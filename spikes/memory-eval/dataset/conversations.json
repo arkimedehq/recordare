@@ -1,0 +1,82 @@
+{
+  "_note": "Synthetic Italian dataset for the episodic-memory engine comparison. Users and facts are fictional. Timestamps are when the message was sent (Europe/Rome).",
+  "users": {
+    "luca": "Primary user under test",
+    "elena": "Second user, isolation check: her data must never surface in Luca's answers"
+  },
+  "sessions": [
+    { "id": "s01", "user": "luca", "ts": "2026-01-12T20:10:00+01:00", "messages": [
+      { "role": "user", "content": "Ciao! Giornata pesante al lavoro oggi. Ah, novità: mi sono appena preso una Golf usata, grigia, del 2019." },
+      { "role": "assistant", "content": "Complimenti per la Golf! Una 2019 è un'ottima scelta, affidabile e con consumi contenuti. Com'è andata la giornata pesante?" },
+      { "role": "user", "content": "Riunioni infinite. Per fortuna stasera aiuto Giulia, mia figlia, con i compiti: ha 9 anni e la matematica la odia." },
+      { "role": "assistant", "content": "A 9 anni è normale! Se vuoi ti preparo qualche gioco per rendere più divertenti le tabelline." }
+    ]},
+    { "id": "s02", "user": "luca", "ts": "2026-01-18T19:30:00+01:00", "messages": [
+      { "role": "user", "content": "Ieri sono andato a sciare a Cervinia con Marco, mio cognato. Neve perfetta, giornata stupenda!" },
+      { "role": "assistant", "content": "Che bello! Cervinia con neve fresca è il massimo. Quali piste avete fatto?" },
+      { "role": "user", "content": "Soprattutto la Ventina, fino a Valtournenche. Marco alla fine era distrutto." }
+    ]},
+    { "id": "s03", "user": "luca", "ts": "2026-01-22T21:00:00+01:00", "messages": [
+      { "role": "user", "content": "Come faccio un backup del NAS Synology su un disco esterno USB?" },
+      { "role": "assistant", "content": "Puoi usare Hyper Backup: crea un'attività di backup, scegli 'Cartella locale e USB' come destinazione, seleziona il disco e le cartelle, e pianifica l'esecuzione." }
+    ]},
+    { "id": "s04", "user": "luca", "ts": "2026-01-27T18:45:00+01:00", "messages": [
+      { "role": "user", "content": "La settimana prossima vado a Roma per lavoro, martedì e mercoledì. Mi consigli un hotel vicino a Termini?" },
+      { "role": "assistant", "content": "Vicino a Termini ci sono diverse opzioni comode per chi viaggia per lavoro, ad esempio in zona via Nazionale. Vuoi che guardi qualcosa di specifico?" }
+    ]},
+    { "id": "s05", "user": "luca", "ts": "2026-02-01T11:00:00+01:00", "messages": [
+      { "role": "user", "content": "Cambio di programma: Roma salta, il cliente ha rimandato a data da destinarsi." },
+      { "role": "assistant", "content": "Peccato, ma almeno hai la settimana libera. Fammi sapere se si riprogramma." }
+    ]},
+    { "id": "s06", "user": "luca", "ts": "2026-02-08T17:20:00+01:00", "messages": [
+      { "role": "user", "content": "Sabato sono stato a Livigno a sciare, da solo. Pista ghiacciata e il rifugio era deludente: cibo freddo e carissimo." },
+      { "role": "assistant", "content": "Mi spiace, una giornata così rovina un po' l'esperienza. Almeno il panorama?" },
+      { "role": "user", "content": "Il panorama sì, quello sempre. Ma non ci torno a breve." }
+    ]},
+    { "id": "s07", "user": "luca", "ts": "2026-02-14T18:00:00+01:00", "messages": [
+      { "role": "user", "content": "Stasera cena di San Valentino con Sara, mia moglie, al ristorante Il Pescatore a Varese. Che vino mi consigli con il pesce?" },
+      { "role": "assistant", "content": "Con il pesce un Vermentino o un Franciacorta Brut sono scelte sicure. Buona serata a te e Sara!" }
+    ]},
+    { "id": "s08", "user": "luca", "ts": "2026-02-20T19:15:00+01:00", "messages": [
+      { "role": "user", "content": "Giulia ha vinto la gara di nuoto regionale nei 50 stile libero! Sono orgogliosissimo." },
+      { "role": "assistant", "content": "Fantastico! Complimenti a Giulia, è un risultato importante." }
+    ]},
+    { "id": "s09", "user": "luca", "ts": "2026-02-26T22:00:00+01:00", "messages": [
+      { "role": "user", "content": "Spiegami la differenza tra TCP e UDP." },
+      { "role": "assistant", "content": "TCP è orientato alla connessione e garantisce consegna e ordine dei pacchetti; UDP è senza connessione, più leggero, ma senza garanzie." }
+    ]},
+    { "id": "s10", "user": "luca", "ts": "2026-03-02T13:00:00+01:00", "messages": [
+      { "role": "user", "content": "Ho venduto la Golf, ora ho una Tesla Model 3 presa in leasing." },
+      { "role": "assistant", "content": "Bel salto! Come ti trovi con l'elettrico finora?" },
+      { "role": "user", "content": "Benissimo, la ricarico in garage di notte." }
+    ]},
+    { "id": "s11", "user": "luca", "ts": "2026-03-08T20:00:00+01:00", "messages": [
+      { "role": "user", "content": "Ieri di nuovo a Cervinia, con Marco e Giulia. Giulia ha fatto la sua prima pista nera! Bellissimo." },
+      { "role": "assistant", "content": "Grande Giulia! La prima nera è un traguardo. Che giornata!" }
+    ]},
+    { "id": "s12", "user": "luca", "ts": "2026-03-10T09:00:00+01:00", "messages": [
+      { "role": "user", "content": "Ho il dentista giovedì della settimana prossima alle 15, me lo ricordi?" },
+      { "role": "assistant", "content": "Certo, giovedì 19 marzo alle 15:00, dentista." }
+    ]},
+    { "id": "s13", "user": "luca", "ts": "2026-03-20T12:30:00+01:00", "messages": [
+      { "role": "user", "content": "Fatto il dentista ieri: un'otturazione, tutto ok ma che male." },
+      { "role": "assistant", "content": "Almeno è fatta! Evita cibi troppo freddi o caldi per qualche giorno." }
+    ]},
+    { "id": "s14", "user": "luca", "ts": "2026-03-25T21:30:00+01:00", "messages": [
+      { "role": "user", "content": "Sto pensando di andare in Giappone l'anno prossimo, magari ad aprile per i ciliegi in fiore." },
+      { "role": "assistant", "content": "Aprile è il periodo perfetto per l'hanami. Kyoto e Tokyo sono imperdibili." }
+    ]},
+    { "id": "s15", "user": "luca", "ts": "2026-03-28T18:00:00+01:00", "messages": [
+      { "role": "user", "content": "Oggi pomeriggio corsa di 10 km al parco: nuovo record personale, 52 minuti!" },
+      { "role": "assistant", "content": "Bravissimo! 52 minuti sui 10 km è un ottimo tempo." }
+    ]},
+    { "id": "e01", "user": "elena", "ts": "2026-02-15T18:00:00+01:00", "messages": [
+      { "role": "user", "content": "Ieri sono andata a sciare a Cervinia con le amiche, giornata fantastica." },
+      { "role": "assistant", "content": "Che bello! Cervinia a febbraio è splendida." }
+    ]},
+    { "id": "e02", "user": "elena", "ts": "2026-03-01T10:00:00+01:00", "messages": [
+      { "role": "user", "content": "Mi sono comprata una Fiat 500 rossa." },
+      { "role": "assistant", "content": "Ottima per la città!" }
+    ]}
+  ]
+}
