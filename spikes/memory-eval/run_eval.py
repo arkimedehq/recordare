@@ -25,6 +25,9 @@ def build(system: str):
     if system == "graphiti":
         from systems.graphiti_sys import GraphitiSystem
         return GraphitiSystem()
+    if system == "d":
+        from systems.d_sys import DSystem
+        return DSystem()
     if system == "memobase":
         from systems.memobase_sys import MemobaseSystem
         return MemobaseSystem()
@@ -85,6 +88,8 @@ def main() -> None:
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / f"{label}.json").write_text(
         json.dumps({"summary": summary, "rows": rows}, ensure_ascii=False, indent=2))
+    if hasattr(sys_, "dump"):
+        (RESULTS / f"{label}-memory.json").write_text(sys_.dump())
     print("\n" + json.dumps(summary, ensure_ascii=False, indent=2))
 
 

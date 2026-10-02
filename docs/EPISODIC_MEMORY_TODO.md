@@ -1,8 +1,8 @@
 # Episodic memory — design TODO
 
 Status: **design / discussion**. Nothing implemented yet. Engine evaluation done
-(`spikes/memory-eval/RESULTS.md`): Memobase's profile + dated-event model scored best under
-noise; adopt-vs-build decision is open (to be recorded as D23).
+(`spikes/memory-eval/RESULTS.md`, round 2): a prototype of this design (D) beat Memobase,
+Graphiti and the raw baseline; D23 proposes building it.
 
 This is **phase 1** of the digital twin vision (`DIGITAL_TWIN_VISION.md`): episodic
 memory is the foundation the twin's memory, self-model and initiative build on.
@@ -289,9 +289,28 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   - D4/D5: toggle and idle delay become service settings (per user / global).
 - A-MEM stays in Arkimede for now; migration is a later phase.
 
+### D23 — Engine: build our design (D) in the service (proposed 2026-10-02, pending owner's OK)
+- Evidence (`spikes/memory-eval/RESULTS.md`, round 2, bge-m3, 24 questions): under noise
+  D 96% vs Memobase 88%, Graphiti 81%, raw baseline 67%; with a local `qwen3:8b` D 73% vs
+  Memobase 65%. Gap comes from the data model (event dates + date filter, plan status,
+  emotions, fact history), not from embeddings.
+- Caveat: D's prompts were iterated on the same dataset (generic rules only); confirm on a
+  held-out set during M4 (the eval harness becomes the service's regression suite).
+- Consequences: no Python / Memobase sidecar; engine in TypeScript behind an internal port;
+  spike prompts (`systems/d_sys.py`) are the starting point for the service prompts.
+- Additions learned from the prototype:
+  - explicit weekday → date calendar in extraction and planning prompts (date resolution);
+  - the extractor sees open plans and current facts (plan confirmation / cancellation,
+    fact supersession) — the D10 mechanism works as designed;
+  - a lived state change ("sold the Golf, now a Tesla") is both an episode and a fact;
+  - undated reported news → message date with precision `approximate`;
+  - restated unchanged facts are dropped (noise repeats the same news);
+  - `search_episodes` accepts `from` / `to` from the agent, plus a deterministic resolver for
+    common period expressions so small agent models do not compute calendars.
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D22. To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D23. To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)

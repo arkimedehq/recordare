@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import uuid
 
+import httpx
+
 from memobase import ChatBlob, MemoBaseClient
 
 from evalkit.common import USAGE
@@ -24,6 +26,7 @@ class MemobaseSystem:
 
     def __init__(self) -> None:
         self.client = MemoBaseClient(project_url=URL, api_key=TOKEN)
+        self.client.client.timeout = httpx.Timeout(600)  # SDK default 60 s: too short for local models
         assert self.client.ping(), "Memobase server not reachable on :8019"
         self.users = {}
 

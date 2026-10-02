@@ -1,7 +1,7 @@
 """Local OpenAI-compatible gateway for the engines under test.
 
 - /v1/embeddings: local fastembed model.
-- /v1/chat/completions: proxy to the spike LLM (DeepSeek) that disables reasoning
+- /v1/chat/completions: proxy to the spike LLM (DeepSeek, or Ollama) that disables reasoning
   ("thinking") — engines like Memobase cap max_tokens at 1024 and a reasoning model spends it
   all on thinking, returning empty content. The API key stays in this process.
 """
@@ -39,7 +39,10 @@ def embeddings(req: EmbeddingRequest) -> dict:
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request) -> dict:
     body = await request.json()
-    body["thinking"] = {"type": "disabled"}
+    if "11434" in os.environ["LLM_BASE_URL"]:  # Ollama: OpenAI-compatible switch
+        body["reasoning_effort"] = "none"
+    else:  # DeepSeek
+        body["thinking"] = {"type": "disabled"}
     async with httpx.AsyncClient(timeout=180) as client:
         r = await client.post(f"{os.environ['LLM_BASE_URL'].rstrip('/')}/chat/completions", json=body,
                               headers={"Authorization": f"Bearer {os.environ['LLM_API_KEY']}"})

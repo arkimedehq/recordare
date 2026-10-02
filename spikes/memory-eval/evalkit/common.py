@@ -75,6 +75,29 @@ def chat(messages: list[dict], phase: str, json_mode: bool = False, max_tokens: 
     return ""
 
 
+def engine_chat_json(messages: list[dict], phase: str, max_tokens: int = 4000) -> dict:
+    """JSON-mode completion for an engine's internal work (system D): ENGINE_* endpoint/model,
+    reasoning disabled when ENGINE_NO_THINKING is set; invalid JSON is retried."""
+    client = OpenAI(base_url=os.getenv("ENGINE_BASE_URL") or os.environ["LLM_BASE_URL"],
+                    api_key=os.getenv("ENGINE_API_KEY") or os.environ["LLM_API_KEY"], timeout=180, max_retries=0)
+    kwargs = {"model": engine_model(), "messages": messages, "max_tokens": max_tokens, "temperature": 0,
+              "response_format": {"type": "json_object"}}
+    if os.getenv("ENGINE_NO_THINKING"):
+        kwargs["extra_body"] = ({"reasoning_effort": "none"} if os.getenv("ENGINE_BASE_URL", "").find("11434") >= 0
+                                else {"thinking": {"type": "disabled"}})
+    for attempt in range(4):
+        try:
+            resp = client.chat.completions.create(**kwargs)
+            USAGE.add(phase, resp.usage)
+            return json.loads(resp.choices[0].message.content or "")
+        except Exception as err:  # noqa: BLE001 - transient provider errors, invalid JSON
+            print(f"  ! {phase} call failed (attempt {attempt + 1}): {type(err).__name__}: {str(err)[:160]}", flush=True)
+            if attempt == 3:
+                raise
+            time.sleep(2 ** attempt)
+    return {}
+
+
 # ── Dataset ─────────────────────────────────────────────────────────────────────
 
 def load_sessions() -> list[dict]:
