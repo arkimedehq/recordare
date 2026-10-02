@@ -1,0 +1,19 @@
+[project]
+name = "memory-eval"
+version = "0.1.0"
+description = "Spike: compare memory engines for Recordare on an Italian episodic dataset"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "openai>=1.50",
+  "python-dotenv>=1.0",
+  "rank-bm25>=0.2.2",
+  "fastembed>=0.4",
+  "numpy>=1.26",
+  "graphiti-core[falkordb]>=0.30.2",
+  "memobase>=0.0.27",
+  "fastapi>=0.142.2",
+  "uvicorn>=0.54.0",
+]
+
+[tool.uv]
+package = false

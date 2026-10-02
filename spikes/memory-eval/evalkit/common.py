@@ -1,0 +1,140 @@
+"""Shared pieces of the memory-engine spike: config, LLM client, dataset, answer and judge."""
+from __future__ import annotations
+
+import json
+import os
+import re
+import time
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+
+from dotenv import load_dotenv
+from openai import OpenAI
+
+ROOT = Path(__file__).resolve().parent.parent
+DATASET = ROOT / "dataset"
+RESULTS = ROOT / "results"
+
+load_dotenv(ROOT / ".env")
+
+WEEKDAYS_IT = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+
+
+def llm_client() -> OpenAI:
+    return OpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"], timeout=60, max_retries=0)
+
+
+def llm_model() -> str:
+    return os.environ["LLM_MODEL"]
+
+
+@dataclass
+class Usage:
+    """Token accounting per phase (ingest / answer / judge)."""
+    calls: dict[str, int] = field(default_factory=dict)
+    prompt: dict[str, int] = field(default_factory=dict)
+    completion: dict[str, int] = field(default_factory=dict)
+
+    def add(self, phase: str, usage) -> None:
+        self.calls[phase] = self.calls.get(phase, 0) + 1
+        if usage is not None:
+            self.prompt[phase] = self.prompt.get(phase, 0) + (usage.prompt_tokens or 0)
+            self.completion[phase] = self.completion.get(phase, 0) + (usage.completion_tokens or 0)
+
+    def as_dict(self) -> dict:
+        return {"calls": self.calls, "prompt_tokens": self.prompt, "completion_tokens": self.completion}
+
+
+USAGE = Usage()
+
+
+def chat(messages: list[dict], phase: str, json_mode: bool = False, max_tokens: int = 800) -> str:
+    """Single chat completion with retry; records token usage under `phase`."""
+    kwargs = {"model": llm_model(), "messages": messages, "max_tokens": max_tokens, "temperature": 0}
+    if json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+    for attempt in range(4):
+        try:
+            resp = llm_client().chat.completions.create(**kwargs)
+            USAGE.add(phase, resp.usage)
+            content = resp.choices[0].message.content or ""
+            if not content.strip():  # reasoning models can exhaust max_tokens before answering
+                raise ValueError("empty completion")
+            return content
+        except Exception as err:  # noqa: BLE001 - transient provider errors
+            print(f"  ! {phase} call failed (attempt {attempt + 1}): {type(err).__name__}: {str(err)[:160]}", flush=True)
+            if attempt == 3:
+                raise
+            time.sleep(2 ** attempt)
+    return ""
+
+
+# ── Dataset ─────────────────────────────────────────────────────────────────────
+
+def load_sessions() -> list[dict]:
+    data = json.loads((DATASET / "conversations.json").read_text())
+    return sorted(data["sessions"], key=lambda s: s["ts"])
+
+
+def load_questions() -> list[dict]:
+    return json.loads((DATASET / "questions.json").read_text())["questions"]
+
+
+def fmt_when(iso: str) -> str:
+    """'2026-01-18T19:30:00+01:00' -> 'domenica 2026-01-18 19:30'."""
+    dt = datetime.fromisoformat(iso)
+    return f"{WEEKDAYS_IT[dt.weekday()]} {dt:%Y-%m-%d %H:%M}"
+
+
+def tokenize(text: str) -> list[str]:
+    return [w for w in re.split(r"[^\w]+", text.lower()) if len(w) > 2]
+
+
+# ── Answer + judge (identical for every system) ─────────────────────────────────
+
+ANSWER_SYSTEM = (
+    "Sei l'assistente personale dell'utente. Rispondi in italiano, in modo breve e preciso, "
+    "usando SOLO le informazioni nel CONTESTO DI MEMORIA. Se il contesto non contiene la "
+    "risposta, dillo chiaramente (es. 'Non mi risulta'). Non inventare date o fatti."
+)
+
+
+def answer(question: dict, context: str) -> str:
+    user = (
+        f"Oggi è {fmt_when(question['asked_at'])}.\n\n"
+        f"CONTESTO DI MEMORIA:\n{context or '(vuoto)'}\n\n"
+        f"DOMANDA: {question['q']}"
+    )
+    return chat([{"role": "system", "content": ANSWER_SYSTEM}, {"role": "user", "content": user}],
+                phase="answer", max_tokens=3000).strip()
+
+
+JUDGE_SYSTEM = (
+    "You grade answers of a memory assistant against a reference. Output JSON "
+    '{"verdict": "correct"|"partial"|"wrong", "reason": "<short>"}. '
+    "correct = contains the key facts of the reference (dates may be phrased differently) and "
+    "no contradicting claim; partial = some key facts right but incomplete or with a minor error; "
+    "wrong = missing the key facts, contradicting the reference, or containing any MUST_NOT item."
+)
+
+
+def judge(question: dict, given: str) -> dict:
+    user = (
+        f"QUESTION: {question['q']}\n"
+        f"REFERENCE: {question['expected']}\n"
+        f"MUST_NOT: {json.dumps(question.get('must_not', []), ensure_ascii=False)}\n"
+        f"ANSWER: {given}"
+    )
+    raw = chat([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": user}],
+               phase="judge", json_mode=True, max_tokens=3000)
+    try:
+        out = json.loads(raw)
+        if out.get("verdict") not in ("correct", "partial", "wrong"):
+            raise ValueError
+        return out
+    except Exception:  # noqa: BLE001
+        return {"verdict": "wrong", "reason": f"unparseable judge output: {raw[:120]}"}
+
+
+SCORE = {"correct": 1.0, "partial": 0.5, "wrong": 0.0}

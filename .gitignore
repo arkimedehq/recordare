@@ -9,3 +9,7 @@ coverage/
 .venv/
 __pycache__/
 spikes/**/results/
+
+# Claude Code personal settings
+.claude/settings.local.json
+spikes/**/memobase/config.yaml
