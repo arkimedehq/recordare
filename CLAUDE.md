@@ -7,12 +7,14 @@ client. Status: **design + evaluation spike; no service code yet.**
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
   mode, architecture (standalone, own DB, one memory per person), name, roadmap.
-- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D23 (layered memory: raw log →
+- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D27 (layered memory: raw log →
   episodes → digests → semantic notes; two LLM calls; idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
-  D) and embedding comparison. Round 2 + held-out: D wins; **D23 approved: build D**, default engine model `deepseek-flash`.
+  D) and embedding comparison. Round 2 + held-out: D wins; **D23 approved: build D**; in the DeepSeek test setup `deepseek-flash` = `v4-pro` quality.
   Spike runs cost real money (DeepSeek): keep runs minimal, prefer base before noise.
+  Reasoning-off switch per provider: `evalkit/common.py` → `REASONING_OFF` (override with
+  `REASONING_OFF_BODY`).
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 and open decisions D23–D26.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
   gaps, and **cost principles** (the owner wants Recordare as cheap as possible: zero LLM calls
@@ -30,6 +32,9 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Stack preference: TypeScript / NestJS (service), Postgres; i18n IT/EN; type-check with
   `tsc --noEmit` before committing.
 - Don't ask for confirmation at each intermediate step inside agreed work.
+- **Any LLM provider** (D27): Recordare must work with any LLM / embedding provider; DeepSeek and
+  local Ollama are only our test setups — never hardcode provider specifics outside the
+  provider-profile configuration.
 - Cost: as cheap as possible **without losing quality** — at equal measured quality the cheaper
   option wins; never trade quality for cost.
 

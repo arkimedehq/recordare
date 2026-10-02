@@ -12,6 +12,8 @@ their own plan when phase 1 is done.
   contracts. Every feature must work through the public contracts (REST ingest, MCP, SDK).
 - **Two integration levels** (vision → Architecture): *basic* = MCP tools only (Claude
   Desktop / Code, Cursor, …); *full* = MCP + REST ingest + SDK. Both are tested.
+- **Any LLM / embedding provider** (D27): DeepSeek and local Ollama are our test setups only;
+  provider differences live in configuration profiles, prompts and schemas are provider-neutral.
 - **Engine behind a port**: the memory engine (build D / Memobase / hybrid) sits behind an
   internal interface, so the contracts and the service skeleton do not depend on D23.
 - **Evaluate, don't assume**: the spike dataset becomes a regression harness that runs
@@ -29,7 +31,7 @@ M0 and M1 can run in parallel: contracts do not depend on the engine choice.
 
 **Done 2026-10-02** (`spikes/memory-eval/RESULTS.md`, round 2): D 96% under noise vs Memobase
 88%, Graphiti 81%, baseline 67%; local `qwen3:8b` D 73% vs Memobase 65%. D23 approved: build
-D (`EPISODIC_MEMORY_TODO.md`); `deepseek-flash` = same quality as `v4-pro` → default engine model. Held-out dataset (blind to D's prompts): D 86% vs Memobase 61%
+D (`EPISODIC_MEMORY_TODO.md`); `deepseek-flash` = same quality as `v4-pro` → our test default (any provider, D27). Held-out dataset (blind to D's prompts): D 86% vs Memobase 61%
 under noise. Ideas to borrow / reject and cost principles: `ENGINE_IDEAS.md`. Left open: local
 model sweep.
 
@@ -62,7 +64,7 @@ behind the engine port (hybrid) and revisit after M4.
 |---|---|
 | 2.1 | NestJS project, strict TS, lint, `tsc --noEmit`, test runner; CI on every push |
 | 2.2 | Postgres + migrations (TypeORM); pgvector with HNSW index (**D25**) |
-| 2.3 | Ports and adapters: `LlmPort` (OpenAI-compatible, thinking off, validate + retry), `EmbeddingPort` (OpenAI-compatible, `bge-m3` default), `VectorStorePort` (pgvector adapter; Qdrant would be just another adapter), `ClockPort`, `QueuePort` (BullMQ) |
+| 2.3 | Ports and adapters: `LlmPort` (adapters OpenAI-compatible + native Anthropic, provider profiles from config — reasoning off, structured-output mode, token param, caching, usage — validate + retry; D27), `EmbeddingPort` (OpenAI-compatible, `bge-m3` default), `VectorStorePort` (pgvector adapter; Qdrant would be just another adapter), `ClockPort`, `QueuePort` (BullMQ) |
 | 2.4 | Auth: hashed API keys per client, admin bootstrap, person/identity tables |
 | 2.5 | `docker-compose.yml` (service, Postgres, Redis), health endpoint, config via env |
 | 2.6 | i18n scaffolding for prompts and messages (IT/EN) |
@@ -87,6 +89,7 @@ behind the engine port (hybrid) and revisit after M4.
 | 4.4b | Eval suite = `dataset/` + `dataset_holdout/` (+ a new blind set when prompts change a lot); gaps from `ENGINE_IDEAS.md` covered (rescheduled plans, corrections, `latest` mode, facts as-of) |
 | 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget |
 | 4.5 | Per-person toggle `episodicMemoryEnabled` (D4), default off |
+| 4.5b | **Provider matrix**: eval suite run against DeepSeek, Ollama and at least one of OpenAI / Anthropic / Gemini; CLI `eval --config <profile>`; supported-models table (D27) |
 | 4.6 | Eval harness v2: compare with M0 scores; must not regress below the D23 prototype |
 
 ### M5 — Layer 2: consolidation
@@ -120,7 +123,8 @@ behind the engine port (hybrid) and revisit after M4.
 
 | Id | Question | Proposal | When |
 |---|---|---|---|
-| D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02**; default engine model `deepseek-flash` | Done |
+| D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02** | Done |
+| D27 | LLM / embedding providers | **Any provider** via config profiles; DeepSeek + Ollama only as test setups | Done (2026-10-02) |
 | D24 | MCP transport and per-person auth for basic-level clients | Streamable HTTP, bearer key bound to a person | M1 |
 | D25 | Vector store | **pgvector** (proposed 2026-10-02, see below) | M2 |
 | D26 | Where pattern promotions go while A-MEM lives in Arkimede | Exposed by Recordare as `pending` proposals via API; the client decides (Arkimede imports them into A-MEM) | M5 |

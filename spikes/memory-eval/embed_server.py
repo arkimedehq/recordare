@@ -1,7 +1,7 @@
 """Local OpenAI-compatible gateway for the engines under test.
 
 - /v1/embeddings: local fastembed model.
-- /v1/chat/completions: proxy to the spike LLM (DeepSeek, or Ollama) that disables reasoning
+- /v1/chat/completions: proxy to the spike LLM (any OpenAI-compatible provider) that disables reasoning
   ("thinking") — engines like Memobase cap max_tokens at 1024 and a reasoning model spends it
   all on thinking, returning empty content. The API key stays in this process.
 """
@@ -13,7 +13,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
-from evalkit.common import ROOT  # noqa: F401 - loads .env
+from evalkit.common import ROOT, reasoning_off_body  # noqa: F401 - ROOT import loads .env
 from evalkit.embed import MODEL, embed
 
 app = FastAPI()
@@ -39,10 +39,7 @@ def embeddings(req: EmbeddingRequest) -> dict:
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request) -> dict:
     body = await request.json()
-    if "11434" in os.environ["LLM_BASE_URL"]:  # Ollama: OpenAI-compatible switch
-        body["reasoning_effort"] = "none"
-    else:  # DeepSeek
-        body["thinking"] = {"type": "disabled"}
+    body.update(reasoning_off_body(os.environ["LLM_BASE_URL"]))
     async with httpx.AsyncClient(timeout=180) as client:
         r = await client.post(f"{os.environ['LLM_BASE_URL'].rstrip('/')}/chat/completions", json=body,
                               headers={"Authorization": f"Bearer {os.environ['LLM_API_KEY']}"})

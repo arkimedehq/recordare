@@ -13,8 +13,8 @@ Sources (Apache-2.0): Memobase server 0.0.42 (`memobase_server/…`, MemoDB), gr
 
 Recordare must run on the cheapest model that keeps quality, and make **zero LLM calls** when
 there is nothing to do. **Quality first**: a cheaper option is adopted only when it measures the
-same on the eval suite; at equal quality the cheaper one wins. Default engine model:
-`deepseek-flash`, reasoning off (held-out: same quality as `deepseek-v4-pro`). Spike runs used the expensive `deepseek-v4-pro` and repeated runs; that
+same on the eval suite; at equal quality the cheaper one wins. Provider-agnostic (D27): in our
+DeepSeek test setup `deepseek-flash`, reasoning off, matched `deepseek-v4-pro` on the held-out set. Spike runs used the expensive `deepseek-v4-pro` and repeated runs; that
 is test cost, not the product's.
 
 | Rule | From | Where |
@@ -22,7 +22,7 @@ is test cost, not the product's.
 | One extraction call per idle window (episodes + plan updates + fact candidates); a resolve call **only** when deterministic gates leave ambiguous candidates. Target ≤ 1.2 calls per window on average | Graphiti lesson (8–12 calls/session, ≥ 5 sequential round trips) | D1, D2 |
 | Deterministic gates before any LLM call: no user message, no personal content (cheap classifier / heuristics), exact or trigram (`pg_trgm`) match, no candidates, nothing new | Graphiti `dedup_helpers.py`, Memobase skip-LLM fast path | D5, consolidation |
 | Model tiers: small / cheap model for dedupe, tagging, digests; main model only for extraction; reasoning always off | Graphiti `ModelSize.small`, Memobase model tiers | `LlmPort` |
-| Stable system prompts first in the message list → provider prefix caching (DeepSeek, OpenAI) | — | all prompts |
+| Stable system prompts first in the message list → provider prefix caching (automatic on OpenAI / DeepSeek, explicit `cache_control` on Anthropic — handled by the provider profile, D27) | — | all prompts |
 | Window bounds: max tokens per extraction window, forced flush on very long chats; spill over, never truncate | Memobase 1024-token flush + 16k cap (but it truncates) | D1 |
 | No LLM at recall: the agent fills `from` / `to` / `mode`; deterministic period resolver for common expressions | spike finding 5 | D12 |
 | Per-call accounting: prompt id, tokens in/out, latency, per person and per client; quotas | Memobase `llms/__init__.py`, billing | M2 telemetry |

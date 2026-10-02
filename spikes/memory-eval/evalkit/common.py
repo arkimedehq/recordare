@@ -75,16 +75,30 @@ def chat(messages: list[dict], phase: str, json_mode: bool = False, max_tokens: 
     return ""
 
 
+# How to switch reasoning off differs per provider; the engine logic must not care. Override with
+# REASONING_OFF_BODY='{"...": ...}' for providers not listed here.
+REASONING_OFF = {
+    "api.deepseek.com": {"thinking": {"type": "disabled"}},
+    ":11434": {"reasoning_effort": "none"},  # Ollama OpenAI-compatible API
+}
+
+
+def reasoning_off_body(base_url: str) -> dict:
+    if os.getenv("REASONING_OFF_BODY"):
+        return json.loads(os.environ["REASONING_OFF_BODY"])
+    return next((body for key, body in REASONING_OFF.items() if key in base_url), {})
+
+
 def engine_chat_json(messages: list[dict], phase: str, max_tokens: int = 4000) -> dict:
     """JSON-mode completion for an engine's internal work (system D): ENGINE_* endpoint/model,
     reasoning disabled when ENGINE_NO_THINKING is set; invalid JSON is retried."""
-    client = OpenAI(base_url=os.getenv("ENGINE_BASE_URL") or os.environ["LLM_BASE_URL"],
+    base_url = os.getenv("ENGINE_BASE_URL") or os.environ["LLM_BASE_URL"]
+    client = OpenAI(base_url=base_url,
                     api_key=os.getenv("ENGINE_API_KEY") or os.environ["LLM_API_KEY"], timeout=180, max_retries=0)
     kwargs = {"model": engine_model(), "messages": messages, "max_tokens": max_tokens, "temperature": 0,
               "response_format": {"type": "json_object"}}
     if os.getenv("ENGINE_NO_THINKING"):
-        kwargs["extra_body"] = ({"reasoning_effort": "none"} if os.getenv("ENGINE_BASE_URL", "").find("11434") >= 0
-                                else {"thinking": {"type": "disabled"}})
+        kwargs["extra_body"] = reasoning_off_body(base_url)
     for attempt in range(4):
         try:
             resp = client.chat.completions.create(**kwargs)

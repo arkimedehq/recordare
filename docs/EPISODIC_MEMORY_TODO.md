@@ -298,8 +298,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   vs Memobase 75% / 61% — the gap widened; D's misses are recorded as design gaps in
   `ENGINE_IDEAS.md`.
 - Borrowed ideas (Memobase, Graphiti), rejected ones and cost principles: `ENGINE_IDEAS.md`.
-- Default engine model: `deepseek-flash`, reasoning off — same quality as `deepseek-v4-pro` on
-  the held-out set, much cheaper. Rule: at equal quality the cheaper option wins; never trade
+- Engine model in our test setup: `deepseek-flash`, reasoning off — same quality as
+  `deepseek-v4-pro` on the held-out set, much cheaper (any provider allowed, see D27). Rule: at equal quality the cheaper option wins; never trade
   quality for cost.
 - Consequences: no Python / Memobase sidecar; engine in TypeScript behind an internal port;
   spike prompts (`systems/d_sys.py`) are the starting point for the service prompts.
@@ -313,9 +313,35 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   - `search_episodes` accepts `from` / `to` from the agent, plus a deterministic resolver for
     common period expressions so small agent models do not compute calendars.
 
+### D27 — Any LLM / embedding provider; DeepSeek and Ollama are only our test setups (2026-10-02)
+- Recordare must work with any LLM: hosted (OpenAI, Anthropic, Google, Mistral, DeepSeek,
+  OpenRouter, Groq, …), self-hosted (vLLM, LM Studio, Ollama) or the host platform's own gateway
+  (e.g. Arkimede's OpenAI-compatible shim). We test with DeepSeek (cloud) and Ollama (local) for
+  convenience; nothing in the engine may depend on them.
+- `LlmPort` adapters chosen by configuration: **OpenAI-compatible** (covers most providers and
+  local servers) and **native Anthropic**; native Gemini only if its OpenAI-compatible endpoint
+  falls short.
+- **Provider profile = configuration, not code**: how to switch reasoning off (DeepSeek
+  `thinking`, OpenAI / Ollama `reasoning_effort`, Qwen `/no_think`, Anthropic off by default),
+  structured output support (`json_schema` → `json_object` → prompt-only with tolerant parsing
+  and one repair retry), token-limit parameter (`max_tokens` vs `max_completion_tokens`),
+  temperature support, prompt caching (automatic prefix vs explicit `cache_control`), usage
+  fields for accounting.
+- **Provider-neutral prompts and schemas**: one prompt set for all providers (IT/EN), no vendor
+  tags; JSON schemas in the common subset (flat objects, enums, no `oneOf` / format keywords);
+  output always validated in code.
+- **Model roles configured independently**: extraction, light tasks (digests, dedupe), embeddings
+  — each can use a different provider (e.g. local embeddings + hosted extraction).
+- **Embeddings**: any OpenAI-compatible `/v1/embeddings` or local server; model and dimension
+  fixed per installation and stored with each vector; changing model = re-embed job (as Arkimede).
+- **Certification**: a provider / model is "supported" when it passes the eval suite (base +
+  held-out) within a set margin of the reference and its structured output validates; a CLI
+  command runs the suite against a given configuration; results kept in a supported-models table.
+  At equal quality the cheaper model wins.
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D23. To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D27 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)
