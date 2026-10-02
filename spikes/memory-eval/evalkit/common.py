@@ -159,15 +159,17 @@ def judge(question: dict, given: str) -> dict:
         f"MUST_NOT: {json.dumps(question.get('must_not', []), ensure_ascii=False)}\n"
         f"ANSWER: {given}"
     )
-    raw = chat([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": user}],
-               phase="judge", json_mode=True, max_tokens=3000)
-    try:
-        out = json.loads(raw)
-        if out.get("verdict") not in ("correct", "partial", "wrong"):
-            raise ValueError
-        return out
-    except Exception:  # noqa: BLE001
-        return {"verdict": "wrong", "reason": f"unparseable judge output: {raw[:120]}"}
+    raw = ""
+    for _ in range(3):  # a truncated / invalid verdict is a judge failure, not a wrong answer
+        raw = chat([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": user}],
+                   phase="judge", json_mode=True, max_tokens=3000)
+        try:
+            out = json.loads(raw)
+            if out.get("verdict") in ("correct", "partial", "wrong"):
+                return out
+        except ValueError:
+            pass
+    return {"verdict": "wrong", "reason": f"unparseable judge output: {raw[:120]}"}
 
 
 SCORE = {"correct": 1.0, "partial": 0.5, "wrong": 0.0}

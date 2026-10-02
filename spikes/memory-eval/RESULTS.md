@@ -93,6 +93,24 @@ Memobase **widened** (+16 base, +25 noise). The misses point at real design gaps
 plans, corrections, "last time" ranking, state at a past date), recorded in
 `docs/ENGINE_IDEAS.md`. Graphiti was not re-run (excluded, slow and costly).
 
+### Engine model: `deepseek-flash` vs `deepseek-v4-pro` (held-out, D, thinking off)
+
+| Engine model | Base | Noise | Ingest tokens in / out (noise) |
+|---|---|---|---|
+| `deepseek-v4-pro` | 91% | 86% | 352 k / 22 k |
+| `deepseek-flash` | 89% | 84% | 427 k / 24 k |
+
+Same quality within variance (one question ≈ 3.6 points). The flash "wrong" answers were judge
+artefacts, not memory errors: correct answers that also mentioned a `must_not` item in passing
+(the future address, the cousin's trip to Porto, Rufus' adoption date) and one truncated judge
+output (the judge now retries invalid verdicts). Decision: **`deepseek-flash` is the default
+engine model** — equal result, much cheaper per token. Flash consumed ~20% more input tokens
+(more extracted episodes → longer open-plan / fact lists in the prompt): cap those lists and
+keep the prompt prefix stable for caching.
+
+Note on absolute numbers: the judge applies `must_not` to any mention, so all systems are
+somewhat under-scored; comparisons stay fair (same judge for all).
+
 ### Cost note
 D ingest on the held-out noise set: 352 k input tokens on `deepseek-v4-pro` for 191 sessions.
 The spike deliberately used the expensive model and repeated runs; the product targets the
@@ -101,7 +119,6 @@ cheap model with reasoning off, gates that skip the LLM, and prefix caching (see
 check.
 
 ### Open items (not blocking D23)
-- D on the cheap model (`deepseek-flash`, thinking off) — cost vs quality.
 - Local model sweep (`qwen3:14b`, `gemma3`, …) for the sovereign profile.
 
 ## Round 1 (2026-10-02, morning) — MiniLM, 18 questions

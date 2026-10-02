@@ -1,8 +1,8 @@
 # Episodic memory — design TODO
 
 Status: **design / discussion**. Nothing implemented yet. Engine evaluation done
-(`spikes/memory-eval/RESULTS.md`, round 2): a prototype of this design (D) beat Memobase,
-Graphiti and the raw baseline; D23 proposes building it.
+(`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D) beat
+Memobase, Graphiti and the raw baseline; D23 (approved) builds it.
 
 This is **phase 1** of the digital twin vision (`DIGITAL_TWIN_VISION.md`): episodic
 memory is the foundation the twin's memory, self-model and initiative build on.
@@ -289,7 +289,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   - D4/D5: toggle and idle delay become service settings (per user / global).
 - A-MEM stays in Arkimede for now; migration is a later phase.
 
-### D23 — Engine: build our design (D) in the service (proposed 2026-10-02, pending owner's OK)
+### D23 — Engine: build our design (D) in the service (approved 2026-10-02)
 - Evidence (`spikes/memory-eval/RESULTS.md`, round 2, bge-m3, 24 questions): under noise
   D 96% vs Memobase 88%, Graphiti 81%, raw baseline 67%; with a local `qwen3:8b` D 73% vs
   Memobase 65%. Gap comes from the data model (event dates + date filter, plan status,
@@ -298,6 +298,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   vs Memobase 75% / 61% — the gap widened; D's misses are recorded as design gaps in
   `ENGINE_IDEAS.md`.
 - Borrowed ideas (Memobase, Graphiti), rejected ones and cost principles: `ENGINE_IDEAS.md`.
+- Default engine model: `deepseek-flash`, reasoning off — same quality as `deepseek-v4-pro` on
+  the held-out set, much cheaper. Rule: at equal quality the cheaper option wins; never trade
+  quality for cost.
 - Consequences: no Python / Memobase sidecar; engine in TypeScript behind an internal port;
   spike prompts (`systems/d_sys.py`) are the starting point for the service prompts.
 - Additions learned from the prototype:

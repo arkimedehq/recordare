@@ -11,7 +11,7 @@ client. Status: **design + evaluation spike; no service code yet.**
   episodes → digests → semantic notes; two LLM calls; idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
-  D) and embedding comparison. Round 2 + held-out: D wins; **D23 = build D, proposed, pending the owner's OK**.
+  D) and embedding comparison. Round 2 + held-out: D wins; **D23 approved: build D**, default engine model `deepseek-flash`.
   Spike runs cost real money (DeepSeek): keep runs minimal, prefer base before noise.
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 and open decisions D23–D26.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
@@ -30,6 +30,8 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Stack preference: TypeScript / NestJS (service), Postgres; i18n IT/EN; type-check with
   `tsc --noEmit` before committing.
 - Don't ask for confirmation at each intermediate step inside agreed work.
+- Cost: as cheap as possible **without losing quality** — at equal measured quality the cheaper
+  option wins; never trade quality for cost.
 
 ## Spike (`spikes/memory-eval/`) — how to run
 - Python via `uv`; run commands as `uv run --directory <abs path to spikes/memory-eval> python …`
@@ -62,4 +64,4 @@ client. Status: **design + evaluation spike; no service code yet.**
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md`: M0 done (D23 pending OK) → M1 contracts and M2 scaffold.
+Follow `docs/WORK_PLAN.md`: M0 done (D23 approved) → M1 contracts and M2 scaffold.

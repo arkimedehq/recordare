@@ -12,7 +12,9 @@ Sources (Apache-2.0): Memobase server 0.0.42 (`memobase_server/…`, MemoDB), gr
 ## Cost principles (requirement, not an optimisation)
 
 Recordare must run on the cheapest model that keeps quality, and make **zero LLM calls** when
-there is nothing to do. Spike runs used the expensive `deepseek-v4-pro` and repeated runs; that
+there is nothing to do. **Quality first**: a cheaper option is adopted only when it measures the
+same on the eval suite; at equal quality the cheaper one wins. Default engine model:
+`deepseek-flash`, reasoning off (held-out: same quality as `deepseek-v4-pro`). Spike runs used the expensive `deepseek-v4-pro` and repeated runs; that
 is test cost, not the product's.
 
 | Rule | From | Where |
@@ -24,6 +26,7 @@ is test cost, not the product's.
 | Window bounds: max tokens per extraction window, forced flush on very long chats; spill over, never truncate | Memobase 1024-token flush + 16k cap (but it truncates) | D1 |
 | No LLM at recall: the agent fills `from` / `to` / `mode`; deterministic period resolver for common expressions | spike finding 5 | D12 |
 | Per-call accounting: prompt id, tokens in/out, latency, per person and per client; quotas | Memobase `llms/__init__.py`, billing | M2 telemetry |
+| Bounded prompt context: cap the open-plan / current-fact / recent-episode lists given to the extractor (most relevant + most recent), they grow with history | spike: flash used +20% input tokens | extraction |
 
 ## Adopted from Memobase
 

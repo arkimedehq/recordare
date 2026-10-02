@@ -28,10 +28,10 @@ M0 and M1 can run in parallel: contracts do not depend on the engine choice.
 ### M0 — Close the engine decision (spike) → D23
 
 **Done 2026-10-02** (`spikes/memory-eval/RESULTS.md`, round 2): D 96% under noise vs Memobase
-88%, Graphiti 81%, baseline 67%; local `qwen3:8b` D 73% vs Memobase 65%. D23 proposes building
-D (`EPISODIC_MEMORY_TODO.md`). Held-out dataset (blind to D's prompts): D 86% vs Memobase 61%
-under noise. Ideas to borrow / reject and cost principles: `ENGINE_IDEAS.md`. Left open: D on
-the cheap model, local model sweep.
+88%, Graphiti 81%, baseline 67%; local `qwen3:8b` D 73% vs Memobase 65%. D23 approved: build
+D (`EPISODIC_MEMORY_TODO.md`); `deepseek-flash` = same quality as `v4-pro` → default engine model. Held-out dataset (blind to D's prompts): D 86% vs Memobase 61%
+under noise. Ideas to borrow / reject and cost principles: `ENGINE_IDEAS.md`. Left open: local
+model sweep.
 
 | # | Task | Output |
 |---|---|---|
@@ -120,7 +120,7 @@ behind the engine port (hybrid) and revisit after M4.
 
 | Id | Question | Proposal | When |
 |---|---|---|---|
-| D23 | Engine: build D / adopt Memobase / hybrid | **Build D** (proposed after M0, pending OK) | End of M0 |
+| D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02**; default engine model `deepseek-flash` | Done |
 | D24 | MCP transport and per-person auth for basic-level clients | Streamable HTTP, bearer key bound to a person | M1 |
 | D25 | Vector store | **pgvector** (proposed 2026-10-02, see below) | M2 |
 | D26 | Where pattern promotions go while A-MEM lives in Arkimede | Exposed by Recordare as `pending` proposals via API; the client decides (Arkimede imports them into A-MEM) | M5 |
