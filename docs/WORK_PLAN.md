@@ -47,6 +47,17 @@ Decision rule (proposal): if D is within ~5 points of Memobase under noise, buil
 stack, date filter, digests, plans, provenance, disclosure later); otherwise adopt Memobase
 behind the engine port (hybrid) and revisit after M4.
 
+### M0.5 — Eval hygiene before building (2026-10-02)
+
+| # | Task |
+|---|---|
+| 0.5.1 | Gold audit of `dataset/` and `dataset_holdout/` by a second reader (dates, weekdays, year boundary, who is who) — fixes recorded in `spikes/memory-eval/GOLD_AUDIT.md` |
+| 0.5.2 | Judge validation: per question, vague / specific-but-wrong / correct-plus-extra / correct-paraphrase answers; measure judge false-accept and false-reject rates; fix the judge prompt (per-type rules) until both are low |
+
+The rest of the eval upgrade (N ≥ 3 runs + paired tests, controls and baselines, correct /
+hallucinated / omitted outcomes, per-stage extraction eval, new probe types, cost columns)
+lands in M3/M4 as the service's regression suite (`literature/README.md` → Evaluation).
+
 ### M1 — Contracts (engine-independent)
 
 | # | Task | Output |
@@ -54,7 +65,7 @@ behind the engine port (hybrid) and revisit after M4.
 | 1.1 | **Identity model**: `client` (platform, API key) → `external identity` (client + external user id) → `person` (one memory per person). Linking flow for the same person across clients | `docs/API.md` § Identity |
 | 1.2 | **REST ingest**: `POST api/v1/ingest/messages` (batch). Per message: external conversation id, external message id, role, author, content, `sentAt`, channel, optional interlocutor identity. Idempotent on (client, conversation, message); edit and delete endpoints | `docs/API.md` § Ingest + OpenAPI |
 | 1.3 | **MCP tools**: `log_episode`, `search_episodes` (D11/D12) — JSON schemas valid across LLM providers (no unsupported keywords, flat params) | `docs/API.md` § MCP |
-| 1.3b | **Data model v1** with the reserved fields of D28 (plan statuses incl. `unresolved`, kinds, bi-temporal facts, `corrects` / `supersedes`, `origin`, `disclosure`, `stated` / `inferred`) | `docs/DATA_MODEL.md` |
+| 1.3b | **Data model v1** with the fields of D28 + D29 + D30 (plan statuses incl. `unresolved` and typed patches, kinds, bi-temporal facts with `unknown_current`, `corrects` / `supersedes`, `derivedFrom` / `needsRecheck`, `origin` incl. `assistant_stated`, `disclosure` + audience set, source ids, evidence message ids) | `docs/DATA_MODEL.md` |
 | 1.4 | **Read API** for host UIs (timeline / diary, edit, delete, "forget period" — D16/D18) | `docs/API.md` § Timeline |
 | 1.5 | MCP transport + auth: streamable HTTP, bearer key bound to a person (basic level has no ingest, so the key is the identity) | Decision D24 |
 | 1.6 | SDK shape: thin TS client `@arkimedehq/recordare-client` (ingest, timeline, typed errors) | Package skeleton |
@@ -126,6 +137,8 @@ behind the engine port (hybrid) and revisit after M4.
 | Id | Question | Proposal | When |
 |---|---|---|---|
 | D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02** | Done |
+| D29 | Data model / recall additions from the literature | Approved (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
+| D30 | Assistant turns | Extracted with `origin: assistant_stated` | Done (2026-10-02) |
 | D28 | Data model fields for research hypotheses | Reserved from v1 (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
 | D27 | LLM / embedding providers | **Any provider** via config profiles; DeepSeek + Ollama only as test setups | Done (2026-10-02) |
 | D24 | MCP transport and per-person auth for basic-level clients | Streamable HTTP, bearer key bound to a person | M1 |

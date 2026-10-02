@@ -355,9 +355,40 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   their source ids so labels can propagate (most restrictive wins).
 - `stated | inferred` on facts; inferred ones stay pending (see `ENGINE_IDEAS.md`).
 
+### D29 — Data model and recall additions from the literature review (approved 2026-10-02)
+- Source: `literature/README.md` (synthesis of 15 deep-read sources); extends D28.
+- **Audience set**: every episode, fact, digest and profile entry stores the resolved person ids
+  present when it was recorded (immutable), next to the `disclosure` tier; permissions are
+  evaluated at read time against current policy; grants are data with validity intervals;
+  missing and forbidden items return the same "not found".
+- **Derived artefacts carry source ids**; derived audience = intersection of the sources';
+  an artefact without source ids fails closed.
+- **Facts**: status `current | superseded | corrected | unknown_current`; per touched fact the
+  extractor gives a verdict `keep | stale | replace | corrects | unknown` over a shortlisted
+  candidate set; `derivedFrom` + deterministic `needsRecheck` (flag only, never auto-rewrite);
+  supersession forward-only by event / message time (imports never overwrite newer facts);
+  `stated | inferred` + confidence.
+- **Plans**: the LLM emits sparse typed patches `confirm | cancel | reschedule | amend`;
+  transitions happen in code; a later mention is not a cancellation; open plans shortlisted
+  (date window + embedding + people) and referenced by index.
+- **Evidence-bound extraction**: every episode / fact / plan patch cites message ids, validated
+  in code against Layer 0; the original time expression is stored next to the resolved date.
+- **Retrieval keys** (keywords, one-line context, tags) come from the same extraction call.
+- **Recall**: `search_episodes` mode `latest`; with a date range, in-range first; value chain per
+  fact slot; statuses always shown; premise check for presupposed states; long tails segmented
+  by topic before extraction, never truncated; per-window claim cap.
+
+### D30 — Assistant turns are extracted too, with their own origin (approved 2026-10-02)
+- Derived memories that ignore the assistant lose what it said or did (Zep's
+  single-session-assistant regression) — for agentic clients that is the agent's actions and the
+  recommendations the user accepted.
+- Assistant turns are always extraction context, and assistant-stated items are extracted with
+  `origin: assistant_stated` (extends D28's `owner_lived | owner_told | twin_experienced`),
+  never merged with owner-lived memories; recall labels them ("the assistant suggested / did").
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D28 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D30 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)

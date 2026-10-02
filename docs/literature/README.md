@@ -38,7 +38,7 @@ quoting them externally. Licences of reusable code: `../LICENSING.md`.
 - Batching per idle window is where the cost savings are (LightMem); no graph DB (Mem0g, Zep).
 - `unresolved` for user plans goes beyond the closest work (PIS has pending / done / canceled).
 
-### Data model additions (proposed D29 — extends D28)
+### Data model additions (D29, approved 2026-10-02 — extends D28)
 1. **Audience set** on every episode, fact, digest and profile entry: resolved person ids present
    when it was recorded (immutable), next to the `disclosure` tier; permissions evaluated at
    read time against current policy; grants as data with validity intervals; lookups return the
@@ -93,9 +93,9 @@ quoting them externally. Licences of reusable code: `../LICENSING.md`.
 - **Cost columns** per run: calls and tokens per message, tokens injected per query, p50 / p95
   latency. *(Mem0, MemDelta, LightMem)*
 
-### Open question for the owner
+### Assistant turns (D30, approved 2026-10-02: option b)
 - **Assistant turns**: derived memories lose what the assistant said (Zep's
   single-session-assistant regression). For agentic clients this matters (the agent's actions,
   recommendations the user accepted). Options: (a) assistant turns only as context, (b) also
   extract assistant-stated items with their own origin (`assistant_stated`), never mixed with
-  owner-lived memories. Proposal: (b), consistent with H3 provenance.
+  owner-lived memories. Chosen: (b), consistent with H3 provenance.
