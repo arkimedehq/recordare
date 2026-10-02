@@ -54,6 +54,7 @@ behind the engine port (hybrid) and revisit after M4.
 | 1.1 | **Identity model**: `client` (platform, API key) → `external identity` (client + external user id) → `person` (one memory per person). Linking flow for the same person across clients | `docs/API.md` § Identity |
 | 1.2 | **REST ingest**: `POST api/v1/ingest/messages` (batch). Per message: external conversation id, external message id, role, author, content, `sentAt`, channel, optional interlocutor identity. Idempotent on (client, conversation, message); edit and delete endpoints | `docs/API.md` § Ingest + OpenAPI |
 | 1.3 | **MCP tools**: `log_episode`, `search_episodes` (D11/D12) — JSON schemas valid across LLM providers (no unsupported keywords, flat params) | `docs/API.md` § MCP |
+| 1.3b | **Data model v1** with the reserved fields of D28 (plan statuses incl. `unresolved`, kinds, bi-temporal facts, `corrects` / `supersedes`, `origin`, `disclosure`, `stated` / `inferred`) | `docs/DATA_MODEL.md` |
 | 1.4 | **Read API** for host UIs (timeline / diary, edit, delete, "forget period" — D16/D18) | `docs/API.md` § Timeline |
 | 1.5 | MCP transport + auth: streamable HTTP, bearer key bound to a person (basic level has no ingest, so the key is the identity) | Decision D24 |
 | 1.6 | SDK shape: thin TS client `@arkimedehq/recordare-client` (ingest, timeline, typed errors) | Package skeleton |
@@ -90,6 +91,7 @@ behind the engine port (hybrid) and revisit after M4.
 | 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget |
 | 4.5 | Per-person toggle `episodicMemoryEnabled` (D4), default off |
 | 4.5b | **Provider matrix**: eval suite run against DeepSeek, Ollama and at least one of OpenAI / Anthropic / Gemini; CLI `eval --config <profile>`; supported-models table (D27) |
+| 4.5c | Eval categories for H1 (plan resolution incl. unresolved, premise traps, accumulate vs supersede, correction vs change) with unjustified-assertion and over-abstention rates (`RESEARCH_NOTES.md`) |
 | 4.6 | Eval harness v2: compare with M0 scores; must not regress below the D23 prototype |
 
 ### M5 — Layer 2: consolidation
@@ -124,6 +126,7 @@ behind the engine port (hybrid) and revisit after M4.
 | Id | Question | Proposal | When |
 |---|---|---|---|
 | D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02** | Done |
+| D28 | Data model fields for research hypotheses | Reserved from v1 (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
 | D27 | LLM / embedding providers | **Any provider** via config profiles; DeepSeek + Ollama only as test setups | Done (2026-10-02) |
 | D24 | MCP transport and per-person auth for basic-level clients | Streamable HTTP, bearer key bound to a person | M1 |
 | D25 | Vector store | **pgvector** (proposed 2026-10-02, see below) | M2 |

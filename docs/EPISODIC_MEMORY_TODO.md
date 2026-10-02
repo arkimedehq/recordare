@@ -339,9 +339,25 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   command runs the suite against a given configuration; results kept in a supported-models table.
   At equal quality the cheaper model wins.
 
+### D28 — Phase-1 data model reserves the fields the research hypotheses need (2026-10-02)
+- From `RESEARCH_NOTES.md` (H1–H3): adding these later would mean migrating episodes, so they
+  exist from v1 even where phase 1 only writes defaults.
+- Plans: status `open | confirmed | cancelled | rescheduled | unresolved` (a past plan never
+  confirmed becomes `unresolved` → answered "I don't know if it happened"), `rescheduledTo`,
+  status date and evidence episode (extends D10).
+- Episode kind `event | plan | state-change`; facts bi-temporal on both axes: world time
+  (`validFrom` / `validTo`) and knowledge time (`recordedAt` / `expiredAt`).
+- `corrects` (the old value was never true) distinct from `supersedes` (true until t); both keep
+  the old row (no rewrite).
+- `origin: owner_lived | owner_told | twin_experienced` on episodes and facts (phase 1 writes
+  the first two), plus the conversation's interlocutor and audience.
+- `disclosure` label on episodes, facts and digests (default `owner`); derived artefacts keep
+  their source ids so labels can propagate (most restrictive wins).
+- `stated | inferred` on facts; inferred ones stay pending (see `ENGINE_IDEAS.md`).
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D27 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D28 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)

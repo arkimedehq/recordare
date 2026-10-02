@@ -7,7 +7,7 @@ client. Status: **design + evaluation spike; no service code yet.**
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
   mode, architecture (standalone, own DB, one memory per person), name, roadmap.
-- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D27 (layered memory: raw log →
+- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D28 (layered memory: raw log →
   episodes → digests → semantic notes; two LLM calls; idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
@@ -16,6 +16,9 @@ client. Status: **design + evaluation spike; no service code yet.**
   Reasoning-off switch per provider: `evalkit/common.py` → `REASONING_OFF` (override with
   `REASONING_OFF_BODY`).
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 and open decisions D23–D26.
+- `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H8) with literature verdicts: phase 1 is
+  mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), owner vs
+  twin provenance (H3). Never claim novelty without re-checking it.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
   gaps, and **cost principles** (the owner wants Recordare as cheap as possible: zero LLM calls
   when nothing to do, cheap model, no reasoning, prefix caching).
