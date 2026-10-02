@@ -6,8 +6,8 @@ reject, and the gaps found by the held-out evaluation. Each item names the targe
 layer in `EPISODIC_MEMORY_TODO.md`.
 
 Sources (Apache-2.0): Memobase server 0.0.42 (`memobase_server/…`, MemoDB), graphiti-core
-0.30.2 (`graphiti_core/…`, Zep Software, Inc.). If prompt wording is copied, credit both in a
-`NOTICE` file.
+0.30.2 (`graphiti_core/…`, Zep Software, Inc.). Any reuse of code or prompt text follows
+`LICENSING.md` and is recorded in `THIRD_PARTY_NOTICES.md` when it happens.
 
 ## Cost principles (requirement, not an optimisation)
 

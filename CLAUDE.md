@@ -35,6 +35,10 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Stack preference: TypeScript / NestJS (service), Postgres; i18n IT/EN; type-check with
   `tsc --noEmit` before committing.
 - Don't ask for confirmation at each intermediate step inside agreed work.
+- **Licences** (`docs/LICENSING.md`): ideas may be reimplemented with citation; code / prompt text
+  only from AGPL-compatible licences (MIT, BSD, Apache-2.0, GPL family) with notices recorded in
+  `THIRD_PARTY_NOTICES.md` at the moment of reuse; never copy unlicensed / non-commercial
+  sources (e.g. LoCoMo is CC BY-NC); paper text is rewritten, not copied.
 - **Any LLM provider** (D27): Recordare must work with any LLM / embedding provider; DeepSeek and
   local Ollama are only our test setups — never hardcode provider specifics outside the
   provider-profile configuration.
