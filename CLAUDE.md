@@ -19,6 +19,8 @@ client. Status: **design + evaluation spike; no service code yet.**
 - `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H8) with literature verdicts: phase 1 is
   mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), owner vs
   twin provenance (H3). Never claim novelty without re-checking it.
+- `docs/literature/` — deep-reading cards of 15 key sources + `README.md` synthesis (proposed D29
+  data-model additions, recall changes, eval-suite upgrade). Read before designing a component.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
   gaps, and **cost principles** (the owner wants Recordare as cheap as possible: zero LLM calls
   when nothing to do, cheap model, no reasoning, prefix caching).

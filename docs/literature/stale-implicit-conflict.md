@@ -1,0 +1,33 @@
+# STALE: Can LLM Agents Know When Their Memories Are No Longer Valid? (Chao, Bai, Sheng, Li, Sun; Wuhan Univ. / CUHK / HKUST, 2026, arXiv:2605.06527)
+Read: full PDF text (main paper plus appendices A-H incl. CUPMem design F); repository listing only (not file contents); Code: https://github.com/icedreamc/STALE (dirs `STALE/` benchmark and `cup_mem/` method); dataset https://huggingface.co/datasets/STALEproj/STALE (CC BY 4.0)
+
+## Problem
+"Implicit Conflict": a later observation invalidates an earlier memory WITHOUT explicit negation ("I broke my leg" invalidates "I cycle to work"). Formally: Axiom 1 belief incompatibility (new observation, under world knowledge, makes the old belief invalid) and Axiom 2 non-explicit invalidation (no utterance explicitly negates/corrects it). Type I co-referential (same attribute, e.g. Seattle then utilities in Portland); Type II propagated (a different attribute changes and cascades, e.g. injury to commute). Memory is framed as latent user-state tracking (HMM/POMDP view).
+
+## Mechanism (CUPMem, the proposed prototype)
+1. **Write-side extraction**: per session, extract state-relevant evidence spans (dropping task wrappers, purely historical mentions), convert to state-update candidates `delta_k`. A transition keeps the post-transition state, not the event.
+2. **Local update** per candidate against same-slot and same-domain items: `ADD | REFINE | REPLACE | NO_OP`.
+3. **Revision candidate set** `R = R_direct ∪ R_affected ∪ R_global`; `R_affected` comes from a schema-constrained common-sense extrapolation of which neighbouring state regions the change may alter (bounded search, not full scan); `R_global` is a bounded fallback.
+4. **LLM adjudicator** decides per old item `KEEP | STALE | REPLACE | UNKNOWN`. STALE = archived (never deleted); UNKNOWN = the old default is unsafe but no replacement is established, slot marked `UNKNOWN_CURRENT`. Only later evidence may revise earlier items.
+5. **Constrained readout**: query analysis `(I_q, P_q, B_q, A_q)` = intent, presupposed states, needed current-state basis, requested action; premise-centred retrieval into status-aware bundles; verifier `SUPPORTED | OUTDATED | UNRESOLVED`; the answer uses only the authorised current basis; a presupposition of a stale state is blocked.
+
+## Data model
+Two-level schema `Omega`: state domains (10, e.g. `health_and_mobility`, `location_and_living`, `routine_and_transport`, `finance_and_resources`) each with local slots and cardinality `single | multi` (e.g. `current_commute_mode(single)`, `functional_limitation(multi)`). Memory item `m_i = (id, b, l, v, s, tau, E)`: domain, slot, proposition, status `s in {ACTIVE, STALE}` plus the `UNKNOWN_CURRENT` marker, temporal provenance, supporting evidence. Candidate `delta = (b, l, v_hat, z, gamma, tau, E)` where `z` distinguishes direct observation from upstream inference and `gamma` is a confidence. Proposal `p = (m_old, delta_p, rho_p, gamma_p)` with rationale and confidence.
+
+## Prompts / LLM usage
+LLM: extraction, local update, affected-region extrapolation, adjudicator, query analysis, verifier, generator. Deterministic: candidate-set union, status writes, temporal-causality guard, status-aware bundling. Number of calls per session and prompt texts: not stated in the paper (prompts live in `cup_mem/prompt_lib`, not read). Backbone GPT-4o-mini; judge Gemini-3.1-flash-lite (95.8% agreement with humans).
+
+## Evaluation
+STALE: 400 expert-validated scenarios, 1,200 queries, haystacks up to 150K tokens (distractors from LongMemEval). Three probes per scenario: **SR** state resolution ("does the user still commute by bike?"), **PR** premise resistance ("since the user rides daily, make a maintenance plan"), **IPA** implicit policy adaptation ("suggest a commute plan for this week"). Overall accuracy: Gemini-3.1-pro 55.2%, Qwen3.5-27B 31.3%, GPT-5.4 15.7%, GPT-4o-mini 8.7%; memory systems (same GPT-4o-mini): LightMem 17.8, Mem0 8.3, LiCoMemory 7.6, Zep 6.0, A-Mem 5.1; CUPMem 68.0 (PR 78.0 / 75.0 vs near 0 for most; IPA only 32.0 / 43.0). Findings: recognition does not imply application (Qwen27B Type I SR 76 vs IPA 39); PR is the weakest (Gemini-pro 92 SR vs 30 PR); Type II harder than Type I. Diagnostic on LightMem: new evidence retrieved in 77.5% of cases, but of top-3 old entries recalled at write time 60.5% contained the old evidence and only 3.3% were judged to need update ("current-state adjudication gap").
+
+## Limitations
+Authors: one conflict pair per instance (no repeated or coupled updates); LLM-generated dialogues; LLM judge; CUPMem is a prototype dependent on a predefined schema; attention analysis is diagnostic only. Own: the schema covers the same everyday domains the benchmark samples, so transfer is untested despite being "fixed before evaluation"; IPA remains below 45%; CUPMem is compared to systems with different pipelines under a weak backbone; cost per session not reported.
+
+## Implications for Recordare
+- **ADOPT (important), D28**: add an `unknown_current` state for facts/slots (old default unsafe, replacement unknown), distinct from `superseded`/`corrected`. It generalises our plan status `unresolved` (H1) to facts: after an implicit change recall must answer "I don't know the current value", not the stale one.
+- **ADOPT (important), D23 extractor / consolidation**: write-time adjudication with explicit verdicts (keep / stale / replace / unknown) over a bounded candidate set; plain vector-neighbour lookup fails (LightMem judged 3.3% of recalled old entries stale). Our extractor already sees current facts; give it the verdict vocabulary and require a verdict per touched fact.
+- **ADOPT, recall (D12/D13)**: premise check at query time: detect presupposed states in the question and verify against status; PR was the weakest probe for every system. Return stale items only as labelled history.
+- **ADOPT, eval (H6)**: add SR/PR/IPA probe triplets and Type I vs Type II tags to our held-out set; implicit-change cases (no negation cue) are absent from our current question mix.
+- **CHANGE, D28**: add a `stated | inferred` origin on candidate updates (their `z`) and a confidence; inferred invalidations should yield `unknown_current` or pending, not hard retirement, consistent with ENGINE_IDEAS (inferred stays pending).
+- **CHANGE, cost/D27**: Type II propagation needs "affected region" search; with a free-form (non-domain) schema, do it only for facts touched in the batch and limit by a small generic category list; avoid hardcoding their domain schema (violates platform genericity).
+- **AVOID**: relying on a bigger model or long context as the fix (best model 55%); and on retrieval alone.

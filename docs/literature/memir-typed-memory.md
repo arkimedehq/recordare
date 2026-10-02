@@ -1,0 +1,32 @@
+# Mitigating Provenance-Role Collapse in Long-Term Agents via Typed Memory Representation, "MemIR" (Jin, Wang, Li, Xu, Zhang; HIT / PolyU, preprint May 2026, arXiv:2605.25869)
+Read: full PDF text (method, all tables, ablation and hyper-parameter text, appendix A and the four prompts in appendix B); figures not read; Code: not released (no repository link, no release statement)
+
+## Problem
+Flat memory (summaries or chunks) removes the cues for *source monitoring* (Johnson et al. 1993): observed vs inferred content, which mentions co-refer, which statement is current. The result, **provenance-role collapse**: fragments of different provenance are merged without authorisation, or one evolving object is counted as several ("How many screenplays has Joanna written?").
+
+## Mechanism (how it works — concrete, step by step)
+1. **Write** (compile history into atoms): group turns into *pages*, split into *spans* (verbatim evidence); an LLM extracts cues (*handles*, *time*, *pivots*); a second LLM call per page writes *claims*. Every cue and claim must cite supporting spans: `∅ ≠ sup(x) ⊆ S`.
+2. **Retrieval views** `R` link atoms to claims (span -> claims it supports, handle/pivot/time -> claims sharing the anchor).
+3. **Read**: BM25 over views (query rewritten via a function-word table) + BGE-M3 dense over claims and spans; fused with RRF. **Type-constrained projection** `Π(h)`: spans, handles and pivots may reach the answer layer *only through a linked claim*; hits with no claim are discarded. Hits on the same claim form a *candidate bundle* `b_a = ⟨a, ρ_a, E_a⟩` (claim, summed RRF score, provenance closure).
+4. Top-M bundles by `ρ_a` -> cross-encoder rerank (bge-reranker-v2-m3) -> an **LLM selector** picks <= X bundles each tagged `direct` or `support` -> normalised fact interface `f_i = ⟨z(a_i), E_i, τ_i, r_i⟩` -> answer model, told to answer "insufficient evidence" when nothing supports the answer.
+
+## Data model (fields, types, statuses, stores; quote exact field names)
+Store `M = {P, S, H, T, V, A, R}` = pages, spans, handles, times, pivots, claims, retrieval views. Handle output: `surface_text`, `support_span_ids` (surface text must be an exact substring of a cited span). Pivot output: `candidate_ref`, `support_text`, `referent_label`. Claim output: `unit_text`, `support_span_ids` (1-3 ids, at least one current-page dialogue span). Claim ids look like `C23:01` (page 23, claim 1). No status, validity interval, supersession, importance, or origin field exists; "claim" is the only truth-bearing type. Time atoms: storage format not stated (only `time_cues` fed to the claim writer).
+
+## Prompts / LLM usage (number of calls, what is LLM vs deterministic code; short excerpts of key prompt wording if available)
+Write path: LLM calls for cue extraction (handles, pivots; the pivot prompt receives a *deterministic list of sentence-level candidate spans*) and one claim-writing call per page; total per page not stated. Read path: one selector call plus one answer call, plus a cross-encoder. Deterministic: candidate spans, projection, bundling, RRF (page/span segmentation: not stated). Claim prompt: "A Claim is a locally supported fact … not a page summary, not a transcript log"; "Do not make the speech act itself the remembered fact"; "Preserve natural relative time"; "Do not treat the utterance date as a normal value to add". Selector: "Stop by coverage, not by first match."
+
+## Evaluation (datasets, metrics, baselines, key numbers incl. tokens / API calls / latency)
+LoCoMo (1,540 q; F1, BLEU-1, judge) and BEAM-100K (400 q, ten categories; judge). 13 baselines (Zep, A-Mem, Mem0, LightMem, Nemori, SimpleMem, ...); backbone GPT-4.1-mini. BEAM-100K average 48.26 vs SimpleMem 40.68, Nemori 40.45; Contradiction resolution 32.3 (next best 20.6), Knowledge update 58.4, Abstention 37.5, Event ordering 28.6, Temporal 38.5. LoCoMo, GPT-4.1-mini: single-hop judge 89.5, temporal judge 84.6, multi-hop judge 70.2 (below Nemori 74.8, SimpleMem 73.8). Defaults: 12 claims/page (LoCoMo), 18 (BEAM), M=32 / 72, X=6 / 10. Small backbones degrade (BEAM Abstention: GLM-4 9B 10.0, Qwen3-14B 15.0, GPT-4.1-mini 37.5). Ablations are bar charts only (no numbers in text). **Cost, latency, tokens: not reported.**
+
+## Limitations (as admitted by authors + your own observations)
+Authors: cross-claim reasoning depends on the answer model; writing many atom types "inevitably incurs additional computational costs". Ours: (a) "provenance" means *which spans support a claim*, not *whose experience it was* (no owner_lived / owner_told / twin_experienced); (b) no write-time supersession: the selector and answer model must pick the current fact, and BEAM contradiction resolution is only 32%; (c) relative times stay as text, so no date filter; (d) feelings and reactions are dropped on purpose; (e) 2 LLM calls per page on write, 2 at read; (f) no code, no cost numbers.
+
+## Implications for Recordare
+- **Adopt, important — evidence-bound extraction (D2, Layer 0, D28)**: every episode, fact and plan update must cite message ids, and the *quote* (or ids) must be validated in code against the raw log; reject output otherwise. This is the cheap, deterministic half of MemIR and directly supports "provenance to raw round" and re-extraction.
+- **Adopt — tier labelling at recall (D13)**: raw-log fallback hits reach the agent only labelled "from chats", never merged as episodes (MemIR's type-constrained projection).
+- **Adopt, small — claim budget**: few, specific, self-contained rows; their sweep shows over-dense extraction lowers precision (peak ~12 per page). Add a per-window cap and dedupe rule (D2).
+- **Change / avoid, important — do not copy their time handling (D1)**: keeping "last Friday" as text defeats date-range queries. We resolve against the message timestamp, but also store the original expression and `datePrecision` for audit.
+- **Avoid — per-page multi-call writing and read-time LLM selection (cost principles, D12)**: contradicts "no LLM at recall". Keep the selector (`direct` / `support`, "stop by coverage") only as an optional mode for aggregate questions.
+- **H3, D28**: MemIR does not model *who lived* the memory, so `origin` is not covered; H3's "partially novel" verdict stands (cite MemIR as closest work). Its weak contradiction score supports explicit `supersedes` / `corrects` rows over read-time resolution.
+- **Keep emotions (D21)**: their rule to skip reaction sentences suits QA, not a twin.
