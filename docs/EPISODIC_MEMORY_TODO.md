@@ -294,8 +294,10 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   D 96% vs Memobase 88%, Graphiti 81%, raw baseline 67%; with a local `qwen3:8b` D 73% vs
   Memobase 65%. Gap comes from the data model (event dates + date filter, plan status,
   emotions, fact history), not from embeddings.
-- Caveat: D's prompts were iterated on the same dataset (generic rules only); confirm on a
-  held-out set during M4 (the eval harness becomes the service's regression suite).
+- Held-out check (separate dataset written blind to D's prompts): D 91% / 86% (base / noise)
+  vs Memobase 75% / 61% — the gap widened; D's misses are recorded as design gaps in
+  `ENGINE_IDEAS.md`.
+- Borrowed ideas (Memobase, Graphiti), rejected ones and cost principles: `ENGINE_IDEAS.md`.
 - Consequences: no Python / Memobase sidecar; engine in TypeScript behind an internal port;
   spike prompts (`systems/d_sys.py`) are the starting point for the service prompts.
 - Additions learned from the prototype:

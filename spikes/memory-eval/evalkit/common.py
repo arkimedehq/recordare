@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 ROOT = Path(__file__).resolve().parent.parent
-DATASET = ROOT / "dataset"
+DATASET = ROOT / os.getenv("EVAL_DATASET", "dataset")  # e.g. EVAL_DATASET=dataset_holdout
 RESULTS = ROOT / "results"
 
 load_dotenv(ROOT / ".env")
@@ -107,6 +107,11 @@ def load_sessions() -> list[dict]:
 
 def load_questions() -> list[dict]:
     return json.loads((DATASET / "questions.json").read_text())["questions"]
+
+
+def eval_user() -> str:
+    """The user the questions are asked as (questions.json `user`, default 'luca')."""
+    return json.loads((DATASET / "questions.json").read_text()).get("user", "luca")
 
 
 def fmt_when(iso: str) -> str:

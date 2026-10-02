@@ -11,8 +11,12 @@ client. Status: **design + evaluation spike; no service code yet.**
   episodes → digests → semantic notes; two LLM calls; idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
-  D) and embedding comparison. Round 2: D wins; **D23 = build D, proposed, pending the owner's OK**.
+  D) and embedding comparison. Round 2 + held-out: D wins; **D23 = build D, proposed, pending the owner's OK**.
+  Spike runs cost real money (DeepSeek): keep runs minimal, prefer base before noise.
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 and open decisions D23–D26.
+- `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
+  gaps, and **cost principles** (the owner wants Recordare as cheap as possible: zero LLM calls
+  when nothing to do, cheap model, no reasoning, prefix caching).
 
 ## Conventions (the owner's preferences — follow them)
 - Chat with the owner in **Italian**; code comments and dev-facing docs in **English**.
@@ -39,7 +43,8 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Engines: Graphiti on FalkorDB container `memeval-falkordb` (**image `falkordb/falkordb:v4.22.0`**,
   host port 6390 — 6.x breaks Graphiti); Memobase via `memobase/docker-compose.yml` (API :8019,
   `setup_memobase.py` writes the gitignored `config.yaml`; currently configured for bge-m3).
-- `run_eval.py --system baseline|graphiti|memobase|d [--noise] [--only q01,…]` → `results/*.json`
+- `run_eval.py --system baseline|graphiti|memobase|d [--noise] [--only q01,…]` → `results/*.json`;
+  `EVAL_DATASET=dataset_holdout` selects the held-out set (keep it blind: do not tune prompts on it)
   (gitignored). `emb_eval.py` with `EMBED_MODEL=st:<hf-model>|ollama:<name>|<fastembed-model>`.
 - Gotchas: reasoning models need high `max_tokens` (empty content otherwise); the Mac's Docker VM
   disk is nearly full — clean images before pulling big ones. Run evals with

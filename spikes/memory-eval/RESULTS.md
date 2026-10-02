@@ -73,9 +73,35 @@ is needed before trusting the gap fully (see open items).
 - Gateway (`embed_server.py`) also fronts Ollama (`reasoning_effort: none` disables qwen3
   thinking on the OpenAI-compatible API).
 
+### Held-out check (2026-10-02, evening)
+
+`dataset_holdout/` was written by a separate agent that could not read `systems/`, the results
+or the design docs: user `chiara` (physiotherapist, Bologna), 27 sessions Oct 2026 → Feb 2027
+across the year boundary, 4 in English, plus 4 sessions of `davide` with look-alike content;
+28 questions (rescheduled / cancelled / never-confirmed plans, two corrections, an address that
+changes twice, multi-day trip, year-boundary and cross-language questions); 160 noise sessions
+(`dataset_holdout/gen_noise.py`, seed 1729). D's prompts were frozen at commit `ce1fd95`.
+
+| System | Base (31 sessions) | **Noise (191 sessions)** |
+|---|---|---|
+| A — baseline | 64% | **50%** |
+| C — Memobase | 75% | **61%** |
+| **D — prototype** | **91%** | **86%** |
+
+D lost ~10 points vs the tuning dataset (some overfitting, and a harder set), but the gap to
+Memobase **widened** (+16 base, +25 noise). The misses point at real design gaps (rescheduled
+plans, corrections, "last time" ranking, state at a past date), recorded in
+`docs/ENGINE_IDEAS.md`. Graphiti was not re-run (excluded, slow and costly).
+
+### Cost note
+D ingest on the held-out noise set: 352 k input tokens on `deepseek-v4-pro` for 191 sessions.
+The spike deliberately used the expensive model and repeated runs; the product targets the
+cheap model with reasoning off, gates that skip the LLM, and prefix caching (see
+`docs/ENGINE_IDEAS.md` → Cost principles). Measuring D on `deepseek-flash` is the next cheap
+check.
+
 ### Open items (not blocking D23)
-- Held-out evaluation set written without looking at D's prompts (different user, other
-  life domains, English sessions) to confirm the gap.
+- D on the cheap model (`deepseek-flash`, thinking off) — cost vs quality.
 - Local model sweep (`qwen3:14b`, `gemma3`, …) for the sovereign profile.
 
 ## Round 1 (2026-10-02, morning) — MiniLM, 18 questions

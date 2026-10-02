@@ -13,9 +13,8 @@ import json
 import time
 from collections import defaultdict
 
-from evalkit.common import DATASET, RESULTS, SCORE, USAGE, answer, judge, load_questions, load_sessions
+from evalkit.common import DATASET, RESULTS, SCORE, USAGE, answer, eval_user, judge, load_questions, load_sessions
 
-USER = "luca"
 
 
 def build(system: str):
@@ -41,6 +40,8 @@ def main() -> None:
     ap.add_argument("--noise", action="store_true", help="add dataset/noise.json sessions")
     args = ap.parse_args()
     label = args.system + ("-noise" if args.noise else "")
+    if DATASET.name != "dataset":
+        label += f"-{DATASET.name}"
     if os.getenv("EMBED_MODEL"):
         label += "-emb_" + os.environ["EMBED_MODEL"].split("/")[-1].replace(":", "_")
     if os.getenv("ENGINE_MODEL") and args.system != "baseline":
@@ -63,7 +64,7 @@ def main() -> None:
     rows, latencies = [], []
     for q in questions:
         t = time.time()
-        ctx = sys_.context(USER, q)
+        ctx = sys_.context(eval_user(), q)
         latencies.append(time.time() - t)
         ans = answer(q, ctx)
         verdict = judge(q, ans)
