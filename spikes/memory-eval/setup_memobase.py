@@ -1,13 +1,13 @@
-"""Generate memobase/config.yaml from the spike .env (keeps the LLM key out of commands and git)."""
+"""Generate memobase/config.yaml: LLM and embeddings both go through the local gateway (embed_server.py)."""
 import os
 from pathlib import Path
 
-from evalkit.common import ROOT, llm_model
+from evalkit.common import ROOT, engine_model as llm_model
 from evalkit.embed import MODEL
 
 cfg = f"""llm_style: openai
-llm_base_url: {os.environ['LLM_BASE_URL']}
-llm_api_key: {os.environ['LLM_API_KEY']}
+llm_base_url: http://host.docker.internal:{os.getenv('EMBED_PORT', '8790')}/v1
+llm_api_key: via-local-gateway
 best_llm_model: {llm_model()}
 thinking_llm_model: {llm_model()}
 summary_llm_model: {llm_model()}

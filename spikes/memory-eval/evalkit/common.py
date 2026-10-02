@@ -29,6 +29,11 @@ def llm_model() -> str:
     return os.environ["LLM_MODEL"]
 
 
+def engine_model() -> str:
+    """Model used by memory engines for their internal extraction (answer/judge stay on llm_model)."""
+    return os.getenv("ENGINE_MODEL") or llm_model()
+
+
 @dataclass
 class Usage:
     """Token accounting per phase (ingest / answer / judge)."""

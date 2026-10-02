@@ -30,7 +30,7 @@ class Baseline:
         self._index = {}
         for user, docs in self.docs.items():
             bm25 = BM25Okapi([tokenize(d["content"]) for d in docs])
-            vecs = embed([d["content"] for d in docs])
+            vecs = embed([d["content"] for d in docs], kind="passage")
             self._index[user] = (bm25, vecs)
 
     def context(self, user: str, question: dict) -> str:
@@ -39,7 +39,7 @@ class Baseline:
             return ""
         bm25, vecs = self._index[user]
         lex = bm25.get_scores(tokenize(question["q"]))
-        sem = vecs @ embed([question["q"]])[0]
+        sem = vecs @ embed([question["q"]], kind="query")[0]
         fused = np.zeros(len(docs))
         for scores in (lex, sem):
             for rank, idx in enumerate(np.argsort(-scores)):

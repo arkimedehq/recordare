@@ -8,6 +8,7 @@ Writes results/<system>.json and prints a per-category summary.
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import time
 from collections import defaultdict
@@ -37,6 +38,10 @@ def main() -> None:
     ap.add_argument("--noise", action="store_true", help="add dataset/noise.json sessions")
     args = ap.parse_args()
     label = args.system + ("-noise" if args.noise else "")
+    if os.getenv("EMBED_MODEL"):
+        label += "-emb_" + os.environ["EMBED_MODEL"].split("/")[-1].replace(":", "_")
+    if os.getenv("ENGINE_MODEL") and args.system != "baseline":
+        label += f"-{os.environ['ENGINE_MODEL']}" + ("-nothink" if os.getenv("ENGINE_NO_THINKING") else "")
 
     sys_ = build(args.system)
     t0 = time.time()
@@ -70,6 +75,7 @@ def main() -> None:
     summary = {
         "system": label,
         "sessions": len(sessions),
+        "embed_model": __import__("evalkit.embed", fromlist=["MODEL"]).MODEL,
         "accuracy": round(total, 3),
         "by_category": {c: round(sum(v) / len(v), 2) for c, v in sorted(by_cat.items())},
         "ingest_seconds": round(ingest_s, 1),

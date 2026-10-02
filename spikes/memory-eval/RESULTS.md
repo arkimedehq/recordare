@@ -1,59 +1,80 @@
 # Memory engine evaluation — results (2026-10-02)
 
-Setup: same LLM for every phase (DeepSeek `deepseek-flash`, temperature 0), same answer
-prompt and LLM judge for every system; local multilingual embeddings
-(`paraphrase-multilingual-MiniLM-L12-v2`, 384 dims). Dataset: 15 Italian sessions of `luca`
-+ 2 of `elena`, 18 questions. "Noise" = +150 deterministic filler sessions for `luca`
-(+20 for `elena`) with lexical traps (`gen_noise.py`).
+Answer + judge: DeepSeek `deepseek-flash` (temperature 0) for every system — constant, so the
+comparison measures memory, not the answering model. Engine-internal extraction: see column.
+Embeddings: local `paraphrase-multilingual-MiniLM-L12-v2` (384 dims) for every system.
+Dataset: 15 Italian sessions of `luca` + 2 of `elena`, 18 questions. "Noise" = +150
+deterministic filler sessions for `luca` (+20 for `elena`) with lexical traps (`gen_noise.py`).
 
-## Scores
+## Final scores
 
-| System | Dataset | Accuracy | Ingest | Retrieval p50 | Notes |
-|---|---|---|---|---|---|
-| **A — baseline** (BM25 + vector over raw messages, RRF top-8) | base | **86%** | 1 s, 0 LLM calls | 7 ms | Fails only period questions (no date filter) |
-| **A — baseline** | base + noise (187 sessions) | **56%** | 1 s, 0 LLM calls | — | Falls into traps: "Che macchina ho?" → coffee machine; March ski trip pushed out of top-8 |
-| **B — Graphiti** (FalkorDB 4.22) | base | **53%** | 532 s (≈31 s/session) | 33 ms | See failure analysis |
-| **C — Memobase** 0.0.42 | base | **3–19%** | 16–125 s | 27–35 ms | Extraction silently empty — see below |
+| System | Engine LLM (extraction) | Base (17 sessions) | **Noise (187 sessions)** | Ingest (noise) |
+|---|---|---|---|---|
+| A — baseline: BM25 + vector over raw messages, RRF top-8 | — (no LLM) | 86% | **56%** | 4 s |
+| B — Graphiti 0.30 + FalkorDB 4.22 | `deepseek-v4-pro`, thinking off | 81% | **75%** | 1240 s (≈6.6 s/session) |
+| C — Memobase 0.0.42 | `deepseek-v4-pro`, thinking off | 81% | **83%** | 258 s (≈1.4 s/session) |
 
-Graphiti / Memobase with noise not run: both already lose to the baseline on the clean set;
-Graphiti ingest of 187 sessions ≈ 1.5 h.
+Earlier runs, kept for the record (misleading, see "What went wrong"):
+Graphiti with `deepseek-flash` 53%; Memobase with `deepseek-flash` or `deepseek-v4-pro` *with
+thinking* 3% (silent empty extraction).
 
-## Failure analysis
+## What went wrong in the first round (lessons)
 
-**Graphiti — event/state confusion (structural).** Graphiti's temporal model assumes facts
-are *states* that supersede each other. Episodic events are not states:
-- "went skiing at Cervinia (17 Jan)" was marked *"no longer valid from 7 Feb"* because the
-  user skied at Livigno on 7 Feb; the March trip was then missing from the top results →
-  "last time I skied" answered 7 Feb (wrong), "how many times" answered 2.
-- Conversely a real state change was *not* invalidated: "Che macchina ho?" → "Tesla **and**
-  Golf".
-- Facts are extracted in mixed Italian/English, one fact per relation: many near-duplicate
-  facts compete for the top-K.
-- Operational: DeepSeek in `json_object` mode sometimes echoes the JSON schema instead of an
-  instance — Graphiti crashes without retry (patched in the spike with a validating client);
-  FalkorDB 6.0 (released 2026-10-01) breaks Graphiti's fulltext index creation (pinned 4.22).
+1. **Reasoning models + capped `max_tokens` = empty output, silently.** Memobase's LLM wrapper
+   caps `max_tokens=1024`; DeepSeek models think first and spend the budget, so content is
+   empty and the pipeline exits without error (`if not user_memo_str: return`). Same failure hit
+   our own judge at `max_tokens=200`. Fix used: local gateway (`embed_server.py`) forwarding to
+   DeepSeek with `thinking: {type: disabled}`. **Any engine we adopt or build must disable
+   reasoning or size `max_tokens` for it.**
+2. **Graphiti in `json_object` mode**: DeepSeek sometimes echoes the JSON schema instead of an
+   instance → patched with a validating client that retries (`systems/graphiti_sys.py`).
+3. **FalkorDB 6.0** (released 2026-10-01) breaks Graphiti's fulltext index creation → pinned 4.22.
+4. **Clean datasets flatter naive retrieval**: the baseline drops 86% → 56% with noise.
 
-**Memobase — silent pipeline failure.** Per-session flushes skip buffers < 256 tokens
-(by design); with proper buffering the server runs `summary_entry_chats` but never proceeds
-to profile/event extraction, without errors, with `deepseek-flash`. Rigid prompt-format
-pipeline + reasoning model = silent empty memory. Project activity is slowing (last push
-2026-01). Not retried with another model.
+## Per-system analysis
 
-## Decision (per README decision rule)
+**C — Memobase (best under noise).** Profile slots (semantic) + event timeline with *two dates*
+(`mention` vs `event in`) — essentially our D21/D22 design. Robust to lexical traps. Fast ingest.
+Weak points: project activity slowing (last push 2026-01), Python + Postgres + Redis server,
+prompts officially only `en`/`zh`, the 1024-token cap above, misses on "this week"
+(relative-period) and some partial detail answers.
 
-Neither B nor C passes the must-haves (accuracy clearly above baseline A). →
-**build our design (D)**, carrying these lessons:
+**B — Graphiti (good, but structural mismatch).** Treats facts as *states that supersede each
+other*: "went skiing at Cervinia" becomes "no longer valid from 7 Feb" after the Livigno trip,
+so "last time I skied" / "how many times" fail. Excellent for real state changes (car, address).
+Slow ingest, graph DB (Neo4j/FalkorDB) dependency, mixed-language facts.
 
-1. **Events are not states.** Episodes never invalidate each other; only *state facts*
-   (car, address, job) get validity / supersession (`validUntil`, `invalidatedAt` — D10/D21).
-   Keep the two kinds separate (episodic table vs semantic notes).
-2. **Date filter is the biggest lever** where the baseline fails (period questions) —
-   confirms LongMemEval and D12 (`from` / `to`, list mode, digests).
-3. **Raw log must stay searchable** (D13 fallback): the baseline is a strong floor on
-   point lookups and provenance.
-4. **Noise kills naive top-K**: the clean set flatters any system; always evaluate with noise.
-5. **Robust LLM I/O**: validate structured output against the schema and retry; tolerate
-   reasoning models (empty content when `max_tokens` is low).
+**A — baseline.** Strong floor on point lookups and provenance; collapses with noise (coffee
+machine answered for "che macchina ho?"; March trip pushed out of top-8); no date filter.
 
-Next: prototype D in this spike (episode extraction with dates + importance, digests,
-`search_episodes` with date filter + raw-log fallback) and compare against A on base + noise.
+## Embedding models (retrieval only, no LLM — `emb_eval.py`)
+
+recall@8 of gold sessions, vector-only; `st:` = sentence-transformers exactly as Arkimede's
+`embedding-service` (same query/document prompt logic):
+
+| Model | Base | Noise | RSS | CPU emb/s (M4) |
+|---|---|---|---|---|
+| `st:intfloat/multilingual-e5-small` | 85% | 59% | 0.98 GB | 389 |
+| `st:mixedbread-ai/mxbai-embed-large-v1` | 84% | 60% | 0.77 GB | 8 |
+| `st:BAAI/bge-m3` | **96%** | **76%** | 1.41 GB | 26 |
+| `paraphrase-multilingual-MiniLM-L12-v2` (fastembed) | 88% | 75% | — | 273 |
+| `intfloat/multilingual-e5-large` | not measured (fastembed ONNX external-data bug) | | | |
+
+Hybrid BM25+vector fusion *hurts* under noise (62-68% vs 75-76% vector-only) — fusion weights
+must be tuned. Outcome: Arkimede moved to bge-m3 (2026-10-02, both deploys).
+Note: the engine scores above used MiniLM; re-running B/C with bge-m3 is an open item.
+
+## Decision status — OPEN
+
+The first-round decision ("build our own engine D") was based on broken runs and is withdrawn.
+Options now on the table:
+
+1. **Adopt Memobase as the engine** behind Recordare's twin layer (fastest path; must handle
+   thinking/token cap, Italian prompts, project health risk — possibly fork).
+2. **Build D (our design)** taking Memobase's model as the reference (profile + dated events) in
+   NestJS/Postgres, with what we already know beats it on paper: date-range filter, digests,
+   plans/validity, provenance, disclosure tiers.
+3. Hybrid: Memobase now, D later behind the same API.
+
+Before deciding: re-run B/C (and a D prototype) with `bge-m3` embeddings and with a local model
+(Ollama, e.g. qwen3 with thinking off) to check the sovereign/local deployment story.

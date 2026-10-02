@@ -13,6 +13,8 @@ dependencies = [
   "memobase>=0.0.27",
   "fastapi>=0.142.2",
   "uvicorn>=0.54.0",
+  "sentence-transformers>=6.1.0",
+  "psutil>=7.2.2",
 ]
 
 [tool.uv]

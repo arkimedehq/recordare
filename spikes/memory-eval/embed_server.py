@@ -1,10 +1,19 @@
-"""Tiny OpenAI-compatible /v1/embeddings server over the local fastembed model (for Memobase)."""
+"""Local OpenAI-compatible gateway for the engines under test.
+
+- /v1/embeddings: local fastembed model.
+- /v1/chat/completions: proxy to the spike LLM (DeepSeek) that disables reasoning
+  ("thinking") — engines like Memobase cap max_tokens at 1024 and a reasoning model spends it
+  all on thinking, returning empty content. The API key stays in this process.
+"""
 import os
 
+import httpx
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 
+from evalkit.common import ROOT  # noqa: F401 - loads .env
 from evalkit.embed import MODEL, embed
 
 app = FastAPI()
@@ -25,6 +34,16 @@ def embeddings(req: EmbeddingRequest) -> dict:
         "data": [{"object": "embedding", "index": i, "embedding": v.tolist()} for i, v in enumerate(vecs)],
         "usage": {"prompt_tokens": 0, "total_tokens": 0},
     }
+
+
+@app.post("/v1/chat/completions")
+async def chat_completions(request: Request) -> dict:
+    body = await request.json()
+    body["thinking"] = {"type": "disabled"}
+    async with httpx.AsyncClient(timeout=180) as client:
+        r = await client.post(f"{os.environ['LLM_BASE_URL'].rstrip('/')}/chat/completions", json=body,
+                              headers={"Authorization": f"Bearer {os.environ['LLM_API_KEY']}"})
+    return r.json()
 
 
 @app.get("/v1/models")

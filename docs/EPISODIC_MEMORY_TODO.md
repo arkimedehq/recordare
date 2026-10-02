@@ -1,6 +1,8 @@
 # Episodic memory — design TODO
 
-Status: **design / discussion**. Nothing implemented yet.
+Status: **design / discussion**. Nothing implemented yet. Engine evaluation done
+(`spikes/memory-eval/RESULTS.md`): Memobase's profile + dated-event model scored best under
+noise; adopt-vs-build decision is open (to be recorded as D23).
 
 This is **phase 1** of the digital twin vision (`DIGITAL_TWIN_VISION.md`): episodic
 memory is the foundation the twin's memory, self-model and initiative build on.

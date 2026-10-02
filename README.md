@@ -20,7 +20,9 @@ is the first client.
 - [Episodic memory design](docs/EPISODIC_MEMORY_TODO.md) — phase 1: layered memory
   (raw log → episodes → digests → semantic notes), decisions D1–D22.
 - [Memory engine evaluation](spikes/memory-eval/README.md) — spike comparing existing
-  engines (Graphiti, Memobase) against a raw baseline before building our own.
+  engines (Graphiti, Memobase) against a raw baseline; results in
+  [RESULTS.md](spikes/memory-eval/RESULTS.md).
+- [CLAUDE.md](CLAUDE.md) — context and conventions for development sessions.
 
 ## License
 

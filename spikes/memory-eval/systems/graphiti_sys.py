@@ -24,7 +24,8 @@ from graphiti_core.nodes import EpisodeType  # noqa: E402
 from graphiti_core.prompts.models import Message  # noqa: E402
 from pydantic import ValidationError  # noqa: E402
 
-from evalkit.common import USAGE, fmt_when, llm_model  # noqa: E402
+from evalkit.common import USAGE, engine_model, fmt_when  # noqa: E402
+from graphiti_core.search.search_config_recipes import COMBINED_HYBRID_SEARCH_RRF  # noqa: E402
 from evalkit.embed import embed  # noqa: E402
 
 NUM_RESULTS = 12
@@ -73,8 +74,10 @@ class GraphitiSystem:
     def __init__(self) -> None:
         self.loop = asyncio.new_event_loop()
         self.llm = ValidatingGenericClient(
-            config=LLMConfig(api_key=os.environ["LLM_API_KEY"], base_url=os.environ["LLM_BASE_URL"],
-                             model=llm_model(), small_model=llm_model(), temperature=0),
+            config=LLMConfig(api_key=os.environ["LLM_API_KEY"],
+                             base_url=(f"http://localhost:{os.getenv('EMBED_PORT', '8790')}/v1"
+                                       if os.getenv("ENGINE_NO_THINKING") else os.environ["LLM_BASE_URL"]),
+                             model=engine_model(), small_model=engine_model(), temperature=0),
             structured_output_mode="json_object",
             max_tokens=8192,
         )
@@ -112,13 +115,20 @@ class GraphitiSystem:
             USAGE.completion["ingest"] = USAGE.completion.get("ingest", 0) + u.total_output_tokens
 
     def context(self, user: str, question: dict) -> str:
-        edges = self._run(self.g.search(question["q"], group_ids=[user], num_results=NUM_RESULTS))
-        lines = []
-        for e in edges:
+        """Zep-style context: facts with validity, entity summaries and source episodes."""
+        cfg = COMBINED_HYBRID_SEARCH_RRF.model_copy(deep=True)
+        cfg.limit = NUM_RESULTS
+        res = self._run(self.g.search_(question["q"], config=cfg, group_ids=[user]))
+        out = ["FATTI:"]
+        for e in res.edges:
             span = []
             if e.valid_at:
                 span.append(f"valido dal {e.valid_at:%Y-%m-%d}")
             if e.invalid_at:
                 span.append(f"non più valido dal {e.invalid_at:%Y-%m-%d}")
-            lines.append(f"- {e.fact}" + (f" ({', '.join(span)})" if span else ""))
-        return "\n".join(lines)
+            out.append(f"- {e.fact}" + (f" ({', '.join(span)})" if span else ""))
+        out.append("ENTITÀ:")
+        out += [f"- {n.name}: {n.summary}" for n in res.nodes if n.summary]
+        out.append("EPISODI (conversazioni originali):")
+        out += [f"- [{fmt_when(ep.valid_at.isoformat())}] {ep.content}" for ep in res.episodes]
+        return "\n".join(out)
