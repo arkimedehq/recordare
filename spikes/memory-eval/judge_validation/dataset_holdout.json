@@ -1,0 +1,1012 @@
+{
+ "items": [
+  {
+   "qid": "h01",
+   "variant": "correct_paraphrase",
+   "answer": "L'ultima volta è stata sabato 6 febbraio 2027 a BlocHaus: hai chiuso il tuo primo 6c, ed era la prima volta da dicembre.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h01",
+   "variant": "correct_plus_context",
+   "answer": "Il 6/2 a BlocHaus (primo 6c, il dito ha retto benissimo); prima di allora l'ultima uscita era stata il 3 dicembre, il rientro dopo l'infortunio.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h01",
+   "variant": "vague_topical",
+   "answer": "Sei andata ad arrampicare di recente a BlocHaus e ti sei divertita molto.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h01",
+   "variant": "specific_wrong",
+   "answer": "L'ultima volta è stata giovedì 3 dicembre 2026, al rientro dopo l'infortunio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h01",
+   "variant": "partial",
+   "answer": "Sabato 6 febbraio 2027 a BlocHaus.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h01",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h02",
+   "variant": "correct_paraphrase",
+   "answer": "4 volte, sempre a BlocHaus: il 10 ottobre, il 28 ottobre (quando ti sei fatta male al dito), il 3 dicembre e il 6 febbraio 2027.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h02",
+   "variant": "correct_plus_context",
+   "answer": "Quattro volte a BlocHaus: 10 e 28 ottobre, 3 dicembre e 6 febbraio; tra il 28 ottobre e il 3 dicembre hai fatto stop per la lesione alla puleggia A2.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h02",
+   "variant": "vague_topical",
+   "answer": "Sei andata ad arrampicare diverse volte, sempre a BlocHaus, con una pausa per l'infortunio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h02",
+   "variant": "specific_wrong",
+   "answer": "5 volte, comprese un'uscita a novembre e una a gennaio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h02",
+   "variant": "partial",
+   "answer": "4 volte a BlocHaus, ma non ricordo le date.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h02",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h03",
+   "variant": "correct_paraphrase",
+   "answer": "Abiti in via Andrea Costa 41, al terzo piano, a Bologna, con Tommaso e Rufus; ti sei trasferita il 17 gennaio 2027.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h03",
+   "variant": "correct_plus_context",
+   "answer": "In via Andrea Costa 41 (terzo piano), con Tommaso e Rufus, dal 17 gennaio; prima eri da Tommaso in via Saragozza e ancora prima in via Mascarella con Irene.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h03",
+   "variant": "vague_topical",
+   "answer": "Abiti a Bologna in un appartamento con il tuo compagno e il vostro cane.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h03",
+   "variant": "specific_wrong",
+   "answer": "Abiti in via Saragozza 88, da Tommaso.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h03",
+   "variant": "partial",
+   "answer": "Abiti in via Andrea Costa, a Bologna.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h03",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h04",
+   "variant": "correct_paraphrase",
+   "answer": "All'inizio di dicembre stavi da Tommaso in via Saragozza 88, in una sistemazione provvisoria dal 21 novembre 2026 a gennaio.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h04",
+   "variant": "correct_plus_context",
+   "answer": "Da Tommaso in via Saragozza 88, provvisoriamente; via Mascarella l'avevi già lasciata e la casa di via Andrea Costa era ancora in ristrutturazione.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h04",
+   "variant": "vague_topical",
+   "answer": "Abitavi a Bologna, in casa con il tuo compagno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h04",
+   "variant": "specific_wrong",
+   "answer": "Abitavi ancora in via Mascarella 12 con Irene.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h04",
+   "variant": "partial",
+   "answer": "Abitavi da Tommaso, in una sistemazione provvisoria.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h04",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h05",
+   "variant": "correct_paraphrase",
+   "answer": "Hai lasciato via Mascarella sabato 21 novembre 2026, trasferendoti da Tommaso in via Saragozza 88.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h05",
+   "variant": "correct_plus_context",
+   "answer": "Il 21 novembre 2026, con il trasloco provvisorio da Tommaso; Irene è partita per Milano lunedì 30 novembre e il 17 gennaio ti sei poi trasferita in via Andrea Costa.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h05",
+   "variant": "vague_topical",
+   "answer": "Hai lasciato la casa di via Mascarella a fine autunno, quando Irene è andata a Milano.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h05",
+   "variant": "specific_wrong",
+   "answer": "Il 17 gennaio 2027, con il trasloco in via Andrea Costa.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h05",
+   "variant": "partial",
+   "answer": "A novembre 2026, trasferendoti da Tommaso.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h05",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h06",
+   "variant": "correct_paraphrase",
+   "answer": "Il saggio si è tenuto venerdì 15 gennaio 2027: hai suonato il Cigno di Saint-Saëns e c'era anche tua mamma.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h06",
+   "variant": "correct_plus_context",
+   "answer": "Venerdì 15 gennaio 2027; era fissato per il 18 dicembre 2026 ma è stato spostato per un'infiltrazione d'acqua nell'auditorium. Hai suonato il Cigno, con tua mamma in sala.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h06",
+   "variant": "vague_topical",
+   "answer": "Hai fatto un saggio alla scuola di musica dopo alcuni mesi di studio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h06",
+   "variant": "specific_wrong",
+   "answer": "Il 18 dicembre 2026, all'auditorium della scuola.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h06",
+   "variant": "partial",
+   "answer": "Venerdì 15 gennaio 2027.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h06",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h07",
+   "variant": "correct_paraphrase",
+   "answer": "No, la gita a Trento del 12-13 dicembre è stata annullata: non ve la sentivate di lasciare o stressare Rufus appena adottato, e l'hotel ha rimborsato la caparra.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h07",
+   "variant": "correct_plus_context",
+   "answer": "No, annullata il 9 dicembre (lo stesso giorno dell'operazione di tua mamma a Ferrara), per non lasciare Rufus; la caparra dell'hotel è stata rimborsata.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h07",
+   "variant": "vague_topical",
+   "answer": "Il viaggio a Trento era in programma per il weekend di metà dicembre, con l'hotel già prenotato.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h07",
+   "variant": "specific_wrong",
+   "answer": "Sì, ci siete andati il 12 e 13 dicembre, portando Rufus con voi.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h07",
+   "variant": "partial",
+   "answer": "No, non ci siete andati, avete cambiato programma.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h07",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h08",
+   "variant": "correct_paraphrase",
+   "answer": "Non lo so: era in programma venerdì 22 gennaio 2027 all'Arena del Sole con Irene, ma non mi hai mai detto se ci sei andata.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h08",
+   "variant": "correct_plus_context",
+   "answer": "Non risulta: era previsto per il 22 gennaio con Irene, che tornava da Milano per il weekend, ma non mi hai poi raccontato com'è andata.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h08",
+   "variant": "vague_topical",
+   "answer": "Hai parlato di uno spettacolo teatrale all'Arena del Sole con un'amica.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h08",
+   "variant": "specific_wrong",
+   "answer": "Sì, ci sei andata il 22 gennaio con Irene e vi è piaciuta moltissimo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h08",
+   "variant": "partial",
+   "answer": "Non so se ci sei andata; era in programma all'Arena del Sole.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h08",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h09",
+   "variant": "correct_paraphrase",
+   "answer": "Sei stata dall'ortopedico martedì 3 novembre 2026, dopo che la visita di lunedì era stata spostata. Diagnosi: lesione parziale della puleggia A2 dell'anulare sinistro.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h09",
+   "variant": "correct_plus_context",
+   "answer": "Martedì 3 novembre 2026. In un primo momento mi avevi detto lunedì 2 novembre, ma poi hai corretto: quella visita era stata spostata. La diagnosi è stata lesione parziale della puleggia A2.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h09",
+   "variant": "vague_topical",
+   "answer": "Sei stata dall'ortopedico a inizio novembre per il dito.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h09",
+   "variant": "specific_wrong",
+   "answer": "Lunedì 2 novembre 2026.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h09",
+   "variant": "partial",
+   "answer": "Sei andata dall'ortopedico di martedì, a inizio novembre, e ti ha diagnosticato una lesione parziale della puleggia A2.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h09",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h10",
+   "variant": "correct_paraphrase",
+   "answer": "Rufus ha circa 4 anni, secondo la veterinaria, dott.ssa Marchi (visita del 15 dicembre); al canile avevano detto 2 anni ma sbagliavano.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h10",
+   "variant": "correct_plus_context",
+   "answer": "Circa 4 anni, stimati dai denti dalla dottoressa Marchi; il canile gli aveva dato 2 anni. Pesa 14,5 kg.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h10",
+   "variant": "vague_topical",
+   "answer": "Rufus è un cane adulto, un meticcio color miele.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h10",
+   "variant": "specific_wrong",
+   "answer": "Rufus ha 2 anni.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h10",
+   "variant": "partial",
+   "answer": "Rufus ha più anni di quanti dicevano al canile, secondo la veterinaria.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h10",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h11",
+   "variant": "correct_paraphrase",
+   "answer": "Tua mamma è stata operata mercoledì 9 dicembre 2026 a Ferrara, di cataratta all'occhio destro; è andato tutto bene e tu eri con lei.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h11",
+   "variant": "correct_plus_context",
+   "answer": "Il 9 dicembre 2026 a Ferrara, cataratta all'occhio destro, tutto bene (eri con lei); a Natale vedeva già molto meglio.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h11",
+   "variant": "vague_topical",
+   "answer": "Tua mamma ha avuto un intervento a un occhio, andato bene.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h11",
+   "variant": "specific_wrong",
+   "answer": "Il 12 gennaio 2027, a Bologna, di cataratta all'occhio sinistro.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h11",
+   "variant": "partial",
+   "answer": "È stata operata di cataratta all'occhio destro, e l'intervento è andato bene.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h11",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h12",
+   "variant": "correct_paraphrase",
+   "answer": "Mercoledì 10 febbraio 2027 Tommaso è stato promosso capo progetto.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h12",
+   "variant": "correct_plus_context",
+   "answer": "Il 10 febbraio è stato promosso capo progetto e avete festeggiato con il sushi sul divano; anche Irene a fine gennaio era stata promossa team lead a Milano.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h12",
+   "variant": "vague_topical",
+   "answer": "Tommaso ha avuto una bella novità professionale di recente.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h12",
+   "variant": "specific_wrong",
+   "answer": "È stato promosso responsabile di reparto il 24 gennaio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h12",
+   "variant": "partial",
+   "answer": "È stato promosso capo progetto, qualche giorno fa.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h12",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h13",
+   "variant": "correct_paraphrase",
+   "answer": "Ti sono sembrati troppo dolci e un po' sopravvalutati; li hai assaggiati a Belém il 30 dicembre 2026, dopo 40 minuti di coda.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h13",
+   "variant": "correct_plus_context",
+   "answer": "Tutti ti dicevano che fossero life-changing, ma tu li hai trovati troppo dolci e un po' overrated, a Belém dopo 40 minuti di coda.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h13",
+   "variant": "vague_topical",
+   "answer": "Hai parlato dei pastéis de nata durante il viaggio a Lisbona.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h13",
+   "variant": "specific_wrong",
+   "answer": "Ti sono piaciuti tantissimo: i più buoni del mondo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h13",
+   "variant": "partial",
+   "answer": "Che erano sopravvalutati.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h13",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h14",
+   "variant": "correct_paraphrase",
+   "answer": "A capodanno eri a Lisbona con Tommaso: fuochi d'artificio in Praça do Comércio e, a mezzanotte, lui ti ha chiesto di sposarlo e hai detto sì.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h14",
+   "variant": "correct_plus_context",
+   "answer": "Eri a Lisbona (il viaggio era iniziato il 28 dicembre) e a mezzanotte in Praça do Comércio Tommaso ti ha fatto la proposta; Rufus era rimasto da Elisa e Sintra l'avete saltata per la pioggia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h14",
+   "variant": "vague_topical",
+   "answer": "Hai festeggiato il capodanno fuori città con il tuo compagno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h14",
+   "variant": "specific_wrong",
+   "answer": "Hai passato capodanno a Porto con degli amici.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h14",
+   "variant": "partial",
+   "answer": "Eri a Lisbona con Tommaso e avete visto i fuochi d'artificio.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h14",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h15",
+   "variant": "correct_paraphrase",
+   "answer": "A dicembre 2026: il 3 sei tornata ad arrampicare a BlocHaus dopo l'infortunio; il 5 avete adottato Rufus dal canile di Bologna; il 9 sei stata a Ferrara per l'operazione di cataratta di tua mamma e avete annullato Trento; il 10 hai saputo che il saggio era spostato a gennaio; il 15 Rufus dal veterinario; il 23 ultimo giorno allo Studio Porta Mazzini; il 24-26 Natale a Ferrara; dal 28 Lisbona con Tommaso.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h15",
+   "variant": "correct_plus_context",
+   "answer": "Il 3 rientro all'arrampicata, il 5 Rufus dal canile, il 9 la cataratta della mamma a Ferrara e l'annullamento di Trento, il 10 il saggio di violoncello (previsto il 18 dicembre) spostato a gennaio, il 15 la visita veterinaria, il 23 l'ultimo giorno di lavoro allo Studio Porta Mazzini, Natale da mamma e poi Lisbona dal 28; a fine novembre era partita Irene per Milano.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h15",
+   "variant": "vague_topical",
+   "answer": "A dicembre hai avuto un mese pieno: lavoro, famiglia, un nuovo cane e un viaggio a fine anno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h15",
+   "variant": "specific_wrong",
+   "answer": "A dicembre sei andata ai mercatini di Trento il 12-13, il saggio di violoncello è stato il 18, poi Natale a Ferrara e Lisbona.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h15",
+   "variant": "partial",
+   "answer": "Il 3 rientro all'arrampicata, il 5 adozione di Rufus, il 9 operazione della mamma a Ferrara e il 23 l'ultimo giorno di lavoro.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h15",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h16",
+   "variant": "correct_paraphrase",
+   "answer": "L'affitto è di 1.150 euro al mese, escluse le spese condominiali.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h16",
+   "variant": "correct_plus_context",
+   "answer": "1.150 euro al mese più spese condominiali; la casa è al terzo piano con un terrazzino ed è stata ristrutturata prima della consegna.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h16",
+   "variant": "vague_topical",
+   "answer": "L'affitto è in linea con il mercato per una casa con terrazzo in quella zona.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h16",
+   "variant": "specific_wrong",
+   "answer": "900 euro al mese, spese incluse.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h16",
+   "variant": "partial",
+   "answer": "Poco più di mille euro al mese, escluse le spese condominiali.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h16",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h17",
+   "variant": "correct_paraphrase",
+   "answer": "Me l'hai chiesto domenica 10 gennaio 2027, la sera prima di iniziare a Kinesis; nella stessa conversazione parlavamo anche di subentro e di una torta di mele.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h17",
+   "variant": "correct_plus_context",
+   "answer": "Il 10 gennaio 2027: ti avevo spiegato che servono POD e PDR, e che se tutto è staccato si tratta di subentro; poi mi avevi chiesto le dosi di una torta di mele.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h17",
+   "variant": "vague_topical",
+   "answer": "Ne abbiamo parlato in una conversazione di gennaio sulla casa nuova.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h17",
+   "variant": "specific_wrong",
+   "answer": "Il 17 gennaio 2027, il giorno del trasloco.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h17",
+   "variant": "partial",
+   "answer": "Era una conversazione di gennaio 2027, insieme a una ricetta di torta di mele; non ricordo il giorno.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h17",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h18",
+   "variant": "correct_paraphrase",
+   "answer": "No, non risulta che tu sia mai stata a Porto: in Portogallo sei stata solo a Lisbona, dal 28 dicembre 2026 al 2 gennaio 2027.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h18",
+   "variant": "correct_plus_context",
+   "answer": "No; in Portogallo risulta solo Lisbona (Alfama, tram 28, Belém), mentre Sintra l'avete saltata per la pioggia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h18",
+   "variant": "vague_topical",
+   "answer": "Hai viaggiato in Portogallo a fine anno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h18",
+   "variant": "specific_wrong",
+   "answer": "Sì, hai passato capodanno a Porto con gli amici.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h18",
+   "variant": "partial",
+   "answer": "Non risulta che tu sia stata a Porto; sei stata a Lisbona, ma non ricordo quando.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h18",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h19",
+   "variant": "correct_paraphrase",
+   "answer": "Mercoledì 9 dicembre eri a Ferrara per l'operazione di cataratta di tua mamma, andata bene, e avete annullato i mercatini di Trento del 12-13 per Rufus; giovedì 10 a lezione di violoncello hai saputo che il saggio è spostato dal 18 dicembre al 15 gennaio.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h19",
+   "variant": "correct_plus_context",
+   "answer": "Il 9 a Ferrara per la mamma (tutto bene) e annullamento di Trento; il 10 saggio spostato a gennaio. Rufus invece l'avevate adottato sabato scorso, il 5 dicembre.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h19",
+   "variant": "vague_topical",
+   "answer": "Questa settimana è stata piena di novità tra famiglia, cane e musica.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h19",
+   "variant": "specific_wrong",
+   "answer": "Questa settimana hai adottato Rufus, sei andata ai mercatini di Trento e hai fatto il saggio di violoncello.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h19",
+   "variant": "partial",
+   "answer": "Mercoledì 9 sei stata a Ferrara per l'operazione della mamma, andata bene.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h19",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h20",
+   "variant": "correct_paraphrase",
+   "answer": "Lunedì 11 gennaio hai iniziato a lavorare a Kinesis (ritmi intensi, 12 pazienti al giorno); venerdì 15 hai suonato il Cigno al saggio di violoncello, con tua mamma presente; domenica 17 il trasloco in via Andrea Costa 41.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h20",
+   "variant": "correct_plus_context",
+   "answer": "L'11 primo giorno a Kinesis, il 15 saggio di violoncello (il Cigno), il 17 trasloco; il 10 mi avevi chiesto della voltura di luce e gas, e per venerdì 22 avete in programma La Locandiera con Irene.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h20",
+   "variant": "vague_topical",
+   "answer": "La settimana scorsa hai iniziato un nuovo lavoro e fatto altre cose importanti.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h20",
+   "variant": "specific_wrong",
+   "answer": "Sei tornata da Lisbona e hai iniziato a Kinesis lunedì 4 gennaio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h20",
+   "variant": "partial",
+   "answer": "Lunedì 11 hai iniziato a Kinesis e venerdì 15 hai fatto il saggio di violoncello.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h20",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h21",
+   "variant": "correct_paraphrase",
+   "answer": "Last week you had your cello lesson on Thursday 4 February, where you started Bach's Minuet in G, and on Saturday 6 February you went back to BlocHaus for the first time since December and sent your first 6c.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h21",
+   "variant": "correct_plus_context",
+   "answer": "Thursday 4 Feb: cello lesson, new piece (Minuet in G); Saturday 6 Feb: first climb since December, your first 6c. This Monday you also visited a villa on the hills as a possible wedding venue.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h21",
+   "variant": "vague_topical",
+   "answer": "Last week you did some climbing and some cello practice.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h21",
+   "variant": "specific_wrong",
+   "answer": "You started the Romance on Thursday and climbed your first 7a on Saturday.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h21",
+   "variant": "partial",
+   "answer": "You went back to BlocHaus on Saturday 6 February and sent your first 6c.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h21",
+   "variant": "abstain",
+   "answer": "I don't have any information about that.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h22",
+   "variant": "correct_paraphrase",
+   "answer": "Lavori a Kinesis, un centro di riabilitazione sportiva, dall'11 gennaio 2027; prima eri allo Studio Porta Mazzini, dove l'ultimo giorno è stato il 23 dicembre 2026.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h22",
+   "variant": "correct_plus_context",
+   "answer": "Da lunedì 11 gennaio 2027 a Kinesis (riabilitazione sportiva, zona Fiera, 12 pazienti al giorno); lo Studio Porta Mazzini l'hai lasciato il 23 dicembre dopo il preavviso.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h22",
+   "variant": "vague_topical",
+   "answer": "Lavori come fisioterapista a Bologna.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h22",
+   "variant": "specific_wrong",
+   "answer": "Lavori allo Studio Porta Mazzini dal 23 dicembre.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h22",
+   "variant": "partial",
+   "answer": "Lavori a Kinesis, un centro di riabilitazione sportiva.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h22",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h23",
+   "variant": "correct_paraphrase",
+   "answer": "Il viaggio è durato 6 giorni: dal 28 dicembre 2026 al 2 gennaio 2027, a cavallo di capodanno.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h23",
+   "variant": "correct_plus_context",
+   "answer": "6 giorni, da lunedì 28 dicembre a sabato 2 gennaio; Sintra l'avete saltata per la pioggia e Rufus era da Elisa.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h23",
+   "variant": "vague_topical",
+   "answer": "È stato un viaggio di alcuni giorni a cavallo tra l'anno vecchio e quello nuovo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h23",
+   "variant": "specific_wrong",
+   "answer": "4 giorni, dal 4 al 7 dicembre.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h23",
+   "variant": "partial",
+   "answer": "Circa 6 giorni, a cavallo di capodanno, ma non ricordo le date esatte.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h23",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h24",
+   "variant": "correct_paraphrase",
+   "answer": "You adopted Rufus on Saturday 5 December 2026 from the dog shelter in Bologna.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h24",
+   "variant": "correct_plus_context",
+   "answer": "On 5 December 2026 from the Bologna dog shelter; they said he was about 2 years old, but the vet later estimated about 4.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h24",
+   "variant": "vague_topical",
+   "answer": "You adopted Rufus from a shelter a while ago, and he has settled in well.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h24",
+   "variant": "specific_wrong",
+   "answer": "You adopted Rufus on 12 December from a cat shelter in Milan.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h24",
+   "variant": "partial",
+   "answer": "From the dog shelter in Bologna.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h24",
+   "variant": "abstain",
+   "answer": "I don't have any information about that.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h25",
+   "variant": "correct_paraphrase",
+   "answer": "Devi stare ferma 4-6 settimane, secondo l'ortopedico, per la lesione parziale della puleggia A2 dell'anulare sinistro; porti un anello di protezione e il violoncello puoi continuare a suonarlo.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h25",
+   "variant": "correct_plus_context",
+   "answer": "4-6 settimane di stop dall'arrampicata dopo la visita del 3 novembre (che era stata spostata da lunedì a martedì), con un anello di protezione; il violoncello va bene, anzi muovere il dito aiuta.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h25",
+   "variant": "vague_topical",
+   "answer": "Dovrai stare ferma per un po', finché il dito non guarisce.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h25",
+   "variant": "specific_wrong",
+   "answer": "Tre settimane, poi puoi riprendere.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h25",
+   "variant": "partial",
+   "answer": "4-6 settimane di stop, con un anello di protezione.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h25",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h26",
+   "variant": "correct_paraphrase",
+   "answer": "Hai studiato il Cigno di Saint-Saëns (versione semplificata, suonato al saggio del 15 gennaio 2027) e, dal 4 febbraio 2027, il Minuetto in sol di Bach; prima ancora la scala di Re maggiore.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h26",
+   "variant": "correct_plus_context",
+   "answer": "Il Cigno di Saint-Saëns per il saggio e il Minuetto in sol di Bach dal 4 febbraio; ti avevo anche spiegato il significato di 'legato' sullo spartito.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h26",
+   "variant": "vague_topical",
+   "answer": "Hai studiato alcuni brani di musica classica e delle scale.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h26",
+   "variant": "specific_wrong",
+   "answer": "Il Cigno di Saint-Saëns e la Romance.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h26",
+   "variant": "partial",
+   "answer": "Il Cigno di Saint-Saëns, che hai suonato al saggio.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h26",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h27",
+   "variant": "correct_paraphrase",
+   "answer": "You said it was a wonderful place with great equipment and young, skilled colleagues; the pace was intense, 12 athletes a day, so you were exhausted in the evenings but happy.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h27",
+   "variant": "correct_plus_context",
+   "answer": "You were a bit anxious the day before starting (11 January); by 14 January you loved the place and the equipment, the pace was intense with 12 patients a day, all athletes: tired but happy. You also hadn't studied much cello that week.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h27",
+   "variant": "vague_topical",
+   "answer": "You had mixed feelings about starting a new job.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h27",
+   "variant": "specific_wrong",
+   "answer": "You were disappointed: the equipment was outdated, the colleagues were unfriendly and you had few patients.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h27",
+   "variant": "partial",
+   "answer": "You loved the place and the equipment, and your colleagues were young and skilled.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h27",
+   "variant": "abstain",
+   "answer": "I don't have any information about that.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h28",
+   "variant": "correct_paraphrase",
+   "answer": "Your wedding is on Saturday 18 September 2027; Tommaso proposed at midnight on New Year's Eve in Praça do Comércio, Lisbon, during the fireworks.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h28",
+   "variant": "correct_plus_context",
+   "answer": "Saturday 18 September 2027; he proposed at midnight between 31 December 2026 and 1 January in Lisbon. You've also seen a villa on the hills you love, and you told your mum in person in Ferrara on 13 February.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "h28",
+   "variant": "vague_topical",
+   "answer": "You have a wedding coming up next year and Tommaso proposed on a trip.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h28",
+   "variant": "specific_wrong",
+   "answer": "The wedding is on 18 June 2027 and Tommaso proposed on Christmas Eve in Porto.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "h28",
+   "variant": "partial",
+   "answer": "The wedding is on Saturday 18 September 2027.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "h28",
+   "variant": "abstain",
+   "answer": "I don't have any information about that.",
+   "expected_verdict": "wrong"
+  }
+ ]
+}

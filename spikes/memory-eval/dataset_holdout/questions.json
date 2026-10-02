@@ -43,8 +43,8 @@
    "q": "Dove abitavo all'inizio di dicembre?",
    "expected": "Da Tommaso, in via Saragozza 88 (sistemazione provvisoria dal 21 novembre 2026 al 17 gennaio 2027).",
    "must_not": [
-    "via Mascarella",
-    "via Andrea Costa"
+    "affermare che all'inizio di dicembre abitavi in via Mascarella",
+    "affermare che all'inizio di dicembre abitavi in via Andrea Costa"
    ]
   },
   {
@@ -55,7 +55,7 @@
    "expected": "Sabato 21 novembre 2026, trasferendoti provvisoriamente da Tommaso in via Saragozza 88.",
    "must_not": [
     "1° febbraio",
-    "17 gennaio"
+    "indicare il 17 gennaio come data in cui hai lasciato via Mascarella"
    ]
   },
   {
@@ -77,7 +77,7 @@
    "expected": "No: il weekend del 12-13 dicembre 2026 a Trento è stato annullato (deciso il 9 dicembre) per non lasciare o stressare Rufus appena adottato; l'hotel ha rimborsato la caparra.",
    "must_not": [
     "sì, siete andati",
-    "rinviato"
+    "presentare la gita come solo rinviata e ancora in programma"
    ]
   },
   {
@@ -88,7 +88,7 @@
    "expected": "Non si sa: era in programma venerdì 22 gennaio 2027 all'Arena del Sole con Irene, ma non mi hai mai detto se ci sei andata.",
    "must_not": [
     "sì, ci sei andata",
-    "è stato annullato"
+    "affermare che la serata è stata annullata"
    ]
   },
   {
@@ -96,9 +96,9 @@
    "category": "correction",
    "asked_at": "2027-02-20T10:00:00+01:00",
    "q": "Che giorno sono stata dall'ortopedico per il dito?",
-   "expected": "Martedì 3 novembre 2026 (non lunedì 2: la visita era stata spostata all'ultimo). Diagnosi: lesione parziale della puleggia A2 dell'anulare sinistro.",
+   "expected": "Martedì 3 novembre 2026 per la visita con diagnosi: lesione parziale della puleggia A2 dell'anulare sinistro (non lunedì 2: la visita era stata spostata all'ultimo). C'è stata anche una visita di controllo lunedì 30 novembre 2026, con il via libera per tornare ad arrampicare.",
    "must_not": [
-    "lunedì 2 novembre"
+    "indicare lunedì 2 novembre come data della visita (senza la correzione a martedì 3)"
    ]
   },
   {
@@ -108,7 +108,7 @@
    "q": "Quanti anni ha Rufus?",
    "expected": "Circa 4 anni, secondo la veterinaria (dott.ssa Marchi, 15 dicembre 2026); il canile aveva detto 2 anni, ma era sbagliato.",
    "must_not": [
-    "ha 2 anni"
+    "indicare 2 anni come età attuale di Rufus"
    ]
   },
   {
@@ -146,7 +146,7 @@
    "q": "Cosa ho fatto a capodanno?",
    "expected": "Eri a Lisbona con Tommaso: fuochi d'artificio in Praça do Comércio e, a mezzanotte, Tommaso ti ha chiesto di sposarlo (hai detto sì).",
    "must_not": [
-    "Porto"
+    "affermare che hai passato capodanno a Porto"
    ]
   },
   {
@@ -157,7 +157,7 @@
    "expected": "Dicembre 2026: 3 dic rientro all'arrampicata a BlocHaus dopo l'infortunio (via libera dell'ortopedico il 30 nov); 5 dic adozione di Rufus dal canile di Bologna; 9 dic a Ferrara per l'operazione di cataratta della mamma e annullamento della gita a Trento; 10 dic saggio di violoncello spostato a gennaio; 15 dic Rufus dal veterinario; 23 dic ultimo giorno allo Studio Porta Mazzini; 24-26 dic Natale da mamma a Ferrara; dal 28 dic viaggio a Lisbona con Tommaso (fino al 2 gennaio).",
    "must_not": [
     "sei andata a Trento",
-    "saggio il 18 dicembre"
+    "indicare il saggio come tenuto il 18 dicembre"
    ]
   },
   {
@@ -184,8 +184,7 @@
    "q": "Sono mai stata a Porto?",
    "expected": "No, non mi risulta: in Portogallo sei stata solo a Lisbona (28 dicembre 2026 - 2 gennaio 2027).",
    "must_not": [
-    "capodanno a Porto",
-    "sei stata a Porto"
+    "affermare di essere stata a Porto"
    ]
   },
   {
@@ -207,7 +206,7 @@
    "expected": "Lunedì 11 gennaio hai iniziato a lavorare a Kinesis (ritmi intensi, 12 pazienti al giorno); venerdì 15 saggio di violoncello (il Cigno, c'era la mamma); domenica 17 trasloco in via Andrea Costa 41.",
    "must_not": [
     "Lisbona",
-    "La Locandiera"
+    "La Locandiera presentata come già vista o avvenuta la settimana scorsa"
    ]
   },
   {
@@ -236,7 +235,7 @@
    "category": "multi-day",
    "asked_at": "2027-02-20T10:00:00+01:00",
    "q": "Quanto è durato il viaggio a Lisbona?",
-   "expected": "Dal 28 dicembre 2026 (lunedì) al 2 gennaio 2027 (sabato): 6 giorni, a cavallo di capodanno.",
+   "expected": "Dal 28 dicembre 2026 (lunedì) al 2 gennaio 2027 (sabato): 5 notti, 6 giorni di calendario, a cavallo di capodanno.",
    "must_not": [
     "dal 4 al 7 dicembre"
    ]

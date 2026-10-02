@@ -94,15 +94,17 @@ class GraphitiSystem:
     def _run(self, coro):
         return self.loop.run_until_complete(coro)
 
-    def ingest(self, sessions: list[dict]) -> None:
+    def reset(self, users: set[str]) -> None:
         # Fresh state per run. The FalkorDB driver stores each group_id in its own graph, so the
         # per-user graphs must be dropped too (vector indexes keep their dimension otherwise).
-        for name in {self.g.driver._database, *(s["user"] for s in sessions)}:
+        for name in {self.g.driver._database, *users}:
             try:
                 self._run(self.g.driver.client.select_graph(name).delete())
             except Exception:  # noqa: BLE001 - graph does not exist yet
                 pass
         self._run(self.g.build_indices_and_constraints())
+
+    def ingest(self, sessions: list[dict]) -> None:
         for s in sessions:
             body = "\n".join(f"{m['role']}: {m['content']}" for m in s["messages"])
             self._run(self.g.add_episode(

@@ -38,7 +38,7 @@
       { "role": "assistant", "content": "Con il pesce un Vermentino o un Franciacorta Brut sono scelte sicure. Buona serata a te e Sara!" }
     ]},
     { "id": "s08", "user": "luca", "ts": "2026-02-20T19:15:00+01:00", "messages": [
-      { "role": "user", "content": "Giulia ha vinto la gara di nuoto regionale nei 50 stile libero! Sono orgogliosissimo." },
+      { "role": "user", "content": "Oggi Giulia ha vinto la gara di nuoto regionale nei 50 stile libero! Sono orgogliosissimo." },
       { "role": "assistant", "content": "Fantastico! Complimenti a Giulia, è un risultato importante." }
     ]},
     { "id": "s09", "user": "luca", "ts": "2026-02-26T22:00:00+01:00", "messages": [
@@ -46,7 +46,7 @@
       { "role": "assistant", "content": "TCP è orientato alla connessione e garantisce consegna e ordine dei pacchetti; UDP è senza connessione, più leggero, ma senza garanzie." }
     ]},
     { "id": "s10", "user": "luca", "ts": "2026-03-02T13:00:00+01:00", "messages": [
-      { "role": "user", "content": "Ho venduto la Golf, ora ho una Tesla Model 3 presa in leasing." },
+      { "role": "user", "content": "Oggi ho venduto la Golf, ora ho una Tesla Model 3 presa in leasing." },
       { "role": "assistant", "content": "Bel salto! Come ti trovi con l'elettrico finora?" },
       { "role": "user", "content": "Benissimo, la ricarico in garage di notte." }
     ]},

@@ -1,0 +1,868 @@
+{
+ "items": [
+  {
+   "qid": "q01",
+   "variant": "correct_paraphrase",
+   "answer": "L'ultima volta è stata il 7 marzo 2026, a Cervinia, insieme a Marco e Giulia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q01",
+   "variant": "correct_plus_context",
+   "answer": "Il 7/3 a Cervinia con Marco e Giulia (Giulia ha fatto la sua prima pista nera); prima eri andato il 17 gennaio a Cervinia e il 7 febbraio a Livigno.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q01",
+   "variant": "vague_topical",
+   "answer": "Sei andato a sciare a Cervinia di recente, con la famiglia, ed è stata una bella giornata.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q01",
+   "variant": "specific_wrong",
+   "answer": "L'ultima volta è stata sabato 7 febbraio 2026 a Livigno, da solo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q01",
+   "variant": "partial",
+   "answer": "A Cervinia, con Marco e Giulia.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q01",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q02",
+   "variant": "correct_paraphrase",
+   "answer": "Quest'inverno hai sciato tre volte: il 17 gennaio a Cervinia, il 7 febbraio a Livigno e il 7 marzo di nuovo a Cervinia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q02",
+   "variant": "correct_plus_context",
+   "answer": "Tre volte: 17 gennaio a Cervinia, 7 febbraio a Livigno, 7 marzo a Cervinia. Il 14 febbraio invece non hai sciato: avevi la cena di San Valentino con Sara.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q02",
+   "variant": "vague_topical",
+   "answer": "Sei andato a sciare diverse volte quest'inverno, tra Cervinia e Livigno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q02",
+   "variant": "specific_wrong",
+   "answer": "Quattro volte: due a Cervinia, una a Livigno e una a Bormio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q02",
+   "variant": "partial",
+   "answer": "Tre volte: il 17 gennaio e il 7 marzo a Cervinia, più una a Livigno di cui non ricordo la data.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q02",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q03",
+   "variant": "correct_paraphrase",
+   "answer": "Sei stato sulla neve con Marco, tuo cognato, il 17 gennaio e il 7 marzo 2026: entrambe le volte a Cervinia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q03",
+   "variant": "correct_plus_context",
+   "answer": "Il 17 gennaio e il 7 marzo 2026 a Cervinia con Marco; il 7 marzo c'era anche Giulia, mentre la gita del 7 febbraio a Livigno l'avevi fatta da solo.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q03",
+   "variant": "vague_topical",
+   "answer": "Sei stato a sciare con tuo cognato Marco in un paio di occasioni quest'inverno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q03",
+   "variant": "specific_wrong",
+   "answer": "Il 17 gennaio a Cervinia e il 7 febbraio a Livigno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q03",
+   "variant": "partial",
+   "answer": "Il 17 gennaio a Cervinia con Marco.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q03",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q04",
+   "variant": "correct_paraphrase",
+   "answer": "A febbraio: il 7 sci a Livigno da solo (giornata deludente), il 14 cena di San Valentino con Sara al Pescatore di Varese, il 20 Giulia ha vinto la gara regionale di nuoto. Il viaggio a Roma è stato annullato.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q04",
+   "variant": "correct_plus_context",
+   "answer": "Il 7 sci a Livigno da solo, il 14 cena con Sara al Pescatore di Varese, il 20 la vittoria di Giulia nella gara regionale di nuoto. Il viaggio di lavoro a Roma del 3-4 febbraio è saltato, e a marzo hai poi cambiato macchina.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q04",
+   "variant": "vague_topical",
+   "answer": "A febbraio hai fatto varie cose: un po' di sport, una serata romantica e qualcosa legato a Giulia.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q04",
+   "variant": "specific_wrong",
+   "answer": "A febbraio sei andato a Roma per lavoro il 3-4, hai sciato a Cervinia il 14 e hai cenato a Varese il 20.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q04",
+   "variant": "partial",
+   "answer": "Il 7 sci a Livigno e il 14 cena di San Valentino con Sara a Varese.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q04",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q05",
+   "variant": "correct_paraphrase",
+   "answer": "No, non ci sei andato: il viaggio del 3-4 febbraio è saltato perché il cliente ha rimandato a data da destinarsi.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q05",
+   "variant": "correct_plus_context",
+   "answer": "No: era previsto per martedì 3 e mercoledì 4 febbraio (avevi chiesto un hotel vicino a Termini), ma il cliente ha rimandato a data da destinarsi.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q05",
+   "variant": "vague_topical",
+   "answer": "Il viaggio a Roma per lavoro era un impegno di inizio febbraio, per cui avevi cercato un hotel vicino a Termini.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q05",
+   "variant": "specific_wrong",
+   "answer": "Sì, sei andato a Roma il 3 e 4 febbraio per l'incontro con il cliente.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q05",
+   "variant": "partial",
+   "answer": "No, non ci sei andato.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q05",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q06",
+   "variant": "correct_paraphrase",
+   "answer": "Sì, ci sei andato giovedì 19 marzo: ti hanno fatto un'otturazione, tutto bene ma è stato doloroso.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q06",
+   "variant": "correct_plus_context",
+   "answer": "Sì, il 19/3 alle 15 hai fatto un'otturazione; l'appuntamento me lo avevi fatto ricordare il 10 marzo. Tutto ok, ma molto doloroso.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q06",
+   "variant": "vague_topical",
+   "answer": "Avevi un appuntamento dal dentista a marzo, e ne hai parlato con me.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q06",
+   "variant": "specific_wrong",
+   "answer": "No, hai saltato la visita dal dentista del 19 marzo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q06",
+   "variant": "partial",
+   "answer": "Sì, sei andato dal dentista e ti hanno fatto un'otturazione.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q06",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q07",
+   "variant": "correct_paraphrase",
+   "answer": "Hai una Tesla Model 3 in leasing, presa il 2 marzo 2026; la Golf l'hai venduta.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q07",
+   "variant": "correct_plus_context",
+   "answer": "Una Tesla Model 3 in leasing dal 2 marzo (la ricarichi in garage di notte); prima avevi una Golf grigia del 2019, poi venduta.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q07",
+   "variant": "vague_topical",
+   "answer": "Hai un'auto recente con cui ti trovi molto bene.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q07",
+   "variant": "specific_wrong",
+   "answer": "Hai una Golf grigia del 2019.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q07",
+   "variant": "partial",
+   "answer": "Hai una Tesla Model 3, ma non ho dettagli su come l'hai avuta.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q07",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q08",
+   "variant": "correct_paraphrase",
+   "answer": "A gennaio avevi una Golf grigia del 2019, comprata usata il 12 gennaio.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q08",
+   "variant": "correct_plus_context",
+   "answer": "Una Golf grigia del 2019 usata, presa il 12 gennaio; a marzo l'hai venduta per passare a una Tesla Model 3 in leasing.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q08",
+   "variant": "vague_topical",
+   "answer": "Avevi una macchina usata di cui eri contento.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q08",
+   "variant": "specific_wrong",
+   "answer": "Avevi una Tesla Model 3 in leasing.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q08",
+   "variant": "partial",
+   "answer": "Avevi una Golf grigia.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q08",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q09",
+   "variant": "correct_paraphrase",
+   "answer": "Male: la pista era ghiacciata e il rifugio deludente, con cibo freddo e carissimo. Solo il panorama era bello, e non pensi di tornarci a breve.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q09",
+   "variant": "correct_plus_context",
+   "answer": "È andata male: pista ghiacciata, rifugio deludente (cibo freddo e carissimo); il panorama però era bello. A differenza di Cervinia, non ci tornerai a breve.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q09",
+   "variant": "vague_topical",
+   "answer": "Sei stato a Livigno a sciare sabato 7 febbraio, da solo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q09",
+   "variant": "specific_wrong",
+   "answer": "Benissimo: neve perfetta, giornata stupenda, e hai detto che ci torni presto.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q09",
+   "variant": "partial",
+   "answer": "Male, la pista era ghiacciata.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q09",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q10",
+   "variant": "correct_paraphrase",
+   "answer": "Sei andato con tuo cognato Marco.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q10",
+   "variant": "correct_plus_context",
+   "answer": "Con Marco, tuo cognato; avete fatto soprattutto la Ventina fino a Valtournenche e alla fine lui era distrutto.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q10",
+   "variant": "vague_topical",
+   "answer": "Eri in compagnia di qualcuno e avete passato una bella giornata sulla neve.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q10",
+   "variant": "specific_wrong",
+   "answer": "Sei andato con Giulia e Sara.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q10",
+   "variant": "partial",
+   "answer": "Sei andato con un parente, credo tuo cognato, ma non ricordo il nome.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q10",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q11",
+   "variant": "correct_paraphrase",
+   "answer": "Giulia ha vinto la gara regionale di nuoto nei 50 stile libero, il 20 febbraio 2026.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q11",
+   "variant": "correct_plus_context",
+   "answer": "La gara regionale di nuoto nei 50 stile libero (20 febbraio); il 7 marzo poi ha fatto anche la sua prima pista nera a Cervinia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q11",
+   "variant": "vague_topical",
+   "answer": "Giulia ha ottenuto un bel risultato sportivo di cui sei orgogliosissimo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q11",
+   "variant": "specific_wrong",
+   "answer": "Ha vinto la gara regionale di nuoto nei 100 dorso, il 14 febbraio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q11",
+   "variant": "partial",
+   "answer": "Ha vinto una gara di nuoto regionale.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q11",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q12",
+   "variant": "correct_paraphrase",
+   "answer": "Sabato 7 febbraio sei andato a sciare a Livigno, da solo.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q12",
+   "variant": "correct_plus_context",
+   "answer": "Il 7 febbraio sci a Livigno da solo, con pista ghiacciata e rifugio deludente; il 17 gennaio e il 7 marzo eri invece stato a Cervinia con Marco.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q12",
+   "variant": "vague_topical",
+   "answer": "Hai passato la giornata all'aperto facendo sport.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q12",
+   "variant": "specific_wrong",
+   "answer": "Sei andato a sciare a Cervinia con Marco.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q12",
+   "variant": "partial",
+   "answer": "Sei andato a sciare.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q12",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q13",
+   "variant": "correct_paraphrase",
+   "answer": "No, non risulta che tu sia mai stato in Giappone: hai solo pensato di andarci ad aprile 2027 per i ciliegi in fiore.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q13",
+   "variant": "correct_plus_context",
+   "answer": "Non risulta; hai solo accennato a un'idea di viaggio per aprile 2027 (hanami), e io avevo citato Kyoto e Tokyo. Nel frattempo il viaggio a Roma era stato annullato.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q13",
+   "variant": "vague_topical",
+   "answer": "Hai parlato del Giappone con me in una conversazione di marzo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q13",
+   "variant": "specific_wrong",
+   "answer": "Sì, ci sei stato ad aprile 2026 per i ciliegi in fiore.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q13",
+   "variant": "partial",
+   "answer": "Hai pensato di andare in Giappone, ma non so se ci sei già stato.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q13",
+   "variant": "abstain",
+   "answer": "Non mi risulta.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q14",
+   "variant": "correct_paraphrase",
+   "answer": "L'unico progetto è un'idea di viaggio in Giappone ad aprile 2027, non ancora confermata; il viaggio a Roma è stato annullato.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q14",
+   "variant": "correct_plus_context",
+   "answer": "Hai pensato al Giappone ad aprile 2027 per i ciliegi (Kyoto e Tokyo), ma nulla è deciso; il viaggio di lavoro a Roma di febbraio è saltato.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q14",
+   "variant": "vague_topical",
+   "answer": "Hai qualche idea per viaggi futuri, forse all'estero.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q14",
+   "variant": "specific_wrong",
+   "answer": "Hai confermato un viaggio in Giappone ad aprile 2027, con voli già prenotati.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q14",
+   "variant": "partial",
+   "answer": "Hai l'idea di andare in Giappone.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q14",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q15",
+   "variant": "correct_paraphrase",
+   "answer": "Il tuo record sui 10 km è 52 minuti, fatto il 28 marzo 2026 al parco.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q15",
+   "variant": "correct_plus_context",
+   "answer": "52 minuti, il 28 marzo al parco: un nuovo record personale.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q15",
+   "variant": "vague_topical",
+   "answer": "Corri regolarmente e hai migliorato i tuoi tempi.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q15",
+   "variant": "specific_wrong",
+   "answer": "48 minuti, il 28 marzo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q15",
+   "variant": "partial",
+   "answer": "Hai fatto un nuovo record sui 10 km al parco il 28 marzo, ma non ricordo il tempo.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q15",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q16",
+   "variant": "correct_paraphrase",
+   "answer": "Ne abbiamo parlato il 22 gennaio 2026: backup del NAS Synology su disco USB con Hyper Backup.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q16",
+   "variant": "correct_plus_context",
+   "answer": "Il 22 gennaio 2026, in serata: ti avevo indicato Hyper Backup con destinazione 'Cartella locale e USB'.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q16",
+   "variant": "vague_topical",
+   "answer": "Ne abbiamo parlato in una delle conversazioni di gennaio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q16",
+   "variant": "specific_wrong",
+   "answer": "Nella conversazione del 26 febbraio 2026.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q16",
+   "variant": "partial",
+   "answer": "Mi avevi chiesto del backup del NAS Synology e ti avevo consigliato Hyper Backup, ma non ricordo quando.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q16",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q17",
+   "variant": "correct_paraphrase",
+   "answer": "Venerdì 20 febbraio Giulia ha vinto la gara regionale di nuoto nei 50 stile.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q17",
+   "variant": "correct_plus_context",
+   "answer": "Venerdì 20 febbraio la vittoria di Giulia nei 50 stile alla gara regionale; sabato scorso invece c'era stata la cena di San Valentino con Sara.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q17",
+   "variant": "vague_topical",
+   "answer": "Questa settimana c'è stata una bella notizia in famiglia.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q17",
+   "variant": "specific_wrong",
+   "answer": "Giulia ha fatto la sua prima pista nera a Cervinia.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q17",
+   "variant": "partial",
+   "answer": "Giulia ha vinto una gara di nuoto.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q17",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q18",
+   "variant": "correct_paraphrase",
+   "answer": "Avete cenato al ristorante Il Pescatore, a Varese, con Sara.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q18",
+   "variant": "correct_plus_context",
+   "answer": "Al Pescatore a Varese con Sara, tua moglie; mi avevi chiesto un vino per il pesce e ti avevo suggerito Vermentino o Franciacorta.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q18",
+   "variant": "vague_topical",
+   "answer": "In un ristorante di pesce, per una serata romantica.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q18",
+   "variant": "specific_wrong",
+   "answer": "Al ristorante Il Pescatore a Milano, con Marco e Giulia.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q18",
+   "variant": "partial",
+   "answer": "A Varese, con Sara.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q18",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q19",
+   "variant": "correct_paraphrase",
+   "answer": "Lunedì 2 marzo hai venduto la Golf e preso una Tesla Model 3 in leasing; sabato 7 marzo sei andato a sciare a Cervinia con Marco e Giulia, che ha fatto la sua prima pista nera.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q19",
+   "variant": "correct_plus_context",
+   "answer": "Il 2 marzo cambio macchina (Tesla Model 3 in leasing al posto della Golf), il 7 sci a Cervinia con Marco e Giulia e la sua prima nera; il 20 febbraio, prima, Giulia aveva vinto la gara di nuoto.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q19",
+   "variant": "vague_topical",
+   "answer": "La settimana scorsa hai cambiato qualcosa di importante e hai fatto un po' di sport.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q19",
+   "variant": "specific_wrong",
+   "answer": "Hai avuto il dentista giovedì 5 marzo e sei andato a Livigno il 7.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q19",
+   "variant": "partial",
+   "answer": "Lunedì 2 marzo hai cambiato macchina: Tesla Model 3 in leasing al posto della Golf.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q19",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q20",
+   "variant": "correct_paraphrase",
+   "answer": "Hai cambiato macchina lunedì 2 marzo 2026: hai venduto la Golf e preso in leasing una Tesla Model 3.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q20",
+   "variant": "correct_plus_context",
+   "answer": "Il 2 marzo; la Golf l'avevi comprata usata il 12 gennaio, quindi l'hai tenuta meno di due mesi.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q20",
+   "variant": "vague_topical",
+   "answer": "Hai cambiato macchina qualche tempo fa, passando a un'auto elettrica.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q20",
+   "variant": "specific_wrong",
+   "answer": "L'8 marzo 2026.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q20",
+   "variant": "partial",
+   "answer": "Hai venduto la Golf e preso una Tesla Model 3 in leasing, ma non ricordo la data.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q20",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q21",
+   "variant": "correct_paraphrase",
+   "answer": "Non risulta che tu sia andato a sciare a dicembre: le uscite registrate sono il 17 gennaio, il 7 febbraio e il 7 marzo 2026.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q21",
+   "variant": "correct_plus_context",
+   "answer": "Non risulta; la prima uscita sugli sci registrata è del 17 gennaio a Cervinia con Marco, poi 7 febbraio e 7 marzo. A gennaio avevi anche appena comprato la Golf.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q21",
+   "variant": "vague_topical",
+   "answer": "Hai sciato in diverse occasioni durante l'inverno.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q21",
+   "variant": "specific_wrong",
+   "answer": "Sì, sei andato a sciare a Bormio a dicembre.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q21",
+   "variant": "partial",
+   "answer": "A dicembre non risulta; hai sciato a gennaio e a febbraio.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q21",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q22",
+   "variant": "correct_paraphrase",
+   "answer": "Giovedì 19 marzo sei andato dal dentista: un'otturazione, tutto ok ma doloroso.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q22",
+   "variant": "correct_plus_context",
+   "answer": "Giovedì 19 marzo alle 15 dentista, con un'otturazione dolorosa ma riuscita; ti avevo consigliato di evitare cibi troppo caldi o freddi. Il 7 marzo avevi invece sciato.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q22",
+   "variant": "vague_topical",
+   "answer": "Questa settimana hai avuto una visita medica.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q22",
+   "variant": "specific_wrong",
+   "answer": "Sei andato dal dentista martedì 17 marzo per una devitalizzazione.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q22",
+   "variant": "partial",
+   "answer": "Sei andato dal dentista giovedì 19 marzo.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q22",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q23",
+   "variant": "correct_paraphrase",
+   "answer": "Il 20 febbraio ha vinto la gara regionale di nuoto nei 50 stile libero e il 7 marzo ha fatto la sua prima pista nera a Cervinia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q23",
+   "variant": "correct_plus_context",
+   "answer": "Vittoria nella gara regionale di nuoto (50 stile libero) il 20 febbraio e prima pista nera a Cervinia il 7 marzo; ha 9 anni e la matematica non le piace.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q23",
+   "variant": "vague_topical",
+   "answer": "Giulia ha avuto buoni risultati sportivi quest'anno, nel nuoto e nello sci.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q23",
+   "variant": "specific_wrong",
+   "answer": "Ha vinto la gara di nuoto regionale il 14 febbraio e ha fatto la prima nera a Livigno il 7 febbraio.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q23",
+   "variant": "partial",
+   "answer": "Ha vinto la gara regionale di nuoto nei 50 stile libero.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q23",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q24",
+   "variant": "correct_paraphrase",
+   "answer": "Sei stato a Cervinia 2 volte: il 17 gennaio con Marco e il 7 marzo 2026 con Marco e Giulia.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q24",
+   "variant": "correct_plus_context",
+   "answer": "Due volte a Cervinia (17 gennaio e 7 marzo); in tutto quest'inverno hai sciato 3 volte, contando anche Livigno il 7 febbraio.",
+   "expected_verdict": "correct"
+  },
+  {
+   "qid": "q24",
+   "variant": "vague_topical",
+   "answer": "Sei stato a Cervinia più volte quest'inverno, sempre con la famiglia.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q24",
+   "variant": "specific_wrong",
+   "answer": "3 volte: il 17 gennaio, il 14 febbraio e il 7 marzo.",
+   "expected_verdict": "wrong"
+  },
+  {
+   "qid": "q24",
+   "variant": "partial",
+   "answer": "Due volte: il 17 gennaio con Marco e una seconda volta di cui non ricordo i dettagli.",
+   "expected_verdict": "partial"
+  },
+  {
+   "qid": "q24",
+   "variant": "abstain",
+   "answer": "Non mi risulta, non ho informazioni su questo.",
+   "expected_verdict": "wrong"
+  }
+ ]
+}

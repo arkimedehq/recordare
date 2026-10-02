@@ -49,6 +49,10 @@ behind the engine port (hybrid) and revisit after M4.
 
 ### M0.5 — Eval hygiene before building (2026-10-02)
 
+**Done**: gold audit applied, judge validated and rewritten (false accepts 0 %, false rejects
+≤ 3 %), as-of ingestion in the runner; D 100 % / baseline 66–83 % on the base sets
+(`spikes/memory-eval/RESULTS.md` → Harness v1.1).
+
 | # | Task |
 |---|---|
 | 0.5.1 | Gold audit of `dataset/` and `dataset_holdout/` by a second reader (dates, weekdays, year boundary, who is who) — fixes recorded in `spikes/memory-eval/GOLD_AUDIT.md` |
