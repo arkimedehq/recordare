@@ -11,6 +11,7 @@ import argparse
 import os
 import json
 import time
+from datetime import datetime
 from collections import defaultdict
 
 from evalkit.common import DATASET, RESULTS, SCORE, USAGE, answer, eval_user, judge, load_questions, load_sessions
@@ -48,21 +49,33 @@ def main() -> None:
         label += f"-{os.environ['ENGINE_MODEL']}" + ("-nothink" if os.getenv("ENGINE_NO_THINKING") else "")
 
     sys_ = build(args.system)
-    t0 = time.time()
     sessions = load_sessions()
     if args.noise:
         sessions = sorted(sessions + json.loads((DATASET / "noise.json").read_text())["sessions"],
                           key=lambda s: s["ts"])
-    sys_.ingest(sessions)
-    ingest_s = time.time() - t0
+    if hasattr(sys_, "reset"):
+        sys_.reset({s["user"] for s in sessions})
 
     questions = load_questions()
     if args.only:
         wanted = set(args.only.split(","))
         questions = [q for q in questions if q["id"] in wanted]
 
-    rows, latencies = [], []
-    for q in questions:
+    # Ingest incrementally up to each question's asked_at: a system must never see sessions from
+    # after the moment the question is asked (mid-period questions like "this week").
+    def when(iso: str) -> datetime:
+        return datetime.fromisoformat(iso)
+
+    rows, latencies, ingest_s, done = [], [], 0.0, 0
+    for q in sorted(questions, key=lambda q: when(q["asked_at"])):
+        batch = []
+        while done < len(sessions) and when(sessions[done]["ts"]) <= when(q["asked_at"]):
+            batch.append(sessions[done])
+            done += 1
+        if batch:
+            t0 = time.time()
+            sys_.ingest(batch)
+            ingest_s += time.time() - t0
         t = time.time()
         ctx = sys_.context(eval_user(), q)
         latencies.append(time.time() - t)
@@ -72,6 +85,7 @@ def main() -> None:
                      "context": ctx, "answer": ans, **verdict})
         print(f"{q['id']} [{verdict['verdict']:>7}] {q['q']}\n        → {ans[:160]}")
 
+    rows.sort(key=lambda r: r["id"])
     by_cat = defaultdict(list)
     for r in rows:
         by_cat[r["category"]].append(SCORE[r["verdict"]])
@@ -79,6 +93,7 @@ def main() -> None:
     summary = {
         "system": label,
         "sessions": len(sessions),
+        "sessions_ingested": done,
         "embed_model": __import__("evalkit.embed", fromlist=["MODEL"]).MODEL,
         "accuracy": round(total, 3),
         "by_category": {c: round(sum(v) / len(v), 2) for c, v in sorted(by_cat.items())},

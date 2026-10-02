@@ -121,6 +121,36 @@ check.
 ### Open items (not blocking D23)
 - Local model sweep (`qwen3:14b`, `gemma3`, …) for the sovereign profile.
 
+## Harness v1.1 (2026-10-02, night) — gold audit, validated judge, as-of ingestion
+
+Changes (WORK_PLAN M0.5):
+- **Gold audit** by a second reader (`GOLD_AUDIT.md`): no date errors; 1 incomplete reference
+  (h09), 1 duration ambiguity (h23), 3 report-date ambiguities in `dataset` (fixed in the data:
+  "Oggi" added to s08 / s10), 12 `must_not` items that penalised correct answers, rewritten as
+  claims ("affermare che …").
+- **Judge validated** (`judge_eval.py`, `judge_validation/`: 312 hand-labelled answers, 6 variants
+  per question). Old judge → new judge: false accepts 0 % → 0 %; false rejects 2–10 % → 0–3 %;
+  vague answers graded partial 13–17 % → 7 %; agreement 82–89 % → 89–92 % (the rest is label
+  ambiguity). New judge rules: `must_not` = claims asserted as true (not words mentioned);
+  vague topical answers are wrong; extra true context and year-less dates are fine.
+- **As-of ingestion**: `run_eval.py` ingests sessions only up to each question's `asked_at`
+  (before, 7 mid-period questions could see the future).
+
+Reference numbers with harness v1.1 (single run, engine `deepseek-flash`, bge-m3, base sets
+only — noise not re-run to save cost):
+
+| System | `dataset` (24 q) | `dataset_holdout` (28 q) |
+|---|---|---|
+| A — baseline | 83 % | 66 % |
+| D — prototype | **100 %** | **100 %** |
+
+**Not comparable with the rows above** (old judge, full ingestion). Part of D's earlier held-out
+misses were judge artefacts; the design gaps recorded in D29 came from the noise runs and from
+reading the contexts, and stay valid. The base sets now hit the ceiling for D: from M3 the
+regression suite must rely on the noise sets and on the new probe types (anti-traps, implicit
+changes, premise resistance, plan resolution — `docs/literature/README.md` → Evaluation), with
+N ≥ 3 runs.
+
 ## Round 1 (2026-10-02, morning) — MiniLM, 18 questions
 
 Answer + judge: DeepSeek `deepseek-flash` (temperature 0) for every system — constant, so the

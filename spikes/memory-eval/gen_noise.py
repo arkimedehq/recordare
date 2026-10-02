@@ -1,6 +1,6 @@
 """Generate deterministic "noise" sessions (dataset/noise.json) to stress retrieval.
 
-Constraints: noise must NOT change any expected answer in questions.json:
+Constraints: noise must NOT change any expected answer in questions.json (24 questions):
 - no new first-person events relevant to the 18 questions (no skiing, trips, car changes,
   dentist visits, runs, dinners by the user);
 - nothing personal and "nice" during 2026-02-16..21 (q17);

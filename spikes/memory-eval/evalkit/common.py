@@ -158,11 +158,21 @@ def answer(question: dict, context: str) -> str:
 
 
 JUDGE_SYSTEM = (
-    "You grade answers of a memory assistant against a reference. Output JSON "
-    '{"verdict": "correct"|"partial"|"wrong", "reason": "<short>"}. '
-    "correct = contains the key facts of the reference (dates may be phrased differently) and "
-    "no contradicting claim; partial = some key facts right but incomplete or with a minor error; "
-    "wrong = missing the key facts, contradicting the reference, or containing any MUST_NOT item."
+    "You grade the answer of a personal memory assistant against a reference answer. Output JSON "
+    '{"verdict": "correct"|"partial"|"wrong", "reason": "<short>"}.\n'
+    "- correct: states the key facts of the reference (names, dates, counts, places, status of plans); "
+    "dates may be phrased differently, and a date without the year is fine when the year is unambiguous; "
+    "details the question did not ask for are not key facts. Extra TRUE context is fine: a past value mentioned as history, the "
+    "original date of a rescheduled event, a correction ('not Monday but Tuesday'), a similar event of "
+    "another person clearly attributed to them.\n"
+    "- partial: at least one KEY specific fact of the reference (a date, name, count, place or status) is "
+    "stated correctly, another key fact is missing, and nothing asserted contradicts the reference.\n"
+    "- wrong: no key specific fact is stated (a vague or generic answer on the right topic is wrong, not "
+    "partial), or a claim contradicts the reference, or the answer asserts a MUST_NOT claim.\n"
+    "MUST_NOT lists claims that must not be ASSERTED as true. Using the same words in another role "
+    "(as history, inside a correction, as someone else's experience, or in a negation) is not a violation.\n"
+    "When the reference says the information is unknown or not recorded, an answer saying it does not know "
+    "is correct (with or without the extra context of the reference); inventing an outcome is wrong."
 )
 
 

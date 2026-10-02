@@ -208,8 +208,12 @@ class DSystem:
                 phase="consolidate", max_tokens=600)
             return day, out.get("digest", "")
 
+        # Incremental: only days whose episode set changed since the last consolidation.
+        seen = st.setdefault("digest_keys", {})
+        changed = {d: eps for d, eps in days.items() if seen.get(d) != tuple(e["id"] for e in eps)}
         with ThreadPoolExecutor(max_workers=8) as pool:
-            st["digests"] = dict(pool.map(digest, sorted(days.items())))
+            st["digests"].update(pool.map(digest, sorted(changed.items())))
+        seen.update({d: tuple(e["id"] for e in eps) for d, eps in changed.items()})
 
     # ── Recall ──────────────────────────────────────────────────────────────────
 
