@@ -1,7 +1,7 @@
 """System B — Graphiti (temporal knowledge graph) on FalkorDB.
 
 LLM: the spike's OpenAI-compatible endpoint (DeepSeek) in `json_object` mode.
-Embeddings: local fastembed model (384 dims). No reranker LLM (passthrough).
+Embeddings: local model via EMBED_MODEL (graph name carries the dimension). No reranker LLM (passthrough).
 One episode per session, reference_time = session timestamp, group_id = user.
 FalkorDB: `docker run -d --name memeval-falkordb -p 6390:6379 falkordb/falkordb:v4.22.0` (6.x breaks Graphiti fulltext indexes).
 """
@@ -12,7 +12,9 @@ import os
 from collections.abc import Iterable
 from datetime import datetime
 
-os.environ.setdefault("EMBEDDING_DIM", "384")  # must be set before graphiti_core is imported
+from evalkit.embed import dim  # noqa: E402
+
+os.environ.setdefault("EMBEDDING_DIM", str(dim()))  # must be set before graphiti_core is imported
 
 from graphiti_core import Graphiti  # noqa: E402
 from graphiti_core.cross_encoder.client import CrossEncoderClient  # noqa: E402
@@ -83,7 +85,7 @@ class GraphitiSystem:
         )
         self.g = Graphiti(
             graph_driver=FalkorDriver(host="localhost", port=int(os.getenv("FALKOR_PORT", "6390")),
-                                      database="memeval"),
+                                      database=f"memeval_{dim()}"),
             llm_client=self.llm,
             embedder=LocalEmbedder(),
             cross_encoder=PassthroughReranker(),
@@ -93,10 +95,13 @@ class GraphitiSystem:
         return self.loop.run_until_complete(coro)
 
     def ingest(self, sessions: list[dict]) -> None:
-        try:  # fresh graph per run
-            self._run(self.g.driver.execute_query("MATCH (n) DETACH DELETE n"))
-        except Exception:  # noqa: BLE001 - graph does not exist yet
-            pass
+        # Fresh state per run. The FalkorDB driver stores each group_id in its own graph, so the
+        # per-user graphs must be dropped too (vector indexes keep their dimension otherwise).
+        for name in {self.g.driver._database, *(s["user"] for s in sessions)}:
+            try:
+                self._run(self.g.driver.client.select_graph(name).delete())
+            except Exception:  # noqa: BLE001 - graph does not exist yet
+                pass
         self._run(self.g.build_indices_and_constraints())
         for s in sessions:
             body = "\n".join(f"{m['role']}: {m['content']}" for m in s["messages"])

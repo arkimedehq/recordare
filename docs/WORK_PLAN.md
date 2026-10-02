@@ -27,6 +27,12 @@ M0 and M1 can run in parallel: contracts do not depend on the engine choice.
 
 ### M0 — Close the engine decision (spike) → D23
 
+**Done 2026-10-02** (`spikes/memory-eval/RESULTS.md`, round 2): D 96% under noise vs Memobase
+88%, Graphiti 81%, baseline 67%; local `qwen3:8b` D 73% vs Memobase 65%. D23 approved: build
+D (`EPISODIC_MEMORY_TODO.md`); `deepseek-flash` = same quality as `v4-pro` → default engine model. Held-out dataset (blind to D's prompts): D 86% vs Memobase 61%
+under noise. Ideas to borrow / reject and cost principles: `ENGINE_IDEAS.md`. Left open: local
+model sweep.
+
 | # | Task | Output |
 |---|---|---|
 | 0.1 | Re-run Memobase with `bge-m3` embeddings (via `embed_server.py`), base + noise. Graphiti once, for completeness only: its fact-supersession model fails "how many times" / "last time" structurally, embeddings won't fix that — the real contest is Memobase vs D | Updated `RESULTS.md` |
@@ -77,7 +83,9 @@ behind the engine port (hybrid) and revisit after M4.
 | 4.1 | Per-conversation idle debounce (D1/D5) + service-side cursor (D22) + nightly sweep |
 | 4.2 | Episode extraction (D2, D9, D10, D21): bi-temporal, `datePrecision`, plans with `validUntil` / `invalidatedAt`, valence / feelings / opinion, `people`, provenance to raw message |
 | 4.3 | `log_episode` (explicit capture, max importance) |
-| 4.4 | `search_episodes` full: date-range filter, `mode: search \| list`, ranking relevance + recency + importance + access boost (D14), automatic raw-log fallback (D13) |
+| 4.4 | `search_episodes` full: date-range filter, `mode: search \| list`, ranking relevance + recency + importance + access boost (D14), automatic raw-log fallback (D13); deterministic resolver for common period expressions (this / last week, month names) |
+| 4.4b | Eval suite = `dataset/` + `dataset_holdout/` (+ a new blind set when prompts change a lot); gaps from `ENGINE_IDEAS.md` covered (rescheduled plans, corrections, `latest` mode, facts as-of) |
+| 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget |
 | 4.5 | Per-person toggle `episodicMemoryEnabled` (D4), default off |
 | 4.6 | Eval harness v2: compare with M0 scores; must not regress below the D23 prototype |
 
@@ -112,7 +120,7 @@ behind the engine port (hybrid) and revisit after M4.
 
 | Id | Question | Proposal | When |
 |---|---|---|---|
-| D23 | Engine: build D / adopt Memobase / hybrid | Decision rule in M0 | End of M0 |
+| D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02**; default engine model `deepseek-flash` | Done |
 | D24 | MCP transport and per-person auth for basic-level clients | Streamable HTTP, bearer key bound to a person | M1 |
 | D25 | Vector store | **pgvector** (proposed 2026-10-02, see below) | M2 |
 | D26 | Where pattern promotions go while A-MEM lives in Arkimede | Exposed by Recordare as `pending` proposals via API; the client decides (Arkimede imports them into A-MEM) | M5 |

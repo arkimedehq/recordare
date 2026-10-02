@@ -12,7 +12,7 @@ engine and builds only the twin layer on top. Time box: 1–2 days.
 | **A** | Raw baseline — hybrid FTS + vector over raw messages (≈ today's `search_conversations` + a vector leg) | Lower bound: what we get with zero memory engineering |
 | **B** | **Graphiti** (getzep/graphiti, Apache-2.0) + FalkorDB | Closest to our decisions: raw episodes, bi-temporal model, fact validity, MCP server; very active |
 | **C** | **Memobase** (memodb-io/memobase, Apache-2.0) | User profile + event timeline, built for temporal questions; activity slowing (last push 2026-01) |
-| *(D)* | Prototype of our design | Only if B and C both fail the must-have criteria |
+| **D** | Prototype of our design (`systems/d_sys.py`) | Added in round 2 to compare build vs adopt on the same data |
 
 Not tested: Mem0 / Cognee / MIRIX / Letta / MemOS (fact- or graph-centric, or agent-internal;
 see prior art), Second Me (stalled since 2025-09, fine-tuning-centric — idea kept for phase 2).

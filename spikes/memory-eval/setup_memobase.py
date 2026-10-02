@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from evalkit.common import ROOT, engine_model as llm_model
-from evalkit.embed import MODEL
+from evalkit.embed import MODEL, dim
 
 cfg = f"""llm_style: openai
 llm_base_url: http://host.docker.internal:{os.getenv('EMBED_PORT', '8790')}/v1
@@ -15,7 +15,7 @@ embedding_provider: openai
 embedding_base_url: http://host.docker.internal:{os.getenv('EMBED_PORT', '8790')}/v1
 embedding_api_key: local
 embedding_model: {MODEL}
-embedding_dim: 384
+embedding_dim: {dim()}
 persistent_chat_blobs: true
 """
 path = ROOT / "memobase" / "config.yaml"

@@ -1,0 +1,877 @@
+{
+ "sessions": [
+  {
+   "id": "c01",
+   "user": "chiara",
+   "ts": "2026-10-08T21:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao! Mi presento un po', così ti ricordi di me: sono Chiara, ho 31 anni e faccio la fisioterapista allo Studio Porta Mazzini, qui a Bologna. Abito in via Mascarella 12 con la mia coinquilina Irene."
+    },
+    {
+     "role": "assistant",
+     "content": "Piacere, Chiara! Me lo segno. Come posso aiutarti stasera?"
+    },
+    {
+     "role": "user",
+     "content": "Stasera ho fatto la mia prima lezione di violoncello! Con la maestra Agnese, alla scuola di musica del quartiere. Ci andrò ogni giovedì alle 19."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello iniziare il violoncello! Com'è andata la prima lezione?"
+    },
+    {
+     "role": "user",
+     "content": "Strano tenere l'arco, dopo mezz'ora mi faceva male il polso. Ah, e sabato vado ad arrampicare a BlocHaus con Irene, è da settembre che non ci vado."
+    },
+    {
+     "role": "assistant",
+     "content": "Per il polso è normale all'inizio: tieni la mano morbida e fai delle pause. Buona arrampicata sabato!"
+    }
+   ]
+  },
+  {
+   "id": "c02",
+   "user": "chiara",
+   "ts": "2026-10-11T18:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri a BlocHaus con Irene ho chiuso il mio primo blocco viola, che lì vuol dire più o meno 6b. Sono fierissima!"
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti! Il primo 6b è un bel traguardo."
+    },
+    {
+     "role": "user",
+     "content": "Irene invece ha litigato tutto il pomeriggio con un tetto che non le veniva, ahah. Cambiando argomento: mi dai una ricetta per un risotto alla zucca? Stasera viene a cena Tommaso, il mio ragazzo."
+    },
+    {
+     "role": "assistant",
+     "content": "Soffriggi lo scalogno, tosta il riso, sfuma col vino bianco, aggiungi la zucca a cubetti e il brodo poco alla volta; manteca con burro e parmigiano. Un pizzico di noce moscata ci sta benissimo."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, la noce moscata ce l'ho. Grazie!"
+    },
+    {
+     "role": "assistant",
+     "content": "Buona cena a te e a Tommaso!"
+    }
+   ]
+  },
+  {
+   "id": "c03",
+   "user": "chiara",
+   "ts": "2026-10-14T22:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono un po' agitata: oggi mi ha chiamato Kinesis, il centro di riabilitazione sportiva in zona Fiera. Mi vogliono per un colloquio lunedì prossimo alle 10."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima notizia! Vuoi preparare insieme le risposte alle domande più classiche?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, magari un'altra sera. È che allo Studio Porta Mazzini sto bene con i colleghi, ma faccio sempre le stesse cose, mal di schiena e cervicali. A Kinesis lavorerei con gli sportivi, è quello che sogno da anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Si capisce: sarebbe un passo verso la specializzazione che ti interessa. Al colloquio porta esempi concreti di riabilitazioni post-infortunio che hai seguito."
+    },
+    {
+     "role": "user",
+     "content": "Poi c'è il discorso casa: io e Tommaso stiamo cercando un appartamento insieme, ma a Bologna è un delirio."
+    },
+    {
+     "role": "assistant",
+     "content": "Il mercato degli affitti a Bologna è difficile, sì. Se vuoi ti aiuto a fare una lista di priorità per la ricerca."
+    }
+   ]
+  },
+  {
+   "id": "c04",
+   "user": "chiara",
+   "ts": "2026-10-20T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hey, writing in English today, I need to practise for work. So: the interview at Kinesis was yesterday and I think it went really well!"
+    },
+    {
+     "role": "assistant",
+     "content": "That's great to hear! What made you feel it went well?"
+    },
+    {
+     "role": "user",
+     "content": "The head physio, Stefano Ricci, asked a lot about ACL rehab and I knew everything. They said they'd let me know within two weeks."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds promising. Two weeks is a normal timeframe, try not to overthink it in the meantime."
+    },
+    {
+     "role": "user",
+     "content": "Easier said than done. Also, the day after tomorrow Tommaso and I are going to see a flat in via Andrea Costa. Fingers crossed!"
+    },
+    {
+     "role": "assistant",
+     "content": "Fingers crossed! Bring a checklist: heating type, condo fees, natural light and street noise."
+    }
+   ]
+  },
+  {
+   "id": "c05",
+   "user": "chiara",
+   "ts": "2026-10-23T13:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri abbiamo visto la casa in via Andrea Costa: bellissima, terzo piano, luminosa, con un terrazzino. Però va sistemata: la ristrutturano e sarà pronta solo a metà gennaio."
+    },
+    {
+     "role": "assistant",
+     "content": "Sembra perfetta, anche se l'attesa è lunga. Avete deciso?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, la prendiamo! Affitto 1.150 euro al mese, spese condominiali escluse. Firmiamo il contratto la settimana prossima."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulazioni! Per una casa con terrazzo in quella zona è un prezzo in linea con il mercato."
+    },
+    {
+     "role": "user",
+     "content": "Il problema è che Irene a fine novembre si trasferisce a Milano per lavoro e la casa di via Mascarella la lasciamo. Quindi fino a gennaio andrò a stare da Tommaso, in via Saragozza."
+    },
+    {
+     "role": "assistant",
+     "content": "Una soluzione ragionevole per un paio di mesi. Se vuoi ti aiuto a organizzare il doppio trasloco."
+    }
+   ]
+  },
+  {
+   "id": "c06",
+   "user": "chiara",
+   "ts": "2026-10-30T19:05:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Disastro. Mercoledì sera a BlocHaus, su un blocco con delle tacche piccolissime, ho sentito un 'pop' all'anulare sinistro. Il dito si è gonfiato subito."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi dispiace! Un 'pop' sull'anulare in arrampicata fa pensare a una puleggia. Ghiaccio, niente carichi, e fatti vedere da uno specialista."
+    },
+    {
+     "role": "user",
+     "content": "Sì, da fisio lo so benissimo, ma è diverso quando succede a te. Ho prenotato l'ortopedico per lunedì. Ieri ho anche saltato la lezione di violoncello perché non riuscivo a chiudere la mano."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai fatto bene a fermarti. Speriamo sia solo una lesione parziale."
+    }
+   ]
+  },
+  {
+   "id": "c07",
+   "user": "chiara",
+   "ts": "2026-11-04T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Aggiornamento dito: lunedì sono stata dall'ortopedico. Lesione parziale della puleggia A2, anulare sinistro. Stop arrampicata per 4-6 settimane e un anello di protezione."
+    },
+    {
+     "role": "assistant",
+     "content": "Poteva andare peggio: una lesione parziale guarisce bene con il riposo e un rientro graduale."
+    },
+    {
+     "role": "user",
+     "content": "Il violoncello per fortuna posso suonarlo: dice che muovere il dito senza carico va bene, anzi aiuta."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, così non perdi le lezioni. Non forzare troppo la pressione della sinistra sulla tastiera."
+    }
+   ]
+  },
+  {
+   "id": "c08",
+   "user": "chiara",
+   "ts": "2026-11-08T11:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ti correggo una cosa che ti avevo detto: dall'ortopedico non ci sono andata lunedì, ma martedì 3. Lunedì me l'avevano spostata all'ultimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie della correzione, me lo segno: visita dall'ortopedico martedì."
+    },
+    {
+     "role": "user",
+     "content": "E notizione: venerdì mi ha chiamato Kinesis, mi hanno presa!! Inizio lunedì 11 gennaio."
+    },
+    {
+     "role": "assistant",
+     "content": "Fantastico, complimenti! Come ti senti?"
+    },
+    {
+     "role": "user",
+     "content": "Felicissima, ma anche un po' triste: allo Studio Porta Mazzini lascio dei colleghi a cui voglio bene. Devo dare il preavviso, il mio ultimo giorno lì sarà il 23 dicembre."
+    },
+    {
+     "role": "assistant",
+     "content": "È normale sentirsi così. Chiudere bene con i colleghi ti lascerà un bel ricordo e dei buoni contatti."
+    }
+   ]
+  },
+  {
+   "id": "c09",
+   "user": "chiara",
+   "ts": "2026-11-12T21:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lezione di violoncello stasera: finalmente la scala di Re maggiore senza stonare troppo!"
+    },
+    {
+     "role": "assistant",
+     "content": "Brava! La scala di Re è una delle prime grandi conquiste."
+    },
+    {
+     "role": "user",
+     "content": "La maestra Agnese ha fissato il saggio di fine anno: venerdì 18 dicembre, all'auditorium della scuola. Io suonerò una versione semplificata del Cigno di Saint-Saëns."
+    },
+    {
+     "role": "assistant",
+     "content": "Il Cigno è bellissimo e molto espressivo. Con qualche minuto di studio al giorno sarai pronta."
+    },
+    {
+     "role": "user",
+     "content": "Ho già l'ansia, ahah. Comunque: cosa vuol dire 'legato' sullo spartito?"
+    },
+    {
+     "role": "assistant",
+     "content": "Che le note vanno suonate unite, senza stacchi, spesso nella stessa arcata."
+    }
+   ]
+  },
+  {
+   "id": "d01",
+   "user": "davide",
+   "ts": "2026-11-15T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri a BlocHaus ho chiuso un 7a, il primo della mia vita!"
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti Davide, un 7a è un grande traguardo!"
+    },
+    {
+     "role": "user",
+     "content": "La settimana prossima adotto un gatto dal gattile, si chiamerà Miso."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Prepara tiragraffi e lettiera prima che arrivi."
+    }
+   ]
+  },
+  {
+   "id": "c10",
+   "user": "chiara",
+   "ts": "2026-11-21T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giornata di trasloco! Ho lasciato via Mascarella e da oggi sto da Tommaso, in via Saragozza 88. Provvisorio, fino a gennaio."
+    },
+    {
+     "role": "assistant",
+     "content": "Che giornata! Com'è andata?"
+    },
+    {
+     "role": "user",
+     "content": "Scatoloni ovunque, soprattutto libri. Tommaso ha un bilocale e non sa più dove mettere le mie cose, poveretto. Mi dai qualche consiglio per non impazzire con scatoloni che dovrò spostare di nuovo tra due mesi?"
+    },
+    {
+     "role": "assistant",
+     "content": "Lascia chiusi quelli che non ti servono e scrivici sopra 'casa nuova'; tieni a portata di mano solo un paio di scatole con l'essenziale."
+    },
+    {
+     "role": "user",
+     "content": "Geniale. Altra cosa a caso: quanto dura il parmigiano aperto in frigo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Avvolto in pellicola o in un panno, diverse settimane; se compare un po' di muffa in superficie puoi tagliare via quella parte."
+    },
+    {
+     "role": "user",
+     "content": "Ok. E Irene parte per Milano a fine mese, mi mancherà tantissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Sarà strano dopo tanti anni insieme, ma Milano è vicina: potrete vedervi spesso."
+    }
+   ]
+  },
+  {
+   "id": "c11",
+   "user": "chiara",
+   "ts": "2026-11-24T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tommaso è a Monaco di Baviera per lavoro da ieri fino a giovedì, ed è la prima volta che sto da sola a casa sua. Silenzio assoluto."
+    },
+    {
+     "role": "assistant",
+     "content": "Goditi un po' di tranquillità! Rientra a fine settimana, quindi."
+    },
+    {
+     "role": "user",
+     "content": "Sì. Intanto ho sentito mia mamma: il 9 dicembre la operano di cataratta all'occhio destro, a Ferrara. Lei è tranquilla, io meno."
+    },
+    {
+     "role": "assistant",
+     "content": "È un intervento molto comune e rapido, ma è normale preoccuparsi per un genitore. Pensi di accompagnarla?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, prendo un giorno di ferie e vado a Ferrara."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima idea, le farà piacere averti accanto."
+    }
+   ]
+  },
+  {
+   "id": "c12",
+   "user": "chiara",
+   "ts": "2026-12-03T22:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Back on the wall!! The orthopaedist cleared me on Monday at the follow-up visit, so today I went to BlocHaus for the first time since the injury. Only easy problems, finger taped."
+    },
+    {
+     "role": "assistant",
+     "content": "Great news! Easy problems and a taped finger are exactly the right way to restart."
+    },
+    {
+     "role": "user",
+     "content": "It felt amazing. Oh, and last Friday we had Irene's farewell party, she moved to Milan on Monday. I cried a bit."
+    },
+    {
+     "role": "assistant",
+     "content": "Farewells with close friends are tough. At least Milan is only an hour away by train."
+    },
+    {
+     "role": "user",
+     "content": "True. And big news: on Saturday Tommaso and I are going to the dog shelter to meet a dog we saw online!"
+    },
+    {
+     "role": "assistant",
+     "content": "How exciting! Take your time with him and ask the volunteers about his character."
+    }
+   ]
+  },
+  {
+   "id": "c13",
+   "user": "chiara",
+   "ts": "2026-12-06T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri abbiamo adottato un cane dal canile di Bologna! Si chiama Rufus, è un meticcio color miele, al canile ci hanno detto che ha 2 anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Benvenuto Rufus! Com'è andata la prima notte?"
+    },
+    {
+     "role": "user",
+     "content": "Ha pianto un po' ma poi ha dormito ai piedi del letto. Tommaso è già innamorato."
+    },
+    {
+     "role": "assistant",
+     "content": "Normale nei primi giorni. Dategli una cuccia in un angolo tranquillo e una routine regolare."
+    },
+    {
+     "role": "user",
+     "content": "Il prossimo weekend, sabato 12 e domenica 13, dovremmo andare ai mercatini di Natale a Trento, abbiamo già prenotato l'hotel. Ma adesso con Rufus non so..."
+    },
+    {
+     "role": "assistant",
+     "content": "Potreste chiedere se l'hotel accetta cani, oppure trovare qualcuno che lo tenga per due giorni."
+    }
+   ]
+  },
+  {
+   "id": "d02",
+   "user": "davide",
+   "ts": "2026-12-08T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tornato ieri da Lisbona: quattro giorni, dal 4 al 7 dicembre. I pastéis de nata sono i dolci più buoni del mondo, ne ho mangiati dodici."
+    },
+    {
+     "role": "assistant",
+     "content": "Bentornato! Dodici è un bel record."
+    },
+    {
+     "role": "user",
+     "content": "Intanto Miso in mia assenza ha distrutto il divano."
+    },
+    {
+     "role": "assistant",
+     "content": "Classico. Un tiragraffi verticale vicino al divano di solito aiuta."
+    }
+   ]
+  },
+  {
+   "id": "c14",
+   "user": "chiara",
+   "ts": "2026-12-09T21:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono a Ferrara da mamma: stamattina l'hanno operata di cataratta ed è andato tutto bene. Domani le tolgono già la benda."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sollievo! Riposo e colliri come da indicazioni, e vedrà molto meglio."
+    },
+    {
+     "role": "user",
+     "content": "Intanto abbiamo deciso: Trento lo annulliamo. Rufus è con noi da pochi giorni, non ce la sentiamo né di lasciarlo né di stressarlo col viaggio. L'hotel ci rimborsa la caparra."
+    },
+    {
+     "role": "assistant",
+     "content": "Scelta sensata: i primi giorni sono importanti per l'ambientamento. I mercatini ci saranno anche l'anno prossimo."
+    }
+   ]
+  },
+  {
+   "id": "c15",
+   "user": "chiara",
+   "ts": "2026-12-10T22:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Notizia dalla lezione di violoncello di stasera: il saggio non sarà più il 18 dicembre. L'auditorium ha avuto un'infiltrazione d'acqua e lo spostano a venerdì 15 gennaio."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato per l'attesa, ma così hai un mese in più per preparare il Cigno!"
+    },
+    {
+     "role": "user",
+     "content": "Esatto, la vedo così anche io. Il dito comunque va bene, ormai suono senza anello."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo segno per la guarigione."
+    }
+   ]
+  },
+  {
+   "id": "c16",
+   "user": "chiara",
+   "ts": "2026-12-15T19:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi Rufus è stato dal veterinario, la dottoressa Marchi: vaccini fatti e tutto a posto. Pesa 14,5 kg."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene! È il peso di un cane di taglia media."
+    },
+    {
+     "role": "user",
+     "content": "Però gli ha guardato i denti e dice che ha più o meno 4 anni, non 2 come ci avevano detto al canile."
+    },
+    {
+     "role": "assistant",
+     "content": "Capita spesso con i cani adottati: l'età si stima dai denti. Quindi Rufus ha circa 4 anni."
+    },
+    {
+     "role": "user",
+     "content": "Per noi non cambia niente, è il cane più dolce del mondo."
+    },
+    {
+     "role": "assistant",
+     "content": "Si sente da come ne parli!"
+    }
+   ]
+  },
+  {
+   "id": "d03",
+   "user": "davide",
+   "ts": "2026-12-19T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera saggio di chitarra alla scuola di musica, è andato benissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Bravo! Cosa hai suonato?"
+    },
+    {
+     "role": "user",
+     "content": "Un arrangiamento di Romance anonimo. E ho firmato per un appartamento in via Mascarella: 900 euro al mese, entro il 1° febbraio."
+    },
+    {
+     "role": "assistant",
+     "content": "Doppia buona notizia, complimenti!"
+    }
+   ]
+  },
+  {
+   "id": "c17",
+   "user": "chiara",
+   "ts": "2026-12-23T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi ultimo giorno allo Studio Porta Mazzini. I colleghi mi hanno regalato una tazza con scritto 'la fisio più paziente di Bologna'. Mi sono commossa."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel gesto, si vede che ti volevano bene."
+    },
+    {
+     "role": "user",
+     "content": "Domani si parte per Ferrara: Natale da mamma, fino al 26. Poi il 28 io e Tommaso voliamo a Lisbona, fino al 2 gennaio! Rufus lo lasciamo a Elisa, la sorella di Tommaso."
+    },
+    {
+     "role": "assistant",
+     "content": "Un fine anno perfetto! Lisbona a capodanno è bellissima. Vuoi qualche consiglio su cosa vedere?"
+    },
+    {
+     "role": "user",
+     "content": "Sì: cose da non perdere in 5 giorni?"
+    },
+    {
+     "role": "assistant",
+     "content": "Alfama e il Castelo de São Jorge, il tram 28, Belém con il monastero e la torre, un tramonto da un miradouro e, se avete tempo, una gita a Sintra."
+    }
+   ]
+  },
+  {
+   "id": "c18",
+   "user": "chiara",
+   "ts": "2026-12-31T17:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hi from Lisbon! We landed on Monday and it's been wonderful so far. Christmas at my mum's in Ferrara was lovely too, she sees much better now."
+    },
+    {
+     "role": "assistant",
+     "content": "So glad to hear that! What have you seen so far?"
+    },
+    {
+     "role": "user",
+     "content": "Alfama, tram 28, and yesterday Belém. Everyone told me pastéis de nata are life-changing, but honestly I found them too sweet. A bit overrated, if you ask me."
+    },
+    {
+     "role": "assistant",
+     "content": "Fair enough, they are very sugary. Did you try them in Belém?"
+    },
+    {
+     "role": "user",
+     "content": "Yes, at the famous bakery, after a 40-minute queue. Tonight we're watching the fireworks at Praça do Comércio for New Year's Eve."
+    },
+    {
+     "role": "assistant",
+     "content": "That's the best spot in town. Happy New Year to you both!"
+    }
+   ]
+  },
+  {
+   "id": "c19",
+   "user": "chiara",
+   "ts": "2027-01-02T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tornati da Lisbona oggi pomeriggio, stanchissimi."
+    },
+    {
+     "role": "assistant",
+     "content": "Bentornati! Com'è andato il capodanno?"
+    },
+    {
+     "role": "user",
+     "content": "Ti devo raccontare: a mezzanotte, in Praça do Comércio, con i fuochi sul fiume, Tommaso si è inginocchiato e mi ha chiesto di sposarlo! Ho detto sì, ovviamente, piangendo."
+    },
+    {
+     "role": "assistant",
+     "content": "Che emozione, congratulazioni a entrambi!"
+    },
+    {
+     "role": "user",
+     "content": "Sono ancora su una nuvola. Sintra invece l'abbiamo saltata, pioveva troppo."
+    },
+    {
+     "role": "assistant",
+     "content": "Sarà un motivo per tornarci. E Rufus come sta?"
+    },
+    {
+     "role": "user",
+     "content": "Elisa dice che è stato bravissimo. Domani andiamo a riprenderlo."
+    },
+    {
+     "role": "assistant",
+     "content": "Vi avrà sicuramente aspettato con la coda che gira!"
+    }
+   ]
+  },
+  {
+   "id": "c20",
+   "user": "chiara",
+   "ts": "2027-01-10T16:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domani inizio a Kinesis e ho un po' d'ansia. Ma intanto devo pensare alla casa nuova: mi spieghi come si fa la voltura di luce e gas? L'appartamento di via Andrea Costa ce lo consegnano tra una settimana."
+    },
+    {
+     "role": "assistant",
+     "content": "Per la voltura ti servono: il codice POD (luce) e il PDR (gas) dalla bolletta del vecchio intestatario, la lettura dei contatori, i dati del contratto d'affitto e un documento d'identità. La richiedi al fornitore che scegli, online o al telefono; di solito si completa in pochi giorni e costa qualche decina di euro di oneri."
+    },
+    {
+     "role": "user",
+     "content": "E se il vecchio inquilino ha fatto staccare tutto?"
+    },
+    {
+     "role": "assistant",
+     "content": "Allora non è una voltura ma un subentro: stessa procedura con il fornitore, ma costi un po' più alti e qualche giorno in più per la riattivazione."
+    },
+    {
+     "role": "user",
+     "content": "Ok, chiamo domani in pausa pranzo. Intanto stasera faccio una torta di mele per calmarmi, mi dai le dosi?"
+    },
+    {
+     "role": "assistant",
+     "content": "300 g di farina, 150 g di zucchero, 3 uova, 100 g di burro fuso, una bustina di lievito e 3 mele a fette: 45 minuti a 180 gradi."
+    }
+   ]
+  },
+  {
+   "id": "d04",
+   "user": "davide",
+   "ts": "2027-01-13T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Capodanno a Porto con gli amici, bellissimo. Però al rientro mi sono fatto male alla spalla in palestra: l'ortopedico dice tre settimane di stop."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi dispiace per la spalla. Riposo e fisioterapia, e tornerai come prima."
+    },
+    {
+     "role": "user",
+     "content": "E ieri hanno operato mia madre di cataratta, è andato tutto bene."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, le auguro una buona ripresa."
+    }
+   ]
+  },
+  {
+   "id": "c21",
+   "user": "chiara",
+   "ts": "2027-01-14T13:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pausa pranzo a Kinesis, quarto giorno. L'ambiente è bellissimo, attrezzature pazzesche, colleghi giovani e preparati."
+    },
+    {
+     "role": "assistant",
+     "content": "Sembra proprio il posto che cercavi! E i ritmi?"
+    },
+    {
+     "role": "user",
+     "content": "Intensi: 12 pazienti al giorno, tutti sportivi. La sera sono distrutta, però felice. Tra l'altro domani sera c'è il saggio di violoncello e questa settimana non ho studiato quasi niente."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai preparato il Cigno per settimane: fidati del lavoro fatto. In bocca al lupo!"
+    }
+   ]
+  },
+  {
+   "id": "c22",
+   "user": "chiara",
+   "ts": "2027-01-16T10:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera il saggio! Il Cigno mi è venuto bene, a parte un'arcata tremolante all'inizio. C'era anche mamma, venuta apposta da Ferrara."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava! Un'arcata tremolante per l'emozione è normalissima. Com'è stato suonare davanti al pubblico?"
+    },
+    {
+     "role": "user",
+     "content": "Terrorizzante e bellissimo. La maestra Agnese dice che a febbraio iniziamo un brano nuovo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, vuol dire che sei pronta a fare un passo avanti."
+    }
+   ]
+  },
+  {
+   "id": "c23",
+   "user": "chiara",
+   "ts": "2027-01-17T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatto! Oggi trasloco definitivo: abitiamo in via Andrea Costa 41, terzo piano. Io, Tommaso e Rufus. Rufus annusa ogni angolo, è confuso."
+    },
+    {
+     "role": "assistant",
+     "content": "Benvenuti nella casa nuova! Dategli qualche giorno: con le sue cose e la solita routine si ambienterà."
+    },
+    {
+     "role": "user",
+     "content": "Venerdì prossimo poi andiamo a teatro, all'Arena del Sole, a vedere La Locandiera con Irene, che torna da Milano per il weekend."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella idea per festeggiare la casa nuova e rivedere Irene!"
+    },
+    {
+     "role": "user",
+     "content": "Domanda veloce: come si pulisce il parquet senza rovinarlo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Aspirapolvere e poi un panno appena umido con un detergente neutro specifico per legno; niente acqua in eccesso né prodotti aggressivi."
+    }
+   ]
+  },
+  {
+   "id": "c24",
+   "user": "chiara",
+   "ts": "2027-01-26T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Quick question: Rufus pulls like crazy on the leash, especially on our street where there are lots of other dogs. How do I fix it?"
+    },
+    {
+     "role": "assistant",
+     "content": "Stop every time the leash goes tight and move on only when it's loose again; reward him with a treat when he walks next to you. Short, frequent sessions work best, and a front-clip harness helps."
+    },
+    {
+     "role": "user",
+     "content": "Thanks, I'll try. Oh, and Irene called yesterday: she got promoted to team lead at her company in Milan, after just two months!"
+    },
+    {
+     "role": "assistant",
+     "content": "That's impressive, she must be thrilled!"
+    }
+   ]
+  },
+  {
+   "id": "c25",
+   "user": "chiara",
+   "ts": "2027-02-06T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi sono tornata a BlocHaus: era la prima volta da dicembre, tra trasloco e lavoro nuovo non avevo avuto tempo. E ho chiuso il mio primo 6c! Il dito ha retto benissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Che rientro! Il primo 6c dopo un infortunio alla puleggia è un risultato notevole."
+    },
+    {
+     "role": "user",
+     "content": "Sono al settimo cielo. E giovedì a lezione abbiamo iniziato il brano nuovo: il Minuetto in sol di Bach, nella versione per violoncello."
+    },
+    {
+     "role": "assistant",
+     "content": "Bellissimo brano, ottimo per lavorare su intonazione e ritmo."
+    }
+   ]
+  },
+  {
+   "id": "c26",
+   "user": "chiara",
+   "ts": "2027-02-11T22:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Grandi notizie in casa: ieri Tommaso è stato promosso capo progetto! Abbiamo festeggiato con il sushi sul divano, Rufus compreso."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti a Tommaso! Un bel riconoscimento."
+    },
+    {
+     "role": "user",
+     "content": "E abbiamo fissato la data del matrimonio: sabato 18 settembre 2027. Lunedì scorso abbiamo visto una villa sui colli e ci piace tantissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Settembre è un mese perfetto. Quando vorrete, posso aiutarvi con una checklist per l'organizzazione."
+    },
+    {
+     "role": "user",
+     "content": "Più avanti sì. Adesso dimmi solo: come si dice 'colofonia' in inglese? Devo comprarla online."
+    },
+    {
+     "role": "assistant",
+     "content": "Rosin."
+    }
+   ]
+  },
+  {
+   "id": "c27",
+   "user": "chiara",
+   "ts": "2027-02-15T20:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Weekend a Ferrara da mamma con Tommaso e Rufus: sabato le abbiamo detto del matrimonio di persona e si è messa a piangere di gioia."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel momento! E Rufus come si è trovato a Ferrara?"
+    },
+    {
+     "role": "user",
+     "content": "Ha inseguito il gatto della vicina per tutto il giardino, una figuraccia. Mamma comunque ci vede benissimo dopo l'operazione, ha anche ripreso a guidare."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo recupero! E Rufus imparerà a ignorare il gatto, con pazienza."
+    }
+   ]
+  }
+ ]
+}

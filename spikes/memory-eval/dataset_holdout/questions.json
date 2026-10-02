@@ -1,0 +1,290 @@
+{
+ "_note": "HELD-OUT set. Questions asked as user 'chiara' at asked_at. expected = reference answer for the judge; must_not = content that indicates a failure (wrong fact, superseded value, or leak from user 'davide').",
+ "user": "chiara",
+ "questions": [
+  {
+   "id": "h01",
+   "category": "point-temporal",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quando sono andata ad arrampicare l'ultima volta?",
+   "expected": "Sabato 6 febbraio 2027 a BlocHaus: hai chiuso il tuo primo 6c (prima volta da dicembre, il dito ha retto).",
+   "must_not": [
+    "7a",
+    "3 dicembre come ultima volta"
+   ]
+  },
+  {
+   "id": "h02",
+   "category": "aggregate",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quante volte sono andata ad arrampicare da ottobre a oggi?",
+   "expected": "4 volte, sempre a BlocHaus: sabato 10 ottobre 2026 (primo blocco viola/6b), mercoledì 28 ottobre (infortunio alla puleggia), giovedì 3 dicembre (rientro dopo l'infortunio), sabato 6 febbraio 2027 (primo 6c).",
+   "must_not": [
+    "7a",
+    "3 volte",
+    "5 volte"
+   ]
+  },
+  {
+   "id": "h03",
+   "category": "knowledge-update",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Dove abito adesso?",
+   "expected": "In via Andrea Costa 41 (terzo piano), a Bologna, con Tommaso e Rufus, dal 17 gennaio 2027.",
+   "must_not": [
+    "abiti in via Saragozza",
+    "abiti in via Mascarella"
+   ]
+  },
+  {
+   "id": "h04",
+   "category": "historical-state",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Dove abitavo all'inizio di dicembre?",
+   "expected": "Da Tommaso, in via Saragozza 88 (sistemazione provvisoria dal 21 novembre 2026 al 17 gennaio 2027).",
+   "must_not": [
+    "via Mascarella",
+    "via Andrea Costa"
+   ]
+  },
+  {
+   "id": "h05",
+   "category": "state-change-date",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quando ho lasciato la casa di via Mascarella?",
+   "expected": "Sabato 21 novembre 2026, trasferendoti provvisoriamente da Tommaso in via Saragozza 88.",
+   "must_not": [
+    "1° febbraio",
+    "17 gennaio"
+   ]
+  },
+  {
+   "id": "h06",
+   "category": "plan-rescheduled",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quando ho fatto il saggio di violoncello?",
+   "expected": "Venerdì 15 gennaio 2027 (era previsto per il 18 dicembre 2026, ma è stato spostato per un'infiltrazione d'acqua nell'auditorium). Hai suonato il Cigno di Saint-Saëns, c'era anche tua mamma.",
+   "must_not": [
+    "si è svolto il 18 dicembre",
+    "chitarra"
+   ]
+  },
+  {
+   "id": "h07",
+   "category": "plan-cancelled",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Alla fine siamo andati ai mercatini di Natale a Trento?",
+   "expected": "No: il weekend del 12-13 dicembre 2026 a Trento è stato annullato (deciso il 9 dicembre) per non lasciare o stressare Rufus appena adottato; l'hotel ha rimborsato la caparra.",
+   "must_not": [
+    "sì, siete andati",
+    "rinviato"
+   ]
+  },
+  {
+   "id": "h08",
+   "category": "plan-no-followup",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Sono poi andata a vedere La Locandiera?",
+   "expected": "Non si sa: era in programma venerdì 22 gennaio 2027 all'Arena del Sole con Irene, ma non mi hai mai detto se ci sei andata.",
+   "must_not": [
+    "sì, ci sei andata",
+    "è stato annullato"
+   ]
+  },
+  {
+   "id": "h09",
+   "category": "correction",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Che giorno sono stata dall'ortopedico per il dito?",
+   "expected": "Martedì 3 novembre 2026 (non lunedì 2: la visita era stata spostata all'ultimo). Diagnosi: lesione parziale della puleggia A2 dell'anulare sinistro.",
+   "must_not": [
+    "lunedì 2 novembre"
+   ]
+  },
+  {
+   "id": "h10",
+   "category": "correction",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quanti anni ha Rufus?",
+   "expected": "Circa 4 anni, secondo la veterinaria (dott.ssa Marchi, 15 dicembre 2026); il canile aveva detto 2 anni, ma era sbagliato.",
+   "must_not": [
+    "ha 2 anni"
+   ]
+  },
+  {
+   "id": "h11",
+   "category": "third-party-event",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quando è stata operata mia mamma, e di cosa?",
+   "expected": "Mercoledì 9 dicembre 2026, a Ferrara, di cataratta all'occhio destro; è andato tutto bene (tu eri con lei).",
+   "must_not": [
+    "12 gennaio"
+   ]
+  },
+  {
+   "id": "h12",
+   "category": "third-party-event",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Che novità ha avuto Tommaso al lavoro?",
+   "expected": "È stato promosso capo progetto mercoledì 10 febbraio 2027."
+  },
+  {
+   "id": "h13",
+   "category": "opinion-cross-language",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Cosa ne pensavo dei pastéis de nata a Lisbona?",
+   "expected": "Che erano troppo dolci e un po' sopravvalutati (assaggiati a Belém il 30 dicembre 2026, dopo 40 minuti di coda).",
+   "must_not": [
+    "i più buoni del mondo",
+    "dodici"
+   ]
+  },
+  {
+   "id": "h14",
+   "category": "year-boundary",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Cosa ho fatto a capodanno?",
+   "expected": "Eri a Lisbona con Tommaso: fuochi d'artificio in Praça do Comércio e, a mezzanotte, Tommaso ti ha chiesto di sposarlo (hai detto sì).",
+   "must_not": [
+    "Porto"
+   ]
+  },
+  {
+   "id": "h15",
+   "category": "year-boundary-period",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Cosa ho fatto lo scorso dicembre?",
+   "expected": "Dicembre 2026: 3 dic rientro all'arrampicata a BlocHaus dopo l'infortunio (via libera dell'ortopedico il 30 nov); 5 dic adozione di Rufus dal canile di Bologna; 9 dic a Ferrara per l'operazione di cataratta della mamma e annullamento della gita a Trento; 10 dic saggio di violoncello spostato a gennaio; 15 dic Rufus dal veterinario; 23 dic ultimo giorno allo Studio Porta Mazzini; 24-26 dic Natale da mamma a Ferrara; dal 28 dic viaggio a Lisbona con Tommaso (fino al 2 gennaio).",
+   "must_not": [
+    "sei andata a Trento",
+    "saggio il 18 dicembre"
+   ]
+  },
+  {
+   "id": "h16",
+   "category": "small-detail",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quanto paghiamo di affitto nella casa nuova?",
+   "expected": "1.150 euro al mese, spese condominiali escluse.",
+   "must_not": [
+    "900"
+   ]
+  },
+  {
+   "id": "h17",
+   "category": "provenance",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "In quale conversazione ti avevo chiesto come si fa la voltura di luce e gas?",
+   "expected": "Domenica 10 gennaio 2027, il giorno prima di iniziare a Kinesis (nella stessa chat: subentro e ricetta della torta di mele)."
+  },
+  {
+   "id": "h18",
+   "category": "negative",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Sono mai stata a Porto?",
+   "expected": "No, non mi risulta: in Portogallo sei stata solo a Lisbona (28 dicembre 2026 - 2 gennaio 2027).",
+   "must_not": [
+    "capodanno a Porto",
+    "sei stata a Porto"
+   ]
+  },
+  {
+   "id": "h19",
+   "category": "relative-period",
+   "asked_at": "2026-12-11T18:00:00+01:00",
+   "q": "Cosa ho fatto questa settimana?",
+   "expected": "Mercoledì 9 dicembre eri a Ferrara per l'operazione di cataratta della mamma (andata bene) e avete annullato i mercatini di Trento del 12-13 dicembre per Rufus; giovedì 10 lezione di violoncello, dove hai saputo che il saggio è spostato dal 18 dicembre al 15 gennaio.",
+   "must_not": [
+    "adozione di Rufus presentata come avvenuta questa settimana",
+    "Lisbona"
+   ]
+  },
+  {
+   "id": "h20",
+   "category": "relative-period",
+   "asked_at": "2027-01-20T10:00:00+01:00",
+   "q": "Cosa ho fatto la settimana scorsa?",
+   "expected": "Lunedì 11 gennaio hai iniziato a lavorare a Kinesis (ritmi intensi, 12 pazienti al giorno); venerdì 15 saggio di violoncello (il Cigno, c'era la mamma); domenica 17 trasloco in via Andrea Costa 41.",
+   "must_not": [
+    "Lisbona",
+    "La Locandiera"
+   ]
+  },
+  {
+   "id": "h21",
+   "category": "relative-period-en",
+   "asked_at": "2027-02-10T10:00:00+01:00",
+   "q": "What did I do last week?",
+   "expected": "Thursday 4 February 2027: cello lesson, you started the Minuet in G by Bach; Saturday 6 February: back at BlocHaus for the first time since December, you sent your first 6c.",
+   "must_not": [
+    "promotion",
+    "wedding venue"
+   ]
+  },
+  {
+   "id": "h22",
+   "category": "knowledge-update",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Dove lavoro adesso e da quando?",
+   "expected": "A Kinesis, centro di riabilitazione sportiva, da lunedì 11 gennaio 2027; prima eri allo Studio Porta Mazzini (ultimo giorno 23 dicembre 2026).",
+   "must_not": [
+    "lavori allo Studio Porta Mazzini"
+   ]
+  },
+  {
+   "id": "h23",
+   "category": "multi-day",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quanto è durato il viaggio a Lisbona?",
+   "expected": "Dal 28 dicembre 2026 (lunedì) al 2 gennaio 2027 (sabato): 6 giorni, a cavallo di capodanno.",
+   "must_not": [
+    "dal 4 al 7 dicembre"
+   ]
+  },
+  {
+   "id": "h24",
+   "category": "cross-language-en",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "When did we adopt Rufus, and where from?",
+   "expected": "On Saturday 5 December 2026, from the Bologna dog shelter (canile di Bologna).",
+   "must_not": [
+    "Miso",
+    "cat shelter"
+   ]
+  },
+  {
+   "id": "h25",
+   "category": "mid-period-detail",
+   "asked_at": "2026-11-05T09:00:00+01:00",
+   "q": "Quanto tempo devo stare ferma con l'arrampicata?",
+   "expected": "4-6 settimane secondo l'ortopedico, per una lesione parziale della puleggia A2 dell'anulare sinistro, con un anello di protezione; il violoncello invece puoi suonarlo.",
+   "must_not": [
+    "tre settimane"
+   ]
+  },
+  {
+   "id": "h26",
+   "category": "aggregate-detail",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "Quali brani ho studiato al violoncello?",
+   "expected": "Il Cigno di Saint-Saëns (versione semplificata, suonato al saggio del 15 gennaio 2027) e, da giovedì 4 febbraio 2027, il Minuetto in sol di Bach (oltre alla scala di Re maggiore).",
+   "must_not": [
+    "Romance"
+   ]
+  },
+  {
+   "id": "h27",
+   "category": "emotion-cross-language-en",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "How did I feel about my first days at Kinesis?",
+   "expected": "Started Monday 11 January 2027; on 14 January you said the place was beautiful (amazing equipment, young and skilled colleagues) but the pace was intense, 12 patients a day all athletes: exhausted in the evening but happy."
+  },
+  {
+   "id": "h28",
+   "category": "future-plan-en",
+   "asked_at": "2027-02-20T10:00:00+01:00",
+   "q": "When is my wedding, and when did Tommaso propose?",
+   "expected": "The wedding is on Saturday 18 September 2027; Tommaso proposed at midnight on New Year's Eve (31 December 2026 into 1 January 2027) in Praça do Comércio, Lisbon."
+  }
+ ]
+}

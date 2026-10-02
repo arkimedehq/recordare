@@ -57,6 +57,27 @@
       "expected": "Venerdì 20 febbraio Giulia ha vinto la gara regionale di nuoto nei 50 stile." },
     { "id": "q18", "category": "detail-recall", "asked_at": "2026-04-01T10:00:00+02:00",
       "q": "Dove abbiamo cenato a San Valentino?",
-      "expected": "Al ristorante Il Pescatore a Varese, con Sara." }
+      "expected": "Al ristorante Il Pescatore a Varese, con Sara." },
+    { "id": "q19", "category": "relative-period", "asked_at": "2026-03-12T10:00:00+01:00",
+      "q": "Cosa ho fatto la settimana scorsa?",
+      "expected": "Lunedì 2 marzo: venduta la Golf, presa una Tesla Model 3 in leasing; sabato 7 marzo: sci a Cervinia con Marco e Giulia (prima pista nera di Giulia)." },
+    { "id": "q20", "category": "state-change-date", "asked_at": "2026-04-01T10:00:00+02:00",
+      "q": "Quando ho cambiato macchina?",
+      "expected": "Il 2 marzo 2026: venduta la Golf, presa una Tesla Model 3 in leasing.",
+      "must_not": ["Panda"] },
+    { "id": "q21", "category": "negative-temporal", "asked_at": "2026-04-01T10:00:00+02:00",
+      "q": "Sono andato a sciare a dicembre?",
+      "expected": "Non risulta: le uscite sugli sci registrate sono del 17 gennaio, 7 febbraio e 7 marzo 2026.",
+      "must_not": ["Bormio", "sì, a dicembre"] },
+    { "id": "q22", "category": "relative-period", "asked_at": "2026-03-21T10:00:00+01:00",
+      "q": "Cosa ho fatto questa settimana?",
+      "expected": "Giovedì 19 marzo sono andato dal dentista: un'otturazione, tutto ok ma doloroso." },
+    { "id": "q23", "category": "third-party-aggregate", "asked_at": "2026-04-01T10:00:00+02:00",
+      "q": "Che traguardi ha raggiunto Giulia quest'anno?",
+      "expected": "20 febbraio: vittoria della gara regionale di nuoto nei 50 stile libero; 7 marzo: prima pista nera a Cervinia." },
+    { "id": "q24", "category": "aggregate", "asked_at": "2026-04-01T10:00:00+02:00",
+      "q": "Quante volte sono stato a Cervinia?",
+      "expected": "2 volte: 17 gennaio (con Marco) e 7 marzo 2026 (con Marco e Giulia).",
+      "must_not": ["3 volte", "con le amiche"] }
   ]
 }

@@ -66,3 +66,9 @@ def embed(texts: list[str], kind: str = "passage") -> np.ndarray:
         vecs = np.array(list(_fastembed().embed(texts)), dtype=np.float32)
     norms = np.linalg.norm(vecs, axis=1, keepdims=True)
     return vecs / np.clip(norms, 1e-9, None)
+
+
+@lru_cache(maxsize=1)
+def dim() -> int:
+    """Embedding dimension of the configured model (one probe call)."""
+    return int(embed(["probe"]).shape[1])

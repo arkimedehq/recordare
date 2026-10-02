@@ -7,11 +7,16 @@ client. Status: **design + evaluation spike; no service code yet.**
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
   mode, architecture (standalone, own DB, one memory per person), name, roadmap.
-- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D22 (layered memory: raw log →
+- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D23 (layered memory: raw log →
   episodes → digests → semantic notes; two LLM calls; idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
-- `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase) and
-  embedding comparison. **Engine decision is OPEN** (adopt Memobase vs build our design D).
+- `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
+  D) and embedding comparison. Round 2 + held-out: D wins; **D23 approved: build D**, default engine model `deepseek-flash`.
+  Spike runs cost real money (DeepSeek): keep runs minimal, prefer base before noise.
+- `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 and open decisions D23–D26.
+- `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
+  gaps, and **cost principles** (the owner wants Recordare as cheap as possible: zero LLM calls
+  when nothing to do, cheap model, no reasoning, prefix caching).
 
 ## Conventions (the owner's preferences — follow them)
 - Chat with the owner in **Italian**; code comments and dev-facing docs in **English**.
@@ -25,6 +30,8 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Stack preference: TypeScript / NestJS (service), Postgres; i18n IT/EN; type-check with
   `tsc --noEmit` before committing.
 - Don't ask for confirmation at each intermediate step inside agreed work.
+- Cost: as cheap as possible **without losing quality** — at equal measured quality the cheaper
+  option wins; never trade quality for cost.
 
 ## Spike (`spikes/memory-eval/`) — how to run
 - Python via `uv`; run commands as `uv run --directory <abs path to spikes/memory-eval> python …`
@@ -37,11 +44,15 @@ client. Status: **design + evaluation spike; no service code yet.**
   1024-token cap; also used by Graphiti when `ENGINE_NO_THINKING=1`).
 - Engines: Graphiti on FalkorDB container `memeval-falkordb` (**image `falkordb/falkordb:v4.22.0`**,
   host port 6390 — 6.x breaks Graphiti); Memobase via `memobase/docker-compose.yml` (API :8019,
-  `setup_memobase.py` writes the gitignored `config.yaml`). Containers are currently stopped.
-- `run_eval.py --system baseline|graphiti|memobase [--noise] [--only q01,…]` → `results/*.json`
+  `setup_memobase.py` writes the gitignored `config.yaml`; currently configured for bge-m3).
+- `run_eval.py --system baseline|graphiti|memobase|d [--noise] [--only q01,…]` → `results/*.json`;
+  `EVAL_DATASET=dataset_holdout` selects the held-out set (keep it blind: do not tune prompts on it)
   (gitignored). `emb_eval.py` with `EMBED_MODEL=st:<hf-model>|ollama:<name>|<fastembed-model>`.
 - Gotchas: reasoning models need high `max_tokens` (empty content otherwise); the Mac's Docker VM
-  disk is nearly full — clean images before pulling big ones.
+  disk is nearly full — clean images before pulling big ones. Run evals with
+  `EMBED_MODEL=st:BAAI/bge-m3`. Local model: `ENGINE_BASE_URL=http://localhost:11434/v1
+  ENGINE_MODEL=qwen3:8b` (D), or a second gateway with `LLM_BASE_URL` = Ollama + `EMBED_PORT=8791`
+  and `setup_memobase.py` (Memobase). Long-running gateways need a long background timeout.
 
 ## Arkimede facts relevant here
 - Embeddings: Arkimede now runs **BAAI/bge-m3** (1024 dims) in its own `embedding-service`;
@@ -52,9 +63,5 @@ client. Status: **design + evaluation spike; no service code yet.**
   later roadmap phase.
 - API convention: no global prefix, controllers hard-code `api/...`.
 
-## Next steps (suggested order)
-1. Re-run Graphiti/Memobase with `bge-m3` embeddings; run with a local model (Ollama, thinking
-   off) to test the sovereign story. Prototype D (episodes + digests + date filter) in the spike
-   and compare on base + noise.
-2. Decide engine (adopt Memobase / build D / hybrid) → record as D23 in the TODO.
-3. Scaffold the NestJS service (ingest API contract, MCP tools, auth / identity mapping).
+## Next steps
+Follow `docs/WORK_PLAN.md`: M0 done (D23 approved) → M1 contracts and M2 scaffold.
