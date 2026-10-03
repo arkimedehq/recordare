@@ -6,9 +6,9 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { BullMqQueueAdapter } from './bullmq-queue.adapter';
-import { ExtractionProcessor, PendingExtractionRunner } from './extraction.processor';
+import { ExtractionProcessor } from './extraction.processor';
 import { EmbeddingProcessor } from './embedding.processor';
-import { EMBEDDING_QUEUE, EXTRACTION_QUEUE, EXTRACTION_RUNNER, QUEUE_PORT } from './queue.port';
+import { EMBEDDING_QUEUE, EXTRACTION_QUEUE, QUEUE_PORT } from './queue.port';
 
 @Global()
 @Module({
@@ -23,7 +23,7 @@ import { EMBEDDING_QUEUE, EXTRACTION_QUEUE, EXTRACTION_RUNNER, QUEUE_PORT } from
             port: Number(url.port || 6379),
             ...(url.password ? { password: decodeURIComponent(url.password) } : {}),
           },
-          prefix: 'recordare',
+          prefix: config.get('QUEUE_PREFIX', { infer: true }),
         };
       },
     }),
@@ -31,7 +31,6 @@ import { EMBEDDING_QUEUE, EXTRACTION_QUEUE, EXTRACTION_RUNNER, QUEUE_PORT } from
   ],
   providers: [
     { provide: QUEUE_PORT, useClass: BullMqQueueAdapter },
-    { provide: EXTRACTION_RUNNER, useClass: PendingExtractionRunner },
     ExtractionProcessor,
     EmbeddingProcessor,
   ],

@@ -185,15 +185,19 @@ def judge(question: dict, given: str) -> dict:
     )
     raw = ""
     for _ in range(3):  # a truncated / invalid verdict is a judge failure, not a wrong answer
-        raw = chat([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": user}],
-                   phase="judge", json_mode=True, max_tokens=3000)
+        try:
+            raw = chat([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": user}],
+                       phase="judge", json_mode=True, max_tokens=3000)
+        except Exception as err:  # noqa: BLE001 - provider kept failing: do not abort the whole run
+            return {"verdict": "error", "reason": f"judge unavailable: {type(err).__name__}"}
         try:
             out = json.loads(raw)
             if out.get("verdict") in ("correct", "partial", "wrong"):
                 return out
         except ValueError:
             pass
-    return {"verdict": "wrong", "reason": f"unparseable judge output: {raw[:120]}"}
+    return {"verdict": "error", "reason": f"unparseable judge output: {raw[:120]}"}
 
 
 SCORE = {"correct": 1.0, "partial": 0.5, "wrong": 0.0}
+# "error" = judge failure: excluded from accuracy, reported separately.

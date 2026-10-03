@@ -40,6 +40,29 @@ export async function startFakeEmbeddings(): Promise<{ url: string; server: Serv
   return { url: `http://127.0.0.1:${port}/v1`, server, requests };
 }
 
+/** OpenAI-compatible /v1/chat/completions stub: answers with the queued JSON outputs in order. */
+export async function startFakeLlm(): Promise<{ url: string; server: Server; queue: unknown[]; requests: Array<{ messages: Array<{ role: string; content: string }> }> }> {
+  const queue: unknown[] = [];
+  const requests: Array<{ messages: Array<{ role: string; content: string }> }> = [];
+  const server = createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      requests.push(JSON.parse(body));
+      const next = queue.shift() ?? {};
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({
+        id: 'x', object: 'chat.completion', created: 0, model: 'fake',
+        choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify(next) } }],
+        usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 },
+      }));
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address() as { port: number };
+  return { url: `http://127.0.0.1:${port}/v1`, server, queue, requests };
+}
+
 export function testEnv(overrides: Record<string, string> = {}): void {
   Object.assign(process.env, {
     NODE_ENV: 'test',
@@ -52,6 +75,8 @@ export function testEnv(overrides: Record<string, string> = {}): void {
     EMBEDDING_BASE_URL: 'http://127.0.0.1:9/v1',
     EMBEDDING_MODEL: 'test-embedding',
     EMBEDDING_DIM: '8',
+    // own queue namespace: a running dev service on the same Redis never takes test jobs
+    QUEUE_PREFIX: `test-${process.pid}`,
     ...overrides,
   });
 }

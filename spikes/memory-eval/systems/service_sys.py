@@ -3,7 +3,9 @@
 Sessions go in through REST ingest (incrementally up to each question's asked_at, as for every
 system); questions go out through MCP `search_episodes` with the official MCP Python client, as any
 agent would call it. The calling agent's planning step (period + topic) runs on LLM_MODEL, the same
-planner as system D. M3: the service answers from the raw log only (episodes arrive in M4).
+planner as system D. M4: the service's own engine extracts episodes, plans, facts and notes (with the
+LLM configured in the service); questions use search_episodes + search_memory, asked "as of" the
+question time (X-Recordare-Now; the service must run with ALLOW_CLOCK_OVERRIDE=true).
 
 Needs a running service (`npm run start:dev` in service/) and:
   RECORDARE_URL (default http://localhost:8080), RECORDARE_ADMIN_KEY, RECORDARE_DB_URL
@@ -24,7 +26,13 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
 from evalkit.common import chat, fmt_when
-from systems.d_sys import PLAN_SYSTEM, calendar
+from systems.d_sys import PLAN_SYSTEM as D_PLAN_SYSTEM, calendar
+
+# The agent knows the service's tools, including mode "latest" (see the search_episodes description).
+PLAN_SYSTEM = D_PLAN_SYSTEM.replace(
+    '"mode": "search" | "list"', '"mode": "search" | "list" | "latest"').replace(
+    '"search" for a specific fact or event.',
+    '"latest" for "when did I last…" / "the most recent time" questions; "search" for a specific fact or event.')
 
 URL = os.getenv("RECORDARE_URL", "http://localhost:8080")
 ADMIN = os.environ.get("RECORDARE_ADMIN_KEY", "")
@@ -70,23 +78,37 @@ class ServiceSystem:
                 "content": m["content"],
                 "sentAt": (base + timedelta(seconds=i)).isoformat(),
             } for i, m in enumerate(s["messages"])]
-            res = self._post("/api/v1/ingest/messages", {"conversation": {"externalId": s["id"]}, "messages": messages},
+            # conversationEnded: extract now instead of waiting for the idle delay.
+            res = self._post("/api/v1/ingest/messages", {"conversation": {"externalId": s["id"]}, "messages": messages,
+                                                         "hints": {"conversationEnded": True}},
                              token=self.key, headers={"x-recordare-user": owner["ext"]})
             assert res.get("stored"), res
-        self._wait_embeddings()
+        self._wait_processed()
 
-    def _wait_embeddings(self, timeout_s: int = 300) -> None:
+    def _wait_processed(self, timeout_s: int = 1800) -> None:
+        """Wait until the engine extracted every message and raw embeddings exist (failed runs are reported)."""
         ids = [o["id"] for o in self.owners.values()]
         deadline = time.time() + timeout_s
-        with psycopg.connect(DB_URL) as conn:
+        with psycopg.connect(DB_URL, autocommit=True) as conn:
             while time.time() < deadline:
                 (pending,) = conn.execute(
-                    "SELECT count(*) FROM messages WHERE owner_id = ANY(%s) AND role <> 'assistant' AND embedding IS NULL",
+                    "SELECT count(*) FROM messages WHERE owner_id = ANY(%s) AND (extracted_run_id IS NULL OR (role <> 'assistant' AND embedding IS NULL))",
                     (ids,)).fetchone()
+                (failed,) = conn.execute(
+                    "SELECT count(*) FROM extraction_runs WHERE owner_id = ANY(%s) AND status = 'failed'", (ids,)).fetchone()
                 if pending == 0:
+                    if failed:
+                        print(f"  ! {failed} extraction runs failed", flush=True)
                     return
-                time.sleep(0.5)
-        print("  ! embeddings still pending after timeout", flush=True)
+                if failed and pending:
+                    # A failed window stays pending (retried by the nightly sweep): do not wait forever.
+                    (running,) = conn.execute(
+                        "SELECT count(*) FROM extraction_runs WHERE owner_id = ANY(%s) AND status = 'running'", (ids,)).fetchone()
+                    if running == 0:
+                        print(f"  ! {failed} extraction runs failed, {pending} messages left pending", flush=True)
+                        return
+                time.sleep(1)
+        print("  ! processing still pending after timeout", flush=True)
 
     # ── Recall ──────────────────────────────────────────────────────────────────
 
@@ -100,26 +122,74 @@ class ServiceSystem:
             plan = json.loads(raw)
         except ValueError:
             plan = {}
-        args = {"query": plan.get("topic") or question["q"], "mode": plan.get("mode") or "search", "limit": 8}
+        topic = plan.get("topic") or question["q"]
+        args = {"query": topic, "mode": plan.get("mode") or "search"}
+        if plan.get("mode") == "list" and not plan.get("topic"):
+            args.pop("query")
         for k in ("from", "to"):
             if plan.get(k):
                 args[k] = plan[k]
-        out = asyncio.run(self._search(owner["token"], args))
-        lines = []
-        if args.get("from") or args.get("to"):
-            lines.append(f"PERIODO CERCATO: {args.get('from', '…')} → {args.get('to', '…')}")
-        lines.append("DALLE CHAT (testo originale):")
-        for h in out.get("fromChats", []):
-            lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}] {h['excerpt']}")
-        return "\n".join(lines)
+        memory_args = {"query": topic, **({"as_of": plan["to"]} if plan.get("to") else {})}
+        episodes, memory = asyncio.run(self._call(owner["token"], question["asked_at"], args, memory_args))
+        return format_context(args, episodes, memory)
 
     @staticmethod
-    async def _search(token: str, args: dict) -> dict:
-        async with httpx2.AsyncClient(headers={"authorization": f"Bearer {token}"}, timeout=60) as client:
+    async def _call(token: str, now: str, episode_args: dict, memory_args: dict) -> tuple[dict, dict]:
+        headers = {"authorization": f"Bearer {token}", "x-recordare-now": now}
+        async with httpx2.AsyncClient(headers=headers, timeout=60) as client:
             async with streamable_http_client(f"{URL}/mcp", http_client=client) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
-                    res = await session.call_tool("search_episodes", args)
-                    if res.structured_content:
-                        return res.structured_content
-                    return json.loads(res.content[0].text) if res.content else {}
+                    out = []
+                    for name, args in (("search_episodes", episode_args), ("search_memory", memory_args)):
+                        res = await session.call_tool(name, args)
+                        out.append(res.structured_content or (json.loads(res.content[0].text) if res.content else {}))
+                    return out[0], out[1]
+
+
+
+def _episode_line(e: dict) -> str:
+    status = e.get("planStatus")
+    tag = ""
+    if status:
+        label = {"open": "PIANO non ancora avvenuto", "confirmed": "PIANO confermato", "cancelled": "PIANO ANNULLATO",
+                 "rescheduled": f"PIANO RINVIATO al {e.get('rescheduledTo', '?')}", "unresolved": "PIANO: non si sa se è avvenuto"}[status]
+        tag = f" [{label}]"
+    extra = []
+    if e.get("people"):
+        extra.append("con/riguarda: " + ", ".join(e["people"]))
+    if e.get("feelings"):
+        extra.append("sentimenti: " + ", ".join(e["feelings"]))
+    if e.get("opinion"):
+        extra.append("opinione: " + e["opinion"])
+    if e.get("origin") == "assistant_stated":
+        extra.append("detto dall'assistente")
+    src = e.get("source", {})
+    return (f"- [{e['when']}]{tag} {e['content']}" + (f" ({'; '.join(extra)})" if extra else "")
+            + (f" — fonte: sessione {src.get('conversation')}" if src.get("conversation") else ""))
+
+
+def format_context(args: dict, episodes: dict, memory: dict) -> str:
+    lines = []
+    if args.get("from") or args.get("to"):
+        lines.append(f"PERIODO CERCATO: {args.get('from', '…')} → {args.get('to', '…')}")
+    lines.append("EPISODI:")
+    lines += [_episode_line(e) for e in episodes.get("episodes", [])] or ["- (nessuno)"]
+    if episodes.get("outsidePeriod"):
+        lines.append("ALTRI EPISODI PERTINENTI (fuori dal periodo cercato):")
+        lines += [_episode_line(e) for e in episodes["outsidePeriod"]]
+    for n in episodes.get("notes", []):
+        lines.append(f"NOTA: {n}")
+    if memory.get("facts") or memory.get("notes"):
+        lines.append("PROFILO (fatti con storico, note):")
+        for f in memory.get("facts", []):
+            hist = "; ".join(f"{h['value'] or '(sconosciuto)'} dal {h['from'] or '?'}" + (f" al {h['to']}" if h.get("to") else "") + f" [{h['status']}]"
+                             for h in f.get("history", []))
+            lines.append(f"- {f['key']}: {f['value'] or '(non noto)'} — storico: {hist}")
+        for n in memory.get("notes", []):
+            lines.append(f"- [{n['category']}] {n['content']}")
+    if episodes.get("fromChats"):
+        lines.append("DALLE CHAT (testo originale):")
+        for h in episodes["fromChats"]:
+            lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}] {h['excerpt']}")
+    return "\n".join(lines)

@@ -89,16 +89,18 @@ def main() -> None:
         print(f"{q['id']} [{verdict['verdict']:>7}] {q['q']}\n        → {ans[:160]}")
 
     rows.sort(key=lambda r: r["id"])
+    scored = [r for r in rows if r["verdict"] in SCORE]
     by_cat = defaultdict(list)
-    for r in rows:
+    for r in scored:
         by_cat[r["category"]].append(SCORE[r["verdict"]])
-    total = sum(SCORE[r["verdict"]] for r in rows) / max(len(rows), 1)
+    total = sum(SCORE[r["verdict"]] for r in scored) / max(len(scored), 1)
     summary = {
         "system": label,
         "sessions": len(sessions),
         "sessions_ingested": done,
         "embed_model": __import__("evalkit.embed", fromlist=["MODEL"]).MODEL,
         "accuracy": round(total, 3),
+        "judge_errors": len(rows) - len(scored),
         "by_category": {c: round(sum(v) / len(v), 2) for c, v in sorted(by_cat.items())},
         "ingest_seconds": round(ingest_s, 1),
         "retrieval_p50_ms": round(sorted(latencies)[len(latencies) // 2] * 1000) if latencies else None,

@@ -17,6 +17,8 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
   DATABASE_URL: z.string().url(),
   REDIS_URL: z.string().url(),
+  /** Queue key prefix: separates installations (or test runs) sharing one Redis. */
+  QUEUE_PREFIX: z.string().regex(/^[a-z0-9_-]+$/).default('recordare'),
   /** v1 home / research profile (D33): bootstrap admin credential. */
   ADMIN_API_KEY: z.string().min(32),
   /** Idle debounce before extracting a conversation (D1, D5): global, seconds. */
@@ -40,6 +42,8 @@ export const envSchema = z.object({
   EMBEDDING_DIM: z.coerce.number().int().positive(),
 
   LOG_LLM_CALLS: bool.default(true),
+  /** Evaluation / tests only: honour `X-Recordare-Now` to ask questions "as of" a past instant. */
+  ALLOW_CLOCK_OVERRIDE: bool.default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

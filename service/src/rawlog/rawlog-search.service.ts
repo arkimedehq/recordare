@@ -44,7 +44,9 @@ export class RawLogSearchService {
   async search(ownerId: string, clientId: string | null, opts: RawSearchOptions): Promise<RawHit[]> {
     const scope = await this.scopeClause(clientId);
     const params: unknown[] = [ownerId, opts.from ?? null, opts.to ?? null];
+    // Messages behind forgotten memories never come back through the chat search (D16).
     const base = `m.owner_id = $1 AND m.role <> 'assistant' AND c.deleted_at IS NULL
+      AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.owner_id = $1 AND m.id = ANY(t.message_ids))
       AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}`;
 
     const tsq = toOrTsQuery(opts.query);

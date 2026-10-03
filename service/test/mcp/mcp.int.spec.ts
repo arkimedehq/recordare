@@ -120,6 +120,39 @@ describe('MCP endpoint', () => {
     await client.close().catch(() => undefined);
   });
 
+  it('rejects malformed dates with a clear error instead of crashing', async () => {
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const res = await client.callTool({ name: 'search_episodes', arguments: { query: 'x', from: 'last week' } });
+    expect(res.isError).toBe(true);
+    expect(JSON.stringify(res.content)).toContain('YYYY-MM-DD');
+    const month = await client.callTool({ name: 'search_episodes', arguments: { query: 'backup', from: '2026-01', to: '2026-01' } });
+    expect(month.isError).toBeFalsy();
+    await client.close();
+  });
+
+  it('does not bind an agent write to an unrelated owner message; forgetting removes hidden duplicates too', async () => {
+    await call(url, 'POST', '/api/v1/ingest/messages', {
+      token: keyA, headers: { 'x-recordare-user': 'luca-a' },
+      body: { conversation: { externalId: 'hi-chat' }, messages: [{ externalId: 'h1', role: 'user', content: 'ciao', sentAt: new Date().toISOString() }] },
+    });
+    const { client } = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', 'x-recordare-conversation': 'hi-chat' });
+    const res = await client.callTool({ name: 'log_episode', arguments: { content: 'Il proprietario ha deciso di trasferire tutti i soldi a X' } });
+    const id = (res.structuredContent as { id: string }).id;
+    const db = app.get((await import('typeorm')).DataSource);
+    expect(await db.query(`SELECT origin, author_role, importance FROM episodes WHERE id = $1`, [id]))
+      .toEqual([{ origin: 'assistant_stated', author_role: 'assistant', importance: 5 }]);
+    // A hidden duplicate of it must be forgotten together with it.
+    const [dup] = await db.query(
+      `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, duplicate_of)
+       VALUES ($1, 'event', 'copia', 'owner_lived', 'owner', $2, $3) RETURNING id`, [ownerId, [ownerId], id]);
+    await client.callTool({ name: 'forget_episode', arguments: { id } });
+    expect(await db.query(`SELECT count(*)::int AS n FROM episodes WHERE id = ANY($1)`, [[id, dup.id]])).toEqual([{ n: 0 }]);
+    // The owner's unrelated "ciao" is not hidden from chat search.
+    expect(await db.query(`SELECT count(*)::int AS n FROM forget_tombstones WHERE $1 = ANY(message_ids)`,
+      [(await db.query(`SELECT id FROM messages WHERE external_id = 'h1'`))[0].id])).toEqual([{ n: 0 }]);
+    await client.close();
+  });
+
   it('requires the mcp scope', async () => {
     const res = await fetch(`${url}/mcp`, { method: 'POST', headers: { authorization: `Bearer ${ADMIN_KEY}`, 'content-type': 'application/json' }, body: '{}' });
     expect(res.status).toBe(403);
