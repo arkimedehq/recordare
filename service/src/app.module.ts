@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { MeController } from './me/me.controller';
 import { QueueModule } from './queue/queue.module';
+import { EngineModule } from './engine/engine.module';
 import { RawLogModule } from './rawlog/rawlog.module';
 import { McpModule } from './mcp/mcp.module';
 
@@ -30,6 +31,7 @@ import { McpModule } from './mcp/mcp.module';
     LlmModule,
     AuthModule,
     AdminModule,
+    EngineModule,
     QueueModule,
     RawLogModule,
     McpModule,

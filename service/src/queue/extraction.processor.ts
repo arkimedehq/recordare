@@ -20,10 +20,3 @@ export class ExtractionProcessor extends WorkerHost {
     await this.runner.runForConversation(job.data.conversationId);
   }
 }
-
-/** Placeholder until the engine lands (M4): messages stay pending, nothing is extracted. */
-export class PendingExtractionRunner implements ExtractionRunner {
-  async runForConversation(): Promise<void> {
-    // Intentionally empty: the M4 engine replaces this provider.
-  }
-}
