@@ -121,6 +121,22 @@ check.
 ### Open items (not blocking D23)
 - Local model sweep (`qwen3:14b`, `gemma3`, …) for the sovereign profile.
 
+## Service v0 (2026-10-03) — the Recordare service through its public contracts
+
+System S (`systems/service_sys.py`): sessions in through REST ingest, questions out through MCP
+`search_episodes` with the official MCP Python client; the agent's planning step (period + topic)
+on `deepseek-flash`, as for D. M3: the service answers from the **raw log only** (full-text +
+vector over non-assistant messages, bge-m3); episodes arrive in M4. Harness v1.1, single run, base sets.
+
+| System | `dataset` (24 q) | `dataset_holdout` (28 q) |
+|---|---|---|
+| A — spike baseline (raw log, no period) | 83 % | 66 % |
+| **S — service v0 (raw log + agent period filter)** | **90 %** | **71 %** |
+| D — prototype (episodes, plans, facts) | 100 % | 100 % |
+
+The gap S → D is what M4 has to close: "last time", counts, plan status and states at a date
+(h01, h02, h04, h26…) need episodes and facts, not chat excerpts.
+
 ## Harness v1.1 (2026-10-02, night) — gold audit, validated judge, as-of ingestion
 
 Changes (WORK_PLAN M0.5):

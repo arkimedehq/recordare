@@ -13,6 +13,8 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 
 export interface RawHit {
   conversationId: string;
+  /** The client's own id of the conversation, to link back to its chat. */
+  conversation: string;
   messageId: string;
   at: string;
   authorRole: 'owner' | 'other' | 'tool';
@@ -75,15 +77,18 @@ export class RawLogSearchService {
     const top = [...scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, opts.limit ?? 5);
     if (top.length === 0) return [];
 
-    const rows: { id: string; conversation_id: string; sent_at: Date; role: string; author_person_id: string | null; content: string }[] =
-      await this.db.query(`SELECT id, conversation_id, sent_at, role, author_person_id, content FROM messages WHERE id = ANY($1)`, [top.map(([id]) => id)]);
+    const rows: { id: string; conversation_id: string; external_id: string; sent_at: Date; role: string; author_person_id: string | null; content: string }[] =
+      await this.db.query(
+        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, m.author_person_id, m.content
+         FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE m.id = ANY($1)`,
+        [top.map(([id]) => id)]);
     const byId = new Map(rows.map((r) => [r.id, r]));
     return top.flatMap(([id, score]) => {
       const r = byId.get(id);
       if (!r) return [];
       const authorRole = r.role === 'tool' ? 'tool' : r.author_person_id === ownerId ? 'owner' : 'other';
       return [{
-        conversationId: r.conversation_id, messageId: r.id, at: r.sent_at.toISOString(), authorRole,
+        conversationId: r.conversation_id, conversation: r.external_id, messageId: r.id, at: r.sent_at.toISOString(), authorRole,
         excerpt: r.content.length > EXCERPT_CHARS ? `${r.content.slice(0, EXCERPT_CHARS)}…` : r.content, score,
       } satisfies RawHit];
     });
