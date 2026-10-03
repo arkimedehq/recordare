@@ -72,18 +72,36 @@ class ServiceSystem:
         for s in sessions:
             owner = self._owner(s["user"])
             base = datetime.fromisoformat(s["ts"])
+            # Group chats: other people's messages keep role "other" and their author as a participant
+            # (unverified: they never enter the audience, and are never the owner's statements).
+            authors = sorted({m["author"] for m in s["messages"] if m["role"] == "other" and m.get("author")})
             messages = [{
                 "externalId": f"{s['id']}-{i}",
-                "role": "user" if m["role"] == "user" else "assistant",
+                "role": m["role"] if m["role"] in ("user", "assistant", "other") else "assistant",
+                **({"authorRef": m["author"]} if m["role"] == "other" and m.get("author") else {}),
                 "content": m["content"],
                 "sentAt": (base + timedelta(seconds=i)).isoformat(),
             } for i, m in enumerate(s["messages"])]
+            conversation = {"externalId": s["id"],
+                            "participants": [{"ref": a, "role": "other", "displayName": a} for a in authors]}
             # conversationEnded: extract now instead of waiting for the idle delay.
-            res = self._post("/api/v1/ingest/messages", {"conversation": {"externalId": s["id"]}, "messages": messages,
+            res = self._post("/api/v1/ingest/messages", {"conversation": conversation, "messages": messages,
                                                          "hints": {"conversationEnded": True}},
                              token=self.key, headers={"x-recordare-user": owner["ext"]})
             assert res.get("stored"), res
         self._wait_processed()
+
+    def cost(self) -> dict:
+        """LLM calls made by the service for this run's owners (engine cost, by prompt)."""
+        ids = [o["id"] for o in self.owners.values()]
+        with psycopg.connect(DB_URL) as conn:
+            rows = conn.execute(
+                "SELECT prompt_id, count(*), sum(input_tokens), sum(cached_input_tokens), sum(output_tokens) "
+                "FROM llm_calls WHERE owner_id = ANY(%s) GROUP BY prompt_id", (ids,)).fetchall()
+        return {r[0]: {"calls": r[1], "input": int(r[2] or 0), "cached": int(r[3] or 0), "output": int(r[4] or 0)} for r in rows}
+
+    def owner_ids(self) -> dict:
+        return {u: o["id"] for u, o in self.owners.items()}
 
     def _wait_processed(self, timeout_s: int = 1800) -> None:
         """Wait until the engine extracted every message and raw embeddings exist (failed runs are reported)."""

@@ -1,0 +1,991 @@
+{
+ "user": "sofia",
+ "episodes": [
+  {
+   "id": "g-e01",
+   "sessions": [
+    "s01"
+   ],
+   "content": "Week with three nights of on-call duty at Clinica Arcella; exhausted, Davide suggests looking for another job",
+   "kind": "event",
+   "date": "2027-03",
+   "date_precision": "approximate",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e02",
+   "sessions": [
+    "s02"
+   ],
+   "content": "First volunteering shift at the Rubano dog shelter (walked six dogs); met Brina, a shy setter mix",
+   "kind": "event",
+   "date": "2027-03-06",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e03",
+   "sessions": [
+    "s02",
+    "s11"
+   ],
+   "content": "Plan: weekend in Ljubljana with Davide 16-18 April, by car (Davide drives), hotel in the centre booked",
+   "kind": "plan",
+   "date": "2027-04-16",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e04",
+   "sessions": [
+    "s03"
+   ],
+   "content": "Job interview at Ambulatorio Veterinario dei Colli, Abano Terme (small practice, no night on-call)",
+   "kind": "event",
+   "date": "2027-03-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e05",
+   "sessions": [
+    "s04"
+   ],
+   "content": "Accepted the job at Ambulatorio dei Colli (full-time, no nights, 2,350 EUR net/month) and resigned from Clinica Arcella",
+   "kind": "event",
+   "date": "2027-03-17",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e06",
+   "sessions": [
+    "s04",
+    "s16"
+   ],
+   "content": "Plan: start at Ambulatorio dei Colli on Monday 10 May",
+   "kind": "plan",
+   "date": "2027-05-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e07",
+   "sessions": [
+    "s05",
+    "s13"
+   ],
+   "content": "Plan: hike on Monte Grappa (Val San Liberale) Sunday 25 April with Davide, Marta, Giorgio, Lorenzo; Sofia brings sandwiches",
+   "kind": "plan",
+   "date": "2027-04-25",
+   "date_precision": "day",
+   "people": [
+    "Davide",
+    "Marta",
+    "Giorgio",
+    "Lorenzo"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e08",
+   "sessions": [
+    "s13"
+   ],
+   "content": "Monte Grappa hike cancelled by Marta on Saturday evening because of a storm weather alert",
+   "kind": "event",
+   "date": "2027-04-24",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e09",
+   "sessions": [
+    "s06"
+   ],
+   "content": "Visit to grandmother Ida in Chioggia; she cooked sarde in saor",
+   "kind": "event",
+   "date": "2027-03-21",
+   "date_precision": "day",
+   "people": [
+    "nonna Ida"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e10",
+   "sessions": [
+    "s06",
+    "s17",
+    "s20"
+   ],
+   "content": "Plan: party for mother Graziella's 60th birthday at agriturismo Le Vigne (Este), first set for Saturday 29 May",
+   "kind": "plan",
+   "date": "2027-05-29",
+   "date_precision": "day",
+   "people": [
+    "Graziella",
+    "Chiara"
+   ],
+   "plan_outcome": "rescheduled:2027-06-05"
+  },
+  {
+   "id": "g-e11",
+   "sessions": [
+    "s07"
+   ],
+   "content": "Easter at her parents' in Este",
+   "kind": "event",
+   "date": "2027-03-28",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e12",
+   "sessions": [
+    "s07"
+   ],
+   "content": "Easter Monday barbecue at Davide's parents' in Selvazzano",
+   "kind": "event",
+   "date": "2027-03-29",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e13",
+   "sessions": [
+    "s07",
+    "s12"
+   ],
+   "content": "Plan: abdominal ultrasound refresher course in Bologna, Saturday 24 April, 150 EUR",
+   "kind": "plan",
+   "date": "2027-04-24",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e14",
+   "sessions": [
+    "s12"
+   ],
+   "content": "Ultrasound course in Bologna cancelled (teacher ill); 150 EUR to be refunded",
+   "kind": "event",
+   "date": "2027-04-22",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e15",
+   "sessions": [
+    "s08"
+   ],
+   "content": "Sister Chiara got an offer from an architecture firm in Verona, starting July, will move there",
+   "kind": "event",
+   "date": "2027-04-08",
+   "date_precision": "day",
+   "people": [
+    "Chiara"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e16",
+   "sessions": [
+    "s09"
+   ],
+   "content": "Second volunteering shift at the Rubano shelter; Brina recognised her",
+   "kind": "event",
+   "date": "2027-04-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e17",
+   "sessions": [
+    "s09"
+   ],
+   "content": "Davide asked her to move in together and she said yes (to his flat in via Savonarola in early June, then look for a house in Abano)",
+   "kind": "event",
+   "date": "2027-04-10",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e18",
+   "sessions": [
+    "s10",
+    "s15",
+    "s19"
+   ],
+   "content": "Plan: orthopaedic visit for right-knee pain with dott. Benetti, Thursday 6 May 17:00",
+   "kind": "plan",
+   "date": "2027-05-06",
+   "date_precision": "day",
+   "people": [
+    "dott. Benetti"
+   ],
+   "plan_outcome": "rescheduled:2027-05-27"
+  },
+  {
+   "id": "g-e19",
+   "sessions": [
+    "s11"
+   ],
+   "content": "Weekend in Ljubljana with Davide (16-18 April): rain on Saturday, funicular to the castle, central market and štruklji on Sunday",
+   "kind": "event",
+   "date": "2027-04-16",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e20",
+   "sessions": [
+    "s14"
+   ],
+   "content": "Last day at Clinica Arcella: returned badge and keys; colleagues made a bone-shaped cake, Ilaria cried",
+   "kind": "state_change",
+   "date": "2027-04-30",
+   "date_precision": "day",
+   "people": [
+    "Ilaria"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e21",
+   "sessions": [
+    "s16"
+   ],
+   "content": "Started at Ambulatorio Veterinario dei Colli in Abano (owner dott. Fabbri, nurse Teresa)",
+   "kind": "state_change",
+   "date": "2027-05-10",
+   "date_precision": "day",
+   "people": [
+    "dott. Fabbri",
+    "Teresa"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e22",
+   "sessions": [
+    "s17"
+   ],
+   "content": "Visit to grandmother Ida in Chioggia with Davide; brought fritole",
+   "kind": "event",
+   "date": "2027-05-16",
+   "date_precision": "day",
+   "people": [
+    "nonna Ida",
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e23",
+   "sessions": [
+    "s17"
+   ],
+   "content": "Uncle Renzo to have surgery on 28 May; mother's party moved to Saturday 5 June",
+   "kind": "event",
+   "date": "2027-05-17",
+   "date_precision": "day",
+   "people": [
+    "zio Renzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e24",
+   "sessions": [
+    "s18"
+   ],
+   "content": "Third volunteering shift at the Rubano shelter; thinking of adopting Brina once they have a house with a garden",
+   "kind": "event",
+   "date": "2027-05-22",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e25",
+   "sessions": [
+    "s19"
+   ],
+   "content": "Orthopaedic visit: meniscus fine, patellar tendinitis, six physiotherapy sessions",
+   "kind": "event",
+   "date": "2027-05-27",
+   "date_precision": "day",
+   "people": [
+    "dott. Benetti"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e26",
+   "sessions": [
+    "s20"
+   ],
+   "content": "Moved in with Davide in via Savonarola (last boxes on 1 June; keys of via Belzoni returned on 2 June)",
+   "kind": "state_change",
+   "date": "2027-06-01",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e27",
+   "sessions": [
+    "s20"
+   ],
+   "content": "Mother's 60th birthday party at Le Vigne: 30 guests, spa-weekend gift from Sofia and Chiara, uncle Renzo came briefly",
+   "kind": "event",
+   "date": "2027-06-05",
+   "date_precision": "day",
+   "people": [
+    "Graziella",
+    "Chiara",
+    "zio Renzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e28",
+   "sessions": [
+    "s21"
+   ],
+   "content": "Agreed in the friends' group to contribute 120 EUR to Marta and Simone's honeymoon gift, money to Ilaria by 15 June",
+   "kind": "plan",
+   "date": "2027-06-15",
+   "date_precision": "day",
+   "people": [
+    "Ilaria",
+    "Marta",
+    "Simone"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e29",
+   "sessions": [
+    "s21",
+    "s23"
+   ],
+   "content": "Marta and Simone's wedding in Asolo, Saturday 19 June: Sofia attended with Davide (caught the bouquet; Davide danced all night)",
+   "kind": "event",
+   "date": "2027-06-19",
+   "date_precision": "day",
+   "people": [
+    "Marta",
+    "Simone",
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e30",
+   "sessions": [
+    "s23"
+   ],
+   "content": "Plan: trial sailing outing in Caorle on Sunday 18 July (surprise gift from Davide)",
+   "kind": "plan",
+   "date": "2027-07-18",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e31",
+   "sessions": [
+    "s24"
+   ],
+   "content": "Signed the lease for a small house with garden in via Monteortone 22, Abano Terme; move-in 1 August",
+   "kind": "event",
+   "date": "2027-06-26",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e32",
+   "sessions": [
+    "s25"
+   ],
+   "content": "Fourth volunteering shift at the Rubano shelter; decided to adopt Brina and signed the pre-adoption form",
+   "kind": "event",
+   "date": "2027-07-03",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e33",
+   "sessions": [
+    "s25"
+   ],
+   "content": "Chiara moved to Verona (studio flat near Castelvecchio); Sofia helped with the van",
+   "kind": "event",
+   "date": "2027-07-01",
+   "date_precision": "day",
+   "people": [
+    "Chiara"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e34",
+   "sessions": [
+    "s25"
+   ],
+   "content": "Plan: ceramics trial lesson at a workshop in Padova, Tuesday 20 July",
+   "kind": "plan",
+   "date": "2027-07-20",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e35",
+   "sessions": [
+    "s25",
+    "s26"
+   ],
+   "content": "Plan: pick up Brina from the shelter on Saturday 10 July",
+   "kind": "plan",
+   "date": "2027-07-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e36",
+   "sessions": [
+    "s26"
+   ],
+   "content": "Adopted Brina (3 years, setter mix, 19 kg), brought home from the Rubano shelter; Pepe hissed at her",
+   "kind": "event",
+   "date": "2027-07-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e37",
+   "sessions": [
+    "s26"
+   ],
+   "content": "Gave a talk on feline nutrition at the Abano public library, about 40 people",
+   "kind": "event",
+   "date": "2027-07-08",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e38",
+   "sessions": [
+    "s27"
+   ],
+   "content": "First dog-training lesson with Brina at the Rubano field (good recall)",
+   "kind": "event",
+   "date": "2027-07-12",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e39",
+   "sessions": [
+    "s27"
+   ],
+   "content": "Dinner at a sushi restaurant for Davide's 38th birthday; gift: a diving watch",
+   "kind": "event",
+   "date": "2027-07-13",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e40",
+   "sessions": [
+    "s28"
+   ],
+   "content": "Visit to grandmother Ida in Chioggia with Davide and Brina",
+   "kind": "event",
+   "date": "2027-07-25",
+   "date_precision": "day",
+   "people": [
+    "nonna Ida",
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e41",
+   "sessions": [
+    "s29"
+   ],
+   "content": "Moved into the rented house in via Monteortone 22, Abano Terme, with Davide",
+   "kind": "state_change",
+   "date": "2027-08-01",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e42",
+   "sessions": [
+    "s30"
+   ],
+   "content": "Davide got a job offer from an engineering firm in Milan and turned it down",
+   "kind": "event",
+   "date": "2027-08",
+   "date_precision": "approximate",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e43",
+   "sessions": [
+    "s30",
+    "s31"
+   ],
+   "content": "Plan: holiday in Puglia 21-28 August at a masseria near Polignano a Mare; Brina stays with mum in Este",
+   "kind": "plan",
+   "date": "2027-08-21",
+   "date_precision": "day",
+   "people": [
+    "Davide",
+    "Graziella"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e44",
+   "sessions": [
+    "s31"
+   ],
+   "content": "Holiday in Puglia (masseria near Polignano a Mare); best day in Alberobello",
+   "kind": "event",
+   "date": "2027-08-21",
+   "date_precision": "day",
+   "people": [
+    "Davide"
+   ],
+   "plan_outcome": null
+  }
+ ],
+ "facts": [
+  {
+   "key": "employer",
+   "history": [
+    {
+     "value": "Clinica Veterinaria Arcella, Padova (veterinarian, 7 years, night on-call)",
+     "from": null,
+     "to": "2027-04-30",
+     "sessions": [
+      "s01",
+      "s04",
+      "s13",
+      "s14"
+     ]
+    },
+    {
+     "value": "Ambulatorio Veterinario dei Colli, Abano Terme (full-time, no nights)",
+     "from": "2027-05-10",
+     "to": null,
+     "sessions": [
+      "s04",
+      "s16",
+      "s30"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "last_day_at_previous_job",
+   "history": [
+    {
+     "value": "2027-04-30 (Friday; first stated as Thursday 29 April, corrected)",
+     "from": "2027-04-26",
+     "to": null,
+     "sessions": [
+      "s04",
+      "s13"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "salary_net_monthly",
+   "history": [
+    {
+     "value": "2,350 EUR net (new job)",
+     "from": "2027-05-10",
+     "to": null,
+     "sessions": [
+      "s04"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "home",
+   "history": [
+    {
+     "value": "rented one-bedroom flat in via Belzoni, Padova (alone with Pepe)",
+     "from": null,
+     "to": "2027-06-01",
+     "sessions": [
+      "s01",
+      "s08",
+      "s20"
+     ]
+    },
+    {
+     "value": "Davide's flat in via Savonarola",
+     "from": "2027-06-01",
+     "to": "2027-08-01",
+     "sessions": [
+      "s09",
+      "s20"
+     ]
+    },
+    {
+     "value": "rented house with garden, via Monteortone 22, Abano Terme",
+     "from": "2027-08-01",
+     "to": null,
+     "sessions": [
+      "s24",
+      "s29"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "lives_with",
+   "history": [
+    {
+     "value": "alone (with cat Pepe)",
+     "from": null,
+     "to": "2027-06-01",
+     "sessions": [
+      "s01"
+     ]
+    },
+    {
+     "value": "Davide",
+     "from": "2027-06-01",
+     "to": null,
+     "sessions": [
+      "s20",
+      "s29"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "rent_monthly",
+   "history": [
+    {
+     "value": "920 EUR/month for the Abano house (first stated as 950, corrected)",
+     "from": "2027-08-01",
+     "to": null,
+     "sessions": [
+      "s24",
+      "s29"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "pets",
+   "history": [
+    {
+     "value": "cat Pepe (tabby, 9)",
+     "from": null,
+     "to": "2027-07-10",
+     "sessions": [
+      "s01"
+     ]
+    },
+    {
+     "value": "cat Pepe and dog Brina (setter mix, 3, 19 kg)",
+     "from": "2027-07-10",
+     "to": null,
+     "sessions": [
+      "s25",
+      "s26"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "ljubljana_hotel_cost",
+   "history": [
+    {
+     "value": "210 EUR for two nights (first stated as 180, corrected)",
+     "from": "2027-04-16",
+     "to": null,
+     "sessions": [
+      "s02",
+      "s12"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "knee_condition",
+   "history": [
+    {
+     "value": "right-knee pain, cause unknown",
+     "from": "2027-04-14",
+     "to": "2027-05-27",
+     "sessions": [
+      "s10"
+     ]
+    },
+    {
+     "value": "patellar tendinitis (meniscus fine), six physiotherapy sessions",
+     "from": "2027-05-27",
+     "to": null,
+     "sessions": [
+      "s19"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "partner",
+   "history": [
+    {
+     "value": "Davide (hydraulic engineer at the Consorzio di bonifica; turned 38 around 13 July 2027, celebrated on the 13th)",
+     "from": null,
+     "to": null,
+     "sessions": [
+      "s01",
+      "s27"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "sister_chiara_city",
+   "history": [
+    {
+     "value": "Padova (architect)",
+     "from": null,
+     "to": "2027-07-01",
+     "sessions": [
+      "s01",
+      "s08"
+     ]
+    },
+    {
+     "value": "Verona (studio flat near Castelvecchio; new job at an architecture firm)",
+     "from": "2027-07-01",
+     "to": null,
+     "sessions": [
+      "s08",
+      "s25"
+     ]
+    }
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "category": "profile",
+   "content": "Sofia, 34, veterinarian; based in Padova, then Abano Terme",
+   "sessions": [
+    "s01",
+    "s29"
+   ]
+  },
+  {
+   "category": "relationship",
+   "content": "Davide is her boyfriend, a hydraulic engineer at the Consorzio di bonifica; his parents live in Selvazzano",
+   "sessions": [
+    "s01",
+    "s07"
+   ]
+  },
+  {
+   "category": "relationship",
+   "content": "Chiara is her sister, an architect (Padova, then Verona from July 2027)",
+   "sessions": [
+    "s01",
+    "s08",
+    "s25"
+   ]
+  },
+  {
+   "category": "relationship",
+   "content": "Mother Graziella lives in Este (60 in 2027); her parents live in Este",
+   "sessions": [
+    "s06",
+    "s07",
+    "s30"
+   ]
+  },
+  {
+   "category": "relationship",
+   "content": "Grandmother Ida, 91, lives in Chioggia, used to be a seamstress",
+   "sessions": [
+    "s06",
+    "s17"
+   ]
+  },
+  {
+   "category": "relationship",
+   "content": "Friends: Marta (friend, married Simone), Giorgio, Lorenzo; Ilaria is her former colleague at Arcella and a friend",
+   "sessions": [
+    "s04",
+    "s05",
+    "s21",
+    "s23"
+   ]
+  },
+  {
+   "category": "relationship",
+   "content": "At the new practice: owner dott. Fabbri, nurse Teresa",
+   "sessions": [
+    "s16"
+   ]
+  },
+  {
+   "category": "habit",
+   "content": "Volunteers on Saturdays at the Rubano dog shelter",
+   "sessions": [
+    "s02",
+    "s09",
+    "s18",
+    "s25"
+   ]
+  },
+  {
+   "category": "habit",
+   "content": "Paints animals in watercolour to relax",
+   "sessions": [
+    "s15"
+   ]
+  },
+  {
+   "category": "habit",
+   "content": "Runs (paused for knee tendinitis)",
+   "sessions": [
+    "s10",
+    "s19"
+   ]
+  },
+  {
+   "category": "value",
+   "content": "Wants a job without night on-call duty; values humane working hours",
+   "sessions": [
+    "s01",
+    "s14",
+    "s16"
+   ]
+  },
+  {
+   "category": "preference",
+   "content": "Loved Ljubljana's central market and štruklji",
+   "sessions": [
+    "s11"
+   ]
+  },
+  {
+   "category": "constraint",
+   "content": "Suffers from seasickness",
+   "sessions": [
+    "s23"
+   ]
+  },
+  {
+   "category": "preference",
+   "content": "Curious about ceramics",
+   "sessions": [
+    "s25"
+   ]
+  },
+  {
+   "category": "knowledge",
+   "content": "Sofia and Davide set up (planned 14 June) a shared household-expense spreadsheet split by income",
+   "sessions": [
+    "s22"
+   ]
+  }
+ ],
+ "not_memories": [
+  {
+   "sessions": [
+    "s03"
+   ],
+   "why": "how-to: how to write a resignation letter and how notice works (the request itself is only provenance)"
+  },
+  {
+   "sessions": [
+    "s22"
+   ],
+   "why": "how-to: spreadsheet set-up for proportional expense split"
+  },
+  {
+   "sessions": [
+    "s21"
+   ],
+   "why": "other person's claim: Giorgio says Sofia is moving to London in September; Sofia never said it"
+  },
+  {
+   "sessions": [
+    "s05",
+    "s21"
+   ],
+   "why": "group-chat logistics by other people (who drives, coffee stove, money collection)"
+  },
+  {
+   "sessions": [
+    "s23",
+    "s15"
+   ],
+   "why": "assistant small talk / generic advice (seasickness tips, watercolour chat)"
+  }
+ ]
+}

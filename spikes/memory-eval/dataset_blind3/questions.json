@@ -1,0 +1,378 @@
+{
+ "_note": "Blind set #3. Questions asked as user 'sofia' at asked_at (systems ingest only sessions up to asked_at). expected = reference answer; must_not = claims that must not be asserted as true.",
+ "user": "sofia",
+ "questions": [
+  {
+   "id": "b01",
+   "category": "point-temporal",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quando ho portato a casa Brina?",
+   "expected": "Sabato 10 luglio 2027, adottata dal canile di Rubano (decisione e preaffido il 3 luglio).",
+   "must_not": [
+    "affermare che l'ha portata a casa il 3 luglio"
+   ]
+  },
+  {
+   "id": "b02",
+   "category": "last-time",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quand'è stata l'ultima volta che sono andata a trovare nonna Ida?",
+   "expected": "Domenica 25 luglio 2027, a Chioggia, con Davide e Brina.",
+   "must_not": [
+    "indicare come ultima visita il 16 maggio"
+   ]
+  },
+  {
+   "id": "b03",
+   "category": "count",
+   "asked_at": "2027-06-30T10:00:00+02:00",
+   "q": "Quante volte ho fatto volontariato al canile finora?",
+   "expected": "3 volte: sabato 6 marzo, sabato 10 aprile e sabato 22 maggio 2027, al canile di Rubano.",
+   "must_not": [
+    "affermare che sono state 4 volte",
+    "contare il turno del 13 marzo (di un altro utente)"
+   ]
+  },
+  {
+   "id": "b04",
+   "category": "count",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quante volte sono andata a trovare nonna Ida a Chioggia da marzo a oggi?",
+   "expected": "3 volte: domenica 21 marzo, domenica 16 maggio (con Davide) e domenica 25 luglio 2027 (con Davide e Brina).",
+   "must_not": [
+    "affermare che sono state 2 volte",
+    "affermare che sono state 4 volte"
+   ]
+  },
+  {
+   "id": "b05",
+   "category": "period-overview",
+   "asked_at": "2027-07-01T09:00:00+02:00",
+   "q": "Cosa è successo di importante nella mia vita a giugno?",
+   "expected": "1 giugno: trasloco da Davide in via Savonarola (2 giugno riconsegnate le chiavi di via Belzoni); sabato 5 giugno festa per i 60 anni della mamma a Le Vigne (Este); sabato 19 giugno matrimonio di Marta ad Asolo (preso il bouquet); sabato 26 giugno firmato l'affitto della casa di via Monteortone 22 ad Abano (ingresso 1 agosto).",
+   "must_not": [
+    "affermare che a giugno si è trasferita ad Abano",
+    "collocare a giugno l'adozione di Brina"
+   ]
+  },
+  {
+   "id": "b06",
+   "category": "this-week",
+   "asked_at": "2027-07-14T20:00:00+02:00",
+   "q": "Cosa ho fatto questa settimana?",
+   "expected": "Lunedì 12 luglio prima lezione di educazione cinofila con Brina al campo di Rubano; martedì 13 luglio cena al sushi per i 38 anni di Davide (regalo: orologio da subacqueo).",
+   "must_not": [
+    "collocare in questa settimana l'adozione di Brina (sabato 10 luglio)",
+    "collocare in questa settimana l'incontro in biblioteca (giovedì 8 luglio)"
+   ]
+  },
+  {
+   "id": "b07",
+   "category": "last-week",
+   "asked_at": "2027-07-14T20:00:00+02:00",
+   "q": "Cosa ho fatto la settimana scorsa?",
+   "expected": "Giovedì 8 luglio incontro sulla nutrizione felina alla biblioteca di Abano (circa 40 persone); sabato 10 luglio adozione di Brina, portata a casa dal canile.",
+   "must_not": [
+    "collocare nella settimana scorsa il turno al canile di sabato 3 luglio",
+    "collocare nella settimana scorsa la lezione di educazione cinofila del 12 luglio"
+   ]
+  },
+  {
+   "id": "b08",
+   "category": "plan-confirmed",
+   "asked_at": "2027-05-01T10:00:00+02:00",
+   "q": "Alla fine il weekend a Lubiana l'abbiamo fatto?",
+   "expected": "Sì: dal 16 al 18 aprile 2027 con Davide, in macchina. Sabato ha piovuto ma siete saliti al castello con la funicolare; domenica mercato centrale e štruklji.",
+   "must_not": [
+    "affermare che il weekend è stato annullato o rimandato"
+   ]
+  },
+  {
+   "id": "b09",
+   "category": "plan-cancelled",
+   "asked_at": "2027-06-01T10:00:00+02:00",
+   "q": "Siamo poi andati sul Monte Grappa a fine aprile?",
+   "expected": "No: l'escursione di domenica 25 aprile è stata annullata da Marta sabato sera per un'allerta meteo per temporali.",
+   "must_not": [
+    "affermare che l'escursione si è fatta"
+   ]
+  },
+  {
+   "id": "b10",
+   "category": "plan-rescheduled",
+   "asked_at": "2027-05-20T10:00:00+02:00",
+   "q": "Quando ho la visita dall'ortopedico?",
+   "expected": "Giovedì 27 maggio 2027 alle 17 dal dottor Benetti (spostata da giovedì 6 maggio perché il dottore era a un congresso).",
+   "must_not": [
+    "affermare che la visita è il 6 maggio",
+    "affermare che la visita c'è già stata"
+   ]
+  },
+  {
+   "id": "b11",
+   "category": "plan-rescheduled",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quando abbiamo festeggiato i 60 anni di mia mamma?",
+   "expected": "Sabato 5 giugno 2027 all'agriturismo Le Vigne di Este (era prevista il 29 maggio, spostata per l'operazione di zio Renzo).",
+   "must_not": [
+    "affermare che la festa si è svolta il 29 maggio"
+   ]
+  },
+  {
+   "id": "b12",
+   "category": "plan-unresolved",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Com'è andata la prova in barca a vela a Caorle?",
+   "expected": "Non si sa: l'uscita di prova (regalo di Davide) era prevista per domenica 18 luglio 2027, ma non ne hai più parlato; l'esito non è noto.",
+   "must_not": [
+    "affermare che l'uscita in barca è stata fatta",
+    "affermare che l'uscita è stata annullata",
+    "affermare che ha sofferto il mal di mare in barca"
+   ]
+  },
+  {
+   "id": "b13",
+   "category": "plan-unresolved",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Sono poi andata alla lezione di prova di ceramica?",
+   "expected": "Non si sa: era prevista martedì 20 luglio 2027 in un laboratorio di Padova, ma non ne hai più parlato.",
+   "must_not": [
+    "affermare che è andata alla lezione",
+    "affermare che si è iscritta al corso di ceramica"
+   ]
+  },
+  {
+   "id": "b14",
+   "category": "premise-trap",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Cosa ho imparato al corso di ecografia a Bologna?",
+   "expected": "Niente: il corso di sabato 24 aprile 2027 è stato annullato (docente malato) e i 150 euro ti vengono rimborsati.",
+   "must_not": [
+    "descrivere contenuti appresi al corso come se si fosse svolto",
+    "affermare che ha frequentato il corso"
+   ]
+  },
+  {
+   "id": "b15",
+   "category": "premise-trap",
+   "asked_at": "2027-05-01T10:00:00+02:00",
+   "q": "Quanto abbiamo speso per il volo per Lubiana?",
+   "expected": "Nessun volo: a Lubiana siete andati in macchina, guidava Davide (circa tre ore). L'hotel è costato 210 euro.",
+   "must_not": [
+    "indicare un prezzo del volo",
+    "affermare che sono andati in aereo"
+   ]
+  },
+  {
+   "id": "b16",
+   "category": "state-now",
+   "asked_at": "2027-06-20T10:00:00+02:00",
+   "q": "Dove abito in questo momento?",
+   "expected": "Con Davide nel suo appartamento in via Savonarola, dal 1° giugno 2027 (hai lasciato il bilocale di via Belzoni).",
+   "must_not": [
+    "affermare che abita ancora in via Belzoni",
+    "affermare che abita ad Abano"
+   ]
+  },
+  {
+   "id": "b17",
+   "category": "state-now",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Dove abito adesso?",
+   "expected": "Ad Abano Terme, nella casetta in affitto di via Monteortone 22, con Davide, Brina e Pepe, dal 1° agosto 2027.",
+   "must_not": [
+    "affermare che abita in via Savonarola",
+    "affermare che abita in via Belzoni",
+    "affermare che abita a Verona"
+   ]
+  },
+  {
+   "id": "b18",
+   "category": "state-at-date",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Dove abitavo a metà giugno?",
+   "expected": "Da Davide, in via Savonarola (dal 1° giugno al 1° agosto 2027).",
+   "must_not": [
+    "affermare che a metà giugno abitava in via Belzoni",
+    "affermare che a metà giugno abitava ad Abano"
+   ]
+  },
+  {
+   "id": "b19",
+   "category": "state-change-date",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quando ho lasciato l'appartamento di via Belzoni?",
+   "expected": "A inizio giugno 2027: martedì 1 giugno ultime scatole portate da Davide, mercoledì 2 giugno chiavi riconsegnate al proprietario.",
+   "must_not": [
+    "affermare che ha lasciato via Belzoni ad agosto"
+   ]
+  },
+  {
+   "id": "b20",
+   "category": "anti-trap",
+   "asked_at": "2027-07-20T10:00:00+02:00",
+   "q": "Mi sono trasferita a Verona questo mese?",
+   "expected": "No: è tua sorella Chiara che si è trasferita a Verona (giovedì 1 luglio; l'hai aiutata col furgone). Tu abiti con Davide in via Savonarola; il trasloco ad Abano è previsto per il 1° agosto.",
+   "must_not": [
+    "affermare che Sofia si è trasferita a Verona"
+   ]
+  },
+  {
+   "id": "b21",
+   "category": "anti-trap",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Ho cambiato di nuovo lavoro quest'estate?",
+   "expected": "No: lavori ancora all'Ambulatorio Veterinario dei Colli di Abano Terme, dove hai iniziato il 10 maggio 2027 (confermato ad agosto). È Davide che ha ricevuto un'offerta a Milano, e l'ha rifiutata.",
+   "must_not": [
+    "affermare che ha cambiato lavoro in estate",
+    "affermare che lavora a Milano",
+    "affermare che lavora a Londra"
+   ]
+  },
+  {
+   "id": "b22",
+   "category": "correction",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quanto è costato l'hotel a Lubiana?",
+   "expected": "210 euro per le due notti (all'inizio avevi detto 180, poi hai corretto).",
+   "must_not": [
+    "affermare che è costato 180 euro"
+   ]
+  },
+  {
+   "id": "b23",
+   "category": "correction",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Qual è stato il mio ultimo giorno alla Clinica Arcella?",
+   "expected": "Venerdì 30 aprile 2027 (non giovedì 29 come avevi detto all'inizio).",
+   "must_not": [
+    "affermare che l'ultimo giorno è stato giovedì 29 aprile"
+   ]
+  },
+  {
+   "id": "b24",
+   "category": "correction",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quanto paghiamo di affitto ad Abano?",
+   "expected": "920 euro al mese (avevi detto 950, poi hai corretto rileggendo il contratto).",
+   "must_not": [
+    "affermare che l'affitto è 950 euro"
+   ]
+  },
+  {
+   "id": "b25",
+   "category": "implicit-change",
+   "asked_at": "2027-05-07T18:00:00+02:00",
+   "q": "Lavoro ancora alla Clinica Veterinaria Arcella?",
+   "expected": "No: l'ultimo giorno è stato venerdì 30 aprile 2027, quando hai riconsegnato badge e chiavi; inizierai all'Ambulatorio Veterinario dei Colli di Abano lunedì 10 maggio.",
+   "must_not": [
+    "affermare che lavora ancora alla Clinica Arcella",
+    "affermare che ha già iniziato all'Ambulatorio dei Colli"
+   ]
+  },
+  {
+   "id": "b26",
+   "category": "third-party",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Cosa è cambiato per mia sorella Chiara negli ultimi mesi?",
+   "expected": "Ha avuto un'offerta da uno studio di architettura di Verona (notizia di aprile; doveva iniziare a luglio) e si è trasferita a Verona giovedì 1 luglio 2027, in un monolocale vicino a Castelvecchio; l'hai aiutata col furgone.",
+   "must_not": [
+    "attribuire a Sofia il trasferimento a Verona"
+   ]
+  },
+  {
+   "id": "b27",
+   "category": "emotion/opinion",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Come mi sentivo quando ho lasciato la Clinica Arcella?",
+   "expected": "Triste per i sette anni e i colleghi (Ilaria ha pianto, torta a forma di osso), ma sollevata perché finivano le notti di reperibilità.",
+   "must_not": [
+    "affermare che era solo felice senza tristezza"
+   ]
+  },
+  {
+   "id": "b28",
+   "category": "emotion/opinion",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "What did I like most about the Ljubljana trip?",
+   "expected": "The central market on Sunday morning and the štruklji (rolled cottage-cheese dumplings). Davide preferred the Dragon Bridge.",
+   "must_not": [
+    "claim that Sofia's favourite was the Dragon Bridge"
+   ]
+  },
+  {
+   "id": "b29",
+   "category": "small-detail",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quante persone sono venute al mio incontro sulla nutrizione felina?",
+   "expected": "Circa 40, giovedì 8 luglio 2027 alla biblioteca di Abano Terme."
+  },
+  {
+   "id": "b30",
+   "category": "provenance",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "In quale conversazione ti avevo chiesto come si scrive una lettera di dimissioni?",
+   "expected": "Nella chat di giovedì 11 marzo 2027, il giorno dopo il colloquio all'Ambulatorio dei Colli: hai chiesto anche come funziona il preavviso.",
+   "must_not": [
+    "collocare la richiesta il 17 marzo"
+   ]
+  },
+  {
+   "id": "b31",
+   "category": "provenance",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "When did I ask you how to set up a spreadsheet for splitting household expenses?",
+   "expected": "On Monday 14 June 2027 (split in proportion to incomes, with an automatic monthly balance)."
+  },
+  {
+   "id": "b32",
+   "category": "negative",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Sono andata a vedere un'opera all'Arena di Verona quest'estate?",
+   "expected": "Non risulta: non hai mai parlato di essere andata all'Arena.",
+   "must_not": [
+    "affermare che è andata all'Arena"
+   ]
+  },
+  {
+   "id": "b33",
+   "category": "cross-language",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Quanti anni ha Brina e di che razza è?",
+   "expected": "Ha 3 anni, è un incrocio di setter (circa 19 kg)."
+  },
+  {
+   "id": "b34",
+   "category": "poisoning-probe",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Ho detto che a settembre mi trasferisco a Londra?",
+   "expected": "No: l'ha scritto Giorgio nella chat del regalo per Marta (10 giugno 2027), ma tu non l'hai mai detto. Vivi ad Abano Terme e lavori all'Ambulatorio dei Colli.",
+   "must_not": [
+    "affermare che Sofia si trasferisce a Londra",
+    "affermare che Sofia ha detto di trasferirsi a Londra",
+    "affermare che a Sofia è stato offerto un posto a Londra"
+   ]
+  },
+  {
+   "id": "b35",
+   "category": "plan-confirmed",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Did we go to Puglia in the end?",
+   "expected": "Yes: 21-28 August 2027, a masseria near Polignano a Mare; the best day was Alberobello. Brina stayed with your mum in Este.",
+   "must_not": [
+    "claim the holiday was cancelled or postponed"
+   ]
+  },
+  {
+   "id": "b36",
+   "category": "plan-confirmed",
+   "asked_at": "2027-09-01T10:00:00+02:00",
+   "q": "Did I go to Marta's wedding?",
+   "expected": "Yes: Saturday 19 June 2027 in Asolo, with Davide. Marta's photos show you catching the bouquet; Davide danced all night.",
+   "must_not": [
+    "claim that Sofia did not go",
+    "claim that it is unknown whether Sofia went"
+   ]
+  }
+ ]
+}
