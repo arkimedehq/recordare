@@ -114,4 +114,9 @@ describe('resolveProfile', () => {
     expect(() => resolveProfile('nope')).toThrow(/Unknown LLM profile/);
     expect(resolveProfile('nope', '{"reasoningOff":{"x":1}}').reasoningOff).toEqual({ x: 1 });
   });
+
+  it('merges nested overrides instead of replacing them', () => {
+    const p = resolveProfile('anthropic', '{"anthropic":{"thinking":{"type":"between_tools"}}}');
+    expect(p.anthropic).toMatchObject({ effort: 'low', refusalFallback: true, thinking: { type: 'between_tools' } });
+  });
 });

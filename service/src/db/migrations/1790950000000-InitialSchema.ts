@@ -396,6 +396,9 @@ export class InitialSchema1790950000000 implements MigrationInterface {
     await q.query(`
       CREATE FUNCTION facts_single_current_check() RETURNS trigger AS $$
       BEGIN
+        -- Serialise writers of the same slot so concurrent extractions cannot both pass the check.
+        PERFORM pg_advisory_xact_lock(hashtextextended(
+          NEW.owner_id::text || '|' || COALESCE(NEW.subject_person_id::text, '') || '|' || NEW.key, 0));
         IF NEW.status = 'current' AND NEW.deleted_at IS NULL
            AND (SELECT cardinality FROM fact_slots WHERE key = NEW.key) = 'single'
            AND EXISTS (

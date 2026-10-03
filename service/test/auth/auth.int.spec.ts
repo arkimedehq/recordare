@@ -70,5 +70,30 @@ describe('auth and admin (v1 home / research profile)', () => {
     expect(first.status).toBe(200);
     const again = await call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' } });
     expect(again.body.ownerId).toBe(first.body.ownerId);
+
+    // Concurrent first contact resolves to one owner, no 500.
+    const burst = await Promise.all(Array.from({ length: 5 }, () =>
+      call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'burst-user' } })));
+    expect(burst.map((r) => r.status)).toEqual([200, 200, 200, 200, 200]);
+    expect(new Set(burst.map((r) => r.body.ownerId)).size).toBe(1);
+  });
+
+  it('rejects tokens for unknown clients and cuts off tokens of disabled clients', async () => {
+    const owner = await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Chiara' } });
+    const missing = await call(url, 'POST', `/api/v1/admin/owners/${owner.body.personId}/tokens`, {
+      token: ADMIN_KEY, body: { clientId: '00000000-0000-4000-8000-000000000000', scopes: ['read'] },
+    });
+    expect(missing.status).toBe(404);
+
+    const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Desk', kind: 'mcp_client' } });
+    const tok = await call(url, 'POST', `/api/v1/admin/owners/${owner.body.personId}/tokens`, {
+      token: ADMIN_KEY, body: { clientId: client.body.id, scopes: ['read'] },
+    });
+    expect((await call(url, 'GET', '/api/v1/me', { token: tok.body.token })).status).toBe(200);
+    const { DataSource } = await import('typeorm');
+    const ds = app.get(DataSource);
+    await ds.query('UPDATE clients SET disabled_at = now() WHERE id = $1', [client.body.id]);
+    (app.get((await import('../../src/auth/auth.service.js')).AuthService)).forget();
+    expect((await call(url, 'GET', '/api/v1/me', { token: tok.body.token })).status).toBe(401);
   });
 });

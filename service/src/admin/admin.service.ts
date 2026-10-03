@@ -68,7 +68,8 @@ export class AdminService {
 
   async createToken(ownerId: string, input: CreateToken): Promise<{ id: string; token: string; prefix: string }> {
     const owner = await this.db.getRepository(Owner).findOneBy({ personId: ownerId });
-    if (!owner) throw new NotFoundException();
+    const client = await this.db.getRepository(Client).findOneBy({ id: input.clientId });
+    if (!owner || !client) throw new NotFoundException();
     const cred = generateCredential('rp');
     const row = await this.db.getRepository(AccessToken).save({
       ownerId, clientId: input.clientId, prefix: cred.prefix, hash: await hashCredential(cred.raw), scopes: input.scopes,

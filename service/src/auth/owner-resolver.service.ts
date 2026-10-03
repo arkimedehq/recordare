@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryFailedError } from 'typeorm';
 import { Client, ExternalIdentity, Owner, Person } from '../identity/identity.entities';
 import { type Principal } from './principal';
 
@@ -20,17 +20,31 @@ export class OwnerResolver {
     if (principal.kind === 'owner_token') return principal.ownerId;
     if (principal.kind !== 'client' || !externalUserId) throw new NotFoundException();
 
-    const identity = await this.db.getRepository(ExternalIdentity).findOne({
-      where: { kind: 'client_user', clientId: principal.clientId, externalId: externalUserId },
-    });
-    if (identity) {
-      const owner = await this.db.getRepository(Owner).findOne({ where: { personId: identity.personId } });
-      if (owner) return owner.personId;
-      throw new NotFoundException();
-    }
+    const known = await this.lookup(principal.clientId, externalUserId);
+    if (known !== undefined) return known;
     const client = await this.db.getRepository(Client).findOneByOrFail({ id: principal.clientId });
     if (!client.autoProvision) throw new NotFoundException();
-    return this.provision(principal.clientId, externalUserId);
+    try {
+      return await this.provision(principal.clientId, externalUserId);
+    } catch (err) {
+      // Concurrent first contact (e.g. ingest + MCP at once): the other request created it.
+      if (err instanceof QueryFailedError && (err.driverError as { code?: string }).code === '23505') {
+        const winner = await this.lookup(principal.clientId, externalUserId);
+        if (winner !== undefined) return winner;
+      }
+      throw err;
+    }
+  }
+
+  /** Owner id for a client user id; undefined when unknown; 404 when bound to a non-owner. */
+  private async lookup(clientId: string, externalUserId: string): Promise<string | undefined> {
+    const identity = await this.db.getRepository(ExternalIdentity).findOne({
+      where: { kind: 'client_user', clientId, externalId: externalUserId },
+    });
+    if (!identity) return undefined;
+    const owner = await this.db.getRepository(Owner).findOne({ where: { personId: identity.personId } });
+    if (!owner) throw new NotFoundException();
+    return owner.personId;
   }
 
   private provision(clientId: string, externalUserId: string): Promise<string> {

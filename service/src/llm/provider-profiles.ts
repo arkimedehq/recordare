@@ -54,5 +54,16 @@ export function resolveProfile(name: string, overrideJson?: string): ProviderPro
   const base = PROFILES[name];
   if (!base && !overrideJson) throw new Error(`Unknown LLM profile "${name}" (known: ${Object.keys(PROFILES).join(', ')})`);
   if (!overrideJson) return base as ProviderProfile;
-  return providerProfileSchema.parse({ ...(base ?? { name }), ...JSON.parse(overrideJson) });
+  const override = JSON.parse(overrideJson) as Record<string, unknown>;
+  const start: Record<string, unknown> = base ? { ...base } : { name };
+  // Nested objects (reasoningOff, anthropic) are merged, so an override keeps the base settings.
+  for (const [k, v] of Object.entries(override)) {
+    const prev = start[k];
+    start[k] = isPlainObject(prev) && isPlainObject(v) ? { ...prev, ...v } : v;
+  }
+  return providerProfileSchema.parse(start);
+}
+
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
