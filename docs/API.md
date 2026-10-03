@@ -1,6 +1,7 @@
 # API contracts v1
 
-Status: **M1 contract draft, revision 2** (2026-10-03, after the consistency review).
+Status: **M1 contracts, revision 3** (2026-10-03): consistency + security reviews applied, then split
+into deployment profiles (§0) so v1 stays focused on the twin.
 Client-neutral: nothing here is specific to Arkimede. Data model: `DATA_MODEL.md`. Two integration
 levels (vision → Architecture): **basic** = MCP tools only; **full** = REST ingest + MCP + read API
 + SDK.
@@ -11,6 +12,17 @@ schemas are the single source of truth and generate `GET /api/v1/openapi.json` (
 `?cursor&limit` → `{items, nextCursor}`; every non-idempotent POST accepts an `Idempotency-Key`
 header (24 h replay window, same response returned).
 
+## 0. Deployment profiles (D33)
+
+| Profile | For | Contents |
+|---|---|---|
+| **v1 — home / research** (built now) | One installation run by its owner(s) and their own clients (Arkimede, Claude Code, the research simulator) | Owners and identities created by the **admin API**; client API keys; **personal access tokens** for MCP-only clients (created via admin API); hashed credentials and simple scopes; per-owner isolation; **viewer context resolved by Recordare** (disclosure is part of the twin, not a security add-on); `author_role` provenance; consent flag; forgetting that sticks |
+| **Public** (deferred — M7 / public release) | Recordare as a service for people the operator does not know | Owner login (email magic link, verified email, owner pages), OAuth 2.1 for MCP connectors, owner-driven link codes + revocation UI, `read_audit`, persistent idempotency table, backup-retention policy and provider-retention notice, export restricted to owner sessions; network-level protection (firewall / WAF / rate limits) in front |
+
+Items marked **(public profile)** below are specified so the design stays coherent, but are not
+built in v1. Nothing in the public profile changes memory rows, so enabling it later needs no data
+migration.
+
 ## 1. Identity, authentication, viewer context (tasks 1.1, 1.5 → D24)
 
 ### Model
@@ -20,8 +32,12 @@ header (24 h replay window, same response returned).
 - **External identity**: `client_user` (`clientId + externalUserId`) or `channel`
   (`telegram:…`, `phone:+39…`, `email:…`); only verified bindings identify interlocutors.
 
-### Owner authentication
-Owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
+### Owner authentication (public profile)
+**v1**: owners are created by the admin (`POST api/v1/admin/owners`); consent (`episodicEnabled`),
+personal tokens and identity bindings are managed through the admin API or an owner personal token;
+there are no owner pages.
+
+**Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
 OIDC later). The owner session is needed for: giving consent (`episodicEnabled`), creating link
 codes, revoking clients, authorising OAuth MCP clients, creating personal tokens, exports, the
 self-service diary.
@@ -40,7 +56,7 @@ self-service diary.
 |---|---|---|
 | Full | **Client API key** `Authorization: Bearer rk_…` | Owners mapped to that client, selected per request with `X-Recordare-User: <externalUserId>` |
 | Basic | **Personal access token** `rp_…`, bound to one owner + one client, created by the owner (owner session) — for header-capable MCP clients (Claude Code, Cursor, SDKs) | That owner |
-| Basic (OAuth) | **OAuth 2.1** per the MCP authorization spec (code + PKCE, dynamic client registration, protected-resource metadata); the owner logs in (magic link) and consents — for clients that require it (Claude Desktop / claude.ai connectors). Scheduled for M6; personal tokens cover M3–M5 | That owner |
+| Basic (OAuth) — public profile | **OAuth 2.1** per the MCP authorization spec (code + PKCE, dynamic client registration, protected-resource metadata); the owner logs in (magic link) and consents — for clients that require it (Claude Desktop / claude.ai connectors). Scheduled for M6; personal tokens cover M3–M5 | That owner |
 | Admin | API key with scope `admin` | Installation management |
 
 ### Scopes
@@ -50,13 +66,14 @@ self-service diary.
 | `mcp` | §3 tools (read + `log_episode`, `correct_episode`, `forget_episode`) |
 | `read` | §4 GET endpoints |
 | `write` | §4 manual entries, corrections, forgetting, fact edits |
-| `owner_settings` | `PATCH settings` incl. `episodicEnabled` — **only owner sessions and owner-created personal tokens**; never client API keys (consent, D4) |
-| `export` | §4 export jobs — **only owner sessions / owner-created personal tokens**; download requires the owner session and expires |
+| `owner_settings` | `PATCH settings` incl. `episodicEnabled` — never client API keys (consent, D4). v1: admin key or the owner's personal token; public profile: owner sessions / owner-created tokens |
+| `export` | §4 export jobs — v1: admin key or the owner's personal token; public profile: owner sessions only, expiring download |
 | `admin` | `api/v1/admin/…` |
 
 Keys and tokens: argon2id hashes, shown once, visible prefix, rotation by create + revoke. A
 client can never mint tokens for another client. `Idempotency-Key` replays are scoped to
-`(credential, owner, method + path)`.
+`(credential, owner, method + path)`; v1 keeps them in Redis for 24 h (persistent table in the
+public profile).
 
 ### Viewer context (who will see the result) — every read
 The viewer set is **resolved by Recordare, never asserted by the client or the LLM**:
@@ -67,7 +84,7 @@ The viewer set is **resolved by Recordare, never asserted by the client or the L
   resolvable conversation returns nothing**.
 - **Personal tokens and owner sessions** (owner-direct use, e.g. Claude Code): no header → viewers =
   the owner; a conversation header, if sent, applies as above.
-- The resolved viewer set and its source are written to `read_audit`.
+- (Public profile) the resolved viewer set and its source are written to `read_audit`.
 
 Rule (`DATA_MODEL.md` → read rule): in phase 1 memories — and raw data derived from chats
 (quotes, `fromChats` excerpts, message ids) — are returned only when the viewers are exactly the
@@ -75,6 +92,11 @@ owner; otherwise the response is empty with a neutral note (`"nothing to show he
 reveal whether memories exist. Missing and forbidden items look the same.
 
 ### Linking the same person across clients
+**v1**: the admin binds identities (`POST api/v1/admin/identities {personId, kind, clientId |
+channel, externalId}`); binding an id already bound to another owner fails with a generic
+`400 cannot_link`.
+
+**Public profile**:
 1. In an **owner session**, the owner picks the target client and creates a link code
    (`POST api/v1/me/link-codes {clientId}` → `{code, expiresAt}`, single use, 10 min), seeing what
    that client will get: episodes and facts of all clients; raw chats only of its own conversations
@@ -241,6 +263,7 @@ The same pages are served by Recordare itself for owners without a host UI.
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | `episodicEnabled`, locale, timezone |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
+| `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
 
 ## 5. SDK (task 1.6)
 

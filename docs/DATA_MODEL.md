@@ -1,6 +1,7 @@
 # Data model v1
 
-Status: **M1 contract draft, revision 2** (2026-10-03, after the consistency review).
+Status: **M1 contracts, revision 3** (2026-10-03): consistency + security reviews applied; tables
+of the **public** deployment profile (`API.md` §0, D33) are marked and not built in v1.
 Postgres 16 + pgvector ≥ 0.8. Implements D6–D32 (`EPISODIC_MEMORY_TODO.md`), the identity model of
 `API.md` and the vision's provenance / disclosure rules.
 
@@ -93,7 +94,7 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 | Column | Type | Notes |
 |---|---|---|
 | `person_id` | uuid PK → persons | |
-| `email` | text unique null | Owner login (magic link, `API.md` §1) |
+| `email` | text unique null | Owner login (magic link, `API.md` §1) — used by the public profile only |
 | `locale`, `timezone` | text | |
 | `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
@@ -101,7 +102,7 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 
 Idle delay is a global setting (D5), not per owner.
 
-### owner_sessions
+### owner_sessions (public profile)
 `id, owner_id, created_at, expires_at, revoked_at, user_agent` — the owner's own login session on
 Recordare's pages (consent, link codes, OAuth authorisation, self-service diary).
 
@@ -115,7 +116,7 @@ the owner's clients; raw chats are not, unless the owner widens it).
 `id, client_id, prefix, hash (argon2id), scopes text[], created_at, last_used_at, revoked_at`
 (scope table: `API.md` §1).
 
-### access_tokens and oauth_clients
+### access_tokens and oauth_clients (oauth parts: public profile)
 `access_tokens(id, owner_id, client_id, kind enum (personal|oauth_access|oauth_refresh), prefix,
 hash, scopes text[], created_at, expires_at, last_used_at, revoked_at)`;
 `oauth_clients(id, client_id, redirect_uris text[], registered_at)` (MCP dynamic registration).
@@ -127,11 +128,11 @@ null, external_id, verified_at null, created_at`; unique `(kind, client_id, exte
 memory (client A cannot attach owner B's Telegram id to A's memories). Only verified bindings
 identify interlocutors and enter `audience`.
 
-### link_codes
+### link_codes (public profile)
 `id, owner_id, client_id (the only client allowed to redeem), code_hash, expires_at, used_at,
 created_at`.
 
-### idempotency_keys
+### idempotency_keys (public profile; v1 keeps replay keys in Redis for 24 h)
 `credential_id, owner_id, method_path, key, response_hash, response_body, created_at` — unique on
 the first four; 24 h retention.
 
@@ -288,7 +289,7 @@ text stored. Aggregated per owner / client / day for budgets and the CI cost gat
 period_from, period_to, conversation_id null, created_at` — checked **before inserting any
 episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
 
-### read_audit
+### read_audit (public profile)
 `id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], viewer_source enum
 (conversation|owner_direct|added_viewers), endpoint, row_ids uuid[], created_at` — which memories
 were returned to whom and how the viewer set was determined (vision principle 5, M7). Retention
@@ -311,7 +312,7 @@ configurable.
 - The purge job also removes: `messages.embedding`, `message_revisions` (also on forget-period),
   `embedding_text`, quotes, `run_outputs` rows. Queued jobs carry **ids only, never content**;
   `extraction_runs.error` and `llm_calls` never contain user content.
-- **Backups**: forgotten rows disappear from backups within a configured window (default 30 days,
+- (Public profile) **Backups**: forgotten rows disappear from backups within a configured window (default 30 days,
   shown to the owner). **LLM provider logs** are outside Recordare's control: the owner page states
   which provider processes their data and its retention policy (D27 provider profile).
 - Corrections and supersessions keep history; forgetting is physical.

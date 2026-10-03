@@ -85,7 +85,7 @@ zod schemas in M2 rather than hand-written.
 | 2.1 | NestJS project, strict TS, lint, `tsc --noEmit`, test runner; CI on every push |
 | 2.2 | Postgres + migrations (TypeORM); pgvector with HNSW index (**D25**) |
 | 2.3 | Ports and adapters: `LlmPort` (adapters OpenAI-compatible + native Anthropic, provider profiles from config — reasoning off, structured-output mode, token param, caching, usage — validate + retry; D27), `EmbeddingPort` (OpenAI-compatible, `bge-m3` default), `VectorStorePort` (pgvector adapter; Qdrant would be just another adapter), `ClockPort`, `QueuePort` (BullMQ) |
-| 2.4 | Auth: hashed API keys per client, admin bootstrap, person/identity tables |
+| 2.4 | Auth (v1 home / research profile, D33): hashed client API keys, personal tokens, admin bootstrap, person / identity tables |
 | 2.5 | `docker-compose.yml` (service, Postgres, Redis), health endpoint, config via env |
 | 2.6 | i18n scaffolding for prompts and messages (IT/EN) |
 
@@ -134,6 +134,11 @@ zod schemas in M2 rather than hand-written.
 
 ### M7 — Hardening and release
 
+Only if Recordare opens to people the operator does not know: enable the **public profile**
+(`API.md` §0, D33) — owner login and pages, OAuth 2.1 for MCP connectors, owner-driven linking and
+revocation, read audit, persistent idempotency, backup / provider retention policy — plus network
+protection in front (firewall / WAF / rate limits).
+
 - Security: per-person data isolation tests, key rotation, rate limits, audit log of reads
   (the twin is a high-value secret — vision principle 5).
 - Backup / restore, export of a person's data, full deletion.
@@ -145,6 +150,7 @@ zod schemas in M2 rather than hand-written.
 | Id | Question | Proposal | When |
 |---|---|---|---|
 | D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02** | Done |
+| D33 | Deployment profiles | v1 home / research; public-profile hardening deferred to M7 | Done (2026-10-03) |
 | D31 | Facts in Recordare | State slots with value chain; notes stay in A-MEM until migration | Done (2026-10-03) |
 | D32 | Extraction calls per window | One call (amends D2) | Done (2026-10-03) |
 | D29 | Data model / recall additions from the literature | Approved (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |

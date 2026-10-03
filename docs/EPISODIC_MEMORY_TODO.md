@@ -401,9 +401,21 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   when facts lived only in A-MEM; A-MEM's own extraction in Arkimede stays untouched (its call is
   Arkimede's, not Recordare's).
 
+### D33 — Deployment profiles: v1 home / research, hardening deferred (2026-10-03)
+- The owner's guidance: stay on the twin; when more security is needed, put firewalls and
+  hardening in front. v1 = **home / research profile**: admin-created owners, client keys, personal
+  tokens, simple scopes, per-owner isolation.
+- Kept in v1 because they are part of the twin, not security add-ons: viewer context resolved by
+  Recordare (knowing what to tell whom — disclosure pillar), `author_role` provenance (principle 3,
+  memory quality), consent flag (D4), forgetting that sticks (D16).
+- Deferred to the **public profile** (M7 / public release): owner login and pages, OAuth for MCP,
+  owner-driven linking and revocation UI, read audit, persistent idempotency, backup / provider
+  retention policy, network protection. Specified in `API.md` §0 so enabling them needs no data
+  migration.
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D32 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D33 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)
