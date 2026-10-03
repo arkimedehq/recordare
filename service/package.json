@@ -1,7 +1,7 @@
 {
   "name": "@arkimedehq/recordare-service",
   "version": "0.1.0",
-  "description": "Recordare — memory and digital-twin service (REST ingest + MCP)",
+  "description": "Recordare \u2014 memory and digital-twin service (REST ingest + MCP)",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "commonjs",
@@ -17,7 +17,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "migration:run": "typeorm migration:run -d dist/db/data-source.js",
-    "migration:revert": "typeorm migration:revert -d dist/db/data-source.js"
+    "migration:revert": "typeorm migration:revert -d dist/db/data-source.js",
+    "smoke:llm": "node -r @swc-node/register scripts/smoke-llm.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
