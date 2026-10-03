@@ -9,6 +9,7 @@
 import 'reflect-metadata';
 import { z } from 'zod';
 import { AnthropicAdapter } from '../src/llm/anthropic.adapter';
+import { ClaudeCliAdapter } from '../src/llm/claude-cli.adapter';
 import { OpenAiCompatibleAdapter } from '../src/llm/openai-compatible.adapter';
 import { resolveProfile } from '../src/llm/provider-profiles';
 import { type LlmCallRecord, type LlmCallRecorder } from '../src/llm/llm-call-recorder';
@@ -22,7 +23,9 @@ const cfg = {
   model: env['LLM_MODEL'] ?? '',
   profile: resolveProfile(env['LLM_PROFILE'] ?? 'generic', env['LLM_PROFILE_JSON'] || undefined),
 };
-const llm = env['LLM_PROVIDER'] === 'anthropic' ? new AnthropicAdapter(cfg, recorder) : new OpenAiCompatibleAdapter(cfg, recorder);
+const llm = env['LLM_PROVIDER'] === 'anthropic' ? new AnthropicAdapter(cfg, recorder)
+  : env['LLM_PROVIDER'] === 'claude-cli' ? new ClaudeCliAdapter({ model: cfg.model }, recorder)
+    : new OpenAiCompatibleAdapter(cfg, recorder);
 
 const schema = z.object({ events: z.array(z.object({ content: z.string(), date: z.string() })) });
 

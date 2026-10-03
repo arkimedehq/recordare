@@ -24,7 +24,8 @@ export const envSchema = z.object({
   /** Idle debounce before extracting a conversation (D1, D5): global, seconds. */
   IDLE_DELAY_SECONDS: z.coerce.number().int().positive().default(900),
 
-  LLM_PROVIDER: z.enum(['openai-compatible', 'anthropic']).default('openai-compatible'),
+  /** `claude-cli`: local evaluation only, through the operator's own Claude plan (headless Claude Code). */
+  LLM_PROVIDER: z.enum(['openai-compatible', 'anthropic', 'claude-cli']).default('openai-compatible'),
   /** Provider profile name (reasoning switch, structured-output mode…), see llm/provider-profiles.ts. */
   LLM_PROFILE: z.string().default('generic'),
   /** Optional JSON override / definition of the profile (e.g. for a provider not listed). */
