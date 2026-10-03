@@ -40,6 +40,8 @@ export const envSchema = z.object({
   EMBEDDING_DIM: z.coerce.number().int().positive(),
 
   LOG_LLM_CALLS: bool.default(true),
+  /** Evaluation / tests only: honour `X-Recordare-Now` to ask questions "as of" a past instant. */
+  ALLOW_CLOCK_OVERRIDE: bool.default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

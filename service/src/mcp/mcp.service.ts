@@ -6,7 +6,9 @@
  * every later request must come from the same credential acting for the same owner, otherwise
  * the session is closed (hosts reusing a session across users cannot cross memories).
  */
-import { ForbiddenException, Injectable, Logger, NotFoundException, type OnModuleDestroy } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException, type OnModuleDestroy } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { type Env } from '../config/env';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -15,7 +17,11 @@ import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { OwnerResolver } from '../auth/owner-resolver.service';
 import { type Principal } from '../auth/principal';
 import { ViewerContextService } from '../auth/viewer-context.service';
-import { RawLogSearchService } from '../rawlog/rawlog-search.service';
+import { DataSource } from 'typeorm';
+import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
+import { EpisodeSearchService } from '../recall/episode-search.service';
+import { MemorySearchService } from '../recall/memory-search.service';
+import { MemoryWriteService } from '../recall/memory-write.service';
 import { registerTools } from './mcp-tools';
 
 interface Session {
@@ -39,7 +45,12 @@ export class McpService implements OnModuleDestroy {
   constructor(
     private readonly owners: OwnerResolver,
     private readonly viewers: ViewerContextService,
-    private readonly rawLog: RawLogSearchService,
+    private readonly episodes: EpisodeSearchService,
+    private readonly memory: MemorySearchService,
+    private readonly writes: MemoryWriteService,
+    private readonly db: DataSource,
+    @Inject(CLOCK_PORT) private readonly clock: ClockPort,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async handle(principal: Principal, externalUser: string | undefined, req: IncomingMessage, res: ServerResponse, body: unknown): Promise<void> {
@@ -60,7 +71,12 @@ export class McpService implements OnModuleDestroy {
     if (req.method !== 'POST' || !isInitializeRequest(body)) throw new NotFoundException();
 
     const server = new McpServer({ name: 'recordare', version: '0.1.0' });
-    registerTools(server, { principal, ownerId, viewers: this.viewers, rawLog: this.rawLog });
+    const [owner] = await this.db.query(`SELECT timezone, locale FROM owners WHERE person_id = $1`, [ownerId]);
+    registerTools(server, {
+      principal, ownerId, viewers: this.viewers, episodes: this.episodes, memory: this.memory, writes: this.writes,
+      clock: this.clock, owner: { timezone: owner.timezone, locale: owner.locale },
+      allowClockOverride: this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }),
+    });
     const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (id) => {

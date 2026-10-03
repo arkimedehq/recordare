@@ -4,8 +4,11 @@
 import { Module } from '@nestjs/common';
 import { ViewerContextService } from '../auth/viewer-context.service';
 import { RawLogSearchService } from '../rawlog/rawlog-search.service';
+import { EpisodeSearchService } from '../recall/episode-search.service';
+import { MemorySearchService } from '../recall/memory-search.service';
+import { MemoryWriteService } from '../recall/memory-write.service';
 import { McpController } from './mcp.controller';
 import { McpService } from './mcp.service';
 
-@Module({ controllers: [McpController], providers: [McpService, ViewerContextService, RawLogSearchService] })
+@Module({ controllers: [McpController], providers: [McpService, ViewerContextService, RawLogSearchService, EpisodeSearchService, MemorySearchService, MemoryWriteService] })
 export class McpModule {}
