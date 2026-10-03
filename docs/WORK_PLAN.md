@@ -64,7 +64,7 @@ lands in M3/M4 as the service's regression suite (`literature/README.md` → Eva
 
 ### M1 — Contracts (engine-independent)
 
-**Draft done 2026-10-03** (branch `m1-contracts`): `docs/API.md` (identity, auth, ingest, MCP tools,
+**Draft done 2026-10-03, revision 2 after a consistency review** (branch `m1-contracts`): `docs/API.md` (identity, auth, ingest, MCP tools,
 read API, SDK) and `docs/DATA_MODEL.md` (data model v1 with D28–D30). OpenAPI is generated from the
 zod schemas in M2 rather than hand-written.
 
@@ -145,6 +145,8 @@ zod schemas in M2 rather than hand-written.
 | Id | Question | Proposal | When |
 |---|---|---|---|
 | D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02** | Done |
+| D31 | Facts in Recordare | State slots with value chain; notes stay in A-MEM until migration | Done (2026-10-03) |
+| D32 | Extraction calls per window | One call (amends D2) | Done (2026-10-03) |
 | D29 | Data model / recall additions from the literature | Approved (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
 | D30 | Assistant turns | Extracted with `origin: assistant_stated` | Done (2026-10-02) |
 | D28 | Data model fields for research hypotheses | Reserved from v1 (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |

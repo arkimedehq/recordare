@@ -1,301 +1,306 @@
 # Data model v1
 
-Status: **M1 contract draft** (2026-10-03). Postgres 16 + pgvector. Implements D6–D30
-(`EPISODIC_MEMORY_TODO.md`), the identity model of `API.md` and the vision's provenance /
-disclosure rules. Every field that phase 1 does not use yet is still created now (D28) so later
-phases need no migration of memories.
+Status: **M1 contract draft, revision 2** (2026-10-03, after the consistency review).
+Postgres 16 + pgvector ≥ 0.8. Implements D6–D32 (`EPISODIC_MEMORY_TODO.md`), the identity model of
+`API.md` and the vision's provenance / disclosure rules.
 
-Conventions: `uuid` primary keys (v7, time-ordered); `timestamptz` everywhere; enums as Postgres
-enums; soft history instead of updates for memory rows (append + link, never rewrite — D29);
-`owner_id` on every memory row (one memory per owner, D22) and every query filtered by it.
+Rule for what exists in v1 (D28 refined): **columns on memory rows** that later phases need
+(`audience`, `disclosure`, `confidence_of`, `origin`, `stance`, …) are created and filled now,
+because adding them later means a backfill. **Whole tables and enum values** that only later
+phases use are deferred — adding them later is purely additive (see the last section).
+
+Conventions: `uuid` v7 primary keys; `timestamptz` everywhere; Postgres enums; memory rows are
+append + link, never rewritten (D29); `owner_id` on every memory row and every query filtered by
+it; FKs `ON DELETE` behaviour stated per table.
 
 ## Overview
 
 ```
-Identity      persons ─ person_aliases       clients ─ api_keys ─ access_tokens
-              external_identities (client user ids, channel bindings)
-              owners (a person who has a memory) ─ relationships ─ grants
-Layer 0       conversations ─ conversation_participants ─ messages
-Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events
+Identity      persons ─ person_aliases       clients ─ api_keys ─ access_tokens ─ oauth_clients
+              external_identities            owners ─ owner_sessions
+Layer 0       conversations ─ conversation_participants ─ messages ─ message_revisions
+Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
-Layer 3       facts ─ fact_evidence ─ fact_derivations
-Engine        extraction_runs ─ run_outputs     llm_calls     jobs (BullMQ, not in Postgres)
-Research      autonomy_settings (reserved)      snapshots (reserved)
+Layer 3       fact_slots ─ facts ─ fact_evidence
+Engine        extraction_runs ─ run_outputs   llm_calls   forget_tombstones   read_audit
 ```
 
-## Shared columns and enums
+## Shared columns
 
-**Provenance** (on episodes, facts, digests):
-
-| Column | Type | Notes |
-|---|---|---|
-| `origin` | enum `owner_lived \| owner_told \| assistant_stated \| twin_experienced` | Who lived / said it (D28, D30, H3). `owner_told` = something the owner reports about others, and messages written by others inside the owner's imports |
-| `stance` | enum `stated \| inferred` | Inferred items stay pending / low confidence (D29) |
-| `confidence` | real 0–1 | Extractor confidence; inferred < 1 |
-| `extraction_run_id` | uuid null | Which run produced it (null for manual entries) |
-
-**Disclosure** (on episodes, facts, digests):
+**Provenance** (episodes, facts, digests):
 
 | Column | Type | Notes |
 |---|---|---|
-| `disclosure` | enum `owner \| inner \| friends \| acquaintances \| public` | Tier ceiling; default `owner` (vision tiers) |
-| `audience` | uuid[] (person ids) | Humans present when it was recorded — immutable (D29, Authorization Before Context); always includes the owner. Assistants / the twin are not persons and are not listed |
-| `confidence_of` | uuid null (person id) | Set when the content is a third party's confidence ("Marco told me…"): disclosable at most to owner + that person unless granted |
+| `origin` | enum `owner_lived \| owner_told \| assistant_stated` | Who lived / said it (D28, D30, H3). `owner_told` = what the owner reports about others, and messages written by others inside the owner's imports. `twin_experienced` is added with the twin phases |
+| `stance` | enum `stated \| inferred` | Inferred items stay low-confidence / pending (D29) |
+| `confidence` | real 0–1 | |
+| `extraction_run_id` | uuid null → extraction_runs (`SET NULL`) | null for manual entries |
 
-Admission rule (phase 3, enforced in code before prompt assembly): viewer set `V` ⊆ `audience`
-**and** every viewer's tier ≥ `disclosure` (or an explicit grant). Derived rows (digests, facts
-derived from episodes) take `audience = ∩ sources` and `disclosure = most restrictive source`;
-a derived row without sources fails closed. Missing and forbidden rows return the same "not found".
-
-**Time** (on episodes and facts): world time vs knowledge time (D28, Zep):
+**Disclosure** (episodes, facts, digests):
 
 | Column | Type | Notes |
 |---|---|---|
-| `occurred_at` / `valid_from` | timestamptz null | When it happened / became true (world) |
+| `disclosure` | enum `owner \| inner \| friends \| acquaintances \| public`, default `owner` | Tier ceiling (vision tiers) |
+| `audience` | uuid[] (person ids), GIN index | Humans present when it was recorded — immutable (D29); always contains the owner. Assistants are not persons |
+| `confidence_of` | uuid null (person id) | A third party's confidence ("Marco told me…"): at most owner + that person, unless granted (phase 3) |
+
+**Read rule, enforced in code in every read path from v1** (`API.md` §1 viewer context): rows are
+returned only if the viewer set `V` ⊆ `audience` and every viewer's tier ≥ `disclosure`. In phase 1
+there are no tiers yet, so effectively: **rows are returned only when the viewers are exactly the
+owner**; any other viewer set gets nothing (shared conversations see no diary). Derived rows take
+`audience = ∩ sources`, `disclosure = most restrictive source`; a derived row without sources fails
+closed. Missing and forbidden rows return the same "not found".
+
+**Time.** Dates with coarse precision are stored as the **start of the period in the owner's
+timezone** plus `date_precision` (day → local midnight, month → first day, year → 1 January);
+range queries match by **overlap** of `[occurred_at, occurred_until or end of period]` with the
+requested range.
+
+| Column | Type | Notes |
+|---|---|---|
+| `occurred_at` / `valid_from` | timestamptz null | World time |
 | `occurred_until` / `valid_to` | timestamptz null | Multi-day events / end of validity |
-| `date_precision` | enum `minute \| day \| month \| year \| approximate \| unknown` | Never fake precision ("2020" ≠ 1 Jan) |
-| `time_expression` | text null | Original wording ("sabato scorso"), kept for audit (D29) |
-| `recorded_at` | timestamptz | When Recordare learned it (ingestion / extraction) |
-| `expired_at` | timestamptz null | When Recordare stopped believing it (superseded / corrected) |
+| `date_precision` | enum `minute \| day \| month \| year \| approximate \| unknown` | Never fake precision |
+| `time_expression` | text null | Original wording ("sabato scorso") |
+| `recorded_at` | timestamptz | When Recordare learned it |
 
-**Embeddings**: `embedding vector(N)`, `embedding_model text`, `embedding_text text` (the
-document embedded: content + retrieval keys). N fixed per installation (D27: model + dimension
-stored; changing model = re-embed job). HNSW index (`vector_cosine_ops`).
+**Embeddings**: `embedding vector(N)`, `embedding_model text`, `embedding_text text`. N fixed per
+installation (D27). HNSW (`vector_cosine_ops`) queried with `owner_id` filter and pgvector
+iterative scan (`hnsw.iterative_scan = relaxed_order`) so per-owner recall holds in multi-owner
+installs; partition by owner if an install grows large.
 
 ## Identity
 
 ### persons
-Any human the installation knows: owners and their contacts.
-
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid | |
+| `owner_scope` | uuid null → owners | **null for owners themselves; set for contacts** — a contact belongs to one owner's memory, never shared across owners |
 | `display_name` | text | |
-| `kind` | enum `human \| synthetic` | `synthetic` = simulated agent in research mode (vision → Research mode) |
+| `kind` | enum `human` | `synthetic` (research simulator) added with track R |
 | `created_at` | timestamptz | |
 
-### person_aliases
-Names as mentioned ("Marco", "mio cognato", "Marco (cognato)"), per owner — resolution of
-mentions to persons (Graphiti-style, LLM only when ambiguous).
+Person merge is **not supported in v1** (an attempt to link an identity already bound to another
+owner is rejected); a future merge must remap `audience` arrays and FKs in one transaction.
 
-`id, owner_id, person_id, alias text, alias_norm text (trigram index), source enum
-(extracted|manual), created_at`
+### person_aliases
+`id, owner_id, person_id, alias text, alias_norm text (pg_trgm GIN), source enum
+(extracted|manual), created_at` — mention resolution, LLM only when ambiguous.
 
 ### owners
-A person who has a memory (one memory per owner, D22).
-
 | Column | Type | Notes |
 |---|---|---|
 | `person_id` | uuid PK → persons | |
-| `locale` | text | `it` / `en` (prompts, digests) |
-| `timezone` | text | IANA, for date resolution |
-| `episodic_enabled` | bool, default false | D4 |
-| `settings` | jsonb | Idle delay override, digest levels… (validated by schema) |
+| `email` | text unique null | Owner login (magic link, `API.md` §1) |
+| `locale`, `timezone` | text | |
+| `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
+| `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
 | `created_at` | timestamptz | |
+
+Idle delay is a global setting (D5), not per owner.
+
+### owner_sessions
+`id, owner_id, created_at, expires_at, revoked_at, user_agent` — the owner's own login session on
+Recordare's pages (consent, link codes, OAuth authorisation, self-service diary).
 
 ### clients
-A platform integration (an Arkimede installation, a Claude Desktop setup, a bot).
-
-`id, name, kind enum (platform|mcp_client|import|simulator), auto_provision bool (unknown
-`X-Recordare-User` creates the owner), created_at, disabled_at`
+`id, name, kind enum (platform|mcp_client|import), auto_provision bool, raw_log_scope enum
+(own|all, default own), created_at, disabled_at` — `raw_log_scope = own`: the raw-log fallback of
+this client only searches conversations this client ingested (episodes / facts are shared across
+the owner's clients; raw chats are not, unless the owner widens it).
 
 ### api_keys
-Client credentials for the *full* integration (ingest + MCP + read API on behalf of mapped users).
+`id, client_id, prefix, hash (argon2id), scopes text[], created_at, last_used_at, revoked_at`
+(scope table: `API.md` §1).
 
-`id, client_id, prefix text (shown), hash text (argon2id), scopes text[]
-(ingest, mcp, read, write, admin), created_at, last_used_at, revoked_at`
-
-### access_tokens
-Personal tokens for the *basic* integration (MCP only): bound to one owner and one client (D24).
-Issued either directly (header-capable MCP clients) or as OAuth 2.1 access / refresh tokens by
-Recordare's MCP authorization server (`kind enum (personal|oauth_access|oauth_refresh)`).
-
-`id, owner_id, client_id, kind, prefix, hash, scopes text[], created_at, expires_at, last_used_at,
-revoked_at`; `oauth_clients(id, client_id, redirect_uris text[], registered_at)` for MCP dynamic
-client registration.
+### access_tokens and oauth_clients
+`access_tokens(id, owner_id, client_id, kind enum (personal|oauth_access|oauth_refresh), prefix,
+hash, scopes text[], created_at, expires_at, last_used_at, revoked_at)`;
+`oauth_clients(id, client_id, redirect_uris text[], registered_at)` (MCP dynamic registration).
 
 ### external_identities
-How the outside world refers to a person.
-
-| Column | Type | Notes |
-|---|---|---|
-| `id` | uuid | |
-| `person_id` | uuid → persons | |
-| `kind` | enum `client_user \| channel` | `client_user` = user id inside a client; `channel` = binding used to identify interlocutors (vision: tier from channel binding only) |
-| `client_id` | uuid null | For `client_user` |
-| `channel` | text null | `telegram`, `phone`, `email`, `whatsapp`, … for `channel` |
-| `external_id` | text | Client user id / Telegram id / E.164 phone / email |
-| `verified_at` | timestamptz null | Unverified bindings never raise a tier |
-| `created_at` | timestamptz | |
-
-Unique `(kind, client_id, external_id)` and `(kind, channel, external_id)`.
-
-### relationships and grants (phase 3, created now)
-`relationships(id, owner_id, person_id, tier enum, label text ("cognato"), valid_from, valid_to,
-created_at)` — tier history is bi-temporal so "what could X see on date D" is answerable.
-`grants(id, owner_id, person_id, scope enum (memory|item|action), target_id uuid null,
-effect enum (allow|deny), valid_from, valid_to, created_at)` — per-person exceptions.
+`id, person_id, kind enum (client_user|channel), client_id null, channel text null, external_id,
+verified_at null, created_at`; unique `(kind, client_id, external_id)` and
+`(kind, channel, external_id)`. Only verified channel bindings identify interlocutors.
 
 ## Layer 0 — raw log
 
 ### conversations
 | Column | Type | Notes |
 |---|---|---|
-| `id` | uuid | |
-| `owner_id` | uuid | |
-| `client_id` | uuid | |
-| `external_id` | text | Unique per `(client_id, owner_id, external_id)` |
-| `source` | enum `chat \| voice \| import_chat \| import_social \| import_email \| import_notes \| interview \| simulation` | Import source (vision → Sources of the self-model) |
-| `channel` | text null | `arkimede`, `telegram`, `whatsapp`, … |
-| `title` | text null | |
+| `id`, `owner_id`, `client_id` | uuid | Unique `(client_id, owner_id, external_id)` |
+| `external_id` | text | |
+| `source` | enum `chat \| voice \| mcp_tool \| import_chat \| import_social \| import_email \| import_notes \| interview` | `mcp_tool` = synthetic conversation holding basic-level tool calls |
+| `channel`, `title` | text null | |
 | `started_at`, `last_message_at` | timestamptz | |
-| `episodes_cursor` | uuid null → messages | D1/D22 service-side cursor: last message processed by extraction |
 | `idle_job_at` | timestamptz null | When the idle extraction is due |
-| `deleted_at` | timestamptz null | Deletion request received (rows purged by job) |
+| `deleted_at` | timestamptz null | |
 
 ### conversation_participants
-`conversation_id, person_id null, role enum (owner|assistant|twin|other), display_name,
-external_ref text null, joined_at` — the audience of every message is derived from here.
+`conversation_id, person_id null, role enum (owner|assistant|other), display_name, ref text,
+joined_at` — source of every row's `audience` and of the viewer set for reads in this conversation.
 
 ### messages
 | Column | Type | Notes |
 |---|---|---|
-| `id` | uuid | |
-| `conversation_id` | uuid | |
-| `owner_id` | uuid | Denormalised for filtering |
-| `external_id` | text | Unique per conversation (idempotent ingest) |
-| `role` | enum `user \| assistant \| system \| other` | `other` = another human in group chats / imports |
-| `author_person_id` | uuid null | Resolved author |
+| `id`, `conversation_id`, `owner_id` | uuid | Unique `(conversation_id, external_id)`; index `(owner_id, sent_at)` |
+| `external_id` | text | |
+| `role` | enum `user \| assistant \| tool \| other` | `system` messages are **not ingested** (they can carry secrets); `tool` = tool calls / results of agentic clients (D30) |
+| `tool_name` | text null | For `role = tool` |
+| `author_person_id` | uuid null | |
 | `content` | text | Verbatim |
-| `sent_at` | timestamptz | Reference time for date resolution (never ingestion time) |
-| `received_at` | timestamptz | Ingestion time |
-| `edited_at` | timestamptz null | Edits keep the previous text in `message_revisions` |
-| `tsv` | tsvector | FTS ('simple' + unaccent), GIN index |
-| `embedding` | vector(N) null | Only for the raw-log fallback (D13); computed lazily |
-
-`message_revisions(message_id, content, replaced_at)` keeps edit history; a deleted message is
-purged and every row citing it is re-evaluated (see Deletion).
+| `content_hash` | bytea | Detects re-sends with changed content (`API.md` §2) |
+| `sent_at` | timestamptz | Reference time for date resolution |
+| `received_at` | timestamptz | |
+| `extracted_run_id` | uuid null → extraction_runs | **null = pending extraction**; the idle / nightly jobs take pending messages by `sent_at`, so late-arriving messages (imports, out-of-order batches) are never skipped |
+| `edited_at` | timestamptz null | Previous text in `message_revisions(message_id, content, replaced_at)` |
+| `tsv` | tsvector | 'simple' + unaccent, GIN |
+| `embedding` | vector(N) null | Raw-log fallback only (D13), lazy |
 
 ## Layer 1 — episodes
 
 ### episodes
 | Column | Type | Notes |
 |---|---|---|
-| `id` | uuid | |
-| `owner_id` | uuid | |
-| `kind` | enum `event \| plan \| state_change \| thought \| goal` | `thought` / `goal` = twin's own reflection and goals (research mode, origin `twin_experienced`) |
-| `content` | text | Self-contained sentence, absolute dates (D23 rules) |
-| *time columns* | | `occurred_at`, `occurred_until`, `date_precision`, `time_expression`, `recorded_at`, `expired_at` |
+| `id`, `owner_id` | uuid | |
+| `kind` | enum `event \| plan \| state_change` | `thought` / `goal` added with track R |
+| `content` | text | Self-contained, absolute dates |
+| *time* | | `occurred_at`, `occurred_until`, `date_precision`, `time_expression`, `recorded_at` |
 | `place` | text null | |
 | `importance` | smallint 1–10 | |
 | `valence` | smallint −2…2 null | D21 |
-| `feelings` | text[] | D21 |
-| `opinion` | text null | D21 |
-| `keywords`, `context`, `tags` | text[], text, text[] | Retrieval keys from the same extraction call (D29) |
-| `plan_status` | enum `open \| confirmed \| cancelled \| rescheduled \| unresolved` null | Plans only (D10, D28); `unresolved` = date passed without confirmation |
+| `feelings`, `opinion` | text[], text null | D21 |
+| `keywords`, `context`, `tags` | text[], text, text[] | Retrieval keys, same extraction call (D29) |
+| `plan_status` | enum `open \| confirmed \| cancelled \| rescheduled \| unresolved` null | Plans only. Cancellation lives **only** here (a cancelled plan was a real plan) |
 | `plan_status_at` | timestamptz null | |
-| `rescheduled_to` | uuid null → episodes | New plan row (D29) |
-| `confirmed_by` | uuid null → episodes | Event that confirms the plan |
-| `corrects` | uuid null → episodes | This row corrects an earlier one (old one was never true) |
-| `invalidated_at` | timestamptz null | Set on the corrected / cancelled-as-wrong row (no rewrite) |
-| `access_count`, `last_accessed_at` | int, timestamptz | Recall reinforcement (ranking only) |
-| *provenance* | | `origin`, `stance`, `confidence`, `extraction_run_id` |
-| *disclosure* | | `disclosure`, `audience`, `confidence_of` |
-| *embedding* | | `embedding`, `embedding_model`, `embedding_text` |
-| `deleted_at` | timestamptz null | User-driven deletion (D16), purged by job |
+| `rescheduled_to` | uuid null → episodes (`SET NULL`) | |
+| `confirmed_by` | uuid null → episodes (`SET NULL`) | |
+| `corrects` | uuid null → episodes (`SET NULL`) | This row corrects an earlier one |
+| `invalidated_at` | timestamptz null | **Only for corrections**: set on the row that was wrong |
+| `duplicate_of` | uuid null → episodes (`SET NULL`) | Consolidation dedup link (same event in several chats); duplicates are hidden from recall |
+| `linked_notes` | text[] | External refs to semantic notes (A-MEM ids while it lives in the client — D19, D31) |
+| `access_count`, `last_accessed_at` | int, timestamptz | Ranking only |
+| *provenance*, *disclosure*, *embedding* | | |
+| `deleted_at` | timestamptz null | Forgetting in progress (purged by job) |
 
-Indexes: `(owner_id, occurred_at)`, `(owner_id, kind, plan_status)`, HNSW on `embedding`,
-GIN on `tags` / `keywords`, FTS on `content`.
+Indexes: `(owner_id, occurred_at) WHERE deleted_at IS NULL AND invalidated_at IS NULL AND
+duplicate_of IS NULL`, `(owner_id, kind, plan_status)`, HNSW `embedding`, GIN `tags`, `keywords`,
+FTS on `content`.
 
 ### episode_evidence
-Evidence-bound extraction (D29, MemIR): each episode cites the messages it comes from; the
-quote is validated in code against `messages.content` before insert.
-
-`episode_id, message_id, quote text null, created_at` — at least one row per extracted episode
-(manual `log_episode` entries cite the tool-call message when available).
+`episode_id (CASCADE), message_id (CASCADE), evidence_kind enum (message|agent_paraphrase),
+quote text null, created_at` — every episode has ≥ 1 row; the quote is validated in code against
+the message before insert (D29). `agent_paraphrase` = basic-level `log_episode` without a
+user message to cite (the agent's wording, kept distinguishable). Late binding: a full-level
+`log_episode` whose conversation message has not arrived yet gets its evidence row when it lands.
 
 ### episode_people
-`episode_id, alias text (as mentioned), person_id null (resolved later), role text null`
+`episode_id (CASCADE), alias text, person_id null, role text null`
 
 ### plan_events
-Typed plan patches emitted by the extractor; transitions applied in code (D29, PIS).
+`id, plan_id → episodes (CASCADE), patch enum (open|confirm|cancel|reschedule|amend|expire),
+evidence_message_id null (SET NULL), new_plan_id null, note, created_at, extraction_run_id` —
+typed patches; transitions in code (D29); `expire` = job turning past unconfirmed plans into
+`unresolved`.
 
-`id, plan_id → episodes, patch enum (open|confirm|cancel|reschedule|amend|expire),
-evidence_message_id null, new_plan_id null, note text, created_at, extraction_run_id`
-(`expire` = the job that turns a past, unconfirmed plan into `unresolved`).
+### episode_promotions (D20)
+`id, owner_id, pattern text, episode_ids uuid[], proposed_note_ref text null, status enum
+(proposed|confirmed|rejected), created_at, updated_at` — recurring patterns proposed as
+semantic notes; exposed to clients as pending proposals (D26).
 
 ## Layer 2 — digests
 
 ### digests
-`id, owner_id, level enum (day|month), period_start date, period_end date, content text,
-version int, superseded_at timestamptz null, embedding…, disclosure, audience,
-extraction_run_id, created_at` — a recomputed digest is a new version; the old one is
-superseded, not overwritten.
+`id, owner_id, level enum (day|month), period_start date, period_end date, content, version int,
+superseded_at null, embedding…, disclosure, audience, extraction_run_id, created_at`; partial
+unique `(owner_id, level, period_start) WHERE superseded_at IS NULL`. Phase 3 will need
+per-audience digests (the intersection rule makes mixed-audience days owner-only).
 
 ### digest_sources
-`digest_id, episode_id` (day) or `digest_id, source_digest_id` (month) — required: labels
-propagate from sources (D29).
+`digest_id (CASCADE), episode_id (CASCADE) | source_digest_id (CASCADE)` — required.
 
-## Layer 3 — facts
+## Layer 3 — facts (D31: state slots with value chain)
+
+Recordare facts are **state slots** with their history ("my car", "where I live", "employer",
+"children"). Durable preferences and free-form semantic notes stay in the client's own semantic
+memory (A-MEM in Arkimede) until the A-MEM migration phase.
+
+### fact_slots
+Slot schema per installation (Memobase idea), extended by extraction with new keys (snake_case,
+reused via the key list given to the extractor).
+
+`key text PK, description text, cardinality enum (single|multi), update_policy text
+(merge instruction for the extractor), default_disclosure enum, created_at` — supersession
+applies only to `single` slots; `multi` slots accumulate (children, hobbies), and items leave only
+by explicit statement.
 
 ### facts
 | Column | Type | Notes |
 |---|---|---|
-| `id` | uuid | |
-| `owner_id` | uuid | |
-| `subject_person_id` | uuid null | Whom the fact is about (null = the owner) |
-| `key` | text | Normalised snake_case slot ("car", "address", "employer") |
-| `value` | text | |
-| `status` | enum `current \| superseded \| corrected \| unknown_current` | D29 (STALE) |
-| *time columns* | | `valid_from`, `valid_to`, `date_precision`, `time_expression`, `recorded_at`, `expired_at` |
-| `supersedes` | uuid null → facts | Previous value, true until `valid_from` |
-| `corrects` | uuid null → facts | Previous value, never true |
-| `verdict` | enum `new \| keep \| stale \| replace \| corrects \| unknown` | The extractor's write-time verdict that produced this row (D29) |
-| `needs_recheck` | bool | Set by code when a fact it is derived from changes (flag only) |
-| `support_count` | int | Restatements counted, not stored as new rows (Graphiti) |
-| `pending` | bool | Inferred or promoted facts awaiting owner confirmation (D20) |
-| *provenance*, *disclosure*, *embedding* | | As above |
+| `id`, `owner_id` | uuid | |
+| `subject_person_id` | uuid null | null = the owner |
+| `key` | text → fact_slots | |
+| `value` | text **null** | null only for `unknown_current` |
+| `status` | enum `current \| superseded \| corrected \| unknown_current` | `unknown_current` is a **new row** (value null) that supersedes the stale one: "the current value is not known" (D29, STALE) |
+| *time* | | `valid_from`, `valid_to`, `date_precision`, `time_expression`, `recorded_at` |
+| `expired_at` | timestamptz null | When Recordare stopped believing it |
+| `supersedes`, `corrects` | uuid null → facts (`SET NULL`) | |
+| `verdict` | enum `new \| keep \| stale \| replace \| corrects \| unknown` | Write-time verdict (D29) |
+| `support_count` | int | Restatements counted (Graphiti) |
+| `pending` | bool | Inferred / promoted, awaiting owner confirmation; excluded from recall unless asked |
+| *provenance*, *disclosure*, *embedding* | | |
+| `deleted_at` | timestamptz null | |
 
-Supersession is forward-only by world / message time: a row may supersede another only if its
-`valid_from` ≥ the other's (imports never overwrite newer facts — D29).
+Partial unique `(owner_id, subject_person_id, key) WHERE status = 'current' AND key is single`
+(enforced via trigger on `fact_slots.cardinality`). Supersession forward-only by world / message
+time. `derivedFrom` / `needsRecheck` (D29) are deferred until something produces derived facts.
 
-`fact_evidence(fact_id, message_id null, episode_id null, quote)`;
-`fact_derivations(fact_id, derived_from_fact_id)` (StateMemBench `derivedFrom`).
+`fact_evidence(fact_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`.
 
 ## Engine bookkeeping
 
 ### extraction_runs
-`id, owner_id, conversation_id null, kind enum (episodes|facts|digest|consolidation|reflection),
-window_from_message_id, window_to_message_id, model text, provider text, prompt_version text,
-status enum (running|done|failed), error text null, started_at, finished_at`
-`run_outputs(run_id, table_name, row_id)` — the changelog of a run (Memobase `profile_delta`):
-"why does the twin believe X".
+`id, owner_id, conversation_id null, kind enum (extraction|digest|consolidation), window_from
+timestamptz, window_to timestamptz, model, provider, prompt_version, status enum
+(running|done|failed), error text null (no user content), started_at, finished_at` — one
+`extraction` run per window produces episodes, plan patches and fact candidates (D32).
+`run_outputs(run_id CASCADE, table_name, row_id)` — changelog; rows removed by the purge job.
 
 ### llm_calls
-Per-call accounting (cost principles, D27): `id, owner_id null, client_id null, run_id null,
-prompt_id text, provider, model, input_tokens, cached_input_tokens, output_tokens, latency_ms,
-status, created_at`. Aggregated per owner / client / day for budgets and the CI cost gate.
+`id, owner_id null, client_id null, run_id null, prompt_id, provider, model, input_tokens,
+cached_input_tokens, output_tokens, latency_ms, status, created_at` — no prompt or completion
+text stored. Aggregated per owner / client / day for budgets and the CI cost gate.
 
-## Research mode (reserved, created now)
+### forget_tombstones (D16)
+`id, owner_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,
+period_from, period_to, conversation_id null, created_at` — checked **before inserting any
+episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
 
-`autonomy_settings(owner_id, mode enum (assistant|research), reflection_schedule jsonb,
-initiative_level enum (off|l1|l2|full), money_access jsonb null (account ref, per-transaction cap,
-period budget, merchant categories), kill_switch_at timestamptz null, updated_at)`
-`snapshots(id, owner_id, label, taken_at, storage_ref)` — restart a "life" from a point.
-Twin thoughts and goals are `episodes` with `kind thought|goal`, `origin twin_experienced`.
+### read_audit
+`id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], endpoint, row_ids
+uuid[], created_at` — which memories were returned to whom (vision principle 5, M7). Retention
+configurable.
 
-## Deletion (D16)
+## Forgetting and deletion (D16)
 
-- Deleting a message, conversation or period sets `deleted_at` and enqueues a purge job.
-- The job removes the raw rows, then every episode / fact / digest whose evidence becomes empty;
-  rows with remaining evidence get `needs_recheck` (facts) or are re-extracted (episodes);
-  affected digests get a new version or are removed; embeddings removed with their rows.
-- Deletion is physical for user-requested forgetting (privacy), unlike corrections and
-  supersessions, which keep history.
+- **Forget an episode**: tombstone + delete the episode, its evidence rows, people, plan events,
+  promotions referencing it; the correction chain (`corrects` in both directions) is forgotten
+  with it; its raw messages are **hidden from the raw-log fallback** for that topic (tombstone
+  fingerprint) and purged if the owner chooses "forget the conversation too".
+- **Forget a period** `[from, to]`: tombstone; matches episodes by `occurred_at` **and** raw
+  messages by `sent_at`; raw messages in the period are **purged by default** (`keepRaw: true`
+  to keep them); digests of the period are recomputed or removed.
+- **Delete a message / conversation** (client request): purge raw rows and revisions; for every
+  episode / fact citing it, **drop the evidence row**; a row left without evidence is deleted;
+  no re-extraction (it could rewrite memories).
+- The purge job also removes: `embedding_text`, quotes, `run_outputs` rows, queued job payloads
+  in Redis for the affected conversation; `extraction_runs.error` never contains user content.
+- Corrections and supersessions keep history; forgetting is physical.
 
-## What is written in phase 1
+## Deferred (additive later, no migration of memories)
 
-Everything above except: `relationships` / `grants` contents and the admission rule (phase 3),
-`twin_experienced` origin and `thought` / `goal` kinds (research mode / phase 4), `autonomy_settings`
-and `snapshots` contents. Phase 1 fills `audience` and `disclosure = owner` on every row, so phase 3
-starts with correct data.
+Tables: `relationships` and `grants` (phase 3), `autonomy_settings` and `snapshots` (track R),
+`fact_derivations` + `needs_recheck` (when derived facts exist). Enum values: `origin =
+twin_experienced`, `kind = thought | goal`, `persons.kind = synthetic`, `conversations.source =
+simulation`, participant role `twin`. Their design is recorded in `DIGITAL_TWIN_VISION.md`
+(research mode, money knob) and `literature/README.md`.
