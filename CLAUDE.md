@@ -15,6 +15,8 @@ client. Status: **design + evaluation spike; no service code yet.**
   Spike runs cost real money (DeepSeek): keep runs minimal, prefer base before noise.
   Reasoning-off switch per provider: `evalkit/common.py` → `REASONING_OFF` (override with
   `REASONING_OFF_BODY`).
+- `docs/API.md`, `docs/DATA_MODEL.md` — M1 contracts: identity / auth (D24), REST ingest, MCP tools
+  (`log_episode`, `search_episodes`, `search_facts`, `resolve_period`), read API, SDK; data model v1.
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 and open decisions D23–D26.
 - `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H8) with literature verdicts: phase 1 is
   mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), owner vs

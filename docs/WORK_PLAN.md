@@ -64,6 +64,10 @@ lands in M3/M4 as the service's regression suite (`literature/README.md` → Eva
 
 ### M1 — Contracts (engine-independent)
 
+**Draft done 2026-10-03** (branch `m1-contracts`): `docs/API.md` (identity, auth, ingest, MCP tools,
+read API, SDK) and `docs/DATA_MODEL.md` (data model v1 with D28–D30). OpenAPI is generated from the
+zod schemas in M2 rather than hand-written.
+
 | # | Task | Output |
 |---|---|---|
 | 1.1 | **Identity model**: `client` (platform, API key) → `external identity` (client + external user id) → `person` (one memory per person). Linking flow for the same person across clients | `docs/API.md` § Identity |
@@ -145,7 +149,7 @@ lands in M3/M4 as the service's regression suite (`literature/README.md` → Eva
 | D30 | Assistant turns | Extracted with `origin: assistant_stated` | Done (2026-10-02) |
 | D28 | Data model fields for research hypotheses | Reserved from v1 (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
 | D27 | LLM / embedding providers | **Any provider** via config profiles; DeepSeek + Ollama only as test setups | Done (2026-10-02) |
-| D24 | MCP transport and per-person auth for basic-level clients | Streamable HTTP, bearer key bound to a person | M1 |
+| D24 | MCP transport and per-person auth for basic-level clients | **Decided (M1)**: streamable HTTP at `/mcp`; personal access tokens for header-capable clients; OAuth 2.1 per the MCP authorization spec for clients that require it (Claude Desktop / claude.ai); full level = client API key + `X-Recordare-User` (`API.md` §1) | Done (2026-10-03) |
 | D25 | Vector store | **pgvector** (proposed 2026-10-02, see below) | M2 |
 | D26 | Where pattern promotions go while A-MEM lives in Arkimede | Exposed by Recordare as `pending` proposals via API; the client decides (Arkimede imports them into A-MEM) | M5 |
 | — | Single-tenant (one install per family) vs multi-tenant | Model `person` + `client` so both work; start single-tenant | M1 |
