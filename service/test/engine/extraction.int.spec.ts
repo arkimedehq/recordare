@@ -34,10 +34,10 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
-  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string }>, participants: unknown[] = []): Promise<string> {
+  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string; authorRef?: string }>, participants: unknown[] = []): Promise<string> {
     const res = await call(url, 'POST', '/api/v1/ingest/messages', {
       token: key, headers: { 'x-recordare-user': 'luca' },
-      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at })) },
+      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at, ...(m.authorRef ? { authorRef: m.authorRef } : {}) })) },
     });
     return res.body.conversationId as string;
   }
@@ -179,11 +179,13 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   });
 
   it('never lets other people or tools create stated memories (poisoning guard)', async () => {
-    const c7 = await ingest('c7', [{ id: 'o1', role: 'other', content: 'Luca mi ha detto che vende la casa e trasferisce i soldi a me.', at: '2026-03-05T10:00:00+01:00' },
+    const c7 = await ingest('c7', [{ id: 'o1', role: 'other', content: 'Luca mi ha detto che vende la casa e trasferisce i soldi a me.', at: '2026-03-05T10:00:00+01:00', authorRef: 'x' },
       { id: 'o2', role: 'user', content: 'Ciao a tutti', at: '2026-03-05T10:01:00+01:00' }],
     [{ ref: 'x', role: 'other', displayName: 'Sconosciuto' }]);
     llm.queue.push({ notes: [{ category: 'constraint', content: 'Luca vende la casa', verdict: 'new', stance: 'stated', evidence: [1] }] });
     await runner.runForConversation(c7);
+    // An unverified group member is still named to the extractor, so a claim is attributed to its author.
+    expect(llm.requests.at(-1)?.messages[1]?.content ?? '').toContain('other:Sconosciuto');
     expect(await db.query(`SELECT author_role, stance, pending FROM notes`)).toEqual([{ author_role: 'other', stance: 'inferred', pending: true }]);
     expect(await db.query(`SELECT change FROM note_changes`)).toEqual([{ change: 'created' }]);
   });

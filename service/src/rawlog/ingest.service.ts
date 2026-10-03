@@ -66,11 +66,11 @@ export class IngestService {
         const hash = contentHash(m.content);
         const author = m.authorRef !== undefined ? (persons.get(m.authorRef) ?? null) : m.role === 'user' ? ownerId : null;
         const [inserted] = await tx.query(
-          `INSERT INTO messages (conversation_id, owner_id, external_id, role, tool_name, author_person_id, content, content_hash, sent_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          `INSERT INTO messages (conversation_id, owner_id, external_id, role, tool_name, author_person_id, author_ref, content, content_hash, sent_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            ON CONFLICT (conversation_id, external_id) DO NOTHING
            RETURNING id`,
-          [conversationId, ownerId, m.externalId, m.role, m.toolName ?? null, author, m.content, hash, new Date(m.sentAt)],
+          [conversationId, ownerId, m.externalId, m.role, m.toolName ?? null, author, m.authorRef ?? null, m.content, hash, new Date(m.sentAt)],
         );
         if (inserted) {
           accepted++;

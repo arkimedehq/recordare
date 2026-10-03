@@ -55,8 +55,14 @@ def main() -> None:
         label += f"-{DATASET.name}"
     if os.getenv("EMBED_MODEL"):
         label += "-emb_" + os.environ["EMBED_MODEL"].split("/")[-1].replace(":", "_")
-    if os.getenv("ENGINE_MODEL") and args.system != "baseline":
-        label += f"-{os.environ['ENGINE_MODEL']}" + ("-nothink" if os.getenv("ENGINE_NO_THINKING") else "")
+    # The engine model belongs to the label only where this process picks it: the service has its own
+    # LLM config (SERVICE_MODEL names it), controls have no engine.
+    engine = os.getenv("SERVICE_MODEL") if args.system == "service" else os.getenv("ENGINE_MODEL")
+    if engine and args.system not in ("baseline", "fullcontext", "nomemory"):
+        label += f"-{engine}" + ("-nothink" if os.getenv("ENGINE_NO_THINKING") else "")
+
+    if os.getenv("RUN_TAG"):  # distinguishes engine versions measured on the same dataset
+        label += f"-{os.environ['RUN_TAG']}"
 
     summaries = []
     for run in range(1, args.runs + 1):

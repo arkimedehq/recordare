@@ -43,6 +43,7 @@ export class Message {
   @Column({ type: 'enum', enumName: 'message_role', enum: ['user', 'assistant', 'tool', 'other'] }) role!: MessageRole;
   @Column({ name: 'tool_name', type: 'text', nullable: true }) toolName!: string | null;
   @Column({ name: 'author_person_id', type: 'uuid', nullable: true }) authorPersonId!: string | null;
+  @Column({ name: 'author_ref', type: 'text', nullable: true }) authorRef!: string | null;
   @Column({ type: 'text' }) content!: string;
   @Column({ name: 'content_hash', type: 'bytea' }) contentHash!: Buffer;
   @Column({ name: 'sent_at', type: 'timestamptz' }) sentAt!: Date;

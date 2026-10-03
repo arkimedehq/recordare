@@ -53,8 +53,10 @@ export interface ExtractionInput {
 export async function pendingWindows(tx: EntityManager, conversationId: string): Promise<WindowMessage[][]> {
   const rows: Array<{ id: string; role: WindowMessage['role']; tool_name: string | null; author_person_id: string | null;
     author_name: string | null; content: string; sent_at: Date }> = await tx.query(
-    `SELECT m.id, m.role, m.tool_name, m.author_person_id, p.display_name AS author_name, m.content, m.sent_at
+    // Unverified group members are not persons: their name comes from the conversation's participants.
+    `SELECT m.id, m.role, m.tool_name, m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at
      FROM messages m LEFT JOIN persons p ON p.id = m.author_person_id
+       LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
      WHERE m.conversation_id = $1 AND m.extracted_run_id IS NULL
      ORDER BY m.sent_at, m.received_at`,
     [conversationId],

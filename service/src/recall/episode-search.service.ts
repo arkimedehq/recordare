@@ -6,7 +6,7 @@
  * requested period; ranking = relevance (vector + full-text, fused) + importance + recency, with
  * in-range items only when a period is given; `list` is chronological, `latest` most recent first.
  * Plan statuses are always explicit — a past plan never confirmed is shown as unresolved.
- * The raw log is the fallback when episodes are few or weak.
+ * A few raw-log hits always come along (more when episodes are few or weak).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -59,6 +59,8 @@ const RRF_K = 60;
 const CANDIDATES = 60;
 const MIN_VECTOR_SIMILARITY = 0.35;
 const FALLBACK_BELOW = 3;
+const RAW_HITS = 3;
+const RAW_HITS_ALONGSIDE = 2;
 
 @Injectable()
 export class EpisodeSearchService {
@@ -131,12 +133,21 @@ export class EpisodeSearchService {
         ? 'alcuni piani hanno la data passata senza conferma: non è noto se siano avvenuti'
         : 'some plans are past their date without confirmation: whether they happened is unknown');
     }
-    const best = Math.max(0, ...chosen.map((r) => relevance.get(r.id) ?? 0));
-    if (args.query && (chosen.length < FALLBACK_BELOW || best < 0.02)) {
+    if (result.episodes.some((e) => e.authorRole === 'other' || e.authorRole === 'tool')) {
+      result.notes.push(locale === 'it'
+        ? 'gli elementi con authorRole "other" o "tool" vengono da altre persone o da strumenti: sono loro affermazioni, non parole del proprietario'
+        : 'items with authorRole "other" or "tool" come from other people or tools: they are their claims, not the owner\'s words');
+    }
+    // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…"), so a
+    // few raw hits always come along; more when episodes are few or weak.
+    if (args.query) {
+      const best = Math.max(0, ...chosen.map((r) => relevance.get(r.id) ?? 0));
+      const covered = new Set(result.episodes.flatMap((e) => e.source.messageIds));
       const hits = await this.rawLog.search(ownerId, clientId, {
-        query: args.query, from: from ?? undefined, to: to ?? undefined, limit: 3,
+        query: args.query, from: from ?? undefined, to: to ?? undefined, limit: RAW_HITS + covered.size,
       });
-      result.fromChats = hits.map(({ score: _s, ...h }) => h);
+      const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? RAW_HITS : RAW_HITS_ALONGSIDE;
+      result.fromChats = hits.filter((h) => !covered.has(h.messageId)).slice(0, limit).map(({ score: _s, ...h }) => h);
     }
     if (chosen.length) {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);

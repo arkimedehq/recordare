@@ -153,6 +153,29 @@ describe('MCP endpoint', () => {
     await client.close();
   });
 
+  it('keeps a few chat excerpts next to matching episodes, never the ones behind them; labels claims of others', async () => {
+    const db = app.get((await import('typeorm')).DataSource);
+    const [msg] = await db.query(`SELECT id FROM messages WHERE external_id = 'nas-chat-1'`);
+    const rows: Array<{ id: string }> = [];
+    for (const [content, role] of [['Backup del NAS su disco USB fatto', 'owner'], ['Backup del NAS spostato al cloud', 'owner'], ['Backup del NAS rotto, dice Guest', 'other']]) {
+      const [r] = await db.query(
+        `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, occurred_at, date_precision)
+         VALUES ($1, 'event', $2, 'owner_lived', $3, $4, '2026-01-22T20:00:00Z', 'day') RETURNING id`, [ownerId, content, role, [ownerId]]);
+      rows.push(r);
+    }
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const out = await search(client, { query: 'backup del NAS' });
+    expect((out['episodes'] as unknown[]).length).toBe(3);
+    expect((out['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).toContain(msg.id);
+    expect((out['notes'] as string[]).some((n) => n.includes('"other"'))).toBe(true);
+    // Once an episode stands on that message, the same excerpt is not repeated.
+    await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2)`, [rows[0]?.id, msg.id]);
+    const again = await search(client, { query: 'backup del NAS' });
+    expect((again['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).not.toContain(msg.id);
+    await db.query(`DELETE FROM episodes WHERE id = ANY($1)`, [rows.map((r) => r.id)]);
+    await client.close();
+  });
+
   it('requires the mcp scope', async () => {
     const res = await fetch(`${url}/mcp`, { method: 'POST', headers: { authorization: `Bearer ${ADMIN_KEY}`, 'content-type': 'application/json' }, body: '{}' });
     expect(res.status).toBe(403);

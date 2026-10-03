@@ -161,6 +161,7 @@ joined_at` — source of every row's `audience` and of the viewer set for reads 
 | `role` | enum `user \| assistant \| tool \| other` | `system` messages are **not ingested** (they can carry secrets); `tool` = tool calls / results of agentic clients (D30) |
 | `tool_name` | text null | For `role = tool` |
 | `author_person_id` | uuid null | |
+| `author_ref` | text null | The client's participant ref; names unverified group members for extraction |
 | `content` | text | Verbatim |
 | `content_hash` | bytea | Detects re-sends with changed content (`API.md` §2) |
 | `sent_at` | timestamptz | Reference time for date resolution |
