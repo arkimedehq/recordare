@@ -25,6 +25,8 @@ export const envSchema = z.object({
   LLM_PROVIDER: z.enum(['openai-compatible', 'anthropic']).default('openai-compatible'),
   /** Provider profile name (reasoning switch, structured-output mode…), see llm/provider-profiles.ts. */
   LLM_PROFILE: z.string().default('generic'),
+  /** Optional JSON override / definition of the profile (e.g. for a provider not listed). */
+  LLM_PROFILE_JSON: z.string().optional(),
   LLM_BASE_URL: z.string().url().optional(),
   LLM_API_KEY: z.string().optional(),
   LLM_MODEL: z.string(),

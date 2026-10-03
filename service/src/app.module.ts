@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { validateEnv, type Env } from './config/env';
 import { HealthController } from './health/health.controller';
 import { dataSourceOptions } from './db/data-source-options';
+import { LlmModule } from './llm/llm.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { dataSourceOptions } from './db/data-source-options';
       useFactory: (config: ConfigService<Env, true>) =>
         dataSourceOptions(config.get('DATABASE_URL', { infer: true })),
     }),
+    LlmModule,
   ],
   controllers: [HealthController],
 })

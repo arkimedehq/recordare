@@ -1,7 +1,7 @@
 {
   "name": "@arkimedehq/recordare-service",
   "version": "0.1.0",
-  "description": "Recordare \u2014 memory and digital-twin service (REST ingest + MCP)",
+  "description": "Recordare — memory and digital-twin service (REST ingest + MCP)",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "commonjs",
@@ -20,6 +20,7 @@
     "migration:revert": "typeorm migration:revert -d dist/db/data-source.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@modelcontextprotocol/sdk": "^1.32.0",
     "@nestjs/bullmq": "^12.0.0",
     "@nestjs/common": "^12.1.2",
