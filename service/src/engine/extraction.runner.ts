@@ -16,6 +16,7 @@ import { buildInput, pendingWindows, type Owner, type WindowMessage } from './ex
 import { buildExtractionUser, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
 import { extractionSchema } from './extraction.schema';
 import { ExtractionWriter, type WrittenRow } from './extraction.writer';
+import { resolveNearDuplicates } from './episode-resolver';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
@@ -66,6 +67,9 @@ export class EngineExtractionRunner implements ExtractionRunner {
         return rows;
       });
       await this.embed(written);
+      // Second call only when near-duplicates exist (corrections not linked, same event in two chats).
+      await resolveNearDuplicates(this.db, this.llm, owner.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
+        { ownerId: owner.id, clientId, runId }).catch((err: unknown) => this.log.warn(`near-duplicate resolution skipped: ${(err as Error).name}`));
     } catch (err) {
       // No user content in the error column (docs/DATA_MODEL.md).
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`,

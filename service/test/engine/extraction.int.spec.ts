@@ -5,7 +5,7 @@ import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
-import { EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
+import { EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 describe('extraction engine (fake LLM: code-side rules)', () => {
@@ -62,7 +62,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     const [{ occurred_at }] = await db.query(`SELECT occurred_at FROM episodes`);
     expect(new Date(occurred_at).toISOString()).toBe('2026-01-16T23:00:00.000Z'); // local midnight Europe/Rome
     expect(await db.query(`SELECT status, model FROM extraction_runs`)).toEqual([{ status: 'done', model: 'pending' }]);
-    expect(await db.query(`SELECT prompt_id, input_tokens FROM llm_calls`)).toEqual([{ prompt_id: 'extract.v1', input_tokens: 100 }]);
+    expect(await db.query(`SELECT prompt_id, input_tokens FROM llm_calls`)).toEqual([{ prompt_id: EXTRACTION_PROMPT_VERSION, input_tokens: 100 }]);
   });
 
   it('runs the plan lifecycle in code: open → cancelled, with a plan_events log', async () => {
@@ -75,6 +75,38 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(llm.requests.at(-1)?.messages[1]?.content).toContain('P1: Luca andrà a Roma');
     expect(await db.query(`SELECT plan_status FROM episodes WHERE kind = 'plan'`)).toEqual([{ plan_status: 'cancelled' }]);
     expect(await db.query(`SELECT patch, note FROM plan_events`)).toEqual([{ patch: 'cancel', note: 'cliente ha rimandato' }]);
+  });
+
+  it('a confirmed plan always gets its event episode (created from the plan if missing)', async () => {
+    const c = await ingest('cp1', [{ id: 'cp1', role: 'user', content: 'Sabato vado ad arrampicare con Irene.', at: '2026-10-08T20:00:00+02:00' }]);
+    llm.queue.push({ episodes: [{ content: 'Arrampicata a BlocHaus con Irene sabato 10 ottobre 2026.', kind: 'plan', occurred_at: '2026-10-10', people: ['Irene'], evidence: [1] }] });
+    await runner.runForConversation(c);
+    const c2 = await ingest('cp2', [{ id: 'cp2', role: 'user', content: 'Sabato arrampicata fantastica!', at: '2026-10-11T10:00:00+02:00' }]);
+    const plans = await db.query(`SELECT content FROM episodes WHERE kind = 'plan' AND plan_status = 'open' ORDER BY recorded_at DESC`);
+    const idx = plans.findIndex((p: { content: string }) => p.content.startsWith('Arrampicata'));
+    llm.queue.push({ plan_patches: [{ plan: `P${idx + 1}`, patch: 'confirm', evidence: [1] }] });
+    await runner.runForConversation(c2);
+    const [plan] = await db.query(`SELECT plan_status, confirmed_by FROM episodes WHERE kind = 'plan' AND content LIKE 'Arrampicata%'`);
+    expect(plan.plan_status).toBe('confirmed');
+    const [event] = await db.query(`SELECT kind, content FROM episodes WHERE id = $1`, [plan.confirmed_by]);
+    expect(event).toEqual({ kind: 'event', content: 'Arrampicata a BlocHaus con Irene sabato 10 ottobre 2026.' });
+    expect(await db.query(`SELECT alias FROM episode_people WHERE episode_id = $1`, [plan.confirmed_by])).toEqual([{ alias: 'Irene' }]);
+  });
+
+  it('links an unlinked correction through the near-duplicate check (one extra call only when candidates exist)', async () => {
+    const a = await ingest('ort1', [{ id: 'o1', role: 'user', content: "Lunedì sono stata dall'ortopedico.", at: '2026-11-04T21:00:00+01:00' }]);
+    llm.queue.push({ episodes: [{ content: "Visita dall'ortopedico lunedì 2 novembre 2026.", occurred_at: '2026-11-02', evidence: [1] }] });
+    await runner.runForConversation(a);
+    const callsBefore = llm.requests.length;
+    const b = await ingest('ort2', [{ id: 'o2', role: 'user', content: "Correggo: dall'ortopedico non lunedì ma martedì 3.", at: '2026-11-08T11:30:00+01:00' }]);
+    // The extractor forgets "corrects"; the fake embeddings of identical texts are identical → candidate pair.
+    llm.queue.push({ episodes: [{ content: "Visita dall'ortopedico lunedì 2 novembre 2026.", occurred_at: '2026-11-03', evidence: [1] }] });
+    llm.queue.push({ decisions: [{ pair: 1, relation: 'corrects' }] });
+    await runner.runForConversation(b);
+    expect(llm.requests.length - callsBefore).toBe(2);
+    const rows = await db.query(`SELECT occurred_at::date::text AS d, invalidated_at IS NOT NULL AS inval, corrects IS NOT NULL AS corr
+      FROM episodes WHERE content LIKE 'Visita dall%' ORDER BY recorded_at`);
+    expect(rows).toEqual([{ d: '2026-11-01', inval: true, corr: false }, { d: '2026-11-02', inval: false, corr: true }]);
   });
 
   it('replaces single-value facts forward-only and keeps history', async () => {

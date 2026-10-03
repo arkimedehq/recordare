@@ -23,7 +23,7 @@ import { EMBEDDING_QUEUE, EXTRACTION_QUEUE, QUEUE_PORT } from './queue.port';
             port: Number(url.port || 6379),
             ...(url.password ? { password: decodeURIComponent(url.password) } : {}),
           },
-          prefix: 'recordare',
+          prefix: config.get('QUEUE_PREFIX', { infer: true }),
         };
       },
     }),

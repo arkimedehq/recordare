@@ -121,6 +121,23 @@ check.
 ### Open items (not blocking D23)
 - Local model sweep (`qwen3:14b`, `gemma3`, …) for the sovereign profile.
 
+## Service v1 — M4 engine (2026-10-03)
+
+System S with the service's own engine (`extract.v2`, one call per window on `deepseek-flash`,
+near-duplicate resolver with a light call only when candidates exist), asked "as of" the question
+time; the agent planner knows `search_episodes` mode `latest`. Harness v1.1, base sets.
+
+| Run | `dataset` (24 q) | `dataset_holdout` (28 q) |
+|---|---|---|
+| engine v1 (extract.v1) | 100 % | 92.9 % |
+| + confirm creates event, extract.v2 | 100 % | 96.4 % |
+| + resolver (strict / broad variants), planner `latest` | 100 % ×3 | 89.3 % … **94.6 %** |
+
+Remaining misses: counting (h02, varies between runs), the orthopaedist correction (h09: now linked
+by the resolver in most runs, answer still partial). **Caveat:** the held-out set is no longer blind
+for the engine prompt (extract.v2 was written after seeing h09 / h02); a new blind set is due
+(WORK_PLAN 4.4b). Judge failures are now reported as `judge_errors`, not counted as wrong.
+
 ## Service v0 (2026-10-03) — the Recordare service through its public contracts
 
 System S (`systems/service_sys.py`): sessions in through REST ingest, questions out through MCP

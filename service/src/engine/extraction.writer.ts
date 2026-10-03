@@ -160,7 +160,10 @@ export class ExtractionWriter {
       const at = msgs[0]?.sentAt ?? new Date();
       let newPlanId: string | null = null;
       if (p.patch === 'confirm') {
-        const event = p.event !== null && p.event !== undefined ? (episodeIds[p.event] ?? null) : null;
+        let event = p.event !== null && p.event !== undefined ? (episodeIds[p.event] ?? null) : null;
+        // A confirmed plan always has the event that happened (D10): created from the plan if the
+        // model did not provide one.
+        if (!event) event = await this.eventFromPlan(planId, msgs);
         await this.tx.query(`UPDATE episodes SET plan_status = 'confirmed', plan_status_at = $1, confirmed_by = $2 WHERE id = $3 AND owner_id = $4`,
           [at, event, planId, this.ctx.ownerId]);
       } else if (p.patch === 'cancel') {
@@ -174,6 +177,24 @@ export class ExtractionWriter {
         `INSERT INTO plan_events (plan_id, patch, evidence_message_id, new_plan_id, note, extraction_run_id) VALUES ($1, $2, $3, $4, $5, $6)`,
         [planId, p.patch, msgs[0]?.id ?? null, newPlanId, p.note ?? null, this.ctx.runId]);
     }
+  }
+
+  /** The event of a confirmed plan, derived from the plan itself (same dates, people, place). */
+  private async eventFromPlan(planId: string, msgs: WindowMessage[]): Promise<string> {
+    const [row] = await this.tx.query(
+      `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence,
+         feelings, opinion, keywords, context, tags, origin, author_role, stance, confidence, extraction_run_id, disclosure,
+         audience, audience_unverified)
+       SELECT owner_id, 'event', content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
+         opinion, keywords, context, tags, origin, $3, stance, confidence, $4, 'owner', $5, $6
+       FROM episodes WHERE id = $1 AND owner_id = $2 RETURNING id, content, place`,
+      [planId, this.ctx.ownerId, this.authorRole(msgs), this.ctx.runId, this.audience, this.audienceUnverified]);
+    await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, planId]);
+    for (const m of msgs) {
+      await this.tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, m.id]);
+    }
+    this.written.push({ table: 'episodes', id: row.id, text: [row.content, row.place].filter(Boolean).join(' | ') });
+    return row.id as string;
   }
 
   /** Reschedule / amend: a new open plan row; the old one keeps its history. */

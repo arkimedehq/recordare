@@ -75,6 +75,8 @@ export function testEnv(overrides: Record<string, string> = {}): void {
     EMBEDDING_BASE_URL: 'http://127.0.0.1:9/v1',
     EMBEDDING_MODEL: 'test-embedding',
     EMBEDDING_DIM: '8',
+    // own queue namespace: a running dev service on the same Redis never takes test jobs
+    QUEUE_PREFIX: `test-${process.pid}`,
     ...overrides,
   });
 }

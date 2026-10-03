@@ -26,6 +26,7 @@ twin, owner vs twin provenance, and unresolved user plans.
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the owner's own messages | To test | 2 |
+| H12 | Resting-state thinking ("default mode"): a budgeted background process that replays recent episodes, links them, keeps open loops (unresolved plans, promises), prepares questions / proposals and updates the self-model improves recall and initiative without confabulation | To design with M5 / track R | 5 / R |
 | H11 | Retrieval beyond a single embedding: cross-encoder reranking, bge-m3 sparse vectors, a people / entity index improve recall on negations, exact details and "everything about X" | To test (engineering) | 1 / 3 |
 | H10 | Autonomous evolution: a twin free in thought and action drifts from its owner in measurable ways; lives from the same start diverge | To review (literature not yet searched) | R |
 | H9 | Twin as a reflective companion of its owner (dialogue with oneself; non-sycophantic, evidence from own memories) | To review (literature not yet searched) | 4 |
@@ -229,3 +230,25 @@ fuses full-text + vector; the spike showed structure matters more than the embed
 
 **Measure:** recall@k of gold episodes and QA accuracy per category (negation / detail / people),
 latency and cost; adopt only with a significant gain at acceptable latency.
+
+## H12 — Resting-state thinking ("the mind never stops")
+
+**Inspiration.** When we are not focused on a task the brain's default mode network replays
+autobiographical memories, links them, simulates the future, thinks about self and others, keeps
+pending intentions alive and consolidates while awake (hippocampal replay), not only in sleep.
+Recordare today encodes on input (idle extraction) and will consolidate at night (M5); a third,
+**resting** mode is missing.
+
+**Design sketch (budgeted, gated: no new material / no open loops → no call):**
+1. Replay recent episodes and link them to older ones (`linked` episodes / notes).
+2. Maintain **open loops**: past plans without outcome, promises, waiting-for items → questions for
+   the owner ("did you go to Rome in the end?").
+3. Prepare **proposals** for the owner (initiative L1).
+4. Update the **self-model**: recurring opinions, values, concerns → `inferred` notes, pending.
+5. In research mode: the twin's own reflections and goals (`thought` / `goal`, `twin_experienced`).
+Guardrails: every reflection is `inferred` with its source memories; never rewrites the past.
+
+**Measure:** open-loop recall (unresolved plans surfaced), usefulness of proposals (owner rating),
+cost per day, false-reflection rate. **Prior work to review:** Letta sleep-time compute
+(arXiv:2504.13171), Generative Agents reflection (Park et al. 2023), default mode network /
+awake replay literature.
