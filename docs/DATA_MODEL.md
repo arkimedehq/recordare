@@ -17,7 +17,7 @@ it; FKs `ON DELETE` behaviour stated per table.
 
 ```
 Identity      persons ─ person_aliases       clients ─ api_keys ─ access_tokens ─ oauth_clients
-              external_identities            owners ─ owner_sessions
+              external_identities ─ link_codes   owners ─ owner_sessions   idempotency_keys
 Layer 0       conversations ─ conversation_participants ─ messages ─ message_revisions
 Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
@@ -33,6 +33,7 @@ Engine        extraction_runs ─ run_outputs   llm_calls   forget_tombstones   
 |---|---|---|
 | `origin` | enum `owner_lived \| owner_told \| assistant_stated` | Who lived / said it (D28, D30, H3). `owner_told` = what the owner reports about others, and messages written by others inside the owner's imports. `twin_experienced` is added with the twin phases |
 | `stance` | enum `stated \| inferred` | Inferred items stay low-confidence / pending (D29) |
+| `author_role` | enum `owner \| assistant \| other \| tool` | Who wrote the evidence. Items whose only evidence comes from `other` / `tool` messages (group members, tool outputs, imported mail bodies) are extraction context, never `stance: stated`: at most `inferred` (facts: `pending`) — poisoning guard; recall labels them |
 | `confidence` | real 0–1 | |
 | `extraction_run_id` | uuid null → extraction_runs (`SET NULL`) | null for manual entries |
 
@@ -41,7 +42,8 @@ Engine        extraction_runs ─ run_outputs   llm_calls   forget_tombstones   
 | Column | Type | Notes |
 |---|---|---|
 | `disclosure` | enum `owner \| inner \| friends \| acquaintances \| public`, default `owner` | Tier ceiling (vision tiers) |
-| `audience` | uuid[] (person ids), GIN index | Humans present when it was recorded — immutable (D29); always contains the owner. Assistants are not persons |
+| `audience` | uuid[] (person ids), GIN index | Humans present when it was recorded — immutable (D29); always contains the owner. **Only identities verified for this owner** enter it; assistants are not persons |
+| `audience_unverified` | text[] | Display names of present participants without a verified identity (never used to disclose) |
 | `confidence_of` | uuid null (person id) | A third party's confidence ("Marco told me…"): at most owner + that person, unless granted (phase 3) |
 
 **Read rule, enforced in code in every read path from v1** (`API.md` §1 viewer context): rows are
@@ -119,9 +121,19 @@ hash, scopes text[], created_at, expires_at, last_used_at, revoked_at)`;
 `oauth_clients(id, client_id, redirect_uris text[], registered_at)` (MCP dynamic registration).
 
 ### external_identities
-`id, person_id, kind enum (client_user|channel), client_id null, channel text null, external_id,
-verified_at null, created_at`; unique `(kind, client_id, external_id)` and
-`(kind, channel, external_id)`. Only verified channel bindings identify interlocutors.
+`id, owner_scope null, person_id, kind enum (client_user|channel), client_id null, channel text
+null, external_id, verified_at null, created_at`; unique `(kind, client_id, external_id)` and
+`(owner_scope, kind, channel, external_id)` — channel bindings of contacts are scoped to one owner's
+memory (client A cannot attach owner B's Telegram id to A's memories). Only verified bindings
+identify interlocutors and enter `audience`.
+
+### link_codes
+`id, owner_id, client_id (the only client allowed to redeem), code_hash, expires_at, used_at,
+created_at`.
+
+### idempotency_keys
+`credential_id, owner_id, method_path, key, response_hash, response_body, created_at` — unique on
+the first four; 24 h retention.
 
 ## Layer 0 — raw log
 
@@ -277,24 +289,31 @@ period_from, period_to, conversation_id null, created_at` — checked **before i
 episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
 
 ### read_audit
-`id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], endpoint, row_ids
-uuid[], created_at` — which memories were returned to whom (vision principle 5, M7). Retention
+`id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], viewer_source enum
+(conversation|owner_direct|added_viewers), endpoint, row_ids uuid[], created_at` — which memories
+were returned to whom and how the viewer set was determined (vision principle 5, M7). Retention
 configurable.
 
 ## Forgetting and deletion (D16)
 
 - **Forget an episode**: tombstone + delete the episode, its evidence rows, people, plan events,
   promotions referencing it; the correction chain (`corrects` in both directions) is forgotten
-  with it; its raw messages are **hidden from the raw-log fallback** for that topic (tombstone
-  fingerprint) and purged if the owner chooses "forget the conversation too".
+  with it; the day and month **digests that used it are recomputed** (text and embedding);
+  **facts whose evidence intersects its messages are re-verdicted or deleted**; its evidence
+  messages are **excluded from the raw-log fallback by message id** (not by fuzzy fingerprint) and
+  purged if the owner chooses "forget the conversation too".
 - **Forget a period** `[from, to]`: tombstone; matches episodes by `occurred_at` **and** raw
   messages by `sent_at`; raw messages in the period are **purged by default** (`keepRaw: true`
   to keep them); digests of the period are recomputed or removed.
 - **Delete a message / conversation** (client request): purge raw rows and revisions; for every
   episode / fact citing it, **drop the evidence row**; a row left without evidence is deleted;
   no re-extraction (it could rewrite memories).
-- The purge job also removes: `embedding_text`, quotes, `run_outputs` rows, queued job payloads
-  in Redis for the affected conversation; `extraction_runs.error` never contains user content.
+- The purge job also removes: `messages.embedding`, `message_revisions` (also on forget-period),
+  `embedding_text`, quotes, `run_outputs` rows. Queued jobs carry **ids only, never content**;
+  `extraction_runs.error` and `llm_calls` never contain user content.
+- **Backups**: forgotten rows disappear from backups within a configured window (default 30 days,
+  shown to the owner). **LLM provider logs** are outside Recordare's control: the owner page states
+  which provider processes their data and its retention policy (D27 provider profile).
 - Corrections and supersessions keep history; forgetting is physical.
 
 ## Deferred (additive later, no migration of memories)

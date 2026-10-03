@@ -23,7 +23,17 @@ header (24 h replay window, same response returned).
 ### Owner authentication
 Owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
 OIDC later). The owner session is needed for: giving consent (`episodicEnabled`), creating link
-codes, authorising OAuth MCP clients, creating personal tokens, the self-service diary.
+codes, revoking clients, authorising OAuth MCP clients, creating personal tokens, exports, the
+self-service diary.
+- The owner email is set **only** through a verification mail the owner opens (claim flow); it is
+  never taken from client or ingest payloads, and changing it requires the current owner session
+  plus verification of the new address.
+- Magic links: single use, ≤ 15 min, rate-limited per address and IP, bound to the browser that
+  requested them; new-login notifications by email.
+- An auto-provisioned owner (created by a client) has no email until claimed: until then its
+  memory is exactly as protected as that client's key, and it has no owner pages. Host toggles
+  (e.g. Arkimede's "enable diary") **open Recordare's owner page**; they never change consent with
+  the client key.
 
 ### Credentials (D24)
 | Level | Credential | Acts as |
@@ -41,32 +51,40 @@ codes, authorising OAuth MCP clients, creating personal tokens, the self-service
 | `read` | §4 GET endpoints |
 | `write` | §4 manual entries, corrections, forgetting, fact edits |
 | `owner_settings` | `PATCH settings` incl. `episodicEnabled` — **only owner sessions and owner-created personal tokens**; never client API keys (consent, D4) |
-| `export` | §4 export jobs |
+| `export` | §4 export jobs — **only owner sessions / owner-created personal tokens**; download requires the owner session and expires |
 | `admin` | `api/v1/admin/…` |
 
 Keys and tokens: argon2id hashes, shown once, visible prefix, rotation by create + revoke. A
-client can never mint tokens for another client.
+client can never mint tokens for another client. `Idempotency-Key` replays are scoped to
+`(credential, owner, method + path)`.
 
 ### Viewer context (who will see the result) — every read
-Every read (MCP tools, §4 GETs) declares who will see the answer:
-- `X-Recordare-Conversation: <externalConversationId>` → viewers = participants of that ingested
-  conversation; or
-- `X-Recordare-Viewers: <comma-separated external identities>`; or
-- nothing → viewers = the owner alone (personal token / owner session) — for client API keys the
-  header is **required** on reads.
+The viewer set is **resolved by Recordare, never asserted by the client or the LLM**:
+- **Client API keys and MCP sessions opened with them**: the only accepted source is
+  `X-Recordare-Conversation: <externalConversationId>`, resolved against the participants Recordare
+  has ingested for that conversation. `X-Recordare-Viewers` and `_meta.recordare.viewers` may only
+  **add** viewers (narrowing what is returned), never replace the resolved set. A read **without a
+  resolvable conversation returns nothing**.
+- **Personal tokens and owner sessions** (owner-direct use, e.g. Claude Code): no header → viewers =
+  the owner; a conversation header, if sent, applies as above.
+- The resolved viewer set and its source are written to `read_audit`.
 
-Rule (`DATA_MODEL.md` → read rule): in phase 1 memories are returned only when the viewers are
-exactly the owner; otherwise the response is empty with `notes: ["memory not available in a shared
-conversation"]`. Missing and forbidden items look the same.
+Rule (`DATA_MODEL.md` → read rule): in phase 1 memories — and raw data derived from chats
+(quotes, `fromChats` excerpts, message ids) — are returned only when the viewers are exactly the
+owner; otherwise the response is empty with a neutral note (`"nothing to show here"`) that does not
+reveal whether memories exist. Missing and forbidden items look the same.
 
 ### Linking the same person across clients
-1. In an **owner session**, the owner creates a link code (`POST api/v1/me/link-codes` →
-   `{code, expiresAt}`, single use, 10 min) and sees what client B will get: episodes and facts of
-   all clients; raw chats only of B's own conversations (`clients.raw_log_scope = own`, widenable
-   by the owner).
-2. Client B submits it: `POST api/v1/identities/link {code, externalUserId}` with B's key.
-3. If B's `externalUserId` is already bound to another owner (e.g. auto-provisioned), the link is
-   rejected (`409 identity_bound`) — person merge is not supported in v1.
+1. In an **owner session**, the owner picks the target client and creates a link code
+   (`POST api/v1/me/link-codes {clientId}` → `{code, expiresAt}`, single use, 10 min), seeing what
+   that client will get: episodes and facts of all clients; raw chats only of its own conversations
+   (`clients.raw_log_scope = own`, widenable by the owner).
+2. That client submits it: `POST api/v1/identities/link {code, externalUserId}`; redemption by any
+   other client is rejected. The owner receives a notification.
+3. If the `externalUserId` is already bound to another owner, the link fails with a generic
+   `400 cannot_link` (no hint that the id exists) — person merge is not supported in v1.
+4. The owner can list and revoke connected clients and identities at any time:
+   `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` (owner session).
 
 Admin (`api/v1/admin/…`): clients, keys, persons, owners, identities CRUD; owner export / full
 erasure jobs.
@@ -84,6 +102,8 @@ erasure jobs.
     participants?: Array<{
       ref: string; role: "owner" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
+      // resolved to a person only if the identity is verified for this owner;
+      // otherwise stored by display name (never enters `audience`)
     }>;
   };
   messages: Array<{                       // max 500, any order
@@ -103,7 +123,8 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
 - Same `externalId` and same content → duplicate (ignored). Same `externalId`, different content →
   listed in `conflicts` (`409`-style per item) unless `upsert: true`, which records an edit.
 - **Owner without `episodicEnabled`** → nothing is stored, `stored: false` (no raw log without
-  consent).
+  consent). Disabling it later stops ingest and extraction; existing memories stay until the owner
+  deletes them ("disable and erase" is offered on the owner page).
 - Each accepted batch (re)schedules the conversation's idle job (D1, D5, global delay); messages
   are extracted when pending, by `sentAt`, so late or out-of-order messages are never skipped.
 
@@ -119,10 +140,12 @@ segmentation (D29); forward-only supersession by `sentAt`.
 ## 3. MCP tools (task 1.3) — both levels
 
 Transport: **MCP streamable HTTP** at `/mcp`. **One MCP session per owner**: the owner is fixed
-at `initialize` (token owner, or `X-Recordare-User` for client keys) and cannot change within the
-session; the viewer context comes from the headers of §1 or from `_meta.recordare.conversation` on
-each call. Tool schemas use the provider-neutral subset (D27). Tools are listed only when the owner
-has `episodicEnabled`; the server sends `notifications/tools/list_changed` when it changes.
+at `initialize` (token owner, or `X-Recordare-User` for client keys); every request re-validates
+`X-Recordare-User` against the session owner — a mismatch returns 403 and terminates the session
+(hosts that reuse one session across users cannot cross memories). The viewer context follows §1
+(conversation header; `_meta` may only add viewers). Tool schemas use the provider-neutral subset
+(D27). Tools are always listed (no hint whether a diary exists); with `episodicEnabled` off, reads
+return nothing and writes are rejected with a neutral error.
 
 ### `log_episode` (D11)
 | Param | Type | Notes |
@@ -134,11 +157,13 @@ has `episodicEnabled`; the server sends `notifications/tools/list_changed` when 
 | `people` | string[] | Names as mentioned |
 | `place` | string | |
 
-Returns `{id, stored}`. Importance 10, `stance: stated`. Dedup: the same content for the same owner
-within 10 minutes returns the existing episode (agent retries). Evidence: the conversation message
-(from `_meta.recordare.conversation` / header) — bound late if the ingest has not arrived yet; at
-basic level, the call is stored in a per-client daily conversation (`source: mcp_tool`) with
-`evidence_kind: agent_paraphrase`.
+Returns `{id, stored}`. Dedup: the same content for the same owner within 10 minutes returns the
+existing episode (agent retries). Evidence: the owner's `user` message in the conversation of the
+call (bound late if the ingest has not arrived yet). **Importance 10 and `stance: stated` only when
+the evidence binds to a `user` message of the owner**; otherwise (basic level, or no owner message)
+the call is stored in a per-client daily conversation (`source: mcp_tool`, `evidence_kind:
+agent_paraphrase`) with `origin: assistant_stated`, default importance and the label "noted by the
+assistant" — so an injected tool output cannot create a high-importance "the user said" memory.
 
 ### `correct_episode` / `forget_episode` (D16, D18 — also for MCP-only owners)
 - `correct_episode {id, content?, occurred_at?, date_precision?}` → new row with `corrects`, old
@@ -169,11 +194,13 @@ type Episode = {
   when: string;                                       // human-readable, with precision
   planStatus?: "open" | "confirmed" | "cancelled" | "rescheduled" | "unresolved";
   rescheduledTo?: string; origin: "owner_lived" | "owner_told" | "assistant_stated";
+  authorRole: "owner" | "assistant" | "other" | "tool";   // who wrote the evidence
   people: string[]; feelings: string[]; opinion?: string;
   source: { conversationId: string; messageIds: string[]; at: string };
 };
 ```
-`fromChats` (raw-log fallback, D13) is filled when fewer than 3 episodes match or the best match
+Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts can wrap non-owner
+content as data, not instructions. `fromChats` (raw-log fallback, D13) is filled when fewer than 3 episodes match or the best match
 is below the relevance threshold (tuned on the eval suite); limited to the client's own
 conversations (`raw_log_scope`). Statuses always explicit; cancelled, unresolved and superseded
 items are never presented as current (premise check, D29).
@@ -200,7 +227,7 @@ The same pages are served by Recordare itself for owners without a host UI.
 | Method + path | Scope | Purpose |
 |---|---|---|
 | `GET api/v1/episodes?from&to&kind&planStatus&q&cursor&limit` | read | Timeline |
-| `GET api/v1/episodes/{id}` | read | Detail: evidence, correction history, linked plan / event |
+| `GET api/v1/episodes/{id}` | read | Detail: evidence (quotes filtered by `raw_log_scope` and the viewer rule), correction history, linked plan / event |
 | `POST api/v1/episodes` | write | Manual entry |
 | `POST api/v1/episodes/{id}/corrections` | write | Correction (new row, `corrects`) |
 | `DELETE api/v1/episodes/{id}` | write | Forget one episode |
