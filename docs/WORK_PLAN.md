@@ -80,6 +80,14 @@ zod schemas in M2 rather than hand-written.
 
 ### M2 — Service scaffold
 
+**Done 2026-10-03** (branch `m2-scaffold`): NestJS 12 + TypeScript 6 strict (tsc build, SWC for dev and
+tests — the Nest 12 CLI does not run on Node 20), env validation, health, initial migration of data
+model v1 (home / research profile), provider-neutral `LlmPort` with OpenAI-compatible and native
+Anthropic adapters and profiles (verified live on DeepSeek and Ollama with `npm run smoke:llm`),
+embedding and clock ports, v1 auth (client API keys, personal tokens, admin API, owner resolution),
+docker-compose, CI, Dockerfile. Moved to where they are first used: `QueuePort` (BullMQ idle jobs) →
+M3, `VectorStorePort` and IT/EN prompt files → M4.
+
 | # | Task |
 |---|---|
 | 2.1 | NestJS project, strict TS, lint, `tsc --noEmit`, test runner; CI on every push |
