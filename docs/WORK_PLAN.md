@@ -114,6 +114,14 @@ system S through REST + MCP: **90 % / 71 %** on the base sets (spike baseline 83
 
 ### M4 — Layer 1: episodes (encoding + recall)
 
+**Core done 2026-10-03** (branch `m4-engine`): engine (one extraction call per window, code-side
+lifecycle rules, near-duplicate / correction resolver), notes (D34), recall tools (`search_episodes`
+with `latest`, `search_memory` with as-of, `resolve_period`, explicit writes and forgetting).
+Service v1: 100 % / 89–96 % on the base sets, **96.4 % on the held-out noise set**
+(`spikes/memory-eval/RESULTS.md`). Still open: 4.4b (new blind set — the held-out one is no longer
+blind for the engine prompt), 4.5b (provider matrix), 4.5c (H1 categories), 4.6 (N ≥ 3 runs,
+controls, per-stage extraction eval) — they move to M4b together with the M3/M4 eval upgrade.
+
 | # | Task |
 |---|---|
 | 4.1 | Per-conversation idle debounce (D1/D5) + service-side cursor (D22) + nightly sweep |

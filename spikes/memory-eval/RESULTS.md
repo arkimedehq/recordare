@@ -133,6 +133,12 @@ time; the agent planner knows `search_episodes` mode `latest`. Harness v1.1, bas
 | + confirm creates event, extract.v2 | 100 % | 96.4 % |
 | + resolver (strict / broad variants), planner `latest` | 100 % ×3 | 89.3 % … **94.6 %** |
 
+**Held-out with noise (191 sessions), single run: 96.4 %** (judge v1.1, 0 judge errors; only h09
+wrong). Earlier references on the same set, older judge and full ingestion: D 86 %, Memobase 61 %,
+raw baseline 50 % — indicative, not strictly comparable. Cost signals: ingest 312 s for 191 sessions
+(sequential extraction); **67 % of extraction input tokens served from DeepSeek's prefix cache**
+(stable system prompt); 25 light resolver calls in total.
+
 Remaining misses: counting (h02, varies between runs), the orthopaedist correction (h09: now linked
 by the resolver in most runs, answer still partial). **Caveat:** the held-out set is no longer blind
 for the engine prompt (extract.v2 was written after seeing h09 / h02); a new blind set is due
