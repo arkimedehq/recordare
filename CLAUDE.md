@@ -7,7 +7,7 @@ client. Status: **design + evaluation spike; no service code yet.**
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
   mode, architecture (standalone, own DB, one memory per person), name, roadmap.
-- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D33 (layered memory: raw log →
+- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D34 (layered memory: raw log →
   episodes → digests → semantic notes; two LLM calls; idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
@@ -76,9 +76,10 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Embeddings: Arkimede now runs **BAAI/bge-m3** (1024 dims) in its own `embedding-service`;
   admin re-embed job exists (`/api/admin/vector-db/reembed*`); never change embedding model
   without it.
-- Existing semantic memory: A-MEM (`backend/src/user-memory/`, `docs/MEMORY.md`); raw-log search
-  `search_conversations`. A-MEM stays in Arkimede for now; migrating it into Recordare is a
-  later roadmap phase.
+- Existing semantic memory: A-MEM (`backend/src/user-memory/`, `docs/MEMORY.md`, per-user
+  `autoMemoryEnabled` governs extraction + injection + tools; scopes personal / team / org).
+  **D34**: A-MEM stays in Arkimede unchanged; Recordare is complete (notes too); users copy notes
+  Recordare → A-MEM by choice; the Arkimede toggle is split in M6.
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps

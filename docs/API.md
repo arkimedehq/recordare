@@ -237,6 +237,12 @@ items are never presented as current (premise check, D29).
 Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...], source}]}`;
 `unknown_current` → "the current value is not known".
 
+### `remember` and `search_memory` (D34 — semantic notes)
+- `remember {content, category?}` — explicit "remember that…": stored as a stated note (owner's
+  `user` message as evidence, same rules as `log_episode`).
+- `search_memory {query, include_pending?}` — preferences, habits, values, knowledge, plus the
+  relevant state facts; complements `search_episodes` (what happened / when).
+
 ### `resolve_period` (D12, deterministic)
 `{expression, now?, locale?}` → `{from, to, label}`; Monday-based weeks, owner's timezone; `now`
 defaults to server time (override allowed for tests and historical questions). No LLM.
@@ -260,6 +266,9 @@ The same pages are served by Recordare itself for owners without a host UI.
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Pending facts (D20) |
 | `GET api/v1/promotions?status` + `POST …/{id}/confirm\|reject` | read / write | Pattern proposals (D20, D26) |
 | `GET api/v1/plans?status` | read | Open / unresolved plans |
+| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34) |
+| `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Manage notes |
+| `GET api/v1/notes/changes?since=<seq>` | read | Change feed for clients keeping copies (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | `episodicEnabled`, locale, timezone |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |

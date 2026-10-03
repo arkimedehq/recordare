@@ -118,7 +118,7 @@ system S through REST + MCP: **90 % / 71 %** on the base sets (spike baseline 83
 |---|---|
 | 4.1 | Per-conversation idle debounce (D1/D5) + service-side cursor (D22) + nightly sweep |
 | 4.2 | Episode extraction (D2, D9, D10, D21): bi-temporal, `datePrecision`, plans with `validUntil` / `invalidatedAt`, valence / feelings / opinion, `people`, provenance to raw message |
-| 4.3 | `log_episode` (explicit capture, max importance) |
+| 4.3 | `log_episode` (explicit capture, max importance); semantic notes (D34): extraction in the same call, `notes` tables, `remember` / `search_memory`, notes change feed |
 | 4.4 | `search_episodes` full: date-range filter, `mode: search \| list`, ranking relevance + recency + importance + access boost (D14), automatic raw-log fallback (D13); deterministic resolver for common period expressions (this / last week, month names) |
 | 4.4b | Eval suite = `dataset/` + `dataset_holdout/` (+ a new blind set when prompts change a lot); gaps from `ENGINE_IDEAS.md` covered (rescheduled plans, corrections, `latest` mode, facts as-of) |
 | 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget |
@@ -164,6 +164,7 @@ protection in front (firewall / WAF / rate limits).
 | Id | Question | Proposal | When |
 |---|---|---|---|
 | D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02** | Done |
+| D34 | Notes: Recordare complete, A-MEM unchanged | Recordare has semantic notes; one-way copies to A-MEM by user choice; Arkimede toggle split in M6 | Done (2026-10-03) |
 | D33 | Deployment profiles | v1 home / research; public-profile hardening deferred to M7 | Done (2026-10-03) |
 | D31 | Facts in Recordare | State slots with value chain; notes stay in A-MEM until migration | Done (2026-10-03) |
 | D32 | Extraction calls per window | One call (amends D2) | Done (2026-10-03) |

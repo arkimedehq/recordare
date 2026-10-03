@@ -22,7 +22,7 @@ Identity      persons ─ person_aliases       clients ─ api_keys ─ access_t
 Layer 0       conversations ─ conversation_participants ─ messages ─ message_revisions
 Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
-Layer 3       fact_slots ─ facts ─ fact_evidence
+Layer 3       fact_slots ─ facts ─ fact_evidence     notes ─ note_evidence ─ note_changes
 Engine        extraction_runs ─ run_outputs   llm_calls   forget_tombstones   read_audit
 ```
 
@@ -269,6 +269,29 @@ Partial unique `(owner_id, subject_person_id, key) WHERE status = 'current' AND 
 time. `derivedFrom` / `needsRecheck` (D29) are deferred until something produces derived facts.
 
 `fact_evidence(fact_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`.
+
+### notes (D34)
+Semantic notes: who the owner is, beyond state slots.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id`, `owner_id` | uuid | |
+| `category` | enum `preference \| habit \| value \| relationship \| knowledge \| profile \| constraint` | |
+| `content` | text | Short, self-contained sentence |
+| `keywords`, `context`, `tags` | text[], text, text[] | Retrieval keys (same extraction call) |
+| `pinned` | bool | Always part of the stable context block (owner's choice) |
+| `status` | enum `current \| superseded \| corrected` | History kept, never rewritten |
+| `supersedes`, `corrects` | uuid null → notes (`SET NULL`) | |
+| `support_count` | int | Restatements counted |
+| `pending` | bool | Inferred notes await confirmation; excluded from recall unless asked |
+| *time* | | `valid_from`, `recorded_at` |
+| *provenance*, *disclosure*, *embedding* | | |
+| `deleted_at` | timestamptz null | |
+
+`note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`;
+`note_changes(seq bigserial, owner_id, note_id uuid, change enum (created|updated|corrected|
+confirmed|forgotten), at)` — the change feed clients use to keep copies aligned (forgotten notes are
+purged, the feed keeps only their id).
 
 ## Engine bookkeeping
 

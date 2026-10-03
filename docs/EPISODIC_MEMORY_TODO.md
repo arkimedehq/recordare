@@ -386,7 +386,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   `origin: assistant_stated` (extends D28's `owner_lived | owner_told | twin_experienced`),
   never merged with owner-lived memories; recall labels them ("the assistant suggested / did").
 
-### D31 — Recordare facts are state slots with a value chain (2026-10-03)
+### D31 — Recordare facts are state slots with a value chain (2026-10-03; notes part superseded by D34)
 - Layer 3 in Recordare = **state slots** ("car", "address", "employer", "children") with their
   history, cardinality `single` (supersede) or `multi` (accumulate), slot schema with merge policy
   and default disclosure (`DATA_MODEL.md` → fact_slots).
@@ -413,9 +413,27 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   retention policy, network protection. Specified in `API.md` §0 so enabling them needs no data
   migration.
 
+### D34 — Recordare is complete; A-MEM stays in Arkimede; the user chooses (2026-10-03)
+- **Recordare owns a complete personal memory**: episodes, plans, digests, state facts **and
+  semantic notes** (preferences, habits, values, relationships, knowledge), extracted in the same
+  single call (D32). It works fully with any client, Arkimede or not. Replaces D31's "notes stay in
+  A-MEM" (D31's state slots remain).
+- **A-MEM stays in Arkimede unchanged in its logic** (it also serves team and org scopes).
+- **Copies flow one way, by user choice**: Arkimede, when Recordare is connected, shows Recordare's
+  notes and lets the user copy a note into A-MEM (personal or team) — by rule (e.g. a category) or
+  manually per note, never by blanket prompting. A copy keeps a reference to the Recordare note;
+  Recordare exposes a change feed (`GET api/v1/notes/changes?since=`) so Arkimede updates or
+  removes copies when the note changes or is forgotten. Copying into team / org widens the audience
+  → always an explicit user action, recorded.
+- **Arkimede side (M6, its own repo, additive)**: today one per-user toggle (`autoMemoryEnabled`)
+  governs extraction, injection and tools together. It is split into independent per-user choices:
+  personal notes memory (extraction + use), team / org notes (use), Recordare (connected or not).
+  Users without Recordare get the same flexibility. If a user enables both personal A-MEM extraction
+  and Recordare notes, duplicates are possible: the UI warns, it does not forbid (user's choice).
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D33 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D34 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)
