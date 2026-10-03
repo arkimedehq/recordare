@@ -143,7 +143,11 @@ product.
 - Kill switch / pause, and snapshots to restart a life from any point.
 - Toward real people the twin presents itself as an AI (EU AI Act art. 50; otherwise it deceives
   people who did not choose to take part).
-- No access to third parties' money or accounts outside the simulation.
+- **Money and accounts behind a knob** (default off): the owner may grant the twin access to
+  their own limited accounts — e.g. a prepaid card or a sub-account with a per-transaction cap,
+  a budget per period, allowed merchant categories — and let it buy on their behalf. Every
+  transaction is logged and notified; the grant can be revoked at any time. Third parties'
+  money or accounts are never in scope.
 
 **Research questions** (see `RESEARCH_NOTES.md` H10): how far and how fast does an autonomous
 twin drift from its owner (Park-style agreement over time)? Which goals does it form? How does it
