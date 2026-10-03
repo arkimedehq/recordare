@@ -26,6 +26,7 @@ twin, owner vs twin provenance, and unresolved user plans.
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the owner's own messages | To test | 2 |
+| H9 | Twin as a reflective companion of its owner (dialogue with oneself; non-sycophantic, evidence from own memories) | To review (literature not yet searched) | 4 |
 
 ## H1 — Plans, unknown outcomes, events vs states, corrections
 
@@ -184,3 +185,13 @@ per-person artefact that is an impersonation kit to protect). Compare in phase 2
 Park-style agreement harness and style metrics (blind human / LLM pairwise preference).
 Prior work to review then: Second Me arXiv:2503.08102, TwinVoice arXiv:2510.25536, persona
 consistency literature.
+
+## H9 — The twin as a reflective companion of its owner
+
+**Claim.** A twin talking with its own owner as a companion ("dialogue with oneself") is useful
+when it is *not* an echo: it disagrees with evidence from the owner's own memories, surfaces
+recurring patterns, and checks decisions against stated values. Measure against a sycophantic
+baseline: owner-rated usefulness, agreement rate, and whether challenges cite real memories.
+Risks: emotional dependency, reinforcing biases. **Prior work to search** (not yet reviewed):
+"future self" chat studies (e.g. MIT Media Lab *Future You*, 2024 — verify), self-reflection and
+journaling agents, LLM sycophancy literature, digital-twin companionship studies.

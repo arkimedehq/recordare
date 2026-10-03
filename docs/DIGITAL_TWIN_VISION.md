@@ -53,6 +53,46 @@ it also takes initiative.
 6. **Evaluate, don't assume.** Park-style harness: ask the owner and the twin the same
    questions, measure agreement over time.
 
+7. **A companion, not an echo.** A twin that thinks like the owner tends to agree with the
+   owner and reinforce their biases. In companion mode it may — and should — disagree, using the
+   owner's own memories as evidence ("three months ago you said the opposite"), point out
+   recurring patterns and check decisions against the owner's stated values.
+8. **Only consenting people are modelled.** The twin is built from the owner's own data with
+   their consent. Cloning a third party (from web content or anything else) without their consent
+   is out of scope and blocked by design; legacy mode uses only what the owner authorised while
+   alive.
+
+## Interaction modes (decided 2026-10-03)
+
+The tier says *what* the twin may disclose; the mode says *what role* it plays.
+
+| Mode | With | Role |
+|---|---|---|
+| **Companion (mirror)** | The owner | A second self: knows the owner from the inside, talks with them as a partner / close friend would; reflective, can challenge (principle 7). Owner–digital dialogue with oneself |
+| **Proxy (declared)** | Others | Speaks and reasons like the owner, presented as "the digital twin of <owner>" (principle 4); disclosure by tier |
+
+Both modes can take initiative (see Initiative levels): proposals to the owner (L1), actions
+toward others only within the permission matrix, with confirmation where required (L2).
+Risks to design for: emotional dependency (especially in companion and legacy mode) and
+sycophancy.
+
+## Sources of the self-model (decided 2026-10-03)
+
+People often say more about themselves online than at home, so the owner's digital footprint is
+a primary source, next to everyday chats and guided interviews:
+- **Own public footprint**: the owner's social posts, video / audio transcripts, forum and blog
+  contributions — imported only after verifying the accounts are the owner's (platform login /
+  official data export), with explicit consent per source.
+- **Own private exports**: chat histories (WhatsApp, Telegram), email, notes — via official
+  exports. Messages written by other people inside them are third-party data: stored with
+  `origin: owner_told`-style provenance and the conversation's audience, disclosure owner-only by
+  default, never used to model those people.
+- **Guided interviews** (Park et al. 2024: ~2 h interview → 85 % of participants' own
+  consistency) remain the densest source for values and decision patterns, which public content
+  shows only partially (a curated public persona, little about unseen situations).
+
+Not in scope: building a twin of someone else from web content (principle 8).
+
 ## Interlocutor tiers (draft)
 
 | Tier | Who | Default disclosure |
@@ -151,9 +191,9 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
 | Phase | Content | Depends on |
 |---|---|---|
 | **1. Episodic memory** | Diary, digests, consolidation (`EPISODIC_MEMORY_TODO.md`, D1–D20) + emotions / opinions on episodes | — |
-| **2. Self-model** | Guided voice interview, imports, style profile, values / opinions / decision patterns, autobiographical narrative; evaluation harness | 1 |
+| **2. Self-model** | Guided voice interview, imports (own public footprint + private exports), style profile, values / opinions / decision patterns, autobiographical narrative; evaluation harness | 1 |
 | **3. Contacts & disclosure** | Contact registry with channel binding, tiers, disclosure levels on memories, twin-lived memory store | 1 |
-| **4. Twin interface** | Persona agent answering others (Telegram first), AI disclosure, owner review of conversations | 2, 3 |
+| **4. Twin interface** | Companion mode with the owner; proxy mode answering others (Telegram first), AI disclosure, owner review of conversations | 2, 3 |
 | **5. Initiative L1** | Inform & propose to the owner (heartbeat + scheduling) | 1, 3 |
 | **6. Voice** | Owner voice model (Piper fine-tune, local), twin voice channel with deepfake disclosure | 4 |
 | **7. Initiative L2** | Act toward third parties: permission matrix, audit, kill switch | 4, 5 |
