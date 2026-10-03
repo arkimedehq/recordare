@@ -38,6 +38,13 @@ interface Tombstones {
   periods: Array<{ from: Date; to: Date }>;
 }
 
+export class ConcurrentExtractionError extends Error {
+  constructor() {
+    super('window already extracted by another run');
+    this.name = 'ConcurrentExtractionError';
+  }
+}
+
 export class ExtractionWriter {
   private readonly written: WrittenRow[] = [];
   private audience: string[] = [];
@@ -47,6 +54,11 @@ export class ExtractionWriter {
   constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {}
 
   async apply(out: ExtractionOutput): Promise<WrittenRow[]> {
+    // Concurrency guard: lock the window's messages; if another run already extracted any of them,
+    // this run writes nothing (no duplicates, no double processing).
+    const pending: Array<{ id: string }> = await this.tx.query(
+      `SELECT id FROM messages WHERE id = ANY($1) AND extracted_run_id IS NULL FOR UPDATE`, [this.input.messages.map((m) => m.id)]);
+    if (pending.length !== this.input.messages.length) throw new ConcurrentExtractionError();
     await this.loadAudience();
     await this.loadTombstones();
     const episodeIds = await this.writeEpisodes(out);
@@ -156,7 +168,7 @@ export class ExtractionWriter {
     for (const p of out.plan_patches) {
       const planId = this.input.plans.get(p.plan);
       const msgs = this.evidence(p.evidence);
-      if (!planId || msgs.length === 0) continue;
+      if (!planId || msgs.length === 0 || this.forgotten(msgs, null)) continue;
       const at = msgs[0]?.sentAt ?? new Date();
       let newPlanId: string | null = null;
       if (p.patch === 'confirm') {
@@ -215,6 +227,7 @@ export class ExtractionWriter {
     for (const m of msgs) {
       await this.tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, m.id]);
     }
+    await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, planId]);
     this.written.push({ table: 'episodes', id: row.id, text: [p.new_content ?? old.content, old.place].filter(Boolean).join(' | ') });
     return row.id as string;
   }
@@ -240,6 +253,11 @@ export class ExtractionWriter {
         continue;
       }
       let verdict = f.verdict;
+      // "new" with a target on a single-value slot is a replacement; on a multi-value slot it is a new item.
+      if (target && verdict === 'new') {
+        if (cardinality === 'single') verdict = 'replace';
+        else target = undefined;
+      }
       if (!target && cardinality === 'single' && verdict !== 'corrects') {
         // A new value for a single-value slot that already has one is a replacement.
         const [cur] = await this.tx.query(
@@ -264,6 +282,8 @@ export class ExtractionWriter {
 
       if (target && (verdict === 'replace' || verdict === 'stale' || verdict === 'unknown')) {
         if (target.validFrom && from.at && from.at < target.validFrom) {
+          // Older evidence that a value became unknown changes nothing in the newer history.
+          if (value === null) continue;
           // Forward-only: an older value (late import) becomes history, the newer fact stays current.
           status = 'superseded';
           validTo = target.validFrom;

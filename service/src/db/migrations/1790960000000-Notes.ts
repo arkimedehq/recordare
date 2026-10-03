@@ -5,7 +5,7 @@
 import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
 /** Common state slots; extraction adds new ones (snake_case keys) when needed. */
-const SLOTS: Array<[string, string, 'single' | 'multi']> = [
+export const SLOTS: Array<[string, string, 'single' | 'multi']> = [
   ['car', 'The car the person currently has', 'single'],
   ['address', 'Where the person currently lives', 'single'],
   ['employer', 'Where the person currently works', 'single'],
@@ -15,6 +15,8 @@ const SLOTS: Array<[string, string, 'single' | 'multi']> = [
   ['pets', "The person's pets", 'multi'],
   ['languages', 'Languages the person speaks', 'multi'],
 ];
+
+export const SEED_SLOTS = SLOTS.map(([key]) => key);
 
 export class Notes1790960000000 implements MigrationInterface {
   name = 'Notes1790960000000';

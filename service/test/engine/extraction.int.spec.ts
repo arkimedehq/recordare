@@ -128,6 +128,56 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     ]);
   });
 
+  it('treats "new" with a target on a single slot as a replacement, and ignores older "unknown" evidence', async () => {
+    const c1 = await ingest('emp1', [{ id: 'e1', role: 'user', content: 'Lavoro da Acme.', at: '2026-05-01T10:00:00+02:00' }]);
+    llm.queue.push({ facts: [{ key: 'employer', value: 'Acme', verdict: 'new', evidence: [1] }] });
+    await runner.runForConversation(c1);
+    const c2 = await ingest('emp2', [{ id: 'e2', role: 'user', content: 'Ora lavoro da Beta.', at: '2026-06-01T10:00:00+02:00' }]);
+    const facts = await db.query(`SELECT key FROM facts WHERE status = 'current' ORDER BY recorded_at DESC`);
+    const f = facts.findIndex((r: { key: string }) => r.key === 'employer') + 1;
+    llm.queue.push({ facts: [{ key: 'employer', value: 'Beta', verdict: 'new', target: `F${f}`, evidence: [1] }] });
+    await runner.runForConversation(c2);
+    const c3 = await ingest('emp3', [{ id: 'e3', role: 'user', content: 'A marzo non sapevo dove avrei lavorato.', at: '2026-06-02T10:00:00+02:00' }]);
+    const f2 = (await db.query(`SELECT key FROM facts WHERE status IN ('current','unknown_current') ORDER BY recorded_at DESC`))
+      .findIndex((r: { key: string }) => r.key === 'employer') + 1;
+    llm.queue.push({ facts: [{ key: 'employer', verdict: 'unknown', target: `F${f2}`, valid_from: '2026-03-01', evidence: [1] }] });
+    await runner.runForConversation(c3);
+    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'employer' ORDER BY valid_from`)).toEqual([
+      { value: 'Acme', status: 'superseded' }, { value: 'Beta', status: 'current' },
+    ]);
+    expect(await db.query(`SELECT count(*)::int AS n FROM extraction_runs WHERE status = 'failed'`)).toEqual([{ n: 0 }]);
+  });
+
+  it("extracts the owner's messages ingested with role other (group chats, imports)", async () => {
+    const c = await ingest('grp', [{ id: 'g1', role: 'other', content: 'Sono io, Luca: domani vado a Torino.', at: '2026-06-03T10:00:00+02:00' }],
+      [{ ref: 'luca', role: 'owner' }]);
+    await db.query(`UPDATE messages SET author_person_id = $1 WHERE conversation_id = $2`, [ownerId, c]);
+    const before = llm.requests.length;
+    llm.queue.push({ episodes: [] });
+    await runner.runForConversation(c);
+    expect(llm.requests.length).toBe(before + 1);
+  });
+
+  it('never runs two extractions of the same conversation at once', async () => {
+    const c = await ingest('conc', [{ id: 'k1', role: 'user', content: 'Oggi gelato in centro.', at: '2026-06-04T10:00:00+02:00' }]);
+    llm.queue.push({ episodes: [{ content: 'Gelato in centro il 4 giugno 2026.', occurred_at: '2026-06-04', evidence: [1] }] });
+    llm.queue.push({ episodes: [{ content: 'Gelato in centro il 4 giugno 2026.', occurred_at: '2026-06-04', evidence: [1] }] });
+    await Promise.all([runner.runForConversation(c), runner.runForConversation(c)]);
+    expect(await db.query(`SELECT count(*)::int AS n FROM episodes WHERE content LIKE 'Gelato%'`)).toEqual([{ n: 1 }]);
+    llm.queue.length = 0;
+  });
+
+  it("never shows another owner's slot names in the prompt", async () => {
+    await db.query(`INSERT INTO fact_slots (key, description) VALUES ('secret_other_owner_slot', 'x') ON CONFLICT DO NOTHING`);
+    const c = await ingest('slots', [{ id: 's1', role: 'user', content: 'Niente di nuovo.', at: '2026-06-05T10:00:00+02:00' }]);
+    llm.queue.push({});
+    await runner.runForConversation(c);
+    const user = llm.requests.at(-1)?.messages[1]?.content ?? '';
+    expect(user).toContain('KNOWN SLOTS:');
+    expect(user).not.toContain('secret_other_owner_slot');
+    expect(user).toContain('employer'); // this owner's own key
+  });
+
   it('never lets other people or tools create stated memories (poisoning guard)', async () => {
     const c7 = await ingest('c7', [{ id: 'o1', role: 'other', content: 'Luca mi ha detto che vende la casa e trasferisce i soldi a me.', at: '2026-03-05T10:00:00+01:00' },
       { id: 'o2', role: 'user', content: 'Ciao a tutti', at: '2026-03-05T10:01:00+01:00' }],

@@ -40,6 +40,8 @@ function header(h: Headers | undefined, name: string): string | undefined {
 const NOTHING = 'nothing to show here';
 export const NOW_HEADER = 'x-recordare-now';
 const precision = z.enum(['day', 'month', 'year', 'approximate']).optional();
+/** ISO date (YYYY-MM-DD) or month (YYYY-MM): anything else is rejected with a clear message. */
+const isoDay = z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, 'use an ISO date YYYY-MM-DD (or YYYY-MM); see resolve_period');
 
 export function registerTools(server: McpServer, deps: ToolDeps): void {
   const clientId = deps.principal.kind === 'admin' ? null : deps.principal.clientId;
@@ -69,8 +71,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
       + '"list" = chronological in the period (overviews, counting), "latest" = most recent first ("when did I last…").',
     inputSchema: {
       query: z.string().optional().describe('What to look for'),
-      from: z.string().optional().describe('Start date, ISO (YYYY-MM-DD)'),
-      to: z.string().optional().describe('End date, ISO (YYYY-MM-DD), inclusive'),
+      from: isoDay.optional().describe('Start date, ISO (YYYY-MM-DD or YYYY-MM)'),
+      to: isoDay.optional().describe('End date, ISO (YYYY-MM-DD or YYYY-MM), inclusive'),
       mode: z.enum(['search', 'list', 'latest']).optional(),
       include_plans: z.boolean().optional(),
       limit: z.number().int().min(1).max(50).optional(),
@@ -89,7 +91,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
       + 'Use `as_of` (ISO date) for "what was it on that date" questions; each fact comes with its history.',
     inputSchema: {
       query: z.string().describe('Topic'),
-      as_of: z.string().optional().describe('ISO date (YYYY-MM-DD); default today'),
+      as_of: isoDay.optional().describe('ISO date (YYYY-MM-DD); default today'),
       include_pending: z.boolean().optional(),
     },
   }, async (args, extra) => {
@@ -114,8 +116,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     inputSchema: {
       content: z.string(),
       kind: z.enum(['event', 'plan']).optional(),
-      occurred_at: z.string().optional(),
-      occurred_until: z.string().optional(),
+      occurred_at: isoDay.optional(),
+      occurred_until: isoDay.optional(),
       date_precision: precision,
       people: z.array(z.string()).optional(),
       place: z.string().optional(),
@@ -147,7 +149,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('correct_episode', {
     title: 'Correct a memory',
     description: 'The user corrects a remembered episode (wrong date or detail). The old version is kept as history, never shown as current.',
-    inputSchema: { id: z.string(), content: z.string().optional(), occurred_at: z.string().optional(), date_precision: precision },
+    inputSchema: { id: z.uuid(), content: z.string().optional(), occurred_at: isoDay.optional(), date_precision: precision },
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
@@ -160,7 +162,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('forget_episode', {
     title: 'Forget a memory',
     description: 'The user asks to forget an episode. It is deleted with its corrections and never recreated.',
-    inputSchema: { id: z.string() },
+    inputSchema: { id: z.uuid() },
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });

@@ -45,7 +45,8 @@ export class MemorySearchService {
   async search(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
     const [owner] = await this.db.query(`SELECT timezone, locale FROM owners WHERE person_id = $1`, [ownerId]);
     const tz: string = owner.timezone;
-    const asOf = args.asOf ? zonedMidnight(addDays(args.asOf.slice(0, 10), 1), tz) : now; // end of that day
+    const asOfDay = args.asOf ? (args.asOf.length === 7 ? `${args.asOf}-01` : args.asOf.slice(0, 10)) : null;
+    const asOf = asOfDay ? zonedMidnight(addDays(asOfDay, 1), tz) : now; // end of that day
     const limit = args.limit ?? 8;
     let vec: number[] | undefined;
     try {

@@ -75,8 +75,9 @@ export class EpisodeSearchService {
     const tz: string = owner.timezone;
     const locale: string = owner.locale;
     const mode = args.mode ?? 'search';
-    const from = args.from ? zonedMidnight(args.from.slice(0, 10), tz) : null;
-    const to = args.to ? zonedMidnight(addDays(args.to.slice(0, 10), 1), tz) : null; // exclusive
+    // YYYY-MM means the whole month (from its first day / to its last day).
+    const from = args.from ? zonedMidnight(args.from.length === 7 ? `${args.from}-01` : args.from.slice(0, 10), tz) : null;
+    const to = args.to ? zonedMidnight(args.to.length === 7 ? firstOfNextMonth(args.to) : addDays(args.to.slice(0, 10), 1), tz) : null; // exclusive
     const hasPeriod = !!(from || to);
 
     const rows: Row[] = await this.db.query(
@@ -201,4 +202,9 @@ export class EpisodeSearchService {
       } satisfies EpisodeView;
     });
   }
+}
+
+function firstOfNextMonth(yyyyMm: string): string {
+  const [y, m] = yyyyMm.split('-').map(Number) as [number, number];
+  return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
 }

@@ -15,8 +15,9 @@ import { type ExtractionRunner } from '../queue/queue.port';
 import { buildInput, pendingWindows, type Owner, type WindowMessage } from './extraction.context';
 import { buildExtractionUser, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
 import { extractionSchema } from './extraction.schema';
-import { ExtractionWriter, type WrittenRow } from './extraction.writer';
+import { ConcurrentExtractionError, ExtractionWriter, type WrittenRow } from './extraction.writer';
 import { resolveNearDuplicates } from './episode-resolver';
+import { SEED_SLOTS } from '../db/migrations/1790960000000-Notes';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
@@ -35,15 +36,29 @@ export class EngineExtractionRunner implements ExtractionRunner {
     if (!conv?.episodic_enabled) return;
     const owner: Owner = { id: conv.owner_id, locale: conv.locale, timezone: conv.timezone };
 
-    const windows = await pendingWindows(this.db.manager, conversationId);
-    for (const window of windows) {
-      await this.runWindow(owner, conv.client_id as string, conversationId, window);
+    // One extraction per conversation at a time (session advisory lock); a concurrent job leaves
+    // the work to the run in progress, whose follow-up job picks up anything that arrived meanwhile.
+    const runner = this.db.createQueryRunner();
+    await runner.connect();
+    try {
+      const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 7)) AS locked`, [conversationId]);
+      if (!locked) return;
+      try {
+        const windows = await pendingWindows(this.db.manager, conversationId);
+        for (const window of windows) {
+          await this.runWindow(owner, conv.client_id as string, conversationId, window);
+        }
+      } finally {
+        await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 7))`, [conversationId]);
+      }
+    } finally {
+      await runner.release();
     }
   }
 
   private async runWindow(owner: Owner, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
     const runId = await this.startRun(owner.id, conversationId, window);
-    if (!window.some((m) => m.role === 'user')) {
+    if (!window.some((m) => m.role === 'user' || m.authorPersonId === owner.id)) {
       // Gate: nothing the owner said → no LLM call (D5).
       await this.db.transaction(async (tx) => {
         await tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [runId, window.map((m) => m.id)]);
@@ -52,7 +67,11 @@ export class EngineExtractionRunner implements ExtractionRunner {
       return;
     }
     try {
-      const slots: Array<{ key: string }> = await this.db.query(`SELECT key FROM fact_slots ORDER BY key`);
+      // Only the seeded slots and this owner's own keys: slot names never leak across owners
+      // and the list stays bounded.
+      const slots: Array<{ key: string }> = await this.db.query(
+        `SELECT key FROM fact_slots WHERE key = ANY($2)
+         UNION SELECT DISTINCT key FROM facts WHERE owner_id = $1 ORDER BY key`, [owner.id, SEED_SLOTS]);
       const input = await buildInput(this.db.manager, owner, window, slots.map((s) => s.key));
       const output = await this.llm.completeJson({
         promptId: EXTRACTION_PROMPT_VERSION,
@@ -71,6 +90,10 @@ export class EngineExtractionRunner implements ExtractionRunner {
       await resolveNearDuplicates(this.db, this.llm, owner.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
         { ownerId: owner.id, clientId, runId }).catch((err: unknown) => this.log.warn(`near-duplicate resolution skipped: ${(err as Error).name}`));
     } catch (err) {
+      if (err instanceof ConcurrentExtractionError) {
+        await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), model = 'skipped:concurrent' WHERE id = $1`, [runId]);
+        return;
+      }
       // No user content in the error column (docs/DATA_MODEL.md).
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`,
         [(err as Error).name, runId]);

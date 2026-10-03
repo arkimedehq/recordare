@@ -79,6 +79,7 @@ export class MemoryWriteService {
          FROM episodes WHERE id = $1 AND owner_id = $2 RETURNING id`,
         [input.id, ownerId, input.content ?? old.content, at.at, at.precision]);
       await tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1`, [input.id]);
+      await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, input.id]);
       await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, messageId]);
       return row.id as string;
     });
@@ -91,15 +92,21 @@ export class MemoryWriteService {
   async forgetEpisode(ownerId: string, id: string): Promise<void> {
     await this.db.transaction(async (tx) => {
       const chain: Array<{ id: string; content: string }> = await tx.query(
+        // Everything that tells the same memory: corrections, hidden duplicates, the event of a
+        // confirmed plan and rescheduled plans — otherwise a forgotten memory would resurface.
         `WITH RECURSIVE chain AS (
-           SELECT id, content, corrects FROM episodes WHERE id = $1 AND owner_id = $2
+           SELECT id, content, corrects, duplicate_of, confirmed_by, rescheduled_to FROM episodes WHERE id = $1 AND owner_id = $2
            UNION
-           SELECT e.id, e.content, e.corrects FROM episodes e JOIN chain c ON e.id = c.corrects OR e.corrects = c.id
+           SELECT e.id, e.content, e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to FROM episodes e JOIN chain c
+             ON e.id IN (c.corrects, c.duplicate_of, c.confirmed_by, c.rescheduled_to)
+             OR c.id IN (e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to)
            WHERE e.owner_id = $2)
          SELECT id, content FROM chain`, [id, ownerId]);
       if (chain.length === 0) throw new NotFoundException();
       const ids = chain.map((c) => c.id);
-      const msgs: Array<{ message_id: string }> = await tx.query(`SELECT DISTINCT message_id FROM episode_evidence WHERE episode_id = ANY($1)`, [ids]);
+      // Only real evidence is hidden from the chat search (agent paraphrases are tool messages).
+      const msgs: Array<{ message_id: string }> = await tx.query(
+        `SELECT DISTINCT message_id FROM episode_evidence WHERE episode_id = ANY($1) AND evidence_kind = 'message'`, [ids]);
       await tx.query(
         `INSERT INTO forget_tombstones (owner_id, scope, episode_fingerprint, message_ids) VALUES ($1, 'episode', $2, $3)`,
         [ownerId, createHash('sha256').update(chain.map((c) => c.content).join('\n')).digest(), msgs.map((m) => m.message_id)]);
@@ -115,9 +122,14 @@ export class MemoryWriteService {
    */
   private async bindEvidence(tx: EntityManager, ownerId: string, ev: Evidence, text: string): Promise<{ messageId: string; byOwner: boolean }> {
     if (ev.conversationId) {
+      // Owner-stated only when a recent message of the owner actually says it (text overlap):
+      // an agent cannot turn "ciao" into "the owner decided X" (poisoning guard).
       const [m] = await tx.query(
-        `SELECT id FROM messages WHERE conversation_id = $1 AND owner_id = $2 AND role = 'user' ORDER BY sent_at DESC LIMIT 1`,
-        [ev.conversationId, ownerId]);
+        `SELECT id FROM messages
+         WHERE conversation_id = $1 AND owner_id = $2 AND (role = 'user' OR author_person_id = $2)
+           AND received_at > now() - interval '30 minutes' AND similarity(content, $3) >= 0.2
+         ORDER BY similarity(content, $3) DESC, sent_at DESC LIMIT 1`,
+        [ev.conversationId, ownerId, text]);
       if (m) return { messageId: m.id, byOwner: true };
     }
     const day = new Date().toISOString().slice(0, 10);
