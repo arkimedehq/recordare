@@ -114,6 +114,41 @@ Unknown = `public`.
 | **L1 inform & propose** | "Tomorrow is Marco's birthday — shall I send wishes?" (to the owner) | Owner-facing only; heartbeat gate (no LLM call if nothing to say) |
 | **L2 act** | Sends the wishes to Marco as the twin | Permission matrix per contact × action type; disclosure as twin; audit log; rate limits; global kill switch; owner digest of actions taken |
 
+## Research mode: full autonomy (decided 2026-10-03)
+
+Recordare is also a study: how does a digital twin evolve when it is **free in thought and
+action**, like a person — choosing what to think about, what to do and whom to talk to, and
+allowed to make mistakes? Research mode is a configuration of the same service, not a separate
+product.
+
+**What is free**
+- **Thought**: self-directed reflection without any prompt (it decides when and about what to
+  think: re-reading its memories, forming opinions, planning); it can set its **own goals**.
+- **Action**: initiative without per-action confirmation — it starts conversations, takes
+  decisions and uses its tools on its own schedule (no L1/L2 confirmation gates in this mode).
+- **Evolution**: memory, opinions and personality may change through its own experiences
+  (twin-lived memories, principle 3) — including drifting away from the owner.
+- **Errors**: allowed and kept as data, not prevented; the twin may learn from them or not.
+
+**Where it runs**
+1. **Simulated world first**: a society of agents playing family, friends, colleagues and
+   strangers, each with its own memory, plus simulated tools and time. Reproducible, several
+   "lives" of the same twin from different starting points can be compared, mistakes cost nobody
+   anything.
+2. **Real world by steps**: the owner's own channels and tools, then people who agreed to take
+   part, widening the scope as results justify it.
+
+**Minimal floor (also the instruments of the experiment)**
+- Complete log of thoughts, decisions and actions (nothing to study without it).
+- Kill switch / pause, and snapshots to restart a life from any point.
+- Toward real people the twin presents itself as an AI (EU AI Act art. 50; otherwise it deceives
+  people who did not choose to take part).
+- No access to third parties' money or accounts outside the simulation.
+
+**Research questions** (see `RESEARCH_NOTES.md` H10): how far and how fast does an autonomous
+twin drift from its owner (Park-style agreement over time)? Which goals does it form? How does it
+handle and learn from its errors? Do different lives of the same twin diverge, and on what?
+
 ## Legacy mode (after the owner)
 
 "Always" includes after the owner's death. Draft:
@@ -198,6 +233,7 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
 | **6. Voice** | Owner voice model (Piper fine-tune, local), twin voice channel with deepfake disclosure | 4 |
 | **7. Initiative L2** | Act toward third parties: permission matrix, audit, kill switch | 4, 5 |
 | **8. Legacy mode** | Executors, activation, freeze, pre-authorized actions, retirement | 4, 7 |
+| **R. Research mode** | Autonomous loop (self-directed reflection, own goals, initiative without confirmation), simulated agent society, life snapshots, drift metrics | 1, 2 (sim can start with phase-1 memory) |
 | **A-MEM migration** | Move Arkimede semantic memory into Recordare; Arkimede becomes a pure client | 1 (any time after) |
 
 ## Open questions

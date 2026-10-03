@@ -26,6 +26,7 @@ twin, owner vs twin provenance, and unresolved user plans.
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the owner's own messages | To test | 2 |
+| H10 | Autonomous evolution: a twin free in thought and action drifts from its owner in measurable ways; lives from the same start diverge | To review (literature not yet searched) | R |
 | H9 | Twin as a reflective companion of its owner (dialogue with oneself; non-sycophantic, evidence from own memories) | To review (literature not yet searched) | 4 |
 
 ## H1 — Plans, unknown outcomes, events vs states, corrections
@@ -195,3 +196,14 @@ baseline: owner-rated usefulness, agreement rate, and whether challenges cite re
 Risks: emotional dependency, reinforcing biases. **Prior work to search** (not yet reviewed):
 "future self" chat studies (e.g. MIT Media Lab *Future You*, 2024 — verify), self-reflection and
 journaling agents, LLM sycophancy literature, digital-twin companionship studies.
+
+## H10 — Autonomous evolution of a twin
+
+**Claim / questions.** A twin with self-directed reflection, its own goals and initiative without
+confirmation (vision → Research mode) evolves: how far and how fast it drifts from its owner, which
+goals it forms, how it handles its own errors, and whether several lives started from the same
+twin diverge. **Measure** in a simulated agent society: Park-style agreement with the owner over
+simulated time, opinion / value stability, goal logs, error taxonomy and recurrence, divergence
+between lives (same seed vs different seeds). **Prior work to search** (not yet reviewed):
+Generative Agents (Park et al. 2023) and agent societies / simulations, open-ended and
+self-motivated agents, persona drift in long-running LLM agents, value drift.
