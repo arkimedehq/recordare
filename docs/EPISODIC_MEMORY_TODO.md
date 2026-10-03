@@ -431,9 +431,25 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   Users without Recordare get the same flexibility. If a user enables both personal A-MEM extraction
   and Recordare notes, duplicates are possible: the UI warns, it does not forbid (user's choice).
 
+### D35 — Cost is an option, not a limit: quality profiles (2026-10-03)
+- The owner's guidance: models get cheaper and local models stronger; users choose the quality they
+  want. Every costly mechanism sits behind a **quality profile**, chosen per installation with a
+  per-owner override:
+  - **economy** — today's cost principles (`ENGINE_IDEAS.md`): one extraction call per window,
+    strict gates, light model where possible, no reranker, digests by day, resting-state thinking
+    (H12) limited to deterministic open loops;
+  - **balanced** (default) — current behaviour of service v1;
+  - **full** — quality first: strongest configured model everywhere, broader near-duplicate
+    candidates, a verification pass on extractions, reranker (H11), day + month digests,
+    full resting-state thinking (H12: replay, links, proposals, self-model) on a regular schedule.
+- Profiles are configuration, never code branches scattered in the engine; each profile is
+  measured on the eval suite (quality and cost per message) so the trade-off is visible.
+- Replaces the earlier rule "as cheap as possible" with: **never trade quality silently — the
+  owner chooses the profile**.
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D34 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D35 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)

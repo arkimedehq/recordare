@@ -135,6 +135,15 @@ controls, per-stage extraction eval) — they move to M4b together with the M3/M
 | 4.5c | Eval categories for H1 (plan resolution incl. unresolved, premise traps, accumulate vs supersede, correction vs change) with unjustified-assertion and over-abstention rates (`RESEARCH_NOTES.md`) |
 | 4.6 | Eval harness v2: compare with M0 scores; must not regress below the D23 prototype |
 
+### M4b — Rigorous evaluation and quality profiles
+
+| # | Task |
+|---|---|
+| 4b.1 | Third blind dataset (separate agent, no access to prompts / results): another person and domains, IT + EN, H1 probes (plan resolution incl. unresolved, premise traps, accumulate vs supersede, correction vs change, anti-traps, implicit changes), noise generator, **gold annotations of episodes / plans / facts / notes** for per-stage scoring |
+| 4b.2 | Harness: N ≥ 3 runs per configuration, mean ± confidence interval, paired comparisons; controls (no-memory, full-context, raw-log only); per-category reporting; per-stage extraction scoring against gold; cost columns (calls, tokens, cached share, latency) |
+| 4b.3 | Quality profiles (D35) as configuration: economy / balanced / full, measured on the suite |
+| 4b.4 | Provider matrix (D27): DeepSeek, local Ollama, at least one more hosted provider; supported-models table |
+
 ### M5 — Layer 2: consolidation
 
 | # | Task |
@@ -172,6 +181,7 @@ protection in front (firewall / WAF / rate limits).
 | Id | Question | Proposal | When |
 |---|---|---|---|
 | D23 | Engine: build D / adopt Memobase / hybrid | **Build D — approved 2026-10-02** | Done |
+| D35 | Cost | An option: quality profiles economy / balanced / full, per installation + owner override | Done (2026-10-03) |
 | D34 | Notes: Recordare complete, A-MEM unchanged | Recordare has semantic notes; one-way copies to A-MEM by user choice; Arkimede toggle split in M6 | Done (2026-10-03) |
 | D33 | Deployment profiles | v1 home / research; public-profile hardening deferred to M7 | Done (2026-10-03) |
 | D31 | Facts in Recordare | State slots with value chain; notes stay in A-MEM until migration | Done (2026-10-03) |

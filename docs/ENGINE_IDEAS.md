@@ -9,7 +9,10 @@ Sources (Apache-2.0): Memobase server 0.0.42 (`memobase_server/…`, MemoDB), gr
 0.30.2 (`graphiti_core/…`, Zep Software, Inc.). Any reuse of code or prompt text follows
 `LICENSING.md` and is recorded in `THIRD_PARTY_NOTICES.md` when it happens.
 
-## Cost principles (requirement, not an optimisation)
+## Cost principles — the **economy** profile (D35)
+
+Since D35 cost is an option: these principles define the economy profile and the cost-aware
+defaults; the full profile may spend more for quality, always measured.
 
 Recordare must run on the cheapest model that keeps quality, and make **zero LLM calls** when
 there is nothing to do. **Quality first**: a cheaper option is adopted only when it measures the

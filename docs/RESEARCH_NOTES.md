@@ -239,7 +239,12 @@ pending intentions alive and consolidates while awake (hippocampal replay), not 
 Recordare today encodes on input (idle extraction) and will consolidate at night (M5); a third,
 **resting** mode is missing.
 
-**Design sketch (budgeted, gated: no new material / no open loops → no call):**
+**Two modes (D35):** *economy* — gated and budgeted (no new material / no open loops → no call;
+open loops computed deterministically); *full* — no cost ceiling: regular replay of recent and
+older memories, linking, proposals and self-model updates, for users who choose maximum quality
+(e.g. strong local models).
+
+**Design sketch:**
 1. Replay recent episodes and link them to older ones (`linked` episodes / notes).
 2. Maintain **open loops**: past plans without outcome, promises, waiting-for items → questions for
    the owner ("did you go to Rome in the end?").
