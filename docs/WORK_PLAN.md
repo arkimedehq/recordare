@@ -144,6 +144,13 @@ controls, per-stage extraction eval) — they move to M4b together with the M3/M
 | 4b.3 | Quality profiles (D35) as configuration: economy / balanced / full, measured on the suite |
 | 4b.4 | Provider matrix (D27): DeepSeek, local Ollama, at least one more hosted provider; supported-models table |
 
+Status (2026-10-03): 4b.1 done (`dataset_blind3`, audited); 4b.2 done (multi-run + CI, paired bootstrap,
+controls, per-stage scorer — validated and fixed). **Base, blind: service 86.0 % (Claude engine 87.5 %), D 92.1 %,
+full context 97.2 %, no memory 8.3 %.** Fixes from the blind failures (third-party claims attributed to their
+author, chat excerpts always alongside episodes) → service 96.2 % post-hoc; a fourth blind set must confirm it.
+Facts are the weakest extraction stage (→ M5). Next: noise runs, Ollama in the matrix, profiles. Details in
+`spikes/memory-eval/RESULTS.md` § M4b.
+
 ### M5 — Layer 2: consolidation
 
 | # | Task |

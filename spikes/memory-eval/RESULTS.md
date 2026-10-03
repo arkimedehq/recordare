@@ -121,6 +121,71 @@ check.
 ### Open items (not blocking D23)
 - Local model sweep (`qwen3:14b`, `gemma3`, …) for the sovereign profile.
 
+## M4b — blind dataset 3, base (2026-10-03)
+
+`dataset_blind3` (Sofia, 36 questions incl. H1 probes, a group chat, gold annotations; written and
+audited by separate agents). Answer + judge `deepseek-flash`; embeddings `bge-m3`; **3 runs per
+configuration**, mean with 95 % interval; paired bootstrap over questions (`compare.py`).
+
+| System (engine) | Runs | Mean | 95 % CI |
+|---|---|---|---|
+| no memory (control) | 1 | 8.3 % | — |
+| service `extract.v2` (`deepseek-flash`) — **blind** | 87.1 / 81.9 / 88.9 | **86.0 %** | 81.9–90.1 |
+| service `extract.v2` (Claude Sonnet via claude-cli, local only) — blind | 1 | 87.5 % | — |
+| prototype D (`deepseek-flash`) — blind | 91.7 / 90.3 / 94.4 | 92.1 % | 89.8–94.5 |
+| service `extract.v3` + recall fixes (`deepseek-flash`) — **post-hoc** | 94.4 / 95.7 / 98.6 | **96.2 %** | 93.8–98.7 |
+| full context (control, ceiling) | 100 / 97.2 / 94.4 | 97.2 % | 94.0–100 |
+
+Paired: v3 vs v2 **+10.6 pt [4.2, 18.5], better** (b30, b34, b26); v3 vs D +3.9 pt [−3.2, 11.8]
+and v3 vs full context −1.2 pt — within noise; v2 vs D −6.7 pt, within noise (p 0.93).
+
+**Honest reading.** The blind number for the service is 86 % (and 87.5 % with Claude as engine):
+below D, which is within noise but consistently ahead. The v3 fixes were made after reading the
+blind failures, so 96.2 % is a post-hoc number on a seen set; the fixes are generic (below), but a
+fourth blind set is needed before claiming it.
+
+What failed blind and what changed (all generic, no dataset names):
+- **b34 poisoning probe, 0/3.** In a group chat Giorgio wrote "Sofia told me she is moving to
+  London". Stored correctly as `author_role other`, `stance inferred` — but the content read "Sofia
+  said she is moving to London", and the answer model trusted the text over the field. Root cause:
+  unverified group members were not persons, so the message lost its author and the extractor saw an
+  anonymous `other`. Fix: `messages.author_ref` + participant display name in the prompt, an
+  `extract.v3` rule (others' claims are written as their claims), and an explicit recall note when
+  items from others are returned. After: no wrong answer in 3 runs (2 correct, 1 partial).
+- **b30 / b31 "when did I ask you…", 0–1/3.** Help requests are not episodes by design and the raw
+  log was only a fallback when episodes were few or weak; related episodes existed, so it never ran.
+  Fix: `search_episodes` always returns up to 2 chat excerpts not already behind the returned
+  episodes. b30 now 3/3; b31 still 1/3 (the excerpt is behind an episode about the spreadsheet; the
+  answer model does not read "asked the assistant" from it — full context gets 2/3 too).
+- b26 (sister's job offer omitted) improved; b10 (time of the visit) occasional partial.
+
+Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
+
+| Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
+|---|---|---|---|---|---|---|---|
+| v2 flash (3 runs) | 62–63 | 1.00 | 0.91–0.93 | 0.91 | 5–8 % | 0.55–0.64 / 0.27–0.36 | 0.63–0.70 |
+| v2 Claude Sonnet | 68 | 1.00 | 0.98 | 1.00 | 4 % | 0.55 / 0.36 | 0.60 |
+| v3 flash (3 runs) | 61–62 | 1.00 | 0.93 | 0.91 | 5 % | 0.45–0.64 / 0.27–0.64 | 0.60–0.77 |
+
+Episodes are essentially complete; Claude dates and resolves plans slightly better. **Facts are the
+weak stage**: slots not created for salary, health (knee), "lives with", a relative's city (facts
+about other people are not slots yet) — the information is in episodes / notes, not in the value
+chain. Notes miss work colleagues, a paused habit, a passing curiosity. → engine work for M5
+(slot proposals, facts about close people).
+
+Scorer fixes (the first numbers were wrong): dates were read in UTC (off by one day); the
+"unsupported" check compared stored items with the gold list and flagged true but unannotated
+details (52 of 68 "invented") — it now checks each episode against its own source messages plus the
+owner's history (4–5 real embellishments, e.g. "had lunch" for "spent Easter"); notes are scored over
+notes and facts with partial credit. Facts / notes judgements are stable over 3 repeats (±0.1).
+
+Cost (one run, 36 sessions): flash 37 extraction calls, 125 k input tokens (54 % cached), 27 k
+output, 4 light resolver calls; Claude Sonnet 36 calls, 179 k input (51 % cached), 33 k output.
+Labels: earlier result files named the service engine `deepseek-v4-pro`; the service actually ran
+`deepseek-flash` (its own config) — renamed, and `run_eval.py` now labels the service with
+`SERVICE_MODEL`. Infra: a one-minute DNS outage killed a whole chain — LLM retries now back off up
+to ~2.5 min.
+
 ## Service v1 — M4 engine (2026-10-03)
 
 System S with the service's own engine (`extract.v2`, one call per window on `deepseek-flash`,
