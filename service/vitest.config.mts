@@ -25,5 +25,7 @@ export default defineConfig({
     globals: true,
     include: ['test/**/*.spec.ts'],
     environment: 'node',
+    // integration files share one test database: run files one at a time
+    fileParallelism: false,
   },
 });
