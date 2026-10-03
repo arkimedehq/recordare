@@ -8,6 +8,11 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    languageOptions: {
+      // Constructor parameter types are runtime values for Nest DI (emitDecoratorMetadata):
+      // these options make consistent-type-imports keep them as value imports.
+      parserOptions: { emitDecoratorMetadata: true, experimentalDecorators: true },
+    },
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': ['error', { fixStyle: 'inline-type-imports' }],

@@ -27,5 +27,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  service:
+    profiles: ["app"]   # docker compose --profile app up -d
+    build:
+      context: ./service
+    env_file: ./service/.env
+    environment:
+      DATABASE_URL: postgres://recordare:recordare@db:5432/recordare
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 volumes:
   db-data:

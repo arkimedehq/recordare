@@ -53,7 +53,7 @@ export class OpenAiCompatibleAdapter implements LlmPort {
   constructor(private readonly cfg: OpenAiCompatibleConfig, private readonly recorder?: LlmCallRecorder) {
     this.client = new OpenAI({
       baseURL: cfg.baseURL,
-      apiKey: cfg.apiKey ?? 'none',
+      apiKey: cfg.apiKey || 'none',
       maxRetries: 0,
       timeout: cfg.timeoutMs ?? 120_000,
       ...(cfg.fetch ? { fetch: cfg.fetch } : {}),

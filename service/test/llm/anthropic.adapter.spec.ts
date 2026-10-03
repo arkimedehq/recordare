@@ -10,7 +10,7 @@ type Reply = { text: string; stop?: string };
 
 function fakeFetch(replies: Reply[]) {
   const requests: { body: Record<string, unknown>; headers: Headers }[] = [];
-  const fn = async (_url: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  const fn = async (_url: string | URL | Request, init?: RequestInit): Promise<Response> => {
     requests.push({ body: JSON.parse(String(init?.body)), headers: new Headers(init?.headers) });
     const r = replies.shift() ?? { text: '{}' };
     return new Response(JSON.stringify({

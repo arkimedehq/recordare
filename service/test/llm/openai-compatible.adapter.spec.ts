@@ -12,7 +12,7 @@ type Reply = { status?: number; content?: string };
 /** Fake fetch: records request bodies, answers with the queued replies in order. */
 function fakeFetch(replies: Reply[]) {
   const bodies: Record<string, unknown>[] = [];
-  const fn = async (_url: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  const fn = async (_url: string | URL | Request, init?: RequestInit): Promise<Response> => {
     bodies.push(JSON.parse(String(init?.body)));
     const r = replies.shift() ?? { content: '{}' };
     if (r.status && r.status >= 400) {
