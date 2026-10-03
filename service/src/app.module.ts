@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { MeController } from './me/me.controller';
 import { QueueModule } from './queue/queue.module';
 import { RawLogModule } from './rawlog/rawlog.module';
+import { McpModule } from './mcp/mcp.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RawLogModule } from './rawlog/rawlog.module';
     AdminModule,
     QueueModule,
     RawLogModule,
+    McpModule,
   ],
   controllers: [HealthController, MeController],
 })
