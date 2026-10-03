@@ -1,7 +1,7 @@
 {
   "name": "@arkimedehq/recordare-service",
   "version": "0.1.0",
-  "description": "Recordare \u2014 memory and digital-twin service (REST ingest + MCP)",
+  "description": "Recordare — memory and digital-twin service (REST ingest + MCP)",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "commonjs",
@@ -31,6 +31,7 @@
     "@nestjs/typeorm": "^12.0.2",
     "argon2": "^0.45.1",
     "bullmq": "^6.3.11",
+    "ioredis": "^5.11.1",
     "openai": "^6.49.0",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",

@@ -36,7 +36,9 @@ export class OpenAiCompatibleEmbeddingAdapter implements EmbeddingPort {
       const batch = texts.slice(i, i + size);
       // `input_type` is honoured by servers that distinguish query / document prompts
       // (e.g. Arkimede's embedding-service) and ignored by the others.
-      const res = await this.client.embeddings.create({ model: this.model, input: batch, input_type: kind } as OpenAI.EmbeddingCreateParams);
+      // encoding_format 'float': the SDK otherwise asks for base64 and mis-decodes servers that return
+      // plain float arrays (most OpenAI-compatible embedding servers).
+      const res = await this.client.embeddings.create({ model: this.model, input: batch, encoding_format: 'float', input_type: kind } as OpenAI.EmbeddingCreateParams);
       const vectors = [...res.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);
       for (const v of vectors) {
         if (v.length !== this.dim) throw new Error(`embedding dimension ${v.length} != configured ${this.dim} (model ${this.model})`);

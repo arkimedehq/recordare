@@ -4,13 +4,14 @@
 import { type DataSourceOptions } from 'typeorm';
 import { AccessToken, ApiKey, Client, ExternalIdentity, Owner, Person } from '../identity/identity.entities';
 import { InitialSchema1790950000000 } from './migrations/1790950000000-InitialSchema';
+import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
  * Postgres + pgvector. Schema changes only through migrations (never `synchronize`): enums,
  * HNSW / GIN / partial indexes are written explicitly in SQL. Entities and migrations are listed
  * explicitly (no globs): works the same under tsc, SWC and the test runner.
  */
-export const ENTITIES = [Person, Owner, Client, ApiKey, AccessToken, ExternalIdentity];
+export const ENTITIES = [Person, Owner, Client, ApiKey, AccessToken, ExternalIdentity, Conversation, ConversationParticipant, Message];
 export const MIGRATIONS = [InitialSchema1790950000000];
 
 export function dataSourceOptions(url: string): DataSourceOptions {

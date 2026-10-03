@@ -28,6 +28,9 @@ def build(system: str):
     if system == "d":
         from systems.d_sys import DSystem
         return DSystem()
+    if system == "service":
+        from systems.service_sys import ServiceSystem
+        return ServiceSystem()
     if system == "memobase":
         from systems.memobase_sys import MemobaseSystem
         return MemobaseSystem()

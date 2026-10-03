@@ -8,11 +8,39 @@
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
+import { createServer, type Server } from 'node:http';
+import { createHash } from 'node:crypto';
 import { dataSourceOptions } from '../../src/db/data-source-options';
 
 export const ADMIN_KEY = 'test-admin-key-0123456789abcdef0123456789abcdef';
 
-export function testEnv(): void {
+/** Deterministic vector for a text (dim 8): same text → same vector, used by the fake embedding server. */
+export function fakeVector(text: string): number[] {
+  const h = createHash('sha256').update(text.toLowerCase()).digest();
+  const v = Array.from({ length: 8 }, (_, i) => (h[i] as number) / 255 - 0.5);
+  const norm = Math.sqrt(v.reduce((a, x) => a + x * x, 0)) || 1;
+  return v.map((x) => x / norm);
+}
+
+/** OpenAI-compatible /v1/embeddings stub on a random port. */
+export async function startFakeEmbeddings(): Promise<{ url: string; server: Server; requests: string[][] }> {
+  const requests: string[][] = [];
+  const server = createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      const input = JSON.parse(body).input as string[];
+      requests.push(input);
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ object: 'list', model: 'fake', data: input.map((t, i) => ({ object: 'embedding', index: i, embedding: fakeVector(t) })), usage: { prompt_tokens: 0, total_tokens: 0 } }));
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address() as { port: number };
+  return { url: `http://127.0.0.1:${port}/v1`, server, requests };
+}
+
+export function testEnv(overrides: Record<string, string> = {}): void {
   Object.assign(process.env, {
     NODE_ENV: 'test',
     DATABASE_URL: process.env['TEST_DATABASE_URL'] ?? 'postgres://recordare:recordare@localhost:5433/recordare_test',
@@ -24,6 +52,7 @@ export function testEnv(): void {
     EMBEDDING_BASE_URL: 'http://127.0.0.1:9/v1',
     EMBEDDING_MODEL: 'test-embedding',
     EMBEDDING_DIM: '8',
+    ...overrides,
   });
 }
 
@@ -38,7 +67,7 @@ export async function resetSchema(): Promise<void> {
 export async function startApp(): Promise<{ app: INestApplication; url: string }> {
   const { AppModule } = await import('../../src/app.module.js');
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = moduleRef.createNestApplication({ logger: false });
+  const app = moduleRef.createNestApplication({ logger: process.env['TEST_LOG'] ? ['error', 'warn'] : false });
   await app.listen(0);
   const address = app.getHttpServer().address() as { port: number };
   return { app, url: `http://127.0.0.1:${address.port}` };

@@ -99,6 +99,12 @@ M3, `VectorStorePort` and IT/EN prompt files → M4.
 
 ### M3 — Layer 0: raw log
 
+**Done 2026-10-03** (branch `m3-raw-log`): REST ingest (idempotent, consent-gated, conflicts / upsert
+edits, verified-only participants), edits and purges, BullMQ (debounced idle extraction jobs —
+runner is a placeholder until M4 — and background message embeddings), raw-log search (full-text +
+vector), MCP endpoint with server-resolved viewer context and `search_episodes` (raw only), eval
+system S through REST + MCP: **90 % / 71 %** on the base sets (spike baseline 83 % / 66 %).
+
 | # | Task |
 |---|---|
 | 3.1 | Ingest endpoint → raw message log (verbatim, provenance, idempotency, edit/delete) |
