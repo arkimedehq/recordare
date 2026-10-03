@@ -386,9 +386,36 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   `origin: assistant_stated` (extends D28's `owner_lived | owner_told | twin_experienced`),
   never merged with owner-lived memories; recall labels them ("the assistant suggested / did").
 
+### D31 — Recordare facts are state slots with a value chain (2026-10-03)
+- Layer 3 in Recordare = **state slots** ("car", "address", "employer", "children") with their
+  history, cardinality `single` (supersede) or `multi` (accumulate), slot schema with merge policy
+  and default disclosure (`DATA_MODEL.md` → fact_slots).
+- Durable preferences and free-form semantic notes stay in the client's semantic memory (A-MEM in
+  Arkimede) until the A-MEM migration — no second, competing note store. Episodes link to notes by
+  external ref (`linked_notes`, D19); promotions go to the client as proposals (D20, D26).
+
+### D32 — One extraction call per window (amends D2) (2026-10-03)
+- One engine call per idle window extracts episodes, plan patches and fact candidates (as the D
+  prototype did, at prototype-level quality); a second call only when deterministic gates leave
+  ambiguous fact candidates to resolve (`ENGINE_IDEAS.md` cost rule). D2's "two calls" was written
+  when facts lived only in A-MEM; A-MEM's own extraction in Arkimede stays untouched (its call is
+  Arkimede's, not Recordare's).
+
+### D33 — Deployment profiles: v1 home / research, hardening deferred (2026-10-03)
+- The owner's guidance: stay on the twin; when more security is needed, put firewalls and
+  hardening in front. v1 = **home / research profile**: admin-created owners, client keys, personal
+  tokens, simple scopes, per-owner isolation.
+- Kept in v1 because they are part of the twin, not security add-ons: viewer context resolved by
+  Recordare (knowing what to tell whom — disclosure pillar), `author_role` provenance (principle 3,
+  memory quality), consent flag (D4), forgetting that sticks (D16).
+- Deferred to the **public profile** (M7 / public release): owner login and pages, OAuth for MCP,
+  owner-driven linking and revocation UI, read audit, persistent idempotency, backup / provider
+  retention policy, network protection. Specified in `API.md` §0 so enabling them needs no data
+  migration.
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D30 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
+None — all resolved in D1–D33 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
 ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
 
 ## Non-goals (for now)
