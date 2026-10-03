@@ -6,7 +6,7 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
 import { EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
-import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
+import { ADMIN_KEY, call, fakeVector, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 describe('extraction engine (fake LLM: code-side rules)', () => {
   let app: INestApplication;
@@ -188,6 +188,23 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(llm.requests.at(-1)?.messages[1]?.content ?? '').toContain('other:Sconosciuto');
     expect(await db.query(`SELECT author_role, stance, pending FROM notes`)).toEqual([{ author_role: 'other', stance: 'inferred', pending: true }]);
     expect(await db.query(`SELECT change FROM note_changes`)).toEqual([{ change: 'created' }]);
+  });
+
+  it('shows older episodes related to the window, not only the most recent ones', async () => {
+    const text = "L'hotel a Lubiana in realtà è costato 210 euro, non 180.";
+    const [old] = await db.query(
+      `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, recorded_at, embedding)
+       VALUES ($1, 'event', 'Hotel a Lubiana prenotato: 180 euro', 'owner_lived', 'owner', $2, now() - interval '90 days', $3::vector) RETURNING id`,
+      [ownerId, [ownerId], `[${fakeVector(text).join(',')}]`]);
+    for (let i = 0; i < 10; i++) {
+      await db.query(`INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience) VALUES ($1, 'event', $2, 'owner_lived', 'owner', $3)`,
+        [ownerId, `Rumore ${i}`, [ownerId]]);
+    }
+    const c = await ingest('rel', [{ id: 'r1', role: 'user', content: text, at: new Date().toISOString() }]);
+    llm.queue.push({});
+    await runner.runForConversation(c);
+    expect(llm.requests.at(-1)?.messages[1]?.content ?? '').toContain('Hotel a Lubiana prenotato: 180 euro');
+    await db.query(`DELETE FROM episodes WHERE id = $1 OR content LIKE 'Rumore %'`, [old.id]);
   });
 
   it('makes no LLM call without a message from the owner (gate)', async () => {

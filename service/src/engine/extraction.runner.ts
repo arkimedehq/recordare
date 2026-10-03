@@ -72,7 +72,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const slots: Array<{ key: string }> = await this.db.query(
         `SELECT key FROM fact_slots WHERE key = ANY($2)
          UNION SELECT DISTINCT key FROM facts WHERE owner_id = $1 ORDER BY key`, [owner.id, SEED_SLOTS]);
-      const input = await buildInput(this.db.manager, owner, window, slots.map((s) => s.key));
+      const input = await buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window));
       const output = await this.llm.completeJson({
         promptId: EXTRACTION_PROMPT_VERSION,
         system: EXTRACTION_SYSTEM,
@@ -108,6 +108,18 @@ export class EngineExtractionRunner implements ExtractionRunner {
        VALUES ($1, $2, 'extraction', $3, $4, 'pending', 'configured', $5) RETURNING id`,
       [ownerId, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, EXTRACTION_PROMPT_VERSION]);
     return run.id as string;
+  }
+
+  /** The window's topic as one query vector: picks related older episodes for the E# list. Null on failure. */
+  private async windowVector(window: WindowMessage[]): Promise<number[] | null> {
+    try {
+      const text = window.filter((m) => m.role !== 'assistant').map((m) => m.content).join('\n').slice(0, 4000);
+      const [v] = text ? await this.embeddings.embed([text], 'query') : [];
+      return v ?? null;
+    } catch (err) {
+      this.log.warn(`window embedding failed, recent episodes only: ${(err as Error).message}`);
+      return null;
+    }
   }
 
   /** Embeds new rows (content + retrieval keys). Failures leave embedding null (full-text still works). */

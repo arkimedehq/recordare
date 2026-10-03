@@ -6,7 +6,7 @@
  * variable goes in the user message. Rules come from the prototype that passed the blind held-out
  * check (spikes/memory-eval/systems/d_sys.py) plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v3';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v4';
 
 export const EXTRACTION_SYSTEM = `You are the memory encoder of a personal memory service. You read a window of one \
 conversation (numbered messages) and record what should be remembered about the OWNER's life. \
@@ -29,7 +29,7 @@ Reply with ONE JSON object:
     "keywords": ["<salient search terms, proper names verbatim; not the owner's name, not dates>"],
     "context": "<one sentence: when this memory is useful to recall>" | null,
     "tags": ["<1-3 short labels>"],
-    "corrects": "<E-number from RECENT EPISODES that this one corrects>" | null,
+    "corrects": "<E-number from KNOWN EPISODES that this one corrects>" | null,
     "evidence": [<message numbers that support it>]
   }],
   "plan_patches": [{
@@ -99,7 +99,7 @@ NOTES (who the owner is)
 replace / corrects instead of duplicating.
 
 CORRECTIONS (check before adding anything)
-- Before adding an episode, look for the same event in RECENT EPISODES and OPEN PLANS. If the window corrects it \
+- Before adding an episode, look for the same event in KNOWN EPISODES and OPEN PLANS. If the window corrects it \
 ("non lunedì ma martedì", "actually it was in March", "I got the name wrong"), emit the corrected episode with \
 "corrects" set to that E-number — otherwise the wrong version stays in memory as true. If it corrects an OPEN PLAN's \
 date, emit a "reschedule" patch for that P-number instead. Facts and notes use verdict "corrects" with a target.
@@ -131,7 +131,7 @@ export interface PromptContext {
   openPlans: string[];
   currentFacts: string[];
   currentNotes: string[];
-  recentEpisodes: string[];
+  knownEpisodes: string[];
   knownSlots: string[];
   messages: PromptMessage[];
 }
@@ -146,7 +146,7 @@ export function buildExtractionUser(ctx: PromptContext): string {
     `CURRENT FACTS:\n${ctx.currentFacts.join('\n') || NONE}`,
     `KNOWN SLOTS: ${ctx.knownSlots.join(', ') || NONE}`,
     `CURRENT NOTES:\n${ctx.currentNotes.join('\n') || NONE}`,
-    `RECENT EPISODES:\n${ctx.recentEpisodes.join('\n') || NONE}`,
+    `KNOWN EPISODES (recent, and older ones related to these messages):\n${ctx.knownEpisodes.join('\n') || NONE}`,
     `CONVERSATION WINDOW:\n${ctx.messages.map((m) => `[${m.n}] ${m.sentAt} ${m.speaker}: ${m.content}`).join('\n')}`,
   ].join('\n\n');
 }
