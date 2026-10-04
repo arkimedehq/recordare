@@ -49,6 +49,7 @@ def main() -> None:
     ap.add_argument("--system", required=True)
     ap.add_argument("--only", help="comma-separated question ids")
     ap.add_argument("--noise", action="store_true", help="add dataset/noise.json sessions")
+    ap.add_argument("--resume", action="store_true", help="reuse completed -rN result files of the same label")
     args = ap.parse_args()
     label = args.system + ("-noise" if args.noise else "")
     if DATASET.name != "dataset":
@@ -66,6 +67,11 @@ def main() -> None:
 
     summaries = []
     for run in range(1, args.runs + 1):
+        done = RESULTS / f"{label}-r{run}.json"
+        if args.resume and done.exists():  # a chain stopped midway (provider outage, balance) keeps its runs
+            print(f"#### run {run}: reusing {done.name}")
+            summaries.append(json.loads(done.read_text()))
+            continue
         summaries.append(run_once(args, label, run if args.runs > 1 else None))
     if args.runs > 1:
         aggregate(label, summaries)

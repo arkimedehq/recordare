@@ -165,9 +165,12 @@ D 94.0 % [90.4, 97.6], full context 95.3 % [93.5, 97.2], no memory 8.3 %. v3 los
 180→210, b24 rent 950→920 left the old value visible), b28 (what she liked most — pending note not used) and b34
 (denies but does not mention the third-party claim). Root cause of the corrections: the E# list held only the 15
 most recent episodes, crowded out by noise, so the episode to correct was invisible. **extract.v4**: 8 recent +
-up to 10 older episodes related to the window (one local embedding per window). First v4 noise run: **91.7 %**
-(b22 / b24 correct; wrong b21, b28, b31) — the remaining v4 runs (noise ×2, base ×3) stopped when the DeepSeek
-balance ran out (HTTP 402); to be completed. Extraction on noise (v3): recall 0.98–1.00, dates 0.91–0.95, plan
+up to 10 older episodes related to the window (one local embedding per window). **v4, 3 runs each: noise 95.4 %** [91.4, 99.3]
+(91.7 / 98.6 / 95.8), **base 94.9 %** [93.1, 96.7] (95.8 / 93.1 / 95.8). Paired: noise v3 → v4 **+7.4 pt [1.9, 13.4],
+better** (b24, b34); v4 vs D on noise +1.4 pt and vs full context 0.0 — within noise; base v3 → v4 −1.2 pt, within
+noise (b26 varies); v4 loses nothing from base to noise (+0.5 pt). Cost of the change: +3.5 % extraction input
+tokens on noise (730 k vs 706 k, 71 % cached), ingest 342 s vs 302 s for 206 sessions. (A first attempt stopped
+on an exhausted DeepSeek balance; `run_eval.py --resume` reuses completed runs.) Extraction on noise (v3): recall 0.98–1.00, dates 0.91–0.95, plan
 outcome 0.82–0.91, unsupported 4–6 %, facts current 0.55–0.64, notes 0.67–0.70.
 
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):

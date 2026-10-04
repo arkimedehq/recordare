@@ -148,7 +148,10 @@ Status (2026-10-03): 4b.1 done (`dataset_blind3`, audited); 4b.2 done (multi-run
 controls, per-stage scorer — validated and fixed). **Base, blind: service 86.0 % (Claude engine 87.5 %), D 92.1 %,
 full context 97.2 %, no memory 8.3 %.** Fixes from the blind failures (third-party claims attributed to their
 author, chat excerpts always alongside episodes) → service 96.2 % post-hoc; a fourth blind set must confirm it.
-Facts are the weakest extraction stage (→ M5). Next: noise runs, Ollama in the matrix, profiles. Details in
+Noise: v3 88.0 % (D 94.0 %, full context 95.3 %) — corrections lost because the episode list held only
+recent items; **extract.v4** (recent + related episodes) → **noise 95.4 %, base 94.9 %**, on par with D and with
+full context. Facts are the weakest extraction stage (→ M5). Next: local models in the matrix (Qwen3-8B,
+MiniCPM4.1-8B; MiniCPM5-2B as light model), profiles. Details in
 `spikes/memory-eval/RESULTS.md` § M4b.
 
 ### M5 — Layer 2: consolidation

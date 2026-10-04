@@ -6,7 +6,7 @@ export RECORDARE_ADMIN_KEY=$(grep '^ADMIN_API_KEY=' ../../service/.env | cut -d=
 U="uv run --directory $PWD python"
 for mode in noise base; do
   N=""; [ $mode = noise ] && N="--noise"
-  $U run_eval.py --system service $N --runs 3 > m4b_service_${RUN_TAG}_$mode.log 2>&1
-  for f in results/service$( [ -n "$N" ] && echo -noise)-dataset_blind3-*-$RUN_TAG-r[123].json; do $U extraction_eval.py "$f" dataset_blind3/gold.json >> m4b_extraction_${RUN_TAG}_$mode.log 2>&1; done
+  $U run_eval.py --system service $N --runs 3 --resume > m4b_service_${RUN_TAG}_$mode.log 2>&1
+  for f in results/service$( [ -n "$N" ] && echo -noise)-dataset_blind3-*-$RUN_TAG-r[123].json; do [ -f "${f%.json}-extraction.json" ] && continue; $U extraction_eval.py "$f" dataset_blind3/gold.json >> m4b_extraction_${RUN_TAG}_$mode.log 2>&1; done
 done
 echo DONE
