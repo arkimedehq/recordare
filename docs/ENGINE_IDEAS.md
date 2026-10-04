@@ -104,6 +104,18 @@ is test cost, not the product's.
 9. Later, low priority: **sagas** (named multi-session threads with a running brief) for topics
    that span sessions (a trip planned → lived).
 
+## Ideas from agent platforms (reviewed 2026-10-04; ideas only, reimplemented and cited)
+
+1. **Secret / PII scrubbing before storing** (OpenHuman, `tinymemory-safety`): we keep the full raw log
+   today; an optional scrub stage behind a knob (D35 / disclosure), never silent.
+2. **A ready-to-inject context brief** (OpenHuman `context.md`, refreshed every 6 h, prepended to new
+   sessions): the client-friendly form of our M5 digests + profile.
+3. **"Recall" as an answer with citations** (OpenHuman / TinyMemory): an optional synthesised answer next to
+   the item-level tools, for simple clients.
+4. **Scheduled sync of documents and feeds** (OpenHuman): one of the later "sources of the self-model".
+5. **Deny-by-default action gateway with approvals and audit** (Open Dots): the pattern for the twin's
+   initiative levels and the money / accounts knob (vision, principle 8) — later phases.
+
 ## Rejected (and why)
 
 1. **Treating every fact as a state** — the root cause of Graphiti's Cervinia / Livigno failure:

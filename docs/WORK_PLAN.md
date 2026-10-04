@@ -176,6 +176,15 @@ model is supported only at ≥ 95 % on the suite**; weaker models are removed, r
 | 6.3 | Arkimede settings: `episodicMemoryEnabled` toggle + Diary tab (D18) via the Recordare timeline API | `personalAgent` |
 | 6.4 | Arkimede regression checklist (`EPISODIC_MEMORY_TODO.md` → Regression checklist): A-MEM, `search_conversations`, `search_memory` unchanged | `personalAgent` |
 
+**Other agent platforms — possible clients** (reviewed 2026-10-04; none has a temporal / provenance-aware memory,
+which confirms the standalone-service bet). Not committed work: candidates after Arkimede, in this order.
+
+| Platform | What it is | Memory today | Integration path | Priority |
+|---|---|---|---|---|
+| OpenHuman (`tinyhumansai/openhuman`, GPL-3.0, ~40k stars, early beta) | Rust agent harness (desktop / web / terminal / library), 26 providers + local | Pluggable engine behind TinyMemory (`Recall / Fetch / Store`): hosted CortexDB, Mem0, Supermemory, Cognee… — documents + RAG, no event time, plans or provenance | A **Recordare engine adapter for TinyMemory** (their engine-selection panel) — one adapter reaches all their users | Medium (after M6.2) |
+| Open Dots (`Anil-matcha/open-dots`, MIT, prototype) | Self-hosted personal-agent workspace (Next.js + FastAPI), personas, approval-gated actions | Chat history in SQLite only; "no durable memory service" by its own README | No MCP client seen: a small adapter on their side (REST ingest + recall) | Low (maturity) |
+
+
 ### M7 — Hardening and release
 
 Only if Recordare opens to people the operator does not know: enable the **public profile**
