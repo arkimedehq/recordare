@@ -46,7 +46,8 @@ public or commercial release, have a lawyer review this file and `THIRD_PARTY_NO
 |---|---|---|
 | Graphiti (`getzep/graphiti`) | Apache-2.0 | ideas; prompt wording reusable with attribution |
 | Memobase (`memodb-io/memobase`) | Apache-2.0 | ideas; prompt wording reusable with attribution |
-| Mem0 (`mem0ai/mem0`) | Apache-2.0 | ideas |
+| Mem0 (`mem0ai/mem0`) | Apache-2.0 | ideas; spike baseline (`mem0ai` 2.2.1, dependency only) |
+| Cognee (`topoteretes/cognee`) | Apache-2.0 (has a `NOTICE.md`, checked 2026-10-04) | spike baseline (`cognee` 1.6.0, dependency only) |
 | A-MEM (`agiresearch/A-mem`, `WujiangXu/A-mem-sys`) | MIT | ideas |
 | STALE (`icedreamc/STALE`) | MIT | ideas, eval design |
 | LongMemEval (`xiaowu0162/LongMemEval`) | MIT | eval design; data usable per its licence |

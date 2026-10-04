@@ -40,6 +40,12 @@ def build(system: str):
     if system == "memobase":
         from systems.memobase_sys import MemobaseSystem
         return MemobaseSystem()
+    if system == "mem0":
+        from systems.mem0_sys import Mem0System
+        return Mem0System()
+    if system == "cognee":
+        from systems.cognee_sys import CogneeSystem
+        return CogneeSystem()
     raise SystemExit(f"unknown system: {system}")
 
 
