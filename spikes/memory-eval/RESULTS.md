@@ -173,6 +173,18 @@ tokens on noise (730 k vs 706 k, 71 % cached), ingest 342 s vs 302 s for 206 ses
 on an exhausted DeepSeek balance; `run_eval.py --resume` reuses completed runs.) Extraction on noise (v3): recall 0.98–1.00, dates 0.91–0.95, plan
 outcome 0.82–0.91, unsupported 4–6 %, facts current 0.55–0.64, notes 0.67–0.70.
 
+**Local engines (4b.4, Ollama on a 24 GB Mac, base, 1 run; answer + judge still `deepseek-flash`).**
+Qwen3-8B (`qwen3:8b` with `num_ctx` 16384 — Ollama's default context would silently truncate the prompt),
+thinking off: **59.7 %** (20 correct, 3 partial, 13 wrong) vs ~95 % for `deepseek-flash` on the same engine
+v4. Extraction: recall 0.70, dates 0.65, plan outcome 0.64, unsupported 23 %, facts 0.36 / 0.09, notes 0.10;
+3 of 35 extraction runs failed (invalid JSON / errors), leaving up to 73 messages pending when questions were
+asked — part of the gap is reliability, not only quality. Ingest 1708 s (vs ~300 s hosted). MiniCPM probes
+(not run in full): MiniCPM4.1-8B answers "ciao" in Chinese, Ollama's JSON mode fails on it, its thinking
+cannot be switched off (it reasons in English, once without end) and it attributed a group member's claim to
+the owner; MiniCPM5-1B (light role) called two shelter shifts on different days a duplicate — would hide a
+real event — and did not understand a simple Italian sentence. Excluded. Qwen3-8B got the same resolver
+probe right.
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
