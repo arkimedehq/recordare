@@ -184,6 +184,13 @@ cannot be switched off (it reasons in English, once without end) and it attribut
 the owner; MiniCPM5-1B (light role) called two shelter shifts on different days a duplicate — would hide a
 real event — and did not understand a simple Italian sentence. Excluded. Qwen3-8B got the same resolver
 probe right.
+Qwen3-14B (`num_ctx` 16384), `EXTRACTION_WINDOW_CHARS=4000`, thinking off: **66.7 %** (23 / 2 / 11), no failed
+extraction run (vs 3 with the 8B), but it stores little: 26 visible episodes (flash ~62), recall 0.59, **dates
+0.35**, plan outcome 0.67, unsupported 31 %, facts 0.55 / 0.27, notes 0.23; ingest 1642 s. Sessions are mostly
+shorter than 4000 chars, so the smaller window barely changed the call count (36). Reading: on this hardware a
+local engine is far from the hosted one (−28 pt); the gap is extraction coverage and date resolution, not JSON
+validity. A sovereign profile needs a larger local model (a ≥ 30B class machine) or a split design (local
+light calls, hosted extraction) — to be decided with the profiles (4b.3).
 
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
