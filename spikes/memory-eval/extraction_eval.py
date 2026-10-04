@@ -24,6 +24,9 @@ DB_URL = os.getenv("RECORDARE_DB_URL", "postgres://recordare:recordare@localhost
 BATCH = 6
 
 
+FAILED: list[str] = []
+
+
 def ask(system: str, user: str) -> dict:
     # Reasoning judges need room: a capped budget returns empty content (spike lesson).
     try:
@@ -31,6 +34,7 @@ def ask(system: str, user: str) -> dict:
         return json.loads(raw)
     except Exception as err:  # noqa: BLE001 - one failed batch must not abort the scoring
         print(f"  ! scoring batch failed: {type(err).__name__}", flush=True)
+        FAILED.append(type(err).__name__)
         return {}
 
 
@@ -153,6 +157,8 @@ def main() -> None:
     note_res = ask(NOTES_SYSTEM, note_user).get("results", [])
     note_credit = {"found": 1.0, "partial": 0.5}
 
+    if FAILED:  # partial scores look like real ones: never write them
+        sys.exit(f"{len(FAILED)} scoring calls failed ({', '.join(sorted(set(FAILED)))}); nothing written")
     rate = lambda xs, k: round(sum(1 for x in xs if x.get(k)) / max(len(xs), 1), 3)  # noqa: E731
     report = {
         "run": sys.argv[1], "gold_episodes": len(gold["episodes"]), "stored_visible_episodes": len(visible),

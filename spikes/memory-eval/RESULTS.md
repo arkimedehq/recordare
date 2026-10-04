@@ -159,6 +159,17 @@ What failed blind and what changed (all generic, no dataset names):
   answer model does not read "asked the assistant" from it — full context gets 2/3 too).
 - b26 (sister's job offer omitted) improved; b10 (time of the visit) occasional partial.
 
+**Noise (blind3 + 170 noise sessions), 3 runs each:** service v3 **88.0 %** [84.0, 92.0] (87.5 / 84.7 / 91.7),
+D 94.0 % [90.4, 97.6], full context 95.3 % [93.5, 97.2], no memory 8.3 %. v3 loses 8.1 pt from base to noise
+(paired, significant); v3 vs D −6 pt, within noise (interval reaches +0.5). The loss is in corrections (b22 hotel
+180→210, b24 rent 950→920 left the old value visible), b28 (what she liked most — pending note not used) and b34
+(denies but does not mention the third-party claim). Root cause of the corrections: the E# list held only the 15
+most recent episodes, crowded out by noise, so the episode to correct was invisible. **extract.v4**: 8 recent +
+up to 10 older episodes related to the window (one local embedding per window). First v4 noise run: **91.7 %**
+(b22 / b24 correct; wrong b21, b28, b31) — the remaining v4 runs (noise ×2, base ×3) stopped when the DeepSeek
+balance ran out (HTTP 402); to be completed. Extraction on noise (v3): recall 0.98–1.00, dates 0.91–0.95, plan
+outcome 0.82–0.91, unsupported 4–6 %, facts current 0.55–0.64, notes 0.67–0.70.
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
