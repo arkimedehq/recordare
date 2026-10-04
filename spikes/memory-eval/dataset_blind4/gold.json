@@ -1,0 +1,1354 @@
+{
+ "user": "tommaso",
+ "episodes": [
+  {
+   "id": "g-e01",
+   "sessions": [
+    "s01",
+    "s02"
+   ],
+   "content": "Started a Spanish course (A2, Tuesday evenings, teacher Pilar from Valencia, 12 students); liked it",
+   "kind": "state_change",
+   "date": "2028-01-11",
+   "date_precision": "day",
+   "people": [
+    "Pilar"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e02",
+   "sessions": [
+    "s02"
+   ],
+   "content": "Lumbar back pain after unloading parcels at the warehouse",
+   "kind": "event",
+   "date": "2028-01-10",
+   "date_precision": "approximate",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e03",
+   "sessions": [
+    "s03"
+   ],
+   "content": "Feels stuck at Adriatica after nine years; boss Ferretti micromanages; considers moving to manufacturing",
+   "kind": "event",
+   "date": "2028-01",
+   "date_precision": "approximate",
+   "people": [
+    "Ferretti"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e04",
+   "sessions": [
+    "s04"
+   ],
+   "content": "Dental cleaning at Dr Mancini's; a deep cavity found, root canal needed",
+   "kind": "event",
+   "date": "2028-01-18",
+   "date_precision": "day",
+   "people": [
+    "Dr Mancini"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e05",
+   "sessions": [
+    "s04",
+    "s13",
+    "s18",
+    "s24"
+   ],
+   "content": "Root canal at Dr Mancini's: planned Tue 15 Feb 17:00, moved to Thu 24 Feb (dentist ill), moved again to Wed 8 Mar 18:00 (equipment broken); done on 8 Mar",
+   "kind": "plan",
+   "date": "2028-03-08",
+   "date_precision": "day",
+   "people": [
+    "Dr Mancini"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "g-e06",
+   "sessions": [
+    "s05"
+   ],
+   "content": "First bike ride of the year with Stefano: Ancona - Portonovo and back, 42 km, cold",
+   "kind": "event",
+   "date": "2028-01-23",
+   "date_precision": "day",
+   "people": [
+    "Stefano"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e07",
+   "sessions": [
+    "s05",
+    "s09"
+   ],
+   "content": "Ski weekend in Val di Fassa with Stefano (Sat 5 - Sun 6 Feb, B&B in Canazei); cancelled on 3 Feb because Stefano had the flu, B&B refunded 50%",
+   "kind": "plan",
+   "date": "2028-02-05",
+   "date_precision": "day",
+   "people": [
+    "Stefano"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e08",
+   "sessions": [
+    "s06",
+    "s23",
+    "s27",
+    "s30"
+   ],
+   "content": "40th birthday party at Osteria del Faro, Portonovo: planned Sat 11 Mar, moved to Sat 18 Mar (restaurant renovation); held on 18 Mar with 34 guests, Nicola came, gave a two-minute speech, moved when thanking his parents",
+   "kind": "plan",
+   "date": "2028-03-18",
+   "date_precision": "day",
+   "people": [
+    "Nicola",
+    "Marta"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "g-e09",
+   "sessions": [
+    "s07"
+   ],
+   "content": "Cooked passatelli in broth for Marta during her report-card week; watched a Danish crime series",
+   "kind": "event",
+   "date": "2028-01-28",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e10",
+   "sessions": [
+    "s08"
+   ],
+   "content": "GP visit for back pain: lumbar contracture, physiotherapy prescribed, routine blood tests",
+   "kind": "event",
+   "date": "2028-01-31",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e11",
+   "sessions": [
+    "s09"
+   ],
+   "content": "Physiotherapy session 1 with Roberto (mobility exercises)",
+   "kind": "event",
+   "date": "2028-02-03",
+   "date_precision": "day",
+   "people": [
+    "Roberto"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e12",
+   "sessions": [
+    "s10"
+   ],
+   "content": "Weekend at home with Marta instead of the mountains; a bit sad",
+   "kind": "event",
+   "date": "2028-02-05",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e13",
+   "sessions": [
+    "s11"
+   ],
+   "content": "Physiotherapy session 2",
+   "kind": "event",
+   "date": "2028-02-08",
+   "date_precision": "day",
+   "people": [
+    "Roberto"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e14",
+   "sessions": [
+    "s08",
+    "s11",
+    "s48"
+   ],
+   "content": "Blood test (drawn Fri 4 Feb, results on 8 Feb): LDL cholesterol 186 (first told as 168, corrected on 9 May: digits swapped); diet advised, recheck in June",
+   "kind": "event",
+   "date": "2028-02-08",
+   "date_precision": "approximate",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e15",
+   "sessions": [
+    "s12"
+   ],
+   "content": "Test drive of a grey Toyota Yaris hybrid at an Ancona dealer; liked it",
+   "kind": "event",
+   "date": "2028-02-12",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e16",
+   "sessions": [
+    "s13"
+   ],
+   "content": "Valentine's dinner with Marta at La Lanterna (by the harbour); gave her an antique print of Senigallia",
+   "kind": "event",
+   "date": "2028-02-14",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e17",
+   "sessions": [
+    "s14"
+   ],
+   "content": "Physiotherapy session 3",
+   "kind": "event",
+   "date": "2028-02-15",
+   "date_precision": "day",
+   "people": [
+    "Roberto"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e18",
+   "sessions": [
+    "s14"
+   ],
+   "content": "Applied (CV) for a supply chain planner job at Officine Meccaniche Valmusone, Osimo",
+   "kind": "event",
+   "date": "2028-02-16",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e19",
+   "sessions": [
+    "s15"
+   ],
+   "content": "Dinner at Ilaria's (Marta's friend)",
+   "kind": "event",
+   "date": "2028-02-18",
+   "date_precision": "day",
+   "people": [
+    "Ilaria"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e20",
+   "sessions": [
+    "s16",
+    "s31"
+   ],
+   "content": "Accompanied his father to knee surgery and stayed with him (promised on 20 Feb, done 20 Mar)",
+   "kind": "plan",
+   "date": "2028-03-20",
+   "date_precision": "day",
+   "people": [
+    "father",
+    "Rosanna"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e21",
+   "sessions": [
+    "s17"
+   ],
+   "content": "Physiotherapy session 4, last of the cycle; cleared to cycle again",
+   "kind": "event",
+   "date": "2028-02-22",
+   "date_precision": "day",
+   "people": [
+    "Roberto"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e22",
+   "sessions": [
+    "s17",
+    "s20"
+   ],
+   "content": "Job interview at Valmusone, Wed 1 Mar 10:30, with HR and operations director Lorenzo Galli; went well",
+   "kind": "plan",
+   "date": "2028-03-01",
+   "date_precision": "day",
+   "people": [
+    "Lorenzo Galli"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e23",
+   "sessions": [
+    "s18"
+   ],
+   "content": "Fiat Punto failed the periodic inspection (brakes, emissions)",
+   "kind": "event",
+   "date": "2028-02-24",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e24",
+   "sessions": [
+    "s19"
+   ],
+   "content": "Bike ride with Stefano to Sirolo, 55 km",
+   "kind": "event",
+   "date": "2028-02-27",
+   "date_precision": "day",
+   "people": [
+    "Stefano"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e25",
+   "sessions": [
+    "s21"
+   ],
+   "content": "Started photography course at Ancona photo club (Thursdays, 8 lessons, teacher Ugo, ex photojournalist); bought used Fujifilm X-T30 for 450 euro",
+   "kind": "state_change",
+   "date": "2028-03-02",
+   "date_precision": "day",
+   "people": [
+    "Ugo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e26",
+   "sessions": [
+    "s22"
+   ],
+   "content": "Adopted Zenzero, orange 5-month-old kitten, from the Falconara cat shelter (with Marta)",
+   "kind": "state_change",
+   "date": "2028-03-04",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e27",
+   "sessions": [
+    "s12",
+    "s18",
+    "s23",
+    "s31"
+   ],
+   "content": "Switched car from the Fiat Punto to a Toyota Yaris hybrid (never announced; driving it by 7 Mar; Punto valued 500 euro by the dealer)",
+   "kind": "state_change",
+   "date": "2028-03",
+   "date_precision": "approximate",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e28",
+   "sessions": [
+    "s25"
+   ],
+   "content": "40th birthday: cake at the office, dinner with Marta (skipped photo lesson); Marta gave a hot-air balloon voucher for two",
+   "kind": "event",
+   "date": "2028-03-09",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e29",
+   "sessions": [
+    "s26"
+   ],
+   "content": "Job offer from Valmusone accepted verbally: supply chain planner, start 2 May, +15% salary",
+   "kind": "event",
+   "date": "2028-03-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e30",
+   "sessions": [
+    "s27"
+   ],
+   "content": "Cinema with Marta on the original party date",
+   "kind": "event",
+   "date": "2028-03-11",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e31",
+   "sessions": [
+    "s28"
+   ],
+   "content": "Resigned from Adriatica to Ferretti; notice until Fri 28 Apr; relieved and guilty",
+   "kind": "event",
+   "date": "2028-03-13",
+   "date_precision": "day",
+   "people": [
+    "Ferretti"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e32",
+   "sessions": [
+    "s33"
+   ],
+   "content": "Zenzero's first vaccination at the vet; booster due end of April (never confirmed)",
+   "kind": "event",
+   "date": "2028-03-25",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e33",
+   "sessions": [
+    "s33"
+   ],
+   "content": "Zenzero's vaccine booster at end of April",
+   "kind": "plan",
+   "date": "2028-04",
+   "date_precision": "approximate",
+   "people": [],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e34",
+   "sessions": [
+    "s32",
+    "s34"
+   ],
+   "content": "Planned to cheer Ilaria at the Senigallia half marathon on Sun 26 Mar; dropped because Ilaria withdrew (tendon)",
+   "kind": "plan",
+   "date": "2028-03-26",
+   "date_precision": "day",
+   "people": [
+    "Ilaria"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e35",
+   "sessions": [
+    "s34"
+   ],
+   "content": "Bike ride with Stefano to Portonovo, 45 km (Stefano's new gravel bike)",
+   "kind": "event",
+   "date": "2028-03-26",
+   "date_precision": "day",
+   "people": [
+    "Stefano"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e36",
+   "sessions": [
+    "s35"
+   ],
+   "content": "Maybe a concert in Bologna with Nicola on Sat 8 Apr (tickets not bought); never mentioned again",
+   "kind": "plan",
+   "date": "2028-04-08",
+   "date_precision": "day",
+   "people": [
+    "Nicola"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e37",
+   "sessions": [
+    "s37",
+    "s38"
+   ],
+   "content": "Spanish class dinner organised by Pilar on Fri 7 Apr; cancelled (Pilar had flu), postponed to after summer",
+   "kind": "plan",
+   "date": "2028-04-07",
+   "date_precision": "day",
+   "people": [
+    "Pilar"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e38",
+   "sessions": [
+    "s39"
+   ],
+   "content": "Longest ride of the year so far with Stefano: Numana and back, 60 km",
+   "kind": "event",
+   "date": "2028-04-09",
+   "date_precision": "day",
+   "people": [
+    "Stefano"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e39",
+   "sessions": [
+    "s39",
+    "s42"
+   ],
+   "content": "Easter lunch at his parents' in Jesi on Sun 16 Apr; father on crutches cooked the lamb; Francesca absent",
+   "kind": "plan",
+   "date": "2028-04-16",
+   "date_precision": "day",
+   "people": [
+    "Rosanna",
+    "father"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e40",
+   "sessions": [
+    "s40",
+    "s42"
+   ],
+   "content": "Found a flat in Osimo with Marta (3rd floor, 2 bedrooms, terrace, rent 780 euro/month); lease signing set for Tue 18 Apr (the signing itself was never explicitly confirmed; the move went ahead)",
+   "kind": "event",
+   "date": "2028-04-12",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e41",
+   "sessions": [
+    "s40",
+    "s41",
+    "s45"
+   ],
+   "content": "Photography course final lesson and exhibition on Thu 20 Apr; his dawn photo of the port placed at the entrance by Ugo",
+   "kind": "plan",
+   "date": "2028-04-20",
+   "date_precision": "day",
+   "people": [
+    "Ugo"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e42",
+   "sessions": [
+    "s42"
+   ],
+   "content": "Easter Monday picnic with Marta at Monte Conero",
+   "kind": "event",
+   "date": "2028-04-17",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e43",
+   "sessions": [
+    "s34",
+    "s36",
+    "s44"
+   ],
+   "content": "Trip to Lisbon with Marta, Sat 22 - Tue 25 Apr (flights from Bologna, hotel in Alfama)",
+   "kind": "plan",
+   "date": "2028-04-22",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e44",
+   "sessions": [
+    "s34",
+    "s44"
+   ],
+   "content": "Proposed to Marta at sunset at the Miradouro da Senhora do Monte, Lisbon; she said yes",
+   "kind": "state_change",
+   "date": "2028-04-23",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e45",
+   "sessions": [
+    "s44",
+    "s45"
+   ],
+   "content": "Airline lost Marta's suitcase on the return flight (25 Apr); delivered Wed 26 Apr",
+   "kind": "event",
+   "date": "2028-04-25",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e46",
+   "sessions": [
+    "s43",
+    "s45"
+   ],
+   "content": "Farewell dinner with Adriatica colleagues at Mario's, Thu 27 Apr; gift: framed port photo",
+   "kind": "plan",
+   "date": "2028-04-27",
+   "date_precision": "day",
+   "people": [
+    "Gianni",
+    "Sara"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e47",
+   "sessions": [
+    "s28",
+    "s45"
+   ],
+   "content": "Last working day at Adriatica Shipping Services",
+   "kind": "state_change",
+   "date": "2028-04-28",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e48",
+   "sessions": [
+    "s46"
+   ],
+   "content": "Bike ride with Stefano to Osimo to see the new flat from outside, 38 km",
+   "kind": "event",
+   "date": "2028-04-30",
+   "date_precision": "day",
+   "people": [
+    "Stefano"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e49",
+   "sessions": [
+    "s46",
+    "s47"
+   ],
+   "content": "Started at Valmusone as supply chain planner (plant ~200 people, SAP); overwhelmed but excited",
+   "kind": "state_change",
+   "date": "2028-05-02",
+   "date_precision": "day",
+   "people": [
+    "Lorenzo Galli"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e50",
+   "sessions": [
+    "s40",
+    "s47",
+    "s53"
+   ],
+   "content": "Move to Osimo: planned Sat 13 May, moved to Sat 20 May (no van); done 20 May with help from Stefano and Nicola",
+   "kind": "plan",
+   "date": "2028-05-20",
+   "date_precision": "day",
+   "people": [
+    "Marta",
+    "Stefano",
+    "Nicola"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "g-e51",
+   "sessions": [
+    "s48"
+   ],
+   "content": "Last Spanish lesson attended; told the class about Lisbon in Spanish",
+   "kind": "event",
+   "date": "2028-05-09",
+   "date_precision": "day",
+   "people": [
+    "Pilar"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e52",
+   "sessions": [
+    "s50"
+   ],
+   "content": "Visited Francesca in Bologna with Marta to meet newborn Bianca",
+   "kind": "event",
+   "date": "2028-05-14",
+   "date_precision": "day",
+   "people": [
+    "Francesca",
+    "Marta",
+    "Leo",
+    "Paolo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e53",
+   "sessions": [
+    "s51"
+   ],
+   "content": "Dropped the Spanish course (new job + move)",
+   "kind": "state_change",
+   "date": "2028-05-16",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e54",
+   "sessions": [
+    "s52"
+   ],
+   "content": "First real project at Valmusone: reorganising the spare-parts warehouse; praised by Galli",
+   "kind": "event",
+   "date": "2028-05-18",
+   "date_precision": "day",
+   "people": [
+    "Lorenzo Galli"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e55",
+   "sessions": [
+    "s53"
+   ],
+   "content": "Moved in with Marta in Osimo; household: Marta, Mirtillo, Zenzero, Bricco (Marta's 4-year-old beagle)",
+   "kind": "state_change",
+   "date": "2028-05-20",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e56",
+   "sessions": [
+    "s55"
+   ],
+   "content": "Back pain returned after carrying boxes",
+   "kind": "event",
+   "date": "2028-05-25",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e57",
+   "sessions": [
+    "s55",
+    "s58"
+   ],
+   "content": "Physiotherapy session with Roberto on Tue 30 May",
+   "kind": "plan",
+   "date": "2028-05-30",
+   "date_precision": "day",
+   "people": [
+    "Roberto"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e58",
+   "sessions": [
+    "s55"
+   ],
+   "content": "Maybe dinner with ex-colleagues on Thu 1 Jun (Gianni organising); never mentioned again",
+   "kind": "plan",
+   "date": "2028-06-01",
+   "date_precision": "day",
+   "people": [
+    "Gianni"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e59",
+   "sessions": [
+    "s56"
+   ],
+   "content": "Bricco swallowed a sock; vet visit in Osimo, no surgery",
+   "kind": "event",
+   "date": "2028-05-26",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e60",
+   "sessions": [
+    "s57"
+   ],
+   "content": "Skipped the Sunday ride because of back pain",
+   "kind": "event",
+   "date": "2028-05-28",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e61",
+   "sessions": [
+    "s54",
+    "s58"
+   ],
+   "content": "Returned the keys of the Ancona flat to the landlord",
+   "kind": "state_change",
+   "date": "2028-05-31",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e62",
+   "sessions": [
+    "s58"
+   ],
+   "content": "Farewell to Nicola at his parents' before Rotterdam",
+   "kind": "event",
+   "date": "2028-05-31",
+   "date_precision": "day",
+   "people": [
+    "Nicola"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e63",
+   "sessions": [
+    "s59"
+   ],
+   "content": "Housewarming party planned for Sat 17 Jun (no outcome known)",
+   "kind": "plan",
+   "date": "2028-06-17",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e64",
+   "sessions": [
+    "s60"
+   ],
+   "content": "First dinner guests at the new flat: his parents; father climbed to 3rd floor without crutches",
+   "kind": "event",
+   "date": "2028-06-05",
+   "date_precision": "day",
+   "people": [
+    "Rosanna",
+    "father"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e65",
+   "sessions": [
+    "s61"
+   ],
+   "content": "Cholesterol recheck: LDL 142, doctor satisfied",
+   "kind": "event",
+   "date": "2028-06-07",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e66",
+   "sessions": [
+    "s62"
+   ],
+   "content": "Closed the spare-parts inventory at work; pizza on the terrace with Marta",
+   "kind": "event",
+   "date": "2028-06-09",
+   "date_precision": "day",
+   "people": [
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e67",
+   "sessions": [
+    "s16",
+    "s58",
+    "s59"
+   ],
+   "content": "Brother Nicola hired permanently by a company in Rotterdam; left 1 Jun",
+   "kind": "event",
+   "date": "2028-06-01",
+   "date_precision": "day",
+   "people": [
+    "Nicola"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e68",
+   "sessions": [
+    "s16",
+    "s49"
+   ],
+   "content": "Sister Francesca gave birth to Bianca (3.2 kg) in Bologna",
+   "kind": "event",
+   "date": "2028-05-10",
+   "date_precision": "day",
+   "people": [
+    "Francesca",
+    "Bianca"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e69",
+   "sessions": [
+    "s16",
+    "s31",
+    "s60"
+   ],
+   "content": "Father's total knee replacement at Jesi hospital; went well, walking without crutches by June",
+   "kind": "event",
+   "date": "2028-03-20",
+   "date_precision": "day",
+   "people": [
+    "father"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e70",
+   "sessions": [
+    "s32",
+    "s34"
+   ],
+   "content": "Stefano bought a light-blue Bianchi gravel bike",
+   "kind": "event",
+   "date": "2028-03-23",
+   "date_precision": "day",
+   "people": [
+    "Stefano"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e71",
+   "sessions": [
+    "s34"
+   ],
+   "content": "Ilaria withdrew from the Senigallia half marathon (tendon inflammation); learned on race day, 26 Mar",
+   "kind": "event",
+   "date": "2028-03-26",
+   "date_precision": "approximate",
+   "people": [
+    "Ilaria"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e72",
+   "sessions": [
+    "s43"
+   ],
+   "content": "Ex-colleague Sara going on maternity leave from mid-May (expecting a boy)",
+   "kind": "event",
+   "date": "2028-04-19",
+   "date_precision": "day",
+   "people": [
+    "Sara"
+   ],
+   "plan_outcome": null
+  }
+ ],
+ "facts": [
+  {
+   "key": "employer",
+   "history": [
+    {
+     "value": "Adriatica Shipping Services, port of Ancona (logistics coordinator, 9 years; boss Ferretti)",
+     "from": null,
+     "to": "2028-04-28"
+    },
+    {
+     "value": "Officine Meccaniche Valmusone, Osimo (supply chain planner; boss Lorenzo Galli)",
+     "from": "2028-05-02",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "boss",
+   "history": [
+    {
+     "value": "Ferretti",
+     "from": null,
+     "to": "2028-04-28"
+    },
+    {
+     "value": "Lorenzo Galli (first told as 'Gatti', corrected 2028-04-03)",
+     "from": "2028-05-02",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "home",
+   "history": [
+    {
+     "value": "Rented one-bedroom flat near the Passetto, Ancona, alone with Mirtillo",
+     "from": null,
+     "to": "2028-05-20"
+    },
+    {
+     "value": "Rented flat in Osimo with Marta (3rd floor, 2 bedrooms, terrace, 780 euro/month)",
+     "from": "2028-05-20",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "city",
+   "history": [
+    {
+     "value": "Ancona",
+     "from": null,
+     "to": "2028-05-20"
+    },
+    {
+     "value": "Osimo",
+     "from": "2028-05-20",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "car",
+   "history": [
+    {
+     "value": "Fiat Punto (2009, 230,000 km); failed inspection 24 Feb, valued 500 euro by the dealer (told 20 Mar)",
+     "from": null,
+     "to": "2028-03-07"
+    },
+    {
+     "value": "Toyota Yaris hybrid (implicit, never announced; switch between 24 Feb and 7 Mar, first mentioned in use on 7 Mar)",
+     "from": "2028-03-07",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "relationship",
+   "history": [
+    {
+     "value": "Girlfriend Marta (primary school teacher in Senigallia), together 3 years, living apart",
+     "from": null,
+     "to": "2028-04-23"
+    },
+    {
+     "value": "Engaged to Marta, living apart",
+     "from": "2028-04-23",
+     "to": "2028-05-20"
+    },
+    {
+     "value": "Engaged to Marta, living together in Osimo; wedding date not set",
+     "from": "2028-05-20",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "pets_household (multi-valued, accumulates)",
+   "history": [
+    {
+     "value": "Mirtillo (black-and-white cat, 8)",
+     "from": null,
+     "to": "2028-03-04"
+    },
+    {
+     "value": "Mirtillo, Zenzero (orange kitten)",
+     "from": "2028-03-04",
+     "to": "2028-05-20"
+    },
+    {
+     "value": "Mirtillo, Zenzero, Bricco (Marta's beagle, 4)",
+     "from": "2028-05-20",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "courses (multi-valued)",
+   "history": [
+    {
+     "value": "Spanish A2 (Tuesdays, Pilar)",
+     "from": "2028-01-11",
+     "to": "2028-03-02"
+    },
+    {
+     "value": "Spanish A2 + photography (Thursdays, Ugo)",
+     "from": "2028-03-02",
+     "to": "2028-04-20"
+    },
+    {
+     "value": "Spanish A2",
+     "from": "2028-04-20",
+     "to": "2028-05-09"
+    },
+    {
+     "value": "none",
+     "from": "2028-05-09",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "age",
+   "history": [
+    {
+     "value": "39",
+     "from": null,
+     "to": "2028-03-09"
+    },
+    {
+     "value": "40 (birthday 9 March)",
+     "from": "2028-03-09",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "ldl_cholesterol",
+   "history": [
+    {
+     "value": "186 (Feb test; first told as 168, corrected 2028-05-09)",
+     "from": "2028-02",
+     "to": "2028-06-07"
+    },
+    {
+     "value": "142",
+     "from": "2028-06-07",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "back_health",
+   "history": [
+    {
+     "value": "Lumbar contracture, physiotherapy (4 sessions)",
+     "from": "2028-01-10",
+     "to": "2028-02-22"
+    },
+    {
+     "value": "Recovered",
+     "from": "2028-02-22",
+     "to": "2028-05-25"
+    },
+    {
+     "value": "Flare-up after the move, physiotherapy 30 May, improving",
+     "from": "2028-05-25",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "nieces_nephews (accumulates)",
+   "history": [
+    {
+     "value": "Leo (8, Francesca's son)",
+     "from": null,
+     "to": "2028-05-10"
+    },
+    {
+     "value": "Leo, Bianca",
+     "from": "2028-05-10",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "commute",
+   "history": [
+    {
+     "value": "About 40 minutes Ancona -> Osimo",
+     "from": "2028-05-02",
+     "to": "2028-05-20"
+    },
+    {
+     "value": "About 10 minutes by car",
+     "from": "2028-05-20",
+     "to": null
+    }
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "category": "profile",
+   "content": "Tommaso, 40 since 9 March 2028; from Ancona, moved to Osimo (Marche)"
+  },
+  {
+   "category": "family",
+   "content": "Mother Rosanna and father (unnamed) in Jesi; sister Francesca in Bologna (husband Paolo, children Leo and Bianca); brother Nicola, in Pesaro then Rotterdam; Lidia (relative in the family chat, relation unstated)"
+  },
+  {
+   "category": "people",
+   "content": "Stefano: friend and cycling partner; Ilaria: Marta's friend, runner; Walter: cycling group; Gianni and Sara: ex-colleagues at Adriatica; Pilar: Spanish teacher; Ugo: photography teacher; Roberto: physiotherapist; Dr Mancini: dentist"
+  },
+  {
+   "category": "hobby",
+   "content": "Road cycling on Sundays with Stefano around the Conero coast"
+  },
+  {
+   "category": "hobby",
+   "content": "Photography (Fujifilm X-T30), took a course in spring 2028"
+  },
+  {
+   "category": "preference",
+   "content": "Practises English with the assistant for work"
+  },
+  {
+   "category": "work",
+   "content": "Logistics background: 9 years of port logistics (ferries to Greece and Croatia, customs), now supply chain in manufacturing; dislikes micromanagement, values autonomy"
+  },
+  {
+   "category": "health",
+   "content": "Recurring lumbar back pain; watching LDL cholesterol with diet"
+  },
+  {
+   "category": "plan",
+   "content": "Hot-air balloon flight voucher for two (Marta's gift for his 40th birthday), maybe in September; wedding perhaps 2029"
+  }
+ ],
+ "not_memories": [
+  {
+   "sessions": [
+    "s06"
+   ],
+   "why": "how-to: structure of a birthday speech (only the request itself is provenance)"
+  },
+  {
+   "sessions": [
+    "s14"
+   ],
+   "why": "how-to: cover letter structure"
+  },
+  {
+   "sessions": [
+    "s19"
+   ],
+   "why": "list of common interview questions"
+  },
+  {
+   "sessions": [
+    "s29"
+   ],
+   "why": "explanation of fixed vs variable mortgages (Euribor, spread)"
+  },
+  {
+   "sessions": [
+    "s36"
+   ],
+   "why": "Lisbon itinerary suggestions by the assistant (only the viewpoint choice became real)"
+  },
+  {
+   "sessions": [
+    "s38"
+   ],
+   "why": "how CERCA.VERT / XLOOKUP works"
+  },
+  {
+   "sessions": [
+    "s44"
+   ],
+   "why": "how to write a lost-luggage complaint (Montreal Convention, PIR)"
+  },
+  {
+   "sessions": [
+    "s16"
+   ],
+   "why": "Lidia's claim in the family chat that Tommaso and Marta marry in September: third-party claim never confirmed (later: no date set)"
+  },
+  {
+   "sessions": [
+    "s32"
+   ],
+   "why": "Walter's claim that Tommaso climbed the Conero in 19 minutes on Sun 19 March: never confirmed; Tommaso was resting after the party"
+  },
+  {
+   "sessions": [
+    "s43"
+   ],
+   "why": "Gianni's claim that Tommaso doubles his salary at a competitor: joke, Tommaso stated +15%; Valmusone is not a competitor"
+  },
+  {
+   "sessions": [
+    "noise"
+   ],
+   "why": "anything said by user 'giorgio' (isolation) and general-knowledge / third-party noise in noise.json"
+  }
+ ]
+}

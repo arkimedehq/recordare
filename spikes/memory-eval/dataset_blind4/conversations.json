@@ -1,0 +1,1481 @@
+{
+ "_note": "Blind synthetic dataset #4 (fictional people). Timestamps are when the message was sent (Europe/Rome). Messages with role 'other' are group-chat messages written by someone else (see 'author').",
+ "users": {
+  "tommaso": "Primary user under test",
+  "giorgio": "Second user (noise only), isolation check: his data must never surface in Tommaso's answers"
+ },
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "tommaso",
+   "ts": "2028-01-10T20:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao! Visto che d'ora in poi ti userò spesso, ti racconto un po' di me. Mi chiamo Tommaso, ho 39 anni e vivo ad Ancona, in un bilocale in affitto vicino al Passetto. Lavoro da nove anni come coordinatore logistico all'Adriatica Shipping Services, un'agenzia marittima al porto: traghetti, container, pratiche doganali, quella roba lì."
+    },
+    {
+     "role": "assistant",
+     "content": "Piacere, Tommaso! Me lo segno: Ancona, bilocale vicino al Passetto, coordinatore logistico all'Adriatica Shipping Services da nove anni. Vivi da solo?"
+    },
+    {
+     "role": "user",
+     "content": "Da solo con il mio gatto, Mirtillo, bianco e nero, 8 anni, un tipo molto territoriale. La mia ragazza si chiama Marta, fa la maestra alle elementari a Senigallia e vive lì; stiamo insieme da tre anni. Ah, e giro ancora con una Fiat Punto del 2009 che ormai tiene insieme lo scotch."
+    },
+    {
+     "role": "assistant",
+     "content": "Mirtillo, Marta maestra a Senigallia e la gloriosa Punto del 2009: tutto annotato. Novità in vista?"
+    },
+    {
+     "role": "user",
+     "content": "Sì: domani sera comincio un corso di spagnolo, livello A2, il martedì sera in una scuola di lingue in centro. Lo volevo fare da anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo modo di iniziare l'anno! In bocca al lupo per la prima lezione di domani."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "tommaso",
+   "ts": "2028-01-12T21:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri prima lezione di spagnolo! L'insegnante si chiama Pilar, è di Valencia, simpaticissima. Siamo in dodici in classe, quasi tutti più giovani di me."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Com'è stata l'impressione generale?"
+    },
+    {
+     "role": "user",
+     "content": "Molto positiva, si parla tanto e si scrive poco, come piace a me. Unica nota negativa: ho un mal di schiena tremendo da lunedì, ho dato una mano a scaricare dei colli in magazzino e mi sono bloccato."
+    },
+    {
+     "role": "assistant",
+     "content": "Il mal di schiena da sforzo spesso passa in pochi giorni con riposo relativo; se non migliora entro una settimana conviene sentire il medico."
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "tommaso",
+   "ts": "2028-01-15T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Let's do some English today, I need the practice for work. So: my job at the port is OK but I feel stuck. My boss, Ferretti, checks every single email I send and I've been doing the same things for nine years."
+    },
+    {
+     "role": "assistant",
+     "content": "Happy to practise! Feeling stuck after nine years in the same role is very common. Is it the boss, the tasks, or both?"
+    },
+    {
+     "role": "user",
+     "content": "Both, honestly. I like logistics, the ferries to Greece and Croatia, the chaos of the summer season. But Ferretti micromanages everything and there is no way to grow. I'm starting to think about looking for something else, maybe in manufacturing."
+    },
+    {
+     "role": "assistant",
+     "content": "That sounds like a reasonable direction: supply chain roles in manufacturing value exactly the experience you have. Your English is good, by the way - just say 'I've been doing the same things for nine years', which you did perfectly."
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "user": "tommaso",
+   "ts": "2028-01-18T13:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina igiene dentale dal dottor Mancini. Pulizia ok, però ha trovato una carie profonda su un molare in basso: serve una devitalizzazione."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato. Hai già fissato l'appuntamento?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, martedì 15 febbraio alle 17. Preventivo 280 euro. Già mi fa male il portafoglio prima del dente."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: devitalizzazione martedì 15 febbraio alle 17 dal dottor Mancini, preventivo 280 euro."
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "tommaso",
+   "ts": "2028-01-23T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi primo giro in bici dell'anno con Stefano: Ancona - Portonovo e ritorno, 42 km. Freddissimo ma il mare d'inverno è stupendo. La schiena ha retto."
+    },
+    {
+     "role": "assistant",
+     "content": "42 km a gennaio sono un buon inizio! Contento che la schiena abbia tenuto."
+    },
+    {
+     "role": "user",
+     "content": "Con Stefano abbiamo anche deciso: sabato 5 e domenica 6 febbraio andiamo a sciare in Val di Fassa. Abbiamo già prenotato un B&B a Canazei."
+    },
+    {
+     "role": "assistant",
+     "content": "Bel programma! Weekend sugli sci in Val di Fassa sabato 5 e domenica 6 febbraio, B&B a Canazei."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "tommaso",
+   "ts": "2028-01-26T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi aiuti con una cosa? Il 9 marzo compio 40 anni e voglio fare un piccolo discorso alla festa. Come lo scrivo senza essere né noioso né strappalacrime?"
+    },
+    {
+     "role": "assistant",
+     "content": "Una struttura semplice: 1) apertura leggera, una battuta su di te o sui 40; 2) due o tre ringraziamenti concreti, con un aneddoto breve per ciascuno; 3) uno sguardo avanti, cosa ti auguri per i prossimi anni; 4) brindisi. Massimo due minuti, frasi brevi, e prova a leggerlo ad alta voce una volta."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto. La festa la faccio sabato 11 marzo all'Osteria del Faro, a Portonovo. Pensavo a una trentina di persone."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo posto. Segno: festa dei 40 anni sabato 11 marzo all'Osteria del Faro, circa trenta invitati."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "tommaso",
+   "ts": "2028-01-28T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "English again. Marta is completely stressed, it's report card week at her school and she has 22 kids to evaluate. I cooked for her tonight, passatelli in broth."
+    },
+    {
+     "role": "assistant",
+     "content": "That's a kind gesture - report card week is exhausting for teachers. How did the passatelli turn out?"
+    },
+    {
+     "role": "user",
+     "content": "Great, my grandmother's recipe. Then we watched two episodes of a Danish crime series, very slow, very dark. I liked it, Marta fell asleep."
+    },
+    {
+     "role": "assistant",
+     "content": "Nordic noir does that to people! Glad you had a quiet evening together."
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "user": "tommaso",
+   "ts": "2028-01-31T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono andato dal medico di base per la schiena, che non passa. Dice che è una contrattura lombare e mi manda dal fisioterapista: prima seduta giovedì 3 febbraio."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene che tu abbia fatto controllare. Ti ha prescritto altro?"
+    },
+    {
+     "role": "user",
+     "content": "Esami del sangue di routine, li faccio venerdì. Dice che a quasi quarant'anni è ora di controllare il colesterolo."
+    },
+    {
+     "role": "assistant",
+     "content": "Sensato. Segno fisioterapia da giovedì 3 febbraio ed esami del sangue in arrivo."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "tommaso",
+   "ts": "2028-02-03T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mazzata: Stefano ha la febbre a 39, influenza. Il weekend in Val di Fassa salta, non ha senso andare da solo. Il B&B ci rimborsa solo metà."
+    },
+    {
+     "role": "assistant",
+     "content": "Che peccato, ci tenevi. Almeno metà del soggiorno torna indietro. Lo rimandate?"
+    },
+    {
+     "role": "user",
+     "content": "Per quest'anno credo di no, la stagione è quella che è. In compenso oggi prima seduta di fisioterapia: il fisioterapista si chiama Roberto, mi ha dato esercizi di mobilità da fare ogni mattina."
+    },
+    {
+     "role": "assistant",
+     "content": "Allora: weekend sugli sci annullato per l'influenza di Stefano, e prima seduta di fisio con Roberto fatta oggi. Forza con gli esercizi!"
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "tommaso",
+   "ts": "2028-02-06T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Weekend at home instead of the mountains. A bit sad, I was looking forward to the snow. Marta came over, we cooked and watched films all Saturday."
+    },
+    {
+     "role": "assistant",
+     "content": "Not the weekend you planned, but it sounds cozy. What did you watch?"
+    },
+    {
+     "role": "user",
+     "content": "An old Italian comedy and a documentary about lighthouses. Mirtillo spent the whole time on Marta's lap, he likes her more than me."
+    },
+    {
+     "role": "assistant",
+     "content": "Cats always pick the guest! Sorry about the snow, maybe next winter."
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "user": "tommaso",
+   "ts": "2028-02-08T19:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Seconda seduta di fisio oggi, va un po' meglio. Sono arrivati anche gli esami del sangue: colesterolo LDL 168. Il medico dice dieta e movimento, e di ricontrollare a giugno."
+    },
+    {
+     "role": "assistant",
+     "content": "168 di LDL è sopra i valori consigliati ma con dieta e attività spesso scende. Ricontrollo a giugno, segnato."
+    },
+    {
+     "role": "user",
+     "content": "E poi a fine mese la Punto deve fare la revisione. Ha 230.000 km, ho paura che non passi."
+    },
+    {
+     "role": "assistant",
+     "content": "Con quel chilometraggio conviene farla controllare prima, soprattutto freni ed emissioni."
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "user": "tommaso",
+   "ts": "2028-02-12T12:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina, per curiosità, ho provato una Toyota Yaris ibrida grigia da un concessionario di Ancona. Silenziosissima in città, mi è piaciuta un sacco."
+    },
+    {
+     "role": "assistant",
+     "content": "Le ibride in città rendono molto. Stai pensando seriamente di cambiare la Punto?"
+    },
+    {
+     "role": "user",
+     "content": "Diciamo che ci sto pensando. Dipende da come va la revisione."
+    },
+    {
+     "role": "assistant",
+     "content": "Ha senso aspettare l'esito della revisione prima di decidere."
+    }
+   ]
+  },
+  {
+   "id": "s13",
+   "user": "tommaso",
+   "ts": "2028-02-14T23:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Due cose. Primo: la segretaria del dottor Mancini ha chiamato, il dottore è malato e la devitalizzazione di domani salta. Spostata a giovedì 24 febbraio, sempre alle 17."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: devitalizzazione spostata da martedì 15 a giovedì 24 febbraio alle 17. E la seconda?"
+    },
+    {
+     "role": "user",
+     "content": "Siamo appena tornati da cena con Marta per San Valentino, alla Lanterna, sul porto. Crudo di pesce strepitoso. Le ho regalato una stampa antica di Senigallia."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella serata! Bel regalo, la stampa di Senigallia."
+    }
+   ]
+  },
+  {
+   "id": "s14",
+   "user": "tommaso",
+   "ts": "2028-02-16T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri terza seduta di fisio, la schiena va molto meglio. E stasera ho fatto una cosa: ho trovato un annuncio delle Officine Meccaniche Valmusone, a Osimo, cercano un supply chain planner. Ho mandato il CV."
+    },
+    {
+     "role": "assistant",
+     "content": "Grande passo! Il profilo sembra adatto alla tua esperienza."
+    },
+    {
+     "role": "user",
+     "content": "Mi serve una mano con la lettera di presentazione: come la imposto?"
+    },
+    {
+     "role": "assistant",
+     "content": "Tre paragrafi: 1) per quale ruolo ti candidi e perché quell'azienda; 2) due risultati concreti dei tuoi nove anni in logistica portuale, con numeri se puoi; 3) disponibilità al colloquio e chiusura cordiale. Massimo una pagina, tono diretto, niente formule generiche."
+    }
+   ]
+  },
+  {
+   "id": "s15",
+   "user": "tommaso",
+   "ts": "2028-02-18T23:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Serata a cena da Ilaria, l'amica di Marta. Si sta allenando per la mezza maratona di Senigallia di domenica 26 marzo, corre quattro volte a settimana. Io con la schiena faccio fatica a fare le scale."
+    },
+    {
+     "role": "assistant",
+     "content": "Ognuno con i suoi ritmi! Bella serata?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, ha fatto le olive all'ascolana in casa, divine."
+    },
+    {
+     "role": "assistant",
+     "content": "Le olive fatte in casa sono un'altra cosa!"
+    }
+   ]
+  },
+  {
+   "id": "s16",
+   "user": "tommaso",
+   "ts": "2028-02-20T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "other",
+     "author": "Nicola",
+     "content": "Ragazzi, notizia grossa: mi hanno preso in un'azienda di Rotterdam! Parto il 1 giugno, contratto a tempo indeterminato."
+    },
+    {
+     "role": "other",
+     "author": "Rosanna",
+     "content": "Nicola!!! Sono felice e disperata insieme. Rotterdam è lontanissima."
+    },
+    {
+     "role": "other",
+     "author": "Francesca",
+     "content": "Bravissimo Nico! E visto che siamo in vena di annunci: l'ecografia ha confermato, è una femmina. Nasce a metà maggio."
+    },
+    {
+     "role": "user",
+     "content": "Complimenti Nico, grandissimo! E Fra, che bello, Leo avrà una sorellina!"
+    },
+    {
+     "role": "other",
+     "author": "Lidia",
+     "content": "Che famiglia! E poi ho sentito che Tommaso e Marta si sposano a settembre, finalmente!"
+    },
+    {
+     "role": "other",
+     "author": "Rosanna",
+     "content": "Ricordo a tutti che papà si opera al ginocchio lunedì 20 marzo a Jesi. Tommaso, lo accompagni tu?"
+    },
+    {
+     "role": "user",
+     "content": "Certo mamma, lo porto io e resto con lui."
+    }
+   ]
+  },
+  {
+   "id": "s17",
+   "user": "tommaso",
+   "ts": "2028-02-22T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Quarta e ultima seduta di fisio oggi. Roberto dice che posso tornare in bici con calma, continuando gli esercizi a casa."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima notizia, ciclo di fisioterapia concluso!"
+    },
+    {
+     "role": "user",
+     "content": "E notizia ancora migliore: mi hanno chiamato dalla Valmusone! Colloquio mercoledì 1 marzo alle 10:30 a Osimo. Sono già in ansia."
+    },
+    {
+     "role": "assistant",
+     "content": "Fantastico! Colloquio mercoledì 1 marzo alle 10:30. Un po' d'ansia è normale, possiamo prepararlo insieme."
+    }
+   ]
+  },
+  {
+   "id": "s18",
+   "user": "tommaso",
+   "ts": "2028-02-24T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Non ci credo: il dentista ha spostato di nuovo. Allo studio si è rotto il riunito, devitalizzazione rimandata a mercoledì 8 marzo alle 18. Terzo appuntamento per lo stesso dente."
+    },
+    {
+     "role": "assistant",
+     "content": "Che pazienza! Aggiornato: devitalizzazione ora mercoledì 8 marzo alle 18."
+    },
+    {
+     "role": "user",
+     "content": "E come previsto la Punto non ha passato la revisione: freni e emissioni. Ripararla costa più di quanto vale. Devo decidere."
+    },
+    {
+     "role": "assistant",
+     "content": "Con quelle riparazioni e 230.000 km, cambiarla sembra la scelta più ragionevole."
+    }
+   ]
+  },
+  {
+   "id": "s19",
+   "user": "tommaso",
+   "ts": "2028-02-27T16:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "English practice, and I need help. First: this morning Stefano and I rode to Sirolo, 55 km, finally some sun. My back was fine."
+    },
+    {
+     "role": "assistant",
+     "content": "Great ride, and good news about your back! What do you need help with?"
+    },
+    {
+     "role": "user",
+     "content": "The interview on Wednesday. Part of it might be in English, they export a lot. Can you give me the most common interview questions for a supply chain role?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sure: 'Tell me about yourself'; 'Describe a time you solved a supply disruption'; 'How do you prioritise conflicting deadlines?'; 'Which KPIs do you use to measure logistics performance?'; 'Why do you want to leave your current job?'; 'Where do you see yourself in five years?'. Prepare a short story with numbers for each one."
+    }
+   ]
+  },
+  {
+   "id": "s20",
+   "user": "tommaso",
+   "ts": "2028-03-01T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatto il colloquio stamattina in Valmusone! C'erano la responsabile HR e il direttore operations, Lorenzo Gatti, che sarebbe il mio capo. Un pezzo in inglese, è andato bene."
+    },
+    {
+     "role": "assistant",
+     "content": "Bravo! Che impressione ti hanno fatto?"
+    },
+    {
+     "role": "user",
+     "content": "Ottima: stabilimento ordinato, gente giovane, Gatti molto diretto. Mi hanno detto che danno una risposta entro dieci giorni. Speriamo."
+    },
+    {
+     "role": "assistant",
+     "content": "Incrociamo le dita. Ti aggiorno la memoria: colloquio fatto il 1 marzo con HR e Lorenzo Gatti."
+    }
+   ]
+  },
+  {
+   "id": "s21",
+   "user": "tommaso",
+   "ts": "2028-03-02T22:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera prima lezione del corso di fotografia al circolo fotografico di Ancona! Il giovedì sera, otto lezioni, l'insegnante si chiama Ugo, un ex fotoreporter."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello, un altro corso! Hai già una macchina fotografica?"
+    },
+    {
+     "role": "user",
+     "content": "Ho preso una Fujifilm X-T30 usata, 450 euro con l'obiettivo base. Ugo però è un po' troppo tecnico, parla di istogrammi da mezz'ora."
+    },
+    {
+     "role": "assistant",
+     "content": "Una scelta ottima per iniziare. Segno: corso di fotografia il giovedì con Ugo, otto lezioni."
+    }
+   ]
+  },
+  {
+   "id": "s22",
+   "user": "tommaso",
+   "ts": "2028-03-04T17:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Big news, in English: today Marta and I went to the cat shelter in Falconara and I adopted a kitten! Orange, five months old. I called him Zenzero - Ginger, in English."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations! Welcome Zenzero. How is Mirtillo taking it?"
+    },
+    {
+     "role": "user",
+     "content": "Mirtillo is hissing at him from the top of the wardrobe. The shelter people said to keep them in separate rooms for a few days."
+    },
+    {
+     "role": "assistant",
+     "content": "That's the right approach - gradual introductions work best. So now you have two cats: Mirtillo and Zenzero."
+    }
+   ]
+  },
+  {
+   "id": "s23",
+   "user": "tommaso",
+   "ts": "2028-03-07T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cambio di programma per la festa: l'Osteria del Faro anticipa i lavori di ristrutturazione e sabato 11 è chiusa. La festa si sposta a sabato 18 marzo, stesso posto."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: festa dei 40 anni spostata a sabato 18 marzo all'Osteria del Faro."
+    },
+    {
+     "role": "user",
+     "content": "Pazienza. Stasera a spagnolo congiuntivo, un incubo. In compenso oggi sono andato a Senigallia con la Yaris e ho consumato niente."
+    },
+    {
+     "role": "assistant",
+     "content": "Il congiuntivo spagnolo fa soffrire tutti all'inizio! Bene i consumi."
+    }
+   ]
+  },
+  {
+   "id": "s24",
+   "user": "tommaso",
+   "ts": "2028-03-08T20:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Finalmente fatta la devitalizzazione. Un'ora e mezza a bocca aperta, ma è andata. Pagato 280 euro, come da preventivo."
+    },
+    {
+     "role": "assistant",
+     "content": "Finalmente, dopo due rinvii! Riposati e mangia morbido stasera."
+    },
+    {
+     "role": "user",
+     "content": "Minestrina e gelato, il menù del campione."
+    },
+    {
+     "role": "assistant",
+     "content": "Il menù perfetto per il post-dentista."
+    }
+   ]
+  },
+  {
+   "id": "s25",
+   "user": "tommaso",
+   "ts": "2028-03-09T23:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi 40 anni! I colleghi mi hanno fatto trovare una torta in ufficio, persino Ferretti ha sorriso. Stasera ho saltato la lezione di fotografia e sono andato a cena con Marta."
+    },
+    {
+     "role": "assistant",
+     "content": "Tanti auguri, Tommaso! Che regalo ti ha fatto Marta?"
+    },
+    {
+     "role": "user",
+     "content": "Un buono per un volo in mongolfiera per due! Dobbiamo ancora decidere quando usarlo."
+    },
+    {
+     "role": "assistant",
+     "content": "Regalo bellissimo! Buon quarantesimo."
+    }
+   ]
+  },
+  {
+   "id": "s26",
+   "user": "tommaso",
+   "ts": "2028-03-10T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "NON CI CREDO. Mi ha chiamato la Valmusone: mi offrono il posto! Supply chain planner, inizio martedì 2 maggio, stipendio più alto del 15%. Ho detto sì a voce."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulazioni!! Grande traguardo. Quando lo dici in agenzia?"
+    },
+    {
+     "role": "user",
+     "content": "Lunedì do le dimissioni. Stasera festeggio con Marta, poi ci penso."
+    },
+    {
+     "role": "assistant",
+     "content": "Goditi la serata! Segno: offerta accettata, inizio martedì 2 maggio, +15%."
+    }
+   ]
+  },
+  {
+   "id": "s27",
+   "user": "tommaso",
+   "ts": "2028-03-11T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera doveva esserci la festa e invece siamo andati al cinema con Marta, un film francese carino. Meglio così, sabato prossimo festeggio con la notizia del lavoro."
+    },
+    {
+     "role": "assistant",
+     "content": "Una festa doppia sabato 18, allora!"
+    },
+    {
+     "role": "user",
+     "content": "Esatto. Zenzero intanto ha conquistato il divano, Mirtillo lo tollera."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon segno per la convivenza felina."
+    }
+   ]
+  },
+  {
+   "id": "s28",
+   "user": "tommaso",
+   "ts": "2028-03-13T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatto: stamattina ho dato le dimissioni a Ferretti. Preavviso fino a venerdì 28 aprile, quello sarà il mio ultimo giorno all'Adriatica."
+    },
+    {
+     "role": "assistant",
+     "content": "Un passo grande. Come l'ha presa?"
+    },
+    {
+     "role": "user",
+     "content": "Freddo, ha detto solo 'prendo atto'. Io mi sento sollevato e allo stesso tempo in colpa, nove anni non sono pochi e i colleghi mi mancheranno."
+    },
+    {
+     "role": "assistant",
+     "content": "È normale provare entrambe le cose: sollievo per il nuovo inizio e un po' di senso di colpa per chi resta. Hai fatto una scelta ponderata."
+    }
+   ]
+  },
+  {
+   "id": "s29",
+   "user": "tommaso",
+   "ts": "2028-03-15T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domanda da adulto: mi spieghi la differenza tra mutuo a tasso fisso e a tasso variabile? Con Marta parliamo di andare a vivere insieme, per ora in affitto, ma un giorno magari compriamo."
+    },
+    {
+     "role": "assistant",
+     "content": "Col tasso fisso la rata resta uguale per tutta la durata: paghi un po' di più all'inizio ma hai certezza. Col variabile la rata segue un indice di mercato (in area euro l'Euribor) più uno spread: può scendere o salire. Esistono anche formule miste o con tetto massimo. Il fisso conviene se i tassi sono bassi o se vuoi stabilità."
+    },
+    {
+     "role": "user",
+     "content": "Chiaro, grazie. Intanto Lorenzo Gatti mi ha mandato il contratto da firmare."
+    },
+    {
+     "role": "assistant",
+     "content": "Leggilo con calma, in particolare periodo di prova e mansioni."
+    }
+   ]
+  },
+  {
+   "id": "s30",
+   "user": "tommaso",
+   "ts": "2028-03-19T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera la festa dei 40 all'Osteria del Faro: eravamo in 34! È venuto anche Nicola da Pesaro. Il discorso l'ho fatto, due minuti, ho fatto ridere tutti con la storia della Punto."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Com'è andata a livello emotivo?"
+    },
+    {
+     "role": "user",
+     "content": "Mi sono commosso quando ho ringraziato mamma e papà. Stamattina testa pesante, oggi divano e basta."
+    },
+    {
+     "role": "assistant",
+     "content": "Una festa riuscita. Goditi il divano!"
+    }
+   ]
+  },
+  {
+   "id": "s31",
+   "user": "tommaso",
+   "ts": "2028-03-20T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi papà si è operato al ginocchio all'ospedale di Jesi, protesi totale. Tutto bene, il chirurgo è soddisfatto. Sono rimasto con lui fino a sera."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sollievo! Quanto dovrà restare in ospedale?"
+    },
+    {
+     "role": "user",
+     "content": "Quattro o cinque giorni, poi riabilitazione. Ah, una correzione: ho ritrovato la fattura del dentista, erano 320 euro, non 280: c'era anche la radiografia. E il concessionario mi ha valutato la Punto 500 euro, almeno qualcosa ci ho preso."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: la devitalizzazione è costata 320 euro. Auguri a tuo padre per la riabilitazione."
+    }
+   ]
+  },
+  {
+   "id": "s32",
+   "user": "tommaso",
+   "ts": "2028-03-23T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Ragazzi, domenica uscita? Io ci sono, partenza 8:30 dal Passetto."
+    },
+    {
+     "role": "other",
+     "author": "Walter",
+     "content": "Io ci sono! Il nostro Tommaso domenica scorsa ha fatto la salita del Conero in 19 minuti, record del gruppo, ora non lo teniamo più!"
+    },
+    {
+     "role": "other",
+     "author": "Ilaria",
+     "content": "Io domenica non ci sono, ho la mezza di Senigallia."
+    },
+    {
+     "role": "user",
+     "content": "Domenica io vado a Senigallia a fare il tifo per Ilaria!"
+    },
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Allora vi faccio vedere la mia novità: ho preso la gravel, una Bianchi color celeste. Domenica la battezzo."
+    },
+    {
+     "role": "other",
+     "author": "Ilaria",
+     "content": "Grazie Tommaso, ci conto!"
+    }
+   ]
+  },
+  {
+   "id": "s33",
+   "user": "tommaso",
+   "ts": "2028-03-25T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina ho portato Zenzero dal veterinario per il primo vaccino. Tutto a posto, sano come un pesce. E Mirtillo ormai dorme vicino a lui."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene il vaccino! E che svolta Mirtillo."
+    },
+    {
+     "role": "user",
+     "content": "Ricordami che a fine aprile c'è il richiamo."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: richiamo del vaccino di Zenzero a fine aprile."
+    }
+   ]
+  },
+  {
+   "id": "s34",
+   "user": "tommaso",
+   "ts": "2028-03-26T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giornata strana, col cambio dell'ora ho dormito un'ora in meno. Alla fine niente Senigallia: Ilaria si è ritirata dalla mezza per un'infiammazione al tendine. Così sono andato in bici con Stefano: Portonovo, 45 km, lui con la gravel nuova."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato per Ilaria, auguri per il tendine. Bel giro però!"
+    },
+    {
+     "role": "user",
+     "content": "E ho prenotato una cosa: Lisbona con Marta, da sabato 22 a martedì 25 aprile, voli da Bologna e hotel in Alfama. E te lo dico in segreto: lì le chiedo di sposarmi. L'anello ce l'ho già."
+    },
+    {
+     "role": "assistant",
+     "content": "Che emozione! Segreto custodito. Lisbona dal 22 al 25 aprile."
+    }
+   ]
+  },
+  {
+   "id": "s35",
+   "user": "tommaso",
+   "ts": "2028-03-30T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "English time. Nicola asked me to go to a concert in Bologna on Saturday 8 April, an indie band he loves. I haven't bought the tickets yet, I might go."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds fun. Would you drive there and back the same night?"
+    },
+    {
+     "role": "user",
+     "content": "Probably, it's two and a half hours. We'll see. Also the photography course is getting better, tonight we did night photos at the harbour."
+    },
+    {
+     "role": "assistant",
+     "content": "Night shots at the harbour must be beautiful with the lights on the water."
+    }
+   ]
+  },
+  {
+   "id": "s36",
+   "user": "tommaso",
+   "ts": "2028-04-01T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Help me plan Lisbon! Three full days. What should we absolutely see?"
+    },
+    {
+     "role": "assistant",
+     "content": "Day 1: Alfama, the castle and the Graça viewpoints at sunset. Day 2: Belém - the monastery, the tower, pastéis de nata. Day 3: Chiado, Bairro Alto, and a ride on tram 28 early in the morning. If you have energy, a half-day trip to Sintra."
+    },
+    {
+     "role": "user",
+     "content": "I need a beautiful viewpoint for a special moment, if you know what I mean."
+    },
+    {
+     "role": "assistant",
+     "content": "The Miradouro da Senhora do Monte is one of the highest and calmest, perfect at sunset."
+    }
+   ]
+  },
+  {
+   "id": "s37",
+   "user": "tommaso",
+   "ts": "2028-04-03T20:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Settimana di passaggio di consegne in agenzia, sto preparando tutto per Gianni che prende il mio posto. Ah, ti correggo una cosa: il mio futuro capo si chiama Lorenzo Galli, non Gatti. Ho riletto il contratto, avevo letto male la firma della mail."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: Lorenzo Galli, direttore operations della Valmusone."
+    },
+    {
+     "role": "user",
+     "content": "E Pilar organizza una cena di classe venerdì 7 aprile in una tapería, ci vado."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella idea, buona cena di classe!"
+    }
+   ]
+  },
+  {
+   "id": "s38",
+   "user": "tommaso",
+   "ts": "2028-04-06T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi spieghi come funziona CERCA.VERT su Excel? Devo collegare il file delle spedizioni con quello dei clienti per il passaggio di consegne."
+    },
+    {
+     "role": "assistant",
+     "content": "=CERCA.VERT(valore; tabella; indice_colonna; FALSO): cerca il valore nella prima colonna della tabella e restituisce la colonna indicata della stessa riga. FALSO impone la corrispondenza esatta. Esempio: =CERCA.VERT(A2; Clienti!A:D; 3; FALSO). Se hai Excel recente, CERCA.X è più flessibile."
+    },
+    {
+     "role": "user",
+     "content": "Funziona! Altra notizia: la cena di spagnolo di domani salta, Pilar ha l'influenza. La rimanda a dopo l'estate."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato per la cena. Bene CERCA.VERT!"
+    }
+   ]
+  },
+  {
+   "id": "s39",
+   "user": "tommaso",
+   "ts": "2028-04-09T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giro lungo con Stefano oggi: fino a Numana e ritorno, 60 km. Sono distrutto ma felice."
+    },
+    {
+     "role": "assistant",
+     "content": "60 km, il tuo giro più lungo dell'anno finora!"
+    },
+    {
+     "role": "user",
+     "content": "Sì. Domenica prossima è Pasqua: pranzo dai miei a Jesi, papà cammina con le stampelle ma vuole cucinare lui l'agnello. Francesca non viene, è troppo avanti con la gravidanza."
+    },
+    {
+     "role": "assistant",
+     "content": "Bel pranzo di famiglia in vista. Che tuo padre non esageri!"
+    }
+   ]
+  },
+  {
+   "id": "s40",
+   "user": "tommaso",
+   "ts": "2028-04-12T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Con Marta abbiamo trovato casa! A Osimo, terzo piano, due camere e un terrazzo, 780 euro al mese di affitto. Firmiamo il contratto martedì 18 aprile e il trasloco è fissato per sabato 13 maggio."
+    },
+    {
+     "role": "assistant",
+     "content": "Che notizia! Osimo poi è comodissimo per il nuovo lavoro."
+    },
+    {
+     "role": "user",
+     "content": "Esatto, dieci minuti dalla Valmusone. Altra cosa: giovedì 20 aprile ultima lezione di fotografia con una piccola mostra dei nostri scatti."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno tutto: contratto martedì 18, trasloco sabato 13 maggio, mostra del corso giovedì 20 aprile."
+    }
+   ]
+  },
+  {
+   "id": "s41",
+   "user": "tommaso",
+   "ts": "2028-04-14T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sveglia alle 5:30 per fotografare il porto all'alba, la foto per la mostra. Ne ho una con un traghetto che esce e il cielo arancione, credo sia quella giusta."
+    },
+    {
+     "role": "assistant",
+     "content": "Sembra uno scatto bellissimo. Ugo l'ha vista?"
+    },
+    {
+     "role": "user",
+     "content": "Gliela mostro giovedì. Mi ha già detto che ho occhio per le composizioni, detto da lui vale doppio."
+    },
+    {
+     "role": "assistant",
+     "content": "Un bel complimento!"
+    }
+   ]
+  },
+  {
+   "id": "s42",
+   "user": "tommaso",
+   "ts": "2028-04-17T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pasquetta! Ieri pranzo di Pasqua a Jesi dai miei: papà con le stampelle ha cucinato davvero, l'agnello era perfetto. Oggi picnic con Marta al Monte Conero."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bei giorni di festa! Tuo padre è un leone."
+    },
+    {
+     "role": "user",
+     "content": "Domani firmiamo il contratto della casa. Agitato!"
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo per la firma!"
+    }
+   ]
+  },
+  {
+   "id": "s43",
+   "user": "tommaso",
+   "ts": "2028-04-19T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "other",
+     "author": "Gianni",
+     "content": "Cena di saluto per Tommaso giovedì 27 aprile, chi c'è?"
+    },
+    {
+     "role": "other",
+     "author": "Sara",
+     "content": "Io ci sono! E già che ci siamo vi do una notizia: da metà maggio vado in maternità, aspetto un maschietto."
+    },
+    {
+     "role": "other",
+     "author": "Gianni",
+     "content": "Auguri Sara!! E tu Tommaso, che vai dalla concorrenza a prendere il doppio dello stipendio, offri tu!"
+    },
+    {
+     "role": "user",
+     "content": "Auguri Sara, bellissima notizia! Giovedì 27 ci sono, prenoto io da Mario?"
+    },
+    {
+     "role": "other",
+     "author": "Gianni",
+     "content": "Perfetto, da Mario alle 20."
+    }
+   ]
+  },
+  {
+   "id": "s44",
+   "user": "tommaso",
+   "ts": "2028-04-25T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "We're back from Lisbon! And... I proposed to Marta on Sunday 23 April at sunset at the Miradouro da Senhora do Monte. She said YES! She cried, I cried, a group of tourists clapped."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations to you both!! What a moment. How was the rest of the trip?"
+    },
+    {
+     "role": "user",
+     "content": "Amazing. Pastéis de nata in Belém every day, Alfama at night. The hills are exhausting though, my legs are destroyed. Bad ending: the airline lost Marta's suitcase on the way back. How do I write a complaint email to them?"
+    },
+    {
+     "role": "assistant",
+     "content": "Keep it factual: subject with the file reference (PIR number) from the airport desk; flight number and date; description of the bag and contents; what you ask for (delivery to your address, reimbursement of essential purchases with receipts); deadline for a reply. Attach the boarding passes and the bag tag. Under the Montreal Convention you have 21 days from delivery to claim for delay."
+    }
+   ]
+  },
+  {
+   "id": "s45",
+   "user": "tommaso",
+   "ts": "2028-04-28T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ultimo giorno all'Adriatica. Ieri sera cena di saluto da Mario con i colleghi: mi hanno regalato una foto incorniciata del porto. Ho un groppo in gola."
+    },
+    {
+     "role": "assistant",
+     "content": "Nove anni si sentono. Ti stanno salutando con affetto."
+    },
+    {
+     "role": "user",
+     "content": "Sì. Ah, la valigia di Marta è arrivata mercoledì a casa sua, intatta. E giovedì 20, alla mostra del corso, la mia foto del porto all'alba è piaciuta a tutti, Ugo l'ha messa all'ingresso."
+    },
+    {
+     "role": "assistant",
+     "content": "Due belle notizie: valigia ritrovata e foto all'ingresso della mostra!"
+    }
+   ]
+  },
+  {
+   "id": "s46",
+   "user": "tommaso",
+   "ts": "2028-05-02T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Primo giorno alla Valmusone! Lorenzo Galli mi ha fatto fare il giro dello stabilimento, sono circa 200 persone. Mi hanno dato un portatile e una montagna di procedure."
+    },
+    {
+     "role": "assistant",
+     "content": "Com'è stata la sensazione?"
+    },
+    {
+     "role": "user",
+     "content": "Sopraffatto ma entusiasta. Domenica, prima di iniziare, sono andato in bici con Stefano fino a Osimo per far vedere a lui la casa nuova da fuori, 38 km andata e ritorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Bel modo di chiudere aprile. In bocca al lupo per le prime settimane!"
+    }
+   ]
+  },
+  {
+   "id": "s47",
+   "user": "tommaso",
+   "ts": "2028-05-05T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "First week at Valmusone done. They use SAP, which I knew a bit, and the canteen is surprisingly good. Galli gives you a lot of freedom, the opposite of Ferretti."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like a healthy change. Anything difficult?"
+    },
+    {
+     "role": "user",
+     "content": "The amount of names to remember. And bad news on the move: the moving company has no van on 13 May, so we moved everything to Saturday 20 May."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: the move is now Saturday 20 May."
+    }
+   ]
+  },
+  {
+   "id": "s48",
+   "user": "tommaso",
+   "ts": "2028-05-09T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera a spagnolo Pilar ci ha fatto raccontare un viaggio e io ho raccontato Lisbona, in spagnolo! Ah, e una correzione sugli esami di febbraio: il colesterolo LDL non era 168, era 186. Ho riguardato il referto, avevo invertito le cifre."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: LDL di febbraio 186. Il ricontrollo resta a giugno?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, giugno. Nel frattempo meno formaggi, sob."
+    },
+    {
+     "role": "assistant",
+     "content": "Un sacrificio per una buona causa!"
+    }
+   ]
+  },
+  {
+   "id": "s49",
+   "user": "tommaso",
+   "ts": "2028-05-10T23:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono di nuovo zio! Oggi pomeriggio a Bologna è nata Bianca, la bambina di Francesca: 3,2 chili, stanno benissimo tutte e due."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulazioni zio Tommaso! Benvenuta Bianca."
+    },
+    {
+     "role": "user",
+     "content": "Leo, che ha 8 anni, ha chiesto se può già giocarci a calcio."
+    },
+    {
+     "role": "assistant",
+     "content": "Fratello maggiore entusiasta!"
+    }
+   ]
+  },
+  {
+   "id": "s50",
+   "user": "tommaso",
+   "ts": "2028-05-14T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi siamo andati a Bologna con Marta a conoscere Bianca, con la Yaris, due ore e mezza filate. È minuscola e ha i capelli neri. Leo un po' geloso."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella giornata! La gelosia dei fratelli maggiori di solito passa presto."
+    },
+    {
+     "role": "user",
+     "content": "Francesca era stanca ma felice. Paolo, mio cognato, ha già le occhiaie."
+    },
+    {
+     "role": "assistant",
+     "content": "Benvenuti nei primi mesi!"
+    }
+   ]
+  },
+  {
+   "id": "s51",
+   "user": "tommaso",
+   "ts": "2028-05-16T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho lasciato il corso di spagnolo. Tra lavoro nuovo e trasloco non ci sto dietro; l'ultima lezione che ho fatto è stata martedì scorso, il 9. Mi dispiace per Pilar."
+    },
+    {
+     "role": "assistant",
+     "content": "Una scelta comprensibile. Magari lo riprendi in autunno."
+    },
+    {
+     "role": "user",
+     "content": "Forse. Intanto casa mia è un mare di scatoloni."
+    },
+    {
+     "role": "assistant",
+     "content": "Il periodo pre-trasloco è il peggiore, poi passa."
+    }
+   ]
+  },
+  {
+   "id": "s52",
+   "user": "tommaso",
+   "ts": "2028-05-18T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Al lavoro mi hanno dato il primo progetto vero: riorganizzare il magazzino ricambi. Galli oggi in riunione ha detto che ho portato metodo. Mi ha fatto piacere."
+    },
+    {
+     "role": "assistant",
+     "content": "Un ottimo riconoscimento dopo poche settimane."
+    },
+    {
+     "role": "user",
+     "content": "Domani lavoro da casa, il venerdì qui si fa smart working. Così finisco di impacchettare."
+    },
+    {
+     "role": "assistant",
+     "content": "Comodo, con il trasloco di sabato."
+    }
+   ]
+  },
+  {
+   "id": "s53",
+   "user": "tommaso",
+   "ts": "2028-05-20T22:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatto il trasloco! Da oggi vivo a Osimo con Marta. Ci hanno aiutato Stefano e Nicola. In casa ora siamo in cinque: io, Marta, Mirtillo, Zenzero e Bricco, il beagle di Marta, 4 anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Benvenuti nella nuova casa! Come stanno gli animali?"
+    },
+    {
+     "role": "user",
+     "content": "Bricco è curiosissimo, i gatti lo guardano dall'alto della libreria. Io sono distrutto."
+    },
+    {
+     "role": "assistant",
+     "content": "Riposa, ve lo siete meritato."
+    }
+   ]
+  },
+  {
+   "id": "s54",
+   "user": "tommaso",
+   "ts": "2028-05-22T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "English: settling in Osimo. Now I drive ten minutes to work instead of forty. I miss the sea view from the old flat, though."
+    },
+    {
+     "role": "assistant",
+     "content": "Ten minutes is a big upgrade in quality of life. When do you hand back the keys in Ancona?"
+    },
+    {
+     "role": "user",
+     "content": "On 31 May. Meanwhile Bricco chases Zenzero around the living room, Mirtillo watches like a referee."
+    },
+    {
+     "role": "assistant",
+     "content": "A full house!"
+    }
+   ]
+  },
+  {
+   "id": "s55",
+   "user": "tommaso",
+   "ts": "2028-05-25T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il mal di schiena è tornato, colpa degli scatoloni. Ho chiamato Roberto, seduta martedì 30 maggio."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene che tu abbia chiamato subito. Riposo e niente pesi fino a martedì."
+    },
+    {
+     "role": "user",
+     "content": "Poi giovedì 1 giugno forse ceniamo con gli ex colleghi del porto, Gianni sta organizzando."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato come possibile: cena con gli ex colleghi giovedì 1 giugno."
+    }
+   ]
+  },
+  {
+   "id": "s56",
+   "user": "tommaso",
+   "ts": "2028-05-26T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bricco ate one of my socks this afternoon! We rushed to the vet in Osimo. Luckily he threw it up, no surgery needed."
+    },
+    {
+     "role": "assistant",
+     "content": "What a scare! Glad he's fine. Beagles eat everything."
+    },
+    {
+     "role": "user",
+     "content": "Marta says it's a sign he loves me. I say it's a sign I need a laundry basket with a lid."
+    },
+    {
+     "role": "assistant",
+     "content": "Both can be true!"
+    }
+   ]
+  },
+  {
+   "id": "s57",
+   "user": "tommaso",
+   "ts": "2028-05-28T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi niente bici: la schiena non me lo permetteva. Stefano è andato con Walter fino a Loreto. Un po' di invidia."
+    },
+    {
+     "role": "assistant",
+     "content": "Meglio fermarsi ora che peggiorare. Martedì Roberto ti rimette in sesto."
+    },
+    {
+     "role": "user",
+     "content": "Speriamo. Marta intanto ha finito la scuola per quest'anno, è felicissima."
+    },
+    {
+     "role": "assistant",
+     "content": "Meritate vacanze per lei!"
+    }
+   ]
+  },
+  {
+   "id": "s58",
+   "user": "tommaso",
+   "ts": "2028-05-31T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri fisio con Roberto, già meglio. Oggi ho riconsegnato le chiavi del bilocale di Ancona al proprietario, un po' di malinconia."
+    },
+    {
+     "role": "assistant",
+     "content": "Fine di un capitolo. Come va la schiena?"
+    },
+    {
+     "role": "user",
+     "content": "Meglio. Stasera saluto Nicola dai miei: domani parte per Rotterdam."
+    },
+    {
+     "role": "assistant",
+     "content": "Un abbraccio a Nicola e buon viaggio!"
+    }
+   ]
+  },
+  {
+   "id": "s59",
+   "user": "tommaso",
+   "ts": "2028-06-03T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Nicola landed in Rotterdam on Thursday, he says it rains every day but he loves his new office. My mum calls him three times a day."
+    },
+    {
+     "role": "assistant",
+     "content": "Classic! Good start for him. How about you two?"
+    },
+    {
+     "role": "user",
+     "content": "We're organising a housewarming party for Saturday 17 June, friends and family. And no, before you ask, we haven't set a wedding date yet. Maybe 2029."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: housewarming planned for Saturday 17 June, wedding date not set yet."
+    }
+   ]
+  },
+  {
+   "id": "s60",
+   "user": "tommaso",
+   "ts": "2028-06-05T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prima cena a casa nuova con ospiti: i miei genitori. Papà è salito al terzo piano senza stampelle, a due mesi e mezzo dall'operazione."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel traguardo per tuo padre!"
+    },
+    {
+     "role": "user",
+     "content": "Mamma ha portato i vincisgrassi e Bricco ha cercato di rubarli dal tavolo."
+    },
+    {
+     "role": "assistant",
+     "content": "Bricco non si smentisce!"
+    }
+   ]
+  },
+  {
+   "id": "s61",
+   "user": "tommaso",
+   "ts": "2028-06-07T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ricontrollo del colesterolo: LDL 142. Il medico è soddisfatto, dice di continuare così."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo miglioramento! Da 186 a 142."
+    },
+    {
+     "role": "user",
+     "content": "Vuol dire che qualche formaggio me lo posso concedere?"
+    },
+    {
+     "role": "assistant",
+     "content": "Con moderazione, sì!"
+    }
+   ]
+  },
+  {
+   "id": "s62",
+   "user": "tommaso",
+   "ts": "2028-06-09T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Venerdì di smart working, settimana tosta: chiusura inventario del magazzino ricambi. Stasera pizza sul terrazzo con Marta."
+    },
+    {
+     "role": "assistant",
+     "content": "Te la sei meritata. Come va con il nuovo lavoro dopo cinque settimane?"
+    },
+    {
+     "role": "user",
+     "content": "Bene, davvero. Ogni tanto penso al porto, ma non tornerei indietro. Con Marta stiamo pensando di usare il buono della mongolfiera, forse a settembre."
+    },
+    {
+     "role": "assistant",
+     "content": "Una bella idea per fine estate."
+    }
+   ]
+  }
+ ]
+}

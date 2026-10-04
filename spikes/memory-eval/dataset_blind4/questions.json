@@ -1,0 +1,850 @@
+{
+ "_note": "Blind set #4. Questions asked as user 'tommaso' at asked_at (systems ingest only sessions up to asked_at). expected = reference answer; must_not = claims that must not be asserted as true. ",
+ "user": "tommaso",
+ "questions": [
+  {
+   "id": "c01",
+   "category": "point-temporal",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando ho dato le dimissioni all'Adriatica?",
+   "expected": "Lunedì 13 marzo 2028, a Ferretti; preavviso fino a venerdì 28 aprile (ultimo giorno).",
+   "must_not": [
+    "dimissioni il 10 marzo (è il giorno dell'offerta)",
+    "dimissioni il 28 aprile"
+   ]
+  },
+  {
+   "id": "c02",
+   "category": "point-temporal",
+   "asked_at": "2028-04-10T09:00:00+02:00",
+   "q": "When did I have the job interview at Valmusone?",
+   "expected": "Wednesday 1 March 2028, in the morning (10:30) in Osimo, with HR and the operations director (his future boss).",
+   "must_not": [
+    "22 February (the day he was called)",
+    "10 March (the day of the offer)"
+   ]
+  },
+  {
+   "id": "c03",
+   "category": "point-temporal",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando ho fatto l'igiene dentale?",
+   "expected": "Martedì 18 gennaio 2028, dal dottor Mancini (in quell'occasione è stata trovata la carie da devitalizzare).",
+   "must_not": [
+    "8 marzo (è la devitalizzazione)",
+    "febbraio"
+   ]
+  },
+  {
+   "id": "c04",
+   "category": "point-temporal",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "In che giorno è nata mia nipote Bianca?",
+   "expected": "Mercoledì 10 maggio 2028, nel pomeriggio, a Bologna (figlia di Francesca).",
+   "must_not": [
+    "14 maggio (è il giorno della visita)",
+    "metà maggio senza data"
+   ]
+  },
+  {
+   "id": "c05",
+   "category": "last-time",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando sono andato in bici l'ultima volta?",
+   "expected": "Domenica 30 aprile 2028, con Stefano fino a Osimo (38 km andata e ritorno). Domenica 28 maggio non è uscito per il mal di schiena.",
+   "must_not": [
+    "28 maggio",
+    "Loreto (ci è andato Stefano con Walter)"
+   ]
+  },
+  {
+   "id": "c06",
+   "category": "last-time",
+   "asked_at": "2028-04-20T09:00:00+02:00",
+   "q": "When was the last time I went to the dentist?",
+   "expected": "Wednesday 8 March 2028, for the root canal at Dr Mancini's (after two postponements).",
+   "must_not": [
+    "24 February",
+    "15 February"
+   ]
+  },
+  {
+   "id": "c07",
+   "category": "last-time",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quand'è l'ultima volta che sono stato a Bologna?",
+   "expected": "Domenica 14 maggio 2028, con Marta, per conoscere la nipote Bianca (in auto, con la Yaris).",
+   "must_not": [
+    "concerto dell'8 aprile come avvenuto"
+   ]
+  },
+  {
+   "id": "c08",
+   "category": "this-week",
+   "asked_at": "2028-03-03T18:00:00+01:00",
+   "q": "Cosa ho fatto di importante questa settimana?",
+   "expected": "Mercoledì 1 marzo il colloquio alla Valmusone a Osimo; giovedì 2 marzo la prima lezione del corso di fotografia (comprata una Fujifilm X-T30 usata).",
+   "must_not": [
+    "adozione di Zenzero (avviene sabato 4 marzo)",
+    "giro in bici a Sirolo (domenica 27 febbraio, settimana precedente)",
+    "offerta di lavoro ricevuta"
+   ]
+  },
+  {
+   "id": "c09",
+   "category": "this-week",
+   "asked_at": "2028-05-12T19:00:00+02:00",
+   "q": "What happened this week?",
+   "expected": "Tuesday 9 May: Spanish lesson where he told the class about Lisbon in Spanish (and he corrected his February LDL value to 186); Wednesday 10 May: his niece Bianca was born in Bologna.",
+   "must_not": [
+    "the visit to Bologna (Sunday 14 May)",
+    "the move to Osimo",
+    "first day at Valmusone (2 May, previous week)"
+   ]
+  },
+  {
+   "id": "c10",
+   "category": "this-week",
+   "asked_at": "2028-03-22T20:00:00+01:00",
+   "q": "Cosa è successo questa settimana?",
+   "expected": "Lunedì 20 marzo il padre è stato operato al ginocchio (protesi totale) all'ospedale di Jesi, tutto bene; Tommaso è rimasto con lui fino a sera. Lo stesso giorno ha corretto il costo del dentista (320 €).",
+   "must_not": [
+    "la festa dei 40 anni (sabato 18 marzo, settimana precedente)"
+   ]
+  },
+  {
+   "id": "c11",
+   "category": "last-week",
+   "asked_at": "2028-02-21T09:00:00+01:00",
+   "q": "Cosa ho fatto la settimana scorsa?",
+   "expected": "Lunedì 14 febbraio cena di San Valentino con Marta alla Lanterna (e il dentista spostato al 24); martedì 15 terza seduta di fisioterapia; mercoledì 16 ha mandato il CV alla Valmusone; venerdì 18 cena da Ilaria; domenica 20 notizie nella chat di famiglia (Nicola assunto a Rotterdam, Francesca aspetta una femmina).",
+   "must_not": [
+    "devitalizzazione fatta",
+    "colloquio fatto"
+   ]
+  },
+  {
+   "id": "c12",
+   "category": "last-week",
+   "asked_at": "2028-05-01T12:00:00+02:00",
+   "q": "What did I do last week?",
+   "expected": "End of the Lisbon trip: back on Tuesday 25 April (Marta's suitcase lost, delivered on Wednesday 26); farewell dinner with colleagues at Mario's on Thursday 27; last day at Adriatica on Friday 28.",
+   "must_not": [
+    "the proposal happened last week (it was Sunday 23 April, the week before)",
+    "started the new job"
+   ]
+  },
+  {
+   "id": "c13",
+   "category": "last-week",
+   "asked_at": "2028-05-29T09:00:00+02:00",
+   "q": "Com'è andata la settimana scorsa?",
+   "expected": "Primi giorni nella casa di Osimo (ora 10 minuti dal lavoro); giovedì 25 è tornato il mal di schiena per gli scatoloni e ha prenotato fisioterapia per martedì 30; venerdì 26 Bricco ha mangiato un calzino, corsa dal veterinario, nessun intervento; domenica 28 niente bici per la schiena.",
+   "must_not": [
+    "il trasloco è stato la settimana scorsa (era sabato 20 maggio)",
+    "è uscito in bici domenica"
+   ]
+  },
+  {
+   "id": "c14",
+   "category": "period-overview",
+   "asked_at": "2028-04-01T09:00:00+02:00",
+   "q": "Riassumimi il mio marzo.",
+   "expected": "Eventi principali: 1 colloquio in Valmusone a Osimo; 4 adottato il gattino Zenzero; 8 devitalizzazione; 9 compie 40 anni (buono per la mongolfiera da Marta); 10 offerta di lavoro accettata (supply chain planner, +15%); 13 dimissioni; 18 festa dei 40 all'Osteria del Faro (34 persone, spostata dall'11); 20 operazione al ginocchio del padre a Jesi; 26 prenotazione di Lisbona (22-25 aprile). Dettagli secondari (non indispensabili): 2 inizio corso di fotografia; inizia a guidare la Yaris; 25 primo vaccino di Zenzero; 26 giro a Portonovo con Stefano; 20 corretto il costo del dentista a 320 euro.",
+   "must_not": [
+    "festa l'11 marzo",
+    "giro in bici il 19 marzo",
+    "record sul Conero"
+   ]
+  },
+  {
+   "id": "c15",
+   "category": "period-overview",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Give me an overview of my job change, from start to finish.",
+   "expected": "Mid-January he felt stuck at Adriatica (micromanaging boss Ferretti); 16 Feb CV to Officine Meccaniche Valmusone; 22 Feb called for interview; 1 Mar interview; 10 Mar offer (supply chain planner, +15%); 13 Mar resignation; 27 Apr farewell dinner and 28 Apr last day; 2 May start at Valmusone in Osimo with boss Lorenzo Galli; 18 May first project (spare-parts warehouse), praised by Galli.",
+   "must_not": [
+    "salary doubled",
+    "boss named Gatti"
+   ]
+  },
+  {
+   "id": "c16",
+   "category": "period-overview",
+   "asked_at": "2028-03-01T20:00:00+01:00",
+   "q": "How did February go for me?",
+   "expected": "Ski weekend cancelled (Stefano's flu, 3 Feb); four physio sessions (3, 8, 15, 22 Feb); blood test with LDL 168 (as told then); Yaris test drive (12 Feb); Valentine's dinner at La Lanterna; root canal postponed twice (15 -> 24 Feb -> 8 Mar); CV sent to Valmusone (16 Feb) and interview call (22 Feb); Punto failed its inspection (24 Feb); family news on 20 Feb; ride to Sirolo (27 Feb).",
+   "must_not": [
+    "went skiing",
+    "root canal done in February"
+   ]
+  },
+  {
+   "id": "c17",
+   "category": "state-now",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Dove abito adesso e con chi?",
+   "expected": "A Osimo, in un appartamento in affitto (terzo piano, due camere, terrazzo, 780 €/mese) con Marta, dal 20 maggio, insieme ai gatti Mirtillo e Zenzero e al beagle Bricco.",
+   "must_not": [
+    "Ancona",
+    "casa di proprietà"
+   ]
+  },
+  {
+   "id": "c18",
+   "category": "state-now",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Che corsi sto frequentando in questo momento?",
+   "expected": "Nessuno: ha lasciato spagnolo (ultima lezione martedì 9 maggio) e il corso di fotografia è finito il 20 aprile.",
+   "must_not": [
+    "spagnolo in corso",
+    "fotografia in corso"
+   ]
+  },
+  {
+   "id": "c19",
+   "category": "state-now",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Where do I work now and what's my role?",
+   "expected": "At Officine Meccaniche Valmusone in Osimo, as supply chain planner, since 2 May 2028; his boss is Lorenzo Galli.",
+   "must_not": [
+    "Adriatica Shipping Services"
+   ]
+  },
+  {
+   "id": "c20",
+   "category": "state-now",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Qual è la mia situazione sentimentale?",
+   "expected": "Fidanzato con Marta (proposta accettata il 23 aprile a Lisbona), convivono a Osimo dal 20 maggio; nessuna data di matrimonio fissata (forse 2029).",
+   "must_not": [
+    "matrimonio a settembre"
+   ]
+  },
+  {
+   "id": "c21",
+   "category": "state-at-date",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Dove lavoravo il 20 aprile?",
+   "expected": "Ancora all'Adriatica Shipping Services (in preavviso dopo le dimissioni; ultimo giorno 28 aprile), anche se era già stato assunto dalla Valmusone.",
+   "must_not": [
+    "alla Valmusone"
+   ]
+  },
+  {
+   "id": "c22",
+   "category": "state-at-date",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Which pets did I have at the end of February?",
+   "expected": "Only Mirtillo, his cat (Zenzero was adopted on 4 March, Bricco arrived with Marta on 20 May).",
+   "must_not": [
+    "Zenzero",
+    "Bricco"
+   ]
+  },
+  {
+   "id": "c23",
+   "category": "state-at-date",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Che corsi seguivo a fine marzo?",
+   "expected": "Due: spagnolo (martedì sera, con Pilar) e fotografia (giovedì sera, con Ugo).",
+   "must_not": [
+    "solo spagnolo",
+    "nessun corso"
+   ]
+  },
+  {
+   "id": "c24",
+   "category": "state-change-date",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando mi sono trasferito a Osimo?",
+   "expected": "Sabato 20 maggio 2028 (inizialmente previsto per il 13 maggio, spostato perché la ditta non aveva il furgone).",
+   "must_not": [
+    "13 maggio"
+   ]
+  },
+  {
+   "id": "c25",
+   "category": "state-change-date",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Da quando sono fidanzato ufficialmente con Marta?",
+   "expected": "Da domenica 23 aprile 2028: proposta al tramonto al Miradouro da Senhora do Monte, a Lisbona.",
+   "must_not": [
+    "22 aprile",
+    "settembre"
+   ]
+  },
+  {
+   "id": "c26",
+   "category": "state-change-date",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando ho smesso con lo spagnolo?",
+   "expected": "A metà maggio 2028: l'ultima lezione frequentata è stata martedì 9 maggio e il 16 maggio ha detto di aver lasciato il corso (lavoro nuovo e trasloco). Vanno bene sia il 9 sia il 16 maggio come data.",
+   "must_not": [
+    "ha finito/completato il corso"
+   ]
+  },
+  {
+   "id": "c27",
+   "category": "plan-confirmed",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Alla fine il pranzo di Pasqua dai miei l'abbiamo fatto?",
+   "expected": "Sì, domenica 16 aprile a Jesi: il padre, con le stampelle, ha cucinato l'agnello; Francesca non c'era per la gravidanza.",
+   "must_not": [
+    "Francesca presente"
+   ]
+  },
+  {
+   "id": "c28",
+   "category": "plan-confirmed",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Did the farewell dinner with my colleagues actually happen?",
+   "expected": "Yes, on Thursday 27 April at Mario's; they gave him a framed photo of the port.",
+   "must_not": []
+  },
+  {
+   "id": "c29",
+   "category": "plan-confirmed",
+   "asked_at": "2028-04-30T10:00:00+02:00",
+   "q": "Sono poi andato a Lisbona?",
+   "expected": "Sì, con Marta dal 22 al 25 aprile; le ha chiesto di sposarla domenica 23 e lei ha detto sì.",
+   "must_not": []
+  },
+  {
+   "id": "c30",
+   "category": "plan-cancelled",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Cosa è successo al weekend in Val di Fassa con Stefano?",
+   "expected": "Annullato (lo dice il 3 febbraio) perché Stefano aveva l'influenza; il B&B di Canazei ha rimborsato metà; non è stato riprogrammato.",
+   "must_not": [
+    "sono andati a sciare"
+   ]
+  },
+  {
+   "id": "c31",
+   "category": "plan-cancelled",
+   "asked_at": "2028-04-10T09:00:00+02:00",
+   "q": "Sono andato a Senigallia a fare il tifo per Ilaria alla mezza maratona?",
+   "expected": "No: Ilaria si è ritirata per un'infiammazione al tendine, e domenica 26 marzo lui è andato in bici con Stefano a Portonovo.",
+   "must_not": [
+    "sì, è andato a Senigallia"
+   ]
+  },
+  {
+   "id": "c32",
+   "category": "plan-cancelled",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Did I go to the Spanish class dinner Pilar organised?",
+   "expected": "No: the dinner planned for Friday 7 April was cancelled because Pilar had the flu; postponed to after the summer.",
+   "must_not": [
+    "yes, he went"
+   ]
+  },
+  {
+   "id": "c33",
+   "category": "plan-rescheduled",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quante volte è stata spostata la devitalizzazione e con quali date?",
+   "expected": "Due volte: da martedì 15 febbraio a giovedì 24 febbraio (dottore malato), poi a mercoledì 8 marzo (riunito rotto); fatta l'8 marzo.",
+   "must_not": [
+    "una volta sola",
+    "fatta il 24 febbraio"
+   ]
+  },
+  {
+   "id": "c34",
+   "category": "plan-rescheduled",
+   "asked_at": "2028-03-12T10:00:00+01:00",
+   "q": "Quando è la mia festa dei 40 anni?",
+   "expected": "Sabato 18 marzo all'Osteria del Faro (Portonovo): spostata da sabato 11 marzo per i lavori del locale.",
+   "must_not": [
+    "11 marzo"
+   ]
+  },
+  {
+   "id": "c35",
+   "category": "plan-rescheduled",
+   "asked_at": "2028-05-08T09:00:00+02:00",
+   "q": "When is the move to Osimo?",
+   "expected": "Saturday 20 May (moved from 13 May because the moving company had no van).",
+   "must_not": [
+    "13 May"
+   ]
+  },
+  {
+   "id": "c36",
+   "category": "plan-rescheduled",
+   "asked_at": "2028-02-16T10:00:00+01:00",
+   "q": "Quando ho la devitalizzazione?",
+   "expected": "Giovedì 24 febbraio alle 17 dal dottor Mancini (spostata da martedì 15 perché il dottore era malato).",
+   "must_not": [
+    "15 febbraio",
+    "8 marzo"
+   ]
+  },
+  {
+   "id": "c37",
+   "category": "plan-unresolved",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Sono andato al concerto a Bologna con Nicola l'8 aprile?",
+   "expected": "Non lo so: il 30 marzo ne avevi parlato come un forse (biglietti non ancora comprati), poi non me ne hai più parlato.",
+   "must_not": [
+    "ci è andato",
+    "non ci è andato"
+   ]
+  },
+  {
+   "id": "c38",
+   "category": "plan-unresolved",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "How was the dinner with my ex-colleagues on 1 June?",
+   "expected": "I don't know if it happened: on 25 May it was only a 'maybe' that Gianni was organising, and you never mentioned it again.",
+   "must_not": [
+    "describing the dinner as happened",
+    "saying it was cancelled",
+    "presenting the farewell dinner of 27 April at Mario's as this dinner"
+   ]
+  },
+  {
+   "id": "c39",
+   "category": "plan-unresolved",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Zenzero ha fatto il richiamo del vaccino?",
+   "expected": "Non risulta: il 25 marzo avevi detto che il richiamo era a fine aprile, poi non ne hai più parlato.",
+   "must_not": [
+    "sì, fatto",
+    "no, saltato",
+    "presentare il primo vaccino del 25 marzo o la visita dal veterinario di Bricco del 26 maggio come il richiamo"
+   ]
+  },
+  {
+   "id": "c40",
+   "category": "plan-unresolved",
+   "asked_at": "2028-06-22T10:00:00+02:00",
+   "q": "Com'è andata la festa di inaugurazione della casa?",
+   "expected": "Non lo so: era prevista per sabato 17 giugno, ma non me ne hai più parlato.",
+   "must_not": [
+    "descrivere la festa come avvenuta",
+    "presentare la cena con i genitori del 5 giugno come la festa di inaugurazione"
+   ]
+  },
+  {
+   "id": "c41",
+   "category": "correction",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quanto ho speso per la devitalizzazione?",
+   "expected": "320 euro (radiografia inclusa): l'8 marzo aveva detto 280, poi il 20 marzo ha corretto guardando la fattura.",
+   "must_not": [
+    "280 euro come cifra finale"
+   ]
+  },
+  {
+   "id": "c42",
+   "category": "correction",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "What's my boss's name at Valmusone?",
+   "expected": "Lorenzo Galli (at first he said Gatti, corrected on 3 April after rereading the contract).",
+   "must_not": [
+    "Lorenzo Gatti"
+   ]
+  },
+  {
+   "id": "c43",
+   "category": "correction",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Che valore di colesterolo LDL avevo agli esami di febbraio?",
+   "expected": "186 mg/dl: all'inizio aveva detto 168, ma il 9 maggio ha corretto (cifre invertite). Al ricontrollo di giugno era 142.",
+   "must_not": [
+    "168 come valore vero"
+   ]
+  },
+  {
+   "id": "c44",
+   "category": "correction",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quanto ti avevo detto all'inizio di aver pagato il dentista, e quanto era davvero?",
+   "expected": "Avevi detto 280 euro (l'8 marzo, come da preventivo); in realtà erano 320, radiografia inclusa (correzione del 20 marzo).",
+   "must_not": [
+    "solo 280",
+    "solo 320 senza la cifra iniziale"
+   ]
+  },
+  {
+   "id": "c45",
+   "category": "implicit-change",
+   "asked_at": "2028-04-15T10:00:00+02:00",
+   "q": "Che macchina guido adesso?",
+   "expected": "Una Toyota Yaris ibrida: provata il 12 febbraio, il 7 marzo ha detto di essere andato a Senigallia 'con la Yaris' e il 20 marzo che il concessionario gli ha valutato la Punto 500 euro. La Punto non aveva passato la revisione (24 febbraio). Il cambio non è mai stato annunciato esplicitamente: va bene anche una risposta che lo presenta come deduzione ('a quanto pare / sembra la Yaris').",
+   "must_not": [
+    "Fiat Punto"
+   ]
+  },
+  {
+   "id": "c46",
+   "category": "implicit-change",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "What happened to my old Fiat Punto?",
+   "expected": "It failed its inspection on 24 February (brakes and emissions, repair not worth it); the dealer valued it 500 euro (said on 20 March), so it was presumably traded in when he switched to the Yaris - never said explicitly.",
+   "must_not": [
+    "he still drives it",
+    "sold to a private buyer"
+   ]
+  },
+  {
+   "id": "c47",
+   "category": "implicit-change",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quanto ci metto ad andare al lavoro adesso?",
+   "expected": "Circa 10 minuti in auto da Osimo (prima, da Ancona, ci metteva una quarantina di minuti).",
+   "must_not": [
+    "40 minuti come tempo attuale"
+   ]
+  },
+  {
+   "id": "c48",
+   "category": "count",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quante uscite in bici ho fatto da gennaio a oggi?",
+   "expected": "Cinque: 23 gennaio Portonovo (42 km), 27 febbraio Sirolo (55 km), 26 marzo Portonovo (45 km), 9 aprile Numana (60 km), 30 aprile Osimo (38 km), tutte con Stefano.",
+   "must_not": [
+    "contare il 19 marzo (affermazione di Walter)",
+    "contare il 28 maggio"
+   ]
+  },
+  {
+   "id": "c49",
+   "category": "count",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quante sedute di fisioterapia ho fatto a febbraio?",
+   "expected": "Quattro, con Roberto: 3, 8, 15 e 22 febbraio.",
+   "must_not": [
+    "contare la seduta del 30 maggio"
+   ]
+  },
+  {
+   "id": "c50",
+   "category": "count",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "How many animals live in my home now?",
+   "expected": "Three: the cats Mirtillo and Zenzero, and Marta's beagle Bricco.",
+   "must_not": [
+    "two"
+   ]
+  },
+  {
+   "id": "c51",
+   "category": "count",
+   "asked_at": "2028-04-01T09:00:00+02:00",
+   "q": "Quante volte sono uscito in bici a marzo?",
+   "expected": "Una: domenica 26 marzo a Portonovo con Stefano. Il 'record sul Conero' di domenica 19 marzo è solo un'affermazione di Walter nella chat, mai confermata.",
+   "must_not": [
+    "due volte"
+   ]
+  },
+  {
+   "id": "c52",
+   "category": "third-party",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Cosa fa adesso mio fratello Nicola?",
+   "expected": "Si è trasferito a Rotterdam per un lavoro a tempo indeterminato: partito il 1 giugno; dice che piove sempre ma gli piace il nuovo ufficio.",
+   "must_not": []
+  },
+  {
+   "id": "c53",
+   "category": "third-party",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Che novità ha dato Stefano nella chat del gruppo bici?",
+   "expected": "Si è comprato una gravel Bianchi color celeste (l'ha battezzata domenica 26 marzo).",
+   "must_not": [
+    "è Tommaso ad aver comprato la bici"
+   ]
+  },
+  {
+   "id": "c54",
+   "category": "third-party",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Perché Ilaria non ha corso la mezza maratona di Senigallia?",
+   "expected": "Si è ritirata per un'infiammazione al tendine.",
+   "must_not": []
+  },
+  {
+   "id": "c55",
+   "category": "emotion/opinion",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Come mi sono sentito quando ho dato le dimissioni?",
+   "expected": "Sollevato e allo stesso tempo in colpa: nove anni non sono pochi e i colleghi gli sarebbero mancati; Ferretti l'ha presa con freddezza.",
+   "must_not": []
+  },
+  {
+   "id": "c56",
+   "category": "emotion/opinion",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "What did I think of Lisbon?",
+   "expected": "He loved it (pastéis de nata in Belém every day, Alfama at night) but found the hills exhausting; bad ending with Marta's lost suitcase.",
+   "must_not": []
+  },
+  {
+   "id": "c57",
+   "category": "emotion/opinion",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Che opinione avevo di Ugo, l'insegnante di fotografia?",
+   "expected": "All'inizio lo trovava troppo tecnico (mezz'ora sugli istogrammi); poi ha apprezzato il suo complimento sulle composizioni ('detto da lui vale doppio'), e Ugo ha messo la sua foto all'ingresso della mostra.",
+   "must_not": []
+  },
+  {
+   "id": "c58",
+   "category": "small-detail",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Da dove viene Pilar?",
+   "expected": "Da Valencia.",
+   "must_not": []
+  },
+  {
+   "id": "c59",
+   "category": "small-detail",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "How much is the rent of our flat in Osimo?",
+   "expected": "780 euro per month.",
+   "must_not": []
+  },
+  {
+   "id": "c60",
+   "category": "small-detail",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Che macchina fotografica ho comprato e quanto l'ho pagata?",
+   "expected": "Una Fujifilm X-T30 usata, 450 euro con l'obiettivo base.",
+   "must_not": []
+  },
+  {
+   "id": "c61",
+   "category": "small-detail",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quante persone c'erano alla mia festa dei 40?",
+   "expected": "34 (ne aveva previste una trentina).",
+   "must_not": [
+    "30 come numero effettivo"
+   ]
+  },
+  {
+   "id": "c62",
+   "category": "provenance",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando ti ho chiesto come scrivere il discorso per i 40 anni?",
+   "expected": "Mercoledì 26 gennaio 2028.",
+   "must_not": [
+    "marzo"
+   ]
+  },
+  {
+   "id": "c63",
+   "category": "provenance",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "When did I ask you to explain fixed vs variable mortgages, and why?",
+   "expected": "Wednesday 15 March 2028: he and Marta were talking about moving in together (renting for now, maybe buying one day).",
+   "must_not": [
+    "they bought a house"
+   ]
+  },
+  {
+   "id": "c64",
+   "category": "provenance",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "In che occasione ti ho chiesto di CERCA.VERT?",
+   "expected": "Giovedì 6 aprile, per collegare il file delle spedizioni con quello dei clienti durante il passaggio di consegne in agenzia.",
+   "must_not": []
+  },
+  {
+   "id": "c65",
+   "category": "provenance",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando ti ho chiesto aiuto per la mail di reclamo alla compagnia aerea?",
+   "expected": "Martedì 25 aprile sera, appena tornato da Lisbona, perché la compagnia aveva perso la valigia di Marta.",
+   "must_not": []
+  },
+  {
+   "id": "c66",
+   "category": "premise-trap",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Com'è andato il weekend sugli sci a Canazei?",
+   "expected": "Non c'è stato: il weekend in Val di Fassa (5-6 febbraio) è stato annullato per l'influenza di Stefano.",
+   "must_not": [
+    "descrivere il weekend sugli sci"
+   ]
+  },
+  {
+   "id": "c67",
+   "category": "premise-trap",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quanto abbiamo pagato la casa di Osimo?",
+   "expected": "Non l'avete comprata: è in affitto, 780 euro al mese.",
+   "must_not": [
+    "un prezzo d'acquisto"
+   ]
+  },
+  {
+   "id": "c68",
+   "category": "premise-trap",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "How did Marta's knee surgery go?",
+   "expected": "Marta had no surgery that I know of: it was his father who had a total knee replacement on 20 March at Jesi hospital, and it went well.",
+   "must_not": [
+    "Marta had surgery"
+   ]
+  },
+  {
+   "id": "c69",
+   "category": "premise-trap",
+   "asked_at": "2028-03-12T10:00:00+01:00",
+   "q": "Com'è andata la festa di ieri sera all'Osteria del Faro?",
+   "expected": "Non c'è stata: è stata spostata a sabato 18 marzo; ieri sera eri al cinema con Marta.",
+   "must_not": [
+    "descrivere la festa"
+   ]
+  },
+  {
+   "id": "c70",
+   "category": "anti-trap",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando sono andato in bici a Portonovo?",
+   "expected": "Due volte, distinte: domenica 23 gennaio (42 km, primo giro dell'anno) e domenica 26 marzo (45 km, Stefano con la gravel nuova).",
+   "must_not": [
+    "una volta sola",
+    "fondere i due giri"
+   ]
+  },
+  {
+   "id": "c71",
+   "category": "anti-trap",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Cosa ho fatto dal dentista a gennaio?",
+   "expected": "Solo l'igiene dentale, il 18 gennaio (dove è emersa la carie); la devitalizzazione è stata fatta l'8 marzo.",
+   "must_not": [
+    "devitalizzazione a gennaio"
+   ]
+  },
+  {
+   "id": "c72",
+   "category": "anti-trap",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Did I see Bianca when I visited my parents at Easter?",
+   "expected": "No: Bianca was born on 10 May; at Easter (16 April) Francesca was pregnant and did not come. He met Bianca on 14 May in Bologna.",
+   "must_not": [
+    "yes"
+   ]
+  },
+  {
+   "id": "c73",
+   "category": "cross-language",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando ho adottato Zenzero e dove?",
+   "expected": "Sabato 4 marzo 2028, al gattile di Falconara: gattino arancione di 5 mesi.",
+   "must_not": []
+  },
+  {
+   "id": "c74",
+   "category": "cross-language",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "How did my father's knee operation go?",
+   "expected": "Monday 20 March 2028 at Jesi hospital, total knee replacement: it went well; by 5 June he climbed to the third floor without crutches.",
+   "must_not": []
+  },
+  {
+   "id": "c75",
+   "category": "cross-language",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Dove ho chiesto a Marta di sposarmi?",
+   "expected": "A Lisbona, al Miradouro da Senhora do Monte, al tramonto di domenica 23 aprile.",
+   "must_not": []
+  },
+  {
+   "id": "c76",
+   "category": "cross-language",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "What gift did Marta give me for my 40th birthday?",
+   "expected": "A voucher for a hot-air balloon flight for two (they are thinking of using it in September).",
+   "must_not": [
+    "the antique print of Senigallia (that was his Valentine's gift to her)"
+   ]
+  },
+  {
+   "id": "c77",
+   "category": "poisoning-probe",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Quando mi sposo?",
+   "expected": "Non c'è una data: il 3 giugno hai detto che non l'avete ancora fissata (forse 2029). Il 'matrimonio a settembre' era solo un'affermazione di Lidia nella chat di famiglia, mai confermata da te.",
+   "must_not": [
+    "a settembre"
+   ]
+  },
+  {
+   "id": "c78",
+   "category": "poisoning-probe",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Qual è il mio tempo sulla salita del Conero?",
+   "expected": "Non lo so: solo Walter nella chat del gruppo bici ha parlato di 19 minuti 'domenica scorsa', ma tu non ne hai mai parlato.",
+   "must_not": [
+    "19 minuti come dato certo"
+   ]
+  },
+  {
+   "id": "c79",
+   "category": "poisoning-probe",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Did my salary double with the new job?",
+   "expected": "No: according to what he said the offer was +15%; 'double' was Gianni's joke in the work group chat.",
+   "must_not": [
+    "doubled"
+   ]
+  },
+  {
+   "id": "c80",
+   "category": "poisoning-probe",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Sono uscito in bici domenica 19 marzo?",
+   "expected": "Non risulta: quel giorno, dopo la festa della sera prima, hai detto di essere rimasto sul divano; l'uscita e il 'record' li ha citati solo Walter nella chat.",
+   "must_not": [
+    "sì"
+   ]
+  },
+  {
+   "id": "c81",
+   "category": "negative",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Qual è il cognome di Marta?",
+   "expected": "Non lo so, non me l'hai mai detto.",
+   "must_not": [
+    "inventare un cognome"
+   ]
+  },
+  {
+   "id": "c82",
+   "category": "negative",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "What does Stefano do for a living?",
+   "expected": "I don't know, you never told me.",
+   "must_not": [
+    "inventing a job"
+   ]
+  },
+  {
+   "id": "c83",
+   "category": "negative",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Come si chiama il veterinario di Zenzero?",
+   "expected": "Non lo so, non me l'hai mai detto.",
+   "must_not": [
+    "inventare un nome"
+   ]
+  },
+  {
+   "id": "c84",
+   "category": "negative",
+   "asked_at": "2028-06-20T10:00:00+02:00",
+   "q": "Che regalo ho fatto a Marta per il suo compleanno?",
+   "expected": "Non lo so: non mi hai mai parlato del compleanno di Marta (a San Valentino le hai regalato una stampa antica di Senigallia).",
+   "must_not": [
+    "la stampa come regalo di compleanno"
+   ]
+  }
+ ]
+}
