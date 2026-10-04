@@ -152,7 +152,9 @@ author, chat excerpts always alongside episodes) → service 96.2 % post-hoc; a 
 Noise: v3 88.0 % (D 94.0 %, full context 95.3 %) — corrections lost because the episode list held only
 recent items; **extract.v4** (recent + related episodes) → **noise 95.4 %, base 94.9 %**, on par with D and with
 full context. Facts are the weakest extraction stage (→ M5). Next: local models in the matrix (Qwen3-8B,
-MiniCPM4.1-8B; MiniCPM5-2B as light model), profiles. Details in
+MiniCPM4.1-8B; MiniCPM5-2B as light model), profiles.
+Local engines measured: Qwen3-8B 59.7 %, Qwen3-14B 66.7 %, MiniCPM excluded after probes. **Owner's rule: an engine
+model is supported only at ≥ 95 % on the suite**; weaker models are removed, results kept (RESULTS.md). Details in
 `spikes/memory-eval/RESULTS.md` § M4b.
 
 ### M5 — Layer 2: consolidation
