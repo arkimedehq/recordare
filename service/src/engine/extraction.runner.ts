@@ -18,16 +18,22 @@ import { extractionSchema } from './extraction.schema';
 import { ConcurrentExtractionError, ExtractionWriter, type WrittenRow } from './extraction.writer';
 import { resolveNearDuplicates } from './episode-resolver';
 import { SEED_SLOTS } from '../db/migrations/1790960000000-Notes';
+import { ConfigService } from '@nestjs/config';
+import { type Env } from '../config/env';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
   private readonly log = new Logger(EngineExtractionRunner.name);
+  private readonly windowChars: number;
 
   constructor(
     private readonly db: DataSource,
     @Inject(LLM_PORT) private readonly llm: LlmPort,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
-  ) {}
+    config: ConfigService<Env, true>,
+  ) {
+    this.windowChars = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
+  }
 
   async runForConversation(conversationId: string): Promise<void> {
     const [conv] = await this.db.query(
@@ -44,7 +50,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 7)) AS locked`, [conversationId]);
       if (!locked) return;
       try {
-        const windows = await pendingWindows(this.db.manager, conversationId);
+        const windows = await pendingWindows(this.db.manager, conversationId, this.windowChars);
         for (const window of windows) {
           await this.runWindow(owner, conv.client_id as string, conversationId, window);
         }

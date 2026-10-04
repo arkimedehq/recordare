@@ -11,7 +11,6 @@ import { type EntityManager } from 'typeorm';
 import { calendar, describe, localDate, type Precision } from './time';
 import { type PromptContext, type PromptMessage } from './extraction.prompt';
 
-export const WINDOW_MAX_CHARS = 12_000;
 const MAX_OPEN_PLANS = 15;
 const MAX_FACTS = 40;
 const MAX_NOTES = 30;
@@ -54,7 +53,7 @@ export interface ExtractionInput {
 }
 
 /** Pending messages of a conversation, oldest first, split into windows of bounded size. */
-export async function pendingWindows(tx: EntityManager, conversationId: string): Promise<WindowMessage[][]> {
+export async function pendingWindows(tx: EntityManager, conversationId: string, maxChars: number): Promise<WindowMessage[][]> {
   const rows: Array<{ id: string; role: WindowMessage['role']; tool_name: string | null; author_person_id: string | null;
     author_name: string | null; content: string; sent_at: Date }> = await tx.query(
     // Unverified group members are not persons: their name comes from the conversation's participants.
@@ -71,7 +70,7 @@ export async function pendingWindows(tx: EntityManager, conversationId: string):
   for (const r of rows) {
     const msg: WindowMessage = { id: r.id, role: r.role, toolName: r.tool_name, authorPersonId: r.author_person_id,
       authorName: r.author_name, content: r.content, sentAt: r.sent_at };
-    if (current.length > 0 && size + r.content.length > WINDOW_MAX_CHARS) {
+    if (current.length > 0 && size + r.content.length > maxChars) {
       windows.push(current);
       current = [];
       size = 0;
