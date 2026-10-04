@@ -1,6 +1,10 @@
 """Market baseline — Cognee OSS (`cognee`, Apache-2.0, upstream NOTICE.md by Topoteretes UG; used as an
 installed dependency, nothing redistributed, no code or prompt copied; WORK_PLAN 4b.5).
 
+Not a permanent dependency: cognee 1.6 pulls litellm, which pins `openai<3` (the spike uses openai 3).
+Measured 2026-10-04 (RESULTS.md § M4b); to re-run, install it temporarily (`uv add cognee`, which
+downgrades openai) and remove it afterwards (`uv remove cognee && uv add "openai>=3"`).
+
 Engine: Cognee's documented pipeline `add()` → `cognify()` (chunking, LLM entity/relation extraction
 into its default KnowledgeGraph, chunk summaries, vector indexes of chunks / entities / edges).
 `remember()` is the same plus `improve()`, whose triplet index serves only TRIPLET_COMPLETION, so it
