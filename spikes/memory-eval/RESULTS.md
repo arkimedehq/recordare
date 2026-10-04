@@ -192,6 +192,31 @@ local engine is far from the hosted one (−28 pt); the gap is extraction covera
 validity. A sovereign profile needs a larger local model (a ≥ 30B class machine) or a split design (local
 light calls, hosted extraction) — to be decided with the profiles (4b.3).
 
+**Market baselines (4b.5), blind for them, same harness / answer / judge / embeddings, engines on
+`deepseek-flash` thinking off, 3 runs each:**
+
+| System | Base | Noise | Engine ingest tokens (noise, 1 run) | Ingest (noise) | Context / question |
+|---|---|---|---|---|---|
+| Mem0 2.2.1 (OSS, embedded Qdrant, session date as observation date) | 87.5 % [83.3, 91.7] | **88.4 %** [87.5, 89.3] | 206 calls, 1.77 M in / 13 k out | 361 s | ~4.3 k chars |
+| Cognee 1.6.0 (OSS, default graph + HYBRID_COMPLETION context) | 85.7 % [80.2, 91.2] | 83.8 % [81.3, 86.2] | 413 calls, 338 k in / 121 k out | 173 s | ~5.6 k chars |
+| service v4 (post-hoc) | 94.9 % | 95.4 % | 211 calls, 731 k in (71 % cached) / 37 k out | 342 s | ~4.6 k chars |
+| service v2 (blind) | 86.0 % | — | | | |
+
+Paired over 36 questions: v4 − Mem0 +7.4 pt base [−1.4, 17.6] and +6.9 pt noise [−2.3, 18.1] — within noise;
+v4 − Cognee +9.3 base (within noise) and **+11.6 noise [1.4, 23.6], better**; Mem0 vs Cognee and Mem0 vs our
+blind v2 within noise. With 36 questions a ~7 pt gap is not significant: a larger blind set is needed to
+separate systems of this level. Where they fail, systematically (0/3): **period questions** ("this week",
+"last week": no event time, retrieval by similarity finds nothing in range) and **the b34 third-party claim**
+(both attribute Giorgio's claim to the owner); Cognee also b20 / b21 under noise. Mem0 is robust to noise
+(short fact strings); Cognee is the cheapest at ingest but closest to RAG (chunks = whole sessions).
+Caveats: Mem0 OSS grounds relative dates on today unless patched — the adapter passes the session date
+into the slot its own prompt reserves; Mem0 stores memories in English; Cognee TEMPORAL search not used
+(separate pipeline). Cognee was removed from the spike's dependencies afterwards (litellm pins openai < 3).
+
+**More local engines (Ollama, base, 1 run; removed afterwards per the ≥ 95 % rule):** Qwen3.5-9B **73.6 %**
+(recall 0.70, dates 0.61, unsupported 12 %, facts 0.27, notes 0.10) — best local so far, +14 pt over Qwen3-8B;
+Gemma 4 12B 73.6 %. (gpt-oss 20B and Gemma 4 26B pending.)
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
