@@ -11,11 +11,10 @@
 import { z } from 'zod';
 import { type DataSource } from 'typeorm';
 import { type LlmCallContext, type LlmPort } from '../llm/llm.port';
+import { type QualityProfile } from './quality-profile';
 
-/** Candidates: same kind, within ±WINDOW_DAYS, and similar by embedding or by trigrams of the text. */
-const SIMILARITY = 0.7;
+/** Candidates: same kind, within ± profile days, and similar by embedding (profile threshold) or by trigrams. */
 const TRIGRAM = 0.3;
-const WINDOW_DAYS = 3;
 
 export const RESOLVE_PROMPT_VERSION = 'resolve.v1';
 
@@ -37,7 +36,8 @@ interface Candidate {
   old_content: string;
 }
 
-export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, ownerId: string, newIds: string[], ctx: LlmCallContext): Promise<void> {
+export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, ownerId: string, newIds: string[], ctx: LlmCallContext,
+  profile: Pick<QualityProfile, 'resolverWindowDays' | 'resolverSimilarity'>): Promise<void> {
   if (newIds.length === 0) return;
   const pairs: Candidate[] = await db.query(
     `SELECT DISTINCT ON (n.id) n.id AS new_id, n.content AS new_content, o.id AS old_id, o.content AS old_content
@@ -50,7 +50,7 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, ownerI
            OR similarity(o.content, n.content) >= $5)
      WHERE n.owner_id = $1 AND n.id = ANY($2)
      ORDER BY n.id, similarity(o.content, n.content) DESC`,
-    [ownerId, newIds, SIMILARITY, WINDOW_DAYS, TRIGRAM]);
+    [ownerId, newIds, profile.resolverSimilarity, profile.resolverWindowDays, TRIGRAM]);
   if (pairs.length === 0) return;
 
   const out = await llm.completeJson({

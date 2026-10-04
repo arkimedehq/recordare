@@ -7,6 +7,7 @@
  * native Anthropic API, with provider differences described by a profile.
  */
 import { z } from 'zod';
+import { QUALITY_PROFILES } from '../engine/quality-profile';
 
 const bool = z
   .enum(['true', 'false', '1', '0'])
@@ -23,9 +24,10 @@ export const envSchema = z.object({
   ADMIN_API_KEY: z.string().min(32),
   /** Idle debounce before extracting a conversation (D1, D5): global, seconds. */
   IDLE_DELAY_SECONDS: z.coerce.number().int().positive().default(900),
-  /** Max characters of messages per extraction call. Smaller windows keep a small (local) model's JSON
-   * short and valid, at the cost of more calls (D35: a quality-profile knob). */
-  EXTRACTION_WINDOW_CHARS: z.coerce.number().int().min(1000).default(12_000),
+  /** Max characters of messages per extraction call; set = overrides the quality profile's value. */
+  EXTRACTION_WINDOW_CHARS: z.coerce.number().int().min(1000).optional(),
+  /** Installation default quality profile (D35); owners may override it. */
+  QUALITY_PROFILE: z.enum(QUALITY_PROFILES).default('balanced'),
 
   /** `claude-cli`: local evaluation only, through the operator's own Claude plan (headless Claude Code). */
   LLM_PROVIDER: z.enum(['openai-compatible', 'anthropic', 'claude-cli']).default('openai-compatible'),

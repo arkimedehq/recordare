@@ -13,6 +13,9 @@ import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { describe, periodEnd, zonedMidnight, addDays, type Precision } from '../engine/time';
 import { RawLogSearchService, toOrTsQuery, type RawHit } from '../rawlog/rawlog-search.service';
+import { ConfigService } from '@nestjs/config';
+import { type Env } from '../config/env';
+import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
 
 export interface EpisodeSearchArgs {
   query?: string;
@@ -60,20 +63,24 @@ const CANDIDATES = 60;
 const MIN_VECTOR_SIMILARITY = 0.35;
 const FALLBACK_BELOW = 3;
 const RAW_HITS = 3;
-const RAW_HITS_ALONGSIDE = 2;
 
 @Injectable()
 export class EpisodeSearchService {
   private readonly log = new Logger(EpisodeSearchService.name);
+  private readonly defaultProfile: QualityProfileName;
 
   constructor(
     private readonly db: DataSource,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly rawLog: RawLogSearchService,
-  ) {}
+    config: ConfigService<Env, true>,
+  ) {
+    this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
+  }
 
   async search(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
-    const [owner] = await this.db.query(`SELECT locale, timezone FROM owners WHERE person_id = $1`, [ownerId]);
+    const [owner] = await this.db.query(`SELECT locale, timezone, quality_profile FROM owners WHERE person_id = $1`, [ownerId]);
+    const profile = qualityProfile(owner.quality_profile, this.defaultProfile);
     const tz: string = owner.timezone;
     const locale: string = owner.locale;
     const mode = args.mode ?? 'search';
@@ -146,7 +153,7 @@ export class EpisodeSearchService {
       const hits = await this.rawLog.search(ownerId, clientId, {
         query: args.query, from: from ?? undefined, to: to ?? undefined, limit: RAW_HITS + covered.size,
       });
-      const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? RAW_HITS : RAW_HITS_ALONGSIDE;
+      const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? Math.max(RAW_HITS, profile.rawHitsAlongside) : profile.rawHitsAlongside;
       result.fromChats = hits.filter((h) => !covered.has(h.messageId)).slice(0, limit).map(({ score: _s, ...h }) => h);
     }
     if (chosen.length) {

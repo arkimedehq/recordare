@@ -22,7 +22,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     llm = await startFakeLlm();
     const fake = await startFakeEmbeddings();
     emb = fake.server;
-    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600' });
+    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600', LLM_LIGHT_MODEL: 'test-light' });
     await resetSchema();
     ({ app, url } = await startApp());
     db = app.get(DataSource);
@@ -205,6 +205,30 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     await runner.runForConversation(c);
     expect(llm.requests.at(-1)?.messages[1]?.content ?? '').toContain('Hotel a Lubiana prenotato: 180 euro');
     await db.query(`DELETE FROM episodes WHERE id = $1 OR content LIKE 'Rumore %'`, [old.id]);
+  });
+
+  it('follows the owner\'s quality profile: economy uses the light model, full lets the model reason', async () => {
+    const setProfile = (qualityProfile: string | null) =>
+      call(url, 'PATCH', `/api/v1/admin/owners/${ownerId}`, { token: ADMIN_KEY, body: { qualityProfile } });
+    const last = () => llm.requests.at(-1) as unknown as { model: string; max_tokens: number };
+
+    await setProfile('economy');
+    const e = await ingest('qp-e', [{ id: 'qe1', role: 'user', content: 'Oggi niente di speciale.', at: '2026-06-06T10:00:00+02:00' }]);
+    llm.queue.push({});
+    await runner.runForConversation(e);
+    expect(last()).toMatchObject({ model: 'test-light', max_tokens: 6000 });
+
+    await setProfile('full');
+    const f = await ingest('qp-f', [{ id: 'qf1', role: 'user', content: 'Oggi ancora niente.', at: '2026-06-06T11:00:00+02:00' }]);
+    llm.queue.push({});
+    await runner.runForConversation(f);
+    expect(last()).toMatchObject({ model: 'test-model', max_tokens: 24000 }); // reasoning: larger output budget
+
+    await setProfile(null); // back to the installation default (balanced)
+    const b = await ingest('qp-b', [{ id: 'qb1', role: 'user', content: 'Di nuovo niente.', at: '2026-06-06T12:00:00+02:00' }]);
+    llm.queue.push({});
+    await runner.runForConversation(b);
+    expect(last()).toMatchObject({ model: 'test-model', max_tokens: 6000 });
   });
 
   it('makes no LLM call without a message from the owner (gate)', async () => {

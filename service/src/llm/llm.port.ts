@@ -15,6 +15,15 @@ export interface JsonCompletionRequest<T> {
   schema: z.ZodType<T>;
   role?: ModelRole;
   maxTokens?: number;
+  /** Allow the model to reason before answering (quality profile `full`); off by default. The
+   * output budget is raised so reasoning cannot exhaust it before the answer. */
+  reasoning?: boolean;
+}
+
+/** Output budget for a request: reasoning models spend tokens before the visible answer. */
+export function outputBudget(req: { maxTokens?: number; reasoning?: boolean }): number {
+  const base = req.maxTokens ?? 4000;
+  return req.reasoning ? base * 4 : base;
 }
 
 /** Who the call is for (llm_calls accounting); content is never recorded. */

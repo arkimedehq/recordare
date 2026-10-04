@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { SCOPES } from '../identity/identity.entities';
+import { QUALITY_PROFILES } from '../engine/quality-profile';
 
 const scopes = z.array(z.enum(SCOPES)).min(1);
 
@@ -23,12 +24,16 @@ export const createOwnerSchema = z.object({
   locale: z.enum(['it', 'en']).default('it'),
   timezone: z.string().min(1).default('Europe/Rome'),
   episodicEnabled: z.boolean().default(false),
+  /** D35; omitted = installation default. */
+  qualityProfile: z.enum(QUALITY_PROFILES).nullable().default(null),
 });
 
 export const updateOwnerSchema = z.object({
   locale: z.enum(['it', 'en']).optional(),
   timezone: z.string().min(1).optional(),
   episodicEnabled: z.boolean().optional(),
+  /** null = back to the installation default. */
+  qualityProfile: z.enum(QUALITY_PROFILES).nullable().optional(),
 });
 
 export const createIdentitySchema = z.discriminatedUnion('kind', [

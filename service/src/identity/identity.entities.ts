@@ -3,6 +3,7 @@
 
 /** Identity tables (docs/DATA_MODEL.md → Identity, v1 home / research profile). */
 import { Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { type QualityProfileName } from '../engine/quality-profile';
 
 export const SCOPES = ['ingest', 'mcp', 'read', 'write', 'owner_settings', 'export', 'admin'] as const;
 export type Scope = (typeof SCOPES)[number];
@@ -26,6 +27,8 @@ export class Owner {
   @Column({ name: 'episodic_enabled', type: 'boolean', default: false }) episodicEnabled!: boolean;
   @Column({ name: 'episodic_enabled_at', type: 'timestamptz', nullable: true }) episodicEnabledAt!: Date | null;
   @Column({ name: 'episodic_enabled_by', type: 'text', nullable: true }) episodicEnabledBy!: string | null;
+  /** D35: null = installation default. */
+  @Column({ name: 'quality_profile', type: 'text', nullable: true }) qualityProfile!: QualityProfileName | null;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
 }
 

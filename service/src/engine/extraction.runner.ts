@@ -20,11 +20,13 @@ import { resolveNearDuplicates } from './episode-resolver';
 import { SEED_SLOTS } from '../db/migrations/1790960000000-Notes';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
+import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
   private readonly log = new Logger(EngineExtractionRunner.name);
-  private readonly windowChars: number;
+  private readonly defaultProfile: QualityProfileName;
+  private readonly windowCharsOverride: number | undefined;
 
   constructor(
     private readonly db: DataSource,
@@ -32,15 +34,17 @@ export class EngineExtractionRunner implements ExtractionRunner {
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     config: ConfigService<Env, true>,
   ) {
-    this.windowChars = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
+    this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
+    this.windowCharsOverride = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
   }
 
   async runForConversation(conversationId: string): Promise<void> {
     const [conv] = await this.db.query(
-      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.episodic_enabled
+      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.episodic_enabled, o.quality_profile
        FROM conversations c JOIN owners o ON o.person_id = c.owner_id WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
     if (!conv?.episodic_enabled) return;
     const owner: Owner = { id: conv.owner_id, locale: conv.locale, timezone: conv.timezone };
+    const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride);
 
     // One extraction per conversation at a time (session advisory lock); a concurrent job leaves
     // the work to the run in progress, whose follow-up job picks up anything that arrived meanwhile.
@@ -50,9 +54,9 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 7)) AS locked`, [conversationId]);
       if (!locked) return;
       try {
-        const windows = await pendingWindows(this.db.manager, conversationId, this.windowChars);
+        const windows = await pendingWindows(this.db.manager, conversationId, profile.windowChars);
         for (const window of windows) {
-          await this.runWindow(owner, conv.client_id as string, conversationId, window);
+          await this.runWindow(owner, profile, conv.client_id as string, conversationId, window);
         }
       } finally {
         await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 7))`, [conversationId]);
@@ -62,7 +66,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
     }
   }
 
-  private async runWindow(owner: Owner, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
+  private async runWindow(owner: Owner, profile: QualityProfile, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
     const runId = await this.startRun(owner.id, conversationId, window);
     if (!window.some((m) => m.role === 'user' || m.authorPersonId === owner.id)) {
       // Gate: nothing the owner said → no LLM call (D5).
@@ -78,13 +82,15 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const slots: Array<{ key: string }> = await this.db.query(
         `SELECT key FROM fact_slots WHERE key = ANY($2)
          UNION SELECT DISTINCT key FROM facts WHERE owner_id = $1 ORDER BY key`, [owner.id, SEED_SLOTS]);
-      const input = await buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window));
+      const input = await buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window), profile);
       const output = await this.llm.completeJson({
         promptId: EXTRACTION_PROMPT_VERSION,
         system: EXTRACTION_SYSTEM,
         user: buildExtractionUser(input.prompt),
         schema: extractionSchema,
         maxTokens: 6000,
+        role: profile.extractionRole,
+        reasoning: profile.reasoning,
       }, { ownerId: owner.id, clientId, runId });
       const written = await this.db.transaction(async (tx) => {
         const rows = await new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId }, input).apply(output);
@@ -94,7 +100,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
       await this.embed(written);
       // Second call only when near-duplicates exist (corrections not linked, same event in two chats).
       await resolveNearDuplicates(this.db, this.llm, owner.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
-        { ownerId: owner.id, clientId, runId }).catch((err: unknown) => this.log.warn(`near-duplicate resolution skipped: ${(err as Error).name}`));
+        { ownerId: owner.id, clientId, runId }, profile).catch((err: unknown) => this.log.warn(`near-duplicate resolution skipped: ${(err as Error).name}`));
     } catch (err) {
       if (err instanceof ConcurrentExtractionError) {
         await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), model = 'skipped:concurrent' WHERE id = $1`, [runId]);

@@ -11,7 +11,7 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 import { type ProviderProfile } from './provider-profiles';
 import { type LlmCallRecord, type LlmCallRecorder } from './llm-call-recorder';
-import { LlmOutputError, type JsonCompletionRequest, type LlmCallContext, type LlmPort } from './llm.port';
+import { LlmOutputError, outputBudget, type JsonCompletionRequest, type LlmCallContext, type LlmPort } from './llm.port';
 
 export interface OpenAiCompatibleConfig {
   baseURL?: string;
@@ -96,8 +96,8 @@ export class OpenAiCompatibleAdapter implements LlmPort {
 
   private body<T>(req: JsonCompletionRequest<T>, model: string, messages: ChatMessage[]): Record<string, unknown> {
     const p = this.cfg.profile;
-    const body: Record<string, unknown> = { model, messages, ...p.reasoningOff };
-    body[p.tokenParam] = req.maxTokens ?? 4000;
+    const body: Record<string, unknown> = { model, messages, ...(req.reasoning ? {} : p.reasoningOff) };
+    body[p.tokenParam] = outputBudget(req);
     if (p.supportsTemperature) body['temperature'] = 0;
     if (p.structuredOutput === 'json_object') body['response_format'] = { type: 'json_object' };
     if (p.structuredOutput === 'json_schema') {

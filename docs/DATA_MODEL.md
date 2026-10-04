@@ -98,6 +98,7 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 | `locale`, `timezone` | text | |
 | `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
+| `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `created_at` | timestamptz | |
 
 Idle delay is a global setting (D5), not per owner.

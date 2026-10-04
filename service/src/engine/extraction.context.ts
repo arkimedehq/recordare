@@ -10,14 +10,14 @@
 import { type EntityManager } from 'typeorm';
 import { calendar, describe, localDate, type Precision } from './time';
 import { type PromptContext, type PromptMessage } from './extraction.prompt';
+import { type QualityProfile } from './quality-profile';
 
 const MAX_OPEN_PLANS = 15;
 const MAX_FACTS = 40;
 const MAX_NOTES = 30;
-const MAX_RECENT_EPISODES = 8;
-/** Older episodes close in meaning to the window: under noise the recent ones crowd out the episode a
- * correction refers to (M4b: "it was 210, not 180" left the wrong value visible). */
-const MAX_RELATED_EPISODES = 10;
+/** Older episodes close in meaning to the window sit next to the recent ones (counts: quality profile):
+ * under noise the recent ones crowd out the episode a correction refers to (M4b: "it was 210, not 180"
+ * left the wrong value visible). */
 const MIN_RELATED_SIMILARITY = 0.45;
 
 export interface WindowMessage {
@@ -90,7 +90,7 @@ function speaker(m: WindowMessage, ownerId: string): string {
 }
 
 export async function buildInput(tx: EntityManager, owner: Owner, window: WindowMessage[], knownSlots: string[],
-  windowVector: number[] | null = null): Promise<ExtractionInput> {
+  windowVector: number[] | null, profile: Pick<QualityProfile, 'recentEpisodes' | 'relatedEpisodes'>): Promise<ExtractionInput> {
   const tz = owner.timezone;
   const first = window[0] as WindowMessage;
   const messageDay = localDate(first.sentAt, tz);
@@ -112,13 +112,13 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
   const recent: EpisodeRow[] = await tx.query(
     `SELECT id, content, occurred_at, date_precision FROM episodes
      WHERE ${visible} AND recorded_at > $2::timestamptz - interval '30 days'
-     ORDER BY recorded_at DESC LIMIT $3`, [owner.id, first.sentAt, MAX_RECENT_EPISODES]);
+     ORDER BY recorded_at DESC LIMIT $3`, [owner.id, first.sentAt, profile.recentEpisodes]);
   const related: EpisodeRow[] = windowVector
     ? await tx.query(
       `SELECT id, content, occurred_at, date_precision FROM (
          SELECT id, content, occurred_at, date_precision, embedding <=> $2::vector AS dist FROM episodes
          WHERE ${visible} AND embedding IS NOT NULL ORDER BY dist LIMIT $3) r
-       WHERE 1 - dist >= $4`, [owner.id, `[${windowVector.join(',')}]`, MAX_RELATED_EPISODES, MIN_RELATED_SIMILARITY])
+       WHERE 1 - dist >= $4`, [owner.id, `[${windowVector.join(',')}]`, profile.relatedEpisodes, MIN_RELATED_SIMILARITY])
     : [];
   const episodes = [...recent, ...related.filter((r) => !recent.some((e) => e.id === r.id))];
 

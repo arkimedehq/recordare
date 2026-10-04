@@ -11,7 +11,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { type ProviderProfile } from './provider-profiles';
 import { type LlmCallRecord, type LlmCallRecorder } from './llm-call-recorder';
-import { LlmOutputError, type JsonCompletionRequest, type LlmCallContext, type LlmPort } from './llm.port';
+import { LlmOutputError, outputBudget, type JsonCompletionRequest, type LlmCallContext, type LlmPort } from './llm.port';
 
 export interface AnthropicConfig {
   apiKey?: string;
@@ -39,6 +39,8 @@ export class AnthropicAdapter implements LlmPort {
   async completeJson<T>(req: JsonCompletionRequest<T>, ctx: LlmCallContext = {}): Promise<T> {
     const model = req.role === 'light' ? (this.cfg.lightModel ?? this.cfg.model) : this.cfg.model;
     const a = this.cfg.profile.anthropic;
+    // Reasoning requests think adaptively unless the profile configures thinking explicitly.
+    const thinking = a.thinking ?? (req.reasoning ? { type: 'adaptive' } : undefined);
     let lastIssue = '';
     for (let attempt = 0; attempt < 2; attempt++) {
       const started = Date.now();
@@ -48,11 +50,11 @@ export class AnthropicAdapter implements LlmPort {
       try {
         const res = await this.client.beta.messages.create({
           model,
-          max_tokens: req.maxTokens ?? 4000,
+          max_tokens: outputBudget(req),
           system: [{ type: 'text', text: req.system, cache_control: { type: 'ephemeral' } }],
           messages: [{ role: 'user', content: attempt === 0 ? req.user : `${req.user}\n\n(Previous output was invalid: ${lastIssue}. Follow the schema exactly.)` }],
           output_config: { format: betaZodOutputFormat(req.schema), ...(a.effort ? { effort: a.effort } : {}) },
-          ...(a.thinking ? { thinking: a.thinking as unknown as Anthropic.Beta.BetaThinkingConfigParam } : {}),
+          ...(thinking ? { thinking: thinking as unknown as Anthropic.Beta.BetaThinkingConfigParam } : {}),
           ...(a.refusalFallback ? { fallbacks: 'default' as const, betas: [FALLBACK_BETA] } : {}),
         });
         usage = {

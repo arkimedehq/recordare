@@ -35,7 +35,8 @@ migration.
 ### Owner authentication (public profile)
 **v1**: owners are created by the admin (`POST api/v1/admin/owners`); consent (`episodicEnabled`),
 personal tokens and identity bindings are managed through the admin API or an owner personal token;
-there are no owner pages.
+there are no owner pages. Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
+`PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set).
 
 **Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
 OIDC later). The owner session is needed for: giving consent (`episodicEnabled`), creating link
