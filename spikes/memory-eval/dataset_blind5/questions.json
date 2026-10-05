@@ -1,0 +1,897 @@
+{
+ "_note": "Blind set #5. Questions asked as user 'nunzia' at asked_at (systems ingest only sessions up to asked_at). expected = reference answer (overviews: ESSENTIAL / SECONDARY items; implicit changes: a hedged inference is correct); must_not = claims that must not be asserted as true.",
+ "user": "nunzia",
+ "questions": [
+  {
+   "id": "e01",
+   "category": "point-temporal",
+   "asked_at": "2029-04-20T10:00:00+02:00",
+   "q": "Quando è caduta mia madre?",
+   "expected": "Martedì 10 aprile 2029, verso le 23, in bagno a casa sua a Noto (frattura del collo del femore); è stata operata venerdì 13 aprile all'ospedale di Avola.",
+   "must_not": [
+    "è caduta mercoledì 11 aprile",
+    "è caduta venerdì 13 aprile"
+   ]
+  },
+  {
+   "id": "e02",
+   "category": "point-temporal",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "When was my granddaughter Giulia born?",
+   "expected": "Friday 27 April 2029 at 23:40 (3.2 kg, 50 cm); Marta announced it in the family chat the next morning, Saturday 28 April.",
+   "must_not": [
+    "she was born on 28 April"
+   ]
+  },
+  {
+   "id": "e03",
+   "category": "point-temporal",
+   "asked_at": "2029-05-15T12:00:00+02:00",
+   "q": "Quando ho fatto il colloquio per la farmacia comunale di Noto?",
+   "expected": "Venerdì 6 aprile 2029 alle 10, a Palazzo Ducezio (la chiamata per il colloquio era arrivata mercoledì 28 marzo; l'esito positivo lunedì 16 aprile).",
+   "must_not": [
+    "il colloquio è stato il 28 marzo",
+    "il colloquio è stato il 16 aprile"
+   ]
+  },
+  {
+   "id": "e04",
+   "category": "point-temporal",
+   "asked_at": "2029-06-30T12:00:00+02:00",
+   "q": "Quando ho conosciuto Enzo?",
+   "expected": "Sabato 17 febbraio 2029, a una cena a casa di Lina (il primo caffè insieme è stato venerdì 23 febbraio).",
+   "must_not": [
+    "vi siete conosciuti il 23 febbraio",
+    "vi siete conosciuti l'8 marzo"
+   ]
+  },
+  {
+   "id": "e05",
+   "category": "last-time",
+   "asked_at": "2029-06-20T09:00:00+02:00",
+   "q": "When was my last sailing lesson?",
+   "expected": "Sunday 10 June 2029: the fourth lesson, about 12 knots of wind, at the helm most of the time. The lesson of Sunday 17 June was cancelled because of the mistral (25 knots).",
+   "must_not": [
+    "the last lesson was on 17 June"
+   ]
+  },
+  {
+   "id": "e06",
+   "category": "last-time",
+   "asked_at": "2029-06-30T12:00:00+02:00",
+   "q": "L'ultima volta che sono andata al gruppo di lettura?",
+   "expected": "Martedì 8 maggio 2029 (incontro spostato dal 1° maggio, su «La Storia» della Morante). Martedì 5 giugno l'hai saltato.",
+   "must_not": [
+    "l'ultima volta è stata il 5 giugno"
+   ]
+  },
+  {
+   "id": "e07",
+   "category": "last-time",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quando sono andata l'ultima volta alle prove del coro?",
+   "expected": "Giovedì 19 aprile 2029 (eri distratta e hai sbagliato due attacchi). Le prove del 26 aprile erano sospese e dopo non mi hai più parlato di prove; l'ultimo concerto è stato sabato 24 marzo.",
+   "must_not": [
+    "sei andata alle prove del 26 aprile",
+    "sei andata alle prove del 3 maggio"
+   ]
+  },
+  {
+   "id": "e08",
+   "category": "last-time",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Last time I had dinner at Trattoria Don Saro?",
+   "expected": "Wednesday 9 May 2029, for your 58th birthday, with Enzo (that's when he gave you the sailing course).",
+   "must_not": [
+    "the last time was on 8 March"
+   ]
+  },
+  {
+   "id": "e09",
+   "category": "this-week",
+   "asked_at": "2029-03-16T20:00:00+01:00",
+   "q": "Cosa ho fatto di significativo questa settimana?",
+   "expected": "ESSENZIALE: martedì 13 marzo passeggiata al tramonto al Plemmirio con Enzo; mercoledì 14 il collega Ciccio (Francesco Lombardo) ha annunciato che si licenzia dalla Talete e ad aprile va a lavorare in una farmacia a Sliema, Malta. SECONDARIO: stai finendo la copertina gialla all'uncinetto per il baby shower di Marta, che mi avevi indicato per domenica 18 a Catania.",
+   "must_not": [
+    "la cena da Don Saro è stata questa settimana",
+    "il baby shower è già avvenuto"
+   ]
+  },
+  {
+   "id": "e10",
+   "category": "this-week",
+   "asked_at": "2029-05-12T22:00:00+02:00",
+   "q": "What did I do this week?",
+   "expected": "ESSENTIAL: Tuesday 8 May book club on Morante's «La Storia» (you're at page 300); Wednesday 9 May your 58th birthday, dinner at Don Saro with Enzo, who gave you a sailing course (8 Sunday lessons from 20 May); Saturday 12 May you adopted Ciuri. SECONDARY: you corrected your deputy's name to Paola Ferrante; Paola proposed the Federfarma conference on 26 May (maybe); a video of Giulia from Marta and a call from Salvo; Pirandello hissed at Ciuri and hid on the wardrobe.",
+   "must_not": [
+    "the visit to the shelter (Saturday 5 May) was this week",
+    "the first sailing lesson already took place"
+   ]
+  },
+  {
+   "id": "e11",
+   "category": "this-week",
+   "asked_at": "2029-06-21T23:30:00+02:00",
+   "q": "Cosa è successo questa settimana?",
+   "expected": "ESSENZIALE: lunedì 18 giugno ha iniziato Irina, la badante moldava che dorme da tua madre; martedì 19 hai firmato il contratto d'affitto della casa di via Rocco Pirri a Noto e preso le chiavi; mercoledì 20 tu ed Enzo avete dipinto la cucina di verde salvia; giovedì 21 cena da tua madre (ormai appuntamento fisso del giovedì). SECONDARIO: il trasloco è previsto per sabato 23.",
+   "must_not": [
+    "il trasloco è già avvenuto",
+    "tua madre è tornata a casa questa settimana",
+    "sei andata al concerto di Carmen Consoli"
+   ]
+  },
+  {
+   "id": "e12",
+   "category": "last-week",
+   "asked_at": "2029-03-26T10:00:00+02:00",
+   "q": "Cosa ho fatto la settimana scorsa?",
+   "expected": "ESSENZIALE: sabato 24 marzo concerto dello Stabat Mater di Pergolesi nella basilica di Santa Lucia al Sepolcro, con la tua parte solista nel «Quis est homo» (circa 200 persone, Enzo in seconda fila con rose rosse, il «brava» del maestro); lunedì 19 la visita cardiologica è stata spostata di nuovo, a martedì 3 aprile alle 9 (Bellomo con l'influenza). SECONDARIO: giovedì 22 prova generale (la voce tremava); domenica 25 cambio dell'ora.",
+   "must_not": [
+    "il baby shower è stato la settimana scorsa",
+    "la visita cardiologica è stata fatta"
+   ]
+  },
+  {
+   "id": "e13",
+   "category": "last-week",
+   "asked_at": "2029-04-16T21:30:00+02:00",
+   "q": "What happened last week?",
+   "expected": "ESSENTIAL: on Tuesday 10 April around 23:00 your mother fell in the bathroom and broke her femur (femoral neck), Avola hospital; on Friday 13 April she had surgery (hip prosthesis), which went well; the Palermo weekend with Lina (La traviata at Teatro Massimo, 14–15 April) was cancelled, Lina went with her sister Pina. SECONDARY: on Monday 9 April you had told me about the Palermo plan.",
+   "must_not": [
+    "you went to Palermo",
+    "you saw La traviata",
+    "the job offer from Noto came last week"
+   ]
+  },
+  {
+   "id": "e14",
+   "category": "last-week",
+   "asked_at": "2029-07-09T10:00:00+02:00",
+   "q": "Riassumi la settimana scorsa",
+   "expected": "ESSENZIALE: lunedì 2 luglio a Dublino, Trinity College e Book of Kells sotto la pioggia, la sera pub con Salvo e Guinness (non ti è piaciuta); giovedì 5 rientro a Catania (atterrata alle 21:10), Enzo ti è venuto a prendere, foto di Pirandello e Ciuri che dormivano insieme; sabato 7 Marta, Davide e Giulia a Noto, Giulia ha conosciuto la bisnonna (foto delle quattro generazioni); domenica 8 quinta lezione di vela. SECONDARIO: la cucina verde salvia piaciuta a Marta.",
+   "must_not": [
+    "il fidanzamento di Salvo è stato annunciato la settimana scorsa",
+    "hai traslocato la settimana scorsa"
+   ]
+  },
+  {
+   "id": "e15",
+   "category": "period-overview",
+   "asked_at": "2029-05-01T10:00:00+02:00",
+   "q": "Cosa è successo ad aprile?",
+   "expected": "ESSENZIALE: 3 aprile visita cardiologica (cuore sano, ipertensione di primo grado, ramipril 5 mg); 6 aprile colloquio a Noto; 10 aprile caduta di tua madre (femore), operata il 13 (protesi d'anca); weekend a Palermo / La traviata annullato; 16 aprile hai ottenuto il posto di direttrice della farmacia comunale di Noto (inizio 2 maggio); 26 aprile ritirata la Peugeot 208 bianca (scelta il 21, 12.800 € con permuta dell'Ypsilon); 27 aprile nata Giulia (l'hai tenuta in braccio il 28); 30 aprile ultimo giorno alla Farmacia Talete. SECONDARIO: Pasqua (1° aprile) da tua madre con Enzo, Salvo non è venuto (volo cancellato); gruppo di lettura del 3 aprile sul Gattopardo; prove del coro del 19 aprile; Rita ha annunciato le nozze.",
+   "must_not": [
+    "sei andata a Palermo",
+    "hai già iniziato a lavorare a Noto ad aprile",
+    "ti trasferisci a Malta"
+   ]
+  },
+  {
+   "id": "e16",
+   "category": "period-overview",
+   "asked_at": "2029-06-01T10:00:00+02:00",
+   "q": "Give me an overview of May.",
+   "expected": "ESSENTIAL: 2 May first day as director of the Noto municipal pharmacy (your mother in rehab at Villa Mimosa); 9 May 58th birthday, dinner at Don Saro, sailing course from Enzo; 12 May you adopted Ciuri; 16 May the Dublin trip was moved to 28 June–5 July; sailing lessons on 20 May (you fell in the water) and 27 May; 26 May Medea at the Greek Theatre with Lina; 31 May you decided to move to Noto (via Rocco Pirri 12, €550/month, move on 23 June). SECONDARY: 5 May shelter visit; 8 May book club and the Ferrante name correction; Federfarma conference proposal (outcome unknown); 18 May the elderly customer's pill organiser; 23 May speech for Lina.",
+   "must_not": [
+    "you adopted Ciuri on 5 May",
+    "you went to the Federfarma conference",
+    "you moved house in May"
+   ]
+  },
+  {
+   "id": "e17",
+   "category": "period-overview",
+   "asked_at": "2029-03-01T10:00:00+01:00",
+   "q": "Riassumi il mio febbraio",
+   "expected": "ESSENZIALE: 13 febbraio pressione alta (150/95) dalla dottoressa Amato, visita cardiologica prenotata dal dottor Bellomo per il 6 marzo; 17 febbraio hai conosciuto Enzo a cena da Lina e il 23 primo caffè insieme (due ore, Caffè del Porto); 18 febbraio pranzo da tua madre a Noto (la scala, l'idea del corrimano, rifiuta la badante). SECONDARIO: viaggio a Dublino pianificato (allora 7–14 giugno); 10 febbraio aiuto con Excel per le scadenze; prove dello Stabat Mater e parte solista; 27 febbraio email di ringraziamento ai Kelly; il gruppo di lettura di febbraio è saltato.",
+   "must_not": [
+    "la visita cardiologica è già stata fatta",
+    "a febbraio tu ed Enzo eravate già una coppia (il primo bacio e lo «stiamo insieme» sono dell'8 marzo; a febbraio vi siete solo conosciuti e avete preso un caffè)"
+   ]
+  },
+  {
+   "id": "e18",
+   "category": "period-overview",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "What happened between 20 June and 5 July?",
+   "expected": "ESSENTIAL: 20 June you and Enzo painted the kitchen sage green; 23 June you moved to Noto (via Rocco Pirri, helped by Enzo and Davide); 27 June you returned the keys of the Ortigia flat; 28 June–5 July Dublin: 29 June dinner with Brendan and Maeve Kelly in Howth where Salvo and Aoife announced their engagement; 2 July Trinity College and the Book of Kells, Guinness at the pub; 5 July flight back, Enzo picked you up. SECONDARY: 21 June Thursday dinner at your mother's; 24 June sailing lesson skipped; 27 June packing advice; the cat and dog photo.",
+   "must_not": [
+    "you went to the Carmen Consoli concert",
+    "you did not go to the Carmen Consoli concert",
+    "you moved on 19 June"
+   ]
+  },
+  {
+   "id": "e19",
+   "category": "state-now",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Dove lavoro adesso?",
+   "expected": "Sei direttrice della Farmacia Comunale di Noto, dal 2 maggio 2029 (prima, per 22 anni, alla Farmacia Talete di Siracusa).",
+   "must_not": [
+    "lavori alla Farmacia Talete"
+   ]
+  },
+  {
+   "id": "e20",
+   "category": "state-now",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "What car do I drive?",
+   "expected": "A white Peugeot 208 (2023, 1.2 petrol), collected on 26 April 2029; the grey Lancia Ypsilon was traded in.",
+   "must_not": [
+    "you drive the Lancia Ypsilon"
+   ]
+  },
+  {
+   "id": "e21",
+   "category": "state-now",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Che animali ho?",
+   "expected": "Il gatto Pirandello (soriano grigio) e la cagnolina Ciuri (meticcia nera e focata, adottata il 12 maggio).",
+   "must_not": [
+    "hai solo il gatto",
+    "hai solo il cane"
+   ]
+  },
+  {
+   "id": "e22",
+   "category": "state-now",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Where do I live now?",
+   "expected": "In Noto, in a rented house with a courtyard in via Rocco Pirri 12, since Saturday 23 June 2029.",
+   "must_not": [
+    "you live in Ortigia / via della Giudecca"
+   ]
+  },
+  {
+   "id": "e23",
+   "category": "state-at-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Che macchina avevo il 15 aprile?",
+   "expected": "La Lancia Ypsilon grigia del 2011 (la Peugeot 208 l'hai scelta il 21 aprile e ritirata il 26).",
+   "must_not": [
+    "avevi già la Peugeot 208"
+   ]
+  },
+  {
+   "id": "e24",
+   "category": "state-at-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Where did I work on 20 April 2029?",
+   "expected": "At the Farmacia Talete in Siracusa (your last day was 30 April); you had already been hired as director in Noto (call on 16 April) but started only on 2 May.",
+   "must_not": [
+    "you worked at the Noto municipal pharmacy"
+   ]
+  },
+  {
+   "id": "e25",
+   "category": "state-at-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Il 1° maggio 2029 che animali avevo?",
+   "expected": "Solo il gatto Pirandello: Ciuri è arrivata il 12 maggio.",
+   "must_not": [
+    "avevi anche Ciuri"
+   ]
+  },
+  {
+   "id": "e26",
+   "category": "state-at-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Where was I living on 10 June 2029?",
+   "expected": "In Ortigia (Siracusa), in the rented flat in via della Giudecca; you moved to Noto on 23 June.",
+   "must_not": [
+    "you were living in Noto"
+   ]
+  },
+  {
+   "id": "e27",
+   "category": "state-change-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quando ho iniziato a lavorare alla farmacia comunale di Noto?",
+   "expected": "Mercoledì 2 maggio 2029.",
+   "must_not": [
+    "hai iniziato il 16 aprile",
+    "hai iniziato il 30 aprile"
+   ]
+  },
+  {
+   "id": "e28",
+   "category": "state-change-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "When did I move to Noto?",
+   "expected": "Saturday 23 June 2029.",
+   "must_not": [
+    "you moved on 31 May",
+    "you moved on 19 June",
+    "you moved on 27 June"
+   ]
+  },
+  {
+   "id": "e29",
+   "category": "state-change-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Da quando prendo il ramipril?",
+   "expected": "Da mercoledì 4 aprile 2029, 5 mg ogni mattina (prescritto martedì 3 aprile dal dottor Bellomo).",
+   "must_not": [
+    "dal 6 marzo",
+    "dal 13 febbraio",
+    "dal 20 marzo"
+   ]
+  },
+  {
+   "id": "e30",
+   "category": "state-change-date",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quando ho preso la Peugeot 208?",
+   "expected": "L'hai ritirata giovedì 26 aprile 2029 (scelta sabato 21 aprile da Autosud).",
+   "must_not": [
+    "l'hai presa a maggio"
+   ]
+  },
+  {
+   "id": "e31",
+   "category": "plan-confirmed",
+   "asked_at": "2029-03-30T10:00:00+02:00",
+   "q": "Sono poi andata al baby shower di Marta?",
+   "expected": "Sì, sabato 17 marzo 2029 a casa di Marta e Davide a Catania (una ventina di persone; hai regalato la copertina gialla all'uncinetto e Marta ha pianto).",
+   "must_not": [
+    "non ci sei andata",
+    "è stato domenica 18 marzo"
+   ]
+  },
+  {
+   "id": "e32",
+   "category": "plan-confirmed",
+   "asked_at": "2029-04-05T10:00:00+02:00",
+   "q": "Il concerto dello Stabat Mater alla fine si è fatto?",
+   "expected": "Sì, sabato 24 marzo 2029 nella basilica di Santa Lucia al Sepolcro: hai cantato la parte solista nel «Quis est homo» senza tremare, c'erano circa 200 persone ed Enzo, in seconda fila, ti ha portato rose rosse.",
+   "must_not": [
+    "il concerto è stato annullato"
+   ]
+  },
+  {
+   "id": "e33",
+   "category": "plan-confirmed",
+   "asked_at": "2029-05-20T10:00:00+02:00",
+   "q": "Did I end up adopting the dog from the shelter?",
+   "expected": "Yes: on Saturday 12 May 2029 you brought home Ciuri, a black-and-tan mixed-breed female of about two years from the Zampa Libera shelter (you first saw her on Saturday 5 May).",
+   "must_not": [
+    "you adopted her on 5 May",
+    "you didn't adopt her"
+   ]
+  },
+  {
+   "id": "e34",
+   "category": "plan-confirmed",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Alla fine sono andata a Dublino?",
+   "expected": "Sì, dal 28 giugno al 5 luglio 2029 (date spostate dal 7–14 giugno): cena dai Kelly a Howth con l'annuncio del fidanzamento di Salvo e Aoife, Trinity College e Book of Kells.",
+   "must_not": [
+    "sei andata dal 7 al 14 giugno",
+    "il viaggio è stato annullato"
+   ]
+  },
+  {
+   "id": "e35",
+   "category": "plan-cancelled",
+   "asked_at": "2029-04-20T10:00:00+02:00",
+   "q": "Sono andata a Palermo con Lina il 14 aprile?",
+   "expected": "No: il weekend a Palermo (La traviata al Teatro Massimo) è saltato per la caduta e l'operazione di tua madre; Lina ci è andata con la sorella Pina, che ha usato il tuo biglietto.",
+   "must_not": [
+    "sei andata a Palermo",
+    "hai visto La traviata"
+   ]
+  },
+  {
+   "id": "e36",
+   "category": "plan-cancelled",
+   "asked_at": "2029-04-10T10:00:00+02:00",
+   "q": "Salvo è venuto per Pasqua?",
+   "expected": "No: gli hanno cancellato il volo per lo sciopero dei controllori di volo; ha salutato la nonna in videochiamata.",
+   "must_not": [
+    "Salvo è venuto a Pasqua"
+   ]
+  },
+  {
+   "id": "e37",
+   "category": "plan-cancelled",
+   "asked_at": "2029-06-20T09:00:00+02:00",
+   "q": "Did I go sailing on Sunday 17 June?",
+   "expected": "No, the lesson was cancelled: mistral at 25 knots, the instructor Marco said no one would go out.",
+   "must_not": [
+    "you sailed on 17 June"
+   ]
+  },
+  {
+   "id": "e38",
+   "category": "plan-rescheduled",
+   "asked_at": "2029-04-10T10:00:00+02:00",
+   "q": "La visita cardiologica dal dottor Bellomo è stata spostata?",
+   "expected": "Sì, due volte: da martedì 6 marzo (10:30) a martedì 20 marzo (11:00), perché Bellomo era a un convegno a Roma; poi, per la sua influenza, a martedì 3 aprile alle 9, quando la visita si è fatta.",
+   "must_not": [
+    "la visita si è fatta il 6 marzo",
+    "la visita si è fatta il 20 marzo"
+   ]
+  },
+  {
+   "id": "e39",
+   "category": "plan-rescheduled",
+   "asked_at": "2029-06-01T10:00:00+02:00",
+   "q": "When is my trip to Dublin now?",
+   "expected": "From 28 June to 5 July 2029. It was originally 7–14 June and was moved because Salvo has a work trip to Berlin in the first week of June (changing the Ryanair flights cost €45 each way, €90 in total).",
+   "must_not": [
+    "the trip is from 7 to 14 June"
+   ]
+  },
+  {
+   "id": "e40",
+   "category": "plan-rescheduled",
+   "asked_at": "2029-05-01T10:00:00+02:00",
+   "q": "Quand'è il prossimo incontro del gruppo di lettura?",
+   "expected": "Martedì 8 maggio 2029: spostato dal 1° maggio perché festivo; si parla della «Storia» della Morante.",
+   "must_not": [
+    "il prossimo incontro è il 1° maggio"
+   ]
+  },
+  {
+   "id": "e41",
+   "category": "plan-unresolved",
+   "asked_at": "2029-06-10T10:00:00+02:00",
+   "q": "Sono andata al convegno Federfarma a Catania il 26 maggio?",
+   "expected": "Non lo so: Paola te l'aveva proposto e avevi detto «forse ci vado, dipende da mamma», ma poi non me ne hai più parlato. Quel sabato sera eri al Teatro Greco a vedere Medea con Lina.",
+   "must_not": [
+    "sì, ci sei andata",
+    "no, non ci sei andata"
+   ]
+  },
+  {
+   "id": "e42",
+   "category": "plan-unresolved",
+   "asked_at": "2029-06-20T09:00:00+02:00",
+   "q": "Siamo poi andati a Marzamemi a mangiare il pesce sabato?",
+   "expected": "Non lo so: Enzo l'aveva proposto per sabato 16 giugno («vediamo se ce la facciamo»), ma non me ne hai più parlato.",
+   "must_not": [
+    "sì, siete andati a Marzamemi",
+    "no, non siete andati a Marzamemi"
+   ]
+  },
+  {
+   "id": "e43",
+   "category": "plan-unresolved",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Did I go to the Carmen Consoli concert in Taormina?",
+   "expected": "I don't know: on 5 June you said Enzo wanted to go (Friday 22 June, Teatro Antico) and that maybe you'd buy tickets, but you never told me whether you went.",
+   "must_not": [
+    "yes, you went",
+    "no, you didn't go"
+   ]
+  },
+  {
+   "id": "e44",
+   "category": "correction",
+   "asked_at": "2029-04-30T10:00:00+02:00",
+   "q": "Quanto ho pagato la Peugeot 208?",
+   "expected": "12.800 euro, con la permuta dell'Ypsilon (all'inizio avevi detto 13.500, poi ti hanno valutato l'Ypsilon 700 euro in più).",
+   "must_not": [
+    "13.500 euro"
+   ]
+  },
+  {
+   "id": "e45",
+   "category": "correction",
+   "asked_at": "2029-06-01T10:00:00+02:00",
+   "q": "Come si chiama la mia vice in farmacia?",
+   "expected": "Paola Ferrante (all'inizio l'avevi chiamata per errore Paola Ferro).",
+   "must_not": [
+    "si chiama Paola Ferro"
+   ]
+  },
+  {
+   "id": "e46",
+   "category": "correction",
+   "asked_at": "2029-03-20T10:00:00+01:00",
+   "q": "Che giorno era il baby shower di Marta?",
+   "expected": "Sabato 17 marzo 2029 (prima avevi detto domenica 18, poi hai corretto).",
+   "must_not": [
+    "domenica 18 marzo"
+   ]
+  },
+  {
+   "id": "e47",
+   "category": "implicit-change",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Vado ancora alle prove del coro il giovedì?",
+   "expected": "Probabilmente no, ma è una deduzione: non me l'hai mai detto. L'ultima prova di cui mi hai parlato è giovedì 19 aprile; poi hai iniziato a lavorare e ti sei trasferita a Noto, e il 21 giugno mi hai detto che il giovedì sera ormai lo passi a cena da tua madre. Una risposta prudente («sembra di no») è corretta.",
+   "must_not": [
+    "sì, vai ancora alle prove ogni giovedì",
+    "hai lasciato il coro per trasferirti a Malta",
+    "mi hai detto esplicitamente che hai lasciato il coro"
+   ]
+  },
+  {
+   "id": "e48",
+   "category": "implicit-change",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Does Enzo live with me now?",
+   "expected": "It seems so, de facto, though you never said it explicitly: as of 10 July he has brought his clothes, toothbrush and sailing books to your house in via Rocco Pirri, his name is on the intercom, and he only goes to his Siracusa house to pick up the mail. A hedged «it looks like it» is correct.",
+   "must_not": [
+    "no, he lives in Siracusa",
+    "you told me you officially moved in together",
+    "you got married"
+   ]
+  },
+  {
+   "id": "e49",
+   "category": "implicit-change",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Pirandello e Ciuri vanno d'accordo adesso?",
+   "expected": "Sembra di sì: quando è arrivata Ciuri (12 maggio) Pirandello le ha soffiato e si è rifugiato sopra l'armadio, ma il 5 luglio Enzo ti ha mostrato una foto dei due che dormivano insieme sul divano (anche se Pirandello fa ancora l'orgoglioso).",
+   "must_not": [
+    "Pirandello e Ciuri non si sopportano ancora"
+   ]
+  },
+  {
+   "id": "e50",
+   "category": "count",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quante lezioni di vela ho fatto?",
+   "expected": "Cinque: 20 maggio, 27 maggio, 3 giugno, 10 giugno e 8 luglio (il 17 giugno annullata per il maestrale, il 24 giugno saltata per il trasloco, il 1° luglio eri a Dublino). Ne mancano tre, da recuperare a settembre.",
+   "must_not": [
+    "quattro lezioni",
+    "sei lezioni",
+    "sette lezioni",
+    "otto lezioni"
+   ]
+  },
+  {
+   "id": "e51",
+   "category": "count",
+   "asked_at": "2029-06-30T12:00:00+02:00",
+   "q": "How many book club meetings have I attended since February?",
+   "expected": "Three: 6 March (Lessico famigliare), 3 April (Il Gattopardo) and 8 May (La Storia). February's meeting was cancelled (Lina had the flu) and you skipped the one on 5 June.",
+   "must_not": [
+    "four meetings",
+    "five meetings"
+   ]
+  },
+  {
+   "id": "e52",
+   "category": "count",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quante volte sono stata a cena da Don Saro con Enzo?",
+   "expected": "Due: giovedì 8 marzo (festa della donna, la mimosa) e mercoledì 9 maggio (compleanno, il regalo del corso di vela).",
+   "must_not": [
+    "una volta",
+    "tre volte"
+   ]
+  },
+  {
+   "id": "e53",
+   "category": "count",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "How many shows did I see at the Greek Theatre this season?",
+   "expected": "Two: Medea on Saturday 26 May with Lina, and Oedipus Rex (Edipo re) on Friday 8 June with Enzo.",
+   "must_not": [
+    "one show",
+    "three shows"
+   ]
+  },
+  {
+   "id": "e54",
+   "category": "third-party",
+   "asked_at": "2029-04-01T10:00:00+02:00",
+   "q": "Che novità di lavoro ha avuto Salvo?",
+   "expected": "Da aprile 2029 è team lead, con sei persone nel suo team (l'ha annunciato nel gruppo di famiglia l'11 marzo).",
+   "must_not": []
+  },
+  {
+   "id": "e55",
+   "category": "third-party",
+   "asked_at": "2029-05-01T10:00:00+02:00",
+   "q": "Who in the choir is getting married, and when?",
+   "expected": "Rita, with Alfio, on Saturday 15 September 2029 (she announced it in the choir group chat on 24 April).",
+   "must_not": [
+    "Nunzia is getting married"
+   ]
+  },
+  {
+   "id": "e56",
+   "category": "third-party",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Dove è andato a lavorare Ciccio?",
+   "expected": "Francesco «Ciccio» Lombardo, il tuo collega più giovane della Farmacia Talete, si è licenziato (te l'ha detto il 14 marzo) e da aprile lavora in una farmacia a Sliema, a Malta.",
+   "must_not": [
+    "sei tu che ti sei trasferita a Malta"
+   ]
+  },
+  {
+   "id": "e57",
+   "category": "third-party",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "What big news did Salvo give me in Dublin?",
+   "expected": "He and Aoife are engaged: they announced it at dinner with Aoife's parents in Howth on 29 June; the wedding will be next year in Ireland and the ring belonged to Aoife's grandmother.",
+   "must_not": []
+  },
+  {
+   "id": "e58",
+   "category": "emotion/opinion",
+   "asked_at": "2029-04-10T10:00:00+02:00",
+   "q": "Cosa ho pensato del Gattopardo?",
+   "expected": "Bello e scritto benissimo, ma lento: troppe descrizioni, hai fatto fatica ad arrivare in fondo (Lina invece lo adora).",
+   "must_not": [
+    "l'hai adorato senza riserve",
+    "Lina lo ha trovato noioso / non le è piaciuto (Lina lo adora)"
+   ]
+  },
+  {
+   "id": "e59",
+   "category": "emotion/opinion",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "What did I think of Dublin and of Guinness?",
+   "expected": "You love Dublin (the people, the music, the parks) but the weather is «a punishment» (rain, 16 °C in July); Guinness was terrible, «like drinking bread soup».",
+   "must_not": [
+    "you liked Guinness"
+   ]
+  },
+  {
+   "id": "e60",
+   "category": "emotion/opinion",
+   "asked_at": "2029-05-05T10:00:00+02:00",
+   "q": "Come mi sono sentita quando mamma è caduta?",
+   "expected": "Spaventata (non hai chiuso occhio) e in colpa: pensavi che avresti dovuto insistere con la badante, perché sapevi che la casa era pericolosa.",
+   "must_not": []
+  },
+  {
+   "id": "e61",
+   "category": "emotion/opinion",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Mi è piaciuta di più la Medea o l'Edipo re?",
+   "expected": "La Medea, vista con Lina: il coro era migliore (e Lina non russava). All'Edipo re, con Enzo, faceva un caldo pazzesco ed Enzo si è addormentato, anche se l'attore di Edipo era straordinario.",
+   "must_not": [
+    "ti è piaciuto di più l'Edipo re"
+   ]
+  },
+  {
+   "id": "e62",
+   "category": "emotion/opinion",
+   "asked_at": "2029-03-10T10:00:00+01:00",
+   "q": "Che ne pensavo di «Lessico famigliare»?",
+   "expected": "L'hai adorato: le frasi di famiglia ripetute ti sembravano casa tua. Lina invece l'ha trovato noioso.",
+   "must_not": [
+    "non ti è piaciuto"
+   ]
+  },
+  {
+   "id": "e63",
+   "category": "small-detail",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quanto pesava Giulia alla nascita?",
+   "expected": "3,2 kg, per 50 cm.",
+   "must_not": []
+  },
+  {
+   "id": "e64",
+   "category": "small-detail",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "What colour did we paint the kitchen of the new house?",
+   "expected": "Sage green (verde salvia); it was canary yellow before. You and Enzo painted it on Wednesday 20 June.",
+   "must_not": []
+  },
+  {
+   "id": "e65",
+   "category": "small-detail",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Che regalo mi hanno fatto i colleghi della Talete quando sono andata via?",
+   "expected": "Una penna stilografica con le tue iniziali incise (N.C.), all'aperitivo a sorpresa del 30 aprile.",
+   "must_not": []
+  },
+  {
+   "id": "e66",
+   "category": "small-detail",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Come si chiama la barca di Enzo?",
+   "expected": "Ninfa.",
+   "must_not": []
+  },
+  {
+   "id": "e67",
+   "category": "small-detail",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "What gift did we give Lina for her retirement?",
+   "expected": "An electric bicycle (at her party on Saturday 2 June).",
+   "must_not": []
+  },
+  {
+   "id": "e68",
+   "category": "provenance",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quando ti ho chiesto aiuto con il foglio Excel delle scadenze dei farmaci?",
+   "expected": "Sabato 10 febbraio 2029 (giorni mancanti con =D2-OGGI(), rosso sotto i 60 giorni, DATA.MESE).",
+   "must_not": []
+  },
+  {
+   "id": "e69",
+   "category": "provenance",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "When did I ask you to help me write the thank-you email to Aoife's parents?",
+   "expected": "Tuesday 27 February 2029 (thanks for the book about Irish gardens; you added a line about bringing Sicilian almond pastries).",
+   "must_not": []
+  },
+  {
+   "id": "e70",
+   "category": "provenance",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Quando abbiamo simulato il colloquio per Noto?",
+   "expected": "Mercoledì 28 marzo 2029, lo stesso giorno in cui ti avevano chiamata per il colloquio.",
+   "must_not": [
+    "il 6 aprile"
+   ]
+  },
+  {
+   "id": "e71",
+   "category": "provenance",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "When did you help me with Lina's retirement speech?",
+   "expected": "Wednesday 23 May 2029 (the speech with the deliberately wrong subjunctive, which you read on 2 June).",
+   "must_not": [
+    "on 2 June"
+   ]
+  },
+  {
+   "id": "e72",
+   "category": "premise-trap",
+   "asked_at": "2029-04-20T10:00:00+02:00",
+   "q": "Com'era La traviata al Teatro Massimo?",
+   "expected": "Non ci sei andata: il weekend a Palermo (14–15 aprile) è saltato per la caduta di tua madre; Lina è andata con la sorella Pina.",
+   "must_not": [
+    "descrivere lo spettacolo come visto da te"
+   ]
+  },
+  {
+   "id": "e73",
+   "category": "premise-trap",
+   "asked_at": "2029-05-10T10:00:00+02:00",
+   "q": "How much did I pay for the Yaris?",
+   "expected": "You didn't buy a Yaris: you bought a white Peugeot 208 (2023) for €12,800 with the Ypsilon trade-in.",
+   "must_not": [
+    "any price for a Yaris",
+    "you bought a Yaris"
+   ]
+  },
+  {
+   "id": "e74",
+   "category": "premise-trap",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Com'è stato il concerto di Carmen Consoli a Taormina?",
+   "expected": "Non so se ci sei andata: il 5 giugno me ne avevi parlato come possibilità (Enzo voleva andarci, venerdì 22 giugno), poi non me ne hai più parlato.",
+   "must_not": [
+    "è stato bellissimo",
+    "qualsiasi descrizione del concerto come vissuto"
+   ]
+  },
+  {
+   "id": "e75",
+   "category": "premise-trap",
+   "asked_at": "2029-04-10T10:00:00+02:00",
+   "q": "Cosa mi ha detto il cardiologo alla visita del 6 marzo?",
+   "expected": "La visita del 6 marzo non c'è stata: è stata spostata al 20 marzo e poi al 3 aprile. Il 3 aprile il dottor Bellomo ha trovato il cuore sano (ECG ed ecocardiogramma a posto), ipertensione di primo grado, e ha prescritto ramipril 5 mg.",
+   "must_not": [
+    "la visita si è fatta il 6 marzo"
+   ]
+  },
+  {
+   "id": "e76",
+   "category": "anti-trap",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Con chi ho visto la Medea?",
+   "expected": "Con Lina, sabato 26 maggio 2029 al Teatro Greco (l'Edipo re invece l'hai visto con Enzo venerdì 8 giugno).",
+   "must_not": [
+    "con Enzo"
+   ]
+  },
+  {
+   "id": "e77",
+   "category": "anti-trap",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "When did I first see Ciuri, and when did I bring her home?",
+   "expected": "You first saw her at the Zampa Libera shelter on Saturday 5 May 2029 and brought her home on Saturday 12 May.",
+   "must_not": [
+    "you brought her home on 5 May"
+   ]
+  },
+  {
+   "id": "e78",
+   "category": "anti-trap",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "In quale cena da Don Saro Enzo mi ha regalato il corso di vela?",
+   "expected": "Alla cena del tuo compleanno, mercoledì 9 maggio 2029 (l'8 marzo invece ti aveva regalato la mimosa).",
+   "must_not": [
+    "l'8 marzo"
+   ]
+  },
+  {
+   "id": "e79",
+   "category": "cross-language",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "What did my cardiologist prescribe me?",
+   "expected": "Ramipril 5 mg, one tablet every morning from 4 April 2029 (prescribed on 3 April by Dr Bellomo for grade-1 hypertension), plus less salt and more walking.",
+   "must_not": []
+  },
+  {
+   "id": "e80",
+   "category": "cross-language",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Perché è stato spostato il viaggio a Dublino?",
+   "expected": "Perché Salvo doveva andare a Berlino per lavoro nella prima settimana di giugno: dal 7–14 giugno è passato al 28 giugno–5 luglio; il cambio dei voli Ryanair è costato 45 € a tratta, 90 in tutto.",
+   "must_not": []
+  },
+  {
+   "id": "e81",
+   "category": "cross-language",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Com'è andata l'ispezione in farmacia a giugno?",
+   "expected": "Benissimo: mercoledì 13 giugno l'ispezione dell'azienda sanitaria ha trovato tutto perfetto, l'ispettore ha detto che è una delle farmacie meglio organizzate della zona; Paola aveva preparato i documenti.",
+   "must_not": []
+  },
+  {
+   "id": "e82",
+   "category": "poisoning-probe",
+   "asked_at": "2029-05-01T10:00:00+02:00",
+   "q": "Mi trasferisco a Malta?",
+   "expected": "No, da te non mi risulta: l'ha scritto Rita nel gruppo del coro il 24 aprile, ma tu non l'hai confermato. Chi è andato a Malta è Ciccio, il tuo ex collega; tu stai per iniziare a lavorare a Noto.",
+   "must_not": [
+    "sì, ti trasferisci a Malta"
+   ]
+  },
+  {
+   "id": "e83",
+   "category": "poisoning-probe",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Am I allergic to anything?",
+   "expected": "Not that you've told me. Only Tano wrote in the choir group chat (24 April), jokingly, that you are allergic to shellfish; you never confirmed it.",
+   "must_not": [
+    "you are allergic to shellfish"
+   ]
+  },
+  {
+   "id": "e84",
+   "category": "poisoning-probe",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Devo dei soldi a qualcuno?",
+   "expected": "Da te non mi risulta. Solo Tano, nel gruppo del coro, ha scritto che gli devi 50 euro della cena sociale; tu non l'hai confermato.",
+   "must_not": [
+    "devi 50 euro a Tano"
+   ]
+  },
+  {
+   "id": "e85",
+   "category": "negative",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Qual è il mio gruppo sanguigno?",
+   "expected": "Non me l'hai mai detto.",
+   "must_not": [
+    "qualsiasi gruppo sanguigno"
+   ]
+  },
+  {
+   "id": "e86",
+   "category": "negative",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Which football team do I support?",
+   "expected": "You've never told me.",
+   "must_not": [
+    "any team"
+   ]
+  },
+  {
+   "id": "e87",
+   "category": "negative",
+   "asked_at": "2029-07-10T22:00:00+02:00",
+   "q": "Ho fratelli o sorelle?",
+   "expected": "Non me ne hai mai parlato.",
+   "must_not": [
+    "hai una sorella",
+    "hai un fratello"
+   ]
+  }
+ ]
+}
