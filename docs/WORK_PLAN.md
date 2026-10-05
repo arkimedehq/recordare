@@ -248,3 +248,19 @@ without migrating episodes.
   after the owner's OK; branch deleted after merge.
 - Each milestone ends with: tests green, `tsc --noEmit` clean, eval harness run (from M3),
   docs updated (decisions recorded as D-numbers).
+
+## Evaluation budget (owner's rule, 2026-10-05)
+
+Measured: since the 2026-10-04 top-up, 41 runs / 2,178 judged questions used 27.8 M input + 4.1 M output tokens
+(≈ 6.4 USD on DeepSeek); Mem0 alone was 56 % of it. The cost is the measurement, not Recordare (one person, five
+months, 232 sessions ≈ 1 M input tokens, two thirds cached). Rules:
+
+1. **Exploratory checks: 1 run.** 3 runs only for results that feed a decision or a reported number.
+2. **Base first, noise only if base is promising** (and only for the systems still in question).
+3. **Measured market baselines are not re-run** (Mem0, Cognee, Graphiti, Memobase) unless a specific question needs
+   it — their numbers stay in `RESULTS.md`.
+4. **Controls once per dataset** (no-memory, full context): they do not change between engine versions.
+5. **Small slices while iterating** (`--only` on the failing questions), the full set only to confirm.
+6. **Judge without reasoning** once re-validated against the current judge (`judge_eval.py`): ~4× fewer output tokens.
+7. Every chain is `--resume`-able and ordered by priority, so a stopped chain (balance, outage) keeps what it paid for.
+8. Before a large chain, state its expected token budget and check the provider balance.
