@@ -293,6 +293,19 @@ chats, 45 q, written and audited by separate agents; base, 1 run each): **servic
 denied claims 0.75 / 1.00, state-now 1.00 / 0.83, premise traps 0.80 / 0.80, negatives 1.00 / 1.00, **messages addressed
 to the assistant by others 0.25 / 0.25** — the open weak spot for both.
 
+**Messages addressed to the assistant by others (2026-10-06):** `extract.v5` re-tried on top of the `claims` split
+(keep such messages as claim episodes "X asked the assistant to remember…"): dev 95 %, blind6 slice 78.3 % (was 0.25 on
+this category before and stays 0.25), blind5 slice 81.8 % (was 100 %) — reverted again. Diagnosis (blind6 questions
+of this category read, so it is no longer blind): retrieval, not extraction — "what did my mother ask you to note?"
+cannot reach a message signed "Gabriella" that never says "mother"; needs people ↔ relation resolution and an explicit
+list of requests made to the assistant (design work).
+
+**Engine model: Claude Haiku 4.5 via claude-cli (local eval only), blind5 base, 1 run: 89.1 %** (flash: 91.3 % same
+code, H11 3-run mean 89.2 %). Extraction: recall 0.87, dates 0.97, plan outcome 0.77, **unsupported 20 %** (flash
+4–13 %), facts 0.62 / 0.23, notes 0.64. Cost signals: 74 calls, 445 k input, **778 k output** (the CLI runs Haiku with
+thinking on), ingest 7,240 s (a CLI process per call). Below the 95 % bar; not a candidate as it stands (a run through
+the API with thinking off would be the fair test).
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
