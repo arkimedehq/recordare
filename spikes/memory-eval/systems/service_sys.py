@@ -198,6 +198,9 @@ def format_context(args: dict, episodes: dict, memory: dict) -> str:
         lines.append(f"PERIODO CERCATO: {args.get('from', '…')} → {args.get('to', '…')}")
     lines.append("EPISODI:")
     lines += [_episode_line(e) for e in episodes.get("episodes", [])] or ["- (nessuno)"]
+    if episodes.get("claims"):
+        lines.append("AFFERMAZIONI DI ALTRE PERSONE (non sono ricordi del proprietario; su di lui/lei non confermate):")
+        lines += [_episode_line(e) for e in episodes["claims"]]
     if episodes.get("outsidePeriod"):
         lines.append("ALTRI EPISODI PERTINENTI (fuori dal periodo cercato):")
         lines += [_episode_line(e) for e in episodes["outsidePeriod"]]

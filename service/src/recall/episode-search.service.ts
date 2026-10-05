@@ -49,7 +49,11 @@ export interface EpisodeSearchResult {
   owner: { name: string };
   period?: { from: string | null; to: string | null };
   digests: Array<{ day: string; text: string }>;
+  /** What the owner lived, said or planned (authorRole owner / assistant). */
   episodes: EpisodeView[];
+  /** Other people's and tools' statements (authorRole other / tool), kept apart so that an answer never mixes them
+   * with the owner's memories: claims about the owner are unconfirmed; news about themselves is theirs. */
+  claims: EpisodeView[];
   outsidePeriod: EpisodeView[];
   fromChats: Array<Omit<RawHit, 'score'>>;
   notes: string[];
@@ -141,7 +145,8 @@ export class EpisodeSearchService {
       owner: { name: owner.display_name },
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
       digests: [],
-      episodes: views.slice(0, chosen.length),
+      episodes: views.slice(0, chosen.length).filter((v) => !isClaim(v)),
+      claims: views.slice(0, chosen.length).filter(isClaim),
       outsidePeriod: views.slice(chosen.length),
       fromChats: [],
       notes: [],
@@ -151,10 +156,10 @@ export class EpisodeSearchService {
         ? 'alcuni piani hanno la data passata senza conferma: non è noto se siano avvenuti'
         : 'some plans are past their date without confirmation: whether they happened is unknown');
     }
-    if (result.episodes.some((e) => e.authorRole === 'other' || e.authorRole === 'tool')) {
+    if (result.claims.length) {
       result.notes.push(locale === 'it'
-        ? 'gli elementi con authorRole "other" o "tool" sono affermazioni di chi è in claimedBy, non parole del proprietario: non sono confermati'
-        : 'items with authorRole "other" or "tool" are claims of the people in claimedBy, not the owner\'s words: they are unconfirmed');
+        ? '"claims" sono affermazioni di chi è in claimedBy, non ricordi del proprietario: ciò che dicono di lui/lei non è confermato'
+        : '"claims" are statements of the people in claimedBy, not the owner\'s memories: what they say about the owner is unconfirmed');
     }
     // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…") and keeps the
     // owner's own words next to the summaries, so a few raw hits always come along — also when they are behind a
@@ -164,6 +169,11 @@ export class EpisodeSearchService {
       const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? Math.max(RAW_HITS, profile.rawHitsAlongside) : profile.rawHitsAlongside;
       const hits = await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit });
       result.fromChats = hits.map(({ score: _s, ...h }) => h);
+      if (result.fromChats.some((h) => h.authorRole !== 'owner')) {
+        result.notes.push(locale === 'it'
+          ? 'gli estratti scritti da altri (author) sono parole loro: ciò che dicono del proprietario non è confermato'
+          : 'excerpts written by others (author) are their words: what they say about the owner is unconfirmed');
+      }
     }
     if (chosen.length) {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);
@@ -240,6 +250,10 @@ export class EpisodeSearchService {
       } satisfies EpisodeView;
     });
   }
+}
+
+function isClaim(v: EpisodeView): boolean {
+  return v.authorRole === 'other' || v.authorRole === 'tool';
 }
 
 function firstOfNextMonth(yyyyMm: string): string {

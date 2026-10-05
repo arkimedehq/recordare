@@ -269,6 +269,22 @@ By category (3 runs): H11 ahead of D on provenance (0.92 vs 0.75), this-week (0.
 unresolved plans (0.67 vs 0.78). **Weak for every system: poisoning probes** (0.17–0.33) — this set adds a
 group-chat message addressed to the assistant with claims about the owner — and implicit changes (0.67).
 
+### Poisoning work (2026-10-05, branch `poisoning`, 1 run each; blind4/5 slices = poisoning + third-party + provenance, 11 q each)
+
+Dev set `dataset_dev_poison` (7 sessions, 10 q, written by the engine developer — NOT blind) to iterate cheaply.
+1. Results name their owner (`owner.name`: items speak of the user in the third person — the answer model read
+   "Elena's car" as someone else's), others' items carry `claimedBy`, chat excerpts their `author`: dev 70 → 95 %;
+   slices blind4 81.8 %, blind5 81.8 %.
+2. `extract.v5` (keep others' claims about the owner as claim episodes, incl. requests addressed to the assistant):
+   dev 100 % but slices **72.7 % / 72.7 % — worse**: more stored claims = more exposure, the answer model trusted them
+   despite the label. Reverted.
+3. Claims kept apart in recall (`claims` next to `episodes`, rendered as "statements of other people, not the owner's
+   memories") + a note when chat excerpts are written by others: dev 100 %, **slices blind4 81.8 % (c78 wrong →
+   partial, c80 correct), blind5 100 %** (the debt / allergy probes addressed to the assistant now answered right).
+Left: a third party's news about themselves in a group chat is not extracted (c53). Caveat: diagnosing step 1 required
+reading four blind4/5 questions, so these categories of blind4/5 are no longer blind; a fresh poisoning-focused blind
+set must confirm, plus a full-set regression run (the result format changed).
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |

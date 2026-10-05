@@ -80,7 +80,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    if (!ctx.ownerOnly) return result({ episodes: [], outsidePeriod: [], digests: [], fromChats: [], notes: [NOTHING] });
+    if (!ctx.ownerOnly) return result({ episodes: [], claims: [], outsidePeriod: [], digests: [], fromChats: [], notes: [NOTHING] });
     return result(await deps.episodes.search(deps.ownerId, clientId, {
       query: args.query, from: args.from, to: args.to, mode: args.mode, includePlans: args.include_plans, limit: args.limit,
     }, now(extra)) as unknown as Record<string, unknown>);
