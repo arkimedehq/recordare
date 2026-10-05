@@ -260,6 +260,15 @@ period overviews 0.44 → 0.67, state-now 0.83 → 1.00; lower in this single ru
 implicit-change, cross-language (to be checked with more runs). Blind4 now steered the work at category level, so
 it is no longer fully blind: confirmation on a fifth blind set.
 
+**Confirmation on blind set 5** (Nunzia, 60 sessions, 87 questions, written and audited by separate agents, nobody
+tuned on it; base, answer + judge `deepseek-flash`): **service H11 89.2 %** [85.8, 92.6] (91.9 / 89.7 / 86.0),
+**D 91.7 %** [90.4, 92.9], full context 91.4 % (1 run). Paired: H11 − D −2.1 pt [−5.4, +1.2], **within noise** — the
+gap of blind4 (−7.5 pt, significant) is closed on a fresh set; the service is at the full-context ceiling level.
+By category (3 runs): H11 ahead of D on provenance (0.92 vs 0.75), this-week (0.83 vs 0.72), poisoning (0.33 vs
+0.17); behind on rescheduled plans (0.78 vs 1.00), cross-language (0.78 vs 1.00), last-time (0.88 vs 1.00),
+unresolved plans (0.67 vs 0.78). **Weak for every system: poisoning probes** (0.17–0.33) — this set adds a
+group-chat message addressed to the assistant with claims about the owner — and implicit changes (0.67).
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
