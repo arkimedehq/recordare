@@ -29,6 +29,8 @@ export interface FactView {
 }
 
 export interface MemorySearchResult {
+  /** Whose memory this is (items name the owner in the third person). */
+  owner: { name: string };
   notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; authorRole: string }>;
   facts: FactView[];
   notes_info: string[];
@@ -43,7 +45,8 @@ export class MemorySearchService {
   constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {}
 
   async search(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
-    const [owner] = await this.db.query(`SELECT timezone, locale FROM owners WHERE person_id = $1`, [ownerId]);
+    const [owner] = await this.db.query(
+      `SELECT o.timezone, o.locale, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     const tz: string = owner.timezone;
     const asOfDay = args.asOf ? (args.asOf.length === 7 ? `${args.asOf}-01` : args.asOf.slice(0, 10)) : null;
     const asOf = asOfDay ? zonedMidnight(addDays(asOfDay, 1), tz) : now; // end of that day
@@ -100,6 +103,6 @@ export class MemorySearchService {
     if (facts.some((f) => f.status === 'unknown')) {
       info.push(owner.locale === 'it' ? 'per alcuni fatti il valore attuale non è noto' : 'the current value of some facts is not known');
     }
-    return { notes, facts, notes_info: info };
+    return { owner: { name: owner.display_name }, notes, facts, notes_info: info };
   }
 }

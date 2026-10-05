@@ -35,6 +35,8 @@ export interface EpisodeView {
   rescheduledTo?: string;
   origin: 'owner_lived' | 'owner_told' | 'assistant_stated';
   authorRole: 'owner' | 'assistant' | 'other' | 'tool';
+  /** Who wrote the evidence when it is someone else's claim (authorRole other / tool): names, never the owner. */
+  claimedBy?: string[];
   inferred: boolean;
   people: string[];
   feelings: string[];
@@ -43,6 +45,8 @@ export interface EpisodeView {
 }
 
 export interface EpisodeSearchResult {
+  /** Whose memory this is: items name the owner in the third person ("Elena ha…") — that is the user asking. */
+  owner: { name: string };
   period?: { from: string | null; to: string | null };
   digests: Array<{ day: string; text: string }>;
   episodes: EpisodeView[];
@@ -79,7 +83,8 @@ export class EpisodeSearchService {
   }
 
   async search(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
-    const [owner] = await this.db.query(`SELECT locale, timezone, quality_profile FROM owners WHERE person_id = $1`, [ownerId]);
+    const [owner] = await this.db.query(
+      `SELECT o.locale, o.timezone, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     const profile = qualityProfile(owner.quality_profile, this.defaultProfile);
     const tz: string = owner.timezone;
     const locale: string = owner.locale;
@@ -133,6 +138,7 @@ export class EpisodeSearchService {
 
     const views = await this.views([...chosen, ...outside], tz, locale, now);
     const result: EpisodeSearchResult = {
+      owner: { name: owner.display_name },
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
       digests: [],
       episodes: views.slice(0, chosen.length),
@@ -147,8 +153,8 @@ export class EpisodeSearchService {
     }
     if (result.episodes.some((e) => e.authorRole === 'other' || e.authorRole === 'tool')) {
       result.notes.push(locale === 'it'
-        ? 'gli elementi con authorRole "other" o "tool" vengono da altre persone o da strumenti: sono loro affermazioni, non parole del proprietario'
-        : 'items with authorRole "other" or "tool" come from other people or tools: they are their claims, not the owner\'s words');
+        ? 'gli elementi con authorRole "other" o "tool" sono affermazioni di chi è in claimedBy, non parole del proprietario: non sono confermati'
+        : 'items with authorRole "other" or "tool" are claims of the people in claimedBy, not the owner\'s words: they are unconfirmed');
     }
     // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…") and keeps the
     // owner's own words next to the summaries, so a few raw hits always come along — also when they are behind a
@@ -200,9 +206,14 @@ export class EpisodeSearchService {
     if (rows.length === 0) return [];
     const ids = rows.map((r) => r.id);
     const people: Array<{ episode_id: string; alias: string }> = await this.db.query(`SELECT episode_id, alias FROM episode_people WHERE episode_id = ANY($1)`, [ids]);
-    const evidence: Array<{ episode_id: string; message_id: string; external_id: string; sent_at: Date }> = await this.db.query(
-      `SELECT ev.episode_id, ev.message_id, c.external_id, m.sent_at FROM episode_evidence ev
-       JOIN messages m ON m.id = ev.message_id JOIN conversations c ON c.id = m.conversation_id WHERE ev.episode_id = ANY($1)`, [ids]);
+    const evidence: Array<{ episode_id: string; message_id: string; external_id: string; sent_at: Date; role: string; author: string | null }> = await this.db.query(
+      `SELECT ev.episode_id, ev.message_id, c.external_id, m.sent_at, m.role,
+              CASE WHEN m.role = 'tool' THEN m.tool_name ELSE COALESCE(p.display_name, cp.display_name) END AS author
+       FROM episode_evidence ev
+       JOIN messages m ON m.id = ev.message_id JOIN conversations c ON c.id = m.conversation_id
+       LEFT JOIN persons p ON p.id = m.author_person_id
+       LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
+       WHERE ev.episode_id = ANY($1) ORDER BY m.sent_at`, [ids]);
     const rescheduled = rows.filter((r) => r.rescheduled_to).map((r) => r.rescheduled_to as string);
     const targets: Array<{ id: string; occurred_at: Date | null; date_precision: Precision }> = rescheduled.length
       ? await this.db.query(`SELECT id, occurred_at, date_precision FROM episodes WHERE id = ANY($1)`, [rescheduled]) : [];
@@ -219,7 +230,10 @@ export class EpisodeSearchService {
         when: describe(r.occurred_at, r.date_precision, tz, locale) + (r.occurred_until ? ` → ${describe(r.occurred_until, 'day', tz, locale)}` : ''),
         ...(planStatus ? { planStatus } : {}),
         ...(target ? { rescheduledTo: describe(target.occurred_at, target.date_precision, tz, locale) } : {}),
-        origin: r.origin, authorRole: r.author_role, inferred: r.stance === 'inferred',
+        origin: r.origin, authorRole: r.author_role,
+        ...(r.author_role === 'other' || r.author_role === 'tool'
+          ? { claimedBy: [...new Set(ev.filter((e) => e.role === 'other' || e.role === 'tool').map((e) => e.author ?? '?'))] } : {}),
+        inferred: r.stance === 'inferred',
         people: people.filter((p) => p.episode_id === r.id).map((p) => p.alias),
         feelings: r.feelings, ...(r.opinion ? { opinion: r.opinion } : {}),
         source: { conversation: ev[0]?.external_id ?? '', messageIds: ev.map((e) => e.message_id), at: ev[0]?.sent_at.toISOString() ?? '' },

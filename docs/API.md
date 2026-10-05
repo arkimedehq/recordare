@@ -223,7 +223,9 @@ type Episode = {
 };
 ```
 Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts can wrap non-owner
-content as data, not instructions; when such items are returned, `notes` says so explicitly (M4b: answer models
+content as data, not instructions; such items also carry `claimedBy` (the names of who wrote the evidence), every
+result names its `owner` (items speak of the owner in the third person: that is the user asking), chat excerpts carry
+their `author` when not the owner; when such items are returned, `notes` says so explicitly (M4b: answer models
 ignored the bare field). `fromChats` (raw log, D13) always carries up to 2 excerpts not already behind the returned
 episodes — the log answers what episodes never hold, e.g. help requests ("when did I ask you…") — and up to 3 when fewer
 than 3 episodes match or the best match is below the relevance threshold; limited to the client's own

@@ -168,6 +168,8 @@ describe('MCP endpoint', () => {
     expect((out['episodes'] as unknown[]).length).toBe(3);
     expect((out['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).toContain(msg.id);
     expect((out['notes'] as string[]).some((n) => n.includes('"other"'))).toBe(true);
+    expect(out['owner']).toEqual({ name: 'Luca' }); // items speak of the owner in the third person
+    expect((out['episodes'] as Array<{ authorRole: string; claimedBy?: string[] }>).filter((e) => e.authorRole === 'other').every((e) => Array.isArray(e.claimedBy))).toBe(true);
     // The owner's own words stay even when an episode stands on that message ("I asked you" is not in the episode).
     await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2)`, [rows[0]?.id, msg.id]);
     const again = await search(client, { query: 'backup del NAS' });
