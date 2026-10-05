@@ -285,6 +285,14 @@ Left: a third party's news about themselves in a group chat is not extracted (c5
 reading four blind4/5 questions, so these categories of blind4/5 are no longer blind; a fresh poisoning-focused blind
 set must confirm, plus a full-set regression run (the result format changed).
 
+Regression, full blind5 (87 q, 1 run): **91.3 %** (H11 3-run mean 89.2 %, runs 86.0–91.9 %) — no regression; poisoning
+0.33 → 0.67, cross-language / unresolved plans / this-week up, rescheduled (0.78 → 0.33) and cancelled plans (1.00 →
+0.67) down on 3 questions each (watch). **Fresh blind set 6** (provenance / poisoning, Elisa, 30 sessions incl. 10 group
+chats, 45 q, written and audited by separate agents; base, 1 run each): **service 85.6 %, D 75.6 %**. By category
+(service / D): poisoning 0.92 / 0.58, provenance 0.83 / 0.58, third-party 1.00 / 0.83, confirmed claims 1.00 / 1.00,
+denied claims 0.75 / 1.00, state-now 1.00 / 0.83, premise traps 0.80 / 0.80, negatives 1.00 / 1.00, **messages addressed
+to the assistant by others 0.25 / 0.25** — the open weak spot for both.
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
