@@ -215,7 +215,37 @@ into the slot its own prompt reserves; Mem0 stores memories in English; Cognee T
 
 **More local engines (Ollama, base, 1 run; removed afterwards per the ≥ 95 % rule):** Qwen3.5-9B **73.6 %**
 (recall 0.70, dates 0.61, unsupported 12 %, facts 0.27, notes 0.10) — best local so far, +14 pt over Qwen3-8B;
-Gemma 4 12B 73.6 %. (gpt-oss 20B and Gemma 4 26B pending.)
+Gemma 4 12B 73.6 %; **gpt-oss 20B 83.3 %** (reasoning "low"; best local); Gemma 4 26B (16 GB) does not fit a 24 GB Mac next to Docker — memory pressure restarted Postgres mid-run, no result.
+
+**Quality profiles (4b.3), blind3 base, 3 runs:** economy 93.5 % [90.3, 96.7], balanced (= v4) 94.9 %, full
+(reasoning on) 92.1 % [86.2, 98.0] — all within noise. Full extracts better (dates 0.96–0.98, notes 0.73–0.87, facts
+up to 0.82) but answers no better, at 3.5× output tokens (98 k vs 28 k per run) and 2.4× ingest time (347 s vs
+147 s). With DeepSeek there is no distinct light model, so economy only changes context sizes. Decision: balanced
+stays the default; full is re-assessed when it gets its verification pass / reranker.
+
+### Blind dataset 4 (2026-10-05) — the honest confirmation
+
+`dataset_blind4` (Tommaso, 62 sessions, **84 questions**, IT/EN, 3 group chats; written by a separate agent and
+audited by a second one; nobody tuned on it). 3 runs each, answer + judge `deepseek-flash`:
+
+| System | Base | Noise |
+|---|---|---|
+| service v4 (balanced) | **80.8 %** [78.8, 82.8] | 79.8 % [78.0, 81.5] |
+| Mem0 2.2.1 | 78.0 % [75.0, 81.0] | 79.3 % [77.3, 81.3] |
+| prototype D | **88.3 %** [86.2, 90.4] | — |
+| full context (ceiling) | 89.9 % [86.3, 93.5] | — |
+
+Paired: **D − v4 +7.5 pt [3.4, 12.3], D better**; full context − v4 +9.1 pt [3.4, 15.3]; v4 vs Mem0 +2.8 base /
++0.4 noise, within noise. By category v4 loses most on **provenance** (−0.58 vs D, "when did I ask you…"),
+corrections, this-week, period overviews and third-party news; it beats Mem0 on this-week / last-week (+0.56) and
+anti-traps, loses to it on provenance and third-party.
+
+**Extraction is not the problem** (`extraction_eval.py`, 6 runs): episode recall 0.96–0.99, dates 0.99–1.00, plan
+outcome 0.82–1.00, unsupported 9–13 %, facts 0.46–0.62 / 0.23–0.62, notes 0.50–0.67. The loss is in **recall**:
+what `search_episodes` / `search_memory` return to the answer model (D and full context see raw conversations).
+Reading: the 95 % on blind3 was partly fitted to a seen set; on a fresh, larger set the service is at Mem0's level
+and ~8 pt under D. Next work: recall (H11), measured at category level only on blind4 (no question-level tuning),
+confirmed on a fifth blind set.
 
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 

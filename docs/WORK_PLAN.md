@@ -153,7 +153,11 @@ Noise: v3 88.0 % (D 94.0 %, full context 95.3 %) — corrections lost because th
 recent items; **extract.v4** (recent + related episodes) → **noise 95.4 %, base 94.9 %**, on par with D and with
 full context. Facts are the weakest extraction stage (→ M5). Next: local models in the matrix (Qwen3-8B,
 MiniCPM4.1-8B; MiniCPM5-2B as light model), profiles.
-Local engines measured: Qwen3-8B 59.7 %, Qwen3-14B 66.7 %, MiniCPM excluded after probes. **Owner's rule: an engine
+**Blind set 4 (84 q, nobody tuned on it): service v4 80.8 % base / 79.8 % noise, Mem0 78.0 / 79.3 %, D 88.3 %,
+full context 89.9 %** — extraction is fine (recall 0.96–0.99, dates ~1.0); the gap is recall (provenance, period
+overviews, corrections, third-party). Profiles: economy 93.5 %, balanced 94.9 %, full 92.1 % on blind3 (within noise;
+full costs 3.5× output). Next: recall work (H11) at category level, confirmed on a fifth blind set.
+Local engines measured: Qwen3-8B 59.7 %, Qwen3-14B 66.7 %, Qwen3.5-9B 73.6 %, Gemma 4 12B 73.6 %, gpt-oss 20B 83.3 %, Gemma 4 26B does not fit, MiniCPM excluded after probes. **Owner's rule: an engine
 model is supported only at ≥ 95 % on the suite**; weaker models are removed, results kept (RESULTS.md). Details in
 `spikes/memory-eval/RESULTS.md` § M4b.
 
