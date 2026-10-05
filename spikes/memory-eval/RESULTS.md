@@ -247,6 +247,19 @@ Reading: the 95 % on blind3 was partly fitted to a seen set; on a fresh, larger 
 and ~8 pt under D. Next work: recall (H11), measured at category level only on blind4 (no question-level tuning),
 confirmed on a fifth blind set.
 
+### H11 recall, first step (2026-10-05, branch `h11-recall`, 1 run each — exploratory)
+
+Diagnosis from context metadata per category on blind4 (no question read): the service handed the answer model
+about half of D's episodes (an over-strict relevance gate), 2 chat excerpts instead of 3 — excluding those behind a
+returned episode, i.e. exactly the owner's "I asked you…" — and none for period questions (no query sent).
+Changes: relevant episodes first, free places filled (search by similarity, period lists by importance); excerpts
+kept even when behind an episode; 3 excerpts in balanced (5 full, 1 economy); the tool asks for the user's question
+also when listing a period. Result, 1 run: **blind4 86.9 %** (v4 80.8 % over 3 runs; D 88.3 %), **blind3 97.2 %**
+(v4 94.9 %). By category on blind4: provenance 0.42 → 1.00, corrections 0.79 → 1.00, this-week 0.72 → 1.00,
+period overviews 0.44 → 0.67, state-now 0.83 → 1.00; lower in this single run: last-time 0.89 → 0.67,
+implicit-change, cross-language (to be checked with more runs). Blind4 now steered the work at category level, so
+it is no longer fully blind: confirmation on a fifth blind set.
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
