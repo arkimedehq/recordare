@@ -5,7 +5,7 @@ import { type INestApplication } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { type Server } from 'node:http';
-import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
+import { ADMIN_KEY, call, fakeVector, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
 
 async function connect(url: string, headers: Record<string, string>): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
   const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), { requestInit: { headers } });
@@ -153,7 +153,7 @@ describe('MCP endpoint', () => {
     await client.close();
   });
 
-  it('keeps a few chat excerpts next to matching episodes, never the ones behind them; labels claims of others', async () => {
+  it('keeps a few chat excerpts next to matching episodes, also the ones behind them; labels claims of others', async () => {
     const db = app.get((await import('typeorm')).DataSource);
     const [msg] = await db.query(`SELECT id FROM messages WHERE external_id = 'nas-chat-1'`);
     const rows: Array<{ id: string }> = [];
@@ -168,11 +168,31 @@ describe('MCP endpoint', () => {
     expect((out['episodes'] as unknown[]).length).toBe(3);
     expect((out['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).toContain(msg.id);
     expect((out['notes'] as string[]).some((n) => n.includes('"other"'))).toBe(true);
-    // Once an episode stands on that message, the same excerpt is not repeated.
+    // The owner's own words stay even when an episode stands on that message ("I asked you" is not in the episode).
     await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2)`, [rows[0]?.id, msg.id]);
     const again = await search(client, { query: 'backup del NAS' });
-    expect((again['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).not.toContain(msg.id);
+    expect((again['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).toContain(msg.id);
     await db.query(`DELETE FROM episodes WHERE id = ANY($1)`, [rows.map((r) => r.id)]);
+    await client.close();
+  });
+
+  it('fills free places with the nearest episodes instead of returning half a page', async () => {
+    const db = app.get((await import('typeorm')).DataSource);
+    const ids: string[] = [];
+    for (const content of ['Cena al ristorante giapponese', 'Visita dal dentista', 'Partita di calcetto']) {
+      const [r] = await db.query(
+        `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, occurred_at, date_precision, embedding)
+         VALUES ($1, 'event', $2, 'owner_lived', 'owner', $3, '2026-01-20T20:00:00Z', 'day', $4::vector) RETURNING id`,
+        [ownerId, content, [ownerId], `[${fakeVector(content).join(',')}]`]);
+      ids.push(r.id);
+    }
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    // No word in common and (fake) vectors far apart: before, nothing passed the relevance gate.
+    const out = await search(client, { query: 'zzz qqq' });
+    expect((out['episodes'] as unknown[]).length).toBe(3);
+    const listed = await search(client, { query: 'zzz qqq', mode: 'list', from: '2026-01-20', to: '2026-01-20' });
+    expect((listed['episodes'] as unknown[]).length).toBe(3);
+    await db.query(`DELETE FROM episodes WHERE id = ANY($1)`, [ids]);
     await client.close();
   });
 

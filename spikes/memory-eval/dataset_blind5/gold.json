@@ -1,0 +1,1321 @@
+{
+ "user": "nunzia",
+ "episodes": [
+  {
+   "id": "g-e01",
+   "sessions": [
+    "s01"
+   ],
+   "content": "Introduced herself: Nunzia Caruso, 57, pharmacist at Farmacia Talete (Siracusa, viale Teocrito) for 22 years, owner dott. Corrado Inguaggiato; rented flat in via della Giudecca, Ortigia; divorced; children Marta (28, Catania, married to Davide, expecting a girl end of April) and Salvo (31, software engineer in Dublin, girlfriend Aoife); mother Concetta (84) alone in Noto; cat Pirandello; grey 2011 Lancia Ypsilon; alto in Coro polifonico Santa Lucia (Thursday 21:00); book club «Le Lettrici di Ortigia» first Tuesday of the month at Lina's",
+   "kind": "state_change",
+   "date": "2029-02-05",
+   "date_precision": "day",
+   "people": [
+    "Marta",
+    "Salvo",
+    "Concetta",
+    "Lina",
+    "Corrado Inguaggiato"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e02",
+   "sessions": [
+    "s01"
+   ],
+   "content": "February book club meeting cancelled (Lina had the flu)",
+   "kind": "plan",
+   "date": "2029-02-06",
+   "date_precision": "day",
+   "people": [
+    "Lina"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e03",
+   "sessions": [
+    "s02",
+    "s40",
+    "s54",
+    "s55",
+    "s56",
+    "s57"
+   ],
+   "content": "Trip to Dublin to visit Salvo: planned 7–14 June, moved on 16 May to 28 June–5 July (Salvo's work trip to Berlin; flight change €90); took place 28 June–5 July",
+   "kind": "plan",
+   "date": "2029-06-28",
+   "date_precision": "day",
+   "people": [
+    "Salvo",
+    "Aoife"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "g-e04",
+   "sessions": [
+    "s03"
+   ],
+   "content": "Asked the assistant for an Excel formula for days to expiry of drugs (help request)",
+   "kind": "event",
+   "date": "2029-02-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e05",
+   "sessions": [
+    "s04"
+   ],
+   "content": "GP dott.ssa Amato measured blood pressure 150/95; booked cardiology visit with dott. Bellomo for Tue 6 March 10:30; worried (father had a heart attack at 70)",
+   "kind": "event",
+   "date": "2029-02-13",
+   "date_precision": "day",
+   "people": [
+    "dott.ssa Amato",
+    "dott. Bellomo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e06",
+   "sessions": [
+    "s04",
+    "s10",
+    "s17",
+    "s22"
+   ],
+   "content": "Cardiology visit with dott. Bellomo: 6 March 10:30 → moved (conference in Rome) to 20 March 11:00 → moved (Bellomo's flu) to 3 April 9:00; took place 3 April",
+   "kind": "plan",
+   "date": "2029-04-03",
+   "date_precision": "day",
+   "people": [
+    "dott. Bellomo"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "g-e07",
+   "sessions": [
+    "s05"
+   ],
+   "content": "Choir rehearsal; preparing Pergolesi's Stabat Mater for the 24 March concert; got a solo part in «Quis est homo» from maestro Gino Pappalardo",
+   "kind": "event",
+   "date": "2029-02-15",
+   "date_precision": "day",
+   "people": [
+    "Gino Pappalardo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e08",
+   "sessions": [
+    "s06"
+   ],
+   "content": "Lunch at her mother's in Noto (pasta con le sarde); mother struggles with the stairs and refuses a carer; idea of a handrail",
+   "kind": "event",
+   "date": "2029-02-18",
+   "date_precision": "day",
+   "people": [
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e09",
+   "sessions": [
+    "s07"
+   ],
+   "content": "Met Enzo Gulino (61, widower, retired sailing instructor of the Lega Navale, boat «Ninfa») at a dinner at Lina's",
+   "kind": "event",
+   "date": "2029-02-17",
+   "date_precision": "day",
+   "people": [
+    "Enzo",
+    "Lina"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e10",
+   "sessions": [
+    "s07",
+    "s08"
+   ],
+   "content": "Coffee with Enzo at Caffè del Porto (two hours) and walk on lungomare Alfeo; felt happy and nervous",
+   "kind": "plan",
+   "date": "2029-02-23",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e11",
+   "sessions": [
+    "s09"
+   ],
+   "content": "Asked the assistant to write an English thank-you email to Brendan and Maeve Kelly (Aoife's parents) for a book about Irish gardens (help request)",
+   "kind": "event",
+   "date": "2029-02-27",
+   "date_precision": "day",
+   "people": [
+    "Brendan Kelly",
+    "Maeve Kelly"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e12",
+   "sessions": [
+    "s11"
+   ],
+   "content": "Visited her mother in Noto; the handrail was installed; told her about Enzo; lunch pasta alla Norma",
+   "kind": "event",
+   "date": "2029-03-04",
+   "date_precision": "day",
+   "people": [
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e13",
+   "sessions": [
+    "s12"
+   ],
+   "content": "Book club at Lina's on «Lessico famigliare» (Ginzburg): Nunzia loved it, Lina found it boring; next book «Il Gattopardo»",
+   "kind": "event",
+   "date": "2029-03-06",
+   "date_precision": "day",
+   "people": [
+    "Lina"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e14",
+   "sessions": [
+    "s13"
+   ],
+   "content": "Dinner with Enzo at Trattoria Don Saro (Ortigia) on Women's Day, mimosa; skipped choir rehearsal; first kiss, now a couple",
+   "kind": "event",
+   "date": "2029-03-08",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e15",
+   "sessions": [
+    "s14"
+   ],
+   "content": "Family group chat: Marta at 33 weeks, due date 28 April; Salvo becomes team lead from April (six people)",
+   "kind": "event",
+   "date": "2029-03-11",
+   "date_precision": "day",
+   "people": [
+    "Marta",
+    "Salvo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e16",
+   "sessions": [
+    "s15"
+   ],
+   "content": "Sunset walk at the Plemmirio with Enzo",
+   "kind": "event",
+   "date": "2029-03-13",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e17",
+   "sessions": [
+    "s15"
+   ],
+   "content": "Colleague Francesco «Ciccio» Lombardo resigned from Farmacia Talete; from April works at a pharmacy in Sliema, Malta",
+   "kind": "event",
+   "date": "2029-03-14",
+   "date_precision": "day",
+   "people": [
+    "Ciccio"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e18",
+   "sessions": [
+    "s15",
+    "s16"
+   ],
+   "content": "Marta's baby shower at her home in Catania (first said Sunday 18, corrected to Saturday 17); ~20 people; Nunzia gave a yellow crocheted blanket",
+   "kind": "plan",
+   "date": "2029-03-17",
+   "date_precision": "day",
+   "people": [
+    "Marta",
+    "Davide",
+    "Franca"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e19",
+   "sessions": [
+    "s18"
+   ],
+   "content": "Choir dress rehearsal at Santa Lucia al Sepolcro; voice trembling",
+   "kind": "event",
+   "date": "2029-03-22",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e20",
+   "sessions": [
+    "s05",
+    "s18",
+    "s19"
+   ],
+   "content": "Stabat Mater concert at the basilica of Santa Lucia al Sepolcro: solo in «Quis est homo» went well, ~200 people, Enzo in the second row with red roses, maestro said «brava»",
+   "kind": "plan",
+   "date": "2029-03-24",
+   "date_precision": "day",
+   "people": [
+    "Enzo",
+    "Gino Pappalardo"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e21",
+   "sessions": [
+    "s20"
+   ],
+   "content": "Called for an interview for director of the Farmacia Comunale di Noto (applied in February); asked the assistant to simulate the interview (help request)",
+   "kind": "event",
+   "date": "2029-03-28",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e22",
+   "sessions": [
+    "s21"
+   ],
+   "content": "Easter lunch at her mother's in Noto with Enzo (first meeting; mother approves)",
+   "kind": "event",
+   "date": "2029-04-01",
+   "date_precision": "day",
+   "people": [
+    "Enzo",
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e23",
+   "sessions": [
+    "s21"
+   ],
+   "content": "Salvo's Easter visit cancelled: flight cancelled by an air-traffic-control strike",
+   "kind": "plan",
+   "date": "2029-04-01",
+   "date_precision": "day",
+   "people": [
+    "Salvo"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e24",
+   "sessions": [
+    "s22"
+   ],
+   "content": "Cardiology visit: ECG and echo normal, grade-1 hypertension, ramipril 5 mg every morning from 4 April",
+   "kind": "state_change",
+   "date": "2029-04-03",
+   "date_precision": "day",
+   "people": [
+    "dott. Bellomo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e25",
+   "sessions": [
+    "s12",
+    "s22"
+   ],
+   "content": "Book club on «Il Gattopardo»: Nunzia found it beautiful but slow; next meeting moved from 1 May to 8 May («La Storia»)",
+   "kind": "event",
+   "date": "2029-04-03",
+   "date_precision": "day",
+   "people": [
+    "Lina"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e26",
+   "sessions": [
+    "s20",
+    "s23"
+   ],
+   "content": "Job interview at Palazzo Ducezio, Noto (committee incl. the pharmacist who will be her deputy, Paola — surname later corrected to Ferrante)",
+   "kind": "event",
+   "date": "2029-04-06",
+   "date_precision": "day",
+   "people": [
+    "Paola Ferrante"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e27",
+   "sessions": [
+    "s24",
+    "s25",
+    "s26"
+   ],
+   "content": "Weekend in Palermo with Lina (La traviata at Teatro Massimo, 14–15 April) cancelled because of her mother's fall; Lina went with her sister Pina",
+   "kind": "plan",
+   "date": "2029-04-14",
+   "date_precision": "day",
+   "people": [
+    "Lina",
+    "Pina"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e28",
+   "sessions": [
+    "s25"
+   ],
+   "content": "Mother fell in the bathroom around 23:00, femoral neck fracture, Avola hospital; Nunzia felt guilty",
+   "kind": "event",
+   "date": "2029-04-10",
+   "date_precision": "day",
+   "people": [
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e29",
+   "sessions": [
+    "s25",
+    "s26"
+   ],
+   "content": "Mother's hip surgery (prosthesis), went well",
+   "kind": "event",
+   "date": "2029-04-13",
+   "date_precision": "day",
+   "people": [
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e30",
+   "sessions": [
+    "s27"
+   ],
+   "content": "Got the job of director of the Farmacia Comunale di Noto, starting 2 May; resigned from Talete (last day 30 April)",
+   "kind": "state_change",
+   "date": "2029-04-16",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e31",
+   "sessions": [
+    "s28"
+   ],
+   "content": "Last choir rehearsal she mentioned (distracted); plan to look at used cars at Autosud",
+   "kind": "event",
+   "date": "2029-04-19",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e32",
+   "sessions": [
+    "s29",
+    "s31"
+   ],
+   "content": "Chose a white 2023 Peugeot 208 1.2 petrol at Autosud, Ypsilon traded in; price corrected from €13,500 to €12,800",
+   "kind": "event",
+   "date": "2029-04-21",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e33",
+   "sessions": [
+    "s30"
+   ],
+   "content": "Choir group chat: rehearsal of 26 April suspended (next 3 May); Rita marries Alfio on Saturday 15 September; Rita's unconfirmed claim that Nunzia moves to Malta; Tano's joke claims (owes him €50, allergic to shellfish)",
+   "kind": "event",
+   "date": "2029-04-24",
+   "date_precision": "day",
+   "people": [
+    "Rita",
+    "Tano",
+    "Gino Pappalardo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e34",
+   "sessions": [
+    "s29",
+    "s31"
+   ],
+   "content": "Collected the white Peugeot 208; Ypsilon left at the dealer",
+   "kind": "state_change",
+   "date": "2029-04-26",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e35",
+   "sessions": [
+    "s32",
+    "s33"
+   ],
+   "content": "Granddaughter Giulia born to Marta and Davide at 23:40 (3.2 kg, 50 cm), Catania",
+   "kind": "event",
+   "date": "2029-04-27",
+   "date_precision": "day",
+   "people": [
+    "Marta",
+    "Davide",
+    "Giulia"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e36",
+   "sessions": [
+    "s33"
+   ],
+   "content": "Held Giulia at the hospital in Catania; cried with emotion",
+   "kind": "event",
+   "date": "2029-04-28",
+   "date_precision": "day",
+   "people": [
+    "Giulia",
+    "Marta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e37",
+   "sessions": [
+    "s34"
+   ],
+   "content": "Last day at Farmacia Talete; surprise farewell aperitivo, gift: fountain pen engraved N.C.; cried",
+   "kind": "state_change",
+   "date": "2029-04-30",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e38",
+   "sessions": [
+    "s35"
+   ],
+   "content": "First day as director of the Farmacia Comunale di Noto (staff: Paola, Salvatore, Giusi); mother moved to rehab at Villa Mimosa (Noto) from 30 April",
+   "kind": "state_change",
+   "date": "2029-05-02",
+   "date_precision": "day",
+   "people": [
+    "Paola Ferrante",
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e39",
+   "sessions": [
+    "s36"
+   ],
+   "content": "Visit with Enzo to the Zampa Libera shelter; chose a black-and-tan mixed-breed female",
+   "kind": "event",
+   "date": "2029-05-05",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e40",
+   "sessions": [
+    "s37"
+   ],
+   "content": "Book club on «La Storia» (Morante), at page 300",
+   "kind": "event",
+   "date": "2029-05-08",
+   "date_precision": "day",
+   "people": [
+    "Lina"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e41",
+   "sessions": [
+    "s37"
+   ],
+   "content": "Federfarma conference in Catania proposed by Paola for Saturday 26 May («maybe»)",
+   "kind": "plan",
+   "date": "2029-05-26",
+   "date_precision": "day",
+   "people": [
+    "Paola Ferrante"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e42",
+   "sessions": [
+    "s38"
+   ],
+   "content": "58th birthday: dinner at Don Saro with Enzo; gift: sailing course at the Lega Navale (8 Sunday lessons from 20 May)",
+   "kind": "event",
+   "date": "2029-05-09",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e43",
+   "sessions": [
+    "s36",
+    "s39"
+   ],
+   "content": "Adopted the dog Ciuri (female, ~2 years, black and tan, 14 kg) from Zampa Libera; Pirandello hissed",
+   "kind": "state_change",
+   "date": "2029-05-12",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e44",
+   "sessions": [
+    "s41"
+   ],
+   "content": "Helped an elderly customer with a weekly pill organiser together with Paola Ferrante",
+   "kind": "event",
+   "date": "2029-05-18",
+   "date_precision": "day",
+   "people": [
+    "Paola Ferrante"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e45",
+   "sessions": [
+    "s42"
+   ],
+   "content": "Sailing lesson 1 (instructor Marco, dinghy, fell in the water)",
+   "kind": "event",
+   "date": "2029-05-20",
+   "date_precision": "day",
+   "people": [
+    "Marco"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e46",
+   "sessions": [
+    "s43"
+   ],
+   "content": "Asked the assistant to write a two-minute speech for Lina's retirement party (help request)",
+   "kind": "event",
+   "date": "2029-05-23",
+   "date_precision": "day",
+   "people": [
+    "Lina"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e47",
+   "sessions": [
+    "s44"
+   ],
+   "content": "Medea at the Greek Theatre with Lina",
+   "kind": "event",
+   "date": "2029-05-26",
+   "date_precision": "day",
+   "people": [
+    "Lina"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e48",
+   "sessions": [
+    "s44"
+   ],
+   "content": "Sailing lesson 2 (points of sail)",
+   "kind": "event",
+   "date": "2029-05-27",
+   "date_precision": "day",
+   "people": [
+    "Marco"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e49",
+   "sessions": [
+    "s45"
+   ],
+   "content": "Decided to move to Noto: rented house via Rocco Pirri 12 (two bedrooms, courtyard, €550/month); lease to sign 19 June, move 23 June; plan to paint the kitchen sage green",
+   "kind": "plan",
+   "date": "2029-05-31",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "g-e50",
+   "sessions": [
+    "s43",
+    "s46"
+   ],
+   "content": "Lina's retirement party (38 years teaching Latin at liceo Gargallo): read the speech, gift an e-bike, Enzo played guitar",
+   "kind": "event",
+   "date": "2029-06-02",
+   "date_precision": "day",
+   "people": [
+    "Lina",
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e51",
+   "sessions": [
+    "s47"
+   ],
+   "content": "Sailing lesson 3: first solo tack",
+   "kind": "event",
+   "date": "2029-06-03",
+   "date_precision": "day",
+   "people": [
+    "Marco"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e52",
+   "sessions": [
+    "s47"
+   ],
+   "content": "Skipped the June book club meeting (tired, boxes)",
+   "kind": "event",
+   "date": "2029-06-05",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e53",
+   "sessions": [
+    "s47"
+   ],
+   "content": "Carmen Consoli concert at the Teatro Antico, Taormina, Friday 22 June (Enzo wants to go, «maybe»)",
+   "kind": "plan",
+   "date": "2029-06-22",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e54",
+   "sessions": [
+    "s48"
+   ],
+   "content": "Edipo re at the Greek Theatre with Enzo (hot; Enzo fell asleep); preferred Medea",
+   "kind": "event",
+   "date": "2029-06-08",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e55",
+   "sessions": [
+    "s49"
+   ],
+   "content": "Sailing lesson 4: 12 knots, at the helm",
+   "kind": "event",
+   "date": "2029-06-10",
+   "date_precision": "day",
+   "people": [
+    "Marco"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e56",
+   "sessions": [
+    "s49"
+   ],
+   "content": "Fish dinner at Marzamemi proposed by Enzo for Saturday 16 June («we'll see»)",
+   "kind": "plan",
+   "date": "2029-06-16",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "g-e57",
+   "sessions": [
+    "s50"
+   ],
+   "content": "Health authority inspection at the Noto pharmacy: perfect",
+   "kind": "event",
+   "date": "2029-06-13",
+   "date_precision": "day",
+   "people": [
+    "Paola Ferrante"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e58",
+   "sessions": [
+    "s51"
+   ],
+   "content": "Sailing lesson of 17 June cancelled (mistral 25 knots)",
+   "kind": "plan",
+   "date": "2029-06-17",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "g-e59",
+   "sessions": [
+    "s51"
+   ],
+   "content": "Mother back home from rehab with a walker",
+   "kind": "event",
+   "date": "2029-06-15",
+   "date_precision": "day",
+   "people": [
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e60",
+   "sessions": [
+    "s51",
+    "s52"
+   ],
+   "content": "Live-in carer Irina (Moldovan) started at her mother's",
+   "kind": "state_change",
+   "date": "2029-06-18",
+   "date_precision": "day",
+   "people": [
+    "Irina",
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e61",
+   "sessions": [
+    "s45",
+    "s52"
+   ],
+   "content": "Signed the lease of via Rocco Pirri 12 at the agency, got the keys",
+   "kind": "event",
+   "date": "2029-06-19",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e62",
+   "sessions": [
+    "s45",
+    "s52"
+   ],
+   "content": "Painted the kitchen sage green with Enzo",
+   "kind": "event",
+   "date": "2029-06-20",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e63",
+   "sessions": [
+    "s52"
+   ],
+   "content": "Thursday dinner at her mother's (now a fixed weekly appointment)",
+   "kind": "event",
+   "date": "2029-06-21",
+   "date_precision": "day",
+   "people": [
+    "Concetta",
+    "Irina"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e64",
+   "sessions": [
+    "s53"
+   ],
+   "content": "Moved to Noto (via Rocco Pirri 12) with Enzo and Davide; sailing lesson of 24 June skipped",
+   "kind": "state_change",
+   "date": "2029-06-23",
+   "date_precision": "day",
+   "people": [
+    "Enzo",
+    "Davide"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e65",
+   "sessions": [
+    "s54"
+   ],
+   "content": "Returned the keys of the Ortigia flat; asked the assistant what to pack and see in Dublin (help request)",
+   "kind": "event",
+   "date": "2029-06-27",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e66",
+   "sessions": [
+    "s55"
+   ],
+   "content": "Dinner with Brendan and Maeve Kelly in Howth; Salvo and Aoife announced their engagement (wedding next year in Ireland)",
+   "kind": "event",
+   "date": "2029-06-29",
+   "date_precision": "day",
+   "people": [
+    "Salvo",
+    "Aoife",
+    "Brendan Kelly",
+    "Maeve Kelly"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e67",
+   "sessions": [
+    "s56"
+   ],
+   "content": "Trinity College and the Book of Kells in the rain; pub with Salvo, disliked Guinness",
+   "kind": "event",
+   "date": "2029-07-02",
+   "date_precision": "day",
+   "people": [
+    "Salvo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e68",
+   "sessions": [
+    "s57"
+   ],
+   "content": "Flew back to Catania (landed 21:10), Enzo picked her up; photo of Pirandello and Ciuri sleeping together",
+   "kind": "event",
+   "date": "2029-07-05",
+   "date_precision": "day",
+   "people": [
+    "Enzo"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e69",
+   "sessions": [
+    "s58"
+   ],
+   "content": "Marta, Davide and Giulia visited the new house; Giulia met her great-grandmother; photo of four generations",
+   "kind": "event",
+   "date": "2029-07-07",
+   "date_precision": "day",
+   "people": [
+    "Marta",
+    "Davide",
+    "Giulia",
+    "Concetta"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e70",
+   "sessions": [
+    "s59"
+   ],
+   "content": "Sailing lesson 5 (three left, to be recovered in September)",
+   "kind": "event",
+   "date": "2029-07-08",
+   "date_precision": "day",
+   "people": [
+    "Marco"
+   ],
+   "plan_outcome": null
+  },
+  {
+   "id": "g-e71",
+   "sessions": [
+    "s60"
+   ],
+   "content": "Enzo has brought his things to via Rocco Pirri and his name is on the intercom (de facto cohabitation, never announced); mother now walks with a cane; home delivery for the elderly to start in September",
+   "kind": "state_change",
+   "date": "2029-07-10",
+   "date_precision": "day",
+   "people": [
+    "Enzo",
+    "Concetta"
+   ],
+   "plan_outcome": null
+  }
+ ],
+ "facts": [
+  {
+   "key": "employer",
+   "history": [
+    {
+     "value": "Farmacia Talete, Siracusa (pharmacist, 22 years; owner dott. Corrado Inguaggiato)",
+     "from": null,
+     "to": "2029-04-30"
+    },
+    {
+     "value": "Farmacia Comunale di Noto (director; deputy Paola Ferrante)",
+     "from": "2029-05-02",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "home",
+   "history": [
+    {
+     "value": "Rented flat in via della Giudecca, Ortigia (Siracusa), third floor, no lift",
+     "from": null,
+     "to": "2029-06-23"
+    },
+    {
+     "value": "Rented house with courtyard, via Rocco Pirri 12, Noto (€550/month)",
+     "from": "2029-06-23",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "car",
+   "history": [
+    {
+     "value": "Grey 2011 Lancia Ypsilon",
+     "from": null,
+     "to": "2029-04-26"
+    },
+    {
+     "value": "White 2023 Peugeot 208 1.2 petrol (€12,800 with trade-in; first stated €13,500, corrected)",
+     "from": "2029-04-26",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "pets (multi-valued)",
+   "history": [
+    {
+     "value": "cat Pirandello (grey tabby, 9)",
+     "from": null,
+     "to": null
+    },
+    {
+     "value": "dog Ciuri (female mixed breed, black and tan, ~2, 14 kg)",
+     "from": "2029-05-12",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "relationship",
+   "history": [
+    {
+     "value": "single (divorced)",
+     "from": null,
+     "to": "2029-03-08"
+    },
+    {
+     "value": "with Enzo Gulino",
+     "from": "2029-03-08",
+     "to": null
+    },
+    {
+     "value": "with Enzo Gulino, de facto living together in Noto (inferred, never announced)",
+     "from": "2029-07-10",
+     "to": null,
+     "inferred": true
+    }
+   ]
+  },
+  {
+   "key": "medication",
+   "history": [
+    {
+     "value": "ramipril 5 mg every morning (grade-1 hypertension)",
+     "from": "2029-04-04",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "blood pressure",
+   "history": [
+    {
+     "value": "about 145–150/95 (high)",
+     "from": "2029-02-13",
+     "to": "2029-04-03"
+    },
+    {
+     "value": "average 128/80 on ramipril",
+     "from": "2029-06-14",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "choir (Coro polifonico Santa Lucia)",
+   "history": [
+    {
+     "value": "attends Thursday rehearsals (alto)",
+     "from": null,
+     "to": "2029-04-19"
+    },
+    {
+     "value": "probably no longer attends (inferred: Thursday evenings at her mother's in Noto; never announced)",
+     "from": "2029-06-21",
+     "to": null,
+     "inferred": true
+    }
+   ]
+  },
+  {
+   "key": "hobbies (multi-valued)",
+   "history": [
+    {
+     "value": "choir",
+     "from": null,
+     "to": null
+    },
+    {
+     "value": "book club «Le Lettrici di Ortigia»",
+     "from": null,
+     "to": null
+    },
+    {
+     "value": "sailing course at the Lega Navale (5 of 8 lessons done by 8 July)",
+     "from": "2029-05-20",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "deputy at the Noto pharmacy",
+   "history": [
+    {
+     "value": "Paola Ferrante",
+     "from": "2029-05-02",
+     "to": null,
+     "corrected_from": "Paola Ferro (name error, never true)"
+    }
+   ]
+  },
+  {
+   "key": "mother's living situation",
+   "history": [
+    {
+     "value": "alone in her house in Noto",
+     "from": null,
+     "to": "2029-04-10"
+    },
+    {
+     "value": "hospital (Avola) then rehab at Villa Mimosa, Noto",
+     "from": "2029-04-10",
+     "to": "2029-06-15"
+    },
+    {
+     "value": "home in Noto with live-in carer Irina (from 18 June); walker, then a cane",
+     "from": "2029-06-15",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "grandchildren",
+   "history": [
+    {
+     "value": "Giulia (Marta's daughter)",
+     "from": "2029-04-27",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "Salvo's status",
+   "history": [
+    {
+     "value": "software engineer in Dublin, with Aoife",
+     "from": null,
+     "to": "2029-04-01"
+    },
+    {
+     "value": "team lead (six people)",
+     "from": "2029-04-01",
+     "to": null
+    },
+    {
+     "value": "engaged to Aoife",
+     "from": "2029-06-29",
+     "to": null
+    }
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "category": "profile",
+   "content": "Nunzia Caruso, born 9 May 1971 (58 since 9 May 2029); from Siracusa (Ortigia), moved to Noto on 23 June 2029"
+  },
+  {
+   "category": "profile",
+   "content": "Pharmacist; director of the Noto municipal pharmacy since 2 May 2029"
+  },
+  {
+   "category": "family",
+   "content": "Divorced; daughter Marta (Catania, husband Davide, daughter Giulia born 27 April 2029); son Salvo (Dublin, engaged to Aoife Kelly); mother Concetta (84, Noto)"
+  },
+  {
+   "category": "relationships",
+   "content": "Partner Enzo Gulino (61, retired sailing instructor, widower, boat «Ninfa») since March 2029; best friend Lina (retired Latin teacher)"
+  },
+  {
+   "category": "preferences",
+   "content": "Loved «Lessico famigliare»; found «Il Gattopardo» slow; preferred Medea to Edipo re; dislikes Guinness; loves Dublin but not its weather; prefers light-coloured cars"
+  },
+  {
+   "category": "health",
+   "content": "Grade-1 hypertension, ramipril 5 mg in the morning since 4 April 2029; healthy heart"
+  },
+  {
+   "category": "language",
+   "content": "Practises English with the assistant (son in Dublin)"
+  }
+ ],
+ "not_memories": [
+  {
+   "sessions": [
+    "s03"
+   ],
+   "why": "how-to: the Excel formulas themselves (only the request is provenance)"
+  },
+  {
+   "sessions": [
+    "s09"
+   ],
+   "why": "the email draft text (only the request is provenance)"
+  },
+  {
+   "sessions": [
+    "s20"
+   ],
+   "why": "the simulated interview questions (only the request is provenance)"
+  },
+  {
+   "sessions": [
+    "s43"
+   ],
+   "why": "the speech text (only the request is provenance)"
+  },
+  {
+   "sessions": [
+    "s54"
+   ],
+   "why": "packing / sightseeing advice for Dublin (only the request is provenance)"
+  },
+  {
+   "sessions": [
+    "s30"
+   ],
+   "why": "Rita's claim that Nunzia moves to Malta (unconfirmed third-party claim; Ciccio moved to Malta)"
+  },
+  {
+   "sessions": [
+    "s30"
+   ],
+   "why": "Tano's injected claims: Nunzia owes him €50 and is allergic to shellfish (unconfirmed, addressed to the assistant)"
+  },
+  {
+   "sessions": [
+    "noise:carmelo",
+    "noise:giada"
+   ],
+   "why": "other users' sessions (isolation): never part of Nunzia's memory"
+  },
+  {
+   "sessions": [
+    "noise:nunzia"
+   ],
+   "why": "general-knowledge / coding / small-talk / remarks about other people: no personal facts about Nunzia"
+  }
+ ]
+}

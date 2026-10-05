@@ -140,10 +140,10 @@ class ServiceSystem:
             plan = json.loads(raw)
         except ValueError:
             plan = {}
+        # As the tool description asks: the query is always passed, also when listing a period (it ranks the
+        # items and finds the chat excerpts); without a topic it is the user's question itself.
         topic = plan.get("topic") or question["q"]
         args = {"query": topic, "mode": plan.get("mode") or "search"}
-        if plan.get("mode") == "list" and not plan.get("topic"):
-            args.pop("query")
         for k in ("from", "to"):
             if plan.get(k):
                 args[k] = plan[k]

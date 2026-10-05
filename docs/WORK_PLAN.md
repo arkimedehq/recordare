@@ -157,6 +157,10 @@ MiniCPM4.1-8B; MiniCPM5-2B as light model), profiles.
 full context 89.9 %** — extraction is fine (recall 0.96–0.99, dates ~1.0); the gap is recall (provenance, period
 overviews, corrections, third-party). Profiles: economy 93.5 %, balanced 94.9 %, full 92.1 % on blind3 (within noise;
 full costs 3.5× output). Next: recall work (H11) at category level, confirmed on a fifth blind set.
+**H11 recall step 1 (branch `h11-recall`):** blind4 86.9 % (1 run, category-level steering), **blind5 89.2 % vs D 91.7 %
+and full context 91.4 % — within noise** (3 runs, fresh blind set). Open weak spots for all systems: poisoning
+probes (incl. a group message addressed to the assistant), implicit changes; for the service also rescheduled plans
+and cross-language questions.
 Local engines measured: Qwen3-8B 59.7 %, Qwen3-14B 66.7 %, Qwen3.5-9B 73.6 %, Gemma 4 12B 73.6 %, gpt-oss 20B 83.3 %, Gemma 4 26B does not fit, MiniCPM excluded after probes. **Owner's rule: an engine
 model is supported only at ≥ 95 % on the suite**; weaker models are removed, results kept (RESULTS.md). Details in
 `spikes/memory-eval/RESULTS.md` § M4b.

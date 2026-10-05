@@ -11,10 +11,10 @@ describe('quality profiles (D35)', () => {
     expect(qualityProfile('platinum', 'balanced').name).toBe('balanced');
   });
 
-  it('keeps balanced equal to the measured service v4', () => {
+  it('keeps balanced at the measured configuration', () => {
     expect(qualityProfile(null, 'balanced')).toEqual({
       name: 'balanced', windowChars: 12_000, extractionRole: 'main', reasoning: false,
-      recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 2,
+      recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3,
     });
   });
 
