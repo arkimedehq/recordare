@@ -70,7 +70,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
       + '(ISO dates, inclusive; see resolve_period) for questions about a period. mode: "search" = most relevant, '
       + '"list" = chronological in the period (overviews, counting), "latest" = most recent first ("when did I last…").',
     inputSchema: {
-      query: z.string().optional().describe('What to look for'),
+      query: z.string().optional().describe('What to look for — pass the user\'s question also when listing a period: it ranks '
+        + 'the items and finds the matching chat excerpts'),
       from: isoDay.optional().describe('Start date, ISO (YYYY-MM-DD or YYYY-MM)'),
       to: isoDay.optional().describe('End date, ISO (YYYY-MM-DD or YYYY-MM), inclusive'),
       mode: z.enum(['search', 'list', 'latest']).optional(),

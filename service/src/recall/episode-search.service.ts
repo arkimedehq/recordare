@@ -6,7 +6,7 @@
  * requested period; ranking = relevance (vector + full-text, fused) + importance + recency, with
  * in-range items only when a period is given; `list` is chronological, `latest` most recent first.
  * Plan statuses are always explicit — a past plan never confirmed is shown as unresolved.
- * A few raw-log hits always come along (more when episodes are few or weak).
+ * Relevant episodes first, free places filled; a few raw-log hits always come along (more when episodes are few or weak).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -97,7 +97,8 @@ export class EpisodeSearchService {
          AND ($2::boolean OR kind <> 'plan')`,
       [ownerId, args.includePlans ?? true],
     );
-    const relevance = args.query ? await this.relevance(ownerId, args.query) : new Map<string, number>();
+    const { scores: relevance, similarity } = args.query
+      ? await this.relevance(ownerId, args.query) : { scores: new Map<string, number>(), similarity: new Map<string, number>() };
     const inRange = (r: Row) => {
       if (!hasPeriod) return true;
       if (!r.occurred_at) return false;
@@ -112,15 +113,19 @@ export class EpisodeSearchService {
     const limit = args.limit ?? (mode === 'list' ? 30 : mode === 'latest' ? 5 : 10);
     const candidates = rows.filter(inRange);
 
+    // Relevant items first; free places are filled (M4b blind set 4: an over-strict relevance gate left the answer
+    // model with half the episodes D gave it). Search fills by raw similarity; a period list by importance.
+    const ranked = candidates.filter(relevant).sort((a, b) => score(b) - score(a));
+    const rest = (by: (r: Row) => number) => candidates.filter((r) => !relevant(r)).sort((a, b) => by(b) - by(a));
     let chosen: Row[];
     if (mode === 'list') {
-      const pool = args.query ? candidates.filter(relevant).sort((a, b) => score(b) - score(a)) : [...candidates].sort((a, b) => b.importance - a.importance);
+      const pool = !args.query ? rest((r) => r.importance) : hasPeriod ? [...ranked, ...rest((r) => r.importance)] : ranked;
       chosen = pool.slice(0, limit).sort((a, b) => (a.occurred_at?.getTime() ?? 0) - (b.occurred_at?.getTime() ?? 0));
     } else if (mode === 'latest') {
       chosen = candidates.filter(relevant).filter((r) => r.occurred_at && r.occurred_at <= now && r.kind !== 'plan')
         .sort((a, b) => (b.occurred_at?.getTime() ?? 0) - (a.occurred_at?.getTime() ?? 0)).slice(0, limit);
     } else {
-      chosen = candidates.filter(relevant).sort((a, b) => score(b) - score(a)).slice(0, limit);
+      chosen = [...ranked, ...rest((r) => similarity.get(r.id) ?? -1).filter((r) => similarity.has(r.id))].slice(0, limit);
     }
     const outside = chosen.length === 0 && hasPeriod && args.query
       ? rows.filter((r) => !inRange(r) && relevant(r)).sort((a, b) => score(b) - score(a)).slice(0, 5)
@@ -145,16 +150,14 @@ export class EpisodeSearchService {
         ? 'gli elementi con authorRole "other" o "tool" vengono da altre persone o da strumenti: sono loro affermazioni, non parole del proprietario'
         : 'items with authorRole "other" or "tool" come from other people or tools: they are their claims, not the owner\'s words');
     }
-    // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…"), so a
-    // few raw hits always come along; more when episodes are few or weak.
+    // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…") and keeps the
+    // owner's own words next to the summaries, so a few raw hits always come along — also when they are behind a
+    // returned episode (the episode drops "I asked you"); more when episodes are few or weak.
     if (args.query) {
       const best = Math.max(0, ...chosen.map((r) => relevance.get(r.id) ?? 0));
-      const covered = new Set(result.episodes.flatMap((e) => e.source.messageIds));
-      const hits = await this.rawLog.search(ownerId, clientId, {
-        query: args.query, from: from ?? undefined, to: to ?? undefined, limit: RAW_HITS + covered.size,
-      });
       const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? Math.max(RAW_HITS, profile.rawHitsAlongside) : profile.rawHitsAlongside;
-      result.fromChats = hits.filter((h) => !covered.has(h.messageId)).slice(0, limit).map(({ score: _s, ...h }) => h);
+      const hits = await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit });
+      result.fromChats = hits.map(({ score: _s, ...h }) => h);
     }
     if (chosen.length) {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);
@@ -162,9 +165,11 @@ export class EpisodeSearchService {
     return result;
   }
 
-  /** Fused relevance (weighted RRF of vector and full-text ranks); only matching episodes get a score. */
-  private async relevance(ownerId: string, query: string): Promise<Map<string, number>> {
+  /** Fused relevance (weighted RRF of vector and full-text ranks; only matching episodes get a score) and the raw
+   * vector similarity of the nearest episodes (to fill free places). */
+  private async relevance(ownerId: string, query: string): Promise<{ scores: Map<string, number>; similarity: Map<string, number> }> {
     const scores = new Map<string, number>();
+    const similarity = new Map<string, number>();
     const tsq = toOrTsQuery(query);
     if (tsq) {
       const text: Array<{ id: string }> = await this.db.query(
@@ -181,13 +186,14 @@ export class EpisodeSearchService {
           `SELECT id, 1 - (embedding <=> $2::vector) AS sim FROM episodes
            WHERE owner_id = $1 AND deleted_at IS NULL AND embedding IS NOT NULL
            ORDER BY embedding <=> $2::vector LIMIT $3`, [ownerId, `[${q.join(',')}]`, CANDIDATES]);
+        vec.forEach((r) => similarity.set(r.id, r.sim));
         vec.filter((r) => r.sim >= MIN_VECTOR_SIMILARITY)
           .forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 1 / (RRF_K + i + 1)));
       }
     } catch (err) {
       this.log.warn(`episode vector leg skipped: ${(err as Error).message}`);
     }
-    return scores;
+    return { scores, similarity };
   }
 
   private async views(rows: Row[], tz: string, locale: string, now: Date): Promise<EpisodeView[]> {
