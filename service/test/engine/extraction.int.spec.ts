@@ -6,7 +6,7 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
 import { EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
-import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
+import { ADMIN_KEY, call, fakeVector, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 describe('extraction engine (fake LLM: code-side rules)', () => {
   let app: INestApplication;
@@ -22,7 +22,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     llm = await startFakeLlm();
     const fake = await startFakeEmbeddings();
     emb = fake.server;
-    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600' });
+    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600', LLM_LIGHT_MODEL: 'test-light' });
     await resetSchema();
     ({ app, url } = await startApp());
     db = app.get(DataSource);
@@ -34,10 +34,10 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
-  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string }>, participants: unknown[] = []): Promise<string> {
+  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string; authorRef?: string }>, participants: unknown[] = []): Promise<string> {
     const res = await call(url, 'POST', '/api/v1/ingest/messages', {
       token: key, headers: { 'x-recordare-user': 'luca' },
-      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at })) },
+      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at, ...(m.authorRef ? { authorRef: m.authorRef } : {}) })) },
     });
     return res.body.conversationId as string;
   }
@@ -179,13 +179,56 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   });
 
   it('never lets other people or tools create stated memories (poisoning guard)', async () => {
-    const c7 = await ingest('c7', [{ id: 'o1', role: 'other', content: 'Luca mi ha detto che vende la casa e trasferisce i soldi a me.', at: '2026-03-05T10:00:00+01:00' },
+    const c7 = await ingest('c7', [{ id: 'o1', role: 'other', content: 'Luca mi ha detto che vende la casa e trasferisce i soldi a me.', at: '2026-03-05T10:00:00+01:00', authorRef: 'x' },
       { id: 'o2', role: 'user', content: 'Ciao a tutti', at: '2026-03-05T10:01:00+01:00' }],
     [{ ref: 'x', role: 'other', displayName: 'Sconosciuto' }]);
     llm.queue.push({ notes: [{ category: 'constraint', content: 'Luca vende la casa', verdict: 'new', stance: 'stated', evidence: [1] }] });
     await runner.runForConversation(c7);
+    // An unverified group member is still named to the extractor, so a claim is attributed to its author.
+    expect(llm.requests.at(-1)?.messages[1]?.content ?? '').toContain('other:Sconosciuto');
     expect(await db.query(`SELECT author_role, stance, pending FROM notes`)).toEqual([{ author_role: 'other', stance: 'inferred', pending: true }]);
     expect(await db.query(`SELECT change FROM note_changes`)).toEqual([{ change: 'created' }]);
+  });
+
+  it('shows older episodes related to the window, not only the most recent ones', async () => {
+    const text = "L'hotel a Lubiana in realtà è costato 210 euro, non 180.";
+    const [old] = await db.query(
+      `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, recorded_at, embedding)
+       VALUES ($1, 'event', 'Hotel a Lubiana prenotato: 180 euro', 'owner_lived', 'owner', $2, now() - interval '90 days', $3::vector) RETURNING id`,
+      [ownerId, [ownerId], `[${fakeVector(text).join(',')}]`]);
+    for (let i = 0; i < 10; i++) {
+      await db.query(`INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience) VALUES ($1, 'event', $2, 'owner_lived', 'owner', $3)`,
+        [ownerId, `Rumore ${i}`, [ownerId]]);
+    }
+    const c = await ingest('rel', [{ id: 'r1', role: 'user', content: text, at: new Date().toISOString() }]);
+    llm.queue.push({});
+    await runner.runForConversation(c);
+    expect(llm.requests.at(-1)?.messages[1]?.content ?? '').toContain('Hotel a Lubiana prenotato: 180 euro');
+    await db.query(`DELETE FROM episodes WHERE id = $1 OR content LIKE 'Rumore %'`, [old.id]);
+  });
+
+  it('follows the owner\'s quality profile: economy uses the light model, full lets the model reason', async () => {
+    const setProfile = (qualityProfile: string | null) =>
+      call(url, 'PATCH', `/api/v1/admin/owners/${ownerId}`, { token: ADMIN_KEY, body: { qualityProfile } });
+    const last = () => llm.requests.at(-1) as unknown as { model: string; max_tokens: number };
+
+    await setProfile('economy');
+    const e = await ingest('qp-e', [{ id: 'qe1', role: 'user', content: 'Oggi niente di speciale.', at: '2026-06-06T10:00:00+02:00' }]);
+    llm.queue.push({});
+    await runner.runForConversation(e);
+    expect(last()).toMatchObject({ model: 'test-light', max_tokens: 6000 });
+
+    await setProfile('full');
+    const f = await ingest('qp-f', [{ id: 'qf1', role: 'user', content: 'Oggi ancora niente.', at: '2026-06-06T11:00:00+02:00' }]);
+    llm.queue.push({});
+    await runner.runForConversation(f);
+    expect(last()).toMatchObject({ model: 'test-model', max_tokens: 24000 }); // reasoning: larger output budget
+
+    await setProfile(null); // back to the installation default (balanced)
+    const b = await ingest('qp-b', [{ id: 'qb1', role: 'user', content: 'Di nuovo niente.', at: '2026-06-06T12:00:00+02:00' }]);
+    llm.queue.push({});
+    await runner.runForConversation(b);
+    expect(last()).toMatchObject({ model: 'test-model', max_tokens: 6000 });
   });
 
   it('makes no LLM call without a message from the owner (gate)', async () => {

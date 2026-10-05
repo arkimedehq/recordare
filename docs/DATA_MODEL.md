@@ -98,6 +98,7 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 | `locale`, `timezone` | text | |
 | `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
+| `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `created_at` | timestamptz | |
 
 Idle delay is a global setting (D5), not per owner.
@@ -161,6 +162,7 @@ joined_at` — source of every row's `audience` and of the viewer set for reads 
 | `role` | enum `user \| assistant \| tool \| other` | `system` messages are **not ingested** (they can carry secrets); `tool` = tool calls / results of agentic clients (D30) |
 | `tool_name` | text null | For `role = tool` |
 | `author_person_id` | uuid null | |
+| `author_ref` | text null | The client's participant ref; names unverified group members for extraction |
 | `content` | text | Verbatim |
 | `content_hash` | bytea | Detects re-sends with changed content (`API.md` §2) |
 | `sent_at` | timestamptz | Reference time for date resolution |

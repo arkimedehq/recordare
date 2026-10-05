@@ -9,6 +9,7 @@ import { LlmCallRecorder } from './llm-call-recorder';
 import { OpenAiCompatibleAdapter } from './openai-compatible.adapter';
 import { resolveProfile } from './provider-profiles';
 import { AnthropicAdapter } from './anthropic.adapter';
+import { ClaudeCliAdapter } from './claude-cli.adapter';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { OpenAiCompatibleEmbeddingAdapter } from '../embedding/openai-compatible-embedding.adapter';
 import { CLOCK_PORT, systemClock } from '../clock/clock.port';
@@ -29,9 +30,10 @@ import { CLOCK_PORT, systemClock } from '../clock/clock.port';
           lightModel: config.get('LLM_LIGHT_MODEL', { infer: true }),
           profile: resolveProfile(config.get('LLM_PROFILE', { infer: true }), config.get('LLM_PROFILE_JSON', { infer: true })),
         };
-        return config.get('LLM_PROVIDER', { infer: true }) === 'anthropic'
-          ? new AnthropicAdapter(common, recorder)
-          : new OpenAiCompatibleAdapter(common, recorder);
+        const provider = config.get('LLM_PROVIDER', { infer: true });
+        if (provider === 'anthropic') return new AnthropicAdapter(common, recorder);
+        if (provider === 'claude-cli') return new ClaudeCliAdapter({ model: common.model, lightModel: common.lightModel }, recorder);
+        return new OpenAiCompatibleAdapter(common, recorder);
       },
     },
     {

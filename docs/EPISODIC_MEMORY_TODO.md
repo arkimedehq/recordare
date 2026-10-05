@@ -444,6 +444,10 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
     full resting-state thinking (H12: replay, links, proposals, self-model) on a regular schedule.
 - Profiles are configuration, never code branches scattered in the engine; each profile is
   measured on the eval suite (quality and cost per message) so the trade-off is visible.
+- Implemented (M4b, 2026-10-04): `service/src/engine/quality-profile.ts` — one table of knobs (window size,
+  extraction model role, reasoning, recent / related episodes, near-duplicate window and threshold, chat
+  excerpts); `QUALITY_PROFILE` installation default + `owners.quality_profile`. `balanced` = measured service v4.
+  Not yet: verification pass, reranker, monthly digests, H12 (they arrive with M5 / H11 and join `full`).
 - Replaces the earlier rule "as cheap as possible" with: **never trade quality silently — the
   owner chooses the profile**.
 

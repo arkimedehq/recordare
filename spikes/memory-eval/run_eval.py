@@ -31,26 +31,63 @@ def build(system: str):
     if system == "service":
         from systems.service_sys import ServiceSystem
         return ServiceSystem()
+    if system == "nomemory":
+        from systems.controls import NoMemory
+        return NoMemory()
+    if system == "fullcontext":
+        from systems.controls import FullContext
+        return FullContext()
     if system == "memobase":
         from systems.memobase_sys import MemobaseSystem
         return MemobaseSystem()
+    if system == "mem0":
+        from systems.mem0_sys import Mem0System
+        return Mem0System()
+    if system == "cognee":
+        from systems.cognee_sys import CogneeSystem
+        return CogneeSystem()
     raise SystemExit(f"unknown system: {system}")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--runs", type=int, default=1, help="repeat the whole run N times (fresh system each time)")
     ap.add_argument("--system", required=True)
     ap.add_argument("--only", help="comma-separated question ids")
     ap.add_argument("--noise", action="store_true", help="add dataset/noise.json sessions")
+    ap.add_argument("--resume", action="store_true", help="reuse completed -rN result files of the same label")
     args = ap.parse_args()
     label = args.system + ("-noise" if args.noise else "")
     if DATASET.name != "dataset":
         label += f"-{DATASET.name}"
     if os.getenv("EMBED_MODEL"):
         label += "-emb_" + os.environ["EMBED_MODEL"].split("/")[-1].replace(":", "_")
-    if os.getenv("ENGINE_MODEL") and args.system != "baseline":
-        label += f"-{os.environ['ENGINE_MODEL']}" + ("-nothink" if os.getenv("ENGINE_NO_THINKING") else "")
+    # The engine model belongs to the label only where this process picks it: the service has its own
+    # LLM config (SERVICE_MODEL names it), controls have no engine.
+    engine = os.getenv("SERVICE_MODEL") if args.system == "service" else os.getenv("ENGINE_MODEL")
+    if engine and args.system not in ("baseline", "fullcontext", "nomemory"):
+        label += f"-{engine}" + ("-nothink" if os.getenv("ENGINE_NO_THINKING") else "")
 
+    if os.getenv("RUN_TAG"):  # distinguishes engine versions measured on the same dataset
+        label += f"-{os.environ['RUN_TAG']}"
+
+    summaries = []
+    for run in range(1, args.runs + 1):
+        done = RESULTS / f"{label}-r{run}.json"
+        if args.resume and done.exists():  # a chain stopped midway (provider outage, balance) keeps its runs
+            print(f"#### run {run}: reusing {done.name}")
+            summaries.append(json.loads(done.read_text()))
+            continue
+        summaries.append(run_once(args, label, run if args.runs > 1 else None))
+    if args.runs > 1:
+        aggregate(label, summaries)
+
+
+def run_once(args, label: str, run: int | None) -> dict:
+    USAGE.calls.clear(); USAGE.prompt.clear(); USAGE.completion.clear()
+    if run:
+        label = f"{label}-r{run}"
+        print(f"\n#### run {run}", flush=True)
     sys_ = build(args.system)
     sessions = load_sessions()
     if args.noise:
@@ -109,9 +146,38 @@ def main() -> None:
     RESULTS.mkdir(exist_ok=True)
     (RESULTS / f"{label}.json").write_text(
         json.dumps({"summary": summary, "rows": rows}, ensure_ascii=False, indent=2))
+    if hasattr(sys_, "cost"):
+        summary["engine_cost"] = sys_.cost()
+        summary["owner_ids"] = sys_.owner_ids()
+        (RESULTS / f"{label}.json").write_text(json.dumps({"summary": summary, "rows": rows}, ensure_ascii=False, indent=2))
     if hasattr(sys_, "dump"):
         (RESULTS / f"{label}-memory.json").write_text(sys_.dump())
     print("\n" + json.dumps(summary, ensure_ascii=False, indent=2))
+    return {"summary": summary, "rows": rows}
+
+
+def aggregate(label: str, runs: list[dict]) -> None:
+    """Mean ± 95% CI over runs, and per-question mean score (for paired comparisons)."""
+    import statistics
+    accs = [r["summary"]["accuracy"] for r in runs]
+    mean = statistics.mean(accs)
+    sd = statistics.stdev(accs) if len(accs) > 1 else 0.0
+    half = 1.96 * sd / (len(accs) ** 0.5) if len(accs) > 1 else 0.0
+    per_q: dict[str, list[float]] = defaultdict(list)
+    cats: dict[str, str] = {}
+    for r in runs:
+        for row in r["rows"]:
+            if row["verdict"] in SCORE:
+                per_q[row["id"]].append(SCORE[row["verdict"]])
+                cats[row["id"]] = row["category"]
+    out = {
+        "system": label, "runs": len(runs), "accuracy_mean": round(mean, 3), "accuracy_sd": round(sd, 3),
+        "accuracy_ci95": [round(mean - half, 3), round(mean + half, 3)], "accuracy_runs": accs,
+        "per_question": {q: round(sum(v) / len(v), 3) for q, v in sorted(per_q.items())},
+        "categories": cats,
+    }
+    (RESULTS / f"{label}-agg.json").write_text(json.dumps(out, ensure_ascii=False, indent=2))
+    print("\n#### aggregate\n" + json.dumps({k: out[k] for k in ("system", "runs", "accuracy_mean", "accuracy_sd", "accuracy_ci95", "accuracy_runs")}, indent=1))
 
 
 if __name__ == "__main__":

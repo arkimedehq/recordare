@@ -5,6 +5,8 @@ import { type DataSourceOptions } from 'typeorm';
 import { AccessToken, ApiKey, Client, ExternalIdentity, Owner, Person } from '../identity/identity.entities';
 import { InitialSchema1790950000000 } from './migrations/1790950000000-InitialSchema';
 import { Notes1790960000000 } from './migrations/1790960000000-Notes';
+import { MessageAuthorRef1790970000000 } from './migrations/1790970000000-MessageAuthorRef';
+import { OwnerQualityProfile1790980000000 } from './migrations/1790980000000-OwnerQualityProfile';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -13,7 +15,7 @@ import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog
  * explicitly (no globs): works the same under tsc, SWC and the test runner.
  */
 export const ENTITIES = [Person, Owner, Client, ApiKey, AccessToken, ExternalIdentity, Conversation, ConversationParticipant, Message];
-export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000];
+export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, MessageAuthorRef1790970000000, OwnerQualityProfile1790980000000];
 
 export function dataSourceOptions(url: string): DataSourceOptions {
   return { type: 'postgres', url, entities: ENTITIES, migrations: MIGRATIONS, migrationsRun: false, synchronize: false };

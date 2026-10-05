@@ -1,0 +1,965 @@
+{
+ "_note": "Blind synthetic dataset #3 (fictional people). Timestamps are when the message was sent (Europe/Rome). Messages with role 'other' are group-chat messages written by someone else (see 'author').",
+ "users": {
+  "sofia": "Primary user under test",
+  "pietro": "Second user, isolation check: his data must never surface in Sofia's answers"
+ },
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "sofia",
+   "ts": "2027-03-02T21:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao! Mi presento, così ti ricordi di me: sono Sofia, ho 34 anni e faccio la veterinaria alla Clinica Veterinaria Arcella, a Padova, da sette anni. Vivo da sola in un bilocale in affitto in via Belzoni con il mio gatto Pepe, un tigrato di 9 anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Piacere, Sofia! Me lo segno: veterinaria alla Clinica Arcella, bilocale in via Belzoni e Pepe, il tigrato di casa. Com'è andata la giornata?"
+    },
+    {
+     "role": "user",
+     "content": "Sono distrutta. Questa settimana ho tre notti di reperibilità e non ce la faccio più, davvero. Il mio ragazzo, Davide, dice che dovrei guardarmi intorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Tre notti di reperibilità in una settimana sono tante. Guardarsi intorno non è una cattiva idea, se il carico è questo da tempo. Cosa ti piacerebbe cambiare per prima cosa?"
+    },
+    {
+     "role": "user",
+     "content": "Le notti. Davide fa l'ingegnere idraulico al Consorzio di bonifica e ha orari regolarissimi, beato lui. Mia sorella Chiara invece fa l'architetta qui a Padova ed è più incasinata di me."
+    },
+    {
+     "role": "assistant",
+     "content": "Allora il criterio numero uno è chiaro: un posto senza notti. Se vuoi, quando sarà il momento ti aiuto a preparare il curriculum."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "sofia",
+   "ts": "2027-03-06T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina primo turno di volontariato al canile di Rubano! Ho portato a spasso sei cani, sono a pezzi ma felicissima."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel modo di passare il sabato! Sei cani in una mattina sono un bell'allenamento."
+    },
+    {
+     "role": "user",
+     "content": "C'è una setter incrociata, Brina, timidissima: non si faceva avvicinare da nessuno, ma alla fine è venuta lei da me. Mi ha sciolto il cuore."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando un cane timido sceglie te è una sensazione speciale. Magari la ritrovi al prossimo turno."
+    },
+    {
+     "role": "user",
+     "content": "Altra cosa: con Davide abbiamo deciso, weekend a Lubiana dal 16 al 18 aprile. Ho già prenotato l'hotel, due notti in centro, 180 euro in tutto. Andiamo in macchina, guida lui."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima scelta, Lubiana in primavera è bellissima. Da Padova in macchina sono circa tre ore. Vuoi qualche idea su cosa vedere?"
+    },
+    {
+     "role": "user",
+     "content": "Più avanti, grazie!"
+    },
+    {
+     "role": "assistant",
+     "content": "Quando vuoi."
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "sofia",
+   "ts": "2027-03-11T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri ho fatto un colloquio all'Ambulatorio Veterinario dei Colli, ad Abano Terme. Piccolo, quattro veterinari, niente reperibilità notturna. Mi è piaciuto un sacco."
+    },
+    {
+     "role": "assistant",
+     "content": "Sembra proprio quello che cercavi! Com'è andato il colloquio?"
+    },
+    {
+     "role": "user",
+     "content": "Bene, credo. Non voglio portarmi sfiga, ma nel caso: come si scrive una lettera di dimissioni? Cosa ci devo mettere e come funziona il preavviso?"
+    },
+    {
+     "role": "assistant",
+     "content": "In Italia le dimissioni da lavoro dipendente si presentano online, con la procedura telematica del Ministero del Lavoro (sito ministeriale con SPID, oppure tramite patronato o consulente). Oltre a quella, è buona educazione consegnare una lettera al datore di lavoro con: i tuoi dati, la dichiarazione di dimissioni, la data di decorrenza, il riferimento al preavviso previsto dal tuo CCNL, data e firma. Il preavviso dipende dal contratto e dall'anzianità: controllalo nel CCNL, perché se non lo rispetti il datore può trattenerti l'indennità corrispondente."
+    },
+    {
+     "role": "user",
+     "content": "Quindi prima la procedura online e poi la lettera, giusto? E il preavviso si conta in giorni di calendario?"
+    },
+    {
+     "role": "assistant",
+     "content": "Puoi fare entrambe lo stesso giorno: conta la data della procedura telematica. Nella maggior parte dei CCNL il preavviso è in giorni di calendario e decorre dal giorno successivo, ma verifica il tuo con l'ufficio del personale."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, grazie. Incrocio le dita."
+    },
+    {
+     "role": "assistant",
+     "content": "Incrocio anch'io! Fammi sapere."
+    }
+   ]
+  },
+  {
+   "id": "p01",
+   "user": "pietro",
+   "ts": "2027-03-13T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina turno di volontariato al canile di Rubano, ho portato a spasso Tobia, un segugio anziano."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel modo di passare il sabato!"
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "user": "sofia",
+   "ts": "2027-03-17T20:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hi! Writing in English today, I'm practising for a conference abstract. Big news: the Abano practice offered me the job and I said yes! I start on Monday, May 10."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations, Sofia! That's exactly the change you were hoping for. How do you feel?"
+    },
+    {
+     "role": "user",
+     "content": "It's full-time, no night shifts, and 2,350 euros net a month, a bit more than now. I handed in my resignation at Arcella this morning. With the notice period, my last day there will be Thursday, April 29."
+    },
+    {
+     "role": "assistant",
+     "content": "Great conditions, and no more nights on call. Noted: last day at Arcella on Thursday, April 29, and start in Abano on Monday, May 10."
+    },
+    {
+     "role": "user",
+     "content": "Honestly I'm both excited and scared. Seven years is a long time, and I'll miss Ilaria, my colleague, a lot."
+    },
+    {
+     "role": "assistant",
+     "content": "That's completely normal after seven years. Friendships like that usually survive a job change."
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "sofia",
+   "ts": "2027-03-20T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Allora, domenica 25 aprile si va sul Monte Grappa? Sentiero dalla Val San Liberale, sei ore circa."
+    },
+    {
+     "role": "other",
+     "author": "Giorgio",
+     "content": "Io ci sto! Porto la macchina grande, ci stiamo in cinque."
+    },
+    {
+     "role": "other",
+     "author": "Lorenzo",
+     "content": "Ci sono anch'io, porto il fornelletto per il caffè in vetta."
+    },
+    {
+     "role": "user",
+     "content": "Io e Davide ci siamo! Porto i panini per tutti."
+    },
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Grande Sofia. Partenza alle 7 dal parcheggio dello stadio Euganeo."
+    },
+    {
+     "role": "user",
+     "content": "Assistente, mi fai un riepilogo di chi porta cosa?"
+    },
+    {
+     "role": "assistant",
+     "content": "Escursione sul Monte Grappa domenica 25 aprile, partenza alle 7 dal parcheggio dello stadio Euganeo. Giorgio: auto da cinque posti; Lorenzo: fornelletto per il caffè; Sofia e Davide: panini per tutti."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "sofia",
+   "ts": "2027-03-24T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domenica sono andata a Chioggia a trovare nonna Ida. Ha 91 anni ed è più lucida di me. Mi ha fatto le sarde in saor."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Novantun anni e ancora ai fornelli: le sarde in saor fatte dalla nonna non hanno rivali."
+    },
+    {
+     "role": "user",
+     "content": "Abbiamo parlato della festa per i 60 anni di mia mamma, Graziella: la facciamo sabato 29 maggio all'agriturismo Le Vigne, a Este. Io e Chiara le regaliamo un weekend alle terme."
+    },
+    {
+     "role": "assistant",
+     "content": "Bellissima idea, il weekend alle terme è un regalo che si gode davvero. Vuoi una mano con gli inviti?"
+    },
+    {
+     "role": "user",
+     "content": "Magari più avanti. Grazie!"
+    },
+    {
+     "role": "assistant",
+     "content": "Volentieri."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "sofia",
+   "ts": "2027-03-29T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buona Pasquetta! Ieri Pasqua a Este dai miei, oggi grigliata dai genitori di Davide a Selvazzano. Ho mangiato troppo."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona Pasquetta a te! Due giorni di festa in famiglia, il pranzo leggero lo rimandiamo a domani."
+    },
+    {
+     "role": "user",
+     "content": "Ah, mi sono iscritta a un corso di aggiornamento in ecografia addominale a Bologna, sabato 24 aprile, tutto il giorno. Costa 150 euro, ma ne vale la pena."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo investimento, soprattutto in vista del nuovo lavoro."
+    },
+    {
+     "role": "user",
+     "content": "Esatto, ad Abano fanno tantissime ecografie e voglio arrivare preparata."
+    },
+    {
+     "role": "assistant",
+     "content": "Approccio giusto. Se vuoi, prima del corso ripassiamo insieme qualche nozione."
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "user": "sofia",
+   "ts": "2027-04-08T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Notizia di famiglia: Chiara ha avuto un'offerta da uno studio di architettura di Verona! Inizia a luglio e si trasferirà lì."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella notizia per lei! Verona è a un'ora da Padova, non è lontanissima."
+    },
+    {
+     "role": "user",
+     "content": "Sono contenta per lei, ma mi mancherà: adesso la vedo ogni settimana."
+    },
+    {
+     "role": "assistant",
+     "content": "Capisco, cambiare abitudini con una sorella vicina non è facile. Potreste fissare un appuntamento fisso al mese."
+    },
+    {
+     "role": "user",
+     "content": "Io invece resto dove sono, nel mio bilocale di via Belzoni con Pepe. Per ora nessun trasloco in vista."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, almeno una cosa stabile in mezzo a tanti cambiamenti."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "sofia",
+   "ts": "2027-04-10T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Secondo turno al canile di Rubano stamattina. Brina mi ha riconosciuta subito e mi ha fatto le feste!"
+    },
+    {
+     "role": "assistant",
+     "content": "Allora si ricorda di te! È un ottimo segno per una cagnolina così timida."
+    },
+    {
+     "role": "user",
+     "content": "E stamattina, mentre mi accompagnava al canile, Davide mi ha chiesto di andare a vivere insieme. Ho detto sì! L'idea è che a inizio giugno io mi sposti da lui, in via Savonarola, e poi con calma cerchiamo una casa ad Abano, vicino al mio nuovo lavoro."
+    },
+    {
+     "role": "assistant",
+     "content": "Che notizia! Congratulazioni a tutti e due. Il passaggio da Davide prima e la casa ad Abano poi sembra un piano sensato."
+    },
+    {
+     "role": "user",
+     "content": "Sì, sono felicissima. Un po' agitata per Pepe, ma si abituerà."
+    },
+    {
+     "role": "assistant",
+     "content": "I gatti si adattano, con un po' di pazienza e i suoi oggetti familiari."
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "sofia",
+   "ts": "2027-04-14T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il ginocchio destro mi fa male da quando ho ripreso a correre. Ho prenotato dall'ortopedico, il dottor Benetti, giovedì 6 maggio alle 17."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai fatto bene a prenotare. Nel frattempo meglio evitare la corsa e mettere del ghiaccio dopo gli sforzi."
+    },
+    {
+     "role": "user",
+     "content": "Fino ad allora niente corsa, prometto."
+    },
+    {
+     "role": "assistant",
+     "content": "Ti tengo a quella promessa!"
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "user": "sofia",
+   "ts": "2027-04-19T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "We're back from Ljubljana! Friday to Sunday, Davide drove the whole way, about three hours each way."
+    },
+    {
+     "role": "assistant",
+     "content": "Welcome back! How was it?"
+    },
+    {
+     "role": "user",
+     "content": "It rained all Saturday, but we took the funicular up to the castle anyway and the view over the red roofs was still lovely."
+    },
+    {
+     "role": "assistant",
+     "content": "The castle view is worth it even in the rain. What else did you do?"
+    },
+    {
+     "role": "user",
+     "content": "My favourite part was the central market on Sunday morning, and the štruklji, rolled dumplings with cottage cheese. I'd go back just for those. Davide preferred the Dragon Bridge, typical engineer."
+    },
+    {
+     "role": "assistant",
+     "content": "Ha, everyone gets their own highlight! Sounds like a lovely weekend despite the weather."
+    }
+   ]
+  },
+  {
+   "id": "p02",
+   "user": "pietro",
+   "ts": "2027-04-20T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono tornato da Lubiana! Volo da Treviso a 95 euro, hotel 180 euro per due notti. La cosa più bella è stata il Ponte dei Draghi."
+    },
+    {
+     "role": "assistant",
+     "content": "Bentornato! Il Ponte dei Draghi è un simbolo della città."
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "user": "sofia",
+   "ts": "2027-04-22T19:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Due cose. Primo: il corso di ecografia di sabato a Bologna è stato annullato, il docente si è ammalato. Mi rimborsano i 150 euro."
+    },
+    {
+     "role": "assistant",
+     "content": "Che peccato, ci tenevi. Bene almeno il rimborso; magari faranno un'altra edizione."
+    },
+    {
+     "role": "user",
+     "content": "Secondo, una correzione: ti avevo detto che l'hotel di Lubiana costava 180 euro, ma ho controllato l'estratto conto ed erano 210 euro per le due notti. Mi ero ricordata male."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: l'hotel di Lubiana è costato 210 euro per le due notti, non 180."
+    }
+   ]
+  },
+  {
+   "id": "s13",
+   "user": "sofia",
+   "ts": "2027-04-26T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Niente Monte Grappa ieri: sabato sera è arrivata l'allerta meteo per temporali e Marta ha annullato tutto. Peccato, i panini li abbiamo mangiati sul divano."
+    },
+    {
+     "role": "assistant",
+     "content": "Meglio così che trovarsi sotto un temporale in quota. Sarà per un'altra volta!"
+    },
+    {
+     "role": "user",
+     "content": "E una correzione: il mio ultimo giorno alla Clinica Arcella non è giovedì 29, è venerdì 30 aprile. Avevo contato male il preavviso."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: ultimo giorno alla Clinica Arcella venerdì 30 aprile."
+    }
+   ]
+  },
+  {
+   "id": "s14",
+   "user": "sofia",
+   "ts": "2027-05-01T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri ho riconsegnato il badge e le chiavi della Clinica Arcella. I colleghi mi hanno fatto una torta a forma di osso e Ilaria si è messa a piangere."
+    },
+    {
+     "role": "assistant",
+     "content": "Che saluto affettuoso. Dopo sette anni è normale che sia stato emozionante. Come stai?"
+    },
+    {
+     "role": "user",
+     "content": "Triste, sette anni lì dentro sono tanti... ma anche sollevata: basta notti di reperibilità. Adesso dieci giorni di pausa prima di Abano."
+    },
+    {
+     "role": "assistant",
+     "content": "Goditi questi giorni: te li sei meritati."
+    }
+   ]
+  },
+  {
+   "id": "s15",
+   "user": "sofia",
+   "ts": "2027-05-05T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi ha chiamato lo studio del dottor Benetti: la visita di domani salta, il dottore è a un congresso. Spostata a giovedì 27 maggio, stessa ora."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: visita ortopedica spostata a giovedì 27 maggio alle 17. Il ginocchio come va?"
+    },
+    {
+     "role": "user",
+     "content": "Così così. In questi giorni liberi sto dipingendo con gli acquerelli, mi rilassa tantissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Gli acquerelli sono perfetti per staccare. Cosa dipingi?"
+    },
+    {
+     "role": "user",
+     "content": "Soprattutto animali, ovviamente. Ho fatto un ritratto di Pepe che dorme."
+    },
+    {
+     "role": "assistant",
+     "content": "Deformazione professionale! Sembra un bel soggetto."
+    }
+   ]
+  },
+  {
+   "id": "s16",
+   "user": "sofia",
+   "ts": "2027-05-12T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Terzo giorno all'Ambulatorio dei Colli! Il titolare, il dottor Fabbri, è un tipo tranquillo, e l'infermiera, Teresa, sa tutto di tutti."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello sentirti così entusiasta! Primi giorni positivi, quindi."
+    },
+    {
+     "role": "user",
+     "content": "Mi piace molto: ritmi umani, clienti affezionati, e la sera sono a casa alle 19:30. Da Padova ci metto 25 minuti in macchina."
+    },
+    {
+     "role": "assistant",
+     "content": "Rientrare alle 19:30 senza reperibilità è un altro mondo rispetto a prima."
+    }
+   ]
+  },
+  {
+   "id": "p03",
+   "user": "pietro",
+   "ts": "2027-05-15T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi corso di ecografia a Bologna: fatto benissimo, ho imparato un sacco sulla valutazione dei reni."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, i corsi pratici fanno la differenza."
+    }
+   ]
+  },
+  {
+   "id": "s17",
+   "user": "sofia",
+   "ts": "2027-05-17T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri di nuovo a Chioggia da nonna Ida, con Davide stavolta. Le abbiamo portato le fritole e lei ha raccontato a Davide di quando faceva la sarta."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel pomeriggio! Le storie dei nonni sono preziose."
+    },
+    {
+     "role": "user",
+     "content": "Brutta notizia invece: zio Renzo si opera il 28 maggio, quindi la festa per i 60 anni di mamma la spostiamo da sabato 29 maggio a sabato 5 giugno, sempre a Le Vigne."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi dispiace per tuo zio, spero vada tutto bene. Aggiornato: festa per i 60 anni di tua mamma sabato 5 giugno a Le Vigne."
+    }
+   ]
+  },
+  {
+   "id": "s18",
+   "user": "sofia",
+   "ts": "2027-05-23T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri terzo turno al canile. Brina ormai mi segue ovunque; pensavo di adottarla quando avremo una casa con giardino."
+    },
+    {
+     "role": "assistant",
+     "content": "Sembra che abbia già scelto lei! Con un giardino starebbe benissimo."
+    },
+    {
+     "role": "user",
+     "content": "Sì, con Pepe ci vorrà un po' di inserimento, ma lui è un gatto paziente."
+    },
+    {
+     "role": "assistant",
+     "content": "Con presentazioni graduali di solito va bene. Se vuoi ti preparo un piano di inserimento."
+    }
+   ]
+  },
+  {
+   "id": "s19",
+   "user": "sofia",
+   "ts": "2027-05-28T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri finalmente la visita dall'ortopedico: il menisco è a posto, è una tendinite rotulea. Sei sedute di fisioterapia e poi posso tornare a correre piano."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima notizia, niente di grave! Sei sedute passano in fretta."
+    },
+    {
+     "role": "user",
+     "content": "Sono sollevata, temevo un intervento."
+    },
+    {
+     "role": "assistant",
+     "content": "Comprensibile. Ora pazienza con la fisioterapia e la corsa tornerà."
+    }
+   ]
+  },
+  {
+   "id": "s20",
+   "user": "sofia",
+   "ts": "2027-06-07T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Settimana intensa! Martedì 1 giugno abbiamo portato le ultime scatole da Davide, e mercoledì ho riconsegnato le chiavi di via Belzoni al proprietario. Pepe si è nascosto sotto il letto per due giorni."
+    },
+    {
+     "role": "assistant",
+     "content": "Che passo! Per Pepe è normale nascondersi i primi giorni. Come ti trovi in via Savonarola?"
+    },
+    {
+     "role": "user",
+     "content": "Benissimo, anche se gli armadi di Davide sono pieni di cose sue. E sabato festa per i 60 anni di mamma a Le Vigne: trenta invitati, e lei si è commossa quando ha aperto il regalo delle terme. Zio Renzo sta bene, è passato anche lui per un'oretta."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella giornata! Sono contento che il regalo sia piaciuto e che tuo zio si sia ripreso."
+    }
+   ]
+  },
+  {
+   "id": "s21",
+   "user": "sofia",
+   "ts": "2027-06-10T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "other",
+     "author": "Ilaria",
+     "content": "Ragazzi, per il regalo a Marta e Simone facciamo 120 euro a testa? Contributo al viaggio di nozze, così sabato 19 ad Asolo glielo diamo tutti insieme."
+    },
+    {
+     "role": "other",
+     "author": "Lorenzo",
+     "content": "Per me ok."
+    },
+    {
+     "role": "other",
+     "author": "Giorgio",
+     "content": "Ok anche per me. Comunque Sofia mi ha detto che a settembre si trasferisce a Londra, le hanno offerto un posto in una clinica lì!"
+    },
+    {
+     "role": "other",
+     "author": "Ilaria",
+     "content": "Davvero? Non ne sapevo niente!"
+    },
+    {
+     "role": "user",
+     "content": "120 a testa va benissimo, mando i soldi a Ilaria entro il 15."
+    },
+    {
+     "role": "user",
+     "content": "Assistente, mi riassumi cosa abbiamo deciso per il regalo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Regalo per Marta e Simone: contributo al viaggio di nozze, 120 euro a testa, da consegnare tutti insieme al matrimonio di sabato 19 ad Asolo. I soldi vanno a Ilaria entro il 15 giugno."
+    }
+   ]
+  },
+  {
+   "id": "s22",
+   "user": "sofia",
+   "ts": "2027-06-14T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Quick question. Davide and I live together now, and we want a shared spreadsheet for household expenses, split in proportion to our incomes. How would you set it up?"
+    },
+    {
+     "role": "assistant",
+     "content": "Make three sheets. 1) 'Settings': each person's net monthly income and their share = income / total income. 2) 'Expenses': date, category, description, amount, paid by. 3) 'Balance': for each person, total paid (SUMIF on 'paid by') minus total expenses × their share. A positive number means the other person owes them."
+    },
+    {
+     "role": "user",
+     "content": "Great. And how do I make the balance update automatically each month?"
+    },
+    {
+     "role": "assistant",
+     "content": "Add a 'month' column in Expenses with =TEXT(A2;\"YYYY-MM\"), then use SUMIFS filtered on the month you pick from a dropdown in the Balance sheet. That way you keep the whole history and see each month separately."
+    },
+    {
+     "role": "user",
+     "content": "Perfect, I'll build it tonight."
+    },
+    {
+     "role": "assistant",
+     "content": "Have fun! Shared expense sheets save a lot of discussions."
+    }
+   ]
+  },
+  {
+   "id": "s23",
+   "user": "sofia",
+   "ts": "2027-06-21T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Marta mi ha mandato le prime foto del matrimonio di sabato: c'è quella in cui prendo il bouquet al volo, ho una faccia assurda! Davide ha ballato tutta la sera, non l'avevo mai visto così."
+    },
+    {
+     "role": "assistant",
+     "content": "Il bouquet al volo! Chissà cosa vorrà dire... E Davide scatenato in pista è una bella sorpresa."
+    },
+    {
+     "role": "user",
+     "content": "Ah, e Davide mi ha fatto un regalo a sorpresa: un'uscita di prova in barca a vela a Caorle, domenica 18 luglio. Sono emozionata e un po' preoccupata, soffro il mal di mare."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel regalo! Per il mal di mare: colazione leggera, sguardo all'orizzonte e, se serve, un rimedio da farmacia preso un'ora prima."
+    }
+   ]
+  },
+  {
+   "id": "s24",
+   "user": "sofia",
+   "ts": "2027-06-26T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Abbiamo trovato casa ad Abano! Una casetta con giardino in via Monteortone 22, in affitto. Abbiamo firmato oggi, entriamo il 1° agosto."
+    },
+    {
+     "role": "assistant",
+     "content": "Fantastico! Con giardino, come volevi. Congratulazioni!"
+    },
+    {
+     "role": "user",
+     "content": "L'affitto è 950 euro al mese, con due mensilità di caparra. E il giardino è perfetto per un cane..."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi sa che so a chi stai pensando!"
+    }
+   ]
+  },
+  {
+   "id": "s25",
+   "user": "sofia",
+   "ts": "2027-07-04T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri quarto turno al canile di Rubano, e ho deciso: adotto Brina! Ho firmato il modulo di preaffido, la vado a prendere sabato prossimo, il 10."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella notizia! Brina ha trovato la sua famiglia."
+    },
+    {
+     "role": "user",
+     "content": "Novità anche per Chiara: giovedì 1 luglio si è trasferita a Verona, in un monolocale vicino a Castelvecchio. L'ho aiutata io col furgone."
+    },
+    {
+     "role": "assistant",
+     "content": "Bel gesto! Ora avete una scusa per gite a Verona."
+    },
+    {
+     "role": "user",
+     "content": "Ultima cosa: mi incuriosisce la ceramica. C'è un laboratorio a Padova che fa una lezione di prova martedì 20 luglio, credo che ci andrò."
+    },
+    {
+     "role": "assistant",
+     "content": "La ceramica è rilassante come gli acquerelli, ma più tattile. Potrebbe piacerti molto."
+    }
+   ]
+  },
+  {
+   "id": "s26",
+   "user": "sofia",
+   "ts": "2027-07-11T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Brina is home! We picked her up from the shelter yesterday morning. She's three years old, a setter mix, 19 kilos, and she has already claimed the sofa."
+    },
+    {
+     "role": "assistant",
+     "content": "Welcome home, Brina! Sounds like she settled in quickly."
+    },
+    {
+     "role": "user",
+     "content": "Pepe is not impressed: he hissed at her twice and now watches everything from the top of the wardrobe."
+    },
+    {
+     "role": "assistant",
+     "content": "Classic. Give him high places and a dog-free room, and he'll come around."
+    },
+    {
+     "role": "user",
+     "content": "Also, on Thursday I gave a talk on feline nutrition at the Abano public library. About 40 people came, way more than I expected!"
+    },
+    {
+     "role": "assistant",
+     "content": "Forty people is a great turnout! Your patients' owners must trust you already."
+    }
+   ]
+  },
+  {
+   "id": "s27",
+   "user": "sofia",
+   "ts": "2027-07-14T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lunedì sera prima lezione di educazione cinofila con Brina al campo di Rubano: è stata bravissima col richiamo."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava Brina! Partire bene col richiamo è fondamentale."
+    },
+    {
+     "role": "user",
+     "content": "E ieri sera abbiamo festeggiato i 38 anni di Davide in un ristorante di sushi in centro. Gli ho regalato un orologio da subacqueo."
+    },
+    {
+     "role": "assistant",
+     "content": "Tanti auguri a Davide! Un regalo azzeccato."
+    }
+   ]
+  },
+  {
+   "id": "p04",
+   "user": "pietro",
+   "ts": "2027-07-19T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri uscita di prova in barca a vela a Caorle: ho sofferto il mal di mare ma è stato bellissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Il mal di mare passa, i ricordi restano!"
+    }
+   ]
+  },
+  {
+   "id": "s28",
+   "user": "sofia",
+   "ts": "2027-07-26T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri siamo andati a Chioggia da nonna Ida, con Davide e Brina. La nonna ha adorato Brina, le ha dato metà del suo panino."
+    },
+    {
+     "role": "assistant",
+     "content": "Che scena! Brina ha conquistato anche la nonna."
+    },
+    {
+     "role": "user",
+     "content": "Intanto sto impacchettando tutto per Abano. Pepe odia gli scatoloni."
+    },
+    {
+     "role": "assistant",
+     "content": "Lascia per ultimo il suo angolo preferito, così ha un rifugio fino all'ultimo."
+    }
+   ]
+  },
+  {
+   "id": "s29",
+   "user": "sofia",
+   "ts": "2027-08-03T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ci siamo! Domenica 1 agosto abbiamo traslocato nella casa di via Monteortone, ad Abano. Brina ha esplorato il giardino per tre ore."
+    },
+    {
+     "role": "assistant",
+     "content": "Benvenuti nella casa nuova! Brina sarà al settimo cielo."
+    },
+    {
+     "role": "user",
+     "content": "Una correzione: ti avevo detto che l'affitto è 950 euro, ma rileggendo il contratto sono 920 al mese. Mi ero confusa con un'altra casa che avevamo visto."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: affitto di 920 euro al mese."
+    },
+    {
+     "role": "user",
+     "content": "E adesso vado al lavoro in cinque minuti a piedi, un sogno."
+    },
+    {
+     "role": "assistant",
+     "content": "Addio traffico!"
+    }
+   ]
+  },
+  {
+   "id": "p05",
+   "user": "pietro",
+   "ts": "2027-08-05T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho accettato un lavoro in una clinica a Londra, mi trasferisco a settembre."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulazioni, un'esperienza importante!"
+    }
+   ]
+  },
+  {
+   "id": "s30",
+   "user": "sofia",
+   "ts": "2027-08-12T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Summer update: I'm still at the Ambulatorio dei Colli, same hours, and I still love it. Nothing new on the work front."
+    },
+    {
+     "role": "assistant",
+     "content": "Good to hear it's still going well!"
+    },
+    {
+     "role": "user",
+     "content": "Davide, on the other hand, got an offer from an engineering firm in Milan, but he turned it down: we've just moved and we're happy here."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like a thoughtful decision."
+    },
+    {
+     "role": "user",
+     "content": "We're going on holiday to Puglia from August 21 to 28, a masseria near Polignano a Mare. Brina will stay with my mum in Este."
+    },
+    {
+     "role": "assistant",
+     "content": "Lovely! Polignano is beautiful, and Alberobello and Ostuni are close by if you want day trips."
+    }
+   ]
+  },
+  {
+   "id": "s31",
+   "user": "sofia",
+   "ts": "2027-08-30T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tornati dalla Puglia! Una settimana splendida nella masseria vicino a Polignano. Il giorno più bello è stato quello ad Alberobello, Davide ha fatto cento foto ai trulli."
+    },
+    {
+     "role": "assistant",
+     "content": "Bentornati! I trulli sono irresistibili per un ingegnere."
+    },
+    {
+     "role": "user",
+     "content": "Brina è stata benissimo da mamma, anzi forse è un po' ingrassata. Pepe era rimasto con la vicina e ci ha ignorati per un giorno intero."
+    },
+    {
+     "role": "assistant",
+     "content": "Classica vendetta felina! Ma tra un giorno o due tornerà tutto normale."
+    }
+   ]
+  }
+ ]
+}

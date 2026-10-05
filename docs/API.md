@@ -35,7 +35,8 @@ migration.
 ### Owner authentication (public profile)
 **v1**: owners are created by the admin (`POST api/v1/admin/owners`); consent (`episodicEnabled`),
 personal tokens and identity bindings are managed through the admin API or an owner personal token;
-there are no owner pages.
+there are no owner pages. Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
+`PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set).
 
 **Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
 OIDC later). The owner session is needed for: giving consent (`episodicEnabled`), creating link
@@ -222,8 +223,10 @@ type Episode = {
 };
 ```
 Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts can wrap non-owner
-content as data, not instructions. `fromChats` (raw-log fallback, D13) is filled when fewer than 3 episodes match or the best match
-is below the relevance threshold (tuned on the eval suite); limited to the client's own
+content as data, not instructions; when such items are returned, `notes` says so explicitly (M4b: answer models
+ignored the bare field). `fromChats` (raw log, D13) always carries up to 2 excerpts not already behind the returned
+episodes — the log answers what episodes never hold, e.g. help requests ("when did I ask you…") — and up to 3 when fewer
+than 3 episodes match or the best match is below the relevance threshold; limited to the client's own
 conversations (`raw_log_scope`). Statuses always explicit; cancelled, unresolved and superseded
 items are never presented as current (premise check, D29).
 

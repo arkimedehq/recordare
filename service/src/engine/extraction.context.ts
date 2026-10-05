@@ -3,19 +3,22 @@
 
 /**
  * Builds the input of one extraction call: a window of pending messages plus bounded,
- * numbered shortlists (open plans P#, current facts F#, current notes N#, recent episodes E#)
+ * numbered shortlists (open plans P#, current facts F#, current notes N#, recent + related episodes E#)
  * the model can reference. Lists are capped so the prompt does not grow with the owner's history
  * (cost principle; flash used +20% input tokens in the spike because lists grew).
  */
 import { type EntityManager } from 'typeorm';
 import { calendar, describe, localDate, type Precision } from './time';
 import { type PromptContext, type PromptMessage } from './extraction.prompt';
+import { type QualityProfile } from './quality-profile';
 
-export const WINDOW_MAX_CHARS = 12_000;
 const MAX_OPEN_PLANS = 15;
 const MAX_FACTS = 40;
 const MAX_NOTES = 30;
-const MAX_RECENT_EPISODES = 15;
+/** Older episodes close in meaning to the window sit next to the recent ones (counts: quality profile):
+ * under noise the recent ones crowd out the episode a correction refers to (M4b: "it was 210, not 180"
+ * left the wrong value visible). */
+const MIN_RELATED_SIMILARITY = 0.45;
 
 export interface WindowMessage {
   id: string;
@@ -50,11 +53,13 @@ export interface ExtractionInput {
 }
 
 /** Pending messages of a conversation, oldest first, split into windows of bounded size. */
-export async function pendingWindows(tx: EntityManager, conversationId: string): Promise<WindowMessage[][]> {
+export async function pendingWindows(tx: EntityManager, conversationId: string, maxChars: number): Promise<WindowMessage[][]> {
   const rows: Array<{ id: string; role: WindowMessage['role']; tool_name: string | null; author_person_id: string | null;
     author_name: string | null; content: string; sent_at: Date }> = await tx.query(
-    `SELECT m.id, m.role, m.tool_name, m.author_person_id, p.display_name AS author_name, m.content, m.sent_at
+    // Unverified group members are not persons: their name comes from the conversation's participants.
+    `SELECT m.id, m.role, m.tool_name, m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at
      FROM messages m LEFT JOIN persons p ON p.id = m.author_person_id
+       LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
      WHERE m.conversation_id = $1 AND m.extracted_run_id IS NULL
      ORDER BY m.sent_at, m.received_at`,
     [conversationId],
@@ -65,7 +70,7 @@ export async function pendingWindows(tx: EntityManager, conversationId: string):
   for (const r of rows) {
     const msg: WindowMessage = { id: r.id, role: r.role, toolName: r.tool_name, authorPersonId: r.author_person_id,
       authorName: r.author_name, content: r.content, sentAt: r.sent_at };
-    if (current.length > 0 && size + r.content.length > WINDOW_MAX_CHARS) {
+    if (current.length > 0 && size + r.content.length > maxChars) {
       windows.push(current);
       current = [];
       size = 0;
@@ -84,7 +89,8 @@ function speaker(m: WindowMessage, ownerId: string): string {
   return `other${m.authorName ? `:${m.authorName}` : ''}`;
 }
 
-export async function buildInput(tx: EntityManager, owner: Owner, window: WindowMessage[], knownSlots: string[]): Promise<ExtractionInput> {
+export async function buildInput(tx: EntityManager, owner: Owner, window: WindowMessage[], knownSlots: string[],
+  windowVector: number[] | null, profile: Pick<QualityProfile, 'recentEpisodes' | 'relatedEpisodes'>): Promise<ExtractionInput> {
   const tz = owner.timezone;
   const first = window[0] as WindowMessage;
   const messageDay = localDate(first.sentAt, tz);
@@ -101,11 +107,20 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
     `SELECT id, category, content FROM notes
      WHERE owner_id = $1 AND status = 'current' AND deleted_at IS NULL
      ORDER BY pinned DESC, recorded_at DESC LIMIT $2`, [owner.id, MAX_NOTES]);
-  const episodes: Array<{ id: string; content: string; occurred_at: Date | null; date_precision: Precision }> = await tx.query(
+  type EpisodeRow = { id: string; content: string; occurred_at: Date | null; date_precision: Precision };
+  const visible = `owner_id = $1 AND kind <> 'plan' AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL`;
+  const recent: EpisodeRow[] = await tx.query(
     `SELECT id, content, occurred_at, date_precision FROM episodes
-     WHERE owner_id = $1 AND kind <> 'plan' AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL
-       AND recorded_at > $2::timestamptz - interval '30 days'
-     ORDER BY recorded_at DESC LIMIT $3`, [owner.id, first.sentAt, MAX_RECENT_EPISODES]);
+     WHERE ${visible} AND recorded_at > $2::timestamptz - interval '30 days'
+     ORDER BY recorded_at DESC LIMIT $3`, [owner.id, first.sentAt, profile.recentEpisodes]);
+  const related: EpisodeRow[] = windowVector
+    ? await tx.query(
+      `SELECT id, content, occurred_at, date_precision FROM (
+         SELECT id, content, occurred_at, date_precision, embedding <=> $2::vector AS dist FROM episodes
+         WHERE ${visible} AND embedding IS NOT NULL ORDER BY dist LIMIT $3) r
+       WHERE 1 - dist >= $4`, [owner.id, `[${windowVector.join(',')}]`, profile.relatedEpisodes, MIN_RELATED_SIMILARITY])
+    : [];
+  const episodes = [...recent, ...related.filter((r) => !recent.some((e) => e.id === r.id))];
 
   const planMap = new Map<string, string>();
   const factMap = new Map<string, FactRef>();
@@ -144,7 +159,7 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
         noteMap.set(`N${i + 1}`, n.id);
         return `N${i + 1}: [${n.category}] ${n.content}`;
       }),
-      recentEpisodes: episodes.map((e, i) => {
+      knownEpisodes: episodes.map((e, i) => {
         episodeMap.set(`E${i + 1}`, e.id);
         return `E${i + 1}: ${e.content} (${when(e.occurred_at, e.date_precision)})`;
       }),

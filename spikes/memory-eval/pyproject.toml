@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Spike: compare memory engines for Recordare on an Italian episodic dataset"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-  "openai>=1.50",
+  "openai>=3",
   "python-dotenv>=1.0",
   "rank-bm25>=0.2.2",
   "fastembed>=0.4",
@@ -17,6 +17,7 @@ dependencies = [
   "psutil>=7.2.2",
   "mcp>=2.3.0",
   "psycopg[binary]>=3.3.6",
+  "mem0ai>=2.2.1",
 ]
 
 [tool.uv]

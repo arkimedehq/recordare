@@ -143,6 +143,23 @@ controls, per-stage extraction eval) — they move to M4b together with the M3/M
 | 4b.2 | Harness: N ≥ 3 runs per configuration, mean ± confidence interval, paired comparisons; controls (no-memory, full-context, raw-log only); per-category reporting; per-stage extraction scoring against gold; cost columns (calls, tokens, cached share, latency) |
 | 4b.3 | Quality profiles (D35) as configuration: economy / balanced / full, measured on the suite |
 | 4b.4 | Provider matrix (D27): DeepSeek, local Ollama, at least one more hosted provider; supported-models table |
+| 4b.5 | Market baselines on `dataset_blind3` (base + noise, 3 runs, same harness, judge and embeddings): **Mem0** OSS (the most used agent memory; ADD/UPDATE/DELETE over fact strings) and **Cognee** OSS (knowledge graph + vectors). Thin adapters in `systems/`, engines on the same LLM (`deepseek-flash`, thinking off); licences checked before use (run as dependencies, no code copied); report accuracy, extraction cost and injected tokens per query next to service v4, D and the controls (H6) |
+
+Status (2026-10-03): 4b.1 done (`dataset_blind3`, audited); 4b.2 done (multi-run + CI, paired bootstrap,
+controls, per-stage scorer — validated and fixed). **Base, blind: service 86.0 % (Claude engine 87.5 %), D 92.1 %,
+full context 97.2 %, no memory 8.3 %.** Fixes from the blind failures (third-party claims attributed to their
+author, chat excerpts always alongside episodes) → service 96.2 % post-hoc; a fourth blind set must confirm it.
+Noise: v3 88.0 % (D 94.0 %, full context 95.3 %) — corrections lost because the episode list held only
+recent items; **extract.v4** (recent + related episodes) → **noise 95.4 %, base 94.9 %**, on par with D and with
+full context. Facts are the weakest extraction stage (→ M5). Next: local models in the matrix (Qwen3-8B,
+MiniCPM4.1-8B; MiniCPM5-2B as light model), profiles.
+**Blind set 4 (84 q, nobody tuned on it): service v4 80.8 % base / 79.8 % noise, Mem0 78.0 / 79.3 %, D 88.3 %,
+full context 89.9 %** — extraction is fine (recall 0.96–0.99, dates ~1.0); the gap is recall (provenance, period
+overviews, corrections, third-party). Profiles: economy 93.5 %, balanced 94.9 %, full 92.1 % on blind3 (within noise;
+full costs 3.5× output). Next: recall work (H11) at category level, confirmed on a fifth blind set.
+Local engines measured: Qwen3-8B 59.7 %, Qwen3-14B 66.7 %, Qwen3.5-9B 73.6 %, Gemma 4 12B 73.6 %, gpt-oss 20B 83.3 %, Gemma 4 26B does not fit, MiniCPM excluded after probes. **Owner's rule: an engine
+model is supported only at ≥ 95 % on the suite**; weaker models are removed, results kept (RESULTS.md). Details in
+`spikes/memory-eval/RESULTS.md` § M4b.
 
 ### M5 — Layer 2: consolidation
 
@@ -162,6 +179,15 @@ controls, per-stage extraction eval) — they move to M4b together with the M3/M
 | 6.2 | **Arkimede full level**: register Recordare in its MCP client; non-blocking ingest of persisted messages (outbox + retry, never fails the chat); identity mapping Arkimede user → person | `personalAgent`, own branch |
 | 6.3 | Arkimede settings: `episodicMemoryEnabled` toggle + Diary tab (D18) via the Recordare timeline API | `personalAgent` |
 | 6.4 | Arkimede regression checklist (`EPISODIC_MEMORY_TODO.md` → Regression checklist): A-MEM, `search_conversations`, `search_memory` unchanged | `personalAgent` |
+
+**Other agent platforms — possible clients** (reviewed 2026-10-04; none has a temporal / provenance-aware memory,
+which confirms the standalone-service bet). Not committed work: candidates after Arkimede, in this order.
+
+| Platform | What it is | Memory today | Integration path | Priority |
+|---|---|---|---|---|
+| OpenHuman (`tinyhumansai/openhuman`, GPL-3.0, ~40k stars, early beta) | Rust agent harness (desktop / web / terminal / library), 26 providers + local | Pluggable engine behind TinyMemory (`Recall / Fetch / Store`): hosted CortexDB, Mem0, Supermemory, Cognee… — documents + RAG, no event time, plans or provenance | A **Recordare engine adapter for TinyMemory** (their engine-selection panel) — one adapter reaches all their users | Medium (after M6.2) |
+| Open Dots (`Anil-matcha/open-dots`, MIT, prototype) | Self-hosted personal-agent workspace (Next.js + FastAPI), personas, approval-gated actions | Chat history in SQLite only; "no durable memory service" by its own README | No MCP client seen: a small adapter on their side (REST ingest + recall) | Low (maturity) |
+
 
 ### M7 — Hardening and release
 
@@ -226,3 +252,19 @@ without migrating episodes.
   after the owner's OK; branch deleted after merge.
 - Each milestone ends with: tests green, `tsc --noEmit` clean, eval harness run (from M3),
   docs updated (decisions recorded as D-numbers).
+
+## Evaluation budget (owner's rule, 2026-10-05)
+
+Measured: since the 2026-10-04 top-up, 41 runs / 2,178 judged questions used 27.8 M input + 4.1 M output tokens
+(≈ 6.4 USD on DeepSeek); Mem0 alone was 56 % of it. The cost is the measurement, not Recordare (one person, five
+months, 232 sessions ≈ 1 M input tokens, two thirds cached). Rules:
+
+1. **Exploratory checks: 1 run.** 3 runs only for results that feed a decision or a reported number.
+2. **Base first, noise only if base is promising** (and only for the systems still in question).
+3. **Measured market baselines are not re-run** (Mem0, Cognee, Graphiti, Memobase) unless a specific question needs
+   it — their numbers stay in `RESULTS.md`.
+4. **Controls once per dataset** (no-memory, full context): they do not change between engine versions.
+5. **Small slices while iterating** (`--only` on the failing questions), the full set only to confirm.
+6. **Judge without reasoning** once re-validated against the current judge (`judge_eval.py`): ~4× fewer output tokens.
+7. Every chain is `--resume`-able and ordered by priority, so a stopped chain (balance, outage) keeps what it paid for.
+8. Before a large chain, state its expected token budget and check the provider balance.

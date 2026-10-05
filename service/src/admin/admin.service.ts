@@ -33,7 +33,7 @@ export class AdminService {
     return this.db.transaction(async (tx) => {
       const person = await tx.getRepository(Person).save({ displayName: input.displayName, ownerScope: null });
       return tx.getRepository(Owner).save({
-        personId: person.id, locale: input.locale, timezone: input.timezone, episodicEnabled: input.episodicEnabled,
+        personId: person.id, locale: input.locale, timezone: input.timezone, episodicEnabled: input.episodicEnabled, qualityProfile: input.qualityProfile,
         episodicEnabledAt: input.episodicEnabled ? new Date() : null, episodicEnabledBy: input.episodicEnabled ? 'admin' : null,
       });
     });
@@ -50,6 +50,7 @@ export class AdminService {
     }
     if (input.locale) owner.locale = input.locale;
     if (input.timezone) owner.timezone = input.timezone;
+    if (input.qualityProfile !== undefined) owner.qualityProfile = input.qualityProfile;
     return repo.save(owner);
   }
 

@@ -54,12 +54,16 @@ class Usage:
 USAGE = Usage()
 
 
+ATTEMPTS = 6
+
+
 def chat(messages: list[dict], phase: str, json_mode: bool = False, max_tokens: int = 800) -> str:
     """Single chat completion with retry; records token usage under `phase`."""
     kwargs = {"model": llm_model(), "messages": messages, "max_tokens": max_tokens, "temperature": 0}
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
-    for attempt in range(4):
+    # Backoff covers short network outages (a DNS blip of ~1 min aborted a whole M4b chain).
+    for attempt in range(ATTEMPTS):
         try:
             resp = llm_client().chat.completions.create(**kwargs)
             USAGE.add(phase, resp.usage)
@@ -69,9 +73,9 @@ def chat(messages: list[dict], phase: str, json_mode: bool = False, max_tokens: 
             return content
         except Exception as err:  # noqa: BLE001 - transient provider errors
             print(f"  ! {phase} call failed (attempt {attempt + 1}): {type(err).__name__}: {str(err)[:160]}", flush=True)
-            if attempt == 3:
+            if attempt == ATTEMPTS - 1:
                 raise
-            time.sleep(2 ** attempt)
+            time.sleep(min(5 * 2 ** attempt, 60))
     return ""
 
 
@@ -99,16 +103,16 @@ def engine_chat_json(messages: list[dict], phase: str, max_tokens: int = 4000) -
               "response_format": {"type": "json_object"}}
     if os.getenv("ENGINE_NO_THINKING"):
         kwargs["extra_body"] = reasoning_off_body(base_url)
-    for attempt in range(4):
+    for attempt in range(ATTEMPTS):
         try:
             resp = client.chat.completions.create(**kwargs)
             USAGE.add(phase, resp.usage)
             return json.loads(resp.choices[0].message.content or "")
         except Exception as err:  # noqa: BLE001 - transient provider errors, invalid JSON
             print(f"  ! {phase} call failed (attempt {attempt + 1}): {type(err).__name__}: {str(err)[:160]}", flush=True)
-            if attempt == 3:
+            if attempt == ATTEMPTS - 1:
                 raise
-            time.sleep(2 ** attempt)
+            time.sleep(min(5 * 2 ** attempt, 60))
     return {}
 
 
