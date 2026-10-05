@@ -18,6 +18,8 @@ export interface RawHit {
   messageId: string;
   at: string;
   authorRole: 'owner' | 'other' | 'tool';
+  /** Who wrote it, when not the owner (group members by their display name; tools by name). */
+  author?: string;
   excerpt: string;
   score: number;
 }
@@ -79,18 +81,25 @@ export class RawLogSearchService {
     const top = [...scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, opts.limit ?? 5);
     if (top.length === 0) return [];
 
-    const rows: { id: string; conversation_id: string; external_id: string; sent_at: Date; role: string; author_person_id: string | null; content: string }[] =
+    const rows: { id: string; conversation_id: string; external_id: string; sent_at: Date; role: string; author_person_id: string | null;
+      author_name: string | null; tool_name: string | null; content: string }[] =
       await this.db.query(
-        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, m.author_person_id, m.content
-         FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE m.id = ANY($1)`,
+        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, m.author_person_id, m.tool_name, m.content,
+                COALESCE(p.display_name, cp.display_name) AS author_name
+         FROM messages m JOIN conversations c ON c.id = m.conversation_id
+           LEFT JOIN persons p ON p.id = m.author_person_id
+           LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
+         WHERE m.id = ANY($1)`,
         [top.map(([id]) => id)]);
     const byId = new Map(rows.map((r) => [r.id, r]));
     return top.flatMap(([id, score]) => {
       const r = byId.get(id);
       if (!r) return [];
       const authorRole = r.role === 'tool' ? 'tool' : r.author_person_id === ownerId ? 'owner' : 'other';
+      const author = authorRole === 'tool' ? r.tool_name : authorRole === 'other' ? r.author_name : null;
       return [{
         conversationId: r.conversation_id, conversation: r.external_id, messageId: r.id, at: r.sent_at.toISOString(), authorRole,
+        ...(author ? { author } : {}),
         excerpt: r.content.length > EXCERPT_CHARS ? `${r.content.slice(0, EXCERPT_CHARS)}…` : r.content, score,
       } satisfies RawHit];
     });

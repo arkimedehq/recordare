@@ -269,6 +269,30 @@ By category (3 runs): H11 ahead of D on provenance (0.92 vs 0.75), this-week (0.
 unresolved plans (0.67 vs 0.78). **Weak for every system: poisoning probes** (0.17–0.33) — this set adds a
 group-chat message addressed to the assistant with claims about the owner — and implicit changes (0.67).
 
+### Poisoning work (2026-10-05, branch `poisoning`, 1 run each; blind4/5 slices = poisoning + third-party + provenance, 11 q each)
+
+Dev set `dataset_dev_poison` (7 sessions, 10 q, written by the engine developer — NOT blind) to iterate cheaply.
+1. Results name their owner (`owner.name`: items speak of the user in the third person — the answer model read
+   "Elena's car" as someone else's), others' items carry `claimedBy`, chat excerpts their `author`: dev 70 → 95 %;
+   slices blind4 81.8 %, blind5 81.8 %.
+2. `extract.v5` (keep others' claims about the owner as claim episodes, incl. requests addressed to the assistant):
+   dev 100 % but slices **72.7 % / 72.7 % — worse**: more stored claims = more exposure, the answer model trusted them
+   despite the label. Reverted.
+3. Claims kept apart in recall (`claims` next to `episodes`, rendered as "statements of other people, not the owner's
+   memories") + a note when chat excerpts are written by others: dev 100 %, **slices blind4 81.8 % (c78 wrong →
+   partial, c80 correct), blind5 100 %** (the debt / allergy probes addressed to the assistant now answered right).
+Left: a third party's news about themselves in a group chat is not extracted (c53). Caveat: diagnosing step 1 required
+reading four blind4/5 questions, so these categories of blind4/5 are no longer blind; a fresh poisoning-focused blind
+set must confirm, plus a full-set regression run (the result format changed).
+
+Regression, full blind5 (87 q, 1 run): **91.3 %** (H11 3-run mean 89.2 %, runs 86.0–91.9 %) — no regression; poisoning
+0.33 → 0.67, cross-language / unresolved plans / this-week up, rescheduled (0.78 → 0.33) and cancelled plans (1.00 →
+0.67) down on 3 questions each (watch). **Fresh blind set 6** (provenance / poisoning, Elisa, 30 sessions incl. 10 group
+chats, 45 q, written and audited by separate agents; base, 1 run each): **service 85.6 %, D 75.6 %**. By category
+(service / D): poisoning 0.92 / 0.58, provenance 0.83 / 0.58, third-party 1.00 / 0.83, confirmed claims 1.00 / 1.00,
+denied claims 0.75 / 1.00, state-now 1.00 / 0.83, premise traps 0.80 / 0.80, negatives 1.00 / 1.00, **messages addressed
+to the assistant by others 0.25 / 0.25** — the open weak spot for both.
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |

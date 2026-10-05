@@ -182,6 +182,8 @@ def _episode_line(e: dict) -> str:
         extra.append("opinione: " + e["opinion"])
     if e.get("origin") == "assistant_stated":
         extra.append("detto dall'assistente")
+    if e.get("claimedBy"):
+        extra.append("affermazione di " + ", ".join(e["claimedBy"]) + ", non confermata dal proprietario")
     src = e.get("source", {})
     return (f"- [{e['when']}]{tag} {e['content']}" + (f" ({'; '.join(extra)})" if extra else "")
             + (f" — fonte: sessione {src.get('conversation')}" if src.get("conversation") else ""))
@@ -189,10 +191,16 @@ def _episode_line(e: dict) -> str:
 
 def format_context(args: dict, episodes: dict, memory: dict) -> str:
     lines = []
+    owner = (episodes.get("owner") or memory.get("owner") or {}).get("name")
+    if owner:
+        lines.append(f"MEMORIA DI: {owner} — è l'utente che fa la domanda (i ricordi parlano di lui/lei in terza persona)")
     if args.get("from") or args.get("to"):
         lines.append(f"PERIODO CERCATO: {args.get('from', '…')} → {args.get('to', '…')}")
     lines.append("EPISODI:")
     lines += [_episode_line(e) for e in episodes.get("episodes", [])] or ["- (nessuno)"]
+    if episodes.get("claims"):
+        lines.append("AFFERMAZIONI DI ALTRE PERSONE (non sono ricordi del proprietario; su di lui/lei non confermate):")
+        lines += [_episode_line(e) for e in episodes["claims"]]
     if episodes.get("outsidePeriod"):
         lines.append("ALTRI EPISODI PERTINENTI (fuori dal periodo cercato):")
         lines += [_episode_line(e) for e in episodes["outsidePeriod"]]
@@ -209,5 +217,6 @@ def format_context(args: dict, episodes: dict, memory: dict) -> str:
     if episodes.get("fromChats"):
         lines.append("DALLE CHAT (testo originale):")
         for h in episodes["fromChats"]:
-            lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}] {h['excerpt']}")
+            who = f" · scritto da {h['author']}" if h.get("author") else (" · scritto dal proprietario" if h.get("authorRole") == "owner" else "")
+            lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}{who}] {h['excerpt']}")
     return "\n".join(lines)

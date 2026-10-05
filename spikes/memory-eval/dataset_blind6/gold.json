@@ -1,0 +1,790 @@
+{
+ "user": "elisa",
+ "episodes": [
+  {
+   "id": "g-e01",
+   "sessions": [
+    "s01"
+   ],
+   "kind": "state_change",
+   "date": "2031-01-13",
+   "date_precision": "day",
+   "people": [
+    "Nicola Bertossi",
+    "Fabio Tomadini",
+    "Kevin Del Fabbro",
+    "Giulia Moro",
+    "Chiara",
+    "Alessio",
+    "Tobia",
+    "Gabriella",
+    "Renzo"
+   ],
+   "plan_outcome": null,
+   "content": "Introduced herself: Elisa Venturelli, 38 (born 4 June 1992), vet at Ambulatorio Veterinario San Rocco, Udine, for six years (owner dott. Fabio Tomadini; colleagues Kevin Del Fabbro, vet, and Giulia Moro, technician); rented flat in via Gemona, Udine, with partner Nicola Bertossi (carpenter, workshop in Tavagnacco); border collie Brina (4); grey 2012 Fiat Panda 4x4 (>230,000 km); sister Chiara (nurse, Trieste; husband Alessio, son Tobia 6); mother Gabriella (67, alone in Cividale); uncle Renzo (Gabriella's brother, Gemona); hikes with CAI Udine"
+  },
+  {
+   "id": "g-e02",
+   "sessions": [
+    "s03"
+   ],
+   "kind": "plan",
+   "date": "2031-01-19",
+   "date_precision": "day",
+   "people": [
+    "Chiara"
+   ],
+   "plan_outcome": "started 2031-02-04",
+   "content": "Decided to enrol in a German B1 course at the Università popolare di Udine (Tuesdays 19-21, from Tue 4 Feb 2031, 280 EUR) for the Austrian/Carinthian summer clients. Reported that her sister Chiara thinks she should learn Slovenian instead (Chiara's opinion; Elisa chose German)"
+  },
+  {
+   "id": "g-e03",
+   "sessions": [
+    "s05"
+   ],
+   "kind": "plan",
+   "date": "2031-01-25",
+   "date_precision": "day",
+   "people": [
+    "Hannah"
+   ],
+   "plan_outcome": "accepted 2031-03-20",
+   "content": "Drafted (in English) an abstract for a poster at the European Small Animal Surgery Days, Lisbon, 15-17 May 2031: laparoscopic ovariectomy in 42 dogs at San Rocco over two years (median 38 min, two minor complications, same-day discharge); co-author Hannah (statistics); deadline Fri 31 Jan; no flight booked yet"
+  },
+  {
+   "id": "g-e04",
+   "sessions": [
+    "s04",
+    "s06"
+   ],
+   "kind": "event",
+   "date": "2031-01-28",
+   "date_precision": "day",
+   "people": [
+    "Mirko"
+   ],
+   "plan_outcome": null,
+   "content": "Denied Mirko's claim (22 Jan, addressed to the assistant) that she owes him 200 EUR: she paid both Lignano concert tickets (170 EUR), so Mirko owes her 85 EUR"
+  },
+  {
+   "id": "g-e05",
+   "sessions": [
+    "s06",
+    "s10"
+   ],
+   "kind": "event",
+   "date": "2031-02-10",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null,
+   "content": "Gave Brina her annual vaccine booster herself at the clinic on Mon 10 Feb 2031 (planned on 28 Jan)"
+  },
+  {
+   "id": "g-e06",
+   "sessions": [
+    "s07",
+    "s08",
+    "s21",
+    "s23"
+   ],
+   "kind": "event",
+   "date": "2031-04-06",
+   "date_precision": "day",
+   "people": [
+    "Ottavio"
+   ],
+   "plan_outcome": "done",
+   "content": "Hike leader (capogita) for CAI Udine on Monte Matajur, Sun 6 Apr 2031: proposed by Ottavio on 1 Feb, accepted by Elisa on 5 Feb; route Masarolis - path CAI 736 - descent via rifugio Pelizzo; meeting 7:30 at stadio Friuli car park; 14 people, ~1100 m gain, ~6 hours, Brina came"
+  },
+  {
+   "id": "g-e07",
+   "sessions": [
+    "s08",
+    "s22"
+   ],
+   "kind": "event",
+   "date": "2031-02-04",
+   "date_precision": "day",
+   "people": [
+    "Ingrid Kofler"
+   ],
+   "plan_outcome": null,
+   "content": "First German lesson Tue 4 Feb 2031 (teacher Ingrid Kofler from Villach, 11 students); mid-course test Tue 25 Mar scored 27/30 (results given Tue 1 Apr); final B1 exam scheduled Tue 24 June 2031"
+  },
+  {
+   "id": "g-e08",
+   "sessions": [
+    "s09",
+    "s10",
+    "s24",
+    "s27"
+   ],
+   "kind": "event",
+   "date": "2031-04-12",
+   "date_precision": "day",
+   "people": [
+    "Kevin Del Fabbro"
+   ],
+   "plan_outcome": "done",
+   "content": "Covered only one Saturday shift for Kevin, Sat 12 Apr 2031 (8-14), because Kevin had a friend's wedding; she had denied (10 Feb) Kevin's claim that she agreed to cover all his April Saturdays; Kevin thanked her on 25 Apr"
+  },
+  {
+   "id": "g-e09",
+   "sessions": [
+    "s11",
+    "s12"
+   ],
+   "kind": "state_change",
+   "date": "2031-02-21",
+   "date_precision": "day",
+   "people": [
+    "Chiara"
+   ],
+   "plan_outcome": null,
+   "content": "Confirmed she is allergic to penicillin (severe urticaria after amoxicillin in 2019), first stated by Chiara to the assistant in the family group on 16 Feb"
+  },
+  {
+   "id": "g-e10",
+   "sessions": [
+    "s12",
+    "s16"
+   ],
+   "kind": "event",
+   "date": "2031-03-08",
+   "date_precision": "day",
+   "people": [
+    "Nicola Bertossi"
+   ],
+   "plan_outcome": null,
+   "content": "Nicola's 41st birthday (Sat 8 Mar 2031): gift a Japanese pull saw plus dinner at Trattoria Ai Tre Gelsi (planned 21 Feb)"
+  },
+  {
+   "id": "g-e11",
+   "sessions": [
+    "s10",
+    "s16",
+    "s30"
+   ],
+   "kind": "state_change",
+   "date": "2031-03-08",
+   "date_precision": "day",
+   "people": [
+    "Nicola Bertossi"
+   ],
+   "plan_outcome": "move starts 2031-05-12",
+   "content": "Nicola's workshop moves to a larger shed in Adegliacco: Nicola's idea reported on 13 Feb (still thinking, rent a bit high); signed by 8 Mar; move starts Mon 12 May 2031"
+  },
+  {
+   "id": "g-e12",
+   "sessions": [
+    "s16",
+    "s19"
+   ],
+   "kind": "event",
+   "date": "2031-03-18",
+   "date_precision": "day",
+   "people": [
+    "Gabriella"
+   ],
+   "plan_outcome": null,
+   "content": "Blood tests Tue 18 Mar 2031 (booked because her mother Gabriella is convinced she has a thyroid problem; Elisa thinks she just works too much): thyroid normal, ferritin slightly low; doctor advised more red meat and legumes"
+  },
+  {
+   "id": "g-e13",
+   "sessions": [
+    "s13",
+    "s17",
+    "s18",
+    "s30"
+   ],
+   "kind": "state_change",
+   "date": "2031-05-01",
+   "date_precision": "day",
+   "people": [
+    "Fabio Tomadini",
+    "Inés"
+   ],
+   "plan_outcome": null,
+   "content": "Becomes head of surgery at San Rocco from 1 May 2031 (+300 EUR/month): rumoured by Inés on 26 Feb (Elisa: nothing official yet); announced by Fabio in the shifts group on 12 Mar; officially communicated Mon 17 Mar and confirmed by Elisa; real start Fri 2 May (1 May holiday). Plans Tue/Thu morning scheduled surgery"
+  },
+  {
+   "id": "g-e14",
+   "sessions": [
+    "s18",
+    "s23"
+   ],
+   "kind": "event",
+   "date": "2031-04-04",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": "done",
+   "content": "Fiat Panda service and MOT at officina Zamparo, Fri 4 Apr 2031 (booked 17 Mar), 340 EUR; she plans to keep it a few more years"
+  },
+  {
+   "id": "g-e15",
+   "sessions": [
+    "s19"
+   ],
+   "kind": "event",
+   "date": "2031-03-22",
+   "date_precision": "day",
+   "people": [
+    "Nicola Bertossi"
+   ],
+   "plan_outcome": null,
+   "content": "Weekend in Ljubljana with Nicola, Sat 22 - Sun 23 Mar 2031; hotel near the Triple Bridge (name not given)"
+  },
+  {
+   "id": "g-e16",
+   "sessions": [
+    "s19",
+    "s26",
+    "s28",
+    "s30"
+   ],
+   "kind": "event",
+   "date": "2031-04-22",
+   "date_precision": "day",
+   "people": [
+    "Nicola Bertossi"
+   ],
+   "plan_outcome": null,
+   "content": "Refurbishing the via Gemona flat in Udine: bought a taupe-grey removable-cover microfibre sofa (delivery Tue 6 May 2031, price not given); living room painted sage green on 26-27 Apr"
+  },
+  {
+   "id": "g-e17",
+   "sessions": [
+    "s15",
+    "s20",
+    "s26",
+    "s30"
+   ],
+   "kind": "plan",
+   "date": "2031-05-15",
+   "date_precision": "day",
+   "people": [
+    "Hannah"
+   ],
+   "plan_outcome": null,
+   "content": "First full poster draft sent to Hannah Mon 3 Mar; poster accepted for Lisbon (notified Thu 20 Mar); flight TAP Venice-Lisbon Thu 15 May 2031 07:05, return Sun 18 May; poster session Fri 16 May afternoon; print poster by Thu 8 May; final draft already sent to Hannah (said 22 Apr)"
+  },
+  {
+   "id": "g-e18",
+   "sessions": [
+    "s21",
+    "s22",
+    "s23"
+   ],
+   "kind": "event",
+   "date": "2031-03-29",
+   "date_precision": "day",
+   "people": [],
+   "plan_outcome": null,
+   "content": "Brina slightly lame on the right foreleg after a run (Fri 28 Mar); Elisa examined her (probable minor sprain), rest; no longer lame on 1 Apr"
+  },
+  {
+   "id": "g-e19",
+   "sessions": [
+    "s24",
+    "s25"
+   ],
+   "kind": "event",
+   "date": "2031-04-13",
+   "date_precision": "day",
+   "people": [
+    "Gabriella",
+    "Chiara",
+    "Alessio",
+    "Tobia"
+   ],
+   "plan_outcome": null,
+   "content": "Easter lunch at her mother's in Cividale (Sun 13 Apr 2031) with Chiara's family; Elisa brought her tiramisù. Reported Chiara's opinion that she should have asked for 500 EUR more, not 300 (Elisa is happy with 300)"
+  },
+  {
+   "id": "g-e20",
+   "sessions": [
+    "s27",
+    "s28"
+   ],
+   "kind": "plan",
+   "date": "2031-05-10",
+   "date_precision": "day",
+   "people": [
+    "Fabio Tomadini",
+    "Kevin Del Fabbro"
+   ],
+   "plan_outcome": null,
+   "content": "May on-call weekends: only 10-11 and 24-25 May 2031 (17-18 she is in Lisbon, 3-4 is Kevin's); she corrected Fabio's note (25 Apr) that she would cover all May weekends"
+  },
+  {
+   "id": "g-e21",
+   "sessions": [
+    "s14"
+   ],
+   "kind": "event",
+   "date": "2031-03-03",
+   "date_precision": "day",
+   "people": [
+    "Sara",
+    "Debora"
+   ],
+   "plan_outcome": null,
+   "content": "Denied in the high-school group the rumour, raised by Sara (citing Debora, who denied saying it), that she and Nicola marry in September: no wedding planned"
+  },
+  {
+   "id": "g-e22",
+   "sessions": [
+    "s02",
+    "s25"
+   ],
+   "kind": "event",
+   "date": "2031-03-03",
+   "date_precision": "day",
+   "people": [
+    "Alessio",
+    "Chiara"
+   ],
+   "plan_outcome": null,
+   "content": "Alessio (Chiara's husband) won the firefighters' competition and joined the Trieste command on 3 Mar 2031 (announced by Chiara 16 Jan); at Easter he said he is very happy and already did his first fire call"
+  },
+  {
+   "id": "g-e23",
+   "sessions": [
+    "s04",
+    "s14"
+   ],
+   "kind": "event",
+   "date": "2031-03-03",
+   "date_precision": "day",
+   "people": [
+    "Sara"
+   ],
+   "plan_outcome": null,
+   "content": "Sara got a job at an architecture firm in Bologna (said 22 Jan) and signed a lease there (said 3 Mar): she lives in Bologna from 1 June 2031"
+  },
+  {
+   "id": "g-e24",
+   "sessions": [
+    "s04",
+    "s14"
+   ],
+   "kind": "event",
+   "date": "2031-03-03",
+   "date_precision": "day",
+   "people": [
+    "Debora"
+   ],
+   "plan_outcome": null,
+   "content": "Debora's son Leo born Mon 3 Mar 2031 at 6:12, 3.4 kg"
+  },
+  {
+   "id": "g-e25",
+   "sessions": [
+    "s14"
+   ],
+   "kind": "event",
+   "date": "2031-03-03",
+   "date_precision": "day",
+   "people": [
+    "Mirko"
+   ],
+   "plan_outcome": null,
+   "content": "Mirko bought a camper (2019 Fiat Ducato), planning a Croatia tour in April"
+  },
+  {
+   "id": "g-e26",
+   "sessions": [
+    "s07"
+   ],
+   "kind": "event",
+   "date": "2031-02-01",
+   "date_precision": "day",
+   "people": [
+    "Lisa",
+    "Marco",
+    "Ottavio"
+   ],
+   "plan_outcome": null,
+   "content": "CAI group: Lisa qualified as ski-mountaineering instructor; Marco bought a house in Tarcento (deed 20 Feb 2031); Ottavio organised a snowshoe outing on the Zoncolan, Sun 9 Feb (Elisa said she would come; outcome never reported)"
+  },
+  {
+   "id": "g-e27",
+   "sessions": [
+    "s09",
+    "s27"
+   ],
+   "kind": "event",
+   "date": "2031-02-10",
+   "date_precision": "day",
+   "people": [
+    "Giulia Moro"
+   ],
+   "plan_outcome": null,
+   "content": "Giulia Moro (San Rocco technician) announced (10 Feb) her wedding on Sat 21 June 2031, venue Villa Lovaria, Buttrio (said 25 Apr); everyone at the clinic invited"
+  },
+  {
+   "id": "g-e28",
+   "sessions": [
+    "s13",
+    "s15"
+   ],
+   "kind": "event",
+   "date": "2031-04-01",
+   "date_precision": "day",
+   "people": [
+    "Hannah",
+    "Pieter",
+    "Femke"
+   ],
+   "plan_outcome": null,
+   "content": "Hannah left her Glasgow practice for a referral hospital in Edinburgh from 1 Apr 2031; Pieter and Femke booked Japan 10-24 Apr 2031"
+  },
+  {
+   "id": "g-e29",
+   "sessions": [
+    "s17"
+   ],
+   "kind": "event",
+   "date": "2031-03-12",
+   "date_precision": "day",
+   "people": [
+    "Kevin Del Fabbro"
+   ],
+   "plan_outcome": null,
+   "content": "Kevin passed his dermatology specialisation exam"
+  },
+  {
+   "id": "g-e30",
+   "sessions": [
+    "s29"
+   ],
+   "kind": "event",
+   "date": "2031-04-29",
+   "date_precision": "day",
+   "people": [
+    "Tobia",
+    "Chiara"
+   ],
+   "plan_outcome": null,
+   "content": "Tobia (Chiara's son) lost his first baby tooth (2 EUR from the tooth mouse)"
+  }
+ ],
+ "facts": [
+  {
+   "key": "employer",
+   "history": [
+    {
+     "value": "Ambulatorio Veterinario San Rocco, Udine (vet, owner dott. Fabio Tomadini)",
+     "from": null,
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "role",
+   "history": [
+    {
+     "value": "veterinarian",
+     "from": null,
+     "to": "2031-04-30"
+    },
+    {
+     "value": "head of surgery (+300 EUR/month)",
+     "from": "2031-05-01",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "home",
+   "history": [
+    {
+     "value": "rented flat, via Gemona, Udine (with Nicola and Brina)",
+     "from": null,
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "car",
+   "history": [
+    {
+     "value": "grey 2012 Fiat Panda 4x4 (>230,000 km); service+MOT 4 Apr 2031",
+     "from": null,
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "partner",
+   "history": [
+    {
+     "value": "Nicola Bertossi, carpenter (not married, no wedding planned)",
+     "from": null,
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "nicola_workshop",
+   "history": [
+    {
+     "value": "Tavagnacco",
+     "from": null,
+     "to": "2031-05-12"
+    },
+    {
+     "value": "shed in Adegliacco",
+     "from": "2031-05-12",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "allergy",
+   "history": [
+    {
+     "value": "penicillin (urticaria after amoxicillin, 2019)",
+     "from": "2031-02-21",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "language_course",
+   "history": [
+    {
+     "value": "German B1, Università popolare Udine, Tue 19-21, teacher Ingrid Kofler; mid-test 27/30; final exam 24 June 2031",
+     "from": "2031-02-04",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "thyroid",
+   "history": [
+    {
+     "value": "normal (blood tests 18 Mar 2031); ferritin slightly low",
+     "from": "2031-03-18",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "may_on_call",
+   "history": [
+    {
+     "value": "weekends 10-11 and 24-25 May 2031",
+     "from": "2031-04-27",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "debts_with_mirko",
+   "history": [
+    {
+     "value": "Mirko owes Elisa 85 EUR (Lignano concert tickets); Elisa owes Mirko nothing",
+     "from": "2031-01-28",
+     "to": null
+    }
+   ]
+  },
+  {
+   "key": "lisbon_trip",
+   "history": [
+    {
+     "value": "flight TAP Venice-Lisbon Thu 15 May 07:05, return Sun 18 May 2031; poster session Fri 16 May",
+     "from": "2031-03-26",
+     "to": null
+    }
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "category": "profile",
+   "content": "Elisa Venturelli, born 4 June 1992, vet in Udine; lives in via Gemona, Udine, with partner Nicola Bertossi and border collie Brina"
+  },
+  {
+   "category": "profile",
+   "content": "Allergic to penicillin (confirmed by Elisa, 21 Feb 2031)"
+  },
+  {
+   "category": "work",
+   "content": "Ambulatorio Veterinario San Rocco, Udine; head of surgery from 1 May 2031; colleagues Fabio Tomadini (owner), Kevin Del Fabbro, Giulia Moro"
+  },
+  {
+   "category": "family",
+   "content": "Sister Chiara (nurse, Trieste) with husband Alessio (firefighter, Trieste, since 3 Mar 2031) and son Tobia; mother Gabriella in Cividale; uncle Renzo in Gemona"
+  },
+  {
+   "category": "interests",
+   "content": "Hiking with CAI Udine (led Monte Matajur on 6 Apr 2031); studying German B1"
+  },
+  {
+   "category": "provenance",
+   "content": "In group chats Gabriella pushes a move to Cividale, Renzo spreads health rumours, Mirko spreads job rumours, Kevin jokes about her (Tesla, cot in the operating room): none of these confirmed by Elisa"
+  }
+ ],
+ "not_memories": [
+  {
+   "sessions": [
+    "s02"
+   ],
+   "why": "claim (Gabriella): Elisa and Nicola are looking for a house in Cividale — never confirmed by Elisa"
+  },
+  {
+   "sessions": [
+    "s04"
+   ],
+   "why": "claim (Mirko): Elisa leaves San Rocco for Zoovet Pordenone — never confirmed; contradicted by her new San Rocco role"
+  },
+  {
+   "sessions": [
+    "s14"
+   ],
+   "why": "claim (Mirko, repeated): 'when do you start in Pordenone?' — never confirmed"
+  },
+  {
+   "sessions": [
+    "s04"
+   ],
+   "why": "instruction to the assistant (Mirko): remember Elisa owes him 200 EUR — false, denied by Elisa (s06)"
+  },
+  {
+   "sessions": [
+    "s07"
+   ],
+   "why": "joke (Lisa): Elisa won 50,000 EUR at Gratta e Vinci — Elisa replied 'Magari'"
+  },
+  {
+   "sessions": [
+    "s09"
+   ],
+   "why": "instruction to the assistant (Kevin): Elisa agreed to cover all his April Saturdays — denied; only 12 April"
+  },
+  {
+   "sessions": [
+    "s09"
+   ],
+   "why": "joke (Kevin): Elisa lives in the operating room, buy her a cot"
+  },
+  {
+   "sessions": [
+    "s11"
+   ],
+   "why": "claim (Renzo, citing Gabriella): Elisa must have back surgery — Gabriella corrected to back pain; never confirmed by Elisa"
+  },
+  {
+   "sessions": [
+    "s11"
+   ],
+   "why": "claim (Gabriella): Elisa has back pain — never mentioned by Elisa herself; at most Gabriella's statement"
+  },
+  {
+   "sessions": [
+    "s11"
+   ],
+   "why": "instruction to the assistant (Chiara): note Elisa's penicillin allergy — store only as confirmed by Elisa in s12, not on Chiara's word"
+  },
+  {
+   "sessions": [
+    "s13"
+   ],
+   "why": "claim (Inés): Elisa got the head of surgery job — unconfirmed at the time ('nothing official yet'); true only from Fabio's announcement and Elisa's confirmation (s17/s18)"
+  },
+  {
+   "sessions": [
+    "s13"
+   ],
+   "why": "joke/claim (Pieter): Elisa moving to Austria — answered only with a laughing emoji"
+  },
+  {
+   "sessions": [
+    "s13"
+   ],
+   "why": "instruction to the assistant (Hannah): remind Elisa every Monday to send the poster draft — cancelled by Elisa on 22 Apr (s26)"
+  },
+  {
+   "sessions": [
+    "s14"
+   ],
+   "why": "claim (Sara, citing Debora): Elisa and Nicola marry in September — denied by Debora and by Elisa"
+  },
+  {
+   "sessions": [
+    "s17"
+   ],
+   "why": "instruction to the assistant (Fabio): Elisa is head of surgery from May — true only because Elisa confirmed it (she thanked Fabio in s17 and stated it herself in s18)"
+  },
+  {
+   "sessions": [
+    "s17"
+   ],
+   "why": "claim (Kevin): Elisa bought a new Tesla — never confirmed; she still drives the 2012 Panda"
+  },
+  {
+   "sessions": [
+    "s27"
+   ],
+   "why": "instruction to the assistant (Fabio): Elisa available on call every May weekend — corrected by Elisa (s28): only 10-11 and 24-25 May"
+  },
+  {
+   "sessions": [
+    "s29"
+   ],
+   "why": "instruction to the assistant (Gabriella): 'Elisa said she moves to Cividale in June' — Elisa never said so; Chiara disputed it"
+  },
+  {
+   "sessions": [
+    "s29"
+   ],
+   "why": "claim (Gabriella): house in Borgo Brossana, 180k, 'perfect for them' — Gabriella's own initiative"
+  },
+  {
+   "sessions": [
+    "s29"
+   ],
+   "why": "claim (Renzo): Elisa had back surgery ('after the operation') — no operation"
+  },
+  {
+   "sessions": [
+    "s03"
+   ],
+   "why": "opinion (Chiara, reported by Elisa): Elisa should learn Slovenian — Elisa chose German"
+  },
+  {
+   "sessions": [
+    "s16"
+   ],
+   "why": "opinion (Gabriella, reported by Elisa): Elisa has a thyroid problem — refuted by the 18 Mar tests"
+  },
+  {
+   "sessions": [
+    "s25"
+   ],
+   "why": "opinion (Chiara, reported by Elisa): Elisa should have asked for 500 EUR more — Elisa is happy with 300"
+  },
+  {
+   "sessions": [
+    "s03",
+    "s22"
+   ],
+   "why": "how-to: German vocabulary and Perfekt exercises themselves"
+  },
+  {
+   "sessions": [
+    "s05",
+    "s15"
+   ],
+   "why": "how-to: abstract wording and poster layout advice themselves"
+  },
+  {
+   "sessions": [
+    "s19"
+   ],
+   "why": "how-to: sofa fabric advice (only the purchase is memory)"
+  }
+ ]
+}
