@@ -21,6 +21,10 @@ export interface QualityProfile {
   extractionTask: Extract<LlmTask, 'extract' | 'extract_economy'>;
   /** Let the extraction model reason (slower, more output tokens). */
   reasoning: boolean;
+  /** Facts and notes in the episode call (`inline`) or in their own call on the `facts` task model (`separate`).
+   * Measured 2026-10-06 (blind5, V4 Pro on `facts`): no gain on facts, answers within noise, +65 calls — so `inline`
+   * everywhere; `separate` stays available (FACTS_PASS) for the M5 consolidation work. */
+  factsPass: 'inline' | 'separate';
   /** Episode list shown to the extractor: most recent + older ones related to the window. */
   recentEpisodes: number;
   relatedEpisodes: number;
@@ -33,23 +37,27 @@ export interface QualityProfile {
 
 const PROFILES: Record<QualityProfileName, QualityProfile> = {
   economy: {
-    name: 'economy', windowChars: 16_000, extractionTask: 'extract_economy', reasoning: false,
+    name: 'economy', windowChars: 16_000, extractionTask: 'extract_economy', reasoning: false, factsPass: 'inline',
     recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1,
   },
   balanced: {
-    name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false,
+    name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false, factsPass: 'inline',
     recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3,
   },
   full: {
-    name: 'full', windowChars: 8_000, extractionTask: 'extract', reasoning: true,
+    name: 'full', windowChars: 8_000, extractionTask: 'extract', reasoning: true, factsPass: 'inline',
     recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5,
   },
 };
 
-/** The owner's profile, else the installation default; an explicit window size overrides the profile's. */
+/** The owner's profile, else the installation default; explicit installation settings override single knobs. */
 export function qualityProfile(ownerChoice: string | null | undefined, installationDefault: QualityProfileName,
-  windowCharsOverride?: number): QualityProfile {
+  windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass']): QualityProfile {
   const name = (QUALITY_PROFILES as readonly string[]).includes(ownerChoice ?? '') ? ownerChoice as QualityProfileName : installationDefault;
   const p = PROFILES[name];
-  return windowCharsOverride ? { ...p, windowChars: windowCharsOverride } : p;
+  return {
+    ...p,
+    ...(windowCharsOverride ? { windowChars: windowCharsOverride } : {}),
+    ...(factsPassOverride ? { factsPass: factsPassOverride } : {}),
+  };
 }

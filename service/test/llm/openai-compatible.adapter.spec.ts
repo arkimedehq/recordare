@@ -60,7 +60,7 @@ describe('OpenAiCompatibleAdapter', () => {
     const f = fakeFetch([{ content: '{"episodes":[]}' }, { content: '{"episodes":[]}' }]);
     const big = new OpenAiCompatibleAdapter({ model: 'big', profile: resolveProfile('generic'), fetch: f.fn, baseURL: 'http://x/v1' });
     const small = new OpenAiCompatibleAdapter({ model: 'small', profile: resolveProfile('generic'), fetch: f.fn, baseURL: 'http://x/v1' });
-    const router = new LlmRouter({ extract: big, extract_economy: big, resolve: small });
+    const router = new LlmRouter({ extract: big, extract_economy: big, resolve: small, facts: big });
     await router.completeJson({ ...req, task: 'resolve' });
     await router.completeJson(req);
     expect(f.bodies.map((b) => b['model'])).toEqual(['small', 'big']);

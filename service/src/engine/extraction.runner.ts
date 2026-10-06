@@ -21,12 +21,14 @@ import { SEED_SLOTS } from '../db/migrations/1790960000000-Notes';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
+import { EPISODES_ONLY_NOTE, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
   private readonly log = new Logger(EngineExtractionRunner.name);
   private readonly defaultProfile: QualityProfileName;
   private readonly windowCharsOverride: number | undefined;
+  private readonly factsPassOverride: QualityProfile['factsPass'] | undefined;
 
   constructor(
     private readonly db: DataSource,
@@ -36,6 +38,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
   ) {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
     this.windowCharsOverride = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
+    this.factsPassOverride = config.get('FACTS_PASS', { infer: true });
   }
 
   async runForConversation(conversationId: string): Promise<void> {
@@ -44,7 +47,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
        FROM conversations c JOIN owners o ON o.person_id = c.owner_id WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
     if (!conv?.episodic_enabled) return;
     const owner: Owner = { id: conv.owner_id, locale: conv.locale, timezone: conv.timezone };
-    const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride);
+    const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride, this.factsPassOverride);
 
     // One extraction per conversation at a time (session advisory lock); a concurrent job leaves
     // the work to the run in progress, whose follow-up job picks up anything that arrived meanwhile.
@@ -83,15 +86,26 @@ export class EngineExtractionRunner implements ExtractionRunner {
         `SELECT key FROM fact_slots WHERE key = ANY($2)
          UNION SELECT DISTINCT key FROM facts WHERE owner_id = $1 ORDER BY key`, [owner.id, SEED_SLOTS]);
       const input = await buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window), profile);
-      const output = await this.llm.completeJson({
-        promptId: EXTRACTION_PROMPT_VERSION,
-        system: EXTRACTION_SYSTEM,
-        user: buildExtractionUser(input.prompt),
-        schema: extractionSchema,
-        maxTokens: 6000,
-        task: profile.extractionTask,
-        reasoning: profile.reasoning,
-      }, { ownerId: owner.id, clientId, runId });
+      const ctx = { ownerId: owner.id, clientId, runId };
+      const user = buildExtractionUser(input.prompt);
+      const separate = profile.factsPass === 'separate';
+      // With a separate facts pass the two calls run side by side on their own task models; one writer
+      // transaction applies both (same numbered lists, so references stay valid).
+      const [episodesOut, factsOut] = await Promise.all([
+        this.llm.completeJson({
+          promptId: EXTRACTION_PROMPT_VERSION,
+          system: EXTRACTION_SYSTEM,
+          user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
+          schema: extractionSchema,
+          maxTokens: 6000,
+          task: profile.extractionTask,
+          reasoning: profile.reasoning,
+        }, ctx),
+        separate
+          ? this.llm.completeJson({ promptId: FACTS_PROMPT_VERSION, system: FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
+          : Promise.resolve(null),
+      ]);
+      const output = factsOut ? { ...episodesOut, facts: factsOut.facts, notes: factsOut.notes } : episodesOut;
       const written = await this.db.transaction(async (tx) => {
         const rows = await new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId }, input).apply(output);
         await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [runId]);
