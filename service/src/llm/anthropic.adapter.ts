@@ -17,7 +17,6 @@ export interface AnthropicConfig {
   apiKey?: string;
   baseURL?: string;
   model: string;
-  lightModel?: string;
   profile: ProviderProfile;
   fetch?: typeof fetch;
 }
@@ -37,7 +36,7 @@ export class AnthropicAdapter implements LlmPort {
   }
 
   async completeJson<T>(req: JsonCompletionRequest<T>, ctx: LlmCallContext = {}): Promise<T> {
-    const model = req.role === 'light' ? (this.cfg.lightModel ?? this.cfg.model) : this.cfg.model;
+    const model = this.cfg.model;
     const a = this.cfg.profile.anthropic;
     // Reasoning requests think adaptively unless the profile configures thinking explicitly.
     const thinking = a.thinking ?? (req.reasoning ? { type: 'adaptive' } : undefined);

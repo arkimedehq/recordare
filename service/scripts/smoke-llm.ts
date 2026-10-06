@@ -33,6 +33,7 @@ async function main(): Promise<void> {
   const started = Date.now();
   const out = await llm.completeJson({
     promptId: 'smoke.v1',
+    task: 'extract',
     system: 'Extract the events the user lived, with absolute dates. Reply with JSON {"events":[{"content":"...","date":"YYYY-MM-DD"}]}.',
     user: 'Message time: Sunday 2026-01-18. User: "Ieri sono andato a sciare a Cervinia con Marco."',
     schema,

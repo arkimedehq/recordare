@@ -22,7 +22,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     llm = await startFakeLlm();
     const fake = await startFakeEmbeddings();
     emb = fake.server;
-    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600', LLM_LIGHT_MODEL: 'test-light' });
+    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600', LLM_EXTRACT_ECONOMY_MODEL: 'test-light' });
     await resetSchema();
     ({ app, url } = await startApp());
     db = app.get(DataSource);
@@ -207,7 +207,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     await db.query(`DELETE FROM episodes WHERE id = $1 OR content LIKE 'Rumore %'`, [old.id]);
   });
 
-  it('follows the owner\'s quality profile: economy uses the light model, full lets the model reason', async () => {
+  it('follows the owner\'s quality profile: economy uses its own task model, full lets the model reason', async () => {
     const setProfile = (qualityProfile: string | null) =>
       call(url, 'PATCH', `/api/v1/admin/owners/${ownerId}`, { token: ADMIN_KEY, body: { qualityProfile } });
     const last = () => llm.requests.at(-1) as unknown as { model: string; max_tokens: number };

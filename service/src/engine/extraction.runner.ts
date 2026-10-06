@@ -89,7 +89,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
         user: buildExtractionUser(input.prompt),
         schema: extractionSchema,
         maxTokens: 6000,
-        role: profile.extractionRole,
+        task: profile.extractionTask,
         reasoning: profile.reasoning,
       }, { ownerId: owner.id, clientId, runId });
       const written = await this.db.transaction(async (tx) => {

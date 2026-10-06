@@ -24,7 +24,7 @@ function fakeFetch(replies: Reply[]) {
 }
 
 const schema = z.object({ episodes: z.array(z.object({ content: z.string() })) });
-const req = { promptId: 'extract.test.v1', system: 'stable system prompt', user: 'hello', schema };
+const req = { promptId: 'extract.test.v1', system: 'stable system prompt', user: 'hello', schema, task: 'extract' as const };
 
 describe('AnthropicAdapter', () => {
   it('sends structured output, cached system prompt, effort and the refusal fallback', async () => {

@@ -33,6 +33,9 @@ export type ProviderProfile = z.infer<typeof providerProfileSchema>;
 
 const PROFILES: Record<string, ProviderProfile> = {
   generic: providerProfileSchema.parse({ name: 'generic' }),
+  // One key, many models: reasoning is switched off with OpenRouter's unified `reasoning` field (models that cannot
+  // disable it fall back to their lowest effort through LLM_PROFILE_JSON).
+  openrouter: providerProfileSchema.parse({ name: 'openrouter', reasoningOff: { reasoning: { enabled: false } } }),
   deepseek: providerProfileSchema.parse({ name: 'deepseek', reasoningOff: { thinking: { type: 'disabled' } } }),
   ollama: providerProfileSchema.parse({ name: 'ollama', reasoningOff: { reasoning_effort: 'none' } }),
   vllm: providerProfileSchema.parse({ name: 'vllm', structuredOutput: 'json_schema' }),

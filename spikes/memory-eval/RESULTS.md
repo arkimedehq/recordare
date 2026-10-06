@@ -293,6 +293,48 @@ chats, 45 q, written and audited by separate agents; base, 1 run each): **servic
 denied claims 0.75 / 1.00, state-now 1.00 / 0.83, premise traps 0.80 / 0.80, negatives 1.00 / 1.00, **messages addressed
 to the assistant by others 0.25 / 0.25** — the open weak spot for both.
 
+**Messages addressed to the assistant by others (2026-10-06):** `extract.v5` re-tried on top of the `claims` split
+(keep such messages as claim episodes "X asked the assistant to remember…"): dev 95 %, blind6 slice 78.3 % (was 0.25 on
+this category before and stays 0.25), blind5 slice 81.8 % (was 100 %) — reverted again. Diagnosis (blind6 questions
+of this category read, so it is no longer blind): retrieval, not extraction — "what did my mother ask you to note?"
+cannot reach a message signed "Gabriella" that never says "mother"; needs people ↔ relation resolution and an explicit
+list of requests made to the assistant (design work).
+
+**Engine model: Claude Haiku 4.5 via claude-cli (local eval only), blind5 base, 1 run: 89.1 %** (flash: 91.3 % same
+code, H11 3-run mean 89.2 %). Extraction: recall 0.87, dates 0.97, plan outcome 0.77, **unsupported 20 %** (flash
+4–13 %), facts 0.62 / 0.23, notes 0.64. Cost signals: 74 calls, 445 k input, **778 k output** (the CLI runs Haiku with
+thinking on), ingest 7,240 s (a CLI process per call). Below the 95 % bar; not a candidate as it stands (a run through
+the API with thinking off would be the fair test).
+
+**Cheap hosted engines via OpenRouter (2026-10-06; blind5 base, 1 run, engine v4 + recall H11 + claims split;
+answer + judge `deepseek-flash`; reasoning off through the `openrouter` profile; total spend 1.68 USD):**
+
+| Engine model (USD / M in · out) | Accuracy | Episode recall | Dates | Plan outcome | Unsupported | Facts | Notes | Engine tokens in / out | Ingest |
+|---|---|---|---|---|---|---|---|---|---|
+| deepseek-flash (reference, DeepSeek API) | **91.9 / 91.3 %** | — | — | — | — | — | — | 313 k / 63 k | — |
+| Gemini 3.1 Flash-Lite (0.25 · 1.50) | 81.0 % | 0.92 | 0.95 | 0.67 | 9 % | 0.38 | 0.57 | 243 k / 40 k | 208 s |
+| Claude Haiku 4.5, no thinking (1 · 5) | 81.0 % | 0.87 | 0.89 | 0.67 | 18 % | 0.62 | 0.50 | 574 k / 132 k | 663 s |
+| Qwen 3.7 Flash (0.03 · 0.13) | 78.5 % | 0.87 | 0.95 | 0.58 | 10 % | 0.46 | 0.57 | 284 k / 59 k | 546 s |
+| GPT-5.4 nano (0.20 · 1.25) | 77.9 % | — | — | — | — | — | — | 323 k / 71 k | 514 s |
+| Gemini 2.5 Flash-Lite (0.10 · 0.40) | 73.0 % | 0.72 | 0.94 | 0.67 | 18 % | 0.46 | 0.43 | 313 k / 116 k | 263 s |
+| Mistral Small 2603 (0.15 · 0.60) | 61.5 % | 0.47 | 0.67 | 0.60 | 37 % | 0.23 | 0.36 | 151 k / 42 k (24 failed calls) | 288 s |
+
+**Premium reference (same setup, 1 run):** Claude Sonnet 5.5 (OpenRouter, reasoning "minimal" — it cannot be switched
+off) **89.5 %**: recall 0.96, dates 1.00, plan outcome 0.77, unsupported 5 %, facts 0.31 / 0.15, notes 0.57; 351 k in /
+56 k out, ~1.3 USD, 431 s. DeepSeek V4 Pro (OpenRouter) **87.1 %**: recall 0.97, dates 0.99, plan outcome 0.77,
+unsupported 8 %, **facts 0.77 / 0.54, notes 0.71**; 418 k / 101 k, ~0.34 USD, 2,304 s. deepseek-flash on the same set
+(same code, scored now): **91.3 %**, recall 0.97, dates 0.99, **plan outcome 0.92**, unsupported 9 %, facts 0.62 / 0.46,
+notes 0.64; 313 k in (49 % cached) / 61 k out, 287 s. Reading: a premium model does not lift answers — the main
+extraction is not the bottleneck; flash is best on plan outcomes, V4 Pro clearly best on facts and notes (the weakest
+stage), Sonnet best on dates and faithfulness. Model-per-role candidates: flash for episodes / plans; V4 Pro for a
+facts-and-notes pass (or the nightly M5 consolidation); cheap models only for the light call (to measure).
+
+None reaches the 95 % bar, and none matches `deepseek-flash` (−10 pt or more), which is also the cheapest per token
+with prefix caching. The weak stage is the same everywhere: plan outcomes (0.58–0.67) and facts. Haiku through the
+API (thinking off) equals Gemini 3.1 Flash-Lite at ~5× the price. Decision: `deepseek-flash` stays the reference
+engine; cheap models are not candidates for the main extraction call (they may serve the light resolver call — not
+measured separately).
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
