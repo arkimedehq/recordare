@@ -8,8 +8,8 @@ How an agent platform (Arkimede first, any other after) uses Recordare as its us
 2. Create its key: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read"]}` — shown once; store it
    as a secret of the platform.
 3. **Consent stays with the admin / the owner** (D4): a client key can never turn a person's episodic memory on.
-   Home profile: the admin enables it per person (`PATCH api/v1/settings {episodicEnabled}` with the admin key or the
-   owner's personal token). Public profile: the host's toggle opens Recordare's owner page.
+   Home profile: the admin enables it per person (`PATCH api/v1/admin/owners/{ownerId} {episodicEnabled: true}`).
+   Public profile: the host's toggle opens Recordare's owner page.
 
 ## 2. People
 - Every request names the platform's user: `X-Recordare-User: <the platform's own user id>`. With `autoProvision`
@@ -28,7 +28,7 @@ How an agent platform (Arkimede first, any other after) uses Recordare as its us
 - Register Recordare's MCP endpoint (`/mcp`) in your MCP client with the key and `X-Recordare-User`.
 - **Always send `X-Recordare-Conversation: <externalConversationId>`**: Recordare resolves who will see the answer from
   the participants it ingested; without a resolvable conversation a read returns nothing (viewer rule, `API.md` §1).
-- Tools: `search_episodes`, `search_facts`, `search_memory`, `resolve_period`, `log_episode`, `correct_episode`,
+- Tools: `search_episodes`, `search_memory` (facts and notes), `resolve_period`, `log_episode`, `correct_episode`,
   `forget_episode`, `remember`.
 
 ## 5. Observability (optional)
