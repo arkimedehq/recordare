@@ -78,11 +78,23 @@ footer.hud { left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bo
 }
 
 /* Only-brain mode (screensaver): the brain alone; the cursor hides until the mouse moves. */
-body.only-brain .hud, body.only-brain .label, body.only-brain .scan { display: none; }
+body.only-brain .hud, body.only-brain .scan { display: none; }
+/* Labels: "anatomy · role" in the normal view; only the real brain region in only-brain mode. */
+.label.anatomy-only { display: none; }
+body.only-brain .label .role, body.only-brain .label.no-anatomy { display: none; }
+body.only-brain .label.anatomy-only { display: block; }
+body.only-brain .label { opacity: .55; }
+/* The person on screen: in the header the status says it; in only-brain mode a quiet caption. */
+.who { display: none; }
+body.only-brain .who { display: block; position: fixed; z-index: 2; left: 18px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); margin: 0;
+  font: 600 11px var(--display); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); opacity: .7; }
 body.only-brain { cursor: none; }
 body.only-brain.pointer { cursor: default; }
 .exit-only { display: none; position: fixed; z-index: 3; right: 16px; top: calc(14px + env(safe-area-inset-top, 0px));
   font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel);
   border: 1px solid var(--line); padding: 7px 12px; border-radius: 3px; cursor: pointer; }
 body.only-brain.pointer .exit-only { display: block; }
-#only { color: var(--ink); background: transparent; border-color: var(--line); }
+#only, .controls .toggle { color: var(--ink); background: transparent; border-color: var(--line); }
+.controls .toggle[aria-pressed="true"] { color: var(--cyan); background: rgba(56,232,255,.1); border-color: var(--cyan); }
+.phase { font: 600 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 0 4px; }
+.phase.asleep { color: var(--violet); }

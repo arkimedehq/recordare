@@ -12,6 +12,7 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { addDays, localDate, zonedMidnight } from '../engine/time';
 import { toOrTsQuery } from '../rawlog/rawlog-search.service';
 import { TelemetryService } from '../telemetry/telemetry.service';
+import { logRecall } from './recall-log';
 
 export interface MemorySearchArgs {
   query: string;
@@ -50,6 +51,10 @@ export class MemorySearchService {
   ) {}
 
   async search(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
+    return this.telemetry.track('recall', ownerId, () => this.searchNow(ownerId, args, now));
+  }
+
+  private async searchNow(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
     const [owner] = await this.db.query(
       `SELECT o.timezone, o.locale, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     const tz: string = owner.timezone;
@@ -110,6 +115,7 @@ export class MemorySearchService {
     }
     this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
       facts: facts.length, notes: notes.length });
+    await logRecall(this.db, ownerId, 'search_memory', null, facts.length + notes.length);
     return { owner: { name: owner.display_name }, notes, facts, notes_info: info };
   }
 }

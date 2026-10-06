@@ -8,9 +8,10 @@
 import { type JsonCompletionRequest, type LlmCallContext, type LlmPort, type LlmTask } from './llm.port';
 
 export class LlmRouter implements LlmPort {
-  constructor(private readonly byTask: Record<LlmTask, LlmPort>) {}
+  constructor(private readonly byTask: Record<LlmTask, LlmPort>, private readonly onStart?: (promptId: string, task: LlmTask, ctx?: LlmCallContext) => void) {}
 
   completeJson<T>(req: JsonCompletionRequest<T>, ctx?: LlmCallContext): Promise<T> {
+    this.onStart?.(req.promptId, req.task, ctx);
     return this.byTask[req.task].completeJson(req, ctx);
   }
 }

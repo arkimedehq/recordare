@@ -8,7 +8,8 @@
  * - provenance: author_role from the evidence messages; items backed only by other people or tool
  *   output are `inferred` (facts / notes pending) — poisoning guard;
  * - forgetting: items whose evidence or date hits a tombstone are not recreated (D16);
- * - plans: confirm / cancel / reschedule / amend change status in code, with a plan_events log;
+ * - plans: confirm / cancel / reschedule / amend change status in code, with a plan_events log; a patch needs evidence
+ *   that speaks of that plan (a shared name / place / keyword, or a similar embedding), and a reschedule must move it;
  * - facts: verdicts with world + knowledge time, forward-only supersession (imports never
  *   overwrite newer values), single-value slots replaced, multi-value slots accumulate;
  * - corrections never rewrite: a new row `corrects` the old one, which is invalidated.
@@ -19,6 +20,14 @@ import { type ExtractionOutput } from './extraction.schema';
 import { localDate, toStored, type Precision } from './time';
 
 type AuthorRole = 'owner' | 'assistant' | 'other' | 'tool';
+
+/**
+ * Below this plan ↔ evidence-message similarity, with no shared name, place or keyword, a plan patch is treated as
+ * unfounded. Calibrated on bge-m3 against the patches of three non-blind sets (2026-10-08): the patches backed by an
+ * unrelated message (a plan "cancelled" by a work update, "confirmed" by a physiotherapy session) scored 0.27–0.36,
+ * the right ones without a lexical anchor 0.38 and up.
+ */
+const PLAN_EVIDENCE_MIN_SIMILARITY = 0.37;
 
 export interface WriteContext {
   ownerId: string;
@@ -169,6 +178,8 @@ export class ExtractionWriter {
       const planId = this.input.plans.get(p.plan);
       const msgs = this.evidence(p.evidence);
       if (!planId || msgs.length === 0 || this.forgotten(msgs, null)) continue;
+      if (!(await this.speaksOfPlan(planId, msgs))) continue;
+      if ((p.patch === 'reschedule' || p.patch === 'amend') && !(await this.changesPlan(planId, p))) continue;
       const at = msgs[0]?.sentAt ?? new Date();
       let newPlanId: string | null = null;
       if (p.patch === 'confirm') {
@@ -189,6 +200,36 @@ export class ExtractionWriter {
         `INSERT INTO plan_events (plan_id, patch, evidence_message_id, new_plan_id, note, extraction_run_id) VALUES ($1, $2, $3, $4, $5, $6)`,
         [planId, p.patch, msgs[0]?.id ?? null, newPlanId, p.note ?? null, this.ctx.runId]);
     }
+  }
+
+  /**
+   * Whether the evidence is about this plan: a name, place or keyword of the plan appears in it, or (when both are
+   * embedded) it is similar enough. Guards against a model closing an old plan with an unrelated message.
+   */
+  private async speaksOfPlan(planId: string, msgs: WindowMessage[]): Promise<boolean> {
+    const [plan]: Array<{ content: string; keywords: string[] | null; place: string | null; people: string[] | null; owner: string | null; sim: number | null }> = await this.tx.query(
+      `SELECT e.content, e.keywords, e.place,
+         (SELECT array_agg(alias) FROM episode_people WHERE episode_id = e.id) AS people,
+         (SELECT display_name FROM persons WHERE id = e.owner_id) AS owner,
+         (SELECT max(1 - (e.embedding <=> m.embedding)) FROM messages m WHERE m.id = ANY($2) AND m.embedding IS NOT NULL) AS sim
+       FROM episodes e WHERE e.id = $1`, [planId, msgs.map((m) => m.id)]);
+    if (!plan) return false;
+    const owner = new Set(words(plan.owner ?? '').map(stem));
+    const names = (plan.content.match(/\p{Lu}[\p{L}'’-]{2,}/gu) ?? []); // proper names and places written in the plan
+    const anchors = [...(plan.keywords ?? []), ...(plan.people ?? []), plan.place ?? '', ...names].flatMap(words).map(stem).filter((w) => !owner.has(w));
+    const said = new Set(msgs.flatMap((m) => words(m.content)).map(stem));
+    if (anchors.some((a) => said.has(a))) return true;
+    return plan.sim === null || plan.sim >= PLAN_EVIDENCE_MIN_SIMILARITY;
+  }
+
+  /** A reschedule or amend that leaves the plan as it is (same date, no new text) is a repeat, not a change. */
+  private async changesPlan(planId: string, p: ExtractionOutput['plan_patches'][number]): Promise<boolean> {
+    if (p.new_content || p.new_until) return true;
+    if (!p.new_date) return false;
+    const [old]: Array<{ occurred_at: Date | null }> = await this.tx.query(`SELECT occurred_at FROM episodes WHERE id = $1`, [planId]);
+    const moved = toStored(p.new_date, p.date_precision as Precision | undefined, this.ctx.timezone).at;
+    if (!moved) return false;
+    return !old?.occurred_at || new Date(old.occurred_at).getTime() !== moved.getTime();
   }
 
   /** The event of a confirmed plan, derived from the plan itself (same dates, people, place). */
@@ -220,7 +261,7 @@ export class ExtractionWriter {
          extraction_run_id, disclosure, audience, audience_unverified)
        VALUES ($1, 'plan', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open', now(), $14, $15, $16, $17, $18, 'owner', $19, $20)
        RETURNING id`,
-      [this.ctx.ownerId, p.new_content ?? old.content, at.at, until, at.precision, old.place, old.importance, old.valence,
+      [this.ctx.ownerId, this.planText(old.content, p), at.at, until, at.precision, old.place, old.importance, old.valence,
         old.feelings, old.opinion, old.keywords, old.context, old.tags, old.origin, this.authorRole(msgs), old.stance, old.confidence,
         this.ctx.runId, this.audience, this.audienceUnverified],
     );
@@ -228,8 +269,14 @@ export class ExtractionWriter {
       await this.tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, m.id]);
     }
     await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, planId]);
-    this.written.push({ table: 'episodes', id: row.id, text: [p.new_content ?? old.content, old.place].filter(Boolean).join(' | ') });
+    this.written.push({ table: 'episodes', id: row.id, text: [this.planText(old.content, p), old.place].filter(Boolean).join(' | ') });
     return row.id as string;
+  }
+
+  /** The moved plan's sentence: the model's rewrite, else the old one marked with the new date (never the stale date alone). */
+  private planText(old: string, p: ExtractionOutput['plan_patches'][number]): string {
+    if (p.new_content) return p.new_content;
+    return p.patch === 'reschedule' && p.new_date ? `${old} (→ ${p.new_date}${p.new_until ? ` – ${p.new_until}` : ''})` : old;
   }
 
   // ── facts ─────────────────────────────────────────────────────────────────────
@@ -349,3 +396,7 @@ export class ExtractionWriter {
     }
   }
 }
+
+const words = (s: string): string[] => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4);
+/** A crude cross-inflection key (cena / cene, festa / feste, spostata / spostato). */
+const stem = (w: string): string => w.slice(0, 5);

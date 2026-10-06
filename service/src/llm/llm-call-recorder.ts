@@ -24,6 +24,11 @@ export class LlmCallRecorder {
 
   constructor(private readonly db: DataSource, @Optional() private readonly telemetry?: TelemetryService) {}
 
+  /** A call leaves now (the dashboard shows the wait; `llm.call` follows with tokens and latency). */
+  started(promptId: string, task: string, ctx: LlmCallContext = {}): void {
+    this.telemetry?.emit({ type: 'llm.started', ownerId: ctx.ownerId ?? null, runId: ctx.runId ?? null, promptId, task });
+  }
+
   async record(call: LlmCallRecord, ctx: LlmCallContext = {}): Promise<void> {
     this.telemetry?.emit({ type: 'llm.call', ownerId: ctx.ownerId ?? null, runId: ctx.runId ?? null, promptId: call.promptId, model: call.model,
       inputTokens: call.inputTokens, cachedInputTokens: call.cachedInputTokens, outputTokens: call.outputTokens, latencyMs: call.latencyMs, status: call.status });

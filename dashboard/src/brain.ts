@@ -17,15 +17,17 @@ import { type Atlas, type AtlasEdge } from './api';
 export type Region = 'entry' | 'thalamus' | 'llm' | 'hippoL' | 'hippoR' | 'acc' | 'cortex' | 'prefrontal' | 'agent';
 export const COLORS = { white: 0xdff6ff, cyan: 0x38e8ff, amber: 0xffb547, magenta: 0xff4fd8, lime: 0x9dff6a, violet: 0x9b7bff, red: 0xff5a6a } as const;
 
-const HUB: Record<Region, { pos: THREE.Vector3; color: number; label?: string }> = {
+/** `anatomy`: the real brain region (the only label in only-brain mode); `role`: what it does in Recordare. */
+const HUB: Record<Region, { pos: THREE.Vector3; color: number; anatomy?: string; role?: string }> = {
   entry:      { pos: new THREE.Vector3(0, 3.6, -4.2), color: COLORS.white },
-  thalamus:   { pos: new THREE.Vector3(0, 0.35, -0.2), color: COLORS.white, label: 'Talamo · ingest' },
-  llm:        { pos: new THREE.Vector3(1.9, 0.8, 1.1), color: COLORS.amber, label: 'LLM' },
-  hippoL:     { pos: new THREE.Vector3(-1.15, -0.55, -0.5), color: COLORS.cyan, label: 'Ippocampo' },
-  hippoR:     { pos: new THREE.Vector3(1.15, -0.55, -0.5), color: COLORS.cyan },
-  acc:        { pos: new THREE.Vector3(0, 1.4, 0.9), color: COLORS.red, label: 'Cingolo · terzi' },
-  cortex:     { pos: new THREE.Vector3(-1.8, 1.35, -0.4), color: COLORS.violet, label: 'Neocorteccia · fatti' },
-  prefrontal: { pos: new THREE.Vector3(0, 1.0, 2.7), color: COLORS.lime, label: 'Prefrontale · richiamo' },
+  thalamus:   { pos: new THREE.Vector3(0, 0.35, -0.2), color: COLORS.white, anatomy: 'Talamo', role: 'ingest' },
+  // Language comprehension: the LLM reads the messages and extracts their meaning (Wernicke's area, by analogy).
+  llm:        { pos: new THREE.Vector3(1.9, 0.8, 1.1), color: COLORS.amber, anatomy: 'Area di Wernicke', role: 'LLM' },
+  hippoL:     { pos: new THREE.Vector3(-1.15, -0.55, -0.5), color: COLORS.cyan, anatomy: 'Ippocampo', role: 'episodi' },
+  hippoR:     { pos: new THREE.Vector3(1.15, -0.55, -0.5), color: COLORS.cyan, anatomy: 'Ippocampo' },
+  acc:        { pos: new THREE.Vector3(0, 1.4, 0.9), color: COLORS.red, anatomy: 'Cingolo anteriore', role: 'terzi' },
+  cortex:     { pos: new THREE.Vector3(-1.8, 1.35, -0.4), color: COLORS.violet, anatomy: 'Neocorteccia', role: 'fatti' },
+  prefrontal: { pos: new THREE.Vector3(0, 1.0, 2.7), color: COLORS.lime, anatomy: 'Corteccia prefrontale', role: 'richiamo' },
   agent:      { pos: new THREE.Vector3(0, 3.0, 6.2), color: COLORS.lime },
 };
 /** Saltatory conduction: on an axon the impulse jumps from one node of Ranvier to the next (spacing in scene units). */
@@ -71,6 +73,9 @@ export class Brain {
   private readonly clock = new THREE.Clock();
   private readonly labels: Array<{ el: HTMLElement; pos: THREE.Vector3; region: Region }> = [];
   private readonly heat = new Map<Region, number>();
+  /** Calls in flight per region (a real wait: the LLM is working); the region breathes until they return. */
+  private readonly busy = new Map<Region, number>();
+  private readonly hubRange = new Map<Region, { from: number; to: number; color: THREE.Color }>();
   private readonly tracts = new Map<string, Path>();
   /** Inside each hippocampus the input crosses dentate gyrus → CA3 → CA1 before reaching a memory (trisynaptic loop). */
   private readonly circuits = new Map<Region, Path>();
@@ -83,6 +88,13 @@ export class Brain {
   private readonly pulseGeo = new THREE.BufferGeometry();
   private readonly hubPoints: THREE.Points;
   private readonly MAXP = 3000;
+  private readonly bloom: UnrealBloomPass;
+  /** 0 = awake, 1 = asleep (nightly consolidation running): the palette follows it smoothly. */
+  private sleep = 0;
+  private sleepTarget = 0;
+  private readonly AWAKE = new THREE.Color(0x04060b);
+  private readonly ASLEEP = new THREE.Color(0x0a0520);
+  private readonly bg = new THREE.Color(0x04060b);
 
   constructor(host: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -98,7 +110,8 @@ export class Brain {
     this.controls.target.set(0, 0.3, 0);
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.05, 0.6, 0.06));
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.05, 0.6, 0.06);
+    this.composer.addPass(this.bloom);
 
     this.buildShell();
     this.hubPoints = this.buildHubs();
@@ -137,12 +150,20 @@ export class Brain {
     for (const [name, h] of Object.entries(HUB) as Array<[Region, (typeof HUB)[Region]]>) {
       if (name === 'entry' || name === 'agent') continue;
       const c = new THREE.Color(h.color), r = rnd(name);
+      this.hubRange.set(name, { from: size.length, to: size.length + 60, color: c });
       for (let i = 0; i < 60; i++) {
         const d = new THREE.Vector3(r() - 0.5, r() - 0.5, r() - 0.5).normalize().multiplyScalar(Math.pow(r(), 1.5) * 0.3);
         pos.push(h.pos.x + d.x, h.pos.y + d.y, h.pos.z + d.z); col.push(c.r * 0.6, c.g * 0.6, c.b * 0.6); size.push(0.06 + r() * 0.06);
       }
-      if (h.label) {
-        const el = document.createElement('div'); el.className = 'label'; el.textContent = h.label; el.style.color = `#${c.getHexString()}`;
+      // The normal view shows "anatomy · role" (one label for the pair of hippocampi); only-brain mode shows the
+      // anatomy alone, on both hippocampi (the LLM shows the language-comprehension area it stands for).
+      if (h.anatomy || h.role) {
+        const el = document.createElement('div'); el.className = 'label'; el.style.color = `#${c.getHexString()}`;
+        if (!h.anatomy) el.classList.add('no-anatomy');
+        if (!h.role) el.classList.add('anatomy-only');
+        const a = document.createElement('span'); a.className = 'anatomy'; a.textContent = h.anatomy ?? '';
+        const r = document.createElement('span'); r.className = 'role'; r.textContent = h.anatomy ? (h.role ? ` · ${h.role}` : '') : h.role ?? '';
+        el.append(a, r);
         document.body.appendChild(el); this.labels.push({ el, pos: h.pos.clone().add(new THREE.Vector3(0, 0.45, 0)), region: name });
       }
     }
@@ -360,11 +381,20 @@ export class Brain {
 
   regionOf(id: string): Region | undefined { return this.neurons.get(id)?.region; }
 
-  /** A slow orbit of the point of view (screensaver): the camera moves, the data never does on its own. */
+  /** A call or a job started (+1) or ended (−1) in this region: it breathes while anything is running there. */
+  wait(region: Region, delta: 1 | -1): void { this.busy.set(region, Math.max(0, (this.busy.get(region) ?? 0) + delta)); }
+
+  /** Clears every wait (a reconnection may have lost the ends of jobs in flight). */
+  idle(): void { this.busy.clear(); }
+
+  /** A slow orbit of the point of view: the camera moves, the data never does on its own. */
   setOrbit(on: boolean): void {
     this.controls.autoRotate = on && !matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.controls.autoRotateSpeed = 0.35;
   }
+
+  /** Sleep palette while the service really consolidates (deeper violet night, stronger glow); awake otherwise. */
+  setSleep(on: boolean): void { this.sleepTarget = on ? 1 : 0; }
 
   private resize(): void {
     this.camera.aspect = innerWidth / innerHeight; this.camera.updateProjectionMatrix();
@@ -374,6 +404,13 @@ export class Brain {
   private readonly proj = new THREE.Vector3();
   private loop = (): void => {
     const dt = Math.min(this.clock.getDelta(), 0.05);
+    if (this.sleep !== this.sleepTarget) {
+      this.sleep += Math.sign(this.sleepTarget - this.sleep) * Math.min(Math.abs(this.sleepTarget - this.sleep), dt / 1.5);
+      this.bg.copy(this.AWAKE).lerp(this.ASLEEP, this.sleep);
+      this.renderer.setClearColor(this.bg, 1); (this.scene.fog as THREE.FogExp2).color.copy(this.bg);
+      this.bloom.strength = 1.05 + 0.4 * this.sleep;
+      document.body.style.background = `#${this.bg.getHexString()}`;
+    }
     // neurons: steady light + the glow events leave behind
     if (this.neuronPoints) {
       const order = this.neuronPoints.userData.order as string[];
@@ -389,6 +426,15 @@ export class Brain {
     }
     // hubs glow only after an arrival
     for (const [r, h] of this.heat) this.heat.set(r, Math.max(0, h - dt * 0.7));
+    const now = this.clock.elapsedTime;
+    for (const [r, n] of this.busy) if (n > 0) this.heat.set(r, Math.max(this.heat.get(r) ?? 0, 0.55 + 0.3 * Math.sin(now * 4)));
+    // region hubs light up with their heat (arrivals, calls in flight)
+    const hc = this.hubPoints.geometry.getAttribute('color') as THREE.BufferAttribute;
+    for (const [r, { from, to, color }] of this.hubRange) {
+      const f = 0.6 + (this.heat.get(r) ?? 0) * 1.1;
+      for (let i = from; i < to; i++) hc.setXYZ(i, color.r * f, color.g * f, color.b * f);
+    }
+    hc.needsUpdate = true;
     for (const l of this.labels) l.el.classList.toggle('hot', (this.heat.get(l.region) ?? 0) > 0.15);
     // impulses
     const p = this.pulseGeo.getAttribute('position') as THREE.BufferAttribute, c = this.pulseGeo.getAttribute('color') as THREE.BufferAttribute, s = this.pulseGeo.getAttribute('size') as THREE.BufferAttribute;

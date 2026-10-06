@@ -19,7 +19,7 @@ let refreshTimer: number | undefined;
 
 function show(): void {
   $('s-ep').textContent = String(counters.ep); $('s-fn').textContent = String(counters.fn);
-  $('s-llm').textContent = String(counters.llm); $('s-tok').textContent = counters.tok >= 1000 ? `${(counters.tok / 1000).toFixed(1)}k` : String(counters.tok);
+  $('s-llm').textContent = String(counters.llm); $('s-tok').textContent = counters.tok >= 1e6 ? `${(counters.tok / 1e6).toFixed(2)}M` : counters.tok >= 1000 ? `${(counters.tok / 1000).toFixed(1)}k` : String(counters.tok);
   $('s-rec').textContent = String(counters.rec); $('s-cl').textContent = String(counters.cl);
 }
 function log(cls: string, text: string, at?: string): void {
@@ -30,6 +30,15 @@ function log(cls: string, text: string, at?: string): void {
   while ($('events').children.length > 40) $('events').lastChild?.remove();
 }
 function setStatus(state: 'on' | 'off' | 'err', text: string): void { status.className = `status ${state}`; status.textContent = text; }
+let streamState: 'on' | 'off' | 'err' = 'off';
+/** Connection state plus who is on screen (in follow mode the person changes by itself, so the name matters). */
+function showStatus(): void {
+  const who = shownName ? ` · ${shownName}` : '';
+  setStatus(streamState, streamState === 'on'
+    ? (following ? `segue l'attività${who || ' · in attesa'}` : `in ascolto${who}`)
+    : streamState === 'err' ? 'stream interrotto · riprovo' : 'stream chiuso · riprovo');
+  $('who').textContent = shownName;
+}
 
 try { keyInput.value = sessionStorage.getItem('atlas-key') ?? ''; } catch { /* storage unavailable */ }
 keyInput.addEventListener('change', () => void loadOwners());
@@ -38,11 +47,14 @@ void loadOwners(); // with a local proxy holding the key, no key is needed here
 async function loadOwners(): Promise<void> {
   try {
     const list = await owners(keyInput.value);
+    latestOwner = list[0]?.id ?? null; // the list is ordered by last activity
     const follow = Object.assign(document.createElement('option'), { value: FOLLOW, textContent: 'Segui l\'attività (live)' });
     ownerSelect.replaceChildren(follow, ...list.map((o) => Object.assign(document.createElement('option'), { value: o.id, textContent: `${o.name} · ${o.episodes} episodi` })));
     ownerSelect.disabled = false;
     try { if (keyInput.value) sessionStorage.setItem('atlas-key', keyInput.value); } catch { /* storage unavailable */ }
     setStatus('off', `${list.length} persone · scegli e collega`);
+    // Opened without a running stream: follow the service at once (a reload never leaves the brain disconnected).
+    if (!stopStream) { ownerSelect.value = FOLLOW; void connect(FOLLOW); }
   } catch (err) {
     setStatus('err', `chiave non valida o servizio non raggiungibile (${(err as Error).message})`);
   }
@@ -53,40 +65,59 @@ $<HTMLFormElement>('connect').addEventListener('submit', (ev) => {
   void connect(ownerSelect.value);
 });
 
-/** "Follow": listen to the whole service and switch to whichever owner is active (evaluation runs create new ones). */
+/**
+ * "Follow": listen to the whole service and show whichever owner is active (evaluation runs create new ones). One
+ * owner at a time: the view stays on the shown owner while they are active and moves to another only after
+ * STAY_MS without events of theirs, so two owners at work never make it flicker.
+ */
 const FOLLOW = '__follow__';
+const STAY_MS = 20_000;
 let current: string | null = null;
+let lastSeen = 0;
+let following = false;
+let latestOwner: string | null = null;
+let shownName = '';
 
 async function connect(choice: string): Promise<void> {
   if (!choice) { await loadOwners(); return; }
   stopStream?.();
+  working.clear(); brain.idle();
   const follow = choice === FOLLOW;
-  current = follow ? null : choice;
-  if (current) await refresh(current);
-  stopStream = stream(keyInput.value, follow ? null : choice, (e) => void route(e, follow), (s) =>
-    setStatus(s, s === 'on' ? (follow ? 'segue l\'attività · eventi reali' : 'in ascolto · eventi reali') : s === 'err' ? 'stream interrotto · riprovo' : 'stream chiuso · riprovo'));
+  following = follow;
+  current = follow ? latestOwner : choice; // follow starts from the person active most recently
+  if (current) await refresh(current).catch(() => undefined);
+  stopStream = stream(keyInput.value, follow ? null : choice, (e) => void route(e, follow), (s) => {
+    streamState = s;
+    showStatus();
+  });
   log('idle', follow ? 'in ascolto di tutto il servizio: mostra la persona attiva' : 'collegato: ogni impulso da qui in poi è un evento reale del servizio');
 }
 
 /** Events of the shown owner animate the brain; in follow mode, activity of another owner switches the view to them. */
 async function route(e: TelemetryEvent, follow: boolean): Promise<void> {
   const owner = typeof e.ownerId === 'string' ? e.ownerId : null;
-  if (follow && owner && owner !== current) {
+  if (follow && owner && owner !== current && Date.now() - lastSeen > STAY_MS) {
     current = owner;
-    counters.llm = 0; counters.tok = 0; counters.rec = 0;
+    working.clear(); brain.idle(); // the previous person's jobs end out of sight
     log('idle', 'attività di un\'altra persona: cambio vista');
     await refresh(owner).catch(() => undefined);
   }
   if (current && owner && owner !== current) return;
+  if (owner) lastSeen = Date.now();
   await onEvent(e, current ?? owner ?? '');
 }
 
 async function refresh(ownerId: string): Promise<void> {
   const a = await atlas(keyInput.value, ownerId);
   brain.load(a);
+  shownName = a.owner.name;
+  showStatus();
   counters.ep = a.episodes.filter((e) => !e.hidden && e.authorRole !== 'other' && e.authorRole !== 'tool').length;
   counters.cl = a.episodes.filter((e) => e.authorRole === 'other' || e.authorRole === 'tool').length;
   counters.fn = a.facts.filter((f) => f.status === 'current').length + a.notes.length;
+  // Lifetime totals from the service; live events add to them until the next snapshot. (A service older than the
+  // dashboard sends none: then the counters count from the connection.)
+  if (a.totals) { counters.llm = a.totals.llmCalls; counters.tok = a.totals.inputTokens + a.totals.outputTokens; counters.rec = a.totals.recalls; }
   show();
 }
 /** New memories get their real place by meaning at the next snapshot (a few seconds after the writes stop). */
@@ -96,6 +127,29 @@ function scheduleRefresh(ownerId: string): void {
 }
 
 const taskOf = (promptId: string) => promptId.split('.')[0] ?? promptId;
+
+/** Where each kind of work happens: embeddings of incoming messages in the thalamus (ingest), the context read and the
+ * embeddings of new memories in the hippocampi, a recall in the prefrontal cortex, a consolidation in the cortex. */
+const WORK_REGIONS: Record<string, Region[]> = {
+  'embed.messages': ['thalamus'], context: ['hippoL', 'hippoR'], 'embed.memories': ['hippoL', 'hippoR'],
+  recall: ['prefrontal'], consolidation: ['cortex'],
+};
+const working = new Map<number, Region[]>();
+function endWork(id: number): void {
+  const regions = working.get(id);
+  if (!regions) return;
+  working.delete(id);
+  regions.forEach((r) => brain.wait(r, -1));
+}
+
+// ---------- awake / asleep: the sleep palette only while the service really consolidates ----------
+let wakeTimer: number | undefined;
+function asleep(on: boolean): void {
+  brain.setSleep(on);
+  const el = $('phase'); el.textContent = on ? 'sonno · consolidamento' : 'veglia'; el.classList.toggle('asleep', on);
+  window.clearTimeout(wakeTimer);
+  if (on) wakeTimer = window.setTimeout(() => asleep(false), 60_000); // no news for a minute: the night is over
+}
 const hippo = (id: string): Region => brain.regionOf(id) ?? 'hippoR';
 
 async function onEvent(e: TelemetryEvent, ownerId: string): Promise<void> {
@@ -106,16 +160,42 @@ async function onEvent(e: TelemetryEvent, ownerId: string): Promise<void> {
       for (let i = 0; i < n; i++) window.setTimeout(() => void brain.fire('entry', 'thalamus', COLORS.white, { size: 0.2 }), i * 120);
       break;
     }
+    case 'work.started':
+    case 'work.finished': {
+      // Real work without an LLM call (embeddings, the context read, a recall, a consolidation): its regions breathe
+      // from start to finish. Matched by id, so a lost "finished" cannot leave a region lit forever.
+      const regions = WORK_REGIONS[String(e['op'])] ?? [];
+      const id = Number(e['id']);
+      if (e.type === 'work.started') {
+        working.set(id, regions);
+        regions.forEach((r) => brain.wait(r, 1));
+        window.setTimeout(() => endWork(id), 120_000);
+      } else endWork(id);
+      if (e['op'] === 'consolidation') asleep(e.type === 'work.started');
+      break;
+    }
     case 'extraction.started':
       log('in', `estrazione · finestra di ${String(e['messages'])} messaggi`, e.at);
       break;
+    case 'llm.started': {
+      // The request leaves now; the LLM region stays lit until the answer comes back (llm.call).
+      const task = String(e['task']);
+      brain.wait('llm', 1);
+      if (task === 'resolve') void brain.fire('hippoR', 'llm', COLORS.red, { size: 0.2 });
+      else if (task === 'digest') { asleep(true); void brain.fire('hippoL', 'llm', COLORS.violet, { size: 0.2 }); }
+      else void brain.fire('thalamus', 'llm', COLORS.amber, { size: 0.24 });
+      log('llm', `LLM in corso · ${String(e['promptId'])}…`, e.at);
+      break;
+    }
     case 'llm.call': {
       const task = taskOf(String(e['promptId']));
+      brain.wait('llm', -1);
       counters.llm++; counters.tok += (Number(e['inputTokens']) || 0) + (Number(e['outputTokens']) || 0); show();
       log('llm', `LLM ${String(e['promptId'])} · ${String(e['model'])} · ${String(e['inputTokens'])}→${String(e['outputTokens'])} tok · ${String(e['latencyMs'])} ms${e['status'] === 'ok' ? '' : ` · ${String(e['status'])}`}`, e.at);
-      if (task === 'resolve') void brain.fire('hippoR', 'acc', COLORS.red);
-      else if (task === 'digest') void brain.fire('hippoL', 'cortex', COLORS.violet);
-      else void brain.fire('thalamus', 'llm', COLORS.amber, { size: 0.24 + Math.min(0.3, (Number(e['inputTokens']) || 0) / 20000) });
+      // The answer leaves the LLM: verdicts to the conflict region, diaries to the cortex; extraction answers become
+      // memory.written impulses (llm → the exact neuron).
+      if (task === 'resolve') void brain.fire('llm', 'acc', COLORS.red);
+      else if (task === 'digest') void brain.fire('llm', 'cortex', COLORS.violet);
       break;
     }
     case 'memory.written': {
@@ -152,11 +232,13 @@ async function onEvent(e: TelemetryEvent, ownerId: string): Promise<void> {
       break;
     }
     case 'digest.written':
+      asleep(true);
       log('sleep', `diario ${e['level'] === 'month' ? 'del mese' : 'del giorno'} · ${String(e['period'])}`, e.at);
       void brain.fire('hippoR', 'cortex', COLORS.violet);
       scheduleRefresh(ownerId);
       break;
     case 'consolidation.finished':
+      asleep(false);
       log('sleep', `consolidamento · ${String(e['days'])} giorni, ${String(e['months'])} mesi, ${String(e['llmCalls'])} chiamate`, e.at);
       break;
     case 'episode.forgotten':
@@ -169,11 +251,23 @@ async function onEvent(e: TelemetryEvent, ownerId: string): Promise<void> {
   }
 }
 
+// ---------- rotation (normal view: on by default, remembered; only-brain view: always on) ----------
+let rotate = true;
+try { rotate = localStorage.getItem('atlas-rotate') !== 'off'; } catch { /* storage unavailable */ }
+function setRotate(on: boolean): void {
+  rotate = on;
+  $('rotate').setAttribute('aria-pressed', String(on));
+  try { localStorage.setItem('atlas-rotate', on ? 'on' : 'off'); } catch { /* storage unavailable */ }
+  if (!document.body.classList.contains('only-brain')) brain.setOrbit(on);
+}
+setRotate(rotate);
+$('rotate').addEventListener('click', () => setRotate(!rotate));
+
 // ---------- only-brain mode (screensaver) ----------
 let pointerTimer: number | undefined;
 function setOnlyBrain(on: boolean): void {
   document.body.classList.toggle('only-brain', on);
-  brain.setOrbit(on);
+  brain.setOrbit(on || rotate);
   if (on) { document.documentElement.requestFullscreen?.().catch(() => undefined); history.replaceState(null, '', '#onlybrain'); }
   else { if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined); history.replaceState(null, '', location.pathname); }
 }
@@ -183,6 +277,7 @@ addEventListener('keydown', (ev) => {
   if (ev.target instanceof HTMLInputElement || ev.target instanceof HTMLSelectElement) return;
   if (ev.key === 'Escape') setOnlyBrain(false);
   if (ev.key === 'b' || ev.key === 'B') setOnlyBrain(!document.body.classList.contains('only-brain'));
+  if (ev.key === 'r' || ev.key === 'R') setRotate(!rotate);
 });
 addEventListener('mousemove', () => {
   if (!document.body.classList.contains('only-brain')) return;

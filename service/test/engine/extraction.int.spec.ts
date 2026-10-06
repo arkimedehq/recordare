@@ -77,6 +77,37 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(await db.query(`SELECT patch, note FROM plan_events`)).toEqual([{ patch: 'cancel', note: 'cliente ha rimandato' }]);
   });
 
+  it('ignores plan patches whose evidence speaks of something else, and repeats of a reschedule', async () => {
+    const a = await ingest('pe1', [{ id: 'pe1', role: 'user', content: 'Giovedì vado al concerto a Bologna con Nicola.', at: '2026-04-06T19:00:00+02:00' }]);
+    llm.queue.push({ episodes: [{ content: 'Concerto a Bologna con Nicola giovedì 9 aprile 2026.', kind: 'plan', occurred_at: '2026-04-09', people: ['Nicola'], place: 'Bologna', keywords: ['concerto'], evidence: [1] }] });
+    await runner.runForConversation(a);
+    const plans = async () => db.query(`SELECT content, plan_status FROM episodes WHERE kind = 'plan' AND content LIKE '%Bologna%' ORDER BY recorded_at`);
+    const pOf = async () => {
+      const open = await db.query(`SELECT content FROM episodes WHERE kind = 'plan' AND plan_status = 'open' ORDER BY recorded_at DESC`);
+      return `P${open.findIndex((p: { content: string }) => p.content.includes('Bologna')) + 1}`;
+    };
+    // An unrelated message (the fake embeddings make it dissimilar; no shared name) cannot cancel the plan.
+    const b = await ingest('pe2', [{ id: 'pe2', role: 'user', content: 'Primo giorno nel nuovo ufficio, tante procedure da leggere.', at: '2026-04-20T18:00:00+02:00' }]);
+    await db.query(`UPDATE messages SET embedding = $1 WHERE external_id = 'pe2'`, [`[${[1, 0, 0, 0, 0, 0, 0, 0].join(',')}]`]);
+    await db.query(`UPDATE episodes SET embedding = $1 WHERE content LIKE 'Concerto a Bologna%'`, [`[${[0, 1, 0, 0, 0, 0, 0, 0].join(',')}]`]);
+    llm.queue.push({ plan_patches: [{ plan: await pOf(), patch: 'cancel', evidence: [1] }] });
+    await runner.runForConversation(b);
+    expect(await plans()).toEqual([{ content: 'Concerto a Bologna con Nicola giovedì 9 aprile 2026.', plan_status: 'open' }]);
+    // A message naming the plan moves it; without a rewrite the new plan carries the new date in its text.
+    const c = await ingest('pe3', [{ id: 'pe3', role: 'user', content: 'Il concerto di Bologna slitta a sabato 11.', at: '2026-04-07T09:00:00+02:00' }]);
+    llm.queue.push({ plan_patches: [{ plan: await pOf(), patch: 'reschedule', new_date: '2026-04-11', evidence: [1] }] });
+    await runner.runForConversation(c);
+    expect(await plans()).toEqual([
+      { content: 'Concerto a Bologna con Nicola giovedì 9 aprile 2026.', plan_status: 'rescheduled' },
+      { content: 'Concerto a Bologna con Nicola giovedì 9 aprile 2026. (→ 2026-04-11)', plan_status: 'open' },
+    ]);
+    // The same move again is a repeat, not a new plan.
+    const d = await ingest('pe4', [{ id: 'pe4', role: 'user', content: 'Confermo, Bologna sabato 11.', at: '2026-04-08T09:00:00+02:00' }]);
+    llm.queue.push({ plan_patches: [{ plan: await pOf(), patch: 'reschedule', new_date: '2026-04-11', evidence: [1] }] });
+    await runner.runForConversation(d);
+    expect(await plans()).toHaveLength(2);
+  });
+
   it('a confirmed plan always gets its event episode (created from the plan if missing)', async () => {
     const c = await ingest('cp1', [{ id: 'cp1', role: 'user', content: 'Sabato vado ad arrampicare con Irene.', at: '2026-10-08T20:00:00+02:00' }]);
     llm.queue.push({ episodes: [{ content: 'Arrampicata a BlocHaus con Irene sabato 10 ottobre 2026.', kind: 'plan', occurred_at: '2026-10-10', people: ['Irene'], evidence: [1] }] });

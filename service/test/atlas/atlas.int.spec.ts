@@ -50,6 +50,11 @@ describe('atlas snapshot (M5b.2)', () => {
       expect(res.body.episodes).toHaveLength(3);
       expect(res.body.edges).toEqual(expect.arrayContaining([{ a: b, b: a, kind: 'corrects' }, expect.objectContaining({ kind: 'similar' })]));
       expect(JSON.stringify(res.body)).not.toContain('segretissima');
+      await db.query(`INSERT INTO llm_calls (owner_id, prompt_id, provider, model, input_tokens, cached_input_tokens, output_tokens, latency_ms, status)
+        VALUES ($1, 'extract.v6', 'p', 'm', 1000, 0, 200, 10, 'ok')`, [ownerId]);
+      await db.query(`INSERT INTO recall_log (owner_id, tool, items) VALUES ($1, 'search_episodes', 3)`, [ownerId]);
+      const again = await call(url, 'GET', `/api/v1/admin/owners/${ownerId}/atlas`, { token: ADMIN_KEY });
+      expect(again.body.totals).toEqual({ llmCalls: 1, inputTokens: 1000, outputTokens: 200, recalls: 1 });
       const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
       const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
       expect((await call(url, 'GET', `/api/v1/admin/owners/${ownerId}/atlas`, { token: key })).status).toBe(403);

@@ -88,7 +88,8 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const slots: Array<{ key: string }> = await this.db.query(
         `SELECT key FROM fact_slots WHERE key = ANY($2)
          UNION SELECT DISTINCT key FROM facts WHERE owner_id = $1 ORDER BY key`, [owner.id, SEED_SLOTS]);
-      const input = await buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window), profile);
+      const input = await this.telemetry.track('context', owner.id, async () =>
+        buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window), profile));
       const ctx = { ownerId: owner.id, clientId, runId };
       const user = buildExtractionUser(input.prompt);
       const separate = profile.factsPass === 'separate';
@@ -114,7 +115,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
         await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [runId]);
         return rows;
       });
-      await this.embed(written);
+      await this.telemetry.track('embed.memories', owner.id, () => this.embed(written));
       await this.announce(owner.id, runId, written);
       // Second call only when near-duplicates exist (corrections not linked, same event in two chats).
       const links = await resolveNearDuplicates(this.db, this.llm, owner.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
