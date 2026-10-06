@@ -23,7 +23,7 @@ Layer 0       conversations ─ conversation_participants ─ messages ─ messa
 Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
 Layer 3       fact_slots ─ facts ─ fact_evidence     notes ─ note_evidence ─ note_changes
-Engine        extraction_runs ─ run_outputs   llm_calls   forget_tombstones   read_audit
+Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_tombstones   read_audit
 ```
 
 ## Shared columns
@@ -310,6 +310,11 @@ timestamptz, window_to timestamptz, model, provider, prompt_version, status enum
 `id, owner_id null, client_id null, run_id null, prompt_id, provider, model, input_tokens,
 cached_input_tokens, output_tokens, latency_ms, status, created_at` — no prompt or completion
 text stored. Aggregated per owner / client / day for budgets and the CI cost gate.
+
+### recall_log
+`id, owner_id CASCADE, tool, mode null, items, served_at` — one row per recall served (`search_episodes`,
+`search_memory`), metadata only: never the query, never the memories. Lifetime totals for the operators' dashboard;
+the public profile's `read_audit` (below) extends it with client, viewers and returned row ids.
 
 ### forget_tombstones (D16)
 `id, owner_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,

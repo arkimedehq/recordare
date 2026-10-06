@@ -12,6 +12,7 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { addDays, localDate, zonedMidnight } from '../engine/time';
 import { toOrTsQuery } from '../rawlog/rawlog-search.service';
 import { TelemetryService } from '../telemetry/telemetry.service';
+import { logRecall } from './recall-log';
 
 export interface MemorySearchArgs {
   query: string;
@@ -110,6 +111,7 @@ export class MemorySearchService {
     }
     this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
       facts: facts.length, notes: notes.length });
+    await logRecall(this.db, ownerId, 'search_memory', null, facts.length + notes.length);
     return { owner: { name: owner.display_name }, notes, facts, notes_info: info };
   }
 }

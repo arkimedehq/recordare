@@ -89,6 +89,9 @@ describe('nightly consolidation (M5): day and month digests', () => {
     expect((point.structuredContent as { digests: unknown[] }).digests).toEqual([]); // point questions: episodes only
     const long = await client.callTool({ name: 'search_episodes', arguments: { from: '2026-01-01', to: '2026-06-30', mode: 'list' } });
     expect((long.structuredContent as { digests: Array<{ level: string }> }).digests.map((d) => d.level)).toEqual(['month']);
+    expect(await db.query(`SELECT tool, mode FROM recall_log WHERE owner_id = $1 ORDER BY id`, [ownerId])).toEqual([
+      { tool: 'search_episodes', mode: 'list' }, { tool: 'search_episodes', mode: 'search' }, { tool: 'search_episodes', mode: 'list' },
+    ]); // every recall is logged (metadata only)
     await client.close();
   });
 

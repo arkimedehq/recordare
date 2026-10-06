@@ -19,6 +19,8 @@ export interface AtlasSnapshot {
   facts: Array<{ id: string; key: string; status: string }>;
   notes: Array<{ id: string; category: string; pending: boolean }>;
   digests: Array<{ id: string; level: string; period: string }>;
+  /** Lifetime totals of the owner (so the dashboard counters never restart from zero). */
+  totals: { llmCalls: number; inputTokens: number; outputTokens: number; recalls: number };
 }
 
 const NEIGHBOURS = 3;
@@ -73,6 +75,10 @@ export class AtlasService {
     const facts = await this.db.query(`SELECT id, key, status FROM facts WHERE owner_id = $1 AND deleted_at IS NULL ORDER BY key, valid_from NULLS FIRST`, [ownerId]);
     const notes = await this.db.query(`SELECT id, category, pending FROM notes WHERE owner_id = $1 AND deleted_at IS NULL AND status = 'current'`, [ownerId]);
     const digests = await this.db.query(`SELECT id, level, period_start::text AS period FROM digests WHERE owner_id = $1 AND superseded_at IS NULL ORDER BY period_start`, [ownerId]);
+    const [llm] = await this.db.query(
+      `SELECT count(*)::int AS calls, coalesce(sum(input_tokens), 0)::bigint AS input, coalesce(sum(output_tokens), 0)::bigint AS output
+       FROM llm_calls WHERE owner_id = $1`, [ownerId]);
+    const [rec] = await this.db.query(`SELECT count(*)::int AS n FROM recall_log WHERE owner_id = $1`, [ownerId]);
     return {
       owner: { id: owner.id, name: owner.name }, generatedAt: new Date().toISOString(),
       episodes: rows.map((r, i) => ({
@@ -80,6 +86,7 @@ export class AtlasService {
         hidden: r.duplicate_of ? 'duplicate' : r.invalidated ? 'invalidated' : null, xyz: xyz[i] as [number, number, number],
       })),
       edges, facts, notes, digests,
+      totals: { llmCalls: llm.calls, inputTokens: Number(llm.input), outputTokens: Number(llm.output), recalls: rec.n },
     };
   }
 }
