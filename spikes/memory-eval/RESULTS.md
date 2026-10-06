@@ -354,6 +354,19 @@ extraction issue to fix independently (plan patches should need matching evidenc
 (dashboard "sleep", next M5 steps); the diary in recall is a quality-profile knob (`recallDigests`, `RECALL_DIGESTS`),
 **off by default** until a version shows a gain.
 
+### Plan patches need evidence about the plan (2026-10-08, blind5 base, 3 runs, `pev_runs.sh`)
+
+Diagnosis on the non-blind sets (blind3 / 4 / 6, 228 distinct plan patches): plans closed by unrelated messages (a
+concert "cancelled" by a first-day-at-work message, a dental appointment "confirmed" by a physiotherapy session), moved
+plans keeping the old date in their text (the extractor then moved them again), and a failed car inspection recorded
+as "cancelled". Fix: a patch needs evidence sharing a name / place / keyword with the plan or embedding similarity
+≥ 0.37 (bge-m3; wrong patches 0.27–0.36, right ones without a shared word 0.38+ — calibrated on those sets), a repeated
+reschedule is ignored, a moved plan always carries the new date in its text; `extract.v6` (cancel only when the plan
+will not happen, a bad outcome is a confirm). Result: **91.3 %** (90.8 / 92.9 / 90.1) vs m5off **89.9 %** — paired
++1.5 pt [−2.1, +5.4], within noise, no regression; rescheduled plans +0.22, unresolved −0.22, 4 questions changed
+(2 up, 2 down). Extraction (run 1): **plan outcome 1.00** (was 0.92), episode recall 0.97, dates 0.97, unsupported
+8.7 %, facts / notes unchanged. Kept.
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
