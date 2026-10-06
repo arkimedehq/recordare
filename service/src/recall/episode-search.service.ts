@@ -95,6 +95,10 @@ export class EpisodeSearchService {
   }
 
   async search(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
+    return this.telemetry.track('recall', ownerId, () => this.searchNow(ownerId, clientId, args, now));
+  }
+
+  private async searchNow(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
     const [owner] = await this.db.query(
       `SELECT o.locale, o.timezone, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     const profile = qualityProfile(owner.quality_profile, this.defaultProfile, undefined, undefined, this.recallDigests);

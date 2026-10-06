@@ -49,7 +49,7 @@ export class ConsolidationService {
       const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [ownerId]);
       if (!locked) return report;
       try {
-        await this.run(ownerId, now, report);
+        await this.telemetry.track('consolidation', ownerId, () => this.run(ownerId, now, report));
       } finally {
         await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 11))`, [ownerId]);
       }

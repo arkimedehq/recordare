@@ -51,6 +51,10 @@ export class MemorySearchService {
   ) {}
 
   async search(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
+    return this.telemetry.track('recall', ownerId, () => this.searchNow(ownerId, args, now));
+  }
+
+  private async searchNow(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
     const [owner] = await this.db.query(
       `SELECT o.timezone, o.locale, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     const tz: string = owner.timezone;

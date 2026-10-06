@@ -6,24 +6,28 @@ import { Inject } from '@nestjs/common';
 import { type Job } from 'bullmq';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
+import { TelemetryService } from '../telemetry/telemetry.service';
 import { EMBEDDING_QUEUE } from './queue.port';
 
 /** Embeds user / other / tool messages for the raw-log fallback (assistant replies are not searched). */
 @Processor(EMBEDDING_QUEUE)
 export class EmbeddingProcessor extends WorkerHost {
-  constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {
+  constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
+    private readonly telemetry: TelemetryService) {
     super();
   }
 
   async process(job: Job<{ messageIds: string[] }>): Promise<void> {
-    const rows: { id: string; content: string }[] = await this.db.query(
-      `SELECT id, content FROM messages WHERE id = ANY($1) AND role <> 'assistant' AND embedding IS NULL`,
+    const rows: { id: string; content: string; owner_id: string }[] = await this.db.query(
+      `SELECT id, content, owner_id FROM messages WHERE id = ANY($1) AND role <> 'assistant' AND embedding IS NULL`,
       [job.data.messageIds],
     );
     if (rows.length === 0) return;
-    const vectors = await this.embeddings.embed(rows.map((r) => r.content), 'document');
-    for (const [i, row] of rows.entries()) {
-      await this.db.query(`UPDATE messages SET embedding = $1 WHERE id = $2`, [`[${(vectors[i] ?? []).join(',')}]`, row.id]);
-    }
+    await this.telemetry.track('embed.messages', rows[0]?.owner_id ?? null, async () => {
+      const vectors = await this.embeddings.embed(rows.map((r) => r.content), 'document');
+      for (const [i, row] of rows.entries()) {
+        await this.db.query(`UPDATE messages SET embedding = $1 WHERE id = $2`, [`[${(vectors[i] ?? []).join(',')}]`, row.id]);
+      }
+    });
   }
 }

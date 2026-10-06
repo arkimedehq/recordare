@@ -301,7 +301,7 @@ never blocks or fails the host's chat. MCP is used through the host's own MCP cl
 
 ### Live telemetry (M5b, admin only)
 `GET api/v1/admin/telemetry/stream[?owner=<personId>]` — Server-Sent Events, one per real step inside the service:
-`message.ingested`, `extraction.started` / `extraction.finished`, `llm.started` (prompt id, task — the call left) and `llm.call` (prompt id, model, tokens, latency, status),
+`message.ingested`, `extraction.started` / `extraction.finished`, `work.started` / `work.finished` (op: `embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`; id, duration — work without an LLM call), `llm.started` (prompt id, task — the call left) and `llm.call` (prompt id, model, tokens, latency, status),
 `memory.written` (episodes / facts / notes with kind and author role), `episode.linked` (duplicate / corrects),
 `recall.served` (tool, mode, returned episode and claim ids, counts), `digest.written`, `consolidation.finished`,
 `episode.forgotten`. Metadata only — ids, kinds, counts, tokens — never message or memory content. Nothing is
