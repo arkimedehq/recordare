@@ -31,7 +31,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     llm = await startFakeLlm();
     const fake = await startFakeEmbeddings();
     emb = fake.server;
-    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600', ALLOW_CLOCK_OVERRIDE: 'true' });
+    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600', ALLOW_CLOCK_OVERRIDE: 'true', RECALL_DIGESTS: 'true' });
     await resetSchema();
     ({ app, url } = await startApp());
     db = app.get(DataSource);

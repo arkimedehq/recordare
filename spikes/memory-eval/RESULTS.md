@@ -342,6 +342,18 @@ API (thinking off) equals Gemini 3.1 Flash-Lite at ~5× the price. Decision: `de
 engine; cheap models are not candidates for the main extraction call (they may serve the light resolver call — not
 measured separately).
 
+### M5 consolidation, first slice (2026-10-07, blind5 base, 3 + 3 runs, same code)
+
+Nightly day / month digests (task `digest`, fingerprinted: unchanged days cost nothing; others' claims excluded),
+consolidated as of each question. With the diary given to period overviews (`list` requests): **88.0 %** [85.9, 90.1]
+(87.4 / 90.1 / 86.5); without: **89.9 %** [88.9, 90.8] (89.7 / 90.8 / 89.1) — −1.9 pt [−5.4, +1.3], within noise.
+Period overviews +0.12; this-week, third-party and corrections lower. Cost: ~85–97 day + 25–34 month digests per run
+(~100 k input / 35 k output tokens for five months of one person). A first run had shown 86.2 % because the extractor
+had mis-patched two plans (a reschedule and a cancellation without evidence) that the diary then repeated: an
+extraction issue to fix independently (plan patches should need matching evidence). Decision: consolidation stays
+(dashboard "sleep", next M5 steps); the diary in recall is a quality-profile knob (`recallDigests`, `RECALL_DIGESTS`),
+**off by default** until a version shows a gain.
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |

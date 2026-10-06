@@ -47,6 +47,8 @@ const baseSchema = z.object({
   FACTS_PASS: z.enum(['inline', 'separate']).optional(),
   /** Nightly consolidation on its own schedule (M5); off = only on demand (admin endpoint), e.g. evaluation setups. */
   CONSOLIDATION_SCHEDULE: bool.default(true),
+  /** Give the nightly diary to period overviews in recall; set = overrides the quality profile (measured: no gain yet). */
+  RECALL_DIGESTS: bool.optional(),
   /** Local hour (owner's timezone) after which the nightly consolidation runs (M5). */
   CONSOLIDATION_HOUR: z.coerce.number().int().min(0).max(23).default(3),
   /** Installation default quality profile (D35); owners may override it. */
