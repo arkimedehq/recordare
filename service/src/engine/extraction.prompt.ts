@@ -6,7 +6,7 @@
  * variable goes in the user message. Rules come from the prototype that passed the blind held-out
  * check (spikes/memory-eval/systems/d_sys.py) plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v4';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v6';
 
 export const EXTRACTION_SYSTEM = `You are the memory encoder of a personal memory service. You read a window of one \
 conversation (numbered messages) and record what should be remembered about the OWNER's life. \
@@ -36,7 +36,7 @@ Reply with ONE JSON object:
     "plan": "<P-number from OPEN PLANS>",
     "patch": "confirm" | "cancel" | "reschedule" | "amend",
     "new_date": "YYYY-MM-DD" | null, "new_until": "YYYY-MM-DD" | null, "date_precision": "day" | "month" | "approximate",
-    "new_content": "<for amend: the updated plan sentence>" | null,
+    "new_content": "<for reschedule and amend: the whole plan sentence as it stands now, with the new date>" | null,
     "event": <index in your "episodes" array of the event that confirms the plan> | null,
     "note": "<short reason>" | null,
     "evidence": [<message numbers>]
@@ -84,6 +84,11 @@ PLANS (lifecycle in code; you only emit patches)
 - When a message shows an OPEN PLAN happened: patch "confirm" AND an event episode with what actually happened \
 (put its index in "event"). When it is off: "cancel". When it moved: "reschedule" with the new date. When its content \
 changed: "amend". A later mention of the same topic is NOT a confirmation or a cancellation by itself.
+- "cancel" only when the plan will not take place. A plan that took place with a bad result (an exam failed, a visit \
+with bad news) is "confirm", with the event saying how it went.
+- The evidence of a patch is the message that speaks of THAT plan. A plan whose date passed without news stays open: \
+never close it with a message about something else.
+- For "reschedule", write new_content with the new date, so the plan never keeps its old date in the text.
 - The news of a change ("the recital was moved to 15 January") is also a low-importance event episode on the message date.
 
 FACTS (state slots) — one verdict per fact you touch
