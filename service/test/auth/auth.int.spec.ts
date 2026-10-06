@@ -70,6 +70,15 @@ describe('auth and admin (v1 home / research profile)', () => {
     expect(first.status).toBe(200);
     const again = await call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' } });
     expect(again.body.ownerId).toBe(first.body.ownerId);
+    expect(first.body.displayName).toBe('new-user'); // named after the client's id until named
+
+    // The client may name a person it created, once; after the admin renamed them it may not.
+    const ingestKey = await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } });
+    const name = (displayName: string) => call(url, 'PATCH', '/api/v1/me', { token: ingestKey.body.key, headers: { 'x-recordare-user': 'new-user' }, body: { displayName } });
+    expect((await name('Andrea')).status).toBe(204);
+    expect((await call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' } })).body.displayName).toBe('Andrea');
+    expect((await name('Second name')).status).toBe(403);
+    expect((await call(url, 'PATCH', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' }, body: { displayName: 'x' } })).status).toBe(403); // scope
 
     // Concurrent first contact resolves to one owner, no 500.
     const burst = await Promise.all(Array.from({ length: 5 }, () =>

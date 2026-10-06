@@ -277,6 +277,8 @@ The same pages are served by Recordare itself for owners without a host UI.
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | `episodicEnabled`, locale, timezone |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
+| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, via, scopes}` (with a client key: the person behind `X-Recordare-User`, auto-provisioned if the client allows it) |
+| `PATCH api/v1/me {displayName}` | ingest (client key) | Names a person the client created — only while the name is still the client's user id (auto-provisioning default); after the admin or the owner renamed them → 403 |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
 
 ## 5. SDK (task 1.6)
