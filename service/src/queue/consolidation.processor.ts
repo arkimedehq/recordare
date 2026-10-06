@@ -30,10 +30,15 @@ export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
-    await this.queue.upsertJobScheduler('nightly-sweep', { every: 60 * 60 * 1000 }, { name: 'sweep' });
+    if (this.config.get('CONSOLIDATION_SCHEDULE', { infer: true })) {
+      await this.queue.upsertJobScheduler('nightly-sweep', { every: 60 * 60 * 1000 }, { name: 'sweep' });
+    } else {
+      await this.queue.removeJobScheduler('nightly-sweep');
+    }
   }
 
   async process(_job: Job): Promise<void> {
+    if (!this.config.get('CONSOLIDATION_SCHEDULE', { infer: true })) return; // a sweep queued before it was switched off
     const now = this.clock.now();
     const hour = this.config.get('CONSOLIDATION_HOUR', { infer: true });
     const due: Array<{ person_id: string }> = await this.db.query(
