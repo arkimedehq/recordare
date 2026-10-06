@@ -191,6 +191,7 @@ data: `docs/prototypes/neural-atlas.html` (Three.js + bloom; also published as a
 | 5b.3 | `dashboard/` app (TypeScript, Vite; Three.js or React Three Fiber): the prototype on real data — neurons placed by meaning, click a neuron to read the episode with its sources, filters by period / kind / person, replay of a day at speed, cost counters from `llm_calls` |
 | 5b.4 | Access: admin key or the owner's own token only; no public mode; works with no content (metadata view) for shared screens |
 | 5b.5 | Performance: thousands of neurons at 60 fps (instanced points, GPU particles), graceful fallback without WebGL |
+| 5b.6 | **Visible neural network, real events only** (owner's request 2026-10-07): the brain shows an actual network — neurons joined by visible axon / dendrite paths within and between regions (fibre tracts) — instead of free-flying "meteors". Impulses run along those paths from one region to another. **No fake animation:** every impulse is one real Recordare event from the telemetry stream (5b.1) following the real route of that data (message → ingest → LLM extraction → episode written → links / resolver → recall …); with no events the brain is quiet. A "replay" of recorded events is allowed only if labelled as such |
 
 ### M6 — Integrations (proof of client neutrality)
 
