@@ -16,6 +16,7 @@ import { RawLogSearchService, toOrTsQuery, type RawHit } from '../rawlog/rawlog-
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 export interface EpisodeSearchArgs {
   query?: string;
@@ -79,20 +80,23 @@ const DIGEST_DAY_SPAN = 45;
 export class EpisodeSearchService {
   private readonly log = new Logger(EpisodeSearchService.name);
   private readonly defaultProfile: QualityProfileName;
+  private readonly recallDigests: boolean | undefined;
 
   constructor(
     private readonly db: DataSource,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly rawLog: RawLogSearchService,
     config: ConfigService<Env, true>,
+    private readonly telemetry: TelemetryService,
   ) {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
+    this.recallDigests = config.get('RECALL_DIGESTS', { infer: true });
   }
 
   async search(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
     const [owner] = await this.db.query(
       `SELECT o.locale, o.timezone, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    const profile = qualityProfile(owner.quality_profile, this.defaultProfile);
+    const profile = qualityProfile(owner.quality_profile, this.defaultProfile, undefined, undefined, this.recallDigests);
     const tz: string = owner.timezone;
     const locale: string = owner.locale;
     const mode = args.mode ?? 'search';
@@ -148,7 +152,7 @@ export class EpisodeSearchService {
       owner: { name: owner.display_name },
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
       // The diary serves overviews of a period (mode list); point questions get the episodes themselves.
-      digests: hasPeriod && mode === 'list' ? await this.digests(ownerId, from, to) : [],
+      digests: hasPeriod && mode === 'list' && profile.recallDigests ? await this.digests(ownerId, from, to) : [],
       episodes: views.slice(0, chosen.length).filter((v) => !isClaim(v)),
       claims: views.slice(0, chosen.length).filter(isClaim),
       outsidePeriod: views.slice(chosen.length),
@@ -179,6 +183,8 @@ export class EpisodeSearchService {
           : 'excerpts written by others (author) are their words: what they say about the owner is unconfirmed');
       }
     }
+    this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_episodes', mode,
+      episodeIds: result.episodes.map((e) => e.id), claimIds: result.claims.map((e) => e.id), chats: result.fromChats.length, digests: result.digests.length });
     if (chosen.length) {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);
     }

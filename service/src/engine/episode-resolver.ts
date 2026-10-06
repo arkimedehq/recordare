@@ -29,6 +29,8 @@ const schema = z.object({
   decisions: z.array(z.object({ pair: z.number().int().positive(), relation: z.enum(['duplicate', 'corrects', 'distinct']) })).default([]),
 });
 
+export interface ResolvedLink { relation: 'duplicate' | 'corrects'; from: string; to: string }
+
 interface Candidate {
   new_id: string;
   new_content: string;
@@ -37,8 +39,9 @@ interface Candidate {
 }
 
 export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, ownerId: string, newIds: string[], ctx: LlmCallContext,
-  profile: Pick<QualityProfile, 'resolverWindowDays' | 'resolverSimilarity'>): Promise<void> {
-  if (newIds.length === 0) return;
+  profile: Pick<QualityProfile, 'resolverWindowDays' | 'resolverSimilarity'>): Promise<ResolvedLink[]> {
+  const links: ResolvedLink[] = [];
+  if (newIds.length === 0) return links;
   const pairs: Candidate[] = await db.query(
     `SELECT DISTINCT ON (n.id) n.id AS new_id, n.content AS new_content, o.id AS old_id, o.content AS old_content
      FROM episodes n JOIN episodes o
@@ -51,7 +54,7 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, ownerI
      WHERE n.owner_id = $1 AND n.id = ANY($2)
      ORDER BY n.id, similarity(o.content, n.content) DESC`,
     [ownerId, newIds, profile.resolverSimilarity, profile.resolverWindowDays, TRIGRAM]);
-  if (pairs.length === 0) return;
+  if (pairs.length === 0) return links;
 
   const out = await llm.completeJson({
     promptId: RESOLVE_PROMPT_VERSION,
@@ -69,9 +72,12 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, ownerI
       // Keep the more complete telling visible (a later mention often carries the outcome).
       const [keep, hide] = p.new_content.length > p.old_content.length ? [p.new_id, p.old_id] : [p.old_id, p.new_id];
       await db.query(`UPDATE episodes SET duplicate_of = $1 WHERE id = $2 AND owner_id = $3`, [keep, hide, ownerId]);
+      links.push({ relation: 'duplicate', from: hide, to: keep });
     } else if (d.relation === 'corrects') {
       await db.query(`UPDATE episodes SET corrects = $1 WHERE id = $2 AND owner_id = $3`, [p.old_id, p.new_id, ownerId]);
       await db.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1 AND owner_id = $2`, [p.old_id, ownerId]);
+      links.push({ relation: 'corrects', from: p.new_id, to: p.old_id });
     }
   }
+  return links;
 }

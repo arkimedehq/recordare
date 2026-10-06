@@ -15,6 +15,7 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { DAY_DIGEST_SYSTEM, DAY_DIGEST_VERSION, digestSchema, MONTH_DIGEST_SYSTEM, MONTH_DIGEST_VERSION } from './consolidation.prompt';
 import { addDays, localDate, periodEnd, type Precision } from './time';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
@@ -36,6 +37,7 @@ export class ConsolidationService {
     private readonly db: DataSource,
     @Inject(LLM_PORT) private readonly llm: LlmPort,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
+    private readonly telemetry: TelemetryService,
   ) {}
 
   /** Consolidate every complete day (in the owner's timezone) before `now`. Idempotent; one run per owner at a time. */
@@ -133,6 +135,7 @@ export class ConsolidationService {
       }
       await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [ctx.runId]);
       await this.db.query(`UPDATE owners SET consolidated_at = $2 WHERE person_id = $1`, [ownerId, now]);
+      this.telemetry.emit({ type: 'consolidation.finished', ownerId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
     } catch (err) {
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`, [(err as Error).name, ctx.runId]);
       throw err;
@@ -179,6 +182,7 @@ export class ConsolidationService {
       for (const id of episodeIds) await tx.query(`INSERT INTO digest_sources (digest_id, episode_id) VALUES ($1, $2)`, [d.id, id]);
       for (const id of digestIds) await tx.query(`INSERT INTO digest_sources (digest_id, source_digest_id) VALUES ($1, $2)`, [d.id, id]);
     });
+    this.telemetry.emit({ type: 'digest.written', ownerId, level, period: start, sources: episodeIds.length + digestIds.length });
   }
 
   private async supersede(ids: string[]): Promise<void> {

@@ -33,31 +33,35 @@ export interface QualityProfile {
   resolverSimilarity: number;
   /** Chat excerpts returned next to matching episodes (more when episodes are few). */
   rawHitsAlongside: number;
+  /** Give the nightly diary (M5 digests) to period overviews. Measured 2026-10-07 (blind5, 3+3 runs): −1.9 pt,
+   * within noise (overviews +0.12, other period questions lower) — off until a version shows a gain. */
+  recallDigests: boolean;
 }
 
 const PROFILES: Record<QualityProfileName, QualityProfile> = {
   economy: {
     name: 'economy', windowChars: 16_000, extractionTask: 'extract_economy', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1,
+    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1, recallDigests: false,
   },
   balanced: {
     name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3,
+    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3, recallDigests: false,
   },
   full: {
     name: 'full', windowChars: 8_000, extractionTask: 'extract', reasoning: true, factsPass: 'inline',
-    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5,
+    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5, recallDigests: false,
   },
 };
 
 /** The owner's profile, else the installation default; explicit installation settings override single knobs. */
 export function qualityProfile(ownerChoice: string | null | undefined, installationDefault: QualityProfileName,
-  windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass']): QualityProfile {
+  windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass'], recallDigestsOverride?: boolean): QualityProfile {
   const name = (QUALITY_PROFILES as readonly string[]).includes(ownerChoice ?? '') ? ownerChoice as QualityProfileName : installationDefault;
   const p = PROFILES[name];
   return {
     ...p,
     ...(windowCharsOverride ? { windowChars: windowCharsOverride } : {}),
     ...(factsPassOverride ? { factsPass: factsPassOverride } : {}),
+    ...(recallDigestsOverride !== undefined ? { recallDigests: recallDigestsOverride } : {}),
   };
 }

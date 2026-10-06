@@ -22,6 +22,7 @@ import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
 import { EPISODES_ONLY_NOTE, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
@@ -35,6 +36,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
     @Inject(LLM_PORT) private readonly llm: LlmPort,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     config: ConfigService<Env, true>,
+    private readonly telemetry: TelemetryService,
   ) {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
     this.windowCharsOverride = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
@@ -79,6 +81,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
       });
       return;
     }
+    this.telemetry.emit({ type: 'extraction.started', ownerId: owner.id, runId, conversationId, messages: window.length });
     try {
       // Only the seeded slots and this owner's own keys: slot names never leak across owners
       // and the list stays bounded.
@@ -112,14 +115,22 @@ export class EngineExtractionRunner implements ExtractionRunner {
         return rows;
       });
       await this.embed(written);
+      await this.announce(owner.id, runId, written);
       // Second call only when near-duplicates exist (corrections not linked, same event in two chats).
-      await resolveNearDuplicates(this.db, this.llm, owner.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
-        { ownerId: owner.id, clientId, runId }, profile).catch((err: unknown) => this.log.warn(`near-duplicate resolution skipped: ${(err as Error).name}`));
+      const links = await resolveNearDuplicates(this.db, this.llm, owner.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
+        { ownerId: owner.id, clientId, runId }, profile).catch((err: unknown) => {
+        this.log.warn(`near-duplicate resolution skipped: ${(err as Error).name}`);
+        return [];
+      });
+      for (const l of links) this.telemetry.emit({ type: 'episode.linked', ownerId: owner.id, ...l });
+      this.telemetry.emit({ type: 'extraction.finished', ownerId: owner.id, runId, status: 'done', written: written.length });
     } catch (err) {
       if (err instanceof ConcurrentExtractionError) {
         await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), model = 'skipped:concurrent' WHERE id = $1`, [runId]);
+        this.telemetry.emit({ type: 'extraction.finished', ownerId: owner.id, runId, status: 'skipped', written: 0 });
         return;
       }
+      this.telemetry.emit({ type: 'extraction.finished', ownerId: owner.id, runId, status: 'failed', written: 0 });
       // No user content in the error column (docs/DATA_MODEL.md).
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`,
         [(err as Error).name, runId]);
@@ -134,6 +145,19 @@ export class EngineExtractionRunner implements ExtractionRunner {
        VALUES ($1, $2, 'extraction', $3, $4, 'pending', 'configured', $5) RETURNING id`,
       [ownerId, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, EXTRACTION_PROMPT_VERSION]);
     return run.id as string;
+  }
+
+  /** Telemetry for the rows a window wrote: kind and author of episodes (metadata only). */
+  private async announce(ownerId: string, runId: string, written: WrittenRow[]): Promise<void> {
+    const episodeIds = written.filter((w) => w.table === 'episodes').map((w) => w.id);
+    const meta: Array<{ id: string; kind: string; author_role: string; importance: number; corrects: string | null }> = episodeIds.length
+      ? await this.db.query(`SELECT id, kind, author_role, importance, corrects FROM episodes WHERE id = ANY($1)`, [episodeIds]) : [];
+    const byId = new Map(meta.map((m) => [m.id, m]));
+    for (const w of written) {
+      const m = byId.get(w.id);
+      this.telemetry.emit({ type: 'memory.written', ownerId, runId, table: w.table, id: w.id,
+        ...(m ? { kind: m.kind, authorRole: m.author_role, importance: m.importance, corrects: m.corrects } : {}) });
+    }
   }
 
   /** The window's topic as one query vector: picks related older episodes for the E# list. Null on failure. */

@@ -298,3 +298,16 @@ never blocks or fails the host's chat. MCP is used through the host's own MCP cl
   parameters optional.
 - Contract tests (M3) run the same scenarios through REST + MCP, both levels, including the
   viewer-context rule (shared conversations get nothing).
+
+### Live telemetry (M5b, admin only)
+`GET api/v1/admin/telemetry/stream[?owner=<personId>]` — Server-Sent Events, one per real step inside the service:
+`message.ingested`, `extraction.started` / `extraction.finished`, `llm.call` (prompt id, model, tokens, latency, status),
+`memory.written` (episodes / facts / notes with kind and author role), `episode.linked` (duplicate / corrects),
+`recall.served` (tool, mode, returned episode and claim ids, counts), `digest.written`, `consolidation.finished`,
+`episode.forgotten`. Metadata only — ids, kinds, counts, tokens — never message or memory content. Nothing is
+synthesised: the dashboard (WORK_PLAN 5b.6) moves only when these events arrive.
+
+`GET api/v1/admin/owners/:id/atlas` — the dashboard's starting map of one owner: episodes as neurons (kind, author
+role, importance, day, plan status, hidden state, position by meaning = first three principal components of the
+embeddings), real edges (nearest neighbours in meaning, corrections, duplicates, plan → outcome, reschedules, shared
+people), facts / notes / digests as the cortex. Metadata only.
