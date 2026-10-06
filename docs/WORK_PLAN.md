@@ -175,6 +175,23 @@ model is supported only at ≥ 95 % on the suite**; weaker models are removed, r
 | 5.4 | Pattern promotions with `episode_promotions` (D20) — destination depends on **D26** |
 | 5.5 | User-driven deletion: episode, period; digests recomputed; vectors removed (D16) |
 
+### M5b — Neural Atlas: live dashboard (after M5)
+
+A 3D "virtual brain" showing Recordare at work, live: regions are the components (thalamus = ingest, hippocampus =
+episodes, LLM = extraction calls, amygdala = importance / feelings, anterior cingulate = conflicts: duplicates,
+corrections, third-party claims, neocortex = facts and notes, prefrontal = recall via MCP), neurons are episodes,
+synapses their links, and signals travel between regions as data flows. "Sleep" mode replays the M5 consolidation
+(hippocampus → neocortex), the same mechanism the architecture borrows from human memory. Prototype with simulated
+data: `docs/prototypes/neural-atlas.html` (Three.js + bloom; also published as a private artifact).
+
+| # | Task |
+|---|---|
+| 5b.1 | Service: live event stream for operators (`GET api/v1/admin/telemetry/stream`, Server-Sent Events): message ingested, extraction run start / end, LLM call (task, model, tokens, cost), episode / fact / note written, near-duplicate or correction, claim isolated, recall served, consolidation steps. Metadata only by default — no content unless the viewer is the owner (D33 / disclosure rules) |
+| 5b.2 | Service: snapshot for the initial map: episodes (kind, importance, dates, links: corrects / duplicate_of / plan → event / shared people), facts and notes, per owner; 2-D / 3-D layout from the embeddings (e.g. UMAP / PCA computed server-side and cached) |
+| 5b.3 | `dashboard/` app (TypeScript, Vite; Three.js or React Three Fiber): the prototype on real data — neurons placed by meaning, click a neuron to read the episode with its sources, filters by period / kind / person, replay of a day at speed, cost counters from `llm_calls` |
+| 5b.4 | Access: admin key or the owner's own token only; no public mode; works with no content (metadata view) for shared screens |
+| 5b.5 | Performance: thousands of neurons at 60 fps (instanced points, GPU particles), graceful fallback without WebGL |
+
 ### M6 — Integrations (proof of client neutrality)
 
 | # | Task | Where |

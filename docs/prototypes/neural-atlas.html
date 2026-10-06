@@ -1,0 +1,454 @@
+<title>Recordare Neural Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a full-bleed WebGL brain with a thin HUD frame (header, left legend, right live log, bottom
+   counters); single dark theme by design — a lab monitor at night. */
+:root {
+  --bg: #04060b;
+  --panel: rgba(8, 14, 24, 0.72);
+  --line: rgba(120, 220, 255, 0.18);
+  --ink: #d8f3ff;
+  --muted: #6f8aa3;
+  --cyan: #38e8ff;
+  --amber: #ffb547;
+  --magenta: #ff4fd8;
+  --lime: #9dff6a;
+  --violet: #9b7bff;
+  --red: #ff5a6a;
+  --display: "Chakra Petch", "Eurostile", "Bank Gothic", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--mono); font-size: 12px; overflow: hidden; }
+#stage { position: fixed; inset: 0; }
+canvas { display: block; }
+.hud { position: fixed; z-index: 2; pointer-events: none; }
+.panel { background: var(--panel); border: 1px solid var(--line); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-radius: 4px; pointer-events: auto; }
+.corner { position: relative; }
+.corner::before, .corner::after { content: ""; position: absolute; width: 10px; height: 10px; border: 1.5px solid var(--cyan); }
+.corner::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.corner::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+header.hud { top: calc(14px + env(safe-area-inset-top, 0px)); left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.brand { padding: 10px 14px; }
+.brand h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: .14em; text-transform: uppercase; }
+.brand h1 span { color: var(--cyan); }
+.brand p { margin: 2px 0 0; color: var(--muted); letter-spacing: .06em; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; justify-content: flex-end; }
+.controls button { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: transparent;
+  border: 1px solid var(--line); padding: 7px 10px; border-radius: 3px; cursor: pointer; }
+.controls button:hover, .controls button:focus-visible { border-color: var(--cyan); color: var(--cyan); outline: none; }
+.controls button[aria-pressed="true"] { background: rgba(56, 232, 255, .14); border-color: var(--cyan); color: var(--cyan); }
+.sim { color: var(--amber); border: 1px dashed rgba(255, 181, 71, .5); padding: 6px 8px; border-radius: 3px; align-self: center; letter-spacing: .06em; }
+
+aside.legend { left: 16px; top: 112px; width: 248px; position: fixed; padding: 12px; display: grid; gap: 2px; max-height: calc(100% - 200px); overflow: auto; scrollbar-width: thin; scrollbar-color: rgba(120,220,255,.25) transparent; }
+.legend h2, .log h2 { margin: 0 0 4px; font: 600 11px var(--display); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.reg { display: grid; grid-template-columns: 10px 1fr; gap: 2px 9px; align-items: start; padding: 4px; border-radius: 3px; }
+.reg i { width: 10px; height: 10px; border-radius: 50%; margin-top: 3px; box-shadow: 0 0 10px currentColor; background: currentColor; }
+.reg b { font: 600 12px var(--display); letter-spacing: .06em; }
+.reg small { grid-column: 2; color: var(--muted); font-size: 10.5px; line-height: 1.3; }
+
+aside.log { right: 16px; top: 112px; width: 300px; position: fixed; padding: 12px; display: grid; grid-template-rows: auto 1fr; max-height: calc(100% - 200px); }
+#events { list-style: none; margin: 0; padding: 0; overflow: hidden; display: grid; gap: 3px; align-content: start; }
+#events li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px; line-height: 1.35; animation: in .35s ease-out; }
+#events time { color: var(--muted); font-variant-numeric: tabular-nums; }
+#events .llm { color: var(--amber); } #events .ep { color: var(--cyan); } #events .rec { color: var(--lime); }
+#events .warn { color: var(--magenta); } #events .sleep { color: var(--violet); }
+@keyframes in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+
+footer.hud { left: 16px; right: 16px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.stat { padding: 9px 12px; }
+.stat span { display: block; color: var(--muted); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.stat strong { display: block; font: 600 22px var(--display); letter-spacing: .04em; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.stat strong.c { color: var(--cyan); } .stat strong.a { color: var(--amber); } .stat strong.m { color: var(--magenta); }
+.stat strong.l { color: var(--lime); } .stat strong.v { color: var(--violet); }
+
+.label { position: fixed; z-index: 1; pointer-events: none; font: 600 10px var(--display); letter-spacing: .16em; text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0,0,0,.95); white-space: nowrap; transform: translate(-50%, -50%); opacity: .75; transition: opacity .2s; }
+.label::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; vertical-align: 1px; }
+.label.hot { opacity: 1; }
+#fallback[hidden] { display: none; }
+#fallback { position: fixed; inset: 0; display: grid; place-items: center; color: var(--muted); padding: 24px; text-align: center; }
+.scan { position: fixed; inset: 0; z-index: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px); }
+
+@media (max-width: 900px) {
+  aside.legend { display: none; }
+  aside.log { left: 16px; right: 16px; width: auto; top: auto; bottom: 150px; max-height: 24%; }
+  footer.hud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .brand p { display: none; }
+  .label { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) { #events li { animation: none; } }
+</style>
+
+<div id="stage" aria-label="Cervello virtuale di Recordare"></div>
+<div class="scan" aria-hidden="true"></div>
+<div id="fallback" hidden>Questo prototipo richiede WebGL.</div>
+
+<header class="hud">
+  <div class="panel corner brand">
+    <h1>Recordare <span>Neural Atlas</span></h1>
+    <p>memoria episodica → consolidamento → richiamo · prototipo</p>
+  </div>
+  <div class="panel corner controls" role="toolbar" aria-label="Modalità">
+    <span class="sim">dati simulati</span>
+    <button id="m-live" aria-pressed="true">Veglia</button>
+    <button id="m-sleep" aria-pressed="false">Sonno · replay</button>
+    <button id="m-recall">Domanda</button>
+    <button id="m-poison">Voce di terzi</button>
+    <button id="m-rotate" aria-pressed="true">Rotazione</button>
+  </div>
+</header>
+
+<aside class="hud panel corner legend" aria-label="Regioni">
+  <h2>Regioni · componenti</h2>
+  <div class="reg" style="color:#dff6ff"><i></i><b>Talamo</b><small>ingest: ogni messaggio entra qui e viene smistato</small></div>
+  <div class="reg" style="color:var(--cyan)"><i></i><b>Ippocampo</b><small>episodi: ogni neurone è un ricordo (ciano evento, ambra piano, magenta cambiamento)</small></div>
+  <div class="reg" style="color:var(--amber)"><i></i><b>LLM · estrazione</b><small>le chiamate al modello, le uniche che costano token</small></div>
+  <div class="reg" style="color:var(--magenta)"><i></i><b>Amigdala</b><small>importanza ed emozioni dell'episodio</small></div>
+  <div class="reg" style="color:var(--red)"><i></i><b>Cingolo anteriore</b><small>conflitti: doppioni, correzioni, voci di terzi isolate</small></div>
+  <div class="reg" style="color:var(--violet)"><i></i><b>Neocorteccia</b><small>fatti e note: memoria semantica, consolidata nel sonno</small></div>
+  <div class="reg" style="color:var(--lime)"><i></i><b>Prefrontale</b><small>richiamo: le domande degli agenti via MCP</small></div>
+</aside>
+
+<aside class="hud panel corner log" aria-label="Eventi in tempo reale">
+  <h2>Flusso · live</h2>
+  <ol id="events" aria-live="off"></ol>
+</aside>
+
+<footer class="hud">
+  <div class="panel corner stat"><span>Episodi</span><strong class="c" id="s-ep">0</strong></div>
+  <div class="panel corner stat"><span>Fatti · note</span><strong class="v" id="s-fn">0</strong></div>
+  <div class="panel corner stat"><span>Chiamate LLM</span><strong class="a" id="s-llm">0</strong></div>
+  <div class="panel corner stat"><span>Token</span><strong class="a" id="s-tok">0</strong></div>
+  <div class="panel corner stat"><span>Richiami</span><strong class="l" id="s-rec">0</strong></div>
+  <div class="panel corner stat"><span>Voci isolate</span><strong class="m" id="s-cl">0</strong></div>
+</footer>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const stage = document.getElementById('stage');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); }
+catch { document.getElementById('fallback').hidden = false; throw new Error('WebGL unavailable'); }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x04060b, 1);
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x04060b, 0.03);
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 200);
+camera.position.set(6.4, 2.4, 7.6);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.06; controls.autoRotate = true; controls.autoRotateSpeed = 0.45;
+controls.minDistance = 5.5; controls.maxDistance = 22; controls.target.set(0, 0.2, 0);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.15, 0.65, 0.08);
+composer.addPass(bloom);
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const C = { cyan: 0x38e8ff, amber: 0xffb547, magenta: 0xff4fd8, lime: 0x9dff6a, violet: 0x9b7bff, red: 0xff5a6a, white: 0xdff6ff };
+const clock = new THREE.Clock();
+
+// Round additive glow for every point cloud.
+function glowMaterial(base = 1) {
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
+    uniforms: { uScale: { value: renderer.getPixelRatio() * base } },
+    vertexShader: `attribute float size; varying vec3 vColor; uniform float uScale;
+      void main(){ vColor = color; vec4 mv = modelViewMatrix * vec4(position,1.0);
+        gl_PointSize = size * uScale * (300.0 / -mv.z); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `varying vec3 vColor; void main(){ vec2 c = gl_PointCoord - 0.5; float d = length(c);
+        float a = smoothstep(0.5, 0.0, d); a *= a; gl_FragColor = vec4(vColor * a, a); }`,
+  });
+}
+function cloud(pos, col, size, base = 1) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('size', new THREE.Float32BufferAttribute(size, 1));
+  return new THREE.Points(g, glowMaterial(base));
+}
+
+// ---------- brain shell: two hemispheres with folded cortex, cerebellum, brainstem ----------
+const gyri = (p) => 0.06 * Math.sin(p.x * 5.1 + Math.sin(p.y * 3.3)) * Math.cos(p.z * 4.7 + Math.sin(p.x * 2.1))
+  + 0.035 * Math.sin(p.y * 9.0 + p.z * 6.0);
+const sp = [], sc = [], ss = [], tint = new THREE.Color();
+const sphere = () => { const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, r = Math.sqrt(1 - u * u); return new THREE.Vector3(r * Math.cos(th), u, r * Math.sin(th)); };
+for (const side of [1, -1]) for (let i = 0; i < 9000; i++) {
+  const v = sphere(); const p = new THREE.Vector3(v.x * 2.15, v.y * 2.0, v.z * 3.2);
+  if (p.y < 0) p.y *= 0.72;
+  p.x = side * (0.12 + Math.abs(p.x));
+  p.addScaledVector(p.clone().normalize(), gyri(p)); p.multiplyScalar(rnd(0.985, 1.0));
+  sp.push(p.x, p.y + 0.4, p.z); tint.setHSL(0.53 + rnd(-0.03, 0.05), 0.85, rnd(0.18, 0.42)); sc.push(tint.r, tint.g, tint.b); ss.push(rnd(0.035, 0.085));
+}
+for (let i = 0; i < 2200; i++) {
+  const v = sphere(); const p = new THREE.Vector3(v.x * 1.5, v.y * 0.62, v.z * 0.95);
+  p.addScaledVector(p.clone().normalize(), 0.04 * Math.sin(p.y * 22));
+  sp.push(p.x, p.y - 1.25, p.z - 2.35); tint.setHSL(0.57, 0.7, rnd(0.14, 0.3)); sc.push(tint.r, tint.g, tint.b); ss.push(rnd(0.03, 0.06));
+}
+for (let i = 0; i < 700; i++) {
+  const a = Math.random() * Math.PI * 2, h = Math.random();
+  sp.push(Math.cos(a) * 0.32, -0.9 - h * 1.9, Math.sin(a) * 0.32 - 1.0 - h * 0.6); tint.setHSL(0.55, 0.6, rnd(0.12, 0.25)); sc.push(tint.r, tint.g, tint.b); ss.push(rnd(0.03, 0.05));
+}
+scene.add(cloud(sp, sc, ss));
+
+// ---------- regions = components of Recordare ----------
+const REG = {
+  thalamus:    { name: 'Talamo · ingest',        pos: new THREE.Vector3(0, 0.35, -0.2),    color: C.white },
+  hippocampus: { name: 'Ippocampo · episodi',    pos: new THREE.Vector3(1.15, -0.55, -0.5), color: C.cyan, twin: new THREE.Vector3(-1.15, -0.55, -0.5) },
+  llm:         { name: 'LLM · estrazione',       pos: new THREE.Vector3(1.85, 0.75, 1.2),  color: C.amber },
+  amygdala:    { name: 'Amigdala · importanza',  pos: new THREE.Vector3(1.05, -0.75, 0.75), color: C.magenta },
+  acc:         { name: 'Cingolo · conflitti',    pos: new THREE.Vector3(0, 1.35, 0.9),     color: C.red },
+  cortex:      { name: 'Neocorteccia · fatti',   pos: new THREE.Vector3(-1.75, 1.35, -0.6), color: C.violet },
+  prefrontal:  { name: 'Prefrontale · richiamo', pos: new THREE.Vector3(0, 1.0, 2.75),     color: C.lime },
+};
+const regionMeshes = {};
+for (const [k, r] of Object.entries(REG)) {
+  const pos = [], col = [], size = [], c = new THREE.Color(r.color);
+  const pts = (center, n) => { for (let i = 0; i < n; i++) {
+    const d = sphere().multiplyScalar(Math.pow(Math.random(), 1.6) * 0.42);
+    pos.push(center.x + d.x, center.y + d.y, center.z + d.z); col.push(c.r, c.g, c.b); size.push(rnd(0.05, 0.12)); } };
+  pts(r.pos, 260); if (r.twin) pts(r.twin, 200);
+  const m = cloud(pos, col, size); m.userData.heat = 0; scene.add(m); regionMeshes[k] = m;
+  const el = document.createElement('div'); el.className = 'label'; el.textContent = r.name; el.style.color = '#' + c.getHexString();
+  document.body.appendChild(el); r.label = el;
+}
+const heat = (k, v = 1) => { regionMeshes[k].userData.heat = Math.min(1.6, regionMeshes[k].userData.heat + v); };
+
+// ---------- neurons = episodes / facts; synapses = links ----------
+const MAXN = 900;
+const nPos = new Float32Array(MAXN * 3), nCol = new Float32Array(MAXN * 3), nSize = new Float32Array(MAXN);
+const neuronGeo = new THREE.BufferGeometry();
+neuronGeo.setAttribute('position', new THREE.BufferAttribute(nPos, 3));
+neuronGeo.setAttribute('color', new THREE.BufferAttribute(nCol, 3));
+neuronGeo.setAttribute('size', new THREE.BufferAttribute(nSize, 1));
+neuronGeo.setDrawRange(0, 0);
+scene.add(new THREE.Points(neuronGeo, glowMaterial(1)));
+const neurons = [];
+const KIND = { event: new THREE.Color(C.cyan), plan: new THREE.Color(C.amber), state_change: new THREE.Color(C.magenta), fact: new THREE.Color(C.violet), claim: new THREE.Color(C.red) };
+
+const MAXL = 1600;
+const lPos = new Float32Array(MAXL * 6), lCol = new Float32Array(MAXL * 6);
+const linkGeo = new THREE.BufferGeometry();
+linkGeo.setAttribute('position', new THREE.BufferAttribute(lPos, 3));
+linkGeo.setAttribute('color', new THREE.BufferAttribute(lCol, 3));
+linkGeo.setDrawRange(0, 0);
+scene.add(new THREE.LineSegments(linkGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })));
+const links = [];
+
+function spawnNeuron(kind, home) {
+  if (neurons.length >= MAXN) return null;
+  const center = home === 'cortex' ? REG.cortex.pos : (Math.random() < 0.55 ? REG.hippocampus.pos : REG.hippocampus.twin);
+  const spread = home === 'cortex' ? 0.95 : 0.7;
+  const p = center.clone().add(new THREE.Vector3(rnd(-1, 1), rnd(-0.6, 0.6), rnd(-1, 1)).multiplyScalar(spread));
+  const i = neurons.length;
+  neurons.push({ pos: p, kind, base: home === 'cortex' ? 0.16 : 0.2 + Math.random() * 0.12, flash: 1.4 });
+  nPos.set([p.x, p.y, p.z], i * 3);
+  neuronGeo.setDrawRange(0, neurons.length); neuronGeo.attributes.position.needsUpdate = true;
+  const near = neurons.slice(0, -1).map((n, j) => [j, n.pos.distanceToSquared(p)]).sort((a, b) => a[1] - b[1]).slice(0, 3);
+  for (const [j] of near) { if (links.length >= MAXL) links.shift(); links.push({ a: i, b: j }); }
+  return i;
+}
+
+// ---------- signals along fibre tracts ----------
+const MAXP = 1400;
+const pPos = new Float32Array(MAXP * 3), pCol = new Float32Array(MAXP * 3), pSize = new Float32Array(MAXP);
+const pulseGeo = new THREE.BufferGeometry();
+pulseGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pulseGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+pulseGeo.setAttribute('size', new THREE.BufferAttribute(pSize, 1));
+scene.add(new THREE.Points(pulseGeo, glowMaterial(1.3)));
+const pulses = [];
+function signal(from, to, color, opts = {}) {
+  const a = from.clone(), b = to.clone();
+  const mid = a.clone().lerp(b, 0.5).add(new THREE.Vector3(rnd(-0.6, 0.6), rnd(0.4, 1.4), rnd(-0.6, 0.6)));
+  const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+  const n = opts.count ?? 14, dur = opts.dur ?? 1.1, col = new THREE.Color(color);
+  for (let i = 0; i < n; i++) pulses.push({ curve, t: -i * (opts.gap ?? 0.018), dur, col, size: (opts.size ?? 0.28) * (1 - i / n * 0.7), done: opts.done && i === 0 ? opts.done : null });
+}
+
+// ---------- HUD ----------
+const events = document.getElementById('events');
+const stats = { ep: 0, fn: 0, llm: 0, tok: 0, rec: 0, cl: 0 };
+function bump(k, v = 1) {
+  stats[k] += v;
+  document.getElementById('s-' + k).textContent = k === 'tok' ? (stats.tok / 1000).toFixed(1) + 'k' : String(stats[k]);
+}
+function logEvent(cls, text) {
+  const li = document.createElement('li');
+  const time = document.createElement('time'); time.textContent = new Date().toTimeString().slice(0, 8);
+  const span = document.createElement('span'); if (cls) span.className = cls; span.textContent = text;
+  li.append(time, span); events.prepend(li);
+  while (events.children.length > 24) events.lastChild.remove();
+}
+
+// ---------- simulated life of one person ----------
+const SAMPLE = [
+  ['event', 'Cena al ristorante con Davide, sabato'], ['plan', 'Visita dall\'ortopedico giovedì alle 17'],
+  ['state_change', 'Cambio lavoro: Ambulatorio dei Colli'], ['event', 'Primo turno al canile di Rubano'],
+  ['plan', 'Weekend a Lubiana 16–18 aprile'], ['event', 'Pranzo di Pasqua a Este'], ['state_change', 'Adozione di Brina'],
+  ['event', 'Corso di ecografia a Bologna'], ['plan', 'Festa per i 60 anni della mamma'], ['event', 'Trasloco in via Monteortone'],
+];
+let simTimer = 0, mode = 'live';
+function ingestCycle() {
+  const [kind, text] = SAMPLE[Math.floor(Math.random() * SAMPLE.length)];
+  const entry = new THREE.Vector3(rnd(-6, 6), rnd(3, 5), rnd(5, 8));
+  logEvent('', `msg ← chat · "${text.slice(0, 26)}…"`);
+  signal(entry, REG.thalamus.pos, C.white, { count: 10, dur: 0.9, size: 0.22, done: () => {
+    heat('thalamus');
+    setTimeout(() => {
+      signal(REG.thalamus.pos, REG.llm.pos, C.amber, { count: 16, dur: 0.8, done: () => {
+        heat('llm', 1.2); bump('llm'); bump('tok', 3600 + Math.floor(rnd(-400, 600)));
+        logEvent('llm', 'LLM extract.v4 · ~3.6k → ~0.75k token');
+        signal(REG.llm.pos, Math.random() < 0.5 ? REG.hippocampus.pos : REG.hippocampus.twin, C.cyan, { count: 18, dur: 0.9, done: () => {
+          heat('hippocampus', 1.1); const i = spawnNeuron(kind, 'hippo'); bump('ep');
+          logEvent('ep', `episodio · ${kind} · "${text}"`);
+          if (i != null) signal(neurons[i].pos, REG.amygdala.pos, C.magenta, { count: 6, dur: 0.6, size: 0.18, done: () => heat('amygdala', 0.6) });
+          if (Math.random() < 0.3) setTimeout(conflictCheck, 500);
+        } });
+      } });
+    }, reduced ? 200 : 650);
+  } });
+}
+function conflictCheck() {
+  signal(REG.hippocampus.pos, REG.acc.pos, C.red, { count: 10, dur: 0.7, done: () => {
+    heat('acc', 1.1); bump('llm'); bump('tok', 300);
+    logEvent('warn', Math.random() < 0.5 ? 'resolve.v1 · doppione nascosto' : 'resolve.v1 · correzione collegata');
+  } });
+}
+function recall() {
+  const ask = new THREE.Vector3(0, 2.6, 7.5);
+  logEvent('rec', 'MCP search_episodes ← agente · "cosa ho fatto la settimana scorsa?"');
+  signal(ask, REG.prefrontal.pos, C.lime, { count: 12, dur: 0.7, done: () => {
+    heat('prefrontal', 1.3); bump('rec');
+    const picks = neurons.filter((n) => n.kind !== 'claim').sort(() => Math.random() - 0.5).slice(0, 7);
+    picks.forEach((n, k) => setTimeout(() => {
+      signal(REG.prefrontal.pos, n.pos, C.lime, { count: 8, dur: 0.6, size: 0.2, done: () => {
+        n.flash = 1.8; signal(n.pos, REG.prefrontal.pos, C.lime, { count: 6, dur: 0.6, size: 0.16 });
+      } });
+    }, k * 90));
+    setTimeout(() => { signal(REG.prefrontal.pos, ask, C.lime, { count: 14, dur: 0.8 }); logEvent('rec', `contesto → agente · ${picks.length} episodi + 3 estratti`); }, 900);
+  } });
+}
+function poison() {
+  const from = new THREE.Vector3(-7, 2, 4);
+  logEvent('warn', 'gruppo · "Giorgio: Sofia si trasferisce a Londra"');
+  signal(from, REG.thalamus.pos, C.red, { count: 12, dur: 0.9, done: () => {
+    heat('thalamus'); signal(REG.thalamus.pos, REG.acc.pos, C.red, { count: 14, dur: 0.7, done: () => {
+      heat('acc', 1.4); bump('cl'); const i = spawnNeuron('claim', 'hippo');
+      if (i != null) neurons[i].base = 0.12;
+      logEvent('warn', 'affermazione di Giorgio · isolata in "claims", non confermata');
+    } });
+  } });
+}
+function sleepReplay() {
+  if (neurons.length < 3) return;
+  const n = neurons[Math.floor(Math.random() * neurons.length)];
+  if (n.kind === 'claim') return;
+  n.flash = 1.6;
+  signal(n.pos, REG.cortex.pos, C.violet, { count: 16, dur: 1.4, size: 0.24, done: () => {
+    heat('cortex', 0.9);
+    if (Math.random() < 0.35) { spawnNeuron('fact', 'cortex'); bump('fn'); logEvent('sleep', 'consolidamento · episodi → fatto aggiornato'); }
+    else logEvent('sleep', 'replay · episodio riattivato');
+  } });
+}
+
+// A lived-in brain from the first frame.
+for (let i = 0; i < 70; i++) { spawnNeuron(['event', 'event', 'plan', 'state_change'][i % 4], 'hippo'); stats.ep++; }
+for (let i = 0; i < 26; i++) { spawnNeuron('fact', 'cortex'); stats.fn++; }
+for (let i = 0; i < 4; i++) { const j = spawnNeuron('claim', 'hippo'); if (j != null) neurons[j].base = 0.12; stats.cl++; }
+neurons.forEach((n) => { n.flash = 0; });
+stats.llm = 148; stats.tok = 512000; stats.rec = 37;
+for (const k of Object.keys(stats)) bump(k, 0);
+logEvent('', 'collegato · flusso di eventi del servizio (simulato)');
+
+// ---------- controls ----------
+const btn = (id) => document.getElementById(id);
+function setMode(m) {
+  mode = m; btn('m-live').setAttribute('aria-pressed', String(m === 'live')); btn('m-sleep').setAttribute('aria-pressed', String(m === 'sleep'));
+  bloom.strength = m === 'sleep' ? 1.45 : 1.15;
+  const bg = m === 'sleep' ? 0x070414 : 0x04060b; scene.fog.color.set(bg); renderer.setClearColor(bg, 1);
+  logEvent(m === 'sleep' ? 'sleep' : '', m === 'sleep' ? 'sonno · replay ippocampo → corteccia (M5)' : 'veglia · ingest ed estrazione');
+}
+btn('m-live').onclick = () => setMode('live');
+btn('m-sleep').onclick = () => setMode('sleep');
+btn('m-recall').onclick = recall;
+btn('m-poison').onclick = poison;
+btn('m-rotate').onclick = () => { controls.autoRotate = !controls.autoRotate; btn('m-rotate').setAttribute('aria-pressed', String(controls.autoRotate)); };
+if (reduced) { controls.autoRotate = false; btn('m-rotate').setAttribute('aria-pressed', 'false'); }
+
+// ---------- frame loop ----------
+const proj = new THREE.Vector3();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  simTimer += dt;
+  if (mode === 'live' && simTimer > (reduced ? 3.2 : 1.9)) { simTimer = 0; ingestCycle(); if (Math.random() < 0.18) setTimeout(recall, 900); }
+  if (mode === 'sleep' && simTimer > 0.45) { simTimer = 0; sleepReplay(); }
+
+  for (const [k, m] of Object.entries(regionMeshes)) {
+    m.userData.heat = Math.max(0, m.userData.heat - dt * 0.9);
+    m.scale.setScalar(1 + 0.03 * Math.sin(t * 1.7 + k.length) + m.userData.heat * 0.12);
+    m.material.uniforms.uScale.value = renderer.getPixelRatio() * (1 + m.userData.heat * 0.9);
+    REG[k].label.classList.toggle('hot', m.userData.heat > 0.2);
+  }
+  for (let i = 0; i < neurons.length; i++) {
+    const n = neurons[i]; n.flash = Math.max(0, n.flash - dt * 1.2);
+    const c = KIND[n.kind], f = 1 + n.flash * 1.4;
+    nCol[i * 3] = c.r * f; nCol[i * 3 + 1] = c.g * f; nCol[i * 3 + 2] = c.b * f;
+    nSize[i] = n.base * (1 + 0.15 * Math.sin(t * 2 + i)) + n.flash * 0.25;
+  }
+  neuronGeo.attributes.color.needsUpdate = true; neuronGeo.attributes.size.needsUpdate = true;
+  let li = 0;
+  for (const l of links) {
+    const A = neurons[l.a], B = neurons[l.b]; if (!A || !B) continue;
+    lPos.set([A.pos.x, A.pos.y, A.pos.z, B.pos.x, B.pos.y, B.pos.z], li * 6);
+    const g = 0.08 + 0.5 * Math.max(A.flash, B.flash) / 1.8, ca = KIND[A.kind];
+    lCol.set([ca.r * g, ca.g * g, ca.b * g, ca.r * g, ca.g * g, ca.b * g], li * 6); li++;
+  }
+  linkGeo.setDrawRange(0, li * 2); linkGeo.attributes.position.needsUpdate = true; linkGeo.attributes.color.needsUpdate = true;
+  let pi = 0;
+  for (let i = pulses.length - 1; i >= 0; i--) {
+    const p = pulses[i]; p.t += dt / p.dur;
+    if (p.t >= 1) { if (p.done) p.done(); pulses.splice(i, 1); continue; }
+    if (p.t < 0 || pi >= MAXP) continue;
+    const v = p.curve.getPoint(p.t); pPos.set([v.x, v.y, v.z], pi * 3);
+    pCol.set([p.col.r * 1.6, p.col.g * 1.6, p.col.b * 1.6], pi * 3); pSize[pi] = p.size; pi++;
+  }
+  pulseGeo.setDrawRange(0, pi); pulseGeo.attributes.position.needsUpdate = true; pulseGeo.attributes.color.needsUpdate = true; pulseGeo.attributes.size.needsUpdate = true;
+
+  controls.update();
+  composer.render();
+  for (const r of Object.values(REG)) {
+    proj.copy(r.pos).project(camera);
+    r.label.style.display = proj.z < 1 ? '' : 'none';
+    r.label.style.left = ((proj.x + 1) / 2 * innerWidth) + 'px'; r.label.style.top = ((1 - proj.y) / 2 * innerHeight - 18) + 'px';
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+});
+</script>
