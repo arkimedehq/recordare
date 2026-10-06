@@ -1,2 +1,4 @@
 *.out
 .engine_data/
+or-smoke-*.log
+service-8085.log

@@ -306,6 +306,25 @@ code, H11 3-run mean 89.2 %). Extraction: recall 0.87, dates 0.97, plan outcome 
 thinking on), ingest 7,240 s (a CLI process per call). Below the 95 % bar; not a candidate as it stands (a run through
 the API with thinking off would be the fair test).
 
+**Cheap hosted engines via OpenRouter (2026-10-06; blind5 base, 1 run, engine v4 + recall H11 + claims split;
+answer + judge `deepseek-flash`; reasoning off through the `openrouter` profile; total spend 1.68 USD):**
+
+| Engine model (USD / M in · out) | Accuracy | Episode recall | Dates | Plan outcome | Unsupported | Facts | Notes | Engine tokens in / out | Ingest |
+|---|---|---|---|---|---|---|---|---|---|
+| deepseek-flash (reference, DeepSeek API) | **91.9 / 91.3 %** | — | — | — | — | — | — | 313 k / 63 k | — |
+| Gemini 3.1 Flash-Lite (0.25 · 1.50) | 81.0 % | 0.92 | 0.95 | 0.67 | 9 % | 0.38 | 0.57 | 243 k / 40 k | 208 s |
+| Claude Haiku 4.5, no thinking (1 · 5) | 81.0 % | 0.87 | 0.89 | 0.67 | 18 % | 0.62 | 0.50 | 574 k / 132 k | 663 s |
+| Qwen 3.7 Flash (0.03 · 0.13) | 78.5 % | 0.87 | 0.95 | 0.58 | 10 % | 0.46 | 0.57 | 284 k / 59 k | 546 s |
+| GPT-5.4 nano (0.20 · 1.25) | 77.9 % | — | — | — | — | — | — | 323 k / 71 k | 514 s |
+| Gemini 2.5 Flash-Lite (0.10 · 0.40) | 73.0 % | 0.72 | 0.94 | 0.67 | 18 % | 0.46 | 0.43 | 313 k / 116 k | 263 s |
+| Mistral Small 2603 (0.15 · 0.60) | 61.5 % | 0.47 | 0.67 | 0.60 | 37 % | 0.23 | 0.36 | 151 k / 42 k (24 failed calls) | 288 s |
+
+None reaches the 95 % bar, and none matches `deepseek-flash` (−10 pt or more), which is also the cheapest per token
+with prefix caching. The weak stage is the same everywhere: plan outcomes (0.58–0.67) and facts. Haiku through the
+API (thinking off) equals Gemini 3.1 Flash-Lite at ~5× the price. Decision: `deepseek-flash` stays the reference
+engine; cheap models are not candidates for the main extraction call (they may serve the light resolver call — not
+measured separately).
+
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
 | Engine | Stored | Episode recall | Date acc. | Plan outcome | Unsupported | Facts current / history | Notes |
