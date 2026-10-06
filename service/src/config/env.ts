@@ -43,6 +43,8 @@ const baseSchema = z.object({
   IDLE_DELAY_SECONDS: z.coerce.number().int().positive().default(900),
   /** Max characters of messages per extraction call; set = overrides the quality profile's value. */
   EXTRACTION_WINDOW_CHARS: z.coerce.number().int().min(1000).optional(),
+  /** Facts and notes in the episode call or in their own call (task `facts`); set = overrides the profile. */
+  FACTS_PASS: z.enum(['inline', 'separate']).optional(),
   /** Installation default quality profile (D35); owners may override it. */
   QUALITY_PROFILE: z.enum(QUALITY_PROFILES).default('balanced'),
 

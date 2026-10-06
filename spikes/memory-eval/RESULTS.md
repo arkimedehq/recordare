@@ -329,6 +329,13 @@ extraction is not the bottleneck; flash is best on plan outcomes, V4 Pro clearly
 stage), Sonnet best on dates and faithfulness. Model-per-role candidates: flash for episodes / plans; V4 Pro for a
 facts-and-notes pass (or the nightly M5 consolidation); cheap models only for the light call (to measure).
 
+**Separate facts-and-notes pass (task `facts`, prompt `facts.v1`, DeepSeek V4 Pro native; episodes on flash; blind5,
+1 run):** 89.7 % (inline flash 91.3 %, within noise); facts current 0.62 (unchanged), history 0.38 (0.46), notes 0.71
+(0.64), episode recall 0.90 (0.97), plan outcome 0.83 (0.92); +65 calls / +269 k input / +36 k output; ingest 238 s.
+No gain where it was meant to help: the V4 Pro advantage on facts seen as the single engine did not carry over to a
+dedicated pass on the same window. Kept as an option (`FACTS_PASS=separate`), off in every profile; facts are the
+target of the M5 consolidation instead (facts from episodes across days, not per window).
+
 None reaches the 95 % bar, and none matches `deepseek-flash` (−10 pt or more), which is also the cheapest per token
 with prefix caching. The weak stage is the same everywhere: plan outcomes (0.58–0.67) and facts. Haiku through the
 API (thinking off) equals Gemini 3.1 Flash-Lite at ~5× the price. Decision: `deepseek-flash` stays the reference

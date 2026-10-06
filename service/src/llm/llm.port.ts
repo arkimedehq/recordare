@@ -8,9 +8,10 @@ import { type z } from 'zod';
  * installation can give every job the model that measured best for it (D27, D35). Unset tasks use the default.
  * - `extract`: episodes, plans, facts and notes from a conversation window;
  * - `extract_economy`: the same, for owners on the economy profile (a cheaper model, if configured);
- * - `resolve`: the near-duplicate / correction check (short pairs, a light model is enough).
+ * - `resolve`: the near-duplicate / correction check (short pairs, a light model is enough);
+ * - `facts`: the separate facts-and-notes pass (when the quality profile runs it).
  */
-export const LLM_TASKS = ['extract', 'extract_economy', 'resolve'] as const;
+export const LLM_TASKS = ['extract', 'extract_economy', 'resolve', 'facts'] as const;
 export type LlmTask = (typeof LLM_TASKS)[number];
 
 export interface JsonCompletionRequest<T> {

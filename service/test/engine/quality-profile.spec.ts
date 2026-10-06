@@ -13,7 +13,7 @@ describe('quality profiles (D35)', () => {
 
   it('keeps balanced at the measured configuration', () => {
     expect(qualityProfile(null, 'balanced')).toEqual({
-      name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false,
+      name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false, factsPass: 'inline',
       recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3,
     });
   });
