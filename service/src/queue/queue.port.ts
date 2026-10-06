@@ -13,6 +13,7 @@ export const QUEUE_PORT = Symbol('QUEUE_PORT');
 
 export const EXTRACTION_QUEUE = 'extraction';
 export const EMBEDDING_QUEUE = 'embedding';
+export const CONSOLIDATION_QUEUE = 'consolidation';
 
 /** Runs extraction for a conversation's pending messages; the engine (M4) provides it. */
 export interface ExtractionRunner {

@@ -110,6 +110,14 @@ export class MemoryWriteService {
       await tx.query(
         `INSERT INTO forget_tombstones (owner_id, scope, episode_fingerprint, message_ids) VALUES ($1, 'episode', $2, $3)`,
         [ownerId, createHash('sha256').update(chain.map((c) => c.content).join('\n')).digest(), msgs.map((m) => m.message_id)]);
+      // Digests written from these episodes are superseded now (no stale diary text); the next consolidation
+      // rewrites the day / month from what is left (D16).
+      await tx.query(
+        `WITH days AS (SELECT DISTINCT digest_id FROM digest_sources WHERE episode_id = ANY($1)),
+              months AS (SELECT DISTINCT s.digest_id FROM digest_sources s JOIN days d ON s.source_digest_id = d.digest_id)
+         UPDATE digests SET superseded_at = now()
+         WHERE owner_id = $2 AND superseded_at IS NULL AND id IN (SELECT digest_id FROM days UNION SELECT digest_id FROM months)`,
+        [ids, ownerId]);
       await tx.query(`DELETE FROM episodes WHERE id = ANY($1) AND owner_id = $2`, [ids, ownerId]);
     });
   }

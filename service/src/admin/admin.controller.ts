@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { Body, Controller, Delete, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Headers, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { type Env } from '../config/env';
+import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
+import { ConsolidationService } from '../engine/consolidation.service';
 import { ZodBody } from '../common/zod-body.pipe';
 import { AdminService } from './admin.service';
 import {
@@ -12,7 +16,12 @@ import {
 /** Admin API (no @RequireScopes → admin credential only). */
 @Controller('api/v1/admin')
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly consolidation: ConsolidationService,
+    private readonly config: ConfigService<Env, true>,
+    @Inject(CLOCK_PORT) private readonly clock: ClockPort,
+  ) {}
 
   @Post('clients')
   createClient(@Body(new ZodBody(createClientSchema)) body: CreateClient) {
@@ -43,6 +52,13 @@ export class AdminController {
   @Post('identities')
   createIdentity(@Body(new ZodBody(createIdentitySchema)) body: CreateIdentity) {
     return this.admin.createIdentity(body);
+  }
+
+  /** Run the nightly consolidation now (operators, tests and the eval harness; honours X-Recordare-Now when allowed). */
+  @Post('owners/:id/consolidate')
+  consolidate(@Param('id', ParseUUIDPipe) id: string, @Headers('x-recordare-now') at?: string) {
+    const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
+    return this.consolidation.consolidateOwner(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
   }
 
   @Post('owners/:id/tokens')

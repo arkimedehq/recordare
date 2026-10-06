@@ -9,9 +9,10 @@ import { type z } from 'zod';
  * - `extract`: episodes, plans, facts and notes from a conversation window;
  * - `extract_economy`: the same, for owners on the economy profile (a cheaper model, if configured);
  * - `resolve`: the near-duplicate / correction check (short pairs, a light model is enough);
- * - `facts`: the separate facts-and-notes pass (when the quality profile runs it).
+ * - `facts`: the separate facts-and-notes pass (when the quality profile runs it);
+ * - `digest`: nightly consolidation — the diary of a day and of a month (M5).
  */
-export const LLM_TASKS = ['extract', 'extract_economy', 'resolve', 'facts'] as const;
+export const LLM_TASKS = ['extract', 'extract_economy', 'resolve', 'facts', 'digest'] as const;
 export type LlmTask = (typeof LLM_TASKS)[number];
 
 export interface JsonCompletionRequest<T> {

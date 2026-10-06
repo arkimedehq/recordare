@@ -41,6 +41,7 @@ Checks: `npm run typecheck`, `npm run lint`, `npm test` (integration tests use t
 | `EXTRACT` | episodes, plans, facts and notes from a conversation window (one call per window) | `deepseek-flash`, reasoning off — best answers (91 % blind5) and best plan outcomes, cheapest with prefix caching |
 | `EXTRACT_ECONOMY` | the same for owners on the `economy` profile | `deepseek-flash` (no cheaper model measured reached it: Gemini 3.1 Flash-Lite 81 %, Qwen 3.7 Flash 78.5 %) |
 | `RESOLVE` | near-duplicate / correction check on short pairs (only when candidates exist) | `deepseek-flash` (a light model is enough; cheaper ones not yet measured on this task) |
+| `DIGEST` | nightly consolidation (M5): the diary of each changed day and month | `deepseek-flash` (to be measured) |
 | `FACTS` | separate facts-and-notes pass, only with `FACTS_PASS=separate` (off in every profile) | measured with DeepSeek V4 Pro: no gain over the inline extraction — keep it off |
 
 Engine models are supported at ≥ 95 % on the suite or as the best measured; see RESULTS.md for the full matrix

@@ -98,6 +98,7 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 | `locale`, `timezone` | text | |
 | `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
+| `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `created_at` | timestamptz | |
 
@@ -227,7 +228,8 @@ semantic notes; exposed to clients as pending proposals (D26).
 
 ### digests
 `id, owner_id, level enum (day|month), period_start date, period_end date, content, version int,
-superseded_at null, embedding…, disclosure, audience, extraction_run_id, created_at`; partial
+superseded_at null, embedding…, disclosure, audience, extraction_run_id, source_hash, created_at`; `source_hash` =
+fingerprint of the items the digest was written from (a day is rewritten only when it changes — M5); partial
 unique `(owner_id, level, period_start) WHERE superseded_at IS NULL`. Phase 3 will need
 per-audience digests (the intersection rule makes mixed-audience days owner-only).
 
