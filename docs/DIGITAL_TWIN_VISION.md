@@ -239,6 +239,27 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
 | **8. Legacy mode** | Executors, activation, freeze, pre-authorized actions, retirement | 4, 7 |
 | **R. Research mode** | Autonomous loop (self-directed reflection, own goals, initiative without confirmation), simulated agent society, life snapshots, drift metrics | 1, 2 (sim can start with phase-1 memory) |
 | **A-MEM migration** | Move Arkimede semantic memory into Recordare; Arkimede becomes a pure client | 1 (any time after) |
+| **G. Agent memory** (future, noted 2026-10-07) | Recordare as the memory of an **agent** rather than of one person — e.g. a family's shared Arkimede building its own history and personality. See below | 1, 3 |
+
+### Future direction G — Recordare as the memory of an agent
+
+The owner of a memory can be an **agent persona** (e.g. "the family's Arkimede") instead of a person: Recordare then
+remembers the agent's own life — what each family member told it, what it did for them, its open promises and plans —
+and, through consolidation, **who it is** (its self-model / personality: habits, preferences learned, its relation
+with each person; always `inferred` and traceable to the memories behind it, as in H12). Complementary to the
+default design (every family member has their own twin; the agent reads the memory of whoever is speaking): both can
+coexist on the same installation.
+
+What works already: episodes with dates, plans, corrections, provenance; nightly consolidation; verified persons;
+others' claims kept apart. What changes:
+1. **Who speaks in the first person** — today the owner writes as the user and the assistant is someone else; for an
+   agent owner the agent's turns are its own words and the family members are other (verified) persons.
+2. **Who may see what** — the delicate part: what Marco told the agent must not surface in an answer to Giulia. Each
+   memory is visible to its `audience` (who was present or it was shared with), plus a **household** disclosure tier
+   next to private; per-audience digests (already anticipated in DATA_MODEL). The same rules are needed for the twin
+   speaking to third parties (phase 3), so the work is shared.
+3. **Self-model notes** describe the agent, not a person; never stated, always inferred and pending.
+4. **Consent** of every family member that the agent remembers; extra care for minors.
 
 ## Open questions
 
