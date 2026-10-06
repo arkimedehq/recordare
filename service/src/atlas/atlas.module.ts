@@ -9,6 +9,12 @@ import { AtlasService } from './atlas.service';
 export class AtlasController {
   constructor(private readonly atlas: AtlasService) {}
 
+  /** Owners with their memory size, most recently active first (to pick whose brain to watch). */
+  @Get()
+  owners() {
+    return this.atlas.owners();
+  }
+
   @Get(':id/atlas')
   snapshot(@Param('id', ParseUUIDPipe) id: string) {
     return this.atlas.snapshot(id);

@@ -28,6 +28,15 @@ const MAX_EPISODES = 4000;
 export class AtlasService {
   constructor(private readonly db: DataSource) {}
 
+  async owners(): Promise<Array<{ id: string; name: string; episodes: number; lastActivity: string | null }>> {
+    return this.db.query(
+      `SELECT o.person_id AS id, p.display_name AS name,
+              (SELECT count(*)::int FROM episodes e WHERE e.owner_id = o.person_id AND e.deleted_at IS NULL) AS episodes,
+              (SELECT max(m.received_at) FROM messages m WHERE m.owner_id = o.person_id) AS "lastActivity"
+       FROM owners o JOIN persons p ON p.id = o.person_id
+       ORDER BY "lastActivity" DESC NULLS LAST LIMIT 200`);
+  }
+
   async snapshot(ownerId: string): Promise<AtlasSnapshot> {
     const [owner] = await this.db.query(
       `SELECT o.person_id AS id, p.display_name AS name, o.timezone FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
