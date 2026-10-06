@@ -1,6 +1,7 @@
 #!/bin/sh
 # OpenRouter engine matrix (resumable): per model, smoke with reasoning off (else lowest effort, else default) →
 # 1 base run on blind5 + extraction scoring. Models with a finished result are skipped.
+# Usage: sh or_matrix.sh [provider/model:label ...]  (no arguments = the cheap-model matrix)
 SPIKE=$(cd "$(dirname "$0")" && pwd)
 SVC=$SPIKE/../../service
 KEY=$(grep '^OPEN_ROUTER_API_KEY=' $SPIKE/.env | cut -d= -f2- | tr -d '"'"'"' \r')
@@ -31,10 +32,14 @@ run_model() { # model label
   curl -s https://openrouter.ai/api/v1/key -H "Authorization: Bearer $KEY" | python3 -c "import json,sys;d=json.load(sys.stdin)['data'];print('openrouter usage so far:',round(d['usage'],3))"
   lsof -ti tcp:8085 | xargs kill 2>/dev/null
 }
-run_model qwen/qwen3.7-flash qwen3.7-flash
-run_model google/gemini-2.5-flash-lite gemini-2.5-flash-lite
-run_model mistralai/mistral-small-2603 mistral-small-2603
-run_model openai/gpt-5.4-nano gpt-5.4-nano
-run_model google/gemini-3.1-flash-lite gemini-3.1-flash-lite
-run_model anthropic/claude-haiku-4.5 claude-haiku-4.5
+if [ $# -gt 0 ]; then  # models given as "provider/model:label" arguments
+  for m in "$@"; do run_model "${m%%:*}" "${m##*:}"; done
+else
+  run_model qwen/qwen3.7-flash qwen3.7-flash
+  run_model google/gemini-2.5-flash-lite gemini-2.5-flash-lite
+  run_model mistralai/mistral-small-2603 mistral-small-2603
+  run_model openai/gpt-5.4-nano gpt-5.4-nano
+  run_model google/gemini-3.1-flash-lite gemini-3.1-flash-lite
+  run_model anthropic/claude-haiku-4.5 claude-haiku-4.5
+fi
 echo OR-DONE

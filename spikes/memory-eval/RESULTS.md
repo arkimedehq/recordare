@@ -319,6 +319,16 @@ answer + judge `deepseek-flash`; reasoning off through the `openrouter` profile;
 | Gemini 2.5 Flash-Lite (0.10 · 0.40) | 73.0 % | 0.72 | 0.94 | 0.67 | 18 % | 0.46 | 0.43 | 313 k / 116 k | 263 s |
 | Mistral Small 2603 (0.15 · 0.60) | 61.5 % | 0.47 | 0.67 | 0.60 | 37 % | 0.23 | 0.36 | 151 k / 42 k (24 failed calls) | 288 s |
 
+**Premium reference (same setup, 1 run):** Claude Sonnet 5.5 (OpenRouter, reasoning "minimal" — it cannot be switched
+off) **89.5 %**: recall 0.96, dates 1.00, plan outcome 0.77, unsupported 5 %, facts 0.31 / 0.15, notes 0.57; 351 k in /
+56 k out, ~1.3 USD, 431 s. DeepSeek V4 Pro (OpenRouter) **87.1 %**: recall 0.97, dates 0.99, plan outcome 0.77,
+unsupported 8 %, **facts 0.77 / 0.54, notes 0.71**; 418 k / 101 k, ~0.34 USD, 2,304 s. deepseek-flash on the same set
+(same code, scored now): **91.3 %**, recall 0.97, dates 0.99, **plan outcome 0.92**, unsupported 9 %, facts 0.62 / 0.46,
+notes 0.64; 313 k in (49 % cached) / 61 k out, 287 s. Reading: a premium model does not lift answers — the main
+extraction is not the bottleneck; flash is best on plan outcomes, V4 Pro clearly best on facts and notes (the weakest
+stage), Sonnet best on dates and faithfulness. Model-per-role candidates: flash for episodes / plans; V4 Pro for a
+facts-and-notes pass (or the nightly M5 consolidation); cheap models only for the light call (to measure).
+
 None reaches the 95 % bar, and none matches `deepseek-flash` (−10 pt or more), which is also the cheapest per token
 with prefix caching. The weak stage is the same everywhere: plan outcomes (0.58–0.67) and facts. Haiku through the
 API (thinking off) equals Gemini 3.1 Flash-Lite at ~5× the price. Decision: `deepseek-flash` stays the reference
