@@ -25,6 +25,9 @@ client. Status: **design + evaluation spike; no service code yet.**
   twin provenance (H3). Never claim novelty without re-checking it.
 - `docs/literature/` — deep-reading cards of 15 key sources + `README.md` synthesis (D29 data-model
   additions, D30 assistant turns, recall changes, eval-suite upgrade). Read before designing a component.
+- `docs/ATLAS_EVENTS.md` — contract v1 (endpoints + telemetry events, metadata only) with the optional live brain
+  view **Recordare Atlas**, its own repo `~/Development/recordare-atlas` (`arkimedehq/recordare-atlas`, published with
+  Recordare); Recordare must work without it.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
   gaps, and **cost principles** (economy-profile defaults: zero LLM calls when nothing to do, cheap
   model, no reasoning, prefix caching — D35 makes cost an owner's option).
