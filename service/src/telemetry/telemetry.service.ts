@@ -14,6 +14,7 @@ export type TelemetryEvent =
   | { type: 'message.ingested'; ownerId: string; conversationId: string; messages: number; roles: Record<string, number> }
   | { type: 'extraction.started'; ownerId: string; runId: string; conversationId: string; messages: number }
   | { type: 'extraction.finished'; ownerId: string; runId: string; status: 'done' | 'failed' | 'skipped'; written: number }
+  | { type: 'llm.started'; ownerId: string | null; runId: string | null; promptId: string; task: string }
   | { type: 'llm.call'; ownerId: string | null; runId: string | null; promptId: string; model: string; inputTokens: number;
       cachedInputTokens: number; outputTokens: number; latencyMs: number; status: string }
   | { type: 'memory.written'; ownerId: string; runId: string | null; table: 'episodes' | 'facts' | 'notes'; id: string;

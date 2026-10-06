@@ -46,7 +46,8 @@ import { CLOCK_PORT, systemClock } from '../clock/clock.port';
           shared.set(key, adapter);
           return adapter;
         };
-        return new LlmRouter(Object.fromEntries(LLM_TASKS.map((t) => [t, adapterFor(t)])) as Record<LlmTask, LlmPort>);
+        return new LlmRouter(Object.fromEntries(LLM_TASKS.map((t) => [t, adapterFor(t)])) as Record<LlmTask, LlmPort>,
+          (promptId, task, ctx) => recorder.started(promptId, task, ctx));
       },
     },
     {

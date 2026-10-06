@@ -65,7 +65,8 @@ describe('live telemetry (M5b)', () => {
       await app.get<ExtractionRunner>(EXTRACTION_RUNNER).runForConversation(res.body.conversationId as string);
     });
     const types = events.map((e) => e['type']);
-    expect(types).toEqual(expect.arrayContaining(['message.ingested', 'extraction.started', 'llm.call', 'memory.written', 'extraction.finished']));
+    expect(types).toEqual(expect.arrayContaining(['message.ingested', 'extraction.started', 'llm.started', 'llm.call', 'memory.written', 'extraction.finished']));
+    expect(types.indexOf('llm.started')).toBeLessThan(types.indexOf('llm.call')); // the wait is visible, not only the result
     expect(events.find((e) => e['type'] === 'memory.written')).toMatchObject({ ownerId, table: 'episodes', kind: 'event', authorRole: 'owner' });
     expect(JSON.stringify(events)).not.toContain('Marco'); // metadata only, never content
 
