@@ -17,7 +17,6 @@ export interface OpenAiCompatibleConfig {
   baseURL?: string;
   apiKey?: string;
   model: string;
-  lightModel?: string;
   profile: ProviderProfile;
   /** Injected for tests. */
   fetch?: typeof fetch;
@@ -61,7 +60,7 @@ export class OpenAiCompatibleAdapter implements LlmPort {
   }
 
   async completeJson<T>(req: JsonCompletionRequest<T>, ctx: LlmCallContext = {}): Promise<T> {
-    const model = req.role === 'light' ? (this.cfg.lightModel ?? this.cfg.model) : this.cfg.model;
+    const model = this.cfg.model;
     const messages: ChatMessage[] = [
       { role: 'system', content: this.systemPrompt(req) },
       { role: 'user', content: req.user },

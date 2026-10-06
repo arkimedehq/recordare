@@ -14,7 +14,6 @@ import { parseJsonObject } from './openai-compatible.adapter';
 
 export interface ClaudeCliConfig {
   model: string;
-  lightModel?: string;
   binary?: string;
   timeoutMs?: number;
 }
@@ -29,7 +28,7 @@ export class ClaudeCliAdapter implements LlmPort {
   constructor(private readonly cfg: ClaudeCliConfig, private readonly recorder?: LlmCallRecorder) {}
 
   async completeJson<T>(req: JsonCompletionRequest<T>, ctx: LlmCallContext = {}): Promise<T> {
-    const model = req.role === 'light' ? (this.cfg.lightModel ?? this.cfg.model) : this.cfg.model;
+    const model = this.cfg.model;
     let user = req.user;
     let lastIssue = '';
     for (let attempt = 0; attempt < 2; attempt++) {

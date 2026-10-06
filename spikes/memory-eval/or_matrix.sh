@@ -21,7 +21,7 @@ run_model() { # model label
   [ -z "$ok" ] && { echo "smoke failed"; return; }
   echo "profile json: $ok"
   lsof -ti tcp:8085 | xargs kill 2>/dev/null; sleep 2
-  (cd $SVC && PORT=8085 QUEUE_PREFIX=recordare-or LLM_PROVIDER=openai-compatible LLM_PROFILE=openrouter LLM_PROFILE_JSON="$ok" LLM_BASE_URL=https://openrouter.ai/api/v1 LLM_API_KEY="$KEY" LLM_MODEL=$model LLM_LIGHT_MODEL=$model nohup node dist/main.js > $SPIKE/service-8085.log 2>&1 &)
+  (cd $SVC && PORT=8085 QUEUE_PREFIX=recordare-or LLM_PROVIDER=openai-compatible LLM_PROFILE=openrouter LLM_PROFILE_JSON="$ok" LLM_BASE_URL=https://openrouter.ai/api/v1 LLM_API_KEY="$KEY" LLM_MODEL=$model nohup node dist/main.js > $SPIKE/service-8085.log 2>&1 &)
   sleep 7
   (cd $SPIKE && RECORDARE_ADMIN_KEY=$(grep '^ADMIN_API_KEY=' $SVC/.env | cut -d= -f2) EMBED_MODEL=st:BAAI/bge-m3 EVAL_DATASET=dataset_blind5 SERVICE_MODEL=$label RUN_TAG=v4 RECORDARE_URL=http://localhost:8085 \
     uv run --directory $SPIKE python run_eval.py --system service > $SPIKE/or_$label.log 2>&1

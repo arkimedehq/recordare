@@ -448,6 +448,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   extraction model role, reasoning, recent / related episodes, near-duplicate window and threshold, chat
   excerpts); `QUALITY_PROFILE` installation default + `owners.quality_profile`. `balanced` = measured service v4.
   Not yet: verification pass, reranker, monthly digests, H12 (they arrive with M5 / H11 and join `full`).
+- Model per task (owner's rule, 2026-10-06): every LLM task has its own configurable model and provider
+  (`LLM_<TASK>_*`, tasks `extract`, `extract_economy`, `resolve`); defaults documented as the best measured model.
+  Profiles pick the extraction task (`economy` → `extract_economy`), never a model.
 - Replaces the earlier rule "as cheap as possible" with: **never trade quality silently — the
   owner chooses the profile**.
 

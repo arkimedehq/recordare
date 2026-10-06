@@ -58,7 +58,7 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, ownerI
     system: RESOLVE_SYSTEM,
     user: pairs.map((p, i) => `PAIR ${i + 1}\nNEW: ${p.new_content}\nEXISTING: ${p.old_content}`).join('\n\n'),
     schema,
-    role: 'light',
+    task: 'resolve',
     maxTokens: 800,
   }, ctx);
 

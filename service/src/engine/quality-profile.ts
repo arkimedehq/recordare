@@ -5,10 +5,10 @@
  * Quality profiles (D35): cost is an option, not a limit. Every costly knob of the engine and of
  * recall lives here, never as scattered branches; the installation picks a default
  * (`QUALITY_PROFILE`) and each owner may override it (`owners.quality_profile`).
- * Models stay provider configuration (D27): a profile only says which configured role to use
- * (`main` / `light`) and whether reasoning is allowed. `balanced` = service v4 engine + the h11 recall changes.
+ * Models stay provider configuration (D27): every LLM task has its own configurable model; a profile only says
+ * which task runs the extraction and whether reasoning is allowed. `balanced` = service v4 engine + the h11 recall changes.
  */
-import { type ModelRole } from '../llm/llm.port';
+import { type LlmTask } from '../llm/llm.port';
 
 export const QUALITY_PROFILES = ['economy', 'balanced', 'full'] as const;
 export type QualityProfileName = (typeof QUALITY_PROFILES)[number];
@@ -17,8 +17,8 @@ export interface QualityProfile {
   name: QualityProfileName;
   /** Max characters of messages per extraction call. */
   windowChars: number;
-  /** Model role of the extraction call (`light` falls back to the main model when none is configured). */
-  extractionRole: ModelRole;
+  /** Which task's model runs the extraction (`extract_economy` uses the default model unless one is configured). */
+  extractionTask: Extract<LlmTask, 'extract' | 'extract_economy'>;
   /** Let the extraction model reason (slower, more output tokens). */
   reasoning: boolean;
   /** Episode list shown to the extractor: most recent + older ones related to the window. */
@@ -33,15 +33,15 @@ export interface QualityProfile {
 
 const PROFILES: Record<QualityProfileName, QualityProfile> = {
   economy: {
-    name: 'economy', windowChars: 16_000, extractionRole: 'light', reasoning: false,
+    name: 'economy', windowChars: 16_000, extractionTask: 'extract_economy', reasoning: false,
     recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1,
   },
   balanced: {
-    name: 'balanced', windowChars: 12_000, extractionRole: 'main', reasoning: false,
+    name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false,
     recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3,
   },
   full: {
-    name: 'full', windowChars: 8_000, extractionRole: 'main', reasoning: true,
+    name: 'full', windowChars: 8_000, extractionTask: 'extract', reasoning: true,
     recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5,
   },
 };

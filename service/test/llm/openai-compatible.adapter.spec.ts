@@ -6,6 +6,7 @@ import { OpenAiCompatibleAdapter, parseJsonObject } from '../../src/llm/openai-c
 import { resolveProfile } from '../../src/llm/provider-profiles';
 import { LlmOutputError } from '../../src/llm/llm.port';
 import { type LlmCallRecord, type LlmCallRecorder } from '../../src/llm/llm-call-recorder';
+import { LlmRouter } from '../../src/llm/llm-router';
 
 type Reply = { status?: number; content?: string };
 
@@ -33,7 +34,7 @@ function recorder() {
 }
 
 const schema = z.object({ episodes: z.array(z.object({ content: z.string() })) });
-const req = { promptId: 'extract.test.v1', system: 'sys', user: 'hello', schema };
+const req = { promptId: 'extract.test.v1', system: 'sys', user: 'hello', schema, task: 'extract' as const };
 
 describe('OpenAiCompatibleAdapter', () => {
   it('applies the DeepSeek profile: reasoning off, JSON mode, temperature 0', async () => {
@@ -55,11 +56,14 @@ describe('OpenAiCompatibleAdapter', () => {
     expect(body['response_format']).toMatchObject({ type: 'json_schema', json_schema: { name: 'extract_test_v1' } });
   });
 
-  it('uses the light model for light tasks', async () => {
-    const f = fakeFetch([{ content: '{"episodes":[]}' }]);
-    const a = new OpenAiCompatibleAdapter({ model: 'big', lightModel: 'small', profile: resolveProfile('generic'), fetch: f.fn, baseURL: 'http://x/v1' });
-    await a.completeJson({ ...req, role: 'light' });
-    expect(f.bodies[0]).toMatchObject({ model: 'small' });
+  it('routes each task to its own configured model', async () => {
+    const f = fakeFetch([{ content: '{"episodes":[]}' }, { content: '{"episodes":[]}' }]);
+    const big = new OpenAiCompatibleAdapter({ model: 'big', profile: resolveProfile('generic'), fetch: f.fn, baseURL: 'http://x/v1' });
+    const small = new OpenAiCompatibleAdapter({ model: 'small', profile: resolveProfile('generic'), fetch: f.fn, baseURL: 'http://x/v1' });
+    const router = new LlmRouter({ extract: big, extract_economy: big, resolve: small });
+    await router.completeJson({ ...req, task: 'resolve' });
+    await router.completeJson(req);
+    expect(f.bodies.map((b) => b['model'])).toEqual(['small', 'big']);
   });
 
   it('repairs an invalid reply once and records both calls', async () => {

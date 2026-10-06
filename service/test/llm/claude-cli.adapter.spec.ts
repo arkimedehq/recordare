@@ -19,7 +19,7 @@ describe('ClaudeCliAdapter (local evaluation only)', () => {
     const calls: LlmCallRecord[] = [];
     const recorder = { record: async (c: LlmCallRecord) => { calls.push(c); } } as unknown as LlmCallRecorder;
     const a = new ClaudeCliAdapter({ model: 'sonnet', binary }, recorder);
-    await expect(a.completeJson({ promptId: 'p', system: 'SYS', user: 'hello', schema })).resolves.toEqual({ events: ['sci'] });
+    await expect(a.completeJson({ promptId: 'p', system: 'SYS', user: 'hello', schema, task: 'extract' })).resolves.toEqual({ events: ['sci'] });
     const first = JSON.parse(readFileSync(`${counter}.args.0`, 'utf8')) as { args: string[]; stdin: string };
     expect(first.args).toEqual(expect.arrayContaining(['-p', '--output-format', 'json', '--model', 'sonnet', '--tools', '', '--setting-sources', '', '--strict-mcp-config', '--system-prompt', 'SYS']));
     expect(first.stdin).toBe('hello');
