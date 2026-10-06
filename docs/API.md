@@ -306,3 +306,8 @@ never blocks or fails the host's chat. MCP is used through the host's own MCP cl
 `recall.served` (tool, mode, returned episode and claim ids, counts), `digest.written`, `consolidation.finished`,
 `episode.forgotten`. Metadata only — ids, kinds, counts, tokens — never message or memory content. Nothing is
 synthesised: the dashboard (WORK_PLAN 5b.6) moves only when these events arrive.
+
+`GET api/v1/admin/owners/:id/atlas` — the dashboard's starting map of one owner: episodes as neurons (kind, author
+role, importance, day, plan status, hidden state, position by meaning = first three principal components of the
+embeddings), real edges (nearest neighbours in meaning, corrections, duplicates, plan → outcome, reschedules, shared
+people), facts / notes / digests as the cortex. Metadata only.
