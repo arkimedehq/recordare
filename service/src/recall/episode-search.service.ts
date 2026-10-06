@@ -48,7 +48,8 @@ export interface EpisodeSearchResult {
   /** Whose memory this is: items name the owner in the third person ("Elena ha…") — that is the user asking. */
   owner: { name: string };
   period?: { from: string | null; to: string | null };
-  digests: Array<{ day: string; text: string }>;
+  /** The diary of the period (M5): day entries for spans up to ~6 weeks, month summaries for longer ones. */
+  digests: Array<{ level: 'day' | 'month'; from: string; to: string; text: string }>;
   /** What the owner lived, said or planned (authorRole owner / assistant). */
   episodes: EpisodeView[];
   /** Other people's and tools' statements (authorRole other / tool), kept apart so that an answer never mixes them
@@ -71,6 +72,8 @@ const CANDIDATES = 60;
 const MIN_VECTOR_SIMILARITY = 0.35;
 const FALLBACK_BELOW = 3;
 const RAW_HITS = 3;
+/** Periods up to this many days get the day diary; longer ones the month summaries. */
+const DIGEST_DAY_SPAN = 45;
 
 @Injectable()
 export class EpisodeSearchService {
@@ -144,7 +147,7 @@ export class EpisodeSearchService {
     const result: EpisodeSearchResult = {
       owner: { name: owner.display_name },
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
-      digests: [],
+      digests: hasPeriod ? await this.digests(ownerId, from, to) : [],
       episodes: views.slice(0, chosen.length).filter((v) => !isClaim(v)),
       claims: views.slice(0, chosen.length).filter(isClaim),
       outsidePeriod: views.slice(chosen.length),
@@ -179,6 +182,19 @@ export class EpisodeSearchService {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);
     }
     return result;
+  }
+
+  /** Current digests overlapping the period, chronological; day level for short spans, month level for long ones. */
+  private async digests(ownerId: string, from: Date | null, to: Date | null): Promise<EpisodeSearchResult['digests']> {
+    const spanDays = from && to ? (to.getTime() - from.getTime()) / 86_400_000 : Infinity;
+    const level = spanDays <= DIGEST_DAY_SPAN ? 'day' : 'month';
+    const rows: Array<{ level: 'day' | 'month'; period_start: string; period_end: string; content: string }> = await this.db.query(
+      `SELECT level, period_start::text, period_end::text, content FROM digests
+       WHERE owner_id = $1 AND superseded_at IS NULL AND level = $2
+         AND ($3::timestamptz IS NULL OR period_end >= ($3::timestamptz AT TIME ZONE (SELECT timezone FROM owners WHERE person_id = $1))::date)
+         AND ($4::timestamptz IS NULL OR period_start < ($4::timestamptz AT TIME ZONE (SELECT timezone FROM owners WHERE person_id = $1))::date)
+       ORDER BY period_start LIMIT $5`, [ownerId, level, from, to, level === 'day' ? 45 : 24]);
+    return rows.map((r) => ({ level: r.level, from: r.period_start, to: r.period_end, text: r.content }));
   }
 
   /** Fused relevance (weighted RRF of vector and full-text ranks; only matching episodes get a score) and the raw

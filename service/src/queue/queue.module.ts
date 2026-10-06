@@ -8,7 +8,8 @@ import { type Env } from '../config/env';
 import { BullMqQueueAdapter } from './bullmq-queue.adapter';
 import { ExtractionProcessor } from './extraction.processor';
 import { EmbeddingProcessor } from './embedding.processor';
-import { EMBEDDING_QUEUE, EXTRACTION_QUEUE, QUEUE_PORT } from './queue.port';
+import { CONSOLIDATION_QUEUE, EMBEDDING_QUEUE, EXTRACTION_QUEUE, QUEUE_PORT } from './queue.port';
+import { ConsolidationProcessor } from './consolidation.processor';
 
 @Global()
 @Module({
@@ -27,12 +28,13 @@ import { EMBEDDING_QUEUE, EXTRACTION_QUEUE, QUEUE_PORT } from './queue.port';
         };
       },
     }),
-    BullModule.registerQueue({ name: EXTRACTION_QUEUE }, { name: EMBEDDING_QUEUE }),
+    BullModule.registerQueue({ name: EXTRACTION_QUEUE }, { name: EMBEDDING_QUEUE }, { name: CONSOLIDATION_QUEUE }),
   ],
   providers: [
     { provide: QUEUE_PORT, useClass: BullMqQueueAdapter },
     ExtractionProcessor,
     EmbeddingProcessor,
+    ConsolidationProcessor,
   ],
   exports: [QUEUE_PORT],
 })

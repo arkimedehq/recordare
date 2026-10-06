@@ -45,6 +45,8 @@ const baseSchema = z.object({
   EXTRACTION_WINDOW_CHARS: z.coerce.number().int().min(1000).optional(),
   /** Facts and notes in the episode call or in their own call (task `facts`); set = overrides the profile. */
   FACTS_PASS: z.enum(['inline', 'separate']).optional(),
+  /** Local hour (owner's timezone) after which the nightly consolidation runs (M5). */
+  CONSOLIDATION_HOUR: z.coerce.number().int().min(0).max(23).default(3),
   /** Installation default quality profile (D35); owners may override it. */
   QUALITY_PROFILE: z.enum(QUALITY_PROFILES).default('balanced'),
 
