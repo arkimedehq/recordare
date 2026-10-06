@@ -34,7 +34,10 @@ export type TelemetryEvent =
  */
 export type WorkOp = 'embed.messages' | 'context' | 'embed.memories' | 'recall' | 'consolidation';
 
-export type StampedEvent = TelemetryEvent & { at: string };
+/** Version of the event contract (docs/ATLAS_EVENTS.md): additive changes keep it, breaking ones raise it. */
+export const ATLAS_EVENTS_VERSION = 1;
+
+export type StampedEvent = TelemetryEvent & { v: number; at: string };
 
 @Injectable()
 export class TelemetryService {
@@ -43,7 +46,7 @@ export class TelemetryService {
   private workId = 0;
 
   emit(event: TelemetryEvent): void {
-    this.bus.next({ ...event, at: new Date().toISOString() });
+    this.bus.next({ ...event, v: ATLAS_EVENTS_VERSION, at: new Date().toISOString() });
   }
 
   /** Runs `fn` between a work.started and a work.finished event (also when it fails). */
