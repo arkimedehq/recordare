@@ -22,7 +22,8 @@ interface EpisodeRow {
 }
 interface DigestRow { id: string; level: 'day' | 'month'; period_start: string; version: number; source_hash: string; content: string }
 
-export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number }
+/** `failed`: digests whose call failed — left as they were and retried at the next consolidation. */
+export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number; failed: number }
 
 /** Multi-day items are listed on each of their days, up to this many. */
 const MAX_SPAN_DAYS = 14;
@@ -39,7 +40,7 @@ export class ConsolidationService {
 
   /** Consolidate every complete day (in the owner's timezone) before `now`. Idempotent; one run per owner at a time. */
   async consolidateOwner(ownerId: string, now: Date): Promise<ConsolidationReport> {
-    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0 };
+    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
@@ -97,11 +98,12 @@ export class ConsolidationService {
         const lines = items.map((e) => this.line(e, tz, now));
         const hash = fingerprint(lines);
         if (currentDay.get(day)?.source_hash === hash) continue;
+        report.llmCalls++;
         const out = await this.llm.completeJson({
           promptId: DAY_DIGEST_VERSION, system: DAY_DIGEST_SYSTEM, task: 'digest', maxTokens: 600,
           user: `OWNER: ${owner.display_name}\nOWNER LANGUAGE: ${owner.locale}\nDAY: ${day}\nITEMS:\n${lines.join('\n')}`, schema: digestSchema,
-        }, ctx);
-        report.llmCalls++;
+        }, ctx).catch((err: unknown) => this.skip(report, `day ${day}`, err));
+        if (!out) continue;
         await this.write(ownerId, 'day', day, day, out.summary, hash, currentDay.get(day), items.map((e) => e.id), [], ctx.runId);
         report.days++;
       }
@@ -118,11 +120,12 @@ export class ConsolidationService {
         const lines = [...dayDigests.map((d) => `${d.period_start}: ${d.content}`), ...extra.map((l) => `(${month}) ${l}`)];
         const hash = fingerprint([...dayDigests.map((d) => `${d.id}`), ...extra]);
         if (currentMonth.get(month)?.source_hash === hash) continue;
+        report.llmCalls++;
         const out = await this.llm.completeJson({
           promptId: MONTH_DIGEST_VERSION, system: MONTH_DIGEST_SYSTEM, task: 'digest', maxTokens: 1200,
           user: `OWNER: ${owner.display_name}\nOWNER LANGUAGE: ${owner.locale}\nMONTH: ${month}\nDAYS AND ITEMS:\n${lines.join('\n')}`, schema: digestSchema,
-        }, ctx);
-        report.llmCalls++;
+        }, ctx).catch((err: unknown) => this.skip(report, `month ${month}`, err));
+        if (!out) continue;
         const last = addDays(`${nextMonth(month)}-01`, -1);
         await this.write(ownerId, 'month', `${month}-01`, last, out.summary, hash, currentMonth.get(month),
           (monthOnly.get(month) ?? []).map((e) => e.id), dayDigests.map((d) => d.id), ctx.runId);
@@ -134,6 +137,13 @@ export class ConsolidationService {
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`, [(err as Error).name, ctx.runId]);
       throw err;
     }
+  }
+
+  /** A failed digest call does not stop the night: that day / month keeps its old digest and is retried next time. */
+  private skip(report: ConsolidationReport, what: string, err: unknown): null {
+    report.failed++;
+    this.log.warn(`digest skipped (${what}): ${(err as Error).name}`);
+    return null;
   }
 
   /** One item of the diary input: kind / status, date, content, people, feelings. */

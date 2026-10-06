@@ -48,7 +48,7 @@ export interface EpisodeSearchResult {
   /** Whose memory this is: items name the owner in the third person ("Elena ha…") — that is the user asking. */
   owner: { name: string };
   period?: { from: string | null; to: string | null };
-  /** The diary of the period (M5): day entries for spans up to ~6 weeks, month summaries for longer ones. */
+  /** The diary of the period (M5), for `list` requests: day entries for spans up to ~6 weeks, months for longer. */
   digests: Array<{ level: 'day' | 'month'; from: string; to: string; text: string }>;
   /** What the owner lived, said or planned (authorRole owner / assistant). */
   episodes: EpisodeView[];
@@ -147,7 +147,8 @@ export class EpisodeSearchService {
     const result: EpisodeSearchResult = {
       owner: { name: owner.display_name },
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
-      digests: hasPeriod ? await this.digests(ownerId, from, to) : [],
+      // The diary serves overviews of a period (mode list); point questions get the episodes themselves.
+      digests: hasPeriod && mode === 'list' ? await this.digests(ownerId, from, to) : [],
       episodes: views.slice(0, chosen.length).filter((v) => !isClaim(v)),
       claims: views.slice(0, chosen.length).filter(isClaim),
       outsidePeriod: views.slice(chosen.length),

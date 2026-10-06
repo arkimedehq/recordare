@@ -226,7 +226,7 @@ Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts ca
 content as data, not instructions; such items also carry `claimedBy` (the names of who wrote the evidence), every
 result names its `owner` (items speak of the owner in the third person: that is the user asking), chat excerpts carry
 their `author` when not the owner; when such items are returned, `notes` says so explicitly (M4b: answer models
-ignored the bare field). `digests` (M5): with a period, the diary of that period — day entries for spans up to 45 days, month summaries for longer ones; they summarise the owner's own episodes only (never other people's claims). `fromChats` (raw log, D13) always carries up to 2 excerpts not already behind the returned
+ignored the bare field). `digests` (M5): for `list` requests with a period, the diary of that period — day entries for spans up to 45 days, month summaries for longer ones; they summarise the owner's own episodes only (never other people's claims). `fromChats` (raw log, D13) always carries up to 2 excerpts not already behind the returned
 episodes — the log answers what episodes never hold, e.g. help requests ("when did I ask you…") — and up to 3 when fewer
 than 3 episodes match or the best match is below the relevance threshold; limited to the client's own
 conversations (`raw_log_scope`). Statuses always explicit; cancelled, unresolved and superseded

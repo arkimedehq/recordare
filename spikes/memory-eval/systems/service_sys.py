@@ -59,7 +59,7 @@ class ServiceSystem:
 
     def _owner(self, user: str) -> dict:
         if user not in self.owners:
-            o = self._post("/api/v1/admin/owners", {"displayName": user, "episodicEnabled": True})
+            o = self._post("/api/v1/admin/owners", {"displayName": user.capitalize(), "episodicEnabled": True})
             ext = f"{user}-{self.run}"
             self._post("/api/v1/admin/identities", {"kind": "client_user", "personId": o["personId"], "clientId": self.client_id, "externalId": ext})
             tok = self._post(f"/api/v1/admin/owners/{o['personId']}/tokens", {"clientId": self.client_id, "scopes": ["mcp"]})["token"]
@@ -132,6 +132,11 @@ class ServiceSystem:
 
     def context(self, user: str, question: dict) -> str:
         owner = self._owner(user)
+        # The nights before the question have passed: run the consolidation as of that moment (M5). Idempotent and
+        # free when nothing changed; set CONSOLIDATE=0 to measure without it.
+        if os.getenv("CONSOLIDATE", "1") != "0":
+            r = self.http.post(f"/api/v1/admin/owners/{owner['id']}/consolidate", headers={"x-recordare-now": question["asked_at"]})
+            r.raise_for_status()
         now = datetime.fromisoformat(question["asked_at"])
         raw = chat([{"role": "system", "content": PLAN_SYSTEM}, {"role": "user", "content": (
             f"TODAY: {fmt_when(question['asked_at'])}\nCALENDAR:\n{calendar(now.date(), 21, 0)}\n\nQUESTION: {question['q']}")}],
@@ -204,6 +209,9 @@ def format_context(args: dict, episodes: dict, memory: dict) -> str:
     if episodes.get("outsidePeriod"):
         lines.append("ALTRI EPISODI PERTINENTI (fuori dal periodo cercato):")
         lines += [_episode_line(e) for e in episodes["outsidePeriod"]]
+    if episodes.get("digests"):
+        lines.append("DIARIO DEL PERIODO (riassunti dei giorni / mesi):")
+        lines += [f"- {d['from']}{'' if d['from'] == d['to'] else ' → ' + d['to']}: {d['text']}" for d in episodes["digests"]]
     for n in episodes.get("notes", []):
         lines.append(f"NOTA: {n}")
     if memory.get("facts") or memory.get("notes"):
