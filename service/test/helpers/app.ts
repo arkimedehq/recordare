@@ -70,6 +70,7 @@ export function testEnv(overrides: Record<string, string> = {}): void {
     REDIS_URL: process.env['TEST_REDIS_URL'] ?? 'redis://localhost:6380',
     ADMIN_API_KEY: ADMIN_KEY,
     LLM_MODEL: 'test-model',
+    CONSOLIDATION_SCHEDULE: 'false', // the nightly sweep would consume the fake LLM's queued answers
     LLM_PROFILE: 'generic',
     LLM_BASE_URL: 'http://127.0.0.1:9/v1',
     EMBEDDING_BASE_URL: 'http://127.0.0.1:9/v1',
