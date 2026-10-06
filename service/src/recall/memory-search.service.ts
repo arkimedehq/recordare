@@ -11,6 +11,7 @@ import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { addDays, localDate, zonedMidnight } from '../engine/time';
 import { toOrTsQuery } from '../rawlog/rawlog-search.service';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 export interface MemorySearchArgs {
   query: string;
@@ -42,7 +43,11 @@ const MIN_VECTOR_SIMILARITY = 0.35;
 export class MemorySearchService {
   private readonly log = new Logger(MemorySearchService.name);
 
-  constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {}
+  constructor(
+    private readonly db: DataSource,
+    @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
+    private readonly telemetry: TelemetryService,
+  ) {}
 
   async search(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
     const [owner] = await this.db.query(
@@ -103,6 +108,8 @@ export class MemorySearchService {
     if (facts.some((f) => f.status === 'unknown')) {
       info.push(owner.locale === 'it' ? 'per alcuni fatti il valore attuale non è noto' : 'the current value of some facts is not known');
     }
+    this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
+      facts: facts.length, notes: notes.length });
     return { owner: { name: owner.display_name }, notes, facts, notes_info: info };
   }
 }

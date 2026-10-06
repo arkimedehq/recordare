@@ -13,6 +13,7 @@ import { DataSource, type EntityManager } from 'typeorm';
 import { type Env } from '../config/env';
 import { QUEUE_PORT, type QueuePort } from '../queue/queue.port';
 import { type IngestRequest, type IngestResult } from './ingest.schemas';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 type Participant = IngestRequest['conversation']['participants'][number];
 
@@ -28,6 +29,7 @@ export class IngestService {
     private readonly db: DataSource,
     @Inject(QUEUE_PORT) private readonly queue: QueuePort,
     config: ConfigService<Env, true>,
+    private readonly telemetry: TelemetryService,
   ) {
     this.idleDelayMs = config.get('IDLE_DELAY_SECONDS', { infer: true }) * 1000;
   }
@@ -98,6 +100,9 @@ export class IngestService {
       await this.db.query(`UPDATE conversations SET idle_job_at = now() + ($1 || ' milliseconds')::interval WHERE id = $2`, [String(delay), outcome.conversationId]);
       await this.queue.scheduleIdleExtraction(outcome.conversationId, delay);
       await this.queue.enqueueMessageEmbeddings(outcome.newIds);
+      const roles: Record<string, number> = {};
+      for (const m of req.messages) roles[m.role] = (roles[m.role] ?? 0) + 1;
+      this.telemetry.emit({ type: 'message.ingested', ownerId, conversationId: outcome.conversationId, messages: outcome.accepted, roles });
     }
     return { conversationId: outcome.conversationId, accepted: outcome.accepted, duplicates: outcome.duplicates, conflicts: outcome.conflicts, stored: true };
   }

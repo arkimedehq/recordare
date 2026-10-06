@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Optional, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { type LlmCallContext } from './llm.port';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 export interface LlmCallRecord {
   promptId: string;
@@ -21,9 +22,11 @@ export interface LlmCallRecord {
 export class LlmCallRecorder {
   private readonly log = new Logger(LlmCallRecorder.name);
 
-  constructor(private readonly db: DataSource) {}
+  constructor(private readonly db: DataSource, @Optional() private readonly telemetry?: TelemetryService) {}
 
   async record(call: LlmCallRecord, ctx: LlmCallContext = {}): Promise<void> {
+    this.telemetry?.emit({ type: 'llm.call', ownerId: ctx.ownerId ?? null, runId: ctx.runId ?? null, promptId: call.promptId, model: call.model,
+      inputTokens: call.inputTokens, cachedInputTokens: call.cachedInputTokens, outputTokens: call.outputTokens, latencyMs: call.latencyMs, status: call.status });
     try {
       await this.db.query(
         `INSERT INTO llm_calls (owner_id, client_id, run_id, prompt_id, provider, model, input_tokens,

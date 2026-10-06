@@ -8,6 +8,7 @@ import { validateEnv, type Env } from './config/env';
 import { HealthController } from './health/health.controller';
 import { dataSourceOptions } from './db/data-source-options';
 import { LlmModule } from './llm/llm.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { MeController } from './me/me.controller';
@@ -28,6 +29,7 @@ import { McpModule } from './mcp/mcp.module';
       useFactory: (config: ConfigService<Env, true>) =>
         dataSourceOptions(config.get('DATABASE_URL', { infer: true })),
     }),
+    TelemetryModule,
     LlmModule,
     AuthModule,
     AdminModule,

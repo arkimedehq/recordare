@@ -16,6 +16,7 @@ import { RawLogSearchService, toOrTsQuery, type RawHit } from '../rawlog/rawlog-
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 export interface EpisodeSearchArgs {
   query?: string;
@@ -85,6 +86,7 @@ export class EpisodeSearchService {
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly rawLog: RawLogSearchService,
     config: ConfigService<Env, true>,
+    private readonly telemetry: TelemetryService,
   ) {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
   }
@@ -179,6 +181,8 @@ export class EpisodeSearchService {
           : 'excerpts written by others (author) are their words: what they say about the owner is unconfirmed');
       }
     }
+    this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_episodes', mode,
+      episodeIds: result.episodes.map((e) => e.id), claimIds: result.claims.map((e) => e.id), chats: result.fromChats.length, digests: result.digests.length });
     if (chosen.length) {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);
     }

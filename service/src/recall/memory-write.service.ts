@@ -12,6 +12,7 @@ import { createHash } from 'node:crypto';
 import { DataSource, type EntityManager } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { toStored, type Precision } from '../engine/time';
+import { TelemetryService } from '../telemetry/telemetry.service';
 
 export interface Evidence {
   /** Conversation the tool was called from (resolved viewer context), if any. */
@@ -21,7 +22,11 @@ export interface Evidence {
 
 @Injectable()
 export class MemoryWriteService {
-  constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {}
+  constructor(
+    private readonly db: DataSource,
+    @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
+    private readonly telemetry: TelemetryService,
+  ) {}
 
   async logEpisode(ownerId: string, ev: Evidence, input: {
     content: string; kind?: 'event' | 'plan'; occurredAt?: string; occurredUntil?: string; datePrecision?: Precision; people?: string[]; place?: string;
@@ -90,6 +95,7 @@ export class MemoryWriteService {
 
   /** Physical forgetting of an episode and its correction chain; never recreated (tombstone). */
   async forgetEpisode(ownerId: string, id: string): Promise<void> {
+    let forgotten: string[] = [];
     await this.db.transaction(async (tx) => {
       const chain: Array<{ id: string; content: string }> = await tx.query(
         // Everything that tells the same memory: corrections, hidden duplicates, the event of a
@@ -119,7 +125,9 @@ export class MemoryWriteService {
          WHERE owner_id = $2 AND superseded_at IS NULL AND id IN (SELECT digest_id FROM days UNION SELECT digest_id FROM months)`,
         [ids, ownerId]);
       await tx.query(`DELETE FROM episodes WHERE id = ANY($1) AND owner_id = $2`, [ids, ownerId]);
+      forgotten = ids;
     });
+    this.telemetry.emit({ type: 'episode.forgotten', ownerId, ids: forgotten });
   }
 
   /**
