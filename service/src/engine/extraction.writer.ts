@@ -13,11 +13,12 @@
  * - facts: verdicts with world + knowledge time, forward-only supersession (imports never
  *   overwrite newer values), single-value slots replaced, multi-value slots accumulate;
  * - corrections never rewrite: a new row `corrects` the old one, which is invalidated;
- * - recall echoes: what only an assistant reply answering from memory said (a recalled detail the owner neither
- *   repeated nor added) is not recorded — a wrong recall must not become a memory because the owner said "ok".
+ * - recall echoes: what only an assistant reply answering from memory said — neither the owner nor another person nor
+ *   a non-memory tool (web search, a calendar…) said it — is not recorded: a wrong or invented recall must not become
+ *   a memory because the owner said "ok", while news a tool brought in the same turn stays news.
  */
 import { type EntityManager } from 'typeorm';
-import { type ExtractionInput, type WindowMessage } from './extraction.context';
+import { type ExtractionInput, isMemoryTool, type WindowMessage } from './extraction.context';
 import { type ExtractionOutput } from './extraction.schema';
 import { localDate, toStored, type Precision } from './time';
 
@@ -117,8 +118,8 @@ export class ExtractionWriter {
 
   /**
    * True when an item comes only from a recall echo: its names (or, without names, its words) appear in an assistant
-   * reply answering from memory and in no message of the owner or another person in the window. Inactive when the
-   * window has no such reply.
+   * reply answering from memory and in no message of the owner, of another person or of a non-memory tool (the
+   * world's sources) in the window. Inactive when the window has no such reply.
    */
   private echoOnly(text: string): boolean {
     const echoes = this.input.messages.filter((m) => m.fromMemory);
@@ -127,8 +128,22 @@ export class ExtractionWriter {
     const anchors = names.length ? names : words(text).map(stem);
     const echoed = new Set(echoes.flatMap((m) => words(m.content)).map(stem));
     if (!anchors.some((a) => echoed.has(a))) return false;
-    const own = new Set(this.input.messages.filter((m) => m.role === 'user' || m.role === 'other').flatMap((m) => words(m.content)).map(stem));
+    const sources = this.input.messages.filter((m) => m.role === 'user' || m.role === 'other' || (m.role === 'tool' && !isMemoryTool(m.toolName)));
+    const own = new Set(sources.flatMap((m) => words(m.content)).map(stem));
     return !anchors.some((a) => own.has(a));
+  }
+
+  /**
+   * After a recall, a fact changes (replaced, stale, unknown, corrected) only when a statement in its evidence — by the
+   * owner, another person or a non-memory tool, not a question — speaks of it: asking "what's my dentist called?" and
+   * hearing a wrong name is no news about the dentist. Always true when the window has no reply answering from memory.
+   */
+  private assertedAfterRecall(msgs: WindowMessage[], about: string): boolean {
+    if (!this.input.messages.some((m) => m.fromMemory)) return true;
+    const topic = new Set(words(about).map(stem));
+    // Sentence by sentence: "What's my dentist called? I must call him." asks about the dentist, it does not assert.
+    return msgs.some((m) => (m.role === 'user' || m.role === 'other' || (m.role === 'tool' && !isMemoryTool(m.toolName)))
+      && (m.content.match(/[^.!?\n]+[.!?\n]*/g) ?? []).some((s) => !s.trim().endsWith('?') && words(s).map(stem).some((w) => topic.has(w))));
   }
 
   private authorRole(msgs: WindowMessage[]): AuthorRole {
@@ -305,6 +320,7 @@ export class ExtractionWriter {
       if (msgs.length === 0 || this.forgotten(msgs, null) || (f.value && this.echoOnly(f.value))) continue;
       const key = f.key.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
       if (!key) continue;
+      if (f.verdict !== 'new' && f.verdict !== 'keep' && !this.assertedAfterRecall(msgs, `${key.replace(/_/g, ' ')} ${f.value ?? ''}`)) continue;
       await this.tx.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ($1, $1, $2) ON CONFLICT (key) DO NOTHING`, [key, f.cardinality ?? 'single']);
       const [{ cardinality }] = await this.tx.query(`SELECT cardinality FROM fact_slots WHERE key = $1`, [key]);
       const role = this.authorRole(msgs);

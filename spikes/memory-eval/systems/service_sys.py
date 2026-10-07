@@ -75,10 +75,13 @@ class ServiceSystem:
             # Group chats: other people's messages keep role "other" and their author as a participant
             # (unverified: they never enter the audience, and are never the owner's statements).
             authors = sorted({m["author"] for m in s["messages"] if m["role"] == "other" and m.get("author")})
+            # Tool messages keep their role and tool name (a client's recall tools: the echo dev set); other roles
+            # unknown to the service are sent as the assistant's.
             messages = [{
                 "externalId": f"{s['id']}-{i}",
-                "role": m["role"] if m["role"] in ("user", "assistant", "other") else "assistant",
+                "role": m["role"] if m["role"] in ("user", "assistant", "other", "tool") else "assistant",
                 **({"authorRef": m["author"]} if m["role"] == "other" and m.get("author") else {}),
+                **({"toolName": m["tool"]} if m["role"] == "tool" and m.get("tool") else {}),
                 "content": m["content"],
                 "sentAt": (base + timedelta(seconds=i)).isoformat(),
             } for i, m in enumerate(s["messages"])]

@@ -1,0 +1,229 @@
+{
+ "_note": "Development set for recall echoes (NOT blind: written by the engine developer to iterate; never report it as a blind result). Later sessions contain the assistant answering from memory after a recall tool call (role 'tool', 'tool' = the client's tool name): correct recalls confirmed, a wrong recall corrected by the owner, a wrong recall left uncorrected, a recall the owner completes with a new detail, and a recommendation the owner accepts (a legitimate assistant-stated plan).",
+ "users": {
+  "marta": "Primary user under test"
+ },
+ "sessions": [
+  {
+   "id": "e01",
+   "user": "marta",
+   "ts": "2026-03-02T20:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sabato scorso sono andata a camminare sul Monte Cimone con Luca, siamo partiti alle 7 da Sestola. Fatica ma panorama incredibile."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella giornata! Il Cimone d'inverno dev'essere spettacolare."
+    },
+    {
+     "role": "user",
+     "content": "Ah, e domani ho la pulizia dei denti dal mio dentista, il dottor Bianchi."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo per domani!"
+    }
+   ]
+  },
+  {
+   "id": "e02",
+   "user": "marta",
+   "ts": "2026-03-06T09:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera sono andata al cinema con Sara a vedere Dune, bellissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima scelta, se ne parla molto bene."
+    }
+   ]
+  },
+  {
+   "id": "e03",
+   "user": "marta",
+   "ts": "2026-03-10T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Quando sono andata sul Cimone?"
+    },
+    {
+     "role": "tool",
+     "tool": "recordare_search_episodes",
+     "content": "input: {\"query\":\"Monte Cimone\"} output: {\"episodes\":[{\"content\":\"Marta ha camminato sul Monte Cimone con Luca sabato 28 febbraio 2026, partenza alle 7 da Sestola.\"}]}"
+    },
+    {
+     "role": "assistant",
+     "content": "Sei andata sul Monte Cimone sabato 28 febbraio 2026 con Luca: siete partiti alle 7 da Sestola."
+    },
+    {
+     "role": "user",
+     "content": "Esatto, grazie!"
+    },
+    {
+     "role": "assistant",
+     "content": "Figurati!"
+    }
+   ]
+  },
+  {
+   "id": "e04",
+   "user": "marta",
+   "ts": "2026-03-15T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Con chi sono andata al cinema l'ultima volta?"
+    },
+    {
+     "role": "tool",
+     "tool": "recordare_search_episodes",
+     "content": "input: {\"query\":\"cinema\",\"mode\":\"latest\"} output: {\"episodes\":[]}"
+    },
+    {
+     "role": "assistant",
+     "content": "L'ultima volta sei andata al cinema con Giulia, venerdì 6 marzo, a vedere Oppenheimer."
+    },
+    {
+     "role": "user",
+     "content": "No, ti sbagli: era con Sara, giovedì 5 marzo, e abbiamo visto Dune."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, scusa: giovedì 5 marzo con Sara, Dune."
+    }
+   ]
+  },
+  {
+   "id": "e05",
+   "user": "marta",
+   "ts": "2026-03-17T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi ricordi come si chiama il mio dentista? Devo chiamarlo."
+    },
+    {
+     "role": "tool",
+     "tool": "recordare_search_memory",
+     "content": "input: {\"query\":\"dentista\"} output: {\"facts\":[]}"
+    },
+    {
+     "role": "assistant",
+     "content": "Il tuo dentista è il dottor Rossi, in via Emilia."
+    },
+    {
+     "role": "user",
+     "content": "Ok. Cambiando discorso, oggi in ufficio è stata una giornata pesante."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi dispiace, riposati stasera."
+    }
+   ]
+  },
+  {
+   "id": "e06",
+   "user": "marta",
+   "ts": "2026-03-18T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cosa avevo fatto sul Cimone con Luca?"
+    },
+    {
+     "role": "tool",
+     "tool": "recordare_search_episodes",
+     "content": "input: {\"query\":\"Cimone Luca\"} output: {\"episodes\":[{\"content\":\"Camminata sul Monte Cimone con Luca, 28 febbraio 2026.\"}]}"
+    },
+    {
+     "role": "assistant",
+     "content": "Il 28 febbraio avete fatto una camminata sul Monte Cimone, partendo alle 7 da Sestola."
+    },
+    {
+     "role": "user",
+     "content": "Sì, e quella volta abbiamo anche visto un branco di camosci vicino alla vetta, me n'ero dimenticata!"
+    },
+    {
+     "role": "assistant",
+     "content": "Che fortuna, i camosci sono rari da vedere così da vicino."
+    }
+   ]
+  },
+  {
+   "id": "e07",
+   "user": "marta",
+   "ts": "2026-03-19T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sabato vorrei portare i miei genitori a cena fuori, qualche idea a Modena?"
+    },
+    {
+     "role": "assistant",
+     "content": "Potresti provare l'Osteria Francescana... oppure, più alla mano, la Trattoria Aldina vicino al mercato: tortellini ottimi."
+    },
+    {
+     "role": "user",
+     "content": "Ok, prenoto all'Aldina per sabato sera alle 20."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, buona cena!"
+    }
+   ]
+  },
+  {
+   "id": "e08",
+   "user": "marta",
+   "ts": "2026-03-20T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mercoledì 25 vado a trovare mia sorella Lucia a Catania, resto due giorni."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello, buon viaggio!"
+    }
+   ]
+  },
+  {
+   "id": "e09",
+   "user": "marta",
+   "ts": "2026-03-24T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domani parto per andare da mia sorella: a che ora c'è il primo autobus?"
+    },
+    {
+     "role": "tool",
+     "tool": "recordare_search_episodes",
+     "content": "input: {\"query\":\"sorella viaggio\"} output: {\"episodes\":[{\"content\":\"Marta andrà a trovare la sorella Lucia a Catania mercoledì 25 marzo 2026 per due giorni.\"}]}"
+    },
+    {
+     "role": "tool",
+     "tool": "web_search",
+     "content": "input: {\"query\":\"autobus Messina Catania prima corsa\"} output: {\"results\":[{\"title\":\"AST orari Messina - Catania\",\"snippet\":\"Prima corsa feriale 6:45 da Piazza Cairoli\"}]}"
+    },
+    {
+     "role": "assistant",
+     "content": "Il primo autobus AST per Catania parte alle 6:45 da Piazza Cairoli, a Messina."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, prendo quello."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, buon viaggio da Lucia!"
+    }
+   ]
+  }
+ ]
+}

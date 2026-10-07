@@ -265,7 +265,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
 
   it('does not record what only a recall echo said (tool call in the turn, or a recall served in the conversation)', async () => {
     const conv = await ingest('echo1', [
-      { id: 'q1', role: 'user', content: 'Mi ricordi come si chiama il mio dentista?', at: '2026-10-07T09:20:00+02:00' },
+      { id: 'q1', role: 'user', content: 'Mi ricordi come si chiama il mio dentista? Devo chiamarlo.', at: '2026-10-07T09:20:00+02:00' },
       { id: 't1', role: 'tool', toolName: 'recordare_search_memory', content: 'input: {"query":"dentista"} output: {"facts":[]}', at: '2026-10-07T09:20:20+02:00' },
       { id: 'a1', role: 'assistant', content: 'Il tuo dentista è il dottor Rossi, in via Emilia.', at: '2026-10-07T09:20:20+02:00' },
       { id: 'q2', role: 'user', content: 'Ok. Sabato prenoto alla Trattoria Aldina per i miei genitori.', at: '2026-10-07T09:21:00+02:00' },
@@ -273,7 +273,15 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       { id: 'q3', role: 'user', content: 'Cosa avevo fatto sul Cimone?', at: '2026-10-07T09:22:00+02:00' },
       { id: 'a3', role: 'assistant', content: 'Una camminata con Luca partendo da Sestola.', at: '2026-10-07T09:22:30+02:00' },
       { id: 'q4', role: 'user', content: 'Sì, e abbiamo visto i camosci!', at: '2026-10-07T09:23:00+02:00' },
+      { id: 'q5', role: 'user', content: 'Domani parto per andare da mia sorella: a che ora c\'è il primo autobus?', at: '2026-10-07T09:24:00+02:00' },
+      { id: 't5', role: 'tool', toolName: 'recordare_search_episodes', content: 'output: {"episodes":[{"content":"Visita alla sorella Lucia a Catania l\'8 ottobre"}]}', at: '2026-10-07T09:24:20+02:00' },
+      { id: 'w5', role: 'tool', toolName: 'web_search', content: 'output: AST Messina-Catania, prima corsa 6:45', at: '2026-10-07T09:24:21+02:00' },
+      { id: 'a5', role: 'assistant', content: 'Il primo bus AST per Catania parte alle 6:45 da Messina.', at: '2026-10-07T09:24:22+02:00' },
+      { id: 'q6', role: 'user', content: 'Perfetto, prendo quello.', at: '2026-10-07T09:25:00+02:00' },
     ]);
+    await db.query(`DELETE FROM facts WHERE owner_id = $1`, [ownerId]);
+    await db.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ('dentist', 'dentist', 'single') ON CONFLICT (key) DO NOTHING`);
+    await db.query(`INSERT INTO facts (owner_id, key, value, status, verdict, valid_from, origin, author_role, audience) VALUES ($1, 'dentist', 'dottor Bianchi', 'current', 'new', '2026-01-01', 'owner_lived', 'owner', $2)`, [ownerId, [ownerId]]);
     // The third reply has no tool message: Recordare itself served a recall in this conversation during that turn.
     await db.query(`INSERT INTO recall_log (owner_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [ownerId, conv]);
     llm.queue.push({
@@ -281,14 +289,18 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
         { content: 'Luca ha portato Marta a Sestola', occurred_at: '2026-10-06', evidence: [7] },                    // echo only
         { content: 'Sul Monte Cimone con Luca Marta ha visto i camosci', occurred_at: '2026-02-28', evidence: [7, 8] }, // owner added
         { content: 'Cena alla Trattoria Aldina con i genitori', kind: 'plan', occurred_at: '2026-10-10', evidence: [4] },
+        { content: 'Bus AST delle 6:45 da Messina per Catania', kind: 'plan', occurred_at: '2026-10-08', evidence: [12, 13] }, // news from the web, same turn as a recall
       ],
-      facts: [{ key: 'dentist', value: 'dottor Rossi, via Emilia', verdict: 'new', evidence: [3, 4] }],               // echo + "Ok"
+      facts: [
+        { key: 'dentist', value: 'dottor Rossi, via Emilia', verdict: 'new', evidence: [3, 4] },                     // echo + "Ok"
+        { key: 'dentist', verdict: 'unknown', target: 'F1', evidence: [1, 3, 4] },                                   // a question and an echo: no news
+      ],
     });
     await runner.runForConversation(conv);
-    expect(await db.query(`SELECT value FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([]);
-    const kept = (await db.query(`SELECT content FROM episodes WHERE owner_id = $1 AND content ~ 'Sestola|camosci|Aldina' ORDER BY content`, [ownerId]))
+    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([{ value: 'dottor Bianchi', status: 'current' }]);
+    const kept = (await db.query(`SELECT content FROM episodes WHERE owner_id = $1 AND content ~ 'Sestola|camosci|Aldina|AST' ORDER BY content`, [ownerId]))
       .map((r: { content: string }) => r.content);
-    expect(kept).toEqual(['Cena alla Trattoria Aldina con i genitori', 'Sul Monte Cimone con Luca Marta ha visto i camosci']);
+    expect(kept).toEqual(['Bus AST delle 6:45 da Messina per Catania', 'Cena alla Trattoria Aldina con i genitori', 'Sul Monte Cimone con Luca Marta ha visto i camosci']);
   });
 
   it('makes no LLM call without a message from the owner (gate)', async () => {
