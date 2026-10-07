@@ -3,6 +3,8 @@
 How an agent platform (Arkimede first, any other after) uses Recordare as its users' memory, at the **full level**
 (client API key, REST ingest + MCP). Contracts: `API.md`; events for the optional live view: `ATLAS_EVENTS.md`.
 
+Infrastructure (standalone, or co-hosted with Arkimede on a small server): `DEPLOYMENT.md`.
+
 ## 1. Set-up (admin, once)
 1. Create the client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
 2. Create its key: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read"]}` — shown once; store it
