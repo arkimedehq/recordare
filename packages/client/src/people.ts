@@ -20,11 +20,21 @@ export interface Person {
   atlasUrl: string | null;
 }
 
+/** The user as the platform knows them. */
+export interface PlatformUser {
+  /** The platform's own opt-in (e.g. a "memory" switch): when false Recordare is not contacted — no person is created. */
+  enabled: boolean;
+  /** The current profile name: the person's name in Recordare follows it. */
+  name?: string | null;
+}
+
 export interface PersonDirectoryOptions {
   /** How long a lookup is trusted; default 5 minutes. */
   ttlMs?: number;
-  /** The user's current profile name on the platform (null = unknown user: no rename). */
-  profileName: (user: string) => Promise<string | null | undefined>;
+  /** The user on the platform; null = unknown user (treated as not enabled). */
+  user: (user: string) => Promise<PlatformUser | null>;
+  /** A person resolved (e.g. to store the ownerId with the platform's user). */
+  onResolved?: (user: string, person: Person) => void | Promise<void>;
   /** Called when a lookup or a rename fails (the cache keeps the last known person). */
   onError?: (user: string, err: unknown) => void;
 }
@@ -88,16 +98,21 @@ export class PersonDirectory {
       this.cache.set(user, { ...p, until: Date.now() + ttl });
       return p;
     };
+    const last = this.cache.get(user);
     try {
+      const platform = await this.options.user(user);
+      // Not opted in on the platform: never contact Recordare; a person already known stays known (e.g. for tracing).
+      if (!platform?.enabled) return remember({ ownerId: last?.ownerId ?? null, consent: null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
       const me = await this.client.me(user);
-      const name = (await this.options.profileName(user))?.trim().slice(0, 100);
+      const name = platform.name?.trim().slice(0, 100);
       if (name && me.displayName !== name) {
         await this.client.updateMe(user, { displayName: name }).catch((err) => this.options.onError?.(user, err));
       }
-      return remember({ ownerId: me.ownerId, consent: me.episodicEnabled, kind: me.kind, atlasUrl: me.atlasUrl ?? null });
+      const person: Person = { ownerId: me.ownerId, consent: me.episodicEnabled, kind: me.kind, atlasUrl: me.atlasUrl ?? null };
+      await this.options.onResolved?.(user, person);
+      return remember(person);
     } catch (err) {
       this.options.onError?.(user, err);
-      const last = this.cache.get(user);
       return remember({ ownerId: last?.ownerId ?? null, consent: null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
     }
   }

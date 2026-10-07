@@ -95,9 +95,12 @@ describe('delivery policy', () => {
 
 describe('clipUtf8', () => {
   it('never splits a character', () => {
-    expect(clipUtf8('aèb', 2)).toBe('a');
-    expect(clipUtf8('aèb', 3)).toBe('aè');
+    expect(clipUtf8('aèb', 2, '')).toBe('a');
+    expect(clipUtf8('aèb', 3, '')).toBe('aè');
     expect(clipUtf8('short')).toBe('short');
+    const long = clipUtf8('è'.repeat(40_000));
+    expect(Buffer.byteLength(long, 'utf8')).toBeLessThanOrEqual(64 * 1024);
+    expect(long.endsWith(' …[truncated]')).toBe(true);
   });
 });
 
@@ -108,7 +111,11 @@ describe('PersonDirectory', () => {
       ? { status: 200, body: { ownerId: 'o1', displayName: shown, kind: 'entity', episodicEnabled: false, atlasUrl: 'http://atlas', via: 'client', scopes: [] } }
       : { status: 204 });
     let profile = 'Andrea';
-    const people = new PersonDirectory(client(), { profileName: async () => profile });
+    const resolved: string[] = [];
+    const people = new PersonDirectory(client(), {
+      user: async (u) => (u === 'off' ? { enabled: false } : { enabled: true, name: profile }),
+      onResolved: (u, p) => { resolved.push(`${u}:${p.ownerId}`); },
+    });
     expect(people.peek('u1')).toBeUndefined(); // never waits; looks up in the background
     expect(await people.status('u1')).toBe('waiting_activation');
     expect(people.peek('u1')).toEqual({ ownerId: 'o1', consent: false, kind: 'entity', atlasUrl: 'http://atlas' });
@@ -123,5 +130,13 @@ describe('PersonDirectory', () => {
     reply = () => ({ status: 503 });
     expect(await people.status('u1')).toBe('unknown');
     expect(people.peek('u1')?.ownerId).toBe('o1'); // the last known person stays
+    expect(resolved).toEqual(['u1:o1', 'u1:o1']);
+
+    // Not opted in on the platform: Recordare is never contacted; a stored person stays known.
+    seen.length = 0;
+    people.seed('off', 'o-stored');
+    expect(await people.status('off')).toBe('unknown');
+    expect(people.peek('off')?.ownerId).toBe('o-stored');
+    expect(seen).toHaveLength(0);
   });
 });

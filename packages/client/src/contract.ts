@@ -97,12 +97,15 @@ export interface IngestResult {
   stored: boolean;
 }
 
-/** Cuts text to at most `maxBytes` UTF-8 bytes without splitting a character. */
-export function clipUtf8(text: string, maxBytes = MAX_CONTENT_BYTES): string {
+/**
+ * Cuts text to at most `maxBytes` UTF-8 bytes without splitting a character, ending with `marker` so a reader (and the
+ * memory engine) knows the text was cut. The marker counts within the limit.
+ */
+export function clipUtf8(text: string, maxBytes = MAX_CONTENT_BYTES, marker = ' …[truncated]'): string {
   const bytes = Buffer.from(text, 'utf8');
   if (bytes.length <= maxBytes) return text;
-  let end = maxBytes;
+  let end = Math.max(0, maxBytes - Buffer.byteLength(marker, 'utf8'));
   // Step back over continuation bytes (10xxxxxx) so the cut lands on a character boundary.
   while (end > 0 && ((bytes[end] ?? 0) & 0xc0) === 0x80) end--;
-  return bytes.subarray(0, end).toString('utf8');
+  return bytes.subarray(0, end).toString('utf8') + marker;
 }
