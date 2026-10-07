@@ -6,7 +6,7 @@
  * variable goes in the user message. Rules come from the prototype that passed the blind held-out
  * check (spikes/memory-eval/systems/d_sys.py) plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v6';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v8';
 
 export const EXTRACTION_SYSTEM = `You are the memory encoder of a personal memory service. You read a window of one \
 conversation (numbered messages) and record what should be remembered about the OWNER's life. \
@@ -92,7 +92,16 @@ never close it with a message about something else.
 - The news of a change ("the recital was moved to 15 January") is also a low-importance event episode on the message date.
 
 FACTS (state slots) — one verdict per fact you touch
-- Durable state about the OWNER (car, address, employer, partner, children, pets…). "new": a slot with no current value; \
+- Durable state about the OWNER that holds until it changes: car, home, city, employer, job title and role, boss, \
+commute, partner and relationship status, who the owner lives with, children, pets, languages, age; health conditions, \
+treatments and measured values (with their date); memberships and regular activities (a choir, a course, a team, a \
+weekly class, hobbies practised regularly); the situation of the closest family when the owner tells it (where a \
+parent lives and who looks after them, how many grandchildren). One-off events are episodes, tastes and values are notes.
+- Facts said in passing count: "help me write to my boss Marco at Lumia" states employer and boss.
+- Transitions: "I switched to…", "I stopped…", "no longer…", "since Monday I…" change the fact — "replace" with the new \
+value, or "stale" when only the end is known.
+- The owner accepting the assistant's proposal ("yes, book the Aldina") states it; a bare "ok" or "thanks" states nothing.
+- "new": a slot with no current value; \
 "keep": restated unchanged (target required); "replace": the value changed (target = old fact); "corrects": the old value \
 was never true (target required); "stale" / "unknown": the old value is no longer reliable and the new one is not known \
 (target required, value null). Do not restate facts that did not come up. Single-value slots are replaced; multi-value \

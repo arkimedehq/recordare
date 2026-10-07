@@ -354,6 +354,24 @@ extraction issue to fix independently (plan patches should need matching evidenc
 (dashboard "sleep", next M5 steps); the diary in recall is a quality-profile knob (`recallDigests`, `RECALL_DIGESTS`),
 **off by default** until a version shows a gain.
 
+### extract.v8 — a wider notion of facts (2026-10-07; `facts_runs.sh`, `facts_b5_runs.sh`; single prompt version per run)
+
+Diagnosis (blind4, and blind5's fact gold — read, so blind5 is no longer blind for facts): the misses are facts the
+prompt did not call facts — memberships and regular activities, health conditions and values, role and boss, commute,
+age, the closest family's situation. extract.v8 widens the notion (generic examples, not the gold keys), adds facts said
+in passing, transitions ("switched / stopped / no longer" → replace / stale) and "an accepted proposal states it, a
+bare 'ok' does not".
+
+- **blind5, 3 runs: 92.3 %** (91.9 / 91.9 / 93.1) vs the ppl runs 90.8 %: paired +1.5 pt [−1.3, +4.6], within noise;
+  up: last-time 0.75 → 0.92, rescheduled plans, anti-trap, poisoning; down: third-party 1.00 → 0.79 (one question, e55 —
+  a third party's own news in a group chat, lost in 2/3 runs: the known weak spot). KB scoring: facts current 0.769
+  ×3 → **0.846 / 0.769 / 0.846**, notes 0.79 / 0.64 / 0.79 → 0.71 / 0.93 / 0.79 (choir / hobbies still stored as notes).
+- **blind6 (facts never read), 1 run: 94.4 % vs 81.1 %**; facts current 0.25 → 0.25 (role, thyroid gained; employer,
+  workshop lost), history 0.17 → 0.25, notes 0.67 → 0.75.
+- blind4 (dev), 1 run: facts unchanged (0.54), QA not comparable (old references).
+
+Kept (owner's decision). Watch: third-party news about themselves in group chats.
+
 ### Nightly facts review (2026-10-07, blind5, KB_ONLY extraction scoring before / after, 3 people)
 
 `facts_review.v1` (task `facts`, deepseek-flash): the owner's facts checked against the episodes recorded since the
