@@ -1,0 +1,42 @@
+# A-MEM: Agentic Memory for LLM Agents (Xu, Liang, Mei, Gao, Tan, Zhang, NeurIPS 2025 / arXiv Feb 2025, arXiv:2502.12110)
+*Traduzione italiana di [amem-zettelkasten.md](amem-zettelkasten.md) — la versione inglese è quella di riferimento.*
+
+Letto: l'intero HTML di arXiv (testo principale, ablation, scaling, prompt in appendice) più il codice di sistema rilasciato (`agentic_memory/memory_system.py` di A-mem-sys, letto). Codice: https://github.com/WujiangXu/A-mem-sys (sistema) e https://github.com/WujiangXu/AgenticMemory (riproduzione del benchmark). Sede: il sorgente contiene una checklist NeurIPS, quindi si tratta di una sottomissione a NeurIPS; accettazione non verificata.
+
+## Problema
+Le memorie degli agenti esistenti richiedono strutture di archiviazione, punti di scrittura e momenti di recupero predefiniti (e i database a grafo richiedono schemi fissi), perciò generalizzano male. A-MEM vuole una memoria che si organizza da sola, seguendo il metodo Zettelkasten: note atomiche più collegamenti flessibili.
+
+## Meccanismo (come funziona)
+1. **Costruzione della nota**: per ogni interazione un LLM produce parole chiave, un contesto di una frase e dei tag; la nota viene calcolata in embedding (all-minilm-l6-v2) a partire da tutti i suoi campi di testo.
+2. **Generazione dei collegamenti**: i k vicini più prossimi per coseno della nuova nota; l'LLM decide quali collegare, in base ad attributi condivisi (l'idea di "box" del paper: una nota può stare in più box sovrapposti).
+3. **Evoluzione della memoria**: per ogni vicino l'LLM decide se aggiornarne contesto, parole chiave e tag alla luce della nuova nota; la nota evoluta **sostituisce** la vecchia.
+4. **Recupero**: embedding della query, top-k per coseno (k=10 di default; ottimizzato per categoria nell'Appendice A.5); vengono restituite anche le note collegate ai risultati.
+
+Nel codice rilasciato, i passi 2 e 3 sono una sola chiamata LLM (`process_memory`) che restituisce `should_evolve`, `actions`, `suggested_connections`, `tags_to_update`, `new_context_neighborhood`, `new_tags_neighborhood`; sono implementate solo le azioni `strengthen` (aggiunge collegamenti, sovrascrive i tag della nota) e `update_neighbor` (sovrascrive tag e contesto del vicino); il prompt offre anche `merge` e `prune`, ma il codice le ignora. L'evoluzione agisce sui 5 vicini più prossimi. L'indice vettoriale viene ricostruito ogni `evo_threshold` (100) evoluzioni.
+
+## Modello dati (campi, stati, tabelle/archivi)
+Paper: nota m_i = {c_i contenuto, t_i timestamp, K_i parole chiave, G_i tag, X_i contesto, e_i embedding, L_i collegamenti}. Codice `MemoryNote`: `content`, `id`, `keywords`, `links`, `retrieval_count`, `timestamp` (YYYYMMDDHHMM), `last_accessed`, `context`, `evolution_history`, `category`, `tags`. Archivio: dizionario in memoria più ChromaDB (i metadati vi sono duplicati). Il campo `evolution_history` esiste ma in `memory_system.py` non viene mai valorizzato: l'evoluzione è distruttiva, senza versioni. Nessun intervallo di validità, data dell'evento, importanza o stato.
+
+## Prompt / uso dell'LLM
+Per ogni nota almeno due chiamate LLM: costruzione della nota (JSON: keywords, context, tags; "Don't include keywords that are the name of the speaker or time") e una chiamata di evoluzione/collegamento sulla nuova nota più i vicini (appendice B.2/B.3: "You are an AI memory evolution agent responsible for managing and evolving a knowledge base ... determine ... strengthen, update_neighbor"). Tutto il resto (similarità, recupero, archiviazione) è codice. Dichiarazioni sui costi: ~1.200 token per operazione di memoria, < $0,0003 per operazione con API commerciali, 5,4 s con GPT-4o-mini e 1,1 s con un Llama 3.2 1B locale. Modelli testati: GPT-4o-mini, GPT-4o, Qwen2.5 1.5B/3B, Llama 3.2 1B/3B via Ollama (più DeepSeek-R1-32B, Claude 3 Haiku, 3.5 Haiku in appendice); output strutturato via LiteLLM o l'API a schema di OpenAI.
+
+## Valutazione
+- Dataset: LoCoMo (il paper dice 7.512 coppie QA; cinque categorie) e DialSim (dialoghi di serie TV, ~350k token). Metriche F1 e BLEU-1 (anche ROUGE, METEOR, SBERT). Baseline: LoCoMo, ReadAgent, MemoryBank, MemGPT.
+- GPT-4o-mini: A-Mem F1 27,02 (multi-hop), 45,85 (temporal), 12,14 (open-domain), 44,65 (single-hop), 50,03 (adversarial); DialSim F1 3,45 contro LoCoMo 2,55, MemGPT 1,18. L'etichettatura delle categorie differisce tra i paper A-Mem e Mem0 (gli stessi numeri compaiono con nomi di categoria diversi), quindi non mescolare le tabelle.
+- Ablation (F1 con GPT-4o-mini): senza generazione di collegamenti ed evoluzione multi-hop 9,65, temporal 24,55, single-hop 13,28; solo con i collegamenti 21,35 / 31,24 / 39,17; completo 27,02 / 45,85 / 44,65. I collegamenti danno la maggior parte del guadagno, l'evoluzione il resto.
+- Scaling: tempo di recupero 0,31 -> 3,70 da 1k a 1M note (l'unità si è persa nella conversione dell'HTML, non indicata qui).
+- Riesecuzione indipendente (paper Mem0, metrica J): A-Mem* single-hop 39,79, multi-hop 18,85, open-domain 54,05, temporal 49,91, complessivo 48,38; ricerca p50 0,67 s, ~2,5k token. Molto più basso degli altri sistemi; nemmeno la riesecuzione di Mem0 è autorevole.
+
+## Limiti
+Autori: la qualità dipende dall'LLM sottostante; solo testo. Nostri: nessuna metrica con giudice nel paper originale (F1/BLEU premiano la sovrapposizione lessicale); nessun costo di ingestione su larga scala oltre a un singolo numero; l'evoluzione riscrive in loco contesto/tag dei vicini senza provenienza né versioni (rischio di deriva ed errori a cascata, "telefono senza fili"); nessuna semantica temporale (il timestamp è il momento dell'interazione, non la data dell'evento); nessuna distinzione tra fatto, evento, piano; i collegamenti sono un giudizio dell'LLM solo sui top-k vicini; ogni nota costa ≥ 2 chiamate LLM; l'aggiornamento dei vicini più prossimi può riscrivere note non correlate; le azioni non implementate nel prompt (`merge`, `prune`) mostrano che lo schema ha superato il codice; l'ablation mostra che i collegamenti aiutano ma non isola in modo netto l'evoluzione sulla correttezza giudicata.
+
+## Implicazioni per Recordare
+- **Importante:** l'evoluzione di A-MEM (riscrittura distruttiva di contesto/tag) è la "riconsolidazione" che abbiamo scartato nella tabella cognitiva. Arkimede la limita già a un solo passaggio conservativo; in Recordare mantenere le note append-only e salvare i collegamenti dal lato episodio/fatto (D19, D28). Se la descrizione di un vicino deve cambiare, scrivere una nuova versione con provenienza, mai sovrascrivere.
+- **Importante:** l'ablation mostra che il beneficio viene soprattutto dalla generazione di collegamenti (multi-hop 9,65 -> 21,35 F1), non dall'evoluzione. Per il Livello 3 (note semantiche), investire nel collegamento (episodio -> nota, episodio -> episodio tramite `linkedNoteIds`, D19/D20) e saltare la riscrittura dei vicini.
+- ADOTTARE: i tre descrittori scritti dall'LLM (parole chiave, contesto di una frase, tag) come chiavi di recupero per episodi e digest, calcolati in embedding insieme al contenuto — coerente con le "fact-augmented keys" di LongMemEval già nel TODO. Ma produrli nella **stessa chiamata di estrazione** (D2), non in una chiamata extra per nota: le 2+ chiamate per nota di A-MEM confliggono con la nostra regola di costo di 1,2 chiamate per finestra.
+- ADOTTARE: mantenere `retrieval_count`/`last_accessed` (i nostri `accessCount`/`lastAccessedAt`), come fa il codice; e l'espansione del recupero "restituisci le note collegate ai risultati" (la nostra D19 v2).
+- ADOTTARE la regola "Don't include keywords that are the name of the speaker or time" nella generazione delle parole chiave (evita tag inutili).
+- EVITARE: ricostruire periodicamente l'indice vettoriale (`consolidate_memories` ricrea l'intera collezione Chroma); usare upsert incrementali in pgvector.
+- EVITARE: uno schema di prompt che offre azioni che il codice non implementa; validare l'output del modello rispetto a un enum chiuso nel codice (D27).
+- Valutazione (H6): non usare F1/BLEU né giudici generosi; i numeri di A-Mem tra paper diversi (originale contro riesecuzione di Mem0) differiscono di un fattore due, un avvertimento che i punteggi dei benchmark di questa famiglia non sono confrontabili.
+- Nota Arkimede: l'implementazione A-MEM esistente corrisponde alla struttura di nota del paper; migrarla in Recordare in futuro significa aggiungere i campi di validità/versionamento che il paper non ha (D28).

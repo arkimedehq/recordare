@@ -11,7 +11,27 @@ twin** of that person. Any agent platform can use it through **MCP** (any MCP cl
 > **Status (2026-10-07).** Phase 1 (episodic memory) is implemented in `service/` (NestJS, Postgres + pgvector,
 > BullMQ). It covers the raw log, episodes, plans, facts, notes, nightly digests, MCP recall and write tools, the
 > admin API and live telemetry. Arkimede is integrated. Next: the read API, the client library and connectors
-> ([work plan](docs/WORK_PLAN.md)). **In progress:** entity memory (D48, below). Recordare is not published yet.
+> ([work plan](docs/WORK_PLAN.md)). Entity memory (D48, below) is built and measured on a dev set. Recordare is not
+> published yet.
+
+*Italian version: [README_it.md](README_it.md). Every project document has an Italian copy (`*_it.md`); the English
+one is the reference.*
+
+## In plain words
+
+AI assistants usually forget everything when a conversation ends. Recordare gives them a **long-term memory**, close
+to a human one. While you talk with your assistant, it keeps a kind of diary: **what happened and when** ("on Saturday
+I was in Bologna with Marco"), **what you plan** ("I see the dentist on Thursday" — and if you never say how it went,
+it does not assume you went), **how your life is now and how it changed** (your car, where you live, your job, with
+their history), and **your tastes and habits**. Every night, as we do while sleeping, it tidies up its memories and
+writes a summary of the day and the month, so the assistant can answer "what did I do last week?" or "when did I change
+car?".
+
+It is careful about **who said what**: what you say counts as your memory, what someone else tells you stays theirs,
+and what the assistant only guessed never becomes a fact. You can correct a memory, and what you ask it to forget does
+not come back. Each person has their **own private memory**; a device the whole family uses (the home voice assistant)
+can have a **shared memory**, where whoever introduces themselves signs their own memories. Nothing starts without
+**consent**. Recordare works with any assistant and any AI model; Arkimede is the first to use it.
 
 ## What kind of memory it is
 
@@ -141,15 +161,16 @@ What is new is narrower:
     note). Resting-state thinking that keeps open loops alive (H12, to design). Legacy mode as enforceable mechanisms
     (H4, engineering only). Cost-aware memory (H5) is already a crowded topic: we report costs and claim nothing.
 
-## Entity memory (D48, in progress)
+## Entity memory (D48)
 
 An owner can also be an **entity**: a shared device, a home robot, a place. Everyone who uses the entity reads and
 writes its memory. Identification ("sono Andrea"; later a voiceprint) only says **whose** a memory is. Within the
 entity's memory, facts carry the person they are about, and a fact from an unidentified speaker is not stored as
 anyone's fact. Identification never grants access: a person's *own* memory is reached only through a secure client
 identity bound by the admin. A code guard records a fact about a person, or an episode naming one, only if the
-conversation names that person (no identity carried over from other chats). Built on the `entity-memory` branch;
-measured on a non-blind dev set only (95.5 %, 1 run, [RESULTS.md](spikes/memory-eval/RESULTS.md)).
+conversation names that person (no identity carried over from other chats). The person chooses the kind on their
+platform (Arkimede: memory settings) while the memory is empty. Measured on a non-blind dev set only (95.5 %, 1 run,
+[RESULTS.md](spikes/memory-eval/RESULTS.md)).
 
 ## Beyond phase 1
 

@@ -41,6 +41,10 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 
 ## Conventions (the owner's preferences — follow them)
 - Chat with the owner in **Italian**; code comments and dev-facing docs in **English**.
+- **Bilingual docs** (owner's rule 2026-10-07): every project document (`README.md`, `service/README.md`, `docs/*.md`,
+  `docs/literature/*.md`) has an Italian copy next to it, `<name>_it.md`; the English one is the reference. Any change
+  to an English document updates its `_it.md` in the same commit. Not translated: `CLAUDE.md` and the evaluation
+  artefacts (`spikes/**`: RESULTS, GOLD_AUDIT, dataset READMEs).
 - Commits as the owner (`andreagenovese <info@rstonline.it>`), **no Claude/Anthropic trailers**.
 - **Ask before any push / publish** (repo is private for now).
 - Substantial work on a dedicated branch, merge `--no-ff` after the owner's OK; small obvious

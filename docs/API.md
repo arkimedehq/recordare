@@ -257,9 +257,9 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
 - `remember {content, category?}` — explicit "remember that…": stored as a stated note (owner's
   `user` message as evidence, same rules as `log_episode`).
 - `search_memory {query, as_of?, include_pending?}` — preferences, habits, values, knowledge, plus the
-  In an entity memory (D48) facts about people carry `about` (the person's name); facts without it are the entity's own.
   relevant state facts valid at `as_of` (ISO date, default today) with their history; complements `search_episodes`
-  (what happened / when). Returns `{notes, facts}`.
+  (what happened / when). Returns `{notes, facts}`. In an entity memory (D48) facts about people carry `about` (the
+  person's name); facts without it are the entity's own.
 
 ### `resolve_period` (D12, deterministic)
 As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); Italian and English

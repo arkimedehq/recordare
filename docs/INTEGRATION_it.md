@@ -1,0 +1,54 @@
+# Integrare una piattaforma client (M6)
+
+*Traduzione italiana di [INTEGRATION.md](INTEGRATION.md) — la versione inglese è quella di riferimento.*
+
+Come una piattaforma di agenti (prima Arkimede, poi qualsiasi altra) usa Recordare come memoria dei suoi utenti, al
+**livello completo** (chiave API del client, ingest REST + MCP). Contratti: `API.md`; eventi per la vista in tempo
+reale opzionale: `ATLAS_EVENTS.md`.
+
+Infrastruttura (standalone, o co-ospitato con Arkimede su un piccolo server): `DEPLOYMENT.md`.
+
+## 1. Configurazione (amministratore, una volta)
+1. Creare il client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
+2. Creare la sua chiave: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read"]}` — mostrata una sola
+   volta; conservarla come segreto della piattaforma.
+3. **Il consenso resta all'amministratore / al proprietario** (D4): la chiave di un client non può mai attivare la
+   memoria episodica di una persona. Profilo home: l'amministratore la attiva per persona
+   (`PATCH api/v1/admin/owners/{ownerId} {episodicEnabled: true}`). Profilo public: l'interruttore dell'host apre la
+   pagina del proprietario di Recordare.
+
+## 2. Persone
+- Ogni richiesta nomina l'utente della piattaforma: `X-Recordare-User: <the platform's own user id>`. Con
+  `autoProvision` la persona viene creata al primo contatto; `GET api/v1/me` restituisce `ownerId` — conservarlo
+  accanto al proprio utente (lega la propria telemetria alla persona: attributo OpenTelemetry `recordare.owner_id`).
+- Dare alla persona il nome del proprio utente e tenerlo sincronizzato: `PATCH api/v1/me {displayName}` ogni volta che
+  l'utente rinomina il proprio profilo (il nome segue la piattaforma). La scelta dell'utente sul tipo di memoria segue
+  la stessa via: `PATCH api/v1/me {kind: human | entity}` (D48 — `entity` per un account condiviso che usano tutti),
+  accettato solo finché la memoria è vuota (409 `memory_not_empty`). `GET api/v1/me` restituisce `kind` (mostrare una
+  memoria condivisa come tale) e `atlasUrl` quando Recordare Atlas è installato (collegarlo solo per i propri
+  amministratori: mostra l'attività di ogni persona).
+- `GET api/v1/me` indica anche `episodicEnabled`: finché il consenso non è dato, l'ingest non memorizza nulla —
+  mostrare all'utente "in attesa di attivazione" invece di accumulare i suoi messaggi (trattenerli aggirerebbe il
+  consenso).
+- La stessa persona su due piattaforme: l'amministratore collega le identità (`POST api/v1/admin/identities`).
+
+## 3. Ingest — non bloccare mai la chat
+- Inviare ogni messaggio persistito (utente, assistente, altri partecipanti, output degli strumenti) con
+  `POST api/v1/ingest/messages`, con `externalId` stabili (idempotente: un nuovo tentativo non duplica mai) e i
+  partecipanti della conversazione.
+- Usare un **outbox**: scrivere prima il messaggio nella propria tabella, inviare in modo asincrono, ritentare con
+  back-off; un'interruzione di Recordare non deve mai far fallire o rallentare la chat. Modifiche ed eliminazioni
+  seguono (`API.md` §2).
+
+## 4. Richiamo — MCP
+- Registrare l'endpoint MCP di Recordare (`/mcp`) nel proprio client MCP con la chiave e `X-Recordare-User`.
+- **Inviare sempre `X-Recordare-Conversation: <externalConversationId>`**: Recordare stabilisce chi vedrà la risposta
+  dai partecipanti che ha ricevuto in ingest; senza una conversazione risolvibile una lettura non restituisce nulla
+  (regola dello spettatore, `API.md` §1).
+- Strumenti: `search_episodes`, `search_memory` (fatti e note), `resolve_period`, `log_episode`, `correct_episode`,
+  `forget_episode`, `remember`.
+
+## 5. Osservabilità (opzionale)
+Recordare Atlas mostra il lavoro di Recordare stesso dal suo flusso di telemetria; i propri agenti (chiamate LLM,
+strumenti) compaiono quando si esportano le tracce OpenTelemetry GenAI verso l'atlas (README di `recordare-atlas`) —
+solo metadati, con `recordare.owner_id` sugli span.
