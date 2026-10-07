@@ -70,5 +70,7 @@ describe('nightly facts review (M5): facts checked against the new episodes', ()
     const again = llm.requests.length;
     expect((await consolidate('2026-03-13T10:00:00+01:00')).body).toMatchObject({ facts: 0, llmCalls: 0 });
     expect(llm.requests.length).toBe(again);
+    // On demand (operators, evaluations): the review alone, with nothing new, costs nothing either.
+    expect((await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/review-facts`, { token: ADMIN_KEY })).body).toEqual({ calls: 0, changed: 0, failed: 0 });
   });
 });

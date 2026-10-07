@@ -19,6 +19,7 @@ import { TelemetryService } from '../telemetry/telemetry.service';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { FactsReviewService } from './facts-review.service';
+import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
 import { qualityProfile, type QualityProfileName } from './quality-profile';
 
 interface EpisodeRow {
@@ -152,6 +153,31 @@ export class ConsolidationService {
     } catch (err) {
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`, [(err as Error).name, ctx.runId]);
       throw err;
+    }
+  }
+
+  /**
+   * The facts review alone, now (operators and evaluations; the night runs it inside the consolidation when the
+   * profile asks for it). Same lock as the consolidation: never two at once for one owner.
+   */
+  async reviewFactsNow(ownerId: string, now: Date): Promise<{ calls: number; changed: number; failed: number }> {
+    const runner = this.db.createQueryRunner();
+    await runner.connect();
+    try {
+      const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [ownerId]);
+      if (!locked) return { calls: 0, changed: 0, failed: 0 };
+      try {
+        const [run] = await this.db.query(
+          `INSERT INTO extraction_runs (owner_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:facts', 'configured', $3) RETURNING id`,
+          [ownerId, now, FACTS_REVIEW_VERSION]);
+        const r = await this.telemetry.track('consolidation', ownerId, () => this.factsReview.review(ownerId, now, run.id));
+        await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [run.id]);
+        return r;
+      } finally {
+        await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 11))`, [ownerId]);
+      }
+    } finally {
+      await runner.release();
     }
   }
 
