@@ -7,7 +7,7 @@
  * nothing is synthesised. Metadata only — ids, kinds, counts, tokens — never message or memory content.
  * In-process (one service process runs API and workers); a multi-process deployment would relay through Redis.
  */
-import { Injectable } from '@nestjs/common';
+import { type BeforeApplicationShutdown, Injectable } from '@nestjs/common';
 import { Subject, type Observable } from 'rxjs';
 
 export type TelemetryEvent =
@@ -40,7 +40,7 @@ export const ATLAS_EVENTS_VERSION = 1;
 export type StampedEvent = TelemetryEvent & { v: number; at: string };
 
 @Injectable()
-export class TelemetryService {
+export class TelemetryService implements BeforeApplicationShutdown {
   private readonly bus = new Subject<StampedEvent>();
 
   private workId = 0;
@@ -58,6 +58,15 @@ export class TelemetryService {
     } finally {
       this.emit({ type: 'work.finished', ownerId, op, id, ms: Date.now() - t0 });
     }
+  }
+
+  /**
+   * Ends the open streams before the HTTP server closes: an SSE connection never ends by itself, so the server would
+   * wait for it forever and the queue workers (closed after it) would keep running in a process that no longer
+   * listens.
+   */
+  beforeApplicationShutdown(): void {
+    this.bus.complete();
   }
 
   get events(): Observable<StampedEvent> {
