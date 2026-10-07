@@ -32,6 +32,8 @@ export interface RawSearchOptions {
   /** The conversation the recall is served in: its current turn (what came after the last assistant reply — usually
    * the question being answered) is not an excerpt worth returning. */
   conversationId?: string;
+  /** Only messages written by these people (folded first names of other participants): "what did Kevin ask you?". */
+  authors?: string[];
 }
 
 const RRF_K = 60;
@@ -54,7 +56,10 @@ export class RawLogSearchService {
       AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.owner_id = $1 AND m.id = ANY(t.message_ids))
       AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}
       ${opts.conversationId ? `AND NOT (m.conversation_id = $${params.push(opts.conversationId)} AND m.sent_at > COALESCE(
-        (SELECT max(a.sent_at) FROM messages a WHERE a.conversation_id = $${params.length} AND a.role = 'assistant'), '-infinity'::timestamptz))` : ''}`;
+        (SELECT max(a.sent_at) FROM messages a WHERE a.conversation_id = $${params.length} AND a.role = 'assistant'), '-infinity'::timestamptz))` : ''}
+      ${opts.authors?.length ? `AND m.role = 'other' AND EXISTS (SELECT 1 FROM conversation_participants ap
+        WHERE ap.conversation_id = m.conversation_id AND ap.ref = m.author_ref
+          AND lower(split_part(ap.display_name, ' ', 1)) = ANY($${params.push(opts.authors)}))` : ''}`;
 
     const tsq = toOrTsQuery(opts.query);
     const text: { id: string }[] = tsq

@@ -5,6 +5,7 @@ import { type INestApplication } from '@nestjs/common';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { type Server } from 'node:http';
+import { DataSource } from 'typeorm';
 import { ADMIN_KEY, call, fakeVector, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
 
 async function connect(url: string, headers: Record<string, string>): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
@@ -107,6 +108,26 @@ describe('MCP endpoint', () => {
     expect(hits).toContain('Il 12 ottobre parto per il Giappone.');
     expect(hits).not.toContain('Quando parto per il Giappone?');
     await ask.client.close();
+  });
+
+  it('gives a question about someone what that person wrote (by name, or by relation from the stored people)', async () => {
+    const group = (conv: string, author: string, id: string, content: string, at: string) => call(url, 'POST', '/api/v1/ingest/messages', {
+      token: keyA, headers: { 'x-recordare-user': 'luca-a' },
+      body: { conversation: { externalId: conv, participants: [{ ref: author.toLowerCase(), role: 'other', displayName: author }] },
+        messages: [{ externalId: id, role: 'other', authorRef: author.toLowerCase(), content, sentAt: at }] },
+    });
+    await group('family', 'Gabriella', 'g1', 'Assistente, segnati che Luca a giugno viene a vivere a Cividale.', '2026-04-29T10:00:00+02:00');
+    await group('shifts', 'Kevin', 'k1', '@bot put in his calendar that he covers all my Saturdays in April', '2026-02-10T18:00:00+01:00');
+    // The extractor stores people as "Name (relation)": that is where "my mother" becomes Gabriella.
+    const db = app.get(DataSource);
+    const [ep] = await db.query(`INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience) VALUES ($1, 'event', 'Pranzo da Gabriella', 'owner_lived', 'owner', $2) RETURNING id`, [ownerId, [ownerId]]);
+    await db.query(`INSERT INTO episode_people (episode_id, alias, role) VALUES ($1, 'Gabriella (mamma)', 'with')`, [ep.id]);
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const excerpts = async (query: string) => ((await search(client, { query }))['fromChats'] as Array<{ excerpt: string; author?: string }>);
+    const mother = await excerpts('Cosa ti ha chiesto di segnare mia madre?');
+    expect(mother.find((h) => h.excerpt.includes('Cividale'))).toMatchObject({ author: 'Gabriella' });
+    expect((await excerpts('What did Kevin ask you?')).some((h) => h.excerpt.includes('Saturdays'))).toBe(true);
+    await client.close();
   });
 
   it('keeps raw chats per client (raw_log_scope = own)', async () => {
