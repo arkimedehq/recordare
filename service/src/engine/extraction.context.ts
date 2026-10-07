@@ -56,6 +56,7 @@ export interface ExtractionInput {
 
 /** Recordare's own read tools, as a client names them (possibly prefixed, e.g. `recordare_search_episodes`). */
 const MEMORY_TOOLS = '(^|[_.:-])(search_episodes|search_memory|search_facts|resolve_period)$';
+export const isMemoryTool = (name: string | null): boolean => !!name && new RegExp(MEMORY_TOOLS).test(name);
 
 /** Pending messages of a conversation, oldest first, split into windows of bounded size. */
 export async function pendingWindows(tx: EntityManager, conversationId: string, maxChars: number): Promise<WindowMessage[][]> {
