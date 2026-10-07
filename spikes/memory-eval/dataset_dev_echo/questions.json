@@ -1,0 +1,97 @@
+{
+ "_note": "Recall-echo dev set (NOT blind). Asked after all sessions.",
+ "user": "marta",
+ "questions": [
+  {
+   "id": "x01",
+   "category": "echo-count",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Quante volte sono andata sul Monte Cimone quest'anno?",
+   "expected": "Una volta: sabato 28 febbraio 2026 con Luca.",
+   "must_not": [
+    "dire due o più volte",
+    "indicare il 10 marzo o il 18 marzo come date di camminate"
+   ]
+  },
+  {
+   "id": "x02",
+   "category": "echo-wrong-corrected",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Con chi sono andata al cinema a vedere Dune, e quando?",
+   "expected": "Con Sara, giovedì 5 marzo 2026.",
+   "must_not": [
+    "Giulia",
+    "6 marzo",
+    "Oppenheimer come film visto"
+   ]
+  },
+  {
+   "id": "x03",
+   "category": "echo-wrong-corrected",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Sono mai andata al cinema con Giulia?",
+   "expected": "No: l'assistente l'aveva detto per errore e Marta l'ha corretto; al cinema (Dune, 5 marzo) era con Sara.",
+   "must_not": [
+    "affermare che Marta è andata al cinema con Giulia"
+   ]
+  },
+  {
+   "id": "x04",
+   "category": "echo-wrong-uncorrected",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Come si chiama il mio dentista?",
+   "expected": "Il dottor Bianchi.",
+   "must_not": [
+    "Rossi",
+    "via Emilia"
+   ]
+  },
+  {
+   "id": "x05",
+   "category": "echo-new-detail",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Cosa abbiamo visto sul Cimone vicino alla vetta?",
+   "expected": "Un branco di camosci.",
+   "must_not": []
+  },
+  {
+   "id": "x06",
+   "category": "assistant-accepted",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Cosa ho in programma sabato sera?",
+   "expected": "Cena con i genitori alla Trattoria Aldina a Modena, sabato 21 marzo alle 20.",
+   "must_not": [
+    "Osteria Francescana come prenotazione"
+   ]
+  },
+  {
+   "id": "x07",
+   "category": "echo-count",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Quando sono andata al cinema l'ultima volta?",
+   "expected": "Giovedì 5 marzo 2026, con Sara (Dune).",
+   "must_not": [
+    "6 marzo",
+    "15 marzo"
+   ]
+  },
+  {
+   "id": "x08",
+   "category": "negative",
+   "asked_at": "2026-03-20T10:00:00+01:00",
+   "q": "Sono andata dal dentista Rossi?",
+   "expected": "No: il dentista di Marta è il dottor Bianchi (pulizia dei denti il 3 marzo); il nome Rossi era un errore dell'assistente.",
+   "must_not": [
+    "affermare una visita dal dottor Rossi"
+   ]
+  },
+  {
+   "id": "x09",
+   "category": "tool-news-with-recall",
+   "asked_at": "2026-03-24T21:00:00+01:00",
+   "q": "A che ora parte l'autobus che prendo domani, e da dove?",
+   "expected": "Alle 6:45, l'autobus AST per Catania da Piazza Cairoli a Messina (per andare dalla sorella Lucia).",
+   "must_not": []
+  }
+ ]
+}

@@ -293,3 +293,7 @@ months, 232 sessions ≈ 1 M input tokens, two thirds cached). Rules:
 6. **Judge without reasoning** once re-validated against the current judge (`judge_eval.py`): ~4× fewer output tokens.
 7. Every chain is `--resume`-able and ordered by priority, so a stopped chain (balance, outage) keeps what it paid for.
 8. Before a large chain, state its expected token budget and check the provider balance.
+9. **One service instance per queue** (2026-10-07): before a run, check that only the intended service consumes the
+   queue (a half-stopped instance kept extracting with old code); compare versions side by side with separate ports
+   and `QUEUE_PREFIX`es. After a run, check that its extractions carry a single prompt version
+   (`extraction_runs.prompt_version`) — a mixed run is discarded.

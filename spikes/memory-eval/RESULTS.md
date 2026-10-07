@@ -354,6 +354,35 @@ extraction issue to fix independently (plan patches should need matching evidenc
 (dashboard "sleep", next M5 steps); the diary in recall is a quality-profile knob (`recallDigests`, `RECALL_DIGESTS`),
 **off by default** until a version shows a gain.
 
+### Recall echoes (2026-10-07, dev set `dataset_dev_echo` — NOT blind, written by the engine developer; `echo_runs.sh`)
+
+In a live Arkimede test the assistant's answers from memory are ingested like any reply. Risk: a recall becomes a new
+memory, a wrong one confirmed by a plain "ok". Dev set: 9 sessions / 9 questions — a correct recall confirmed, a wrong
+recall corrected, a wrong recall left uncorrected ("your dentist is Dr Rossi" → "Ok", the real one is Bianchi), a recall
+the owner completes with a new detail, an accepted recommendation, and a recall plus a web search in the same turn (bus
+times). Measured with one service per version (separate ports and queue prefixes), 3 runs each:
+
+| Version | Runs | Accuracy | Memory |
+|---|---|---|---|
+| no guard (extract.v6) | 3 | 79 % (75 / 87.5 / 75) | "dentist = Dr Rossi" in 3/3 runs |
+| prompt rule + "answering from memory" label (extract.v7) | 1, contaminated (see below) | — | dropped: the label made the recall look authoritative |
+| guard v1 (names said only in a reply answering from memory) | 3 | 96 % | dentist right; the bus plan lost in 1/3 (news from the web dropped) |
+| guard v2 (+ non-memory tool output counts as a source) | 3 | 96 % | bus kept 3/3; "dentist unknown" in 1/3 (a fact change from a question + echo) |
+| **guard v3** (+ a fact change needs an asserting sentence about it) | 3 | **100 %** (3/3) | dentist Bianchi 3/3, bus 3/3, camosci 3/3 |
+
+The guard is code, the prompt is unchanged; it acts only when a reply answers from memory (a Recordare read tool in the
+turn, or a recall served in that conversation): the blind sets have neither (no tool messages; evaluation recalls use a
+personal token without a conversation), so their behaviour is unchanged by construction.
+
+**Contamination found and fixed.** A stopped service instance kept consuming the extraction queue with old code (an
+open telemetry SSE stream kept its HTTP server closing forever, so its queue workers never stopped). Fixed in the
+service (streams end before shutdown, hard exit after 30 s) and in the method (evaluation budget rule 9). Affected:
+the v7 echo run above (discarded) and **run 1 of the plan-evidence measurement** below (6 of 60 extractions by an older
+instance). Corrected plan-evidence numbers: clean runs 2 and 3 = 92.9 / 90.1 % (mean 91.5 %, conclusion unchanged);
+the extraction scores reported from run 1 are replaced by run 2's: **plan outcome 0.77** (not 1.00), episode recall
+0.97, dates 0.97, unsupported 7.6 %, facts current 0.77, notes 0.79 — so the plan-outcome gain is not shown on this
+set; the fix stays for the verified errors it removes.
+
 ### Plan patches need evidence about the plan (2026-10-08, blind5 base, 3 runs, `pev_runs.sh`)
 
 Diagnosis on the non-blind sets (blind3 / 4 / 6, 228 distinct plan patches): plans closed by unrelated messages (a
@@ -364,8 +393,8 @@ as "cancelled". Fix: a patch needs evidence sharing a name / place / keyword wit
 reschedule is ignored, a moved plan always carries the new date in its text; `extract.v6` (cancel only when the plan
 will not happen, a bad outcome is a confirm). Result: **91.3 %** (90.8 / 92.9 / 90.1) vs m5off **89.9 %** — paired
 +1.5 pt [−2.1, +5.4], within noise, no regression; rescheduled plans +0.22, unresolved −0.22, 4 questions changed
-(2 up, 2 down). Extraction (run 1): **plan outcome 1.00** (was 0.92), episode recall 0.97, dates 0.97, unsupported
-8.7 %, facts / notes unchanged. Kept.
+(2 up, 2 down). ~~Extraction (run 1): plan outcome 1.00~~ — run 1 was contaminated (see "Recall echoes" above); run 2:
+plan outcome 0.77, episode recall 0.97, dates 0.97, unsupported 7.6 %. Kept.
 
 Per-stage extraction against gold (`extraction_eval.py`, after fixing the scorer — see below):
 
