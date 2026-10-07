@@ -1,0 +1,24 @@
+# Recordare — co-hosted with Arkimede (docs/DEPLOYMENT.md): only the service; Postgres (own database + user), Redis
+# (own logical database) and the bge-m3 embedder are Arkimede's, reached by name on Arkimede's network.
+# Use deploy/install.sh (it writes deploy/.env with ARKIMEDE_NETWORK).
+name: recordare
+
+services:
+  recordare:
+    build: { context: ../service, dockerfile: Dockerfile }
+    env_file: .env
+    restart: unless-stopped
+    networks: [arkimede]
+    ports: ["${RECORDARE_BIND:-127.0.0.1}:${RECORDARE_PORT:-8090}:8080"]
+    mem_limit: ${RECORDARE_MEM_LIMIT:-768m}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+networks:
+  arkimede:
+    external: true
+    name: ${ARKIMEDE_NETWORK:?run deploy/install.sh}

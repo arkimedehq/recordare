@@ -9,6 +9,25 @@ Recordare needs:
 - an **OpenAI-compatible embedding endpoint** (`/v1/embeddings`), the model fixed per installation (`EMBEDDING_DIM`);
 - an LLM provider (D27).
 
+## Install with the scripts (`deploy/`)
+
+```sh
+deploy/install.sh            # asks the profile (standalone | cohosted), the LLM provider and key; writes deploy/.env (600)
+deploy/update.sh             # backup, rebuild on the current code, restart (migrations run at start)
+deploy/backup.sh             # dump of Recordare's database into deploy/backups/ (keeps the last 14)
+```
+
+- **Standalone**: `deploy/docker-compose.yml` — Recordare, Postgres (pgvector), Redis and Hugging Face
+  text-embeddings-inference (Apache-2.0) serving BAAI/bge-m3 (CPU image per architecture).
+- **Co-hosted with Arkimede**: `deploy/docker-compose.cohosted.yml` — the installer finds Arkimede's stack, checks its
+  Postgres runs the pgvector image and its embedder serves bge-m3, creates the `recordare` database, user and `vector`
+  extension, uses Redis db 1, joins the network those services share, then (optionally) creates Arkimede's client and
+  writes `RECORDARE_URL` / `RECORDARE_API_KEY` into Arkimede's `.env` (backed up); restart Arkimede's backend after.
+- Non-interactive: `deploy/install.sh --profile cohosted --yes` with `LLM_API_KEY_FILE=…` (the key never on the command
+  line). Re-running keeps the secrets already in `deploy/.env`. The scripts never ask for sudo.
+- Recordare listens on `127.0.0.1:8090` on the host (`RECORDARE_PORT`); Arkimede reaches it by name
+  (`http://recordare:8080`) on the shared network.
+
 ## Standalone (default)
 
 Recordare runs its own Postgres (pgvector image), Redis and embedding server. The right choice wherever resources

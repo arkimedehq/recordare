@@ -13,3 +13,6 @@ spikes/**/results/
 # Claude Code personal settings
 .claude/settings.local.json
 spikes/**/memobase/config.yaml
+deploy/.env
+deploy/.env.bak-*
+deploy/backups/
