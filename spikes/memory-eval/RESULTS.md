@@ -354,6 +354,23 @@ extraction issue to fix independently (plan patches should need matching evidenc
 (dashboard "sleep", next M5 steps); the diary in recall is a quality-profile knob (`recallDigests`, `RECALL_DIGESTS`),
 **off by default** until a version shows a gain.
 
+### People-aware recall (2026-10-07, `people_runs.sh`, base, one service instance, single prompt version per run)
+
+Diagnosis on blind6's "messages addressed to the assistant by others" (0.25 for the service and D; category read, so
+no longer blind): the right messages never reached the context — "what did Kevin ask you to put in my calendar?" got
+three of the owner's own excerpts, and "what did my mother ask you to note?" cannot match a message signed "Gabriella"
+that never says "mother". Change (no LLM call): when a question names someone — by name, or by relation resolved from
+the people the extractor stores as "Name (relation)" ("Gabriella (mamma)"), IT / EN relation words, relations matching
+more than 3 people ignored — recall adds up to 3 of that person's own chat messages, ranked by the question.
+
+- **blind6, 1 run: assistant-addressed 0.25 → 0.62** (Kevin right, Fabio partial); total 81.1 % vs 85.6 % of the last
+  full run — the other changed questions name nobody (the change is inactive there: extraction variance), except
+  f16 where the person leg brought Hannah's correct message and the judge faulted a secondary date.
+- **blind5, 3 runs: 90.7 %** (92.4 / 89.7 / 90.1) vs the clean plan-evidence runs (92.9 / 90.1): paired −0.9 pt
+  [−3.6, +1.6] on 86 questions, within noise; the only large change (e70) names nobody.
+
+Kept.
+
 ### Recall echoes (2026-10-07, dev set `dataset_dev_echo` — NOT blind, written by the engine developer; `echo_runs.sh`)
 
 In a live Arkimede test the assistant's answers from memory are ingested like any reply. Risk: a recall becomes a new
