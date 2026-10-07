@@ -88,6 +88,14 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 - Evaluation of the service (rule 9, D46): one service instance per queue (separate ports + `QUEUE_PREFIX` to compare
   versions); a run whose extractions carry more than one `extraction_runs.prompt_version` is discarded.
 
+## Client library (`packages/client`)
+- `@arkimedehq/recordare-client` (WORK_PLAN 6.7): the one client every platform uses, built on standards (official MCP
+  SDK, RFC 9457, Retry-After, W3C trace context); no host-specific code. Checks: `npm run typecheck`, `npm test` in
+  `packages/client`; the conformance suite runs it against the service (`service/test/conformance`, needs `npm ci` in
+  `packages/client` first).
+- Arkimede uses a synced copy (`packages/client/scripts/sync-to.sh ../personalAgent/backend/src/recordare/client`):
+  never edit the copy; change the library, sync, commit in both repos.
+
 ## Related repos
 - `~/Development/recordare-atlas` (`arkimedehq/recordare-atlas`) — optional live brain view (D42).
 - `~/Development/talkiosk` — home voice device talking to Arkimede, continuous listening into each person's memory
@@ -106,5 +114,5 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md` (M6 status line): Recordare co-hosted with Arkimede on Kinox (`docs/DEPLOYMENT.md`) →
-6.7 client library `packages/client` + conformance suite → 6.6 connectors → 5.7 ideas (each measured).
+Follow `docs/WORK_PLAN.md` (M6 status line): 6.6 connectors (on `packages/client`) → 5.7 ideas (each measured) → 4.7 read
+API → 4.8 fresh blind dataset (and a blind entity-memory set).
