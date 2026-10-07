@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import {
-  type IngestRequest, type IngestResult, MAX_MESSAGES_PER_REQUEST, type Me, type MeSettings,
+  CONVERSATION_HEADER, type IngestRequest, type IngestResult, MAX_MESSAGES_PER_REQUEST, type Me, type MeSettings, type MemoryContext,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
@@ -63,6 +63,15 @@ export class RecordareClient {
       total.stored &&= part.stored;
     }
     return total;
+  }
+
+  /**
+   * The memories relevant to `query` (the message about to be answered) as a fenced block to append to the prompt — or
+   * null. Append it at the end of the system prompt (it changes every turn: keep the stable part first for prompt
+   * caching); never store it as a chat message.
+   */
+  context(user: string, conversation: string, query: string): Promise<MemoryContext> {
+    return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { query }, headers: { [CONVERSATION_HEADER]: conversation } });
   }
 
   /** An edited message: Recordare re-extracts what depended on it. */

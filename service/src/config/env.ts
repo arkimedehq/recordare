@@ -51,6 +51,8 @@ const baseSchema = z.object({
   CONSOLIDATION_SCHEDULE: bool.default(true),
   /** Give the nightly diary to period overviews in recall; set = overrides the quality profile (measured: no gain yet). */
   RECALL_DIGESTS: bool.optional(),
+  /** Installation override of the quality profile's pre-turn memory context (WORK_PLAN 5.7). */
+  MEMORY_CONTEXT: bool.optional(),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
   /** Local hour (owner's timezone) after which the nightly consolidation runs (M5). */

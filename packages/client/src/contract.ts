@@ -97,6 +97,13 @@ export interface IngestResult {
   stored: boolean;
 }
 
+/** `POST api/v1/context`: the memories relevant to the message a host is about to answer (WORK_PLAN 5.7). */
+export interface MemoryContext {
+  /** A fenced `<memory-context>` block to append to the prompt, or null (nothing relevant, not owner-only, or off). */
+  block: string | null;
+  items: number;
+}
+
 /**
  * Cuts text to at most `maxBytes` UTF-8 bytes without splitting a character, ending with `marker` so a reader (and the
  * memory engine) knows the text was cut. The marker counts within the limit.
