@@ -401,6 +401,29 @@ more than 3 people ignored — recall adds up to 3 of that person's own chat mes
 
 Kept.
 
+### Pre-turn memory context (WORK_PLAN 5.7, 2026-10-07, dev set `dataset_dev_context` — NOT blind, written by the engine developer)
+
+`agent_eval.py`: the answer model is an **agent** (DeepSeek `deepseek-flash`, function calling) with Recordare's read
+tools over MCP and a neutral system prompt; it decides by itself whether to call them. Variant `tools+context` adds the
+`<memory-context>` block (`POST api/v1/context`, MEMORY_CONTEXT=1) to the system prompt. 15 questions: 7 where memory
+helps but is not asked for (ctx), 2 explicit recalls (rec), 6 with nothing to do with memory (gen, no-harm). 1 run.
+
+| Variant | All | ctx (implicit) | rec | gen (no-harm) | Tool use | Block served |
+|---|---|---|---|---|---|---|
+| tools | 93.3 % | 0.857 | 1.00 | 1.00 | 9 / 15 | — |
+| tools+context | **100 %** | **1.00** | 1.00 | 1.00 | 9 / 15 | 7 / 15 |
+
+- Gains on 2 questions (ctx02 a vegetarian, shellfish-free dish; ctx05 red wine for Luca and something alcohol-free for
+  Sara): partial → correct. No harm: no block was served for any gen question (the thresholds kept them empty), and the
+  answers stayed correct.
+- The expected main benefit did **not** show with this model: DeepSeek flash called the memory tools on every personal
+  question even without the block (tool use 9 / 15 in both variants, all the personal ones), so the block added
+  completeness, not recall that would otherwise be missing; it did not save tool calls either.
+- Misses of the block: ctx01 (gift for the sister) and ctx03 (headache → no ibuprofen) got no block — the memories sit
+  below the 0.5 / 0.55 similarity floors for those phrasings.
+- Within noise on 15 questions; stays **off by default**. Next: the same run with a less tool-eager model (where the
+  benefit is expected), and a blind set before any default change.
+
 ### Entity memory (D48, 2026-10-07, dev set `dataset_dev_entity` — NOT blind, written by the engine developer)
 
 One shared home device (owner `casa`, kind `entity`), 5 sessions, 11 questions: purchases and facts of named family
