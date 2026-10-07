@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright © 2026 Andrea Genovese
+
+/**
+ * People named by a question, by name ("what did Kevin ask you?") or by relation ("what did my mother ask you?").
+ * No LLM call: the owner's people come from what the engine already stored — episode people written as
+ * "Name (relation)" by the extractor, and the participants of the owner's chats. A relation resolves only when it
+ * points to a few people (a word like "friend" that matches many is left alone).
+ */
+import { type DataSource } from 'typeorm';
+
+/** Relation words, IT / EN; each group is one relation. */
+const RELATIONS: string[][] = [
+  ['madre', 'mamma', 'mother', 'mom', 'mum'],
+  ['padre', 'papà', 'papa', 'babbo', 'father', 'dad'],
+  ['sorella', 'sister'], ['fratello', 'brother'],
+  ['moglie', 'wife'], ['marito', 'husband'],
+  ['compagno', 'compagna', 'fidanzato', 'fidanzata', 'partner', 'boyfriend', 'girlfriend'],
+  ['figlio', 'son'], ['figlia', 'daughter'],
+  ['nonno', 'nonna', 'grandfather', 'grandmother', 'grandpa', 'grandma'],
+  ['zio', 'zia', 'uncle', 'aunt'], ['cugino', 'cugina', 'cousin'],
+  ['nipote', 'nephew', 'niece', 'grandson', 'granddaughter'],
+  ['suocero', 'suocera', 'cognato', 'cognata'],
+  ['collega', 'colleghi', 'colleague', 'coworker'],
+  ['capo', 'boss'], ['amico', 'amica', 'friend'],
+];
+/** A relation naming more people than this is too vague to narrow anything. */
+const MAX_PER_RELATION = 3;
+
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const tokens = (s: string) => fold(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+
+/** First names (folded) of the people a question is about; empty when it names none. */
+export async function peopleInQuestion(db: DataSource, ownerId: string, question: string): Promise<string[]> {
+  const asked = new Set(tokens(question));
+  if (asked.size === 0) return [];
+  const rows: Array<{ name: string }> = await db.query(
+    `SELECT DISTINCT ep.alias AS name FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id
+     WHERE e.owner_id = $1 AND e.deleted_at IS NULL
+     UNION SELECT DISTINCT cp.display_name FROM conversation_participants cp JOIN conversations c ON c.id = cp.conversation_id
+     WHERE c.owner_id = $1 AND cp.display_name IS NOT NULL
+     LIMIT 5000`, [ownerId]);
+  const found = new Set<string>();
+  const byRelation = new Map<number, Set<string>>();
+  for (const { name } of rows) {
+    const [who = '', rel = ''] = name.split('(');
+    const first = tokens(who)[0];
+    if (!first || first.length < 3) continue;
+    if (asked.has(first)) found.add(first);
+    const relWords = new Set(tokens(rel));
+    RELATIONS.forEach((group, i) => {
+      if (group.some((w) => relWords.has(fold(w)))) (byRelation.get(i) ?? byRelation.set(i, new Set()).get(i)!).add(first);
+    });
+  }
+  RELATIONS.forEach((group, i) => {
+    const names = byRelation.get(i);
+    if (names && names.size <= MAX_PER_RELATION && group.some((w) => asked.has(fold(w)))) names.forEach((n) => found.add(n));
+  });
+  return [...found];
+}

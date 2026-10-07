@@ -18,6 +18,7 @@ import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { logRecall } from './recall-log';
+import { peopleInQuestion } from './people';
 
 export interface EpisodeSearchArgs {
   /** The conversation the recall is served in (recall log: lets the extractor recognise answers from memory). */
@@ -76,6 +77,8 @@ const CANDIDATES = 60;
 const MIN_VECTOR_SIMILARITY = 0.35;
 const FALLBACK_BELOW = 3;
 const RAW_HITS = 3;
+/** Extra chat excerpts written by the people a question names (by name or relation). */
+const PEOPLE_HITS = 3;
 /** Periods up to this many days get the day diary; longer ones the month summaries. */
 const DIGEST_DAY_SPAN = 45;
 
@@ -184,7 +187,13 @@ export class EpisodeSearchService {
       const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? Math.max(RAW_HITS, profile.rawHitsAlongside) : profile.rawHitsAlongside;
       const hits = await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit,
         conversationId: args.conversationId });
-      result.fromChats = hits.map(({ score: _s, ...h }) => h);
+      // A question about someone ("what did my mother ask you?") also gets what that person wrote in the owner's chats:
+      // their words rarely contain the relation or the question's terms.
+      const people = await peopleInQuestion(this.db, ownerId, args.query);
+      const theirs = people.length ? await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined,
+        to: to ?? undefined, limit: PEOPLE_HITS, conversationId: args.conversationId, authors: people }) : [];
+      const seen = new Set(hits.map((h) => h.messageId));
+      result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId))].map(({ score: _s, ...h }) => h);
       if (result.fromChats.some((h) => h.authorRole !== 'owner')) {
         result.notes.push(locale === 'it'
           ? 'gli estratti scritti da altri (author) sono parole loro: ciò che dicono del proprietario non è confermato'
