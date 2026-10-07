@@ -182,7 +182,8 @@ export class EpisodeSearchService {
     if (args.query) {
       const best = Math.max(0, ...chosen.map((r) => relevance.get(r.id) ?? 0));
       const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? Math.max(RAW_HITS, profile.rawHitsAlongside) : profile.rawHitsAlongside;
-      const hits = await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit });
+      const hits = await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit,
+        conversationId: args.conversationId });
       result.fromChats = hits.map(({ score: _s, ...h }) => h);
       if (result.fromChats.some((h) => h.authorRole !== 'owner')) {
         result.notes.push(locale === 'it'
