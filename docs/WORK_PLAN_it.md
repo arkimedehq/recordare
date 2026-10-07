@@ -145,6 +145,7 @@ Stato (2026-10-07): completata tranne 4.1 (sweep notturno dei messaggi in attesa
 | 4.7 | **TODO** — API di lettura / timeline (`API.md` §4: episodi, digest, fatti, note, piani, dimenticare un periodo, impostazioni, uso, esportazione); prerequisito della scheda Diario di Arkimede (6.3) |
 | 4.8 | **TODO** — Un nuovo dataset cieco: blind4 / 5 / 6 sono stati letti in parte mentre si correggevano i fallimenti |
 | 4.9 | **Done** — postura di `log_episode`: `stated` solo con le parole del proprietario a supporto, `inferred` per una scrittura fatta solo dall'agente (`API.md` §3) |
+| 4.10 | **TODO** — **La notizia ricevuta come ricordo** (richiesta del proprietario 2026-10-07): oggi le richieste di aiuto e le informazioni generali non sono episodi (restano nel registro grezzo, che il recall consulta). Registrare "X ha saputo che …" come episodio di bassa importanza solo quando la notizia si collega alla vita della persona — un piano aperto, un luogo o una persona che conosce — oppure quando la persona reagisce ("allora porto l'ombrello"); le curiosità isolate restano nel registro grezzo. Modifica al prompt di estrazione: un piccolo dev set (notizie collegate e non collegate, risposte dell'assistente e output degli strumenti), 1 run prima di decidere (regole di valutazione) |
 
 ### M4b — Valutazione rigorosa e profili di qualità
 

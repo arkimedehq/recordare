@@ -143,6 +143,7 @@ Status (2026-10-07): done except 4.1 (nightly sweep of pending messages TODO), 4
 | 4.7 | **TODO** — Read / timeline API (`API.md` §4: episodes, digests, facts, notes, plans, forget a period, settings, usage, export); prerequisite of the Arkimede Diary tab (6.3) |
 | 4.8 | **TODO** — A fresh blind dataset: blind4 / 5 / 6 have been partly read while fixing failures |
 | 4.9 | **Done** — `log_episode` stance: `stated` only with the owner's own words behind it, `inferred` for an agent-only write (`API.md` §3) |
+| 4.10 | **TODO** — **News received as a memory** (owner's request 2026-10-07): today help requests and general information are not episodes (they stay in the raw log, which recall searches). Record "X learned that …" as a low-importance episode only when the news links to the person's life — an open plan, a place or a person they know — or when they react to it ("then I'll take the umbrella"); stray trivia stays in the raw log. Extraction prompt change: a small dev set (linked vs unlinked news, assistant answers and tool output), 1 run before deciding (evaluation rules) |
 
 ### M4b — Rigorous evaluation and quality profiles
 
