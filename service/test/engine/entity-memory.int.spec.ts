@@ -20,7 +20,7 @@ describe('entity memory (D48)', () => {
     llm = await startFakeLlm();
     const fake = await startFakeEmbeddings();
     emb = fake.server;
-    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600' });
+    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, IDLE_DELAY_SECONDS: '3600', ATLAS_URL: 'http://atlas.test:5175' });
     await resetSchema();
     ({ app, url } = await startApp());
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
@@ -99,6 +99,20 @@ describe('entity memory (D48)', () => {
     expect(req?.messages[1]?.content).toContain(' owner: Ho comprato');
     expect(await app.get(DataSource).query(`SELECT subject_person_id, value FROM facts WHERE owner_id = $1`, [luca]))
       .toEqual([{ subject_person_id: null, value: 'VW Golf' }]);
+  });
+
+  it('lets the person choose the kind on their platform while the memory is empty, and tells the atlas address', async () => {
+    await owner('tablet');
+    const me = () => call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'tablet' } });
+    const set = (body: object) => call(url, 'PATCH', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'tablet' }, body });
+    expect((await me()).body).toMatchObject({ kind: 'human', atlasUrl: 'http://atlas.test:5175' });
+    expect((await set({ kind: 'entity', displayName: 'Tablet cucina' })).status).toBe(204);
+    expect((await me()).body).toMatchObject({ kind: 'entity', displayName: 'Tablet cucina' });
+    await extract('tablet', 't1', 'Le chiavi di scorta sono nel cassetto blu.', {
+      facts: [{ key: 'spare_keys_location', value: 'cassetto blu', verdict: 'new', subject: null, evidence: [1] }] });
+    expect((await set({ kind: 'human' })).status).toBe(409); // shared memories would mix with one person's
+    expect((await set({ kind: 'entity' })).status).toBe(204); // unchanged kind: fine
+    expect((await me()).body.kind).toBe('entity');
   });
 
   it('renames an owner and turns it into an entity from the admin API', async () => {

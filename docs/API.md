@@ -41,7 +41,7 @@ personal tokens and identity bindings are managed through the admin API or an ow
 there are no owner pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, owner's timezone); `POST api/v1/admin/owners/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/owners/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation). Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
 `PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set). The same
 routes take `kind` `human | entity` (D48: an **entity memory**, shared by everyone using the account — a home device,
-a robot, a place) and `PATCH` takes `displayName` (the admin's rename; a client's rename is TODO, WORK_PLAN 6.8).
+a robot, a place) and `PATCH` takes `displayName` (a client's later sync of its user's name overwrites it: the name follows the platform).
 
 **Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
 OIDC later). The owner session is needed for: giving consent (`episodicEnabled`), creating link
@@ -294,8 +294,8 @@ The same pages are served by Recordare itself for owners without a host UI.
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | `episodicEnabled`, locale, timezone |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
-| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, kind, episodicEnabled, via, scopes}` (`kind` `entity` = a shared memory: the client tells its users so) (`episodicEnabled` = the owner's consent: until it is given, ingest stores nothing) (with a client key: the person behind `X-Recordare-User`, auto-provisioned if the client allows it) |
-| `PATCH api/v1/me {displayName}` | ingest (client key) | Names a person the client created — only while the name is still the client's user id (auto-provisioning default); after the admin or the owner renamed them → 403 |
+| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, kind, episodicEnabled, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`kind` `entity` = a shared memory: the client tells its users so) (`episodicEnabled` = the owner's consent: until it is given, ingest stores nothing) (with a client key: the person behind `X-Recordare-User`, auto-provisioned if the client allows it) |
+| `PATCH api/v1/me {displayName?, kind?}` | ingest (client key) | The person's settings from their platform: the name follows the client's user (sync on every rename); `kind` `human \| entity` (D48) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it). Consent is never set here |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
 
 ## 5. SDK (task 1.6) — not built yet (v1 plan)

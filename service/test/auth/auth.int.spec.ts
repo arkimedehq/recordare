@@ -73,12 +73,14 @@ describe('auth and admin (v1 home / research profile)', () => {
     expect(first.body.displayName).toBe('new-user'); // named after the client's id until named
     expect(first.body.episodicEnabled).toBe(false); // consent belongs to the admin / the owner, never to the client
 
-    // The client may name a person it created, once; after the admin renamed them it may not.
+    // The client names a person it created and keeps the name in sync with its user's profile.
     const ingestKey = await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } });
     const name = (displayName: string) => call(url, 'PATCH', '/api/v1/me', { token: ingestKey.body.key, headers: { 'x-recordare-user': 'new-user' }, body: { displayName } });
+    const shown = async () => (await call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' } })).body.displayName;
     expect((await name('Andrea')).status).toBe(204);
-    expect((await call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' } })).body.displayName).toBe('Andrea');
-    expect((await name('Second name')).status).toBe(403);
+    expect(await shown()).toBe('Andrea');
+    expect((await name('Andrea G.')).status).toBe(204); // the user renamed their profile on the platform
+    expect(await shown()).toBe('Andrea G.');
     expect((await call(url, 'PATCH', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' }, body: { displayName: 'x' } })).status).toBe(403); // scope
 
     // Concurrent first contact resolves to one owner, no 500.

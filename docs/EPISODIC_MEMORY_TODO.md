@@ -535,6 +535,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - TODO (later): stronger identification so the most intimate memories in an entity memory are readable only by the
   person they belong to — then the entity can be a home robot everyone confides in (vision direction G). A client's
   rename of its user propagates to Recordare (WORK_PLAN 6.8).
+- Owner's follow-up (2026-10-07): the **person chooses the kind on their platform** (Arkimede's memory settings →
+  `PATCH /me {kind}`), only while the memory is empty; the **name always follows the platform's profile** (a client's
+  sync overwrites an admin rename); consent stays with the Recordare admin.
 
 ## Open questions (to discuss)
 
