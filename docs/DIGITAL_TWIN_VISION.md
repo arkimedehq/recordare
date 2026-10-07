@@ -250,6 +250,10 @@ with each person; always `inferred` and traceable to the memories behind it, as 
 default design (every family member has their own twin; the agent reads the memory of whoever is speaking): both can
 coexist on the same installation.
 
+**First step built (D48, 2026-10-07): entity memory** — an owner of kind `entity` (a shared device, a robot, a
+place) that everyone using it reads and writes; identification only says whose a memory is; facts carry the person
+they are about. Disclosure inside it (intimate items for their person only) comes later.
+
 What works already: episodes with dates, plans, corrections, provenance; nightly consolidation; verified persons;
 others' claims kept apart. What changes:
 1. **Who speaks in the first person** — today the owner writes as the user and the assistant is someone else; for an

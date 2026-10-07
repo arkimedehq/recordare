@@ -25,7 +25,7 @@ import psycopg
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 
-from evalkit.common import chat, fmt_when
+from evalkit.common import DATASET, chat, fmt_when
 from systems.d_sys import PLAN_SYSTEM as D_PLAN_SYSTEM, calendar
 
 # The agent knows the service's tools, including mode "latest" (see the search_episodes description).
@@ -50,6 +50,9 @@ class ServiceSystem:
         self.client_id = client["id"]
         self.key = self._post(f"/api/v1/admin/clients/{self.client_id}/keys", {"scopes": ["ingest", "mcp", "read"]})["key"]
         self.owners: dict[str, dict] = {}
+        # Entity memories (D48): owners the dataset marks as an entity (a shared device everyone talks to).
+        conv = DATASET / "conversations.json"
+        self.entities = set(json.loads(conv.read_text()).get("entities", [])) if conv.exists() else set()
 
     def _post(self, path: str, body: dict, token: str | None = None, headers: dict | None = None) -> dict:
         h = {**({"authorization": f"Bearer {token}"} if token else {}), **(headers or {})}
@@ -59,7 +62,8 @@ class ServiceSystem:
 
     def _owner(self, user: str) -> dict:
         if user not in self.owners:
-            o = self._post("/api/v1/admin/owners", {"displayName": user.capitalize(), "episodicEnabled": True})
+            o = self._post("/api/v1/admin/owners", {"displayName": user.capitalize(), "episodicEnabled": True,
+                                                    **({"kind": "entity"} if user in self.entities else {})})
             ext = f"{user}-{self.run}"
             self._post("/api/v1/admin/identities", {"kind": "client_user", "personId": o["personId"], "clientId": self.client_id, "externalId": ext})
             tok = self._post(f"/api/v1/admin/owners/{o['personId']}/tokens", {"clientId": self.client_id, "scopes": ["mcp"]})["token"]
@@ -222,7 +226,9 @@ def format_context(args: dict, episodes: dict, memory: dict) -> str:
         for f in memory.get("facts", []):
             hist = "; ".join(f"{h['value'] or '(sconosciuto)'} dal {h['from'] or '?'}" + (f" al {h['to']}" if h.get("to") else "") + f" [{h['status']}]"
                              for h in f.get("history", []))
-            lines.append(f"- {f['key']}: {f['value'] or '(non noto)'} — storico: {hist}")
+            # Entity memories (D48): the person the fact is about; without it, the owner's own fact.
+            about = f"[{f['about']}] " if f.get("about") else ""
+            lines.append(f"- {about}{f['key']}: {f['value'] or '(non noto)'} — storico: {hist}")
         for n in memory.get("notes", []):
             lines.append(f"- [{n['category']}] {n['content']}")
     if episodes.get("fromChats"):

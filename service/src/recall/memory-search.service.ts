@@ -24,6 +24,8 @@ export interface MemorySearchArgs {
 }
 
 export interface FactView {
+  /** Entity memories (D48): the person the fact is about; absent = the owner (or the entity itself). */
+  about?: string;
   key: string;
   value: string | null;
   status: string;
@@ -58,7 +60,7 @@ export class MemorySearchService {
 
   private async searchNow(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
     const [owner] = await this.db.query(
-      `SELECT o.timezone, o.locale, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+      `SELECT o.timezone, o.locale, p.display_name, p.kind FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     const tz: string = owner.timezone;
     const asOfDay = args.asOf ? (args.asOf.length === 7 ? `${args.asOf}-01` : args.asOf.slice(0, 10)) : null;
     const asOf = asOfDay ? zonedMidnight(addDays(asOfDay, 1), tz) : now; // end of that day
@@ -84,29 +86,37 @@ export class MemorySearchService {
       .map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, authorRole: n.author_role }));
 
     // Facts: rank slots by relevance, then report the value valid at `asOf` plus the chain.
+    // A person's memory: facts about the owner. An entity memory (D48): also those about the people who talk to it.
     const factRows: Array<{ id: string; key: string; value: string | null; status: string; valid_from: Date | null; valid_to: Date | null;
-      pending: boolean; sim: number | null; fts: boolean }> = await this.db.query(
-      `SELECT id, key, value, status, valid_from, valid_to, pending,
-              CASE WHEN $2::text IS NULL OR embedding IS NULL THEN NULL ELSE 1 - (embedding <=> $2::vector) END AS sim,
-              ($3::text <> '' AND to_tsvector('simple', key || ' ' || COALESCE(value, '')) @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
-       FROM facts WHERE owner_id = $1 AND subject_person_id IS NULL AND deleted_at IS NULL AND status <> 'corrected'
-         AND ($4::boolean OR NOT pending)
-       ORDER BY key, valid_from NULLS FIRST, recorded_at`,
-      [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
+      pending: boolean; sim: number | null; fts: boolean; about: string | null }> = await this.db.query(
+      `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, s.display_name AS about,
+              CASE WHEN $2::text IS NULL OR f.embedding IS NULL THEN NULL ELSE 1 - (f.embedding <=> $2::vector) END AS sim,
+              ($3::text <> '' AND to_tsvector('simple', COALESCE(s.display_name, '') || ' ' || f.key || ' ' || COALESCE(f.value, ''))
+                @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
+       FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
+       WHERE f.owner_id = $1 AND ($5::boolean OR f.subject_person_id IS NULL) AND f.deleted_at IS NULL AND f.status <> 'corrected'
+         AND ($4::boolean OR NOT f.pending)
+       ORDER BY f.key, f.valid_from NULLS FIRST, f.recorded_at`,
+      [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false, owner.kind === 'entity']);
+    // One slot per (person, key): Andrea's car and Marta's car are two histories.
     const byKey = new Map<string, typeof factRows>();
-    for (const f of factRows) byKey.set(f.key, [...(byKey.get(f.key) ?? []), f]);
+    for (const f of factRows) {
+      const slot = `${f.about ?? ''}\u0000${f.key}`;
+      byKey.set(slot, [...(byKey.get(slot) ?? []), f]);
+    }
     const keyScore = (rows: typeof factRows) => Math.max(...rows.map((r) => (r.sim ?? 0) + (r.fts ? 0.1 : 0)));
     const day = (d: Date | null) => (d ? localDate(d, tz) : null);
     const facts: FactView[] = [...byKey.entries()]
       .filter(([, rows]) => keyScore(rows) >= MIN_VECTOR_SIMILARITY || rows.some((r) => r.fts))
       .sort((a, b) => keyScore(b[1]) - keyScore(a[1]))
       .slice(0, limit)
-      .flatMap(([key, rows]) => {
+      .flatMap(([, rows]) => {
+        const { key, about } = rows[0] as (typeof factRows)[number];
         const valid = rows.filter((r) => (!r.valid_from || r.valid_from < asOf) && (!r.valid_to || r.valid_to >= asOf));
         const at = valid.at(-1) ?? rows.filter((r) => !r.valid_from || r.valid_from < asOf).at(-1);
         if (!at) return [];
         return [{
-          key, value: at.value, status: at.status === 'unknown_current' ? 'unknown' : at.status,
+          ...(about ? { about } : {}), key, value: at.value, status: at.status === 'unknown_current' ? 'unknown' : at.status,
           validFrom: day(at.valid_from), validTo: day(at.valid_to),
           history: rows.map((r) => ({ value: r.value, from: day(r.valid_from), to: day(r.valid_to), status: r.status })),
         }];

@@ -3,7 +3,7 @@
 Status: **implemented** (2026-10-07) in `service/` — raw log, episodes, plans, facts, notes, digests, recall tools,
 explicit writes and forgetting of one episode; open items per milestone in `WORK_PLAN.md` (M5 partial, M6 in
 progress). Engine evaluation (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D)
-beat Memobase, Graphiti and the raw baseline; D23 (approved) builds it. Decisions taken while building: D36–D47.
+beat Memobase, Graphiti and the raw baseline; D23 (approved) builds it. Decisions taken while building: D36–D48.
 
 This is **phase 1** of the digital twin vision (`DIGITAL_TWIN_VISION.md`): episodic
 memory is the foundation the twin's memory, self-model and initiative build on.
@@ -517,9 +517,28 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D47 — Voice spans act for the Wyoming user (2026-10-07)
 - Spans from Arkimede's Wyoming voice server are attributed to the configured Wyoming conversation user.
 
+### D48 — Entity memory: one memory per person, plus memories of entities (2026-10-07)
+- Problem: a family talks to one shared account (Arkimede's voice user on the satellites); its turns cannot go to any
+  person's memory, and one mixed "person" memory would turn everyone's words into facts about the account.
+- **A person's memory is written only through a secure identity**: the client's user (Arkimede's owner id or another
+  client's), bound by the admin. A self-introduction or a voiceprint never routes a turn into someone's own memory.
+- **Entity memory**: an owner can be an entity (`persons.kind = entity`) — a shared device, a home robot, a place.
+  Everyone using it reads and writes all of it, and knows it is shared (`GET /me` returns `kind`). Several entities
+  may exist (one per shared device or room).
+- Identification inside it ("sono Andrea", being addressed by name; later a voiceprint) only says **whose** a memory
+  is: episodes name the person, facts carry `subject_person_id`, notes name the person; an unidentified speaker is
+  "someone" and their personal facts are not recorded. Every conversation starts with nobody identified.
+- Code guard: a fact about a person, or an episode naming one, is recorded only if that name occurs in the window
+  (no identity carried over from earlier chats — measured: the model did that without it).
+- Prompt: `extract.v8` + `ENTITY_RULES` (`entity.v3`), appended only for entity owners (person memories unchanged).
+  Measured on `dataset_dev_entity` (RESULTS.md).
+- TODO (later): stronger identification so the most intimate memories in an entity memory are readable only by the
+  person they belong to — then the entity can be a home robot everyone confides in (vision direction G). A client's
+  rename of its user propagates to Recordare (WORK_PLAN 6.8).
+
 ## Open questions (to discuss)
 
-None — resolved in D1–D47 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked
+None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked
 in `WORK_PLAN.md`.
 
 ## Non-goals (for now)

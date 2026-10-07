@@ -14,7 +14,8 @@ export class Person {
   /** null for owners; set for contacts (scoped to one owner's memory). */
   @Column({ name: 'owner_scope', type: 'uuid', nullable: true }) ownerScope!: string | null;
   @Column({ name: 'display_name', type: 'text' }) displayName!: string;
-  @Column({ type: 'enum', enumName: 'person_kind', enum: ['human'], default: 'human' }) kind!: 'human';
+  /** `entity`: a shared device, robot or place whose memory everyone using it reads and writes (D48). */
+  @Column({ type: 'enum', enumName: 'person_kind', enum: ['human', 'entity'], default: 'human' }) kind!: 'human' | 'entity';
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
 }
 

@@ -45,6 +45,8 @@ export const extractionSchema = z.object({
     value: z.string().nullable().optional(),
     verdict: z.enum(['new', 'keep', 'replace', 'corrects', 'stale', 'unknown']),
     target: z.string().nullable().optional(),
+    /** Entity memories (D48): the person the fact is about; null = the entity itself. Ignored for a person's memory. */
+    subject: z.string().max(200).nullable().optional(),
     cardinality: z.enum(['single', 'multi']).optional(),
     valid_from: date,
     date_precision: precision,

@@ -37,6 +37,8 @@ export interface WriteContext {
   timezone: string;
   runId: string;
   conversationId: string;
+  /** An entity memory (D48): facts name the person they are about. */
+  entity?: boolean;
 }
 
 export interface WrittenRow {
@@ -62,6 +64,7 @@ export class ExtractionWriter {
   private audience: string[] = [];
   private audienceUnverified: string[] = [];
   private tombstones: Tombstones = { messageIds: new Set(), periods: [] };
+  private readonly subjects = new Map<string, string>();
 
   constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {}
 
@@ -182,7 +185,8 @@ export class ExtractionWriter {
       const msgs = this.evidence(e.evidence);
       const at = toStored(e.occurred_at, e.date_precision as Precision | undefined, this.ctx.timezone);
       const until = toStored(e.occurred_until, 'day', this.ctx.timezone);
-      if (msgs.length === 0 || this.forgotten(msgs, at.at) || this.echoOnly(e.content)) {
+      if (msgs.length === 0 || this.forgotten(msgs, at.at) || this.echoOnly(e.content)
+        || (this.ctx.entity && !e.people.every((p) => this.namedInWindow(p)))) {
         ids.push(null);
         continue;
       }
@@ -337,8 +341,10 @@ export class ExtractionWriter {
       const role = this.authorRole(msgs);
       const inferred = role === 'other' || role === 'tool';
       const from = toStored(f.valid_from ?? this.messageDay(msgs), f.date_precision as Precision | undefined, this.ctx.timezone);
+      if (this.ctx.entity && f.subject && !this.namedInWindow(f.subject)) continue;
+      const subjectId = this.ctx.entity ? await this.subject(f.subject) : null;
       let target = f.target ? this.input.facts.get(f.target) : undefined;
-      if (target && target.key !== key) target = undefined;
+      if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
 
       if (f.verdict === 'keep') {
         if (target) await this.tx.query(`UPDATE facts SET support_count = support_count + 1 WHERE id = $1 AND owner_id = $2`, [target.id, this.ctx.ownerId]);
@@ -353,10 +359,10 @@ export class ExtractionWriter {
       if (!target && cardinality === 'single' && verdict !== 'corrects') {
         // A new value for a single-value slot that already has one is a replacement.
         const [cur] = await this.tx.query(
-          `SELECT id, valid_from FROM facts WHERE owner_id = $1 AND subject_person_id IS NULL AND key = $2 AND status IN ('current', 'unknown_current') AND deleted_at IS NULL`,
-          [this.ctx.ownerId, key]);
+          `SELECT id, valid_from FROM facts WHERE owner_id = $1 AND subject_person_id IS NOT DISTINCT FROM $3 AND key = $2 AND status IN ('current', 'unknown_current') AND deleted_at IS NULL`,
+          [this.ctx.ownerId, key, subjectId]);
         if (cur) {
-          target = { id: cur.id, key, validFrom: cur.valid_from };
+          target = { id: cur.id, key, validFrom: cur.valid_from, subjectId };
           if (verdict === 'new') verdict = 'replace';
         }
       }
@@ -391,16 +397,48 @@ export class ExtractionWriter {
       }
       const [row] = await this.tx.query(
         `INSERT INTO facts (owner_id, key, value, status, valid_from, valid_to, date_precision, supersedes, corrects, verdict, pending,
-           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'owner', $17, $18)
+           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_person_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'owner', $17, $18, $19)
          RETURNING id`,
         [this.ctx.ownerId, key, value, status, from.at, validTo, from.precision, supersedes, correctsId, verdict, inferred,
           role === 'assistant' ? 'assistant_stated' : 'owner_lived', role, inferred ? 'inferred' : 'stated', inferred ? 0.6 : 1,
-          this.ctx.runId, this.audience, this.audienceUnverified],
+          this.ctx.runId, this.audience, this.audienceUnverified, subjectId],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
-      this.written.push({ table: 'facts', id: row.id, text: `${key}: ${value ?? '(unknown)'}` });
+      const about = subjectId ? `${f.subject?.trim()} — ` : '';
+      this.written.push({ table: 'facts', id: row.id, text: `${about}${key}: ${value ?? '(unknown)'}` });
     }
+  }
+
+  /**
+   * Entity memories: whose memory it is comes only from the conversation (a self-introduction, being addressed by
+   * name). A person named by an item but never in the window — e.g. carried over from an earlier conversation — is a
+   * wrong attribution: the item is not recorded.
+   */
+  private namedInWindow(raw: string): boolean {
+    // Any word of the name counts ("dott. Ferri" ↔ "il dottor Ferri"); titles and initials are too short to decide.
+    const parts = tokens(raw.replace(/\s*\(.*\)\s*$/, '')).filter((w) => w.length >= 3);
+    if (parts.length === 0) return true;
+    const seen = new Set(this.input.messages.flatMap((m) => tokens(m.content)));
+    return parts.some((w) => seen.has(w));
+  }
+
+  /**
+   * Entity memories: the person a fact is about, a contact of this memory found by name ("Marta (figlia)" → Marta) or
+   * created; null (no subject) = the entity itself.
+   */
+  private async subject(raw: string | null | undefined): Promise<string | null> {
+    const name = raw?.replace(/\s*\(.*\)\s*$/, '').trim().slice(0, 200);
+    if (!name) return null;
+    const lower = name.toLowerCase();
+    const known = this.subjects.get(lower);
+    if (known) return known;
+    const [found] = await this.tx.query(
+      `SELECT id FROM persons WHERE owner_scope = $1 AND lower(display_name) = $2 ORDER BY created_at LIMIT 1`, [this.ctx.ownerId, lower]);
+    const id = (found ?? (await this.tx.query(
+      `INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [this.ctx.ownerId, name]))[0]).id as string;
+    this.subjects.set(lower, id);
+    return id;
   }
 
   // ── notes ─────────────────────────────────────────────────────────────────────
@@ -442,6 +480,7 @@ export class ExtractionWriter {
   }
 }
 
+const tokens = (s: string): string[] => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 const words = (s: string): string[] => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4);
 /** A crude cross-inflection key (cena / cene, festa / feste, spostata / spostato). */
 const stem = (w: string): string => w.slice(0, 5);

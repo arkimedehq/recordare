@@ -1,0 +1,39 @@
+{
+  "_note": "Entity-memory dev set (D48, NOT blind). One shared home device ('casa', an entity owner) that the family talks to; speakers identify themselves in the conversation or stay unknown.",
+  "users": {"casa": "Shared home device (entity memory)"},
+  "entities": ["casa"],
+  "sessions": [
+    {"id": "h01", "user": "casa", "ts": "2026-10-05T08:10:00+02:00", "messages": [
+      {"role": "user", "content": "Ciao, sono Andrea. Ricordami che giovedì alle 17 ho il dentista, il dottor Ferri."},
+      {"role": "assistant", "content": "Segnato: giovedì 8 ottobre alle 17 dal dottor Ferri."},
+      {"role": "user", "content": "E da sabato ho una macchina nuova, una Toyota Yaris ibrida grigia."},
+      {"role": "assistant", "content": "Complimenti per la Yaris!"}
+    ]},
+    {"id": "h02", "user": "casa", "ts": "2026-10-05T19:40:00+02:00", "messages": [
+      {"role": "user", "content": "È finito il latte, domani bisogna comprarlo. E anche il detersivo per la lavastoviglie."},
+      {"role": "assistant", "content": "Ok, latte e detersivo per la lavastoviglie da comprare domani."},
+      {"role": "user", "content": "Ah, oggi il mio capo mi ha detto che mi promuovono a responsabile di reparto!"},
+      {"role": "assistant", "content": "Che bella notizia, congratulazioni!"}
+    ]},
+    {"id": "h03", "user": "casa", "ts": "2026-10-06T21:05:00+02:00", "messages": [
+      {"role": "user", "content": "Sono Nunzia. Ieri da Zara ho comprato un paio di stivaletti neri e una sciarpa rossa."},
+      {"role": "assistant", "content": "Bell'acquisto! Stivaletti neri e sciarpa rossa."},
+      {"role": "user", "content": "Per inciso io il caffè lo prendo sempre amaro, senza zucchero. E la mia macchina è una Fiat 500 bianca."},
+      {"role": "assistant", "content": "Annotato: caffè amaro, e la tua 500 bianca."}
+    ]},
+    {"id": "h04", "user": "casa", "ts": "2026-10-07T07:30:00+02:00", "messages": [
+      {"role": "user", "content": "Sono Andrea, le chiavi di scorta della casa le ho messe nel cassetto dell'ingresso, quello a sinistra."},
+      {"role": "assistant", "content": "Ricordo: chiavi di scorta nel cassetto sinistro dell'ingresso."},
+      {"role": "user", "content": "Ora ti passo Marta."},
+      {"role": "user", "content": "Ciao sono Marta! Venerdì 16 ottobre vado in gita a Ravenna con la classe, partiamo alle 7."},
+      {"role": "assistant", "content": "Che bello Marta! Gita a Ravenna venerdì 16 ottobre, partenza alle 7."},
+      {"role": "user", "content": "E il mio colore preferito adesso è il viola."}
+    ]},
+    {"id": "h05", "user": "casa", "ts": "2026-10-07T20:15:00+02:00", "messages": [
+      {"role": "user", "content": "Da oggi la connessione internet di casa è con Fastweb, abbiamo lasciato TIM."},
+      {"role": "assistant", "content": "Ok, ora internet di casa è Fastweb."},
+      {"role": "user", "content": "Sono Andrea: correggo, il dentista non è giovedì ma venerdì 9 alle 17."},
+      {"role": "assistant", "content": "Corretto: dentista venerdì 9 ottobre alle 17."}
+    ]}
+  ]
+}

@@ -8,7 +8,7 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
   mode, architecture (standalone, own DB, one memory per person), name, roadmap.
-- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D47 (layered memory: raw log →
+- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D48 (layered memory: raw log →
   episodes → digests → semantic notes; one extraction call per window (D32); idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype

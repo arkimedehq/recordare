@@ -39,7 +39,9 @@ migration.
 **v1**: owners are created by the admin (`POST api/v1/admin/owners`); consent (`episodicEnabled`),
 personal tokens and identity bindings are managed through the admin API or an owner personal token;
 there are no owner pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, owner's timezone); `POST api/v1/admin/owners/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/owners/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation). Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
-`PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set).
+`PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set). The same
+routes take `kind` `human | entity` (D48: an **entity memory**, shared by everyone using the account — a home device,
+a robot, a place) and `PATCH` takes `displayName` (the admin's rename; a client's rename is TODO, WORK_PLAN 6.8).
 
 **Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
 OIDC later). The owner session is needed for: giving consent (`episodicEnabled`), creating link
@@ -255,6 +257,7 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
 - `remember {content, category?}` — explicit "remember that…": stored as a stated note (owner's
   `user` message as evidence, same rules as `log_episode`).
 - `search_memory {query, as_of?, include_pending?}` — preferences, habits, values, knowledge, plus the
+  In an entity memory (D48) facts about people carry `about` (the person's name); facts without it are the entity's own.
   relevant state facts valid at `as_of` (ISO date, default today) with their history; complements `search_episodes`
   (what happened / when). Returns `{notes, facts}`.
 
@@ -291,7 +294,7 @@ The same pages are served by Recordare itself for owners without a host UI.
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | `episodicEnabled`, locale, timezone |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
-| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, episodicEnabled, via, scopes}` (`episodicEnabled` = the owner's consent: until it is given, ingest stores nothing) (with a client key: the person behind `X-Recordare-User`, auto-provisioned if the client allows it) |
+| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, kind, episodicEnabled, via, scopes}` (`kind` `entity` = a shared memory: the client tells its users so) (`episodicEnabled` = the owner's consent: until it is given, ingest stores nothing) (with a client key: the person behind `X-Recordare-User`, auto-provisioned if the client allows it) |
 | `PATCH api/v1/me {displayName}` | ingest (client key) | Names a person the client created — only while the name is still the client's user id (auto-provisioning default); after the admin or the owner renamed them → 403 |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
 
