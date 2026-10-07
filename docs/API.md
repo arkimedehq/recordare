@@ -298,20 +298,15 @@ The same pages are served by Recordare itself for owners without a host UI.
 | `PATCH api/v1/me {displayName?, kind?}` | ingest (client key) | The person's settings from their platform: the name follows the client's user (sync on every rename); `kind` `human \| entity` (D48) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it). Consent is never set here |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
 
-## 5. SDK (task 1.6) — not built yet (v1 plan)
+## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 
-`@arkimedehq/recordare-client`, a workspace package `packages/client/` in this repo (WORK_PLAN 6.7), built around the
-service's zod schemas:
-```ts
-const rc = new RecordareClient({ baseUrl, apiKey });
-const owner = rc.as("arkimede-user-42", { conversation: "chat-123" });   // user + viewer context
-await owner.ingest({ conversation, messages });     // batching, retries, idempotency keys
-await owner.episodes.list({ from, to });
-await owner.episodes.correct(id, { occurredAt: "2026-03-03" });
-await owner.facts.list({ asOf: "2026-12-05" });
-```
-Typed errors; batching for imports; an **outbox helper** (persist-then-send with retry) so ingest
-never blocks or fails the host's chat. MCP is used through the host's own MCP client.
+`@arkimedehq/recordare-client` in `packages/client/` (its README): `RecordareClient` (`me`, `updateMe`, `ingest` split
+into requests of 500, `editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, `mcp.listTools` /
+`mcp.callTool` over the official MCP SDK with one session per user + conversation), `PersonDirectory` (cached person,
+consent, kind and Atlas address; the platform's opt-in; name sync), `afterFailure` (outbox delivery policy: back-off
+with jitter, `Retry-After`, park on 400 / 413 / 422), typed errors (RFC 9457). A host keeps only its outbox storage and
+its chat mapping. A conformance suite runs it against the service in CI (`service/test/conformance`). Not built yet:
+the read API wrappers (§4: episodes, facts, digests) — they come with §4.
 
 ## 6. Versioning and compatibility
 - Breaking changes only under `api/v2/…`; additive changes within v1; MCP tool names stable, new

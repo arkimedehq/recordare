@@ -300,20 +300,16 @@ Le stesse pagine sono servite da Recordare stesso per gli owner senza UI dell'ho
 | `PATCH api/v1/me {displayName?, kind?}` | ingest (chiave client) | Le impostazioni della persona provenienti dalla sua piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `kind` `human \| entity` (D48) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo). Il consenso non si imposta mai qui |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | sessione dell'owner (public profile) | Client / identità connessi, revoca |
 
-## 5. SDK (task 1.6) — not built yet (v1 plan)
+## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
 
-`@arkimedehq/recordare-client`, un pacchetto workspace `packages/client/` in questo repo (WORK_PLAN 6.7), costruito attorno agli
-schemi zod del servizio:
-```ts
-const rc = new RecordareClient({ baseUrl, apiKey });
-const owner = rc.as("arkimede-user-42", { conversation: "chat-123" });   // user + viewer context
-await owner.ingest({ conversation, messages });     // batching, retries, idempotency keys
-await owner.episodes.list({ from, to });
-await owner.episodes.correct(id, { occurredAt: "2026-03-03" });
-await owner.facts.list({ asOf: "2026-12-05" });
-```
-Errori tipizzati; batching per gli import; un **outbox helper** (persisti-poi-invia con retry) così che l'ingest
-non blocchi né faccia fallire mai la chat dell'host. MCP si usa tramite il client MCP dell'host stesso.
+`@arkimedehq/recordare-client` in `packages/client/` (vedi il suo README): `RecordareClient` (`me`, `updateMe`, `ingest`
+diviso in richieste da 500, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, `mcp.listTools` /
+`mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `PersonDirectory` (persona in cache,
+consenso, tipo e indirizzo di Atlas; l'opt-in della piattaforma; sincronizzazione del nome), `afterFailure` (politica di
+consegna dell'outbox: back-off con jitter, `Retry-After`, parcheggio su 400 / 413 / 422), errori tipizzati (RFC 9457).
+All'host restano solo la memorizzazione dell'outbox e la trasformazione delle sue chat. Una suite di conformità la
+esegue contro il servizio nella CI (`service/test/conformance`). Non ancora costruiti: i wrapper della API di lettura
+(§4: episodi, fatti, digest) — arrivano con la §4.
 
 ## 6. Versionamento e compatibilità
 - Modifiche incompatibili solo sotto `api/v2/…`; modifiche additive all'interno della v1; nomi degli strumenti MCP stabili, nuovi

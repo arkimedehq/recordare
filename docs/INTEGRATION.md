@@ -5,6 +5,10 @@ How an agent platform (Arkimede first, any other after) uses Recordare as its us
 
 Infrastructure (standalone, or co-hosted with Arkimede on a small server): `DEPLOYMENT.md`.
 
+**Use the client library** (`packages/client`, WORK_PLAN 6.7): it does sections 2–4 below the same way for every
+platform — person, consent and name sync, ingest, deletions, MCP recall with the right headers, the outbox delivery
+policy — and passes the conformance suite. A platform keeps only its outbox storage and its chat mapping.
+
 ## 1. Set-up (admin, once)
 1. Create the client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
 2. Create its key: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read"]}` — shown once; store it

@@ -8,6 +8,11 @@ reale opzionale: `ATLAS_EVENTS.md`.
 
 Infrastruttura (standalone, o co-ospitato con Arkimede su un piccolo server): `DEPLOYMENT.md`.
 
+**Usa la libreria client** (`packages/client`, WORK_PLAN 6.7): fa le sezioni 2–4 qui sotto allo stesso modo per ogni
+piattaforma — persona, consenso e sincronizzazione del nome, ingest, cancellazioni, richiamo MCP con le intestazioni
+giuste, la politica di consegna dell'outbox — e passa la suite di conformità. Alla piattaforma restano solo la
+memorizzazione dell'outbox e la trasformazione delle sue chat.
+
 ## 1. Configurazione (amministratore, una volta)
 1. Creare il client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
 2. Creare la sua chiave: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read"]}` — mostrata una sola
