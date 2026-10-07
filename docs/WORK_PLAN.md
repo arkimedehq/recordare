@@ -174,6 +174,8 @@ model is supported only at ≥ 95 % on the suite**; weaker models are removed, r
 | 5.3 | Dedup of the same event across conversations (link, never rewrite) |
 | 5.4 | Pattern promotions with `episode_promotions` (D20) — destination depends on **D26** |
 | 5.5 | User-driven deletion: episode, period; digests recomputed; vectors removed (D16) |
+| 5.6 | **Nightly facts review** (2026-10-07): built (`facts_review.v1`, task `facts`, admin `POST owners/:id/review-facts`), measured on blind5 — no gain on current facts (0.769 ×3), history +1 fact in 1/3, rewording churn → knob `factsReview` off. Facts work moves to the extraction prompt |
+| 5.7 | **Ideas from other platforms' memory** (`docs/literature/agent-platform-memory.md`, 2026-10-07), each to be measured: fenced injected memory (`<memory-context>`) so the echo guard keeps working with connectors; a no-LLM pre-turn recall block for connectors (owner card, current facts, upcoming plans + ≤ 3 matches); extraction prompt for personal facts said in passing and transitions ("switched / stopped" → replace; accepting a proposal states it, a bare "ok" does not); web-tool taint (assistant text after a web result never becomes an owner fact); a nightly pattern pass proposing pending inferred notes backed by ≥ 2 episodes |
 
 ### M5b — Neural Atlas: live dashboard (after M5)
 

@@ -61,6 +61,13 @@ export class AdminController {
     return this.consolidation.consolidateOwner(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
   }
 
+  /** Run the facts review alone now (operators and evaluations; honours X-Recordare-Now when allowed). */
+  @Post('owners/:id/review-facts')
+  reviewFacts(@Param('id', ParseUUIDPipe) id: string, @Headers('x-recordare-now') at?: string) {
+    const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
+    return this.consolidation.reviewFactsNow(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
+  }
+
   @Post('owners/:id/tokens')
   createToken(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(createTokenSchema)) body: CreateToken) {
     return this.admin.createToken(id, body);

@@ -16,6 +16,11 @@ import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { DAY_DIGEST_SYSTEM, DAY_DIGEST_VERSION, digestSchema, MONTH_DIGEST_SYSTEM, MONTH_DIGEST_VERSION } from './consolidation.prompt';
 import { addDays, localDate, periodEnd, type Precision } from './time';
 import { TelemetryService } from '../telemetry/telemetry.service';
+import { ConfigService } from '@nestjs/config';
+import { type Env } from '../config/env';
+import { FactsReviewService } from './facts-review.service';
+import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
+import { qualityProfile, type QualityProfileName } from './quality-profile';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
@@ -24,7 +29,7 @@ interface EpisodeRow {
 interface DigestRow { id: string; level: 'day' | 'month'; period_start: string; version: number; source_hash: string; content: string }
 
 /** `failed`: digests whose call failed — left as they were and retried at the next consolidation. */
-export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number; failed: number }
+export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number; failed: number; facts: number }
 
 /** Multi-day items are listed on each of their days, up to this many. */
 const MAX_SPAN_DAYS = 14;
@@ -38,11 +43,13 @@ export class ConsolidationService {
     @Inject(LLM_PORT) private readonly llm: LlmPort,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly telemetry: TelemetryService,
+    private readonly factsReview: FactsReviewService,
+    private readonly config: ConfigService<Env, true>,
   ) {}
 
   /** Consolidate every complete day (in the owner's timezone) before `now`. Idempotent; one run per owner at a time. */
   async consolidateOwner(ownerId: string, now: Date): Promise<ConsolidationReport> {
-    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0 };
+    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
@@ -61,7 +68,7 @@ export class ConsolidationService {
 
   private async run(ownerId: string, now: Date, report: ConsolidationReport): Promise<void> {
     const [owner] = await this.db.query(
-      `SELECT o.timezone, o.locale, o.episodic_enabled, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+      `SELECT o.timezone, o.locale, o.episodic_enabled, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     if (!owner?.episodic_enabled) return;
     const tz: string = owner.timezone;
     const today = localDate(now, tz);
@@ -133,12 +140,44 @@ export class ConsolidationService {
           (monthOnly.get(month) ?? []).map((e) => e.id), dayDigests.map((d) => d.id), ctx.runId);
         report.months++;
       }
+      // Facts: checked against the episodes recorded since the last review (quality-profile knob, off by default).
+      const profile = qualityProfile(owner.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
+        undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }));
+      if (profile.factsReview) {
+        const r = await this.factsReview.review(ownerId, now, ctx.runId);
+        report.facts += r.changed; report.llmCalls += r.calls; report.failed += r.failed;
+      }
       await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [ctx.runId]);
       await this.db.query(`UPDATE owners SET consolidated_at = $2 WHERE person_id = $1`, [ownerId, now]);
       this.telemetry.emit({ type: 'consolidation.finished', ownerId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
     } catch (err) {
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`, [(err as Error).name, ctx.runId]);
       throw err;
+    }
+  }
+
+  /**
+   * The facts review alone, now (operators and evaluations; the night runs it inside the consolidation when the
+   * profile asks for it). Same lock as the consolidation: never two at once for one owner.
+   */
+  async reviewFactsNow(ownerId: string, now: Date): Promise<{ calls: number; changed: number; failed: number }> {
+    const runner = this.db.createQueryRunner();
+    await runner.connect();
+    try {
+      const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [ownerId]);
+      if (!locked) return { calls: 0, changed: 0, failed: 0 };
+      try {
+        const [run] = await this.db.query(
+          `INSERT INTO extraction_runs (owner_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:facts', 'configured', $3) RETURNING id`,
+          [ownerId, now, FACTS_REVIEW_VERSION]);
+        const r = await this.telemetry.track('consolidation', ownerId, () => this.factsReview.review(ownerId, now, run.id));
+        await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [run.id]);
+        return r;
+      } finally {
+        await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 11))`, [ownerId]);
+      }
+    } finally {
+      await runner.release();
     }
   }
 
