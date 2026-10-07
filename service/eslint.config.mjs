@@ -18,4 +18,13 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-imports': ['error', { fixStyle: 'inline-type-imports' }],
     },
   },
+  {
+    // The admin console runs in the browser.
+    files: ['console/**/*.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: Object.fromEntries(['document', 'navigator', 'sessionStorage', 'fetch', 'confirm', 'setTimeout', 'clearTimeout', 'Node']
+        .map((g) => [g, 'readonly'])),
+    },
+  },
 );

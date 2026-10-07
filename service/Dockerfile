@@ -14,6 +14,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# Admin console (static page over the admin API).
+COPY console ./console
 COPY package.json ./
 USER node
 EXPOSE 8080

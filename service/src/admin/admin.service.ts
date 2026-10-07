@@ -6,7 +6,7 @@ import { DataSource, QueryFailedError } from 'typeorm';
 import { AccessToken, ApiKey, Client, ExternalIdentity, Owner, Person } from '../identity/identity.entities';
 import { generateCredential, hashCredential } from '../auth/credentials';
 import { AuthService } from '../auth/auth.service';
-import { type CreateClient, type CreateIdentity, type CreateKey, type CreateOwner, type CreateToken, type UpdateOwner } from './admin.schemas';
+import { type CreateClient, type CreateIdentity, type CreateKey, type CreateOwner, type CreateToken, type UpdateClient, type UpdateOwner } from './admin.schemas';
 
 /** Installation management for the v1 home / research profile (owners created by the admin, D33). */
 @Injectable()
@@ -85,6 +85,64 @@ export class AdminService {
 
   async revokeToken(id: string): Promise<void> {
     await this.db.getRepository(AccessToken).update(id, { revokedAt: new Date() });
+    this.auth.forget();
+  }
+
+  // ── Reads for the admin console (metadata only: names, settings, counts — never memory content) ──────────────────
+
+  /** Owners with their settings, memory size, linked identities and personal tokens. */
+  async listPersons(): Promise<unknown[]> {
+    const owners: Array<Record<string, unknown> & { id: string }> = await this.db.query(
+      `SELECT p.id, p.display_name AS name, p.kind, o.episodic_enabled AS "episodicEnabled", o.episodic_enabled_at AS "episodicEnabledAt",
+              o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.created_at AS "createdAt",
+              (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.owner_id = p.id) AS messages,
+              (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id
+                WHERE c.owner_id = p.id AND m.extracted_run_id IS NULL) AS pending,
+              (SELECT count(*)::int FROM episodes e WHERE e.owner_id = p.id AND e.deleted_at IS NULL) AS episodes,
+              (SELECT count(*)::int FROM facts f WHERE f.owner_id = p.id AND f.deleted_at IS NULL AND f.status = 'current') AS facts,
+              (SELECT count(*)::int FROM notes n WHERE n.owner_id = p.id AND n.deleted_at IS NULL AND n.status = 'current') AS notes,
+              (SELECT max(m.sent_at) FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.owner_id = p.id) AS "lastMessage"
+       FROM owners o JOIN persons p ON p.id = o.person_id ORDER BY p.display_name`);
+    const identities: Array<{ personId: string }> = await this.db.query(
+      `SELECT i.id, i.person_id AS "personId", i.kind, i.external_id AS "externalId", i.channel, c.name AS client
+       FROM external_identities i LEFT JOIN clients c ON c.id = i.client_id ORDER BY i.created_at`);
+    const tokens: Array<{ ownerId: string }> = await this.db.query(
+      `SELECT t.id, t.owner_id AS "ownerId", t.prefix, t.scopes, c.name AS client, t.created_at AS "createdAt",
+              t.expires_at AS "expiresAt", t.last_used_at AS "lastUsedAt"
+       FROM access_tokens t JOIN clients c ON c.id = t.client_id WHERE t.revoked_at IS NULL ORDER BY t.created_at`);
+    return owners.map((o) => ({
+      ...o,
+      identities: identities.filter((i) => i.personId === o.id),
+      tokens: tokens.filter((t) => t.ownerId === o.id),
+    }));
+  }
+
+  /** Clients with their active keys (prefixes only). */
+  async listClients(): Promise<unknown[]> {
+    const clients: Array<Record<string, unknown> & { id: string }> = await this.db.query(
+      `SELECT id, name, kind, auto_provision AS "autoProvision", raw_log_scope AS "rawLogScope", created_at AS "createdAt",
+              disabled_at AS "disabledAt"
+       FROM clients ORDER BY created_at`);
+    const keys: Array<{ clientId: string }> = await this.db.query(
+      `SELECT id, client_id AS "clientId", prefix, scopes, created_at AS "createdAt", last_used_at AS "lastUsedAt"
+       FROM api_keys WHERE revoked_at IS NULL AND client_id IS NOT NULL ORDER BY created_at`);
+    return clients.map((c) => ({ ...c, keys: keys.filter((k) => k.clientId === c.id) }));
+  }
+
+  async updateClient(id: string, input: UpdateClient): Promise<void> {
+    const repo = this.db.getRepository(Client);
+    const client = await repo.findOneBy({ id });
+    if (!client) throw new NotFoundException();
+    if (input.autoProvision !== undefined) client.autoProvision = input.autoProvision;
+    if (input.disabled !== undefined) client.disabledAt = input.disabled ? (client.disabledAt ?? new Date()) : null;
+    await repo.save(client);
+    this.auth.forget();
+  }
+
+  /** Unlinks an identity: the client's user no longer reaches this person (memories stay). */
+  async deleteIdentity(id: string): Promise<void> {
+    const res = await this.db.getRepository(ExternalIdentity).delete(id);
+    if (!res.affected) throw new NotFoundException();
     this.auth.forget();
   }
 }

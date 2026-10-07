@@ -14,6 +14,12 @@ export const createClientSchema = z.object({
   rawLogScope: z.enum(['own', 'all']).default('own'),
 });
 
+export const updateClientSchema = z.object({
+  autoProvision: z.boolean().optional(),
+  /** true = every key and token of the client stops working at once; false = back on. */
+  disabled: z.boolean().optional(),
+});
+
 /** Client keys never carry `admin`, `owner_settings` or `export` (consent stays with the owner, D33). */
 export const createKeySchema = z.object({
   scopes: z.array(z.enum(['ingest', 'mcp', 'read', 'write'])).min(1),
@@ -56,6 +62,7 @@ export const createTokenSchema = z.object({
 
 export type CreateClient = z.infer<typeof createClientSchema>;
 export type CreateKey = z.infer<typeof createKeySchema>;
+export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type CreateOwner = z.infer<typeof createOwnerSchema>;
 export type UpdateOwner = z.infer<typeof updateOwnerSchema>;
 export type CreateIdentity = z.infer<typeof createIdentitySchema>;

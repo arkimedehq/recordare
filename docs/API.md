@@ -319,6 +319,14 @@ never blocks or fails the host's chat. MCP is used through the host's own MCP cl
 - Contract tests (M3) run the same scenarios through REST + MCP, both levels, including the
   viewer-context rule (shared conversations get nothing).
 
+### Admin console (WORK_PLAN 6.9)
+`GET /admin` serves a static page (public: it holds no data) over the admin API; the operator types the admin key, kept
+in that browser tab only (strict CSP, `no-store`). Routes it uses besides those above, all admin only and metadata only:
+`GET api/v1/admin/persons` (owners with settings, message / episode / fact / note counts, pending extraction, linked
+identities, active personal tokens by prefix), `GET api/v1/admin/clients` (clients with active keys by prefix),
+`PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = every key and token of the client stops at
+once), `DELETE api/v1/admin/identities/:id` (unlinks a client's user from a person; memories stay).
+
 ### Live telemetry (M5b, admin only)
 `GET api/v1/admin/telemetry/stream[?owner=<personId>]` — Server-Sent Events, one per real step inside the service:
 `message.ingested`, `extraction.started` / `extraction.finished`, `work.started` / `work.finished` (op: `embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`; id, duration — work without an LLM call), `llm.started` (prompt id, task — the call left) and `llm.call` (prompt id, model, tokens, latency, status),
