@@ -354,6 +354,18 @@ extraction issue to fix independently (plan patches should need matching evidenc
 (dashboard "sleep", next M5 steps); the diary in recall is a quality-profile knob (`recallDigests`, `RECALL_DIGESTS`),
 **off by default** until a version shows a gain.
 
+### Nightly facts review (2026-10-07, blind5, KB_ONLY extraction scoring before / after, 3 people)
+
+`facts_review.v1` (task `facts`, deepseek-flash): the owner's facts checked against the episodes recorded since the
+last review; verdicts applied by the extraction's writer. Run once per person at the end of the dataset (one call
+each, 150–300 episodes). Facts current **0.769 → 0.769** in all three; history 0.615 → 0.769 (r1), unchanged (r2, r3).
+What it changed: mostly rewordings of right facts (partner, health condition) and slots that are not about the owner
+("mother_mobility"). The misses are not stale facts: hobbies / choir live in **notes** (the scorer counts facts), the
+mother's living situation is about someone else. No gain → the quality-profile knob `factsReview` stays **off**; the
+code stays (zero cost when off). Next attempt on facts goes through the extraction prompt (personal facts said in
+passing, "I switched / stopped" as replace, the facts / notes boundary for recurring activities — see
+`docs/literature/agent-platform-memory.md`).
+
 ### People-aware recall (2026-10-07, `people_runs.sh`, base, one service instance, single prompt version per run)
 
 Diagnosis on blind6's "messages addressed to the assistant by others" (0.25 for the service and D; category read, so
