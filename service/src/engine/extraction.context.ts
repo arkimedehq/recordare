@@ -28,6 +28,8 @@ export interface WindowMessage {
   authorName: string | null;
   content: string;
   sentAt: Date;
+  /** An assistant reply given right after a memory recall in its turn (an echo of memories, not new information). */
+  fromMemory?: boolean;
 }
 
 export interface Owner {
@@ -52,24 +54,37 @@ export interface ExtractionInput {
   episodes: Map<string, string>;  // "E1" → episode id
 }
 
+/** Recordare's own read tools, as a client names them (possibly prefixed, e.g. `recordare_search_episodes`). */
+const MEMORY_TOOLS = '(^|[_.:-])(search_episodes|search_memory|search_facts|resolve_period)$';
+
 /** Pending messages of a conversation, oldest first, split into windows of bounded size. */
 export async function pendingWindows(tx: EntityManager, conversationId: string, maxChars: number): Promise<WindowMessage[][]> {
   const rows: Array<{ id: string; role: WindowMessage['role']; tool_name: string | null; author_person_id: string | null;
-    author_name: string | null; content: string; sent_at: Date }> = await tx.query(
+    author_name: string | null; content: string; sent_at: Date; from_memory: boolean }> = await tx.query(
     // Unverified group members are not persons: their name comes from the conversation's participants.
-    `SELECT m.id, m.role, m.tool_name, m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at
+    // from_memory: an assistant reply whose turn (since the previous non-assistant, non-tool message) contains a
+    // recall — one of Recordare's read tools called by the client (its tool message), or a recall Recordare served
+    // in this conversation.
+    `SELECT m.id, m.role, m.tool_name, m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at,
+       (m.role = 'assistant' AND (
+          EXISTS (SELECT 1 FROM messages t WHERE t.conversation_id = m.conversation_id AND t.role = 'tool'
+                    AND t.tool_name ~ $2 AND t.sent_at <= m.sent_at + interval '5 seconds' AND t.sent_at >= turn.start)
+          OR EXISTS (SELECT 1 FROM recall_log r WHERE r.conversation_id = m.conversation_id
+                    AND r.served_at <= m.sent_at AND r.served_at >= turn.start))) AS from_memory
      FROM messages m LEFT JOIN persons p ON p.id = m.author_person_id
        LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
+       CROSS JOIN LATERAL (SELECT COALESCE(max(u.sent_at), '-infinity'::timestamptz) AS start FROM messages u
+                           WHERE u.conversation_id = m.conversation_id AND u.role IN ('user', 'other') AND u.sent_at < m.sent_at) turn
      WHERE m.conversation_id = $1 AND m.extracted_run_id IS NULL
      ORDER BY m.sent_at, m.received_at`,
-    [conversationId],
+    [conversationId, MEMORY_TOOLS],
   );
   const windows: WindowMessage[][] = [];
   let current: WindowMessage[] = [];
   let size = 0;
   for (const r of rows) {
     const msg: WindowMessage = { id: r.id, role: r.role, toolName: r.tool_name, authorPersonId: r.author_person_id,
-      authorName: r.author_name, content: r.content, sentAt: r.sent_at };
+      authorName: r.author_name, content: r.content, sentAt: r.sent_at, ...(r.from_memory ? { fromMemory: true } : {}) };
     if (current.length > 0 && size + r.content.length > maxChars) {
       windows.push(current);
       current = [];

@@ -10,6 +10,11 @@ import { type Env } from './config/env';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.enableShutdownHooks();
+  // Whatever an open connection or a job does, a stop request ends the process: a half-closed instance that still
+  // consumes the queues next to a new one is worse than an interrupted job (jobs are retried).
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(signal, () => setTimeout(() => process.exit(1), 30_000).unref());
+  }
   const config = app.get<ConfigService<Env, true>>(ConfigService);
   await app.listen(config.get('PORT', { infer: true }));
 }

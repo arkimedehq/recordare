@@ -34,10 +34,11 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
-  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string; authorRef?: string }>, participants: unknown[] = []): Promise<string> {
+  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string; authorRef?: string; toolName?: string }>, participants: unknown[] = []): Promise<string> {
     const res = await call(url, 'POST', '/api/v1/ingest/messages', {
       token: key, headers: { 'x-recordare-user': 'luca' },
-      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at, ...(m.authorRef ? { authorRef: m.authorRef } : {}) })) },
+      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at,
+        ...(m.authorRef ? { authorRef: m.authorRef } : {}), ...(m.toolName ? { toolName: m.toolName } : {}) })) },
     });
     return res.body.conversationId as string;
   }
@@ -260,6 +261,34 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     llm.queue.push({});
     await runner.runForConversation(b);
     expect(last()).toMatchObject({ model: 'test-model', max_tokens: 6000 });
+  });
+
+  it('does not record what only a recall echo said (tool call in the turn, or a recall served in the conversation)', async () => {
+    const conv = await ingest('echo1', [
+      { id: 'q1', role: 'user', content: 'Mi ricordi come si chiama il mio dentista?', at: '2026-10-07T09:20:00+02:00' },
+      { id: 't1', role: 'tool', toolName: 'recordare_search_memory', content: 'input: {"query":"dentista"} output: {"facts":[]}', at: '2026-10-07T09:20:20+02:00' },
+      { id: 'a1', role: 'assistant', content: 'Il tuo dentista è il dottor Rossi, in via Emilia.', at: '2026-10-07T09:20:20+02:00' },
+      { id: 'q2', role: 'user', content: 'Ok. Sabato prenoto alla Trattoria Aldina per i miei genitori.', at: '2026-10-07T09:21:00+02:00' },
+      { id: 'a2', role: 'assistant', content: 'Perfetto.', at: '2026-10-07T09:21:10+02:00' },
+      { id: 'q3', role: 'user', content: 'Cosa avevo fatto sul Cimone?', at: '2026-10-07T09:22:00+02:00' },
+      { id: 'a3', role: 'assistant', content: 'Una camminata con Luca partendo da Sestola.', at: '2026-10-07T09:22:30+02:00' },
+      { id: 'q4', role: 'user', content: 'Sì, e abbiamo visto i camosci!', at: '2026-10-07T09:23:00+02:00' },
+    ]);
+    // The third reply has no tool message: Recordare itself served a recall in this conversation during that turn.
+    await db.query(`INSERT INTO recall_log (owner_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [ownerId, conv]);
+    llm.queue.push({
+      episodes: [
+        { content: 'Luca ha portato Marta a Sestola', occurred_at: '2026-10-06', evidence: [7] },                    // echo only
+        { content: 'Sul Monte Cimone con Luca Marta ha visto i camosci', occurred_at: '2026-02-28', evidence: [7, 8] }, // owner added
+        { content: 'Cena alla Trattoria Aldina con i genitori', kind: 'plan', occurred_at: '2026-10-10', evidence: [4] },
+      ],
+      facts: [{ key: 'dentist', value: 'dottor Rossi, via Emilia', verdict: 'new', evidence: [3, 4] }],               // echo + "Ok"
+    });
+    await runner.runForConversation(conv);
+    expect(await db.query(`SELECT value FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([]);
+    const kept = (await db.query(`SELECT content FROM episodes WHERE owner_id = $1 AND content ~ 'Sestola|camosci|Aldina' ORDER BY content`, [ownerId]))
+      .map((r: { content: string }) => r.content);
+    expect(kept).toEqual(['Cena alla Trattoria Aldina con i genitori', 'Sul Monte Cimone con Luca Marta ha visto i camosci']);
   });
 
   it('makes no LLM call without a message from the owner (gate)', async () => {
