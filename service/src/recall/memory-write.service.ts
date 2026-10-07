@@ -40,10 +40,12 @@ export class MemoryWriteService {
       const [row] = await tx.query(
         `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, plan_status, plan_status_at,
            origin, author_role, stance, confidence, disclosure, audience)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'stated', 1, 'owner', $13) RETURNING id`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'owner', $15) RETURNING id`,
         [ownerId, kind, input.content, at.at, until.at, at.precision, input.place ?? null, byOwner ? 10 : 5,
           kind === 'plan' ? 'open' : null, kind === 'plan' ? new Date() : null,
-          byOwner ? 'owner_lived' : 'assistant_stated', byOwner ? 'owner' : 'assistant', [ownerId]]);
+          byOwner ? 'owner_lived' : 'assistant_stated', byOwner ? 'owner' : 'assistant',
+          // "stated" only with the owner's own words behind it (API.md §3), as for notes.
+          byOwner ? 'stated' : 'inferred', byOwner ? 1 : 0.6, [ownerId]]);
       await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, $3)`,
         [row.id, messageId, byOwner ? 'message' : 'agent_paraphrase']);
       for (const p of input.people ?? []) await tx.query(`INSERT INTO episode_people (episode_id, alias) VALUES ($1, $2)`, [row.id, p]);
