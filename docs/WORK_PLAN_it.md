@@ -226,8 +226,9 @@ partial (solo chiave admin); 5b.5 partial (nessun fallback senza WebGL, nessun c
 Stato (2026-10-07): 6.1 TODO; **6.2 done** in Arkimede (outbox, identità + naming, strumenti MCP come `recordare_*` senza
 `log_episode`, stato del consenso, turni di errore esclusi); 6.3 partial (interruttore nelle Impostazioni fatto; scheda Diario TODO — richiede 4.7);
 6.4 partial (test unitari; nessuna esecuzione di regressione registrata); 6.5, 6.6 TODO; 6.7 (libreria client + conformità, Arkimede la usa), 6.8 (memoria di entità, D48) e 6.9 (console admin) done; la divisione dell'interruttore A-MEM di D34 e la copia delle note
-Recordare → A-MEM TODO. Prossimi in ordine: Recordare co-ospitato con Arkimede su Kinox (`docs/DEPLOYMENT.md`), 6.7, 6.6,
-poi le idee 5.7.
+Recordare → A-MEM TODO. Prossimi in ordine (decisione del proprietario 2026-10-07: i connettori per ultimi): le idee
+della 5.7, la 4.7 API di lettura (poi la scheda Diario, 6.3), la 4.8 nuovo dataset cieco (e un set cieco per la memoria
+di entità), la 4.10, poi i connettori 6.6.
 
 | # | Compito | Dove |
 |---|---|---|

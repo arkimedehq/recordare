@@ -224,8 +224,9 @@ partial (admin key only); 5b.5 partial (no fallback without WebGL, no fps check)
 Status (2026-10-07): 6.1 TODO; **6.2 done** in Arkimede (outbox, identity + naming, MCP tools as `recordare_*` without
 `log_episode`, consent state, error turns excluded); 6.3 partial (Settings switch done; Diary tab TODO — needs 4.7);
 6.4 partial (unit tests; no recorded regression run); 6.5, 6.6 TODO; 6.7 (client library + conformance, Arkimede on it), 6.8 (entity memory, D48) and 6.9 (admin console) done; D34's A-MEM toggle split and the notes copy
-Recordare → A-MEM TODO. Next in order: Recordare co-hosted with Arkimede on Kinox (`docs/DEPLOYMENT.md`), 6.7, 6.6,
-then the 5.7 ideas.
+Recordare → A-MEM TODO. Next in order (owner's decision 2026-10-07: connectors last): the 5.7 ideas,
+4.7 read API (then the Diary tab, 6.3), 4.8 fresh blind dataset (and a blind entity-memory set), 4.10, then 6.6
+connectors.
 
 | # | Task | Where |
 |---|---|---|

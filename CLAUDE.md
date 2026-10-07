@@ -114,5 +114,6 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md` (M6 status line): 6.6 connectors (on `packages/client`) → 5.7 ideas (each measured) → 4.7 read
-API → 4.8 fresh blind dataset (and a blind entity-memory set).
+Follow `docs/WORK_PLAN.md` (M6 status line; connectors last, owner's decision): 5.7 ideas (each measured) → 4.7 read API
+(+ Arkimede Diary 6.3) → 4.8 fresh blind dataset (and a blind entity-memory set) → 4.10 → 6.6 connectors (on
+`packages/client`).
