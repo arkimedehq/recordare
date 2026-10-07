@@ -1,8 +1,9 @@
 # Episodic memory — design TODO
 
-Status: **design / discussion**. Nothing implemented yet. Engine evaluation done
-(`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D) beat
-Memobase, Graphiti and the raw baseline; D23 (approved) builds it.
+Status: **implemented** (2026-10-07) in `service/` — raw log, episodes, plans, facts, notes, digests, recall tools,
+explicit writes and forgetting of one episode; open items per milestone in `WORK_PLAN.md` (M5 partial, M6 in
+progress). Engine evaluation (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D)
+beat Memobase, Graphiti and the raw baseline; D23 (approved) builds it. Decisions taken while building: D36–D47.
 
 This is **phase 1** of the digital twin vision (`DIGITAL_TWIN_VISION.md`): episodic
 memory is the foundation the twin's memory, self-model and initiative build on.
@@ -173,8 +174,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - A diary is more sensitive than durable facts → explicit opt-in, independent of
   `autoMemoryEnabled`.
 
-### D5 — Idle delay: global `app_config` value, default 15 min (2026-10-01)
-- Admin-editable, no per-user override.
+### D5 — Idle delay: global setting, default 15 min (2026-10-01)
+- As built: env `IDLE_DELAY_SECONDS` (default 900), no per-user override.
 - Episode pass skipped (zero LLM calls) when the tail contains no user message.
 
 ### D6 — Dedicated tables `user_episodes` + `user_digests` (2026-10-01)
@@ -205,12 +206,17 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   `occurredAt` / `datePrecision`, `kind` (event|plan).
 - Loaded only when `episodicMemoryEnabled` (class B, like `save_memory`) → zero
   prompt cost for users without the diary. Explicit capture → max importance.
+- As built (D22): a Recordare MCP tool, not an Arkimede tool; importance 10 / `stated` only with the owner's own
+  words behind it (`API.md` §3). Arkimede exposes the Recordare tools as `recordare_*` but not `log_episode`.
 
 ### D12 — Dedicated tool `search_episodes` (2026-10-01)
 - Symmetric to `log_episode`, same `episodicMemoryEnabled` gate; `search_memory`
   untouched. Params: `query`, optional `from` / `to`, `mode: 'search' | 'list'`
   (list = chronological by date range, capped, for "what did I do in October?" /
   "how many times…"). Period questions read digests first, episodes on demand.
+- As built (D22): a Recordare MCP tool with `mode: search | list | latest`; `search_memory` is Recordare's own
+  (notes + facts as of a date), not Arkimede's. Digests in recall are behind the knob `recallDigests` (off: measured −1.9 pt,
+  WORK_PLAN 5.2).
 
 ### D13 — Automatic fallback to the raw log (2026-10-01)
 - When episodes/digests return nothing relevant, `search_episodes` queries the raw
@@ -237,6 +243,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Next to List / Graph: "Diary" view, day digest on top and episodes underneath,
   month navigation, filters, edit (content / date / importance), delete,
   "forget this period".
+- As built: still the plan for Arkimede (WORK_PLAN 6.3), fed by Recordare's read / timeline API (`API.md` §4, not
+  built yet); Recordare's MCP tools `correct_episode` / `forget_episode` cover edit and delete meanwhile.
 
 ### D19 — Recall boost of linked semantic notes: deferred to v2 (2026-10-01)
 - What it is: when `search_episodes` returns an episode linked (by consolidation) to
@@ -449,15 +457,70 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   excerpts); `QUALITY_PROFILE` installation default + `owners.quality_profile`. `balanced` = measured service v4.
   Not yet: verification pass, reranker, monthly digests, H12 (they arrive with M5 / H11 and join `full`).
 - Model per task (owner's rule, 2026-10-06): every LLM task has its own configurable model and provider
-  (`LLM_<TASK>_*`, tasks `extract`, `extract_economy`, `resolve`); defaults documented as the best measured model.
+  (`LLM_<TASK>_*`, tasks `extract`, `extract_economy`, `resolve`, `digest`, `facts`); defaults documented as the best measured model.
   Profiles pick the extraction task (`economy` → `extract_economy`), never a model.
 - Replaces the earlier rule "as cheap as possible" with: **never trade quality silently — the
   owner chooses the profile**.
 
+### D36 — Consent in two steps (2026-10-07)
+- A client's per-user switch gates the client's side; the episodic consent itself is given by the Recordare admin
+  (home profile) or the owner (public profile). `GET api/v1/me` returns `episodicEnabled`; clients do not buffer
+  messages before consent (they show "waiting for activation").
+
+### D37 — Plan patches need evidence about that plan (2026-10-06)
+- A patch applies only when its evidence speaks of that plan (shared name / place / keyword, or embedding ≥ 0.37);
+  a repeated reschedule is ignored; a moved plan carries the new date in its text. extract.v6. blind5 91.3 % vs 89.9 %
+  (within noise), plan outcome 0.92 → 1.00.
+
+### D38 — Recall echo is stopped by a code guard, not a prompt rule (2026-10-07)
+- A prompt label ("answering from memory") made the extractor trust a wrong recall (dev set 75 %), so extract.v6 stays.
+- The writer drops items said only by an assistant reply answering from memory (a Recordare read tool in the turn, or
+  a recall served in that conversation) and not by the owner, another person or a non-memory tool; after a recall a
+  fact changes only with an asserting (non-question) sentence. Dev echo set 79 % → 100 % (3 + 3 runs).
+
+### D39 — People-aware recall (2026-10-07)
+- A question naming someone (by name, or by a relation resolved from the stored "Name (relation)" people) also gets
+  that person's own chat messages; no LLM call. blind6 assistant-addressed 0.25 → 0.62 (1 run), blind5 within noise.
+
+### D40 — extract.v8: a wider notion of facts (2026-10-07)
+- Kept: blind5 +1.5 pt (within noise), facts current 0.77 → 0.82, blind6 94.4 % vs 81.1 % (1 run). Watch
+  third-party news in group chats.
+
+### D41 — Nightly facts review built, kept off (2026-10-07)
+- `facts_review.v1` (task `facts`), admin `POST owners/:id/review-facts`; blind5: no gain on current facts
+  (0.769 × 3) → quality-profile knob `factsReview` off. Facts work moves to the extraction prompt (D40).
+
+### D42 — Recordare Atlas is its own optional repo (2026-10-06)
+- `arkimedehq/recordare-atlas`, versioned event contract `docs/ATLAS_EVENTS.md`; Recordare works without it. Client
+  agents reach it as OpenTelemetry GenAI traces, metadata only. OpenTelemetry is an observation channel, never a
+  memory channel: ingest stays the only memory input.
+
+### D43 — Clients: uniform contract, not uniform mechanism (2026-10-07)
+- Arkimede is the native server-side client; connectors (hooks + MCP + pre-turn recall) serve platforms we do not
+  control; one client library inside this repo (`packages/client`) and a conformance suite every client passes
+  (WORK_PLAN 6.6, 6.7).
+
+### D44 — Infrastructure profiles: standalone or co-hosted (2026-10-07)
+- Standalone by default; co-hosted with Arkimede on small servers (own database + user on Arkimede's pgvector
+  Postgres, own Redis db + queue prefix, Arkimede's bge-m3 embedder) — `docs/DEPLOYMENT.md`. Arkimede's defaults moved
+  to `pgvector/pgvector:pg16` and BAAI/bge-m3 (and Piper voice `it_IT-serena-medium`).
+
+### D45 — talkiosk (2026-10-07)
+- Own repo; talks directly to Arkimede's OpenAI-compatible API (no Home Assistant); Rust. Continuous listening is
+  opt-in: voiceprints on the device, unknown voices discarded, no audio stored, each person's words into their own
+  memory. WORK_PLAN 5b.10 / 6.5.
+
+### D46 — Evaluation rule 9: one service instance per queue (2026-10-07)
+- A run whose extractions carry more than one prompt version is discarded (a stale instance contaminated runs; fixed
+  in the service's shutdown). WORK_PLAN → Evaluation budget.
+
+### D47 — Voice spans act for the Wyoming user (2026-10-07)
+- Spans from Arkimede's Wyoming voice server are attributed to the configured Wyoming conversation user.
+
 ## Open questions (to discuss)
 
-None — all resolved in D1–D35 (D24–D26: see `WORK_PLAN.md`). To define with the new repo (`arkimedehq/recordare`, NestJS): 
-ingest API contract, MCP tool schemas, auth / identity mapping. Next step: implementation slices.
+None — resolved in D1–D47 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked
+in `WORK_PLAN.md`.
 
 ## Non-goals (for now)
 - Embedding every raw message (cost, noise, no event-time semantics).

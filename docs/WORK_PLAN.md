@@ -1,7 +1,8 @@
 # Work plan
 
-Status: **draft (2026-10-02)**. Covers roadmap phase 1 (episodic memory,
-`EPISODIC_MEMORY_TODO.md`) from engine decision to a first Arkimede integration.
+Status: **2026-10-07** — phase 1 implemented through M5 (some rows partial), M5b mostly done, M6 in progress
+(Arkimede integrated), M7 not started. Each milestone below has a status line; rows say **done / partial / TODO**.
+Covers roadmap phase 1 (episodic memory, `EPISODIC_MEMORY_TODO.md`) from engine decision to a first Arkimede integration.
 Later roadmap phases (`DIGITAL_TWIN_VISION.md` → Roadmap) are listed at the end and get
 their own plan when phase 1 is done.
 
@@ -67,6 +68,8 @@ lands in M3/M4 as the service's regression suite (`literature/README.md` → Eva
 **Draft done 2026-10-03, revision 2 after a consistency review** (branch `m1-contracts`): `docs/API.md` (identity, auth, ingest, MCP tools,
 read API, SDK) and `docs/DATA_MODEL.md` (data model v1 with D28–D30). OpenAPI is generated from the
 zod schemas in M2 rather than hand-written.
+Status (2026-10-07): 1.1–1.5 done as documents and built in M2–M4 (public-profile parts deferred, D33); the read API
+of 1.4 is **not built** (see 4.7); 1.6 SDK skeleton and the generated OpenAPI **not built** (→ 6.7).
 
 | # | Task | Output |
 |---|---|---|
@@ -87,6 +90,8 @@ Anthropic adapters and profiles (verified live on DeepSeek and Ollama with `npm 
 embedding and clock ports, v1 auth (client API keys, personal tokens, admin API, owner resolution),
 docker-compose, CI, Dockerfile. Moved to where they are first used: `QueuePort` (BullMQ idle jobs) →
 M3, `VectorStorePort` and IT/EN prompt files → M4.
+Status (2026-10-07): done except 2.3 `VectorStorePort` (**TODO** — pgvector SQL is inline in the services) and 2.6 i18n
+(**partial** — prompts are English with an owner-language line; period resolver and relation words are IT/EN).
 
 | # | Task |
 |---|---|
@@ -121,19 +126,23 @@ Service v1: 100 % / 89–96 % on the base sets, **96.4 % on the held-out noise s
 (`spikes/memory-eval/RESULTS.md`). Still open: 4.4b (new blind set — the held-out one is no longer
 blind for the engine prompt), 4.5b (provider matrix), 4.5c (H1 categories), 4.6 (N ≥ 3 runs,
 controls, per-stage extraction eval) — they move to M4b together with the M3/M4 eval upgrade.
+Status (2026-10-07): done except 4.1 (nightly sweep of pending messages TODO), 4.4c (TODO) and 4.5b (partial); 4.7–4.8 TODO.
 
 | # | Task |
 |---|---|
-| 4.1 | Per-conversation idle debounce (D1/D5) + service-side cursor (D22) + nightly sweep |
+| 4.1 | Per-conversation idle debounce (D1/D5) + service-side cursor (D22) + nightly sweep — **partial**: the nightly sweep of pending (unextracted) messages is TODO (the hourly sweep only consolidates) |
 | 4.2 | Episode extraction (D2, D9, D10, D21): bi-temporal, `datePrecision`, plans with `validUntil` / `invalidatedAt`, valence / feelings / opinion, `people`, provenance to raw message |
 | 4.3 | `log_episode` (explicit capture, max importance); semantic notes (D34): extraction in the same call, `notes` tables, `remember` / `search_memory`, notes change feed |
 | 4.4 | `search_episodes` full: date-range filter, `mode: search \| list`, ranking relevance + recency + importance + access boost (D14), automatic raw-log fallback (D13); deterministic resolver for common period expressions (this / last week, month names) |
 | 4.4b | Eval suite = `dataset/` + `dataset_holdout/` (+ a new blind set when prompts change a lot); gaps from `ENGINE_IDEAS.md` covered (rescheduled plans, corrections, `latest` mode, facts as-of) |
-| 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget |
+| 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget — **TODO** (accounting exists, no budget / CI gate) |
 | 4.5 | Per-person toggle `episodicMemoryEnabled` (D4), default off |
-| 4.5b | **Provider matrix**: eval suite run against DeepSeek, Ollama and at least one of OpenAI / Anthropic / Gemini; CLI `eval --config <profile>`; supported-models table (D27) |
+| 4.5b | **Provider matrix**: eval suite run against DeepSeek, Ollama and at least one of OpenAI / Anthropic / Gemini; CLI `eval --config <profile>`; supported-models table (D27) — **partial**: measured (DeepSeek, Ollama local models, OpenRouter models, claude-cli); no `eval --config` CLI, no formal supported-models table with weight licences |
 | 4.5c | Eval categories for H1 (plan resolution incl. unresolved, premise traps, accumulate vs supersede, correction vs change) with unjustified-assertion and over-abstention rates (`RESEARCH_NOTES.md`) |
 | 4.6 | Eval harness v2: compare with M0 scores; must not regress below the D23 prototype |
+| 4.7 | **TODO** — Read / timeline API (`API.md` §4: episodes, digests, facts, notes, plans, forget a period, settings, usage, export); prerequisite of the Arkimede Diary tab (6.3) |
+| 4.8 | **TODO** — A fresh blind dataset: blind4 / 5 / 6 have been partly read while fixing failures |
+| 4.9 | **Done** — `log_episode` stance: `stated` only with the owner's own words behind it, `inferred` for an agent-only write (`API.md` §3) |
 
 ### M4b — Rigorous evaluation and quality profiles
 
@@ -142,7 +151,7 @@ controls, per-stage extraction eval) — they move to M4b together with the M3/M
 | 4b.1 | Third blind dataset (separate agent, no access to prompts / results): another person and domains, IT + EN, H1 probes (plan resolution incl. unresolved, premise traps, accumulate vs supersede, correction vs change, anti-traps, implicit changes), noise generator, **gold annotations of episodes / plans / facts / notes** for per-stage scoring |
 | 4b.2 | Harness: N ≥ 3 runs per configuration, mean ± confidence interval, paired comparisons; controls (no-memory, full-context, raw-log only); per-category reporting; per-stage extraction scoring against gold; cost columns (calls, tokens, cached share, latency) |
 | 4b.3 | Quality profiles (D35) as configuration: economy / balanced / full, measured on the suite |
-| 4b.4 | Provider matrix (D27): DeepSeek, local Ollama, at least one more hosted provider; supported-models table |
+| 4b.4 | Provider matrix (D27): DeepSeek, local Ollama, at least one more hosted provider; supported-models table — **partial** (as 4.5b) |
 | 4b.5 | Market baselines on `dataset_blind3` (base + noise, 3 runs, same harness, judge and embeddings): **Mem0** OSS (the most used agent memory; ADD/UPDATE/DELETE over fact strings) and **Cognee** OSS (knowledge graph + vectors). Thin adapters in `systems/`, engines on the same LLM (`deepseek-flash`, thinking off); licences checked before use (run as dependencies, no code copied); report accuracy, extraction cost and injected tokens per query next to service v4, D and the controls (H6) |
 
 Status (2026-10-03): 4b.1 done (`dataset_blind3`, audited); 4b.2 done (multi-run + CI, paired bootstrap,
@@ -167,15 +176,21 @@ model is supported only at ≥ 95 % on the suite**; weaker models are removed, r
 
 ### M5 — Layer 2: consolidation
 
+Status (2026-10-07): 5.1, 5.2 done; 5.3, 5.5 partial; 5.4 TODO; 5.6 built and off; 5.7 one idea done (extract.v8).
+
 | # | Task |
 |---|---|
-| 5.1 | Nightly job per person with new episodes (zero LLM calls if nothing new) |
-| 5.2 | Daily digests + monthly roll-up (D8); period questions read digests first |
-| 5.3 | Dedup of the same event across conversations (link, never rewrite) |
-| 5.4 | Pattern promotions with `episode_promotions` (D20) — destination depends on **D26** |
-| 5.5 | User-driven deletion: episode, period; digests recomputed; vectors removed (D16) |
-| 5.6 | **Nightly facts review** (2026-10-07): built (`facts_review.v1`, task `facts`, admin `POST owners/:id/review-facts`), measured on blind5 — no gain on current facts (0.769 ×3), history +1 fact in 1/3, rewording churn → knob `factsReview` off. Facts work moves to the extraction prompt |
-| 5.7 | **Ideas from other platforms' memory** (`docs/literature/agent-platform-memory.md`, 2026-10-07), each to be measured: fenced injected memory (`<memory-context>`) so the echo guard keeps working with connectors; a no-LLM pre-turn recall block for connectors (owner card, current facts, upcoming plans + ≤ 3 matches); extraction prompt for personal facts said in passing and transitions ("switched / stopped" → replace; accepting a proposal states it, a bare "ok" does not); web-tool taint (assistant text after a web result never becomes an owner fact); a nightly pattern pass proposing pending inferred notes backed by ≥ 2 episodes |
+| 5.1 | Nightly job per person with new episodes (zero LLM calls if nothing new) — **done** |
+| 5.2 | Daily digests + monthly roll-up (D8); period questions read digests first — **done**; digests in recall behind the knob `recallDigests`, off (measured −1.9 pt) |
+| 5.3 | Dedup of the same event across conversations (link, never rewrite) — **partial**: near-duplicate resolver at extraction; no consolidation dedup pass |
+| 5.4 | Pattern promotions with `episode_promotions` (D20) — destination depends on **D26** — **TODO** (table created, unused) |
+| 5.5 | User-driven deletion: episode, period; digests recomputed; vectors removed (D16) — **partial**: forget one episode done; TODO: forget a period, re-verdict facts whose evidence was forgotten, delete episodes left without evidence when a message is deleted |
+| 5.6 | **Nightly facts review** (2026-10-07) — **built, off**: built (`facts_review.v1`, task `facts`, admin `POST owners/:id/review-facts`), measured on blind5 — no gain on current facts (0.769 ×3), history +1 fact in 1/3, rewording churn → knob `factsReview` off. Facts work moves to the extraction prompt |
+| 5.7 | **Ideas from other platforms' memory** (`docs/literature/agent-platform-memory.md`, 2026-10-07) — **partial**: the extraction-prompt idea is done as extract.v8 (D40), the others TODO; each to be measured: fenced injected memory (`<memory-context>`) so the echo guard keeps working with connectors; a no-LLM pre-turn recall block for connectors (owner card, current facts, upcoming plans + ≤ 3 matches); extraction prompt for personal facts said in passing and transitions ("switched / stopped" → replace; accepting a proposal states it, a bare "ok" does not); web-tool taint (assistant text after a web result never becomes an owner fact); a nightly pattern pass proposing pending inferred notes backed by ≥ 2 episodes |
+
+**Watch** (weak spots seen in the blind sets, not yet worked on): third-party news in group chats (extract.v8),
+standing intents for requests to the assistant, plan outcome 0.77 (clean run), implicit changes 0.67,
+cross-language questions.
 
 ### M5b — Neural Atlas: live dashboard (after M5)
 
@@ -185,6 +200,10 @@ corrections, third-party claims, neocortex = facts and notes, prefrontal = recal
 synapses their links, and signals travel between regions as data flows. "Sleep" mode replays the M5 consolidation
 (hippocampus → neocortex), the same mechanism the architecture borrows from human memory. Prototype with simulated
 data: `docs/prototypes/neural-atlas.html` (Three.js + bloom; also published as a private artifact).
+
+Status (2026-10-07): 5b.1, 5b.2, 5b.6, 5b.7, 5b.8 done; 5b.3 partial (no click-to-read, filters, day replay); 5b.4
+partial (admin key only); 5b.5 partial (no fallback without WebGL, no fps check); 5b.9 TODO (idea); 5b.10 design only
+(talkiosk repo).
 
 | # | Task |
 |---|---|
@@ -197,9 +216,15 @@ data: `docs/prototypes/neural-atlas.html` (Three.js + bloom; also published as a
 | 5b.7 | **`recordare-atlas`: the dashboard as its own repo** (owner's decision 2026-10-08): part of the Recordare project, published together with it (same licence, AGPL), but optional — Recordare works without it (no listener, no cost). The repo holds the brain app plus a small server (holds the admin key, serves the app, relays the sources); installable on its own (Docker image). Recordare keeps only its sources: telemetry stream, atlas snapshot, totals. A **versioned event contract** (`atlas-events v1`) documented in Recordare lets the two repos evolve separately |
 | 5b.8 | **Client agents on the brain** (owner's request 2026-10-08): show what the client platform does — agents invoked, its LLM calls, tools run — next to Recordare's own work, for Arkimede and any other client. Preferred route: the atlas server receives **OpenTelemetry traces (OTLP)** with the GenAI semantic conventions (`gen_ai.*`: `invoke_agent`, `chat`, `execute_tool`; model, tokens, durations — check the current version first), so any instrumented platform connects without custom code; a small helper for clients without OpenTelemetry. Mapping: agent planning → prefrontal cortex, the client's LLM generating → Broca's area (Recordare's LLM understanding = Wernicke's area), tools → motor cortex, recall → the existing prefrontal → hippocampus path. Events tied to the owner through Recordare's identities. **Metadata only** on this channel (prompts, replies, tool outputs never travel as telemetry: the viewer may not be the owner, content would escape forgetting and disclosure, and agent traces carry system prompts and tool data that are not memories); conversation content reaches Recordare only through ingest, under the memory's rules. Arkimede: instrument `backend/src/common/llm-usage.util.ts` and the agent / multi-agent services (work in the Arkimede repo, with the owner's OK) |
 | 5b.9 | **Idea — Recordare speaks OpenTelemetry too**: emit its own operations as GenAI memory spans (`search_memory`, `create_memory`, `update_memory`, `delete_memory`; metadata only) so standard observability tools (Grafana / Jaeger / Langfuse) see Recordare with no dedicated integration, and the atlas could read them like any client. Observation only: memory content keeps travelling on ingest (REST / MCP) — telemetry samples, batches and drops, carries no authorship or participants, and escapes forgetting, so it is never a memory channel |
-| 5b.10 | **talkiosk** (owner's decision 2026-10-07; own repo `~/Development/talkiosk`, design in its `docs/DESIGN.md`): a Raspberry Pi 5 with a screen showing Recordare Atlas full screen and a voice that talks **directly to Arkimede** (its OpenAI-compatible API: chat, transcription, speech — no Home Assistant). Rust, voice pieces copied (not depended on) from proven code. Two modes: **assistant** (wake word) and **continuous listening with speaker recognition** (opt-in): voiceprints on the device, unknown voices discarded, no audio stored, each recognised person's words go into **their own** Recordare memory (others present get them as "said by …"). Needs: Arkimede traces transcription and speech (OpenTelemetry); talkiosk is a Recordare client whose enrolled voices are identities linked by the admin to each person; atlas maps its spans (auditory cortex for listening) and may need a light WebGL profile for the Pi |
+| 5b.10 | **talkiosk** (owner's decision 2026-10-07; own repo `~/Development/talkiosk`, design in its `docs/DESIGN.md`): a Raspberry Pi 5 with a screen showing Recordare Atlas full screen and a voice that talks **directly to Arkimede** (its OpenAI-compatible API: chat, transcription, speech — no Home Assistant). Rust, voice pieces copied (not depended on) from proven code. Two modes: **assistant** (wake word) and **continuous listening with speaker recognition** (opt-in): voiceprints on the device, unknown voices discarded, no audio stored, each recognised person's words go into **their own** Recordare memory (others present get them as "said by …"). Arkimede already traces transcription and speech (OpenTelemetry); needs: talkiosk is a Recordare client whose enrolled voices are identities linked by the admin to each person; atlas maps its spans (auditory cortex for listening) and may need a light WebGL profile for the Pi |
 
 ### M6 — Integrations (proof of client neutrality)
+
+Status (2026-10-07): 6.1 TODO; **6.2 done** in Arkimede (outbox, identity + naming, MCP tools as `recordare_*` without
+`log_episode`, consent state, error turns excluded); 6.3 partial (Settings switch done; Diary tab TODO — needs 4.7);
+6.4 partial (unit tests; no recorded regression run); 6.5, 6.6, 6.7 TODO; D34's A-MEM toggle split and the notes copy
+Recordare → A-MEM TODO. Next in order: Recordare co-hosted with Arkimede on Kinox (`docs/DEPLOYMENT.md`), 6.7, 6.6,
+then the 5.7 ideas.
 
 | # | Task | Where |
 |---|---|---|
@@ -221,6 +246,8 @@ which confirms the standalone-service bet). Not committed work: candidates after
 
 
 ### M7 — Hardening and release
+
+Status (2026-10-07): not started (D33). A Dockerfile exists; nothing published.
 
 Only if Recordare opens to people the operator does not know: enable the **public profile**
 (`API.md` §0, D33) — owner login and pages, OAuth 2.1 for MCP connectors, owner-driven linking and
@@ -248,8 +275,8 @@ protection in front (firewall / WAF / rate limits).
 | D28 | Data model fields for research hypotheses | Reserved from v1 (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
 | D27 | LLM / embedding providers | **Any provider** via config profiles; DeepSeek + Ollama only as test setups | Done (2026-10-02) |
 | D24 | MCP transport and per-person auth for basic-level clients | **Decided (M1)**: streamable HTTP at `/mcp`; personal access tokens for header-capable clients; OAuth 2.1 per the MCP authorization spec for clients that require it (Claude Desktop / claude.ai); full level = client API key + `X-Recordare-User` (`API.md` §1) | Done (2026-10-03) |
-| D25 | Vector store | **pgvector** (proposed 2026-10-02, see below) | M2 |
-| D26 | Where pattern promotions go while A-MEM lives in Arkimede | Exposed by Recordare as `pending` proposals via API; the client decides (Arkimede imports them into A-MEM) | M5 |
+| D25 | Vector store | **pgvector** — decided, in use (HNSW, see below) | Done (2026-10-03) |
+| D26 | Where pattern promotions go while A-MEM lives in Arkimede | Exposed by Recordare as `pending` proposals via API; the client decides (Arkimede imports them into A-MEM) | Open — with 5.4 |
 | — | Single-tenant (one install per family) vs multi-tenant | Model `person` + `client` so both work; start single-tenant | M1 |
 
 ### D25 rationale — pgvector (2026-10-02)
