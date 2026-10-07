@@ -12,6 +12,7 @@ import { TelemetryModule } from './telemetry/telemetry.module';
 import { AtlasModule } from './atlas/atlas.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { ConsoleModule } from './console/console.module';
 import { MeController } from './me/me.controller';
 import { QueueModule } from './queue/queue.module';
 import { EngineModule } from './engine/engine.module';
@@ -35,6 +36,7 @@ import { McpModule } from './mcp/mcp.module';
     LlmModule,
     AuthModule,
     AdminModule,
+    ConsoleModule,
     EngineModule,
     QueueModule,
     RawLogModule,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { Body, Controller, Delete, Headers, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
@@ -9,8 +9,8 @@ import { ConsolidationService } from '../engine/consolidation.service';
 import { ZodBody } from '../common/zod-body.pipe';
 import { AdminService } from './admin.service';
 import {
-  createClientSchema, createIdentitySchema, createKeySchema, createOwnerSchema, createTokenSchema, updateOwnerSchema,
-  type CreateClient, type CreateIdentity, type CreateKey, type CreateOwner, type CreateToken, type UpdateOwner,
+  createClientSchema, createIdentitySchema, createKeySchema, createOwnerSchema, createTokenSchema, updateClientSchema, updateOwnerSchema,
+  type CreateClient, type CreateIdentity, type CreateKey, type CreateOwner, type CreateToken, type UpdateClient, type UpdateOwner,
 } from './admin.schemas';
 
 /** Admin API (no @RequireScopes → admin credential only). */
@@ -22,6 +22,29 @@ export class AdminController {
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
+
+  /** Admin console: owners with settings, counts, identities and tokens (metadata only). */
+  @Get('persons')
+  listPersons() {
+    return this.admin.listPersons();
+  }
+
+  @Get('clients')
+  listClients() {
+    return this.admin.listClients();
+  }
+
+  @Patch('clients/:id')
+  @HttpCode(204)
+  updateClient(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(updateClientSchema)) body: UpdateClient) {
+    return this.admin.updateClient(id, body);
+  }
+
+  @Delete('identities/:id')
+  @HttpCode(204)
+  deleteIdentity(@Param('id', ParseUUIDPipe) id: string) {
+    return this.admin.deleteIdentity(id);
+  }
 
   @Post('clients')
   createClient(@Body(new ZodBody(createClientSchema)) body: CreateClient) {

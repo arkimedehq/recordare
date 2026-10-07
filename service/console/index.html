@@ -1,0 +1,65 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright © 2026 Andrea Genovese -->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Recordare · Admin</title>
+  <link rel="stylesheet" href="/admin/console.css">
+</head>
+<body>
+  <header>
+    <h1>Recordare <span class="muted">admin</span></h1>
+    <nav id="tabs" hidden>
+      <button data-tab="persons" class="active" data-i18n="persons"></button>
+      <button data-tab="clients" data-i18n="clients"></button>
+    </nav>
+    <div class="spacer"></div>
+    <button id="lang" class="ghost"></button>
+    <button id="logout" class="ghost" hidden data-i18n="logout"></button>
+  </header>
+
+  <main>
+    <section id="login" hidden>
+      <form id="login-form" class="card narrow">
+        <h2 data-i18n="signIn"></h2>
+        <p class="muted" data-i18n="signInHint"></p>
+        <input id="key" type="password" autocomplete="current-password" required autofocus>
+        <button type="submit" data-i18n="enter"></button>
+        <p id="login-error" class="error" hidden></p>
+      </form>
+    </section>
+
+    <section id="persons" hidden>
+      <div class="toolbar">
+        <h2 data-i18n="persons"></h2>
+        <div class="spacer"></div>
+        <input id="person-search" class="search" type="search">
+        <button id="new-person" data-i18n="newPerson"></button>
+      </div>
+      <div id="person-list"></div>
+    </section>
+
+    <section id="clients" hidden>
+      <div class="toolbar">
+        <h2 data-i18n="clients"></h2>
+        <div class="spacer"></div>
+        <input id="client-search" class="search" type="search">
+        <button id="new-client" data-i18n="newClient"></button>
+      </div>
+      <div id="client-list"></div>
+    </section>
+  </main>
+
+  <div id="toast" hidden></div>
+  <dialog id="secret">
+    <h3 data-i18n="secretTitle"></h3>
+    <p class="muted" data-i18n="secretHint"></p>
+    <code id="secret-value"></code>
+    <div class="row"><button id="secret-copy" data-i18n="copy"></button><button id="secret-close" class="ghost" data-i18n="close"></button></div>
+  </dialog>
+  <script src="/admin/app.js"></script>
+</body>
+</html>

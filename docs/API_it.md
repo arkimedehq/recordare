@@ -321,6 +321,15 @@ non blocchi né faccia fallire mai la chat dell'host. MCP si usa tramite il clie
 - I contract test (M3) eseguono gli stessi scenari attraverso REST + MCP, a entrambi i livelli, inclusa la
   regola del contesto del visualizzatore (le conversazioni condivise non ottengono nulla).
 
+### Console admin (WORK_PLAN 6.9)
+`GET /admin` serve una pagina statica (pubblica: non contiene dati) sopra la API admin; l'operatore digita la chiave
+admin, che resta solo in quella scheda del browser (CSP restrittiva, `no-store`). Rotte usate oltre a quelle sopra, tutte
+solo admin e solo metadati: `GET api/v1/admin/persons` (owner con impostazioni, conteggi di messaggi / episodi / fatti /
+note, estrazione in attesa, identità collegate, token personali attivi per prefisso), `GET api/v1/admin/clients` (client
+con chiavi attive per prefisso), `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = tutte le chiavi
+e i token del client smettono subito di funzionare), `DELETE api/v1/admin/identities/:id` (scollega l'utente di un client
+da una persona; i ricordi restano).
+
 ### Telemetria live (M5b, solo admin)
 `GET api/v1/admin/telemetry/stream[?owner=<personId>]` — Server-Sent Events, uno per ogni passo reale all'interno del servizio:
 `message.ingested`, `extraction.started` / `extraction.finished`, `work.started` / `work.finished` (op: `embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`; id, durata — lavoro senza chiamata LLM), `llm.started` (id del prompt, task — la chiamata è partita) e `llm.call` (id del prompt, modello, token, latenza, stato),
