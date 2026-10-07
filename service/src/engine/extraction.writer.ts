@@ -141,8 +141,9 @@ export class ExtractionWriter {
   private assertedAfterRecall(msgs: WindowMessage[], about: string): boolean {
     if (!this.input.messages.some((m) => m.fromMemory)) return true;
     const topic = new Set(words(about).map(stem));
+    // Sentence by sentence: "What's my dentist called? I must call him." asks about the dentist, it does not assert.
     return msgs.some((m) => (m.role === 'user' || m.role === 'other' || (m.role === 'tool' && !isMemoryTool(m.toolName)))
-      && !m.content.trim().endsWith('?') && words(m.content).map(stem).some((w) => topic.has(w)));
+      && (m.content.match(/[^.!?\n]+[.!?\n]*/g) ?? []).some((s) => !s.trim().endsWith('?') && words(s).map(stem).some((w) => topic.has(w))));
   }
 
   private authorRole(msgs: WindowMessage[]): AuthorRole {

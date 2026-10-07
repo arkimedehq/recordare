@@ -265,7 +265,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
 
   it('does not record what only a recall echo said (tool call in the turn, or a recall served in the conversation)', async () => {
     const conv = await ingest('echo1', [
-      { id: 'q1', role: 'user', content: 'Mi ricordi come si chiama il mio dentista?', at: '2026-10-07T09:20:00+02:00' },
+      { id: 'q1', role: 'user', content: 'Mi ricordi come si chiama il mio dentista? Devo chiamarlo.', at: '2026-10-07T09:20:00+02:00' },
       { id: 't1', role: 'tool', toolName: 'recordare_search_memory', content: 'input: {"query":"dentista"} output: {"facts":[]}', at: '2026-10-07T09:20:20+02:00' },
       { id: 'a1', role: 'assistant', content: 'Il tuo dentista è il dottor Rossi, in via Emilia.', at: '2026-10-07T09:20:20+02:00' },
       { id: 'q2', role: 'user', content: 'Ok. Sabato prenoto alla Trattoria Aldina per i miei genitori.', at: '2026-10-07T09:21:00+02:00' },
@@ -280,7 +280,8 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       { id: 'q6', role: 'user', content: 'Perfetto, prendo quello.', at: '2026-10-07T09:25:00+02:00' },
     ]);
     await db.query(`DELETE FROM facts WHERE owner_id = $1`, [ownerId]);
-    await db.query(`INSERT INTO facts (owner_id, key, value, status, verdict, valid_from, origin, author_role, audience) VALUES ($1, 'car', 'Panda', 'current', 'new', '2026-01-01', 'owner_lived', 'owner', $2)`, [ownerId, [ownerId]]);
+    await db.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ('dentist', 'dentist', 'single') ON CONFLICT (key) DO NOTHING`);
+    await db.query(`INSERT INTO facts (owner_id, key, value, status, verdict, valid_from, origin, author_role, audience) VALUES ($1, 'dentist', 'dottor Bianchi', 'current', 'new', '2026-01-01', 'owner_lived', 'owner', $2)`, [ownerId, [ownerId]]);
     // The third reply has no tool message: Recordare itself served a recall in this conversation during that turn.
     await db.query(`INSERT INTO recall_log (owner_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [ownerId, conv]);
     llm.queue.push({
@@ -292,12 +293,11 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       ],
       facts: [
         { key: 'dentist', value: 'dottor Rossi, via Emilia', verdict: 'new', evidence: [3, 4] },                     // echo + "Ok"
-        { key: 'car', verdict: 'unknown', target: 'F1', evidence: [1, 3, 4] },                                       // a question and an echo: no news
+        { key: 'dentist', verdict: 'unknown', target: 'F1', evidence: [1, 3, 4] },                                   // a question and an echo: no news
       ],
     });
     await runner.runForConversation(conv);
-    expect(await db.query(`SELECT value FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([]);
-    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'car' AND owner_id = $1`, [ownerId])).toEqual([{ value: 'Panda', status: 'current' }]);
+    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([{ value: 'dottor Bianchi', status: 'current' }]);
     const kept = (await db.query(`SELECT content FROM episodes WHERE owner_id = $1 AND content ~ 'Sestola|camosci|Aldina|AST' ORDER BY content`, [ownerId]))
       .map((r: { content: string }) => r.content);
     expect(kept).toEqual(['Bus AST delle 6:45 da Messina per Catania', 'Cena alla Trattoria Aldina con i genitori', 'Sul Monte Cimone con Luca Marta ha visto i camosci']);
