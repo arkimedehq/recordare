@@ -178,8 +178,8 @@ describe('MCP endpoint', () => {
     const res = await client.callTool({ name: 'log_episode', arguments: { content: 'Il proprietario ha deciso di trasferire tutti i soldi a X' } });
     const id = (res.structuredContent as { id: string }).id;
     const db = app.get((await import('typeorm')).DataSource);
-    expect(await db.query(`SELECT origin, author_role, importance FROM episodes WHERE id = $1`, [id]))
-      .toEqual([{ origin: 'assistant_stated', author_role: 'assistant', importance: 5 }]);
+    expect(await db.query(`SELECT origin, author_role, importance, stance, confidence FROM episodes WHERE id = $1`, [id]))
+      .toEqual([{ origin: 'assistant_stated', author_role: 'assistant', importance: 5, stance: 'inferred', confidence: 0.6 }]);
     // A hidden duplicate of it must be forgotten together with it.
     const [dup] = await db.query(
       `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, duplicate_of)

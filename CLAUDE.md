@@ -2,25 +2,30 @@
 
 Standalone memory + **digital twin** service for agentic platforms (MCP + REST ingest + SDK).
 Arkimede (`~/Development/personalAgent`, public mirror `arkimedehq/arkimede`) is the first
-client. Status: **design + evaluation spike; no service code yet.**
+client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done, M5 done or partial, M5b mostly done,
+**M6 in progress** (Arkimede integrated), M7 not started — per-row status in `docs/WORK_PLAN.md`.
 
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
   mode, architecture (standalone, own DB, one memory per person), name, roadmap.
-- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D35 (layered memory: raw log →
-  episodes → digests → semantic notes; two LLM calls; idle+nightly triggers; tools
+- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D47 (layered memory: raw log →
+  episodes → digests → semantic notes; one extraction call per window (D32); idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
   D) and embedding comparison. Round 2 + held-out: D wins; **D23 approved: build D**; in the DeepSeek test setup `deepseek-flash` = `v4-pro` quality.
   Spike runs cost real money (DeepSeek): keep runs minimal, prefer base before noise.
   Reasoning-off switch per provider: `evalkit/common.py` → `REASONING_OFF` (override with
   `REASONING_OFF_BODY`).
-- `docs/API.md`, `docs/DATA_MODEL.md` — M1 contracts: identity / auth (D24), REST ingest, MCP tools
-  (`log_episode`, `correct_episode`, `forget_episode`, `search_episodes`, `search_facts`,
-  `resolve_period`), viewer context on every read, read API, SDK; data model v1. **D33**: build only the v1
+- `docs/API.md`, `docs/DATA_MODEL.md` — contracts: identity / auth (D24), REST ingest, MCP tools as built
+  (`search_episodes`, `search_memory` — notes + facts with `as_of`, `resolve_period`, `log_episode`, `remember`,
+  `correct_episode`, `forget_episode`; `search_facts` planned), viewer context on every read; read API (§4), SDK and
+  OpenAPI **not built yet**; data model v1. **D33**: build only the v1
   home / research profile; public-profile hardening is specified but deferred (stay on the twin).
-- `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 and open decisions D23–D26.
-- `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H8) with literature verdicts: phase 1 is
+- `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 with done / partial / TODO per row, watch list, open D26,
+  evaluation budget rules 1–9.
+- `docs/INTEGRATION.md` — the client-platform guide (set-up, consent with the admin, people, outbox ingest, MCP with
+  the conversation header, telemetry).
+- `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H12) with literature verdicts: phase 1 is
   mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), owner vs
   twin provenance (H3). Never claim novelty without re-checking it.
 - `docs/literature/` — deep-reading cards of 15 key sources + `README.md` synthesis (D29 data-model
@@ -43,8 +48,8 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Never break existing behaviour: enumerate call sites, prefer additive changes, test old and new.
 - Platform code and prompts stay generic (no customer/domain names hardcoded).
 - Development phase: clean code over backward compatibility (no dual paths / lazy migrations).
-- Stack preference: TypeScript / NestJS (service), Postgres; i18n IT/EN; type-check with
-  `tsc --noEmit` before committing.
+- Stack preference: TypeScript / NestJS (service), Postgres; i18n IT/EN. Before committing service code run, in
+  `service/`, `npm run typecheck`, `npm run lint` and `npm test` (CI runs the same; lint broke CI once).
 - Don't ask for confirmation at each intermediate step inside agreed work.
 - **Licences** (`docs/LICENSING.md`): ideas may be reimplemented with citation; code / prompt text
   only from AGPL-compatible licences (MIT, BSD, Apache-2.0, GPL family) with notices recorded in
@@ -76,6 +81,13 @@ client. Status: **design + evaluation spike; no service code yet.**
   `EMBED_MODEL=st:BAAI/bge-m3`. Local model: `ENGINE_BASE_URL=http://localhost:11434/v1
   ENGINE_MODEL=qwen3:8b` (D), or a second gateway with `LLM_BASE_URL` = Ollama + `EMBED_PORT=8791`
   and `setup_memobase.py` (Memobase). Long-running gateways need a long background timeout.
+- Evaluation of the service (rule 9, D46): one service instance per queue (separate ports + `QUEUE_PREFIX` to compare
+  versions); a run whose extractions carry more than one `extraction_runs.prompt_version` is discarded.
+
+## Related repos
+- `~/Development/recordare-atlas` (`arkimedehq/recordare-atlas`) — optional live brain view (D42).
+- `~/Development/talkiosk` — home voice device talking to Arkimede, continuous listening into each person's memory
+  (D45, design in its `docs/DESIGN.md`).
 
 ## Arkimede facts relevant here
 - Embeddings: Arkimede now runs **BAAI/bge-m3** (1024 dims) in its own `embedding-service`;
@@ -84,8 +96,11 @@ client. Status: **design + evaluation spike; no service code yet.**
 - Existing semantic memory: A-MEM (`backend/src/user-memory/`, `docs/MEMORY.md`, per-user
   `autoMemoryEnabled` governs extraction + injection + tools; scopes personal / team / org).
   **D34**: A-MEM stays in Arkimede unchanged; Recordare is complete (notes too); users copy notes
-  Recordare → A-MEM by choice; the Arkimede toggle is split in M6.
+  Recordare → A-MEM by choice; the Arkimede toggle is split in M6 (TODO).
+- Integration (M6.2, done): outbox ingest, identity + naming, Recordare MCP tools as `recordare_*` (no `log_episode`),
+  consent state from `GET api/v1/me`; voice spans from its Wyoming server act for the Wyoming user (D47).
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md`: M0 done (D23 approved) → M1 contracts and M2 scaffold.
+Follow `docs/WORK_PLAN.md` (M6 status line): Recordare co-hosted with Arkimede on Kinox (`docs/DEPLOYMENT.md`) →
+6.7 client library `packages/client` + conformance suite → 6.6 connectors → 5.7 ideas (each measured).

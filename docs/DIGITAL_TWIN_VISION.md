@@ -229,7 +229,7 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
 
 | Phase | Content | Depends on |
 |---|---|---|
-| **1. Episodic memory** | Diary, digests, consolidation (`EPISODIC_MEMORY_TODO.md`, D1–D20) + emotions / opinions on episodes | — |
+| **1. Episodic memory** | Diary, digests, consolidation (`EPISODIC_MEMORY_TODO.md`, D1–D47) + emotions / opinions on episodes — **implemented** (2026-10-07; open items in `WORK_PLAN.md`) | — |
 | **2. Self-model** | Guided voice interview, imports (own public footprint + private exports), style profile, values / opinions / decision patterns, autobiographical narrative; evaluation harness | 1 |
 | **3. Contacts & disclosure** | Contact registry with channel binding, tiers, disclosure levels on memories, twin-lived memory store | 1 |
 | **4. Twin interface** | Companion mode with the owner; proxy mode answering others (Telegram first), AI disclosure, owner review of conversations | 2, 3 |
@@ -260,6 +260,19 @@ others' claims kept apart. What changes:
    speaking to third parties (phase 3), so the work is shared.
 3. **Self-model notes** describe the agent, not a person; never stated, always inferred and pending.
 4. **Consent** of every family member that the agent remembers; extra care for minors.
+
+### Around the memory: reach, voice at home, observability (noted 2026-10-07)
+
+- **Connectors for agent platforms** (WORK_PLAN 6.6, D43): Recordare in any agent platform with one install — each
+  connector captures the turns into ingest and gives the agent the memory (MCP tools and / or a recall injected
+  before the turn); uniform contract and a conformance suite, not a uniform mechanism.
+- **talkiosk** (own repo, WORK_PLAN 5b.10 / 6.5, D45): a home device (Raspberry Pi with a screen) with a voice that
+  talks to Arkimede. Continuous listening is opt-in: voiceprints stay on the device, unknown voices are discarded, no
+  audio is stored, and each recognised person's words go into **their own** memory; facts and notes about the owner
+  heard ambiently stay pending until the owner confirms them. Prepares the voice channel of phase 6.
+- **Recordare Atlas** (own optional repo `arkimedehq/recordare-atlas`, D42): the observability companion — a live
+  brain view of Recordare and of its clients' agents, metadata only; Recordare works without it, and telemetry is
+  never a memory channel.
 
 ## Open questions
 

@@ -2,6 +2,8 @@
 
 Status: **M1 contracts, revision 3** (2026-10-03): consistency + security reviews applied; tables
 of the **public** deployment profile (`API.md` §0, D33) are marked and not built in v1.
+Built (2026-10-07): migrations in `service/src/db/migrations` match this document; tables of the public profile
+are not created, tables marked **created, unused yet** exist without code using them.
 Postgres 16 + pgvector ≥ 0.8. Implements D6–D32 (`EPISODIC_MEMORY_TODO.md`), the identity model of
 `API.md` and the vision's provenance / disclosure rules.
 
@@ -86,9 +88,10 @@ installs; partition by owner if an install grows large.
 Person merge is **not supported in v1** (an attempt to link an identity already bound to another
 owner is rejected); a future merge must remap `audience` arrays and FKs in one transaction.
 
-### person_aliases
+### person_aliases — created, unused yet
 `id, owner_id, person_id, alias text, alias_norm text (pg_trgm GIN), source enum
-(extracted|manual), created_at` — mention resolution, LLM only when ambiguous.
+(extracted|manual), created_at` — mention resolution, LLM only when ambiguous. Today people are kept as
+"Name (relation)" strings on episodes (`episode_people.alias`), which people-aware recall reads (D39).
 
 ### owners
 | Column | Type | Notes |
@@ -99,6 +102,7 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 | `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
+| `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `created_at` | timestamptz | |
 
@@ -170,7 +174,7 @@ joined_at` — source of every row's `audience` and of the viewer set for reads 
 | `received_at` | timestamptz | |
 | `extracted_run_id` | uuid null → extraction_runs | **null = pending extraction**; the idle / nightly jobs take pending messages by `sent_at`, so late-arriving messages (imports, out-of-order batches) are never skipped |
 | `edited_at` | timestamptz null | Previous text in `message_revisions(message_id, content, replaced_at)` |
-| `tsv` | tsvector | 'simple' + unaccent, GIN |
+| `tsv` | tsvector | Generated `to_tsvector('simple', content)`, GIN (the `unaccent` extension is created but not used yet) |
 | `embedding` | vector(N) null | Raw-log fallback only (D13), lazy |
 
 ## Layer 1 — episodes
@@ -216,10 +220,11 @@ user message to cite (the agent's wording, kept distinguishable). Late binding: 
 ### plan_events
 `id, plan_id → episodes (CASCADE), patch enum (open|confirm|cancel|reschedule|amend|expire),
 evidence_message_id null (SET NULL), new_plan_id null, note, created_at, extraction_run_id` —
-typed patches; transitions in code (D29); `expire` = job turning past unconfirmed plans into
-`unresolved`.
+typed patches; transitions in code (D29). As built, `unresolved` is computed at read time (a past plan never
+confirmed is shown as unresolved); no job writes it and the `expire` patch is unused. Patches need evidence about
+that plan (D37).
 
-### episode_promotions (D20)
+### episode_promotions (D20) — created, unused yet (WORK_PLAN 5.4)
 `id, owner_id, pattern text, episode_ids uuid[], proposed_note_ref text null, status enum
 (proposed|confirmed|rejected), created_at, updated_at` — recurring patterns proposed as
 semantic notes; exposed to clients as pending proposals (D26).
@@ -312,13 +317,15 @@ cached_input_tokens, output_tokens, latency_ms, status, created_at` — no promp
 text stored. Aggregated per owner / client / day for budgets and the CI cost gate.
 
 ### recall_log
-`id, owner_id CASCADE, tool, mode null, items, served_at` — one row per recall served (`search_episodes`,
-`search_memory`), metadata only: never the query, never the memories. Lifetime totals for the operators' dashboard;
+`id bigserial, owner_id CASCADE, tool, mode null, items, conversation_id null → conversations (SET NULL), served_at` —
+one row per recall served (`search_episodes`, `search_memory`), metadata only: never the query, never the memories;
+`conversation_id` tells the extraction which conversations had a recall served (recall-echo guard, D38). Lifetime totals for the operators' dashboard;
 the public profile's `read_audit` (below) extends it with client, viewers and returned row ids.
 
 ### forget_tombstones (D16)
 `id, owner_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,
-period_from, period_to, conversation_id null, created_at` — checked **before inserting any
+message_ids uuid[] (the forgotten evidence messages, hidden from chat search), period_from, period_to,
+conversation_id null, created_at` — checked **before inserting any
 episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
 
 ### read_audit (public profile)
@@ -329,17 +336,22 @@ configurable.
 
 ## Forgetting and deletion (D16)
 
+Built (2026-10-07): forget an episode (MCP `forget_episode`) and the synchronous message / conversation purge.
+Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of facts on forgotten evidence, deletion of episodes left
+without evidence.
+
 - **Forget an episode**: tombstone + delete the episode, its evidence rows, people, plan events,
   promotions referencing it; the correction chain (`corrects` in both directions) is forgotten
-  with it; the day and month **digests that used it are recomputed** (text and embedding);
-  **facts whose evidence intersects its messages are re-verdicted or deleted**; its evidence
+  with it (as built: also duplicates, the confirming event and reschedules); the day and month **digests that used
+  it are superseded** and rewritten by the next consolidation;
+  **facts whose evidence intersects its messages are re-verdicted or deleted** (not built yet); its evidence
   messages are **excluded from the raw-log fallback by message id** (not by fuzzy fingerprint) and
   purged if the owner chooses "forget the conversation too".
 - **Forget a period** `[from, to]`: tombstone; matches episodes by `occurred_at` **and** raw
   messages by `sent_at`; raw messages in the period are **purged by default** (`keepRaw: true`
   to keep them); digests of the period are recomputed or removed.
 - **Delete a message / conversation** (client request): purge raw rows and revisions; for every
-  episode / fact citing it, **drop the evidence row**; a row left without evidence is deleted;
+  episode / fact citing it, **drop the evidence row**; a row left without evidence is deleted (not built yet);
   no re-extraction (it could rewrite memories).
 - The purge job also removes: `messages.embedding`, `message_revisions` (also on forget-period),
   `embedding_text`, quotes, `run_outputs` rows. Queued jobs carry **ids only, never content**;
