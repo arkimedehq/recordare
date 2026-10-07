@@ -16,6 +16,8 @@ How an agent platform (Arkimede first, any other after) uses Recordare as its us
   the person is created at first contact; `GET api/v1/me` returns `ownerId` — store it next to your user (it ties
   your telemetry to the person: OpenTelemetry attribute `recordare.owner_id`).
 - Name the person once: `PATCH api/v1/me {displayName}` (only while unnamed; afterwards the admin / owner decide).
+- `GET api/v1/me` also says `episodicEnabled`: until the consent is given, ingest stores nothing — show the user
+  "waiting for activation" instead of buffering their messages (holding them would bypass the consent).
 - The same human on two platforms: the admin links the identities (`POST api/v1/admin/identities`).
 
 ## 3. Ingest — never block the chat

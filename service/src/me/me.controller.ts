@@ -20,8 +20,10 @@ export class MeController {
   @RequireScopes('read')
   async me(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user?: string) {
     const ownerId = await this.owners.resolve(principal, user);
-    const [person] = await this.db.query(`SELECT display_name FROM persons WHERE id = $1`, [ownerId]);
-    return { ownerId, displayName: person?.display_name ?? null, via: principal.kind, scopes: principal.kind === 'admin' ? ['admin'] : principal.scopes };
+    const [person] = await this.db.query(
+      `SELECT p.display_name, o.episodic_enabled FROM persons p JOIN owners o ON o.person_id = p.id WHERE p.id = $1`, [ownerId]);
+    // episodicEnabled: whether the owner's consent is given (a client shows "waiting for activation" until then).
+    return { ownerId, displayName: person?.display_name ?? null, episodicEnabled: person?.episodic_enabled ?? false, via: principal.kind, scopes: principal.kind === 'admin' ? ['admin'] : principal.scopes };
   }
 
   /**

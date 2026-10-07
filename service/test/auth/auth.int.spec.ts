@@ -71,6 +71,7 @@ describe('auth and admin (v1 home / research profile)', () => {
     const again = await call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' } });
     expect(again.body.ownerId).toBe(first.body.ownerId);
     expect(first.body.displayName).toBe('new-user'); // named after the client's id until named
+    expect(first.body.episodicEnabled).toBe(false); // consent belongs to the admin / the owner, never to the client
 
     // The client may name a person it created, once; after the admin renamed them it may not.
     const ingestKey = await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } });
