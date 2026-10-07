@@ -2,15 +2,18 @@
 
 Status: **M1 contracts, revision 3** (2026-10-03): consistency + security reviews applied, then split
 into deployment profiles (§0) so v1 stays focused on the twin.
+**Built (2026-10-07)**: §2 ingest, §3 MCP tools (as noted per tool), `GET / PATCH api/v1/me`, the admin API, live
+telemetry and the atlas snapshot. Sections or rows marked **not built yet (v1 plan)** are the contract still to build
+(§4 read API, §5 SDK, OpenAPI, `Idempotency-Key`).
 Client-neutral: nothing here is specific to Arkimede. Data model: `DATA_MODEL.md`. Two integration
 levels (vision → Architecture): **basic** = MCP tools only; **full** = REST ingest + MCP + read API
 + SDK.
 
 Conventions: JSON over HTTPS; controllers hard-code `api/v1/…` (no global prefix); ISO 8601 with
 offset; uuids; errors as RFC 9457 problem details (`{type, title, status, detail, code}`); zod
-schemas are the single source of truth and generate `GET /api/v1/openapi.json` (M2); pagination
+schemas are the single source of truth and generate `GET /api/v1/openapi.json` (**not built yet**); pagination
 `?cursor&limit` → `{items, nextCursor}`; every non-idempotent POST accepts an `Idempotency-Key`
-header (24 h replay window, same response returned).
+header (24 h replay window, same response returned — **not built yet**; ingest is idempotent on message ids).
 
 ## 0. Deployment profiles (D33)
 
@@ -35,7 +38,7 @@ migration.
 ### Owner authentication (public profile)
 **v1**: owners are created by the admin (`POST api/v1/admin/owners`); consent (`episodicEnabled`),
 personal tokens and identity bindings are managed through the admin API or an owner personal token;
-there are no owner pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, owner's timezone); `POST api/v1/admin/owners/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed). Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
+there are no owner pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, owner's timezone); `POST api/v1/admin/owners/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/owners/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation). Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
 `PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set).
 
 **Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
@@ -109,8 +112,10 @@ channel, externalId}`); binding an id already bound to another owner fails with 
 4. The owner can list and revoke connected clients and identities at any time:
    `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` (owner session).
 
-Admin (`api/v1/admin/…`): clients, keys, persons, owners, identities CRUD; owner export / full
-erasure jobs.
+Admin (`api/v1/admin/…`), built: `POST clients`, `POST clients/:id/keys`, `DELETE keys/:id`, `POST owners`,
+`PATCH owners/:id`, `POST identities`, `POST owners/:id/tokens`, `DELETE tokens/:id`, `POST owners/:id/consolidate`,
+`POST owners/:id/review-facts`, `GET owners` (owners with memory size, for the atlas), `GET owners/:id/atlas`,
+`GET telemetry/stream` (§6). Not built yet: owner export / full erasure jobs.
 
 ## 2. REST ingest (task 1.2) — full integration
 
@@ -154,7 +159,8 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
 ### Edits and deletions
 - `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}`.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
-  purge (`DATA_MODEL.md` → Forgetting and deletion), `202` + job id.
+  purge (`DATA_MODEL.md` → Forgetting and deletion). As built: the purge runs synchronously and returns `202` with no
+  body (plan: `202` + job id).
 
 ### Imports
 `source: import_*` with historical `sentAt`, batched; extracted by the nightly path with topic
@@ -180,10 +186,10 @@ return nothing and writes are rejected with a neutral error.
 | `people` | string[] | Names as mentioned |
 | `place` | string | |
 
-Returns `{id, stored}`. Dedup: the same content for the same owner within 10 minutes returns the
-existing episode (agent retries). Evidence: the owner's `user` message in the conversation of the
-call (bound late if the ingest has not arrived yet). **Importance 10 and `stance: stated` only when
-the evidence binds to a `user` message of the owner**; otherwise (basic level, or no owner message)
+Returns `{id, stored}`. Evidence (as built): the owner's message in the conversation of the call received in the last
+30 minutes whose text overlaps the content (trigram similarity); planned, not built yet: 10-minute dedup of agent
+retries and late binding when the ingest has not arrived. **Importance 10 and `stance: stated` only when
+the evidence binds to a `user` message of the owner**; otherwise (`stance: inferred`, confidence 0.6) (basic level, or no owner message)
 the call is stored in a per-client daily conversation (`source: mcp_tool`, `evidence_kind:
 agent_paraphrase`) with `origin: assistant_stated`, default importance and the label "noted by the
 assistant" — so an injected tool output cannot create a high-importance "the user said" memory.
@@ -232,7 +238,10 @@ than 3 episodes match or the best match is below the relevance threshold; limite
 conversations (`raw_log_scope`). Statuses always explicit; cancelled, unresolved and superseded
 items are never presented as current (premise check, D29).
 
-### `search_facts` (D31, value chain, as-of)
+### `search_facts` (D31, value chain, as-of) — not built yet (v1 plan)
+Today `search_memory` (below) returns facts too, as of a date (`as_of`), each with its value chain; a separate
+`search_facts` tool is planned.
+
 | Param | Type | Notes |
 |---|---|---|
 | `query` | string | Topic |
@@ -245,14 +254,19 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
 ### `remember` and `search_memory` (D34 — semantic notes)
 - `remember {content, category?}` — explicit "remember that…": stored as a stated note (owner's
   `user` message as evidence, same rules as `log_episode`).
-- `search_memory {query, include_pending?}` — preferences, habits, values, knowledge, plus the
-  relevant state facts; complements `search_episodes` (what happened / when).
+- `search_memory {query, as_of?, include_pending?}` — preferences, habits, values, knowledge, plus the
+  relevant state facts valid at `as_of` (ISO date, default today) with their history; complements `search_episodes`
+  (what happened / when). Returns `{notes, facts}`.
 
 ### `resolve_period` (D12, deterministic)
-`{expression, now?, locale?}` → `{from, to, label}`; Monday-based weeks, owner's timezone; `now`
-defaults to server time (override allowed for tests and historical questions). No LLM.
+As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); Italian and English
+expressions; Monday-based weeks, owner's timezone; "now" is the server clock (`X-Recordare-Now` overrides it where
+`ALLOW_CLOCK_OVERRIDE` is set — tests and evaluations). No LLM. `now?` / `locale?` parameters: not built.
 
 ## 4. Read / write API for host UIs (task 1.4) — the diary (D18)
+
+**Not built yet (v1 plan)**, except the `GET / PATCH api/v1/me` rows. Prerequisite of a host diary (WORK_PLAN 4.7,
+6.3). Meanwhile, explicit writes and forgetting go through the MCP tools (§3).
 
 Scoped to the owner (`X-Recordare-User` + viewer context, personal token, or owner session).
 The same pages are served by Recordare itself for owners without a host UI.
@@ -281,9 +295,10 @@ The same pages are served by Recordare itself for owners without a host UI.
 | `PATCH api/v1/me {displayName}` | ingest (client key) | Names a person the client created — only while the name is still the client's user id (auto-provisioning default); after the admin or the owner renamed them → 403 |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
 
-## 5. SDK (task 1.6)
+## 5. SDK (task 1.6) — not built yet (v1 plan)
 
-`@arkimedehq/recordare-client`, generated around the zod schemas:
+`@arkimedehq/recordare-client`, a workspace package `packages/client/` in this repo (WORK_PLAN 6.7), built around the
+service's zod schemas:
 ```ts
 const rc = new RecordareClient({ baseUrl, apiKey });
 const owner = rc.as("arkimede-user-42", { conversation: "chat-123" });   // user + viewer context
@@ -307,7 +322,10 @@ never blocks or fails the host's chat. MCP is used through the host's own MCP cl
 `memory.written` (episodes / facts / notes with kind and author role), `episode.linked` (duplicate / corrects),
 `recall.served` (tool, mode, returned episode and claim ids, counts), `digest.written`, `consolidation.finished`,
 `episode.forgotten`. Metadata only — ids, kinds, counts, tokens — never message or memory content. Nothing is
-synthesised: the dashboard (WORK_PLAN 5b.6) moves only when these events arrive.
+synthesised: the dashboard (WORK_PLAN 5b.6) moves only when these events arrive. Versioned contract: `ATLAS_EVENTS.md`.
+
+Recall log: every `search_episodes` / `search_memory` served writes one `recall_log` row (tool, mode, item count,
+conversation; never the query or the memories) — the source of the atlas totals and of the recall-echo guard (D38).
 
 `GET api/v1/admin/owners/:id/atlas` — the dashboard's starting map of one owner: episodes as neurons (kind, author
 role, importance, day, plan status, hidden state, position by meaning = first three principal components of the
