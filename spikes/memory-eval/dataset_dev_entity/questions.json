@@ -1,0 +1,111 @@
+{
+ "_note": "Entity-memory dev set (NOT blind). Asked after all sessions.",
+ "user": "casa",
+ "questions": [
+  {
+   "id": "n01",
+   "category": "entity-purchase",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Cosa ha comprato Nunzia, e quando?",
+   "expected": "Un paio di stivaletti neri e una sciarpa rossa da Zara, lunedì 5 ottobre 2026.",
+   "must_not": [
+    "attribuire l'acquisto ad Andrea o Marta",
+    "6 ottobre come data dell'acquisto"
+   ]
+  },
+  {
+   "id": "n02",
+   "category": "entity-fact-person",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Che macchina ha Andrea?",
+   "expected": "Una Toyota Yaris ibrida grigia (dal 3 ottobre 2026).",
+   "must_not": [
+    "Fiat 500"
+   ]
+  },
+  {
+   "id": "n03",
+   "category": "entity-fact-person",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Che macchina ha Nunzia?",
+   "expected": "Una Fiat 500 bianca.",
+   "must_not": [
+    "Yaris"
+   ]
+  },
+  {
+   "id": "n04",
+   "category": "entity-note-person",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Come prende il caffè Nunzia?",
+   "expected": "Amaro, senza zucchero.",
+   "must_not": []
+  },
+  {
+   "id": "n05",
+   "category": "entity-fact-place",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Dove sono le chiavi di scorta di casa?",
+   "expected": "Nel cassetto sinistro dell'ingresso.",
+   "must_not": []
+  },
+  {
+   "id": "n06",
+   "category": "entity-unknown-speaker",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Andrea è stato promosso?",
+   "expected": "Non risulta: qualcuno in casa (non identificato) il 5 ottobre ha detto che lo promuovono a responsabile di reparto, ma non si sa chi fosse.",
+   "must_not": [
+    "affermare che Andrea è stato promosso"
+   ]
+  },
+  {
+   "id": "n07",
+   "category": "entity-speaker-switch",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Quando va in gita Marta, e dove?",
+   "expected": "Venerdì 16 ottobre 2026 a Ravenna con la classe, partenza alle 7.",
+   "must_not": [
+    "attribuire la gita ad Andrea"
+   ]
+  },
+  {
+   "id": "n08",
+   "category": "entity-speaker-switch",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Qual è il colore preferito di Marta?",
+   "expected": "Il viola.",
+   "must_not": [
+    "attribuirlo ad Andrea"
+   ]
+  },
+  {
+   "id": "n09",
+   "category": "entity-correction",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Quando ha il dentista Andrea?",
+   "expected": "Venerdì 9 ottobre 2026 alle 17, dal dottor Ferri (spostato/corretto da giovedì 8).",
+   "must_not": [
+    "giovedì 8 ottobre come data valida"
+   ]
+  },
+  {
+   "id": "n10",
+   "category": "entity-fact-place",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Con che operatore è internet di casa?",
+   "expected": "Fastweb (dal 7 ottobre 2026; prima TIM).",
+   "must_not": [
+    "TIM come operatore attuale"
+   ]
+  },
+  {
+   "id": "n11",
+   "category": "entity-unknown-speaker",
+   "asked_at": "2026-10-08T09:00:00+02:00",
+   "q": "Cosa c'era da comprare?",
+   "expected": "Il latte e il detersivo per la lavastoviglie (detto il 5 ottobre, da comprare il 6).",
+   "must_not": []
+  }
+ ]
+}

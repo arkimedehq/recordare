@@ -21,6 +21,8 @@ export const createKeySchema = z.object({
 
 export const createOwnerSchema = z.object({
   displayName: z.string().min(1).max(200),
+  /** `entity`: a memory everyone using the account reads and writes — a shared device, a robot, a place (D48). */
+  kind: z.enum(['human', 'entity']).default('human'),
   locale: z.enum(['it', 'en']).default('it'),
   timezone: z.string().min(1).default('Europe/Rome'),
   episodicEnabled: z.boolean().default(false),
@@ -29,6 +31,8 @@ export const createOwnerSchema = z.object({
 });
 
 export const updateOwnerSchema = z.object({
+  displayName: z.string().trim().min(1).max(200).optional(),
+  kind: z.enum(['human', 'entity']).optional(),
   locale: z.enum(['it', 'en']).optional(),
   timezone: z.string().min(1).optional(),
   episodicEnabled: z.boolean().optional(),

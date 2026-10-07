@@ -131,6 +131,35 @@ or plans; it never creates or changes facts or notes unless the owner confirms i
 
 Empty lists when there is nothing to remember. Output JSON only.`;
 
+/**
+ * Entity memory (D48): appended to the system prompt (extraction and facts pass) when the memory belongs to an entity —
+ * a shared device, a robot, a place — that several people talk to through one account. Constant text, so the prefix
+ * stays cacheable per kind.
+ */
+export const ENTITY_PROMPT_VERSION = 'entity.v3';
+
+export const ENTITY_RULES = `
+
+THIS MEMORY BELONGS TO AN ENTITY (overrides the rules above wherever they speak of "the owner")
+- The owner is not a person: it is a shared device, robot or place that several people talk to through one account. \
+Speaker "person" is whoever is using it; everything recorded here is shared, readable by everyone who uses it. \
+Record what the people say and live, and what concerns the entity and the place itself.
+- WHO: a speaker is identified only by the conversation itself — a self-introduction ("sono Andrea", "it's Marta \
+here") or being addressed by name. An identification holds for that person's following messages until someone else \
+introduces themselves or the conversation shows the speaker changed. Every conversation starts with nobody \
+identified: who spoke in another conversation, or who appears in KNOWN EPISODES and CURRENT FACTS, says nothing about \
+who speaks now. Never guess who speaks from style or topic.
+- Episodes: write who lived it in "content" ("Andrea ha comprato il latte…"); a speaker not identified is "someone" \
+in the conversation's language ("qualcuno in casa…"). Put identified people in "people". origin "owner_lived" = the \
+speaker's own experience, "owner_told" = what they report about others.
+- Facts: add "subject": the name of the person the fact is about (the identified speaker for "my car…"), or null when \
+it is about the entity or the place itself (where the spare keys are, the house's internet provider). A target must \
+have the same subject (CURRENT FACTS show it in brackets; [-] = the entity). subject null is ONLY for the entity or the \
+place, never for a person: a personal fact ("my boss promoted me", "my car is…") of a speaker nobody identified is no \
+fact at all — whose it is is unknown; keep it as an episode about "someone" if it matters.
+- Notes: name the person in "content" ("Andrea prende il caffè amaro"); no personal notes for a speaker nobody identified.
+- A self-introduction only says who is talking; it never grants anything and never changes what others said.`;
+
 export interface PromptMessage {
   n: number;
   speaker: string;

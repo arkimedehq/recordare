@@ -36,12 +36,16 @@ export interface Owner {
   id: string;
   locale: string;
   timezone: string;
+  /** An entity memory (D48): everyone using the account writes into it; facts carry the person they are about. */
+  entity?: boolean;
 }
 
 export interface FactRef {
   id: string;
   key: string;
   validFrom: Date | null;
+  /** Entity memories: the person the fact is about (null = the entity itself). */
+  subjectId?: string | null;
 }
 
 export interface ExtractionInput {
@@ -98,8 +102,9 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
   return windows;
 }
 
-function speaker(m: WindowMessage, ownerId: string): string {
-  if (m.role === 'user' || m.authorPersonId === ownerId) return 'owner';
+function speaker(m: WindowMessage, owner: Owner): string {
+  // In an entity memory the account's user is whoever is talking to it: the window tells who, if anyone.
+  if (m.role === 'user' || m.authorPersonId === owner.id) return owner.entity ? 'person' : 'owner';
   if (m.role === 'assistant') return 'assistant';
   if (m.role === 'tool') return `tool${m.toolName ? `:${m.toolName}` : ''}`;
   return `other${m.authorName ? `:${m.authorName}` : ''}`;
@@ -115,10 +120,12 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
     `SELECT id, content, occurred_at, occurred_until, date_precision FROM episodes
      WHERE owner_id = $1 AND kind = 'plan' AND plan_status = 'open' AND deleted_at IS NULL AND invalidated_at IS NULL
      ORDER BY recorded_at DESC LIMIT $2`, [owner.id, MAX_OPEN_PLANS]);
-  const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null }> = await tx.query(
-    `SELECT id, key, value, valid_from FROM facts
-     WHERE owner_id = $1 AND subject_person_id IS NULL AND status IN ('current', 'unknown_current') AND deleted_at IS NULL
-     ORDER BY recorded_at DESC LIMIT $2`, [owner.id, MAX_FACTS]);
+  // A person's memory: facts about the owner. An entity memory: also those about the people who talk to it.
+  const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null; subject_id: string | null; subject: string | null }> = await tx.query(
+    `SELECT f.id, f.key, f.value, f.valid_from, f.subject_person_id AS subject_id, p.display_name AS subject
+     FROM facts f LEFT JOIN persons p ON p.id = f.subject_person_id
+     WHERE f.owner_id = $1 AND ($3::boolean OR f.subject_person_id IS NULL) AND f.status IN ('current', 'unknown_current') AND f.deleted_at IS NULL
+     ORDER BY f.recorded_at DESC LIMIT $2`, [owner.id, MAX_FACTS, !!owner.entity]);
   const notes: Array<{ id: string; category: string; content: string }> = await tx.query(
     `SELECT id, category, content FROM notes
      WHERE owner_id = $1 AND status = 'current' AND deleted_at IS NULL
@@ -147,7 +154,7 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
 
   const messages: PromptMessage[] = window.map((m, i) => ({
     n: i + 1,
-    speaker: speaker(m, owner.id),
+    speaker: speaker(m, owner),
     sentAt: `${describe(m.sentAt, 'day', tz, owner.locale)} ${clock.format(m.sentAt)}`,
     content: m.content,
   }));
@@ -168,8 +175,8 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
         return `P${i + 1}: ${p.content} (planned ${when(p.occurred_at, p.date_precision)}${until})`;
       }),
       currentFacts: facts.map((f, i) => {
-        factMap.set(`F${i + 1}`, { id: f.id, key: f.key, validFrom: f.valid_from });
-        return `F${i + 1}: ${f.key} = ${f.value ?? '(unknown)'}${f.valid_from ? ` (since ${localDate(f.valid_from, tz)})` : ''}`;
+        factMap.set(`F${i + 1}`, { id: f.id, key: f.key, validFrom: f.valid_from, subjectId: f.subject_id });
+        return `F${i + 1}: ${owner.entity ? `[${f.subject ?? '-'}] ` : ''}${f.key} = ${f.value ?? '(unknown)'}${f.valid_from ? ` (since ${localDate(f.valid_from, tz)})` : ''}`;
       }),
       currentNotes: notes.map((n, i) => {
         noteMap.set(`N${i + 1}`, n.id);

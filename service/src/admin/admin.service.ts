@@ -31,7 +31,7 @@ export class AdminService {
 
   createOwner(input: CreateOwner): Promise<Owner> {
     return this.db.transaction(async (tx) => {
-      const person = await tx.getRepository(Person).save({ displayName: input.displayName, ownerScope: null });
+      const person = await tx.getRepository(Person).save({ displayName: input.displayName, kind: input.kind, ownerScope: null });
       return tx.getRepository(Owner).save({
         personId: person.id, locale: input.locale, timezone: input.timezone, episodicEnabled: input.episodicEnabled, qualityProfile: input.qualityProfile,
         episodicEnabledAt: input.episodicEnabled ? new Date() : null, episodicEnabledBy: input.episodicEnabled ? 'admin' : null,
@@ -47,6 +47,10 @@ export class AdminService {
       owner.episodicEnabled = input.episodicEnabled;
       owner.episodicEnabledAt = new Date();
       owner.episodicEnabledBy = 'admin';
+    }
+    if (input.displayName || input.kind) {
+      await this.db.getRepository(Person).update(personId, {
+        ...(input.displayName ? { displayName: input.displayName } : {}), ...(input.kind ? { kind: input.kind } : {}) });
     }
     if (input.locale) owner.locale = input.locale;
     if (input.timezone) owner.timezone = input.timezone;

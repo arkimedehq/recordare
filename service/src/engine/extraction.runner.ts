@@ -13,7 +13,7 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { type ExtractionRunner } from '../queue/queue.port';
 import { buildInput, pendingWindows, type Owner, type WindowMessage } from './extraction.context';
-import { buildExtractionUser, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
+import { buildExtractionUser, ENTITY_PROMPT_VERSION, ENTITY_RULES, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
 import { extractionSchema } from './extraction.schema';
 import { ConcurrentExtractionError, ExtractionWriter, type WrittenRow } from './extraction.writer';
 import { resolveNearDuplicates } from './episode-resolver';
@@ -45,10 +45,11 @@ export class EngineExtractionRunner implements ExtractionRunner {
 
   async runForConversation(conversationId: string): Promise<void> {
     const [conv] = await this.db.query(
-      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.episodic_enabled, o.quality_profile
-       FROM conversations c JOIN owners o ON o.person_id = c.owner_id WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
+      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.episodic_enabled, o.quality_profile, p.kind
+       FROM conversations c JOIN owners o ON o.person_id = c.owner_id JOIN persons p ON p.id = c.owner_id
+       WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
     if (!conv?.episodic_enabled) return;
-    const owner: Owner = { id: conv.owner_id, locale: conv.locale, timezone: conv.timezone };
+    const owner: Owner = { id: conv.owner_id, locale: conv.locale, timezone: conv.timezone, entity: conv.kind === 'entity' };
     const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride, this.factsPassOverride);
 
     // One extraction per conversation at a time (session advisory lock); a concurrent job leaves
@@ -72,7 +73,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
   }
 
   private async runWindow(owner: Owner, profile: QualityProfile, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
-    const runId = await this.startRun(owner.id, conversationId, window);
+    const runId = await this.startRun(owner, conversationId, window);
     if (!window.some((m) => m.role === 'user' || m.authorPersonId === owner.id)) {
       // Gate: nothing the owner said → no LLM call (D5).
       await this.db.transaction(async (tx) => {
@@ -97,8 +98,8 @@ export class EngineExtractionRunner implements ExtractionRunner {
       // transaction applies both (same numbered lists, so references stay valid).
       const [episodesOut, factsOut] = await Promise.all([
         this.llm.completeJson({
-          promptId: EXTRACTION_PROMPT_VERSION,
-          system: EXTRACTION_SYSTEM,
+          promptId: promptVersion(EXTRACTION_PROMPT_VERSION, owner),
+          system: EXTRACTION_SYSTEM + (owner.entity ? ENTITY_RULES : ''),
           user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
           schema: extractionSchema,
           maxTokens: 6000,
@@ -106,12 +107,12 @@ export class EngineExtractionRunner implements ExtractionRunner {
           reasoning: profile.reasoning,
         }, ctx),
         separate
-          ? this.llm.completeJson({ promptId: FACTS_PROMPT_VERSION, system: FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
+          ? this.llm.completeJson({ promptId: promptVersion(FACTS_PROMPT_VERSION, owner), system: FACTS_SYSTEM + (owner.entity ? ENTITY_RULES : ''), user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
           : Promise.resolve(null),
       ]);
       const output = factsOut ? { ...episodesOut, facts: factsOut.facts, notes: factsOut.notes } : episodesOut;
       const written = await this.db.transaction(async (tx) => {
-        const rows = await new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId }, input).apply(output);
+        const rows = await new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId, entity: !!owner.entity }, input).apply(output);
         await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [runId]);
         return rows;
       });
@@ -140,11 +141,11 @@ export class EngineExtractionRunner implements ExtractionRunner {
     }
   }
 
-  private async startRun(ownerId: string, conversationId: string, window: WindowMessage[]): Promise<string> {
+  private async startRun(owner: Owner, conversationId: string, window: WindowMessage[]): Promise<string> {
     const [run] = await this.db.query(
       `INSERT INTO extraction_runs (owner_id, conversation_id, kind, window_from, window_to, model, provider, prompt_version)
        VALUES ($1, $2, 'extraction', $3, $4, 'pending', 'configured', $5) RETURNING id`,
-      [ownerId, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, EXTRACTION_PROMPT_VERSION]);
+      [owner.id, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, promptVersion(EXTRACTION_PROMPT_VERSION, owner)]);
     return run.id as string;
   }
 
@@ -191,3 +192,6 @@ export class EngineExtractionRunner implements ExtractionRunner {
     }
   }
 }
+
+/** The prompt version as recorded and traced: entity memories add their rules' version (rule 9 compares these). */
+const promptVersion = (base: string, owner: Owner): string => owner.entity ? `${base}+${ENTITY_PROMPT_VERSION}` : base;

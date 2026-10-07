@@ -11,6 +11,7 @@ import { Consolidation1790990000000 } from './migrations/1790990000000-Consolida
 import { RecallLog1791000000000 } from './migrations/1791000000000-RecallLog';
 import { RecallLogConversation1791010000000 } from './migrations/1791010000000-RecallLogConversation';
 import { FactsReview1791020000000 } from './migrations/1791020000000-FactsReview';
+import { EntityMemory1791030000000 } from './migrations/1791030000000-EntityMemory';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -19,7 +20,8 @@ import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog
  * explicitly (no globs): works the same under tsc, SWC and the test runner.
  */
 export const ENTITIES = [Person, Owner, Client, ApiKey, AccessToken, ExternalIdentity, Conversation, ConversationParticipant, Message];
-export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, MessageAuthorRef1790970000000, OwnerQualityProfile1790980000000, Consolidation1790990000000, RecallLog1791000000000, RecallLogConversation1791010000000, FactsReview1791020000000];
+export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, MessageAuthorRef1790970000000, OwnerQualityProfile1790980000000, Consolidation1790990000000, RecallLog1791000000000, RecallLogConversation1791010000000, FactsReview1791020000000,
+  EntityMemory1791030000000];
 
 export function dataSourceOptions(url: string): DataSourceOptions {
   return { type: 'postgres', url, entities: ENTITIES, migrations: MIGRATIONS, migrationsRun: false, synchronize: false };

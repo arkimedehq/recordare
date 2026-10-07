@@ -401,6 +401,21 @@ more than 3 people ignored — recall adds up to 3 of that person's own chat mes
 
 Kept.
 
+### Entity memory (D48, 2026-10-07, dev set `dataset_dev_entity` — NOT blind, written by the engine developer)
+
+One shared home device (owner `casa`, kind `entity`), 5 sessions, 11 questions: purchases and facts of named family
+members, a fact of the place, a speaker switch inside a chat ("ora ti passo Marta"), a correction, and an
+**unidentified speaker** saying "my boss is promoting me". Service, `deepseek-flash`, 1 run each (exploring):
+
+| Run | Prompt | Accuracy | What went wrong |
+|---|---|---|---|
+| entity1 | `entity.v1` | 90.9 % | the unidentified promotion became an episode **and** a fact of Andrea (identity carried over from the morning chat) |
+| entity2 | `entity.v2` (+ "every conversation starts with nobody identified", named-in-window guard) | 81.8 % | no Andrea episode any more; the promotion became a fact of the **entity** (subject null); the harness showed facts without their person, so Nunzia's car read as Andrea's |
+| entity3 | `entity.v3` (+ "subject null only for the entity or place") + harness renders `[about]` | **95.5 %** | memory clean (no promotion fact; "qualcuno in casa"); n06 partial on the answer's wording |
+
+Kept `entity.v3`. Person memories are untouched (the rules are appended only for entity owners). Watch: a blind entity
+set before relying on it for a whole family.
+
 ### Recall echoes (2026-10-07, dev set `dataset_dev_echo` — NOT blind, written by the engine developer; `echo_runs.sh`)
 
 In a live Arkimede test the assistant's answers from memory are ingested like any reply. Risk: a recall becomes a new

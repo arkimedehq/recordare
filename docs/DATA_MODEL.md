@@ -82,7 +82,7 @@ installs; partition by owner if an install grows large.
 | `id` | uuid | |
 | `owner_scope` | uuid null → owners | **null for owners themselves; set for contacts** — a contact belongs to one owner's memory, never shared across owners |
 | `display_name` | text | |
-| `kind` | enum `human` | `synthetic` (research simulator) added with track R |
+| `kind` | enum `human \| entity` | `entity` (D48): an owner that is a shared device, robot or place — an **entity memory** everyone using the account reads and writes. `synthetic` (research simulator) added with track R |
 | `created_at` | timestamptz | |
 
 Person merge is **not supported in v1** (an attempt to link an identity already bound to another
@@ -260,7 +260,7 @@ by explicit statement.
 | Column | Type | Notes |
 |---|---|---|
 | `id`, `owner_id` | uuid | |
-| `subject_person_id` | uuid null | null = the owner |
+| `subject_person_id` | uuid null | null = the owner. **Entity memories (D48)**: the person the fact is about (a contact of that memory, found by name or created by the writer); null = the entity itself. Never set in a person's memory |
 | `key` | text → fact_slots | |
 | `value` | text **null** | null only for `unknown_current` |
 | `status` | enum `current \| superseded \| corrected \| unknown_current` | `unknown_current` is a **new row** (value null) that supersedes the stale one: "the current value is not known" (D29, STALE) |
