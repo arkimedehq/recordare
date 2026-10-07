@@ -99,7 +99,7 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
 
 function speaker(m: WindowMessage, ownerId: string): string {
   if (m.role === 'user' || m.authorPersonId === ownerId) return 'owner';
-  if (m.role === 'assistant') return m.fromMemory ? 'assistant (answering from memory)' : 'assistant';
+  if (m.role === 'assistant') return 'assistant';
   if (m.role === 'tool') return `tool${m.toolName ? `:${m.toolName}` : ''}`;
   return `other${m.authorName ? `:${m.authorName}` : ''}`;
 }

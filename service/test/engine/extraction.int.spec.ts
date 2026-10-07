@@ -263,25 +263,32 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(last()).toMatchObject({ model: 'test-model', max_tokens: 6000 });
   });
 
-  it('labels assistant replies answering from memory (a recall tool in the turn, or a recall served in the conversation)', async () => {
+  it('does not record what only a recall echo said (tool call in the turn, or a recall served in the conversation)', async () => {
     const conv = await ingest('echo1', [
-      { id: 'q1', role: 'user', content: 'Quando parto per il Giappone?', at: '2026-10-07T09:20:00+02:00' },
-      { id: 't1', role: 'tool', toolName: 'recordare_search_episodes', content: 'input: {"query":"Giappone"} output: {...}', at: '2026-10-07T09:20:20+02:00' },
-      { id: 'a1', role: 'assistant', content: 'Parti lunedì 12 ottobre.', at: '2026-10-07T09:20:20+02:00' },
-      { id: 'q2', role: 'user', content: 'E che tempo fa a Tokyo?', at: '2026-10-07T09:21:00+02:00' },
-      { id: 'a2', role: 'assistant', content: 'Sereno, 24 gradi.', at: '2026-10-07T09:21:10+02:00' },
-      { id: 'q3', role: 'user', content: 'Cosa ho fatto ieri?', at: '2026-10-07T09:22:00+02:00' },
-      { id: 'a3', role: 'assistant', content: 'Ieri sei stato in palestra.', at: '2026-10-07T09:22:30+02:00' },
+      { id: 'q1', role: 'user', content: 'Mi ricordi come si chiama il mio dentista?', at: '2026-10-07T09:20:00+02:00' },
+      { id: 't1', role: 'tool', toolName: 'recordare_search_memory', content: 'input: {"query":"dentista"} output: {"facts":[]}', at: '2026-10-07T09:20:20+02:00' },
+      { id: 'a1', role: 'assistant', content: 'Il tuo dentista è il dottor Rossi, in via Emilia.', at: '2026-10-07T09:20:20+02:00' },
+      { id: 'q2', role: 'user', content: 'Ok. Sabato prenoto alla Trattoria Aldina per i miei genitori.', at: '2026-10-07T09:21:00+02:00' },
+      { id: 'a2', role: 'assistant', content: 'Perfetto.', at: '2026-10-07T09:21:10+02:00' },
+      { id: 'q3', role: 'user', content: 'Cosa avevo fatto sul Cimone?', at: '2026-10-07T09:22:00+02:00' },
+      { id: 'a3', role: 'assistant', content: 'Una camminata con Luca partendo da Sestola.', at: '2026-10-07T09:22:30+02:00' },
+      { id: 'q4', role: 'user', content: 'Sì, e abbiamo visto i camosci!', at: '2026-10-07T09:23:00+02:00' },
     ]);
     // The third reply has no tool message: Recordare itself served a recall in this conversation during that turn.
     await db.query(`INSERT INTO recall_log (owner_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [ownerId, conv]);
-    llm.queue.push({});
+    llm.queue.push({
+      episodes: [
+        { content: 'Luca ha portato Marta a Sestola', occurred_at: '2026-10-06', evidence: [7] },                    // echo only
+        { content: 'Sul Monte Cimone con Luca Marta ha visto i camosci', occurred_at: '2026-02-28', evidence: [7, 8] }, // owner added
+        { content: 'Cena alla Trattoria Aldina con i genitori', kind: 'plan', occurred_at: '2026-10-10', evidence: [4] },
+      ],
+      facts: [{ key: 'dentist', value: 'dottor Rossi, via Emilia', verdict: 'new', evidence: [3, 4] }],               // echo + "Ok"
+    });
     await runner.runForConversation(conv);
-    const window = llm.requests.at(-1)?.messages[1]?.content ?? '';
-    const said = (text: string) => window.split('\n').find((l) => l.includes(text)) ?? '';
-    expect(said('Parti lunedì 12 ottobre')).toContain('assistant (answering from memory):');
-    expect(said('Sereno, 24 gradi')).toMatch(/ assistant: /);
-    expect(said('Ieri sei stato in palestra')).toContain('assistant (answering from memory):');
+    expect(await db.query(`SELECT value FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([]);
+    const kept = (await db.query(`SELECT content FROM episodes WHERE owner_id = $1 AND content ~ 'Sestola|camosci|Aldina' ORDER BY content`, [ownerId]))
+      .map((r: { content: string }) => r.content);
+    expect(kept).toEqual(['Cena alla Trattoria Aldina con i genitori', 'Sul Monte Cimone con Luca Marta ha visto i camosci']);
   });
 
   it('makes no LLM call without a message from the owner (gate)', async () => {

@@ -12,7 +12,9 @@
  *   that speaks of that plan (a shared name / place / keyword, or a similar embedding), and a reschedule must move it;
  * - facts: verdicts with world + knowledge time, forward-only supersession (imports never
  *   overwrite newer values), single-value slots replaced, multi-value slots accumulate;
- * - corrections never rewrite: a new row `corrects` the old one, which is invalidated.
+ * - corrections never rewrite: a new row `corrects` the old one, which is invalidated;
+ * - recall echoes: what only an assistant reply answering from memory said (a recalled detail the owner neither
+ *   repeated nor added) is not recorded — a wrong recall must not become a memory because the owner said "ok".
  */
 import { type EntityManager } from 'typeorm';
 import { type ExtractionInput, type WindowMessage } from './extraction.context';
@@ -113,6 +115,22 @@ export class ExtractionWriter {
     });
   }
 
+  /**
+   * True when an item comes only from a recall echo: its names (or, without names, its words) appear in an assistant
+   * reply answering from memory and in no message of the owner or another person in the window. Inactive when the
+   * window has no such reply.
+   */
+  private echoOnly(text: string): boolean {
+    const echoes = this.input.messages.filter((m) => m.fromMemory);
+    if (echoes.length === 0) return false;
+    const names = (text.match(/\p{Lu}[\p{L}'’-]{2,}/gu) ?? []).flatMap(words).map(stem);
+    const anchors = names.length ? names : words(text).map(stem);
+    const echoed = new Set(echoes.flatMap((m) => words(m.content)).map(stem));
+    if (!anchors.some((a) => echoed.has(a))) return false;
+    const own = new Set(this.input.messages.filter((m) => m.role === 'user' || m.role === 'other').flatMap((m) => words(m.content)).map(stem));
+    return !anchors.some((a) => own.has(a));
+  }
+
   private authorRole(msgs: WindowMessage[]): AuthorRole {
     if (msgs.some((m) => m.role === 'user' || m.authorPersonId === this.ctx.ownerId)) return 'owner';
     if (msgs.some((m) => m.role === 'assistant')) return 'assistant';
@@ -138,7 +156,7 @@ export class ExtractionWriter {
       const msgs = this.evidence(e.evidence);
       const at = toStored(e.occurred_at, e.date_precision as Precision | undefined, this.ctx.timezone);
       const until = toStored(e.occurred_until, 'day', this.ctx.timezone);
-      if (msgs.length === 0 || this.forgotten(msgs, at.at)) {
+      if (msgs.length === 0 || this.forgotten(msgs, at.at) || this.echoOnly(e.content)) {
         ids.push(null);
         continue;
       }
@@ -284,7 +302,7 @@ export class ExtractionWriter {
   private async writeFacts(out: ExtractionOutput): Promise<void> {
     for (const f of out.facts) {
       const msgs = this.evidence(f.evidence);
-      if (msgs.length === 0 || this.forgotten(msgs, null)) continue;
+      if (msgs.length === 0 || this.forgotten(msgs, null) || (f.value && this.echoOnly(f.value))) continue;
       const key = f.key.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
       if (!key) continue;
       await this.tx.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ($1, $1, $2) ON CONFLICT (key) DO NOTHING`, [key, f.cardinality ?? 'single']);
@@ -363,7 +381,7 @@ export class ExtractionWriter {
   private async writeNotes(out: ExtractionOutput): Promise<void> {
     for (const n of out.notes) {
       const msgs = this.evidence(n.evidence);
-      if (msgs.length === 0 || this.forgotten(msgs, null)) continue;
+      if (msgs.length === 0 || this.forgotten(msgs, null) || (n.content && this.echoOnly(n.content))) continue;
       const target = n.target ? this.input.notes.get(n.target) : undefined;
       if (n.verdict === 'keep') {
         if (target) await this.tx.query(`UPDATE notes SET support_count = support_count + 1 WHERE id = $1 AND owner_id = $2`, [target, this.ctx.ownerId]);

@@ -6,7 +6,7 @@
  * variable goes in the user message. Rules come from the prototype that passed the blind held-out
  * check (spikes/memory-eval/systems/d_sys.py) plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v7';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v6';
 
 export const EXTRACTION_SYSTEM = `You are the memory encoder of a personal memory service. You read a window of one \
 conversation (numbered messages) and record what should be remembered about the OWNER's life. \
@@ -76,10 +76,6 @@ knowledge and small talk are NOT episodes (they stay in the chat log).
 "state_change") on its date AND a fact.
 - origin: "owner_lived" for the owner's own experience; "owner_told" for what the owner reports about others; \
 "assistant_stated" for something the assistant said or did (a recommendation, an action it took) that the owner accepted.
-- The assistant's replies are context, not memories. A reply that recalls, repeats or summarises the owner's past — \
-always so for "assistant (answering from memory)" — adds no episode, fact or note, even if it states dates or details; \
-what counts is the owner's reaction: agreeing adds nothing, a correction ("no, era martedì") is recorded as a \
-correction of the KNOWN EPISODE, new details the owner adds are recorded as the owner's.
 - Capture feelings and opinions the owner expressed (valence, feelings, opinion); importance reflects emotional charge, \
 novelty and self-relevance; an explicit "remember that…" is 10.
 
