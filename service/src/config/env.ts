@@ -39,6 +39,8 @@ const baseSchema = z.object({
   QUEUE_PREFIX: z.string().regex(/^[a-z0-9_-]+$/).default('recordare'),
   /** v1 home / research profile (D33): bootstrap admin credential. */
   ADMIN_API_KEY: z.string().min(32),
+  /** Where people open Recordare Atlas, if installed (e.g. http://192.168.1.10:5175): told to clients in GET /me. */
+  ATLAS_URL: z.string().url().optional(),
   /** Idle debounce before extracting a conversation (D1, D5): global, seconds. */
   IDLE_DELAY_SECONDS: z.coerce.number().int().positive().default(900),
   /** Max characters of messages per extraction call; set = overrides the quality profile's value. */

@@ -64,4 +64,5 @@ for both: Arkimede re-embeds with its admin job, Recordare re-embeds its episode
 change it for one side only.
 
 **Recordare Atlas** (optional) runs next to them as before; Arkimede's agents export their OpenTelemetry traces to it
-(`recordare-atlas` README).
+(`recordare-atlas` README). Set `ATLAS_URL` in Recordare's `.env` (the address people open, e.g. `http://<server>:5175`):
+`GET /me` hands it to clients, and Arkimede links it for its admins.
