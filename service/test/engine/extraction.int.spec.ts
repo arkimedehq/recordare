@@ -279,6 +279,8 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       { id: 'a5', role: 'assistant', content: 'Il primo bus AST per Catania parte alle 6:45 da Messina.', at: '2026-10-07T09:24:22+02:00' },
       { id: 'q6', role: 'user', content: 'Perfetto, prendo quello.', at: '2026-10-07T09:25:00+02:00' },
     ]);
+    await db.query(`DELETE FROM facts WHERE owner_id = $1`, [ownerId]);
+    await db.query(`INSERT INTO facts (owner_id, key, value, status, verdict, valid_from, origin, author_role, audience) VALUES ($1, 'car', 'Panda', 'current', 'new', '2026-01-01', 'owner_lived', 'owner', $2)`, [ownerId, [ownerId]]);
     // The third reply has no tool message: Recordare itself served a recall in this conversation during that turn.
     await db.query(`INSERT INTO recall_log (owner_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [ownerId, conv]);
     llm.queue.push({
@@ -288,10 +290,14 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
         { content: 'Cena alla Trattoria Aldina con i genitori', kind: 'plan', occurred_at: '2026-10-10', evidence: [4] },
         { content: 'Bus AST delle 6:45 da Messina per Catania', kind: 'plan', occurred_at: '2026-10-08', evidence: [12, 13] }, // news from the web, same turn as a recall
       ],
-      facts: [{ key: 'dentist', value: 'dottor Rossi, via Emilia', verdict: 'new', evidence: [3, 4] }],               // echo + "Ok"
+      facts: [
+        { key: 'dentist', value: 'dottor Rossi, via Emilia', verdict: 'new', evidence: [3, 4] },                     // echo + "Ok"
+        { key: 'car', verdict: 'unknown', target: 'F1', evidence: [1, 3, 4] },                                       // a question and an echo: no news
+      ],
     });
     await runner.runForConversation(conv);
     expect(await db.query(`SELECT value FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([]);
+    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'car' AND owner_id = $1`, [ownerId])).toEqual([{ value: 'Panda', status: 'current' }]);
     const kept = (await db.query(`SELECT content FROM episodes WHERE owner_id = $1 AND content ~ 'Sestola|camosci|Aldina|AST' ORDER BY content`, [ownerId]))
       .map((r: { content: string }) => r.content);
     expect(kept).toEqual(['Bus AST delle 6:45 da Messina per Catania', 'Cena alla Trattoria Aldina con i genitori', 'Sul Monte Cimone con Luca Marta ha visto i camosci']);

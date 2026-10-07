@@ -133,6 +133,18 @@ export class ExtractionWriter {
     return !anchors.some((a) => own.has(a));
   }
 
+  /**
+   * After a recall, a fact changes (replaced, stale, unknown, corrected) only when a statement in its evidence — by the
+   * owner, another person or a non-memory tool, not a question — speaks of it: asking "what's my dentist called?" and
+   * hearing a wrong name is no news about the dentist. Always true when the window has no reply answering from memory.
+   */
+  private assertedAfterRecall(msgs: WindowMessage[], about: string): boolean {
+    if (!this.input.messages.some((m) => m.fromMemory)) return true;
+    const topic = new Set(words(about).map(stem));
+    return msgs.some((m) => (m.role === 'user' || m.role === 'other' || (m.role === 'tool' && !isMemoryTool(m.toolName)))
+      && !m.content.trim().endsWith('?') && words(m.content).map(stem).some((w) => topic.has(w)));
+  }
+
   private authorRole(msgs: WindowMessage[]): AuthorRole {
     if (msgs.some((m) => m.role === 'user' || m.authorPersonId === this.ctx.ownerId)) return 'owner';
     if (msgs.some((m) => m.role === 'assistant')) return 'assistant';
@@ -307,6 +319,7 @@ export class ExtractionWriter {
       if (msgs.length === 0 || this.forgotten(msgs, null) || (f.value && this.echoOnly(f.value))) continue;
       const key = f.key.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
       if (!key) continue;
+      if (f.verdict !== 'new' && f.verdict !== 'keep' && !this.assertedAfterRecall(msgs, `${key.replace(/_/g, ' ')} ${f.value ?? ''}`)) continue;
       await this.tx.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ($1, $1, $2) ON CONFLICT (key) DO NOTHING`, [key, f.cardinality ?? 'single']);
       const [{ cardinality }] = await this.tx.query(`SELECT cardinality FROM fact_slots WHERE key = $1`, [key]);
       const role = this.authorRole(msgs);
