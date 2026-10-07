@@ -84,6 +84,17 @@ export class ExtractionWriter {
     return this.written;
   }
 
+  /**
+   * Facts only, from the nightly review (no chat window to lock): the same code-side rules as the extraction's facts.
+   * The evidence messages are those of the reviewed episodes; the audience is the owner alone.
+   */
+  async applyFacts(facts: ExtractionOutput['facts']): Promise<WrittenRow[]> {
+    this.audience = [this.ctx.ownerId];
+    await this.loadTombstones();
+    await this.writeFacts({ episodes: [], plan_patches: [], facts, notes: [] } as unknown as ExtractionOutput);
+    return this.written;
+  }
+
   // ── shared ────────────────────────────────────────────────────────────────────
 
   private async loadAudience(): Promise<void> {

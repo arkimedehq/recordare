@@ -48,7 +48,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     await episode('Oggi dal dentista', '2026-03-20T09:00:00+01:00'); // today: not a complete day yet
     llm.queue.push({ summary: 'Il 14 Luca cena con Marco.' }, { summary: 'Il 15 Luca gioca a calcetto.' }, { summary: 'Marzo: cena con Marco, calcetto.' });
     const before = llm.requests.length;
-    expect((await consolidate()).body).toEqual({ days: 2, months: 1, superseded: 0, llmCalls: 3, failed: 0 });
+    expect((await consolidate()).body).toEqual({ days: 2, months: 1, superseded: 0, llmCalls: 3, failed: 0, facts: 0 });
     expect(await current()).toEqual([
       { level: 'day', day: '2026-03-14', content: 'Il 14 Luca cena con Marco.' },
       { level: 'day', day: '2026-03-15', content: 'Il 15 Luca gioca a calcetto.' },
@@ -58,7 +58,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     expect(prompts).not.toContain('Londra');
     expect(prompts).not.toContain('dentista');
 
-    expect((await consolidate()).body).toEqual({ days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0 });
+    expect((await consolidate()).body).toEqual({ days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0 });
 
     // Forgetting an episode supersedes the digests built on it; the next night rewrites the month from what is left.
     const { client } = await connectOwner();
@@ -66,7 +66,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     await client.close();
     expect((await current()).map((d: { day: string }) => d.day)).toEqual(['2026-03-15']);
     llm.queue.push({ summary: 'Marzo: calcetto.' });
-    expect((await consolidate()).body).toEqual({ days: 0, months: 1, superseded: 0, llmCalls: 1, failed: 0 });
+    expect((await consolidate()).body).toEqual({ days: 0, months: 1, superseded: 0, llmCalls: 1, failed: 0, facts: 0 });
   });
 
   it('skips a digest whose call fails and retries it at the next consolidation', async () => {

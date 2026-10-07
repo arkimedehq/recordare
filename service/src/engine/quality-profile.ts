@@ -36,26 +36,30 @@ export interface QualityProfile {
   /** Give the nightly diary (M5 digests) to period overviews. Measured 2026-10-07 (blind5, 3+3 runs): −1.9 pt,
    * within noise (overviews +0.12, other period questions lower) — off until a version shows a gain. */
   recallDigests: boolean;
+  /** Nightly facts review (M5): the owner's facts checked against the episodes recorded since the last review — one
+   * call per owner per night with new episodes, none otherwise. Off until a measurement shows a gain. */
+  factsReview: boolean;
 }
 
 const PROFILES: Record<QualityProfileName, QualityProfile> = {
   economy: {
     name: 'economy', windowChars: 16_000, extractionTask: 'extract_economy', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1, recallDigests: false,
+    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1, recallDigests: false, factsReview: false,
   },
   balanced: {
     name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3, recallDigests: false,
+    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3, recallDigests: false, factsReview: false,
   },
   full: {
     name: 'full', windowChars: 8_000, extractionTask: 'extract', reasoning: true, factsPass: 'inline',
-    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5, recallDigests: false,
+    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5, recallDigests: false, factsReview: false,
   },
 };
 
 /** The owner's profile, else the installation default; explicit installation settings override single knobs. */
 export function qualityProfile(ownerChoice: string | null | undefined, installationDefault: QualityProfileName,
-  windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass'], recallDigestsOverride?: boolean): QualityProfile {
+  windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass'], recallDigestsOverride?: boolean,
+  factsReviewOverride?: boolean): QualityProfile {
   const name = (QUALITY_PROFILES as readonly string[]).includes(ownerChoice ?? '') ? ownerChoice as QualityProfileName : installationDefault;
   const p = PROFILES[name];
   return {
@@ -63,5 +67,6 @@ export function qualityProfile(ownerChoice: string | null | undefined, installat
     ...(windowCharsOverride ? { windowChars: windowCharsOverride } : {}),
     ...(factsPassOverride ? { factsPass: factsPassOverride } : {}),
     ...(recallDigestsOverride !== undefined ? { recallDigests: recallDigestsOverride } : {}),
+    ...(factsReviewOverride !== undefined ? { factsReview: factsReviewOverride } : {}),
   };
 }
