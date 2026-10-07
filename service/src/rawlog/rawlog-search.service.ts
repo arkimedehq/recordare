@@ -29,6 +29,9 @@ export interface RawSearchOptions {
   from?: Date;
   to?: Date;
   limit?: number;
+  /** The conversation the recall is served in: its current turn (what came after the last assistant reply — usually
+   * the question being answered) is not an excerpt worth returning. */
+  conversationId?: string;
 }
 
 const RRF_K = 60;
@@ -49,7 +52,9 @@ export class RawLogSearchService {
     // Messages behind forgotten memories never come back through the chat search (D16).
     const base = `m.owner_id = $1 AND m.role <> 'assistant' AND c.deleted_at IS NULL
       AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.owner_id = $1 AND m.id = ANY(t.message_ids))
-      AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}`;
+      AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}
+      ${opts.conversationId ? `AND NOT (m.conversation_id = $${params.push(opts.conversationId)} AND m.sent_at > COALESCE(
+        (SELECT max(a.sent_at) FROM messages a WHERE a.conversation_id = $${params.length} AND a.role = 'assistant'), '-infinity'::timestamptz))` : ''}`;
 
     const tsq = toOrTsQuery(opts.query);
     const text: { id: string }[] = tsq

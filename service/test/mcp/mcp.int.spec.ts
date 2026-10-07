@@ -91,6 +91,24 @@ describe('MCP endpoint', () => {
     await own.client.close();
   });
 
+  it('does not return the question being asked as a chat excerpt (the current turn of the conversation)', async () => {
+    const send = (conv: string, messages: Array<{ id: string; role: string; content: string; at: string }>) => call(url, 'POST', '/api/v1/ingest/messages', {
+      token: keyA, headers: { 'x-recordare-user': 'luca-a' },
+      body: { conversation: { externalId: conv }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at })) },
+    });
+    await send('trip-chat', [{ id: 't1', role: 'user', content: 'Il 12 ottobre parto per il Giappone.', at: '2026-10-07T09:19:00+02:00' }]);
+    await send('ask-chat', [
+      { id: 'k1', role: 'user', content: 'Ciao, come va?', at: '2026-10-07T09:20:00+02:00' },
+      { id: 'k2', role: 'assistant', content: 'Tutto bene!', at: '2026-10-07T09:20:05+02:00' },
+      { id: 'k3', role: 'user', content: 'Quando parto per il Giappone?', at: '2026-10-07T09:21:00+02:00' },
+    ]);
+    const ask = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', 'x-recordare-conversation': 'ask-chat' });
+    const hits = ((await search(ask.client, { query: 'quando parto per il Giappone' }))['fromChats'] as Array<{ excerpt: string }>).map((h) => h.excerpt);
+    expect(hits).toContain('Il 12 ottobre parto per il Giappone.');
+    expect(hits).not.toContain('Quando parto per il Giappone?');
+    await ask.client.close();
+  });
+
   it('keeps raw chats per client (raw_log_scope = own)', async () => {
     await call(url, 'POST', '/api/v1/ingest/messages', {
       token: keyB, headers: { 'x-recordare-user': 'luca-b' },
