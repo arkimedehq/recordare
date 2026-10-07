@@ -15,6 +15,8 @@ import { TelemetryService } from '../telemetry/telemetry.service';
 import { logRecall } from './recall-log';
 
 export interface MemorySearchArgs {
+  /** The conversation the recall is served in (see EpisodeSearchArgs). */
+  conversationId?: string;
   query: string;
   asOf?: string;
   includePending?: boolean;
@@ -115,7 +117,7 @@ export class MemorySearchService {
     }
     this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
       facts: facts.length, notes: notes.length });
-    await logRecall(this.db, ownerId, 'search_memory', null, facts.length + notes.length);
+    await logRecall(this.db, ownerId, 'search_memory', null, facts.length + notes.length, args.conversationId, now);
     return { owner: { name: owner.display_name }, notes, facts, notes_info: info };
   }
 }

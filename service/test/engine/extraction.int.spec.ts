@@ -34,10 +34,11 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
-  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string; authorRef?: string }>, participants: unknown[] = []): Promise<string> {
+  async function ingest(conv: string, messages: Array<{ id: string; role: string; content: string; at: string; authorRef?: string; toolName?: string }>, participants: unknown[] = []): Promise<string> {
     const res = await call(url, 'POST', '/api/v1/ingest/messages', {
       token: key, headers: { 'x-recordare-user': 'luca' },
-      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at, ...(m.authorRef ? { authorRef: m.authorRef } : {}) })) },
+      body: { conversation: { externalId: conv, participants }, messages: messages.map((m) => ({ externalId: m.id, role: m.role, content: m.content, sentAt: m.at,
+        ...(m.authorRef ? { authorRef: m.authorRef } : {}), ...(m.toolName ? { toolName: m.toolName } : {}) })) },
     });
     return res.body.conversationId as string;
   }
@@ -260,6 +261,27 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     llm.queue.push({});
     await runner.runForConversation(b);
     expect(last()).toMatchObject({ model: 'test-model', max_tokens: 6000 });
+  });
+
+  it('labels assistant replies answering from memory (a recall tool in the turn, or a recall served in the conversation)', async () => {
+    const conv = await ingest('echo1', [
+      { id: 'q1', role: 'user', content: 'Quando parto per il Giappone?', at: '2026-10-07T09:20:00+02:00' },
+      { id: 't1', role: 'tool', toolName: 'recordare_search_episodes', content: 'input: {"query":"Giappone"} output: {...}', at: '2026-10-07T09:20:20+02:00' },
+      { id: 'a1', role: 'assistant', content: 'Parti lunedì 12 ottobre.', at: '2026-10-07T09:20:20+02:00' },
+      { id: 'q2', role: 'user', content: 'E che tempo fa a Tokyo?', at: '2026-10-07T09:21:00+02:00' },
+      { id: 'a2', role: 'assistant', content: 'Sereno, 24 gradi.', at: '2026-10-07T09:21:10+02:00' },
+      { id: 'q3', role: 'user', content: 'Cosa ho fatto ieri?', at: '2026-10-07T09:22:00+02:00' },
+      { id: 'a3', role: 'assistant', content: 'Ieri sei stato in palestra.', at: '2026-10-07T09:22:30+02:00' },
+    ]);
+    // The third reply has no tool message: Recordare itself served a recall in this conversation during that turn.
+    await db.query(`INSERT INTO recall_log (owner_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [ownerId, conv]);
+    llm.queue.push({});
+    await runner.runForConversation(conv);
+    const window = llm.requests.at(-1)?.messages[1]?.content ?? '';
+    const said = (text: string) => window.split('\n').find((l) => l.includes(text)) ?? '';
+    expect(said('Parti lunedì 12 ottobre')).toContain('assistant (answering from memory):');
+    expect(said('Sereno, 24 gradi')).toMatch(/ assistant: /);
+    expect(said('Ieri sei stato in palestra')).toContain('assistant (answering from memory):');
   });
 
   it('makes no LLM call without a message from the owner (gate)', async () => {

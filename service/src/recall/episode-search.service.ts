@@ -20,6 +20,8 @@ import { TelemetryService } from '../telemetry/telemetry.service';
 import { logRecall } from './recall-log';
 
 export interface EpisodeSearchArgs {
+  /** The conversation the recall is served in (recall log: lets the extractor recognise answers from memory). */
+  conversationId?: string;
   query?: string;
   from?: string;
   to?: string;
@@ -190,7 +192,8 @@ export class EpisodeSearchService {
     }
     this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_episodes', mode,
       episodeIds: result.episodes.map((e) => e.id), claimIds: result.claims.map((e) => e.id), chats: result.fromChats.length, digests: result.digests.length });
-    await logRecall(this.db, ownerId, 'search_episodes', mode, result.episodes.length + result.claims.length + result.fromChats.length + result.digests.length);
+    await logRecall(this.db, ownerId, 'search_episodes', mode,
+      result.episodes.length + result.claims.length + result.fromChats.length + result.digests.length, args.conversationId, now);
     if (chosen.length) {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);
     }
