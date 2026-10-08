@@ -268,6 +268,24 @@ di rete davanti (firewall / WAF / rate limit).
 - README, `docs/API.md`, guida al deployment, intestazioni AGPL, immagine Docker.
 - Pubblicare su `arkimedehq/recordare` — **solo dopo l'OK del proprietario**.
 
+
+**Prima versione pubblica — v0.1, profilo casa / ricerca** (richiesta del proprietario 2026-10-08: pubblicare quando una
+versione funzionante gira su alcuni client; l'OK finale è del proprietario). Criteri, tutti richiesti:
+1. **Client**: Arkimede al livello completo (ingest, richiamo MCP, Diario) — fatto; almeno un client MCP standard al
+   livello base (Claude Code o Claude Desktop con un token personale: richiamo, `remember`, `log_episode`) — 6.1, una
+   configurazione documentata più uno smoke test scriptato.
+2. **Installazione**: entrambi i profili provati da capo a fondo su una macchina pulita — co-ospitato (Kinox) fatto,
+   standalone (con text-embeddings-inference) ancora da provare.
+3. **Qualità**: un nuovo set cieco (4.8) misurato con il motore rilasciato (3 run, numeri in RESULTS.md); CI verde.
+4. **Igiene**: nessun segreto nella storia dei repository; intestazioni AGPL; `THIRD_PARTY_NOTICES.md` e licenze delle
+   dipendenze verificate; test di isolamento per persona; i limiti del profilo casa dichiarati chiaramente (operatore
+   fidato, non per sconosciuti — D33).
+5. **Documentazione**: README e ogni documento del progetto in inglese e italiano (fatto), INTEGRATION, DEPLOYMENT, KNOBS,
+   un CHANGELOG; tag di versione `v0.1.0`.
+6. **Cosa diventa pubblico insieme**: `arkimedehq/recordare` e `arkimedehq/recordare-atlas`; `@arkimedehq/recordare-client`
+   su npm (Arkimede lo installa al posto della copia sincronizzata); l'integrazione di Arkimede tramite il suo mirror
+   pubblico.
+Non richiesti per la v0.1: il profilo pubblico (login dell'owner, OAuth), i connettori (6.6), le fasi 2+ della vision.
 ## Decisioni aperte da prendere lungo il percorso
 
 | Id | Domanda | Proposta | Quando |

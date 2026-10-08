@@ -266,6 +266,23 @@ protection in front (firewall / WAF / rate limits).
 - README, `docs/API.md`, deployment guide, AGPL headers, Docker image.
 - Publish to `arkimedehq/recordare` — **only after the owner's OK**.
 
+**First public release — v0.1, home / research profile** (owner's request 2026-10-08: publish when a working version
+runs on some clients; the owner gives the final OK). Criteria, all required:
+1. **Clients**: Arkimede at the full level (ingest, MCP recall, Diary) — done; at least one standard MCP client at the
+   basic level (Claude Code or Claude Desktop with a personal token: recall, `remember`, `log_episode`) — 6.1, a
+   documented set-up plus a scripted smoke test.
+2. **Install**: both profiles tested end to end on a clean machine — co-hosted (Kinox) done, standalone (with
+   text-embeddings-inference) still untested.
+3. **Quality**: a fresh blind set (4.8) measured with the released engine (3 runs, numbers in RESULTS.md); CI green.
+4. **Hygiene**: no secret in the repositories' history; AGPL headers; `THIRD_PARTY_NOTICES.md` and dependency licences
+   checked; per-person isolation tests; the home profile's limits stated plainly (trusted operator, not for strangers —
+   D33).
+5. **Docs**: README and every project document in English and Italian (done), INTEGRATION, DEPLOYMENT, KNOBS, a
+   CHANGELOG; version tag `v0.1.0`.
+6. **What goes public together**: `arkimedehq/recordare` and `arkimedehq/recordare-atlas`; `@arkimedehq/recordare-client`
+   on npm (Arkimede then installs it instead of the synced copy); Arkimede's integration through its own public mirror.
+Not required for v0.1: the public profile (owner login, OAuth), connectors (6.6), phases 2+ of the vision.
+
 ## Open decisions to take along the way
 
 | Id | Question | Proposal | When |
