@@ -7,9 +7,10 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p backups && chmod 700 backups
+P=$(grep -E '^RECORDARE_PROJECT=' .env 2>/dev/null | cut -d= -f2- || true); P=${P:-recordare}
 ts=$(date +%Y%m%d-%H%M%S); out="backups/recordare-$ts.sql.gz"
-if docker inspect recordare-postgres-1 >/dev/null 2>&1; then
-  docker exec recordare-postgres-1 pg_dump -U recordare -d recordare | gzip > "$out"          # standalone
+if docker inspect "$P-postgres-1" >/dev/null 2>&1; then
+  docker exec "$P-postgres-1" pg_dump -U recordare -d recordare | gzip > "$out"          # standalone
 else
   PG=$(docker ps --format '{{.Names}}' | grep -E -- '-postgres-1$' | grep -i arkimede | head -1)   # co-hosted
   [[ -n "$PG" ]] || { echo "no Postgres container found" >&2; exit 1; }

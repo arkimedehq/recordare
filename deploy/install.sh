@@ -15,7 +15,8 @@
 # Usage:
 #   deploy/install.sh                 interactive
 #   deploy/install.sh --profile cohosted --yes     answers from the environment / defaults:
-#     LLM_BASE_URL, LLM_MODEL, LLM_API_KEY (or LLM_API_KEY_FILE), ARKIMEDE_DIR, RECORDARE_PORT, LINK_ARKIMEDE=yes|no
+#     LLM_BASE_URL, LLM_MODEL, LLM_API_KEY (or LLM_API_KEY_FILE), ARKIMEDE_DIR, RECORDARE_PORT, LINK_ARKIMEDE=yes|no,
+#     RECORDARE_PROJECT (Compose project name, default recordare: another one for a second installation on the host)
 set -euo pipefail
 
 PROFILE=""; YES=0
@@ -59,9 +60,18 @@ if [[ -z "$PROFILE" ]]; then
   PROFILE=$(ask "Profile: standalone | cohosted" "$([[ -n $ARK_PG ]] && echo cohosted || echo standalone)")
 fi
 [[ "$PROFILE" == standalone || "$PROFILE" == cohosted ]] || die "profile must be standalone or cohosted"
-COMPOSE=(docker compose -p recordare -f "$DEPLOY/docker-compose.yml")
-[[ $PROFILE == cohosted ]] && COMPOSE=(docker compose -p recordare -f "$DEPLOY/docker-compose.cohosted.yml")
-ok "profile: $PROFILE"
+PROJECT_NAME=${RECORDARE_PROJECT:-$(get RECORDARE_PROJECT)}; PROJECT_NAME=${PROJECT_NAME:-recordare}
+COMPOSE_FILE="$DEPLOY/docker-compose.yml"; [[ $PROFILE == cohosted ]] && COMPOSE_FILE="$DEPLOY/docker-compose.cohosted.yml"
+COMPOSE=(docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE")
+# A Compose project of the same name started from other files (e.g. the repository's development compose) would have
+# its containers replaced: stop here and ask for another name.
+other=$(docker compose ls -a --format json 2>/dev/null | PN="$PROJECT_NAME" CF="$COMPOSE_FILE" python3 -c '
+import json, os, sys
+for p in json.load(sys.stdin) or []:
+    if p["Name"] == os.environ["PN"] and os.environ["CF"] not in p.get("ConfigFiles", ""): print(p.get("ConfigFiles", ""))' 2>/dev/null || true)
+[[ -z "$other" ]] || die "a Compose project '$PROJECT_NAME' already runs from $other — set RECORDARE_PROJECT=<another name>"
+RC="$PROJECT_NAME-recordare-1"
+ok "profile: $PROFILE · project $PROJECT_NAME"
 
 [[ -f "$ENV_FILE" ]] && cp -p "$ENV_FILE" "$ENV_FILE.bak-$(date +%Y%m%d-%H%M%S)" && ok "existing .env backed up"
 ADMIN_API_KEY=$(get ADMIN_API_KEY); [[ -n "$ADMIN_API_KEY" ]] || ADMIN_API_KEY=$(openssl rand -hex 32)
@@ -137,6 +147,7 @@ EMBEDDING_BASE_URL=$EMBEDDING_BASE_URL
 EMBEDDING_MODEL=$EMBEDDING_MODEL
 EMBEDDING_DIM=1024
 RECORDARE_PORT=$RECORDARE_PORT
+RECORDARE_PROJECT=$PROJECT_NAME
 ${NET:+ARKIMEDE_NETWORK=$NET}
 ${EMBEDDER_IMAGE:+EMBEDDER_IMAGE=$EMBEDDER_IMAGE}
 ENV
@@ -145,13 +156,13 @@ chmod 600 "$ENV_FILE"; ok "$ENV_FILE"
 step "6 · Build and start"
 "${COMPOSE[@]}" --env-file "$ENV_FILE" up -d --build 2>&1 | grep -E 'Built|Started|Running|Healthy|Error' || true
 for i in $(seq 1 60); do
-  [[ "$(docker inspect recordare-recordare-1 --format '{{.State.Health.Status}}' 2>/dev/null)" == healthy ]] && break; sleep 5
+  [[ "$(docker inspect $RC --format '{{.State.Health.Status}}' 2>/dev/null)" == healthy ]] && break; sleep 5
 done
-[[ "$(docker inspect recordare-recordare-1 --format '{{.State.Health.Status}}' 2>/dev/null)" == healthy ]] \
-  || die "Recordare did not become healthy — see: docker logs recordare-recordare-1"
+[[ "$(docker inspect $RC --format '{{.State.Health.Status}}' 2>/dev/null)" == healthy ]] \
+  || die "Recordare did not become healthy — see: docker logs $RC"
 ok "Recordare is up (migrations applied) on 127.0.0.1:$RECORDARE_PORT"
 
-admin() { docker exec -i recordare-recordare-1 node -e "
+admin() { docker exec -i $RC node -e "
   const [m, p, b] = process.argv.slice(1);
   fetch('http://localhost:8080' + p, { method: m, headers: { authorization: 'Bearer ' + process.env.ADMIN_API_KEY, 'content-type': 'application/json' },
     body: b || undefined }).then(async (r) => { process.stdout.write(await r.text()); process.exit(r.ok ? 0 : 1); });" "$@"; }

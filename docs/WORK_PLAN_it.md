@@ -275,7 +275,9 @@ versione funzionante gira su alcuni client; l'OK finale è del proprietario). Cr
    livello base (Claude Code o Claude Desktop con un token personale: richiamo, `remember`, `log_episode`) — 6.1, una
    configurazione documentata più uno smoke test scriptato.
 2. **Installazione**: entrambi i profili provati da capo a fondo su una macchina pulita — co-ospitato (Kinox) fatto,
-   standalone (con text-embeddings-inference) ancora da provare.
+   standalone (con text-embeddings-inference) **fatto 2026-10-08** su un clone pulito (macOS arm64): installazione,
+   ingest → estrazione → richiamo, smoke test MCP, backup e aggiornamento; corretti strada facendo il nome del progetto
+   Compose (`RECORDARE_PROJECT`) e la memoria dell'embedder (batch 2048 token).
 3. **Qualità**: un nuovo set cieco (4.8) misurato con il motore rilasciato (3 run, numeri in RESULTS.md); CI verde.
 4. **Igiene**: nessun segreto nella storia dei repository; intestazioni AGPL; `THIRD_PARTY_NOTICES.md` e licenze delle
    dipendenze verificate; test di isolamento per persona; i limiti del profilo privato dichiarati chiaramente (operatore

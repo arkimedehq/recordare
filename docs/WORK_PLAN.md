@@ -272,7 +272,9 @@ runs on some clients; the owner gives the final OK). Criteria, all required:
    basic level (Claude Code or Claude Desktop with a personal token: recall, `remember`, `log_episode`) — 6.1, a
    documented set-up plus a scripted smoke test.
 2. **Install**: both profiles tested end to end on a clean machine — co-hosted (Kinox) done, standalone (with
-   text-embeddings-inference) still untested.
+   text-embeddings-inference) **done 2026-10-08** on a clean clone (macOS arm64): install, ingest → extraction →
+   recall, MCP smoke test, backup and update; fixed on the way: the Compose project name (`RECORDARE_PROJECT`) and the
+   embedder's memory (batch 2048 tokens).
 3. **Quality**: a fresh blind set (4.8) measured with the released engine (3 runs, numbers in RESULTS.md); CI green.
 4. **Hygiene**: no secret in the repositories' history; AGPL headers; `THIRD_PARTY_NOTICES.md` and dependency licences
    checked; per-person isolation tests; the home profile's limits stated plainly (trusted operator, not for strangers —
