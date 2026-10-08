@@ -50,9 +50,16 @@ First public release: the **private profile** (an installation run by someone it
 
 ### Clients
 - **Arkimede**: ingest, recall tools, memory context per agent, the Diary, memory kind and consent in its settings.
-- **Claude Code**: basic level (personal token); an agent's writes wait for the person's confirmation.
+- **Connectors at the full level** (capture + memory context before each turn + memory tools), in `connectors/`, each
+  smoke-tested for real: **Claude Code** plugin (`/plugin marketplace add arkimedehq/recordare`), **Codex** (hooks +
+  MCP installer), **OpenClaw** plugin, **Hermes Agent** memory provider, and an **OpenAI-compatible memory proxy** for
+  platforms without hooks (AnythingLLM tested; Open WebUI and LibreChat by the same mechanism).
+- **Any MCP client** at the basic level with a personal token (e.g. Claude Desktop through a local bridge, untested);
+  an agent's writes count as the person's only when their own recent words say it.
 
 ### Known limits
 - No owner login, OAuth or read audit yet (public profile deferred, D33); plain HTTP on a trusted network only.
 - Entity memory: a speaker who never identifies may still be attributed to a named person.
-- Claude Desktop needs OAuth or a local bridge (untested).
+- Claude Desktop / claude.ai: basic level only (no hooks to capture the conversation); Desktop needs OAuth or a local
+  bridge (untested). The memory context misses questions with instruction suffixes, other languages or periods
+  (WORK_PLAN 6.6b) — the memory tools do not.

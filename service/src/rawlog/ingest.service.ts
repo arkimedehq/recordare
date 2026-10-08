@@ -95,10 +95,14 @@ export class IngestService {
       return { conversationId, accepted, duplicates, conflicts, newIds };
     });
 
-    if (outcome.accepted > 0) {
+    // "Conversation ended" counts even when every message was already stored (a client re-sending its last message
+    // only to carry the hint, e.g. at the end of a session): extraction then runs now instead of after the idle delay.
+    if (outcome.accepted > 0 || req.hints.conversationEnded) {
       const delay = req.hints.conversationEnded ? 0 : this.idleDelayMs;
       await this.db.query(`UPDATE conversations SET idle_job_at = now() + ($1 || ' milliseconds')::interval WHERE id = $2`, [String(delay), outcome.conversationId]);
       await this.queue.scheduleIdleExtraction(outcome.conversationId, delay);
+    }
+    if (outcome.accepted > 0) {
       await this.queue.enqueueMessageEmbeddings(outcome.newIds);
       const roles: Record<string, number> = {};
       for (const m of req.messages) roles[m.role] = (roles[m.role] ?? 0) + 1;

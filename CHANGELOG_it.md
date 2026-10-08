@@ -58,10 +58,18 @@ README → Limiti).
 ### Client
 - **Arkimede**: ingest, strumenti di richiamo, contesto di memoria per agente, il Diario, tipo di memoria e consenso
   nelle sue impostazioni.
-- **Claude Code**: livello basic (token personale); le scritture dell'agente attendono la conferma della persona.
+- **Connettori al livello completo** (cattura + contesto di memoria prima di ogni turno + strumenti di memoria), in
+  `connectors/`, ognuno provato dal vero: plugin per **Claude Code** (`/plugin marketplace add arkimedehq/recordare`),
+  **Codex** (installer di hook + MCP), plugin per **OpenClaw**, memory provider per **Hermes Agent**, e un **proxy di
+  memoria compatibile OpenAI** per le piattaforme senza hook (provato con AnythingLLM; Open WebUI e LibreChat con lo
+  stesso meccanismo).
+- **Qualsiasi client MCP** al livello basic con un token personale (per esempio Claude Desktop tramite un ponte locale,
+  non provato); le scritture di un agente valgono come della persona solo se lo dicono le sue parole recenti.
 
 ### Limiti noti
 - Ancora nessun login del titolare, OAuth o registro delle letture (profilo pubblico rimandato, D33); HTTP semplice solo
   su una rete fidata.
 - Memoria di entità: chi non si presenta può ancora essere attribuito a una persona con nome.
-- Claude Desktop richiede OAuth o un ponte locale (non provato).
+- Claude Desktop / claude.ai: solo livello basic (nessun hook per catturare la conversazione); Desktop richiede OAuth o
+  un ponte locale (non provato). Il contesto di memoria manca domande con istruzioni in coda, in altre lingue o su un
+  periodo (WORK_PLAN 6.6b) — gli strumenti di memoria no.

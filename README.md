@@ -274,6 +274,9 @@ co-hosted with Arkimede on a small server).
 | Path | What |
 |---|---|
 | `service/` | The Recordare service (NestJS, TypeScript) |
+| `connectors/` | Full-level connectors: [Claude Code](connectors/claude-code/README.md), [Codex](connectors/codex/README.md), [OpenClaw](connectors/openclaw/README.md), [Hermes Agent](connectors/hermes/README.md), [OpenAI-compatible memory proxy](connectors/openai-proxy/README.md) (AnythingLLM, Open WebUI, LibreChat) |
+| `packages/client/` | `@arkimedehq/recordare-client`, the TypeScript client library the connectors and Arkimede use |
+| `deploy/` | Installer, update and backup scripts, Compose files (standalone / co-hosted) |
 | `spikes/memory-eval/` | Evaluation harness and datasets: engine comparison, blind sets, results ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
 | `docs/` | Vision, design decisions D1–D48 ([episodic memory design](docs/EPISODIC_MEMORY_TODO.md)), [work plan](docs/WORK_PLAN.md), contracts, research notes, literature cards |
 | `docker-compose.yml` | Local development stack (Postgres + pgvector, Redis, service) |

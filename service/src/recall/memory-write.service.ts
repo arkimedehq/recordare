@@ -18,6 +18,8 @@ export interface Evidence {
   /** Conversation the tool was called from (resolved viewer context), if any. */
   conversationId?: string;
   clientId: string;
+  /** A personal token (owner-direct): without a conversation, the owner's recent messages from this client count. */
+  ownerDirect?: boolean;
 }
 
 @Injectable()
@@ -148,6 +150,16 @@ export class MemoryWriteService {
            AND received_at > now() - interval '30 minutes' AND similarity(content, $3) >= 0.2
          ORDER BY similarity(content, $3) DESC, sent_at DESC LIMIT 1`,
         [ev.conversationId, ownerId, text]);
+      if (m) return { messageId: m.id, byOwner: true };
+    } else if (ev.ownerDirect) {
+      // A personal-token client (Claude Code, a connector) ingests the person's turns but cannot name the conversation
+      // on MCP calls: the person's own recent words from the same client are the evidence, same overlap rule.
+      const [m] = await tx.query(
+        `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
+         WHERE c.client_id = $1 AND m.owner_id = $2 AND (m.role = 'user' OR m.author_person_id = $2)
+           AND m.received_at > now() - interval '30 minutes' AND similarity(m.content, $3) >= 0.2
+         ORDER BY similarity(m.content, $3) DESC, m.sent_at DESC LIMIT 1`,
+        [ev.clientId, ownerId, text]);
       if (m) return { messageId: m.id, byOwner: true };
     }
     const day = new Date().toISOString().slice(0, 10);

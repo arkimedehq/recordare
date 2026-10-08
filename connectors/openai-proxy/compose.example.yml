@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
+#
+# Recordare memory proxy next to a chat platform. Copy the service into the platform's compose file and point the
+# platform's OpenAI-compatible provider at http://recordare-proxy:8788/v1 (README → Platforms).
+services:
+  recordare-proxy:
+    build:
+      context: ../..                       # the Recordare repository root
+      dockerfile: connectors/openai-proxy/Dockerfile
+    restart: unless-stopped
+    environment:
+      UPSTREAM_BASE_URL: https://api.deepseek.com/v1   # any OpenAI-compatible provider
+      UPSTREAM_API_KEY: ${UPSTREAM_API_KEY}            # unset = the platform's own key goes through
+      PROXY_API_KEY: ${PROXY_API_KEY:-}                # optional: the key the platform must present
+      RECORDARE_URL: http://recordare:8080             # or http://host.docker.internal:8080
+      RECORDARE_API_KEY: ${RECORDARE_API_KEY}          # rk_… (client key) or rp_… (personal token)
+      TZ: Europe/Rome
+      # USER_MAP: '{"anythingllm:1":"andrea"}'
+      # END_IDLE_SECONDS: "600"
+    # No published port: only the platform (same network) should reach it.
+    # ports: ["127.0.0.1:8788:8788"]

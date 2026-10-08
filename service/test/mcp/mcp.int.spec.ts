@@ -192,6 +192,26 @@ describe('MCP endpoint', () => {
     await client.close();
   });
 
+  it('binds a personal-token write to the person\'s own recent words from the same client (no conversation header)', async () => {
+    const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Connector', kind: 'mcp_client' } })).body.id;
+    const other = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Elsewhere', kind: 'mcp_client' } })).body.id;
+    const tok = async (clientId: string) => (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`,
+      { token: ADMIN_KEY, body: { clientId, scopes: ['mcp', 'ingest'] } })).body.token as string;
+    const [mine, elsewhere] = [await tok(cc), await tok(other)];
+    expect((await call(url, 'POST', '/api/v1/ingest/messages', { token: mine, body: { conversation: { externalId: 'session-1' },
+      messages: [{ externalId: 's1', role: 'user', content: 'Ricorda che preferisco il tè verde al caffè', sentAt: new Date().toISOString() }] } })).status).toBe(200);
+    const db = app.get((await import('typeorm')).DataSource);
+    const note = async (token: string) => {
+      const { client } = await connect(url, { authorization: `Bearer ${token}` });
+      const res = await client.callTool({ name: 'remember', arguments: { content: 'Preferisce il tè verde al caffè', category: 'preference' } });
+      await client.close();
+      return (await db.query(`SELECT pending, author_role FROM notes WHERE id = $1`, [(res.structuredContent as { id: string }).id]))[0];
+    };
+    expect(await note(mine)).toEqual({ pending: false, author_role: 'owner' });
+    // The same words ingested through another client are no evidence for this one.
+    expect(await note(elsewhere)).toEqual({ pending: true, author_role: 'assistant' });
+  });
+
   it('keeps a few chat excerpts next to matching episodes, also the ones behind them; labels claims of others', async () => {
     const db = app.get((await import('typeorm')).DataSource);
     const [msg] = await db.query(`SELECT id FROM messages WHERE external_id = 'nas-chat-1'`);

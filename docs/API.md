@@ -189,7 +189,8 @@ return nothing and writes are rejected with a neutral error.
 | `place` | string | |
 
 Returns `{id, stored}`. Evidence (as built): the owner's message in the conversation of the call received in the last
-30 minutes whose text overlaps the content (trigram similarity); planned, not built yet: 10-minute dedup of agent
+30 minutes whose text overlaps the content (trigram similarity) — with a personal token and no conversation named, the
+owner's messages from the same client (a connector that ingests the turns); planned, not built yet: 10-minute dedup of agent
 retries and late binding when the ingest has not arrived. **Importance 10 and `stance: stated` only when
 the evidence binds to a `user` message of the owner**; otherwise (`stance: inferred`, confidence 0.6) (basic level, or no owner message)
 the call is stored in a per-client daily conversation (`source: mcp_tool`, `evidence_kind:

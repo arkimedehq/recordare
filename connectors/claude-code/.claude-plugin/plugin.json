@@ -1,0 +1,30 @@
+{
+  "name": "recordare",
+  "version": "0.1.0",
+  "description": "Recordare episodic memory for Claude Code: your conversations are remembered (with your consent) and recalled — memory tools plus the relevant memories before each prompt.",
+  "author": { "name": "Andrea Genovese" },
+  "homepage": "https://github.com/arkimedehq/recordare/tree/main/connectors/claude-code",
+  "license": "AGPL-3.0-or-later",
+  "userConfig": {
+    "url": {
+      "type": "string",
+      "title": "Recordare URL",
+      "description": "Base URL of your Recordare service, e.g. http://localhost:8090",
+      "required": true
+    },
+    "token": {
+      "type": "string",
+      "title": "Personal token",
+      "description": "Your personal token (rp_…) with the scopes mcp, ingest and read, created by the Recordare admin",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "mcpServers": {
+    "recordare": {
+      "type": "http",
+      "url": "${user_config.url}/mcp",
+      "headers": { "Authorization": "Bearer ${user_config.token}" }
+    }
+  }
+}
