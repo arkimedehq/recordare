@@ -1,0 +1,535 @@
+{
+ "_note": "Blind synthetic dataset #8 (fictional people), entity memory (D48): the shared kitchen voice assistant of a household in Ravenna. Timestamps are Europe/Rome. Every session is a separate conversation and starts with nobody identified; people speak only through role 'user' messages and identify themselves in the text (or never do); a speaker may hand the device to someone else mid-conversation.",
+ "users": {
+  "casa_bellandi": "Entity under test: the Bellandi household (Paolo, Silvia, Tommaso, Irene, grandmother Franca; guest Aoife) sharing one kitchen assistant; memory belongs to the household"
+ },
+ "entities": [
+  "casa_bellandi"
+ ],
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "casa_bellandi",
+   "ts": "2033-09-26T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao! Allora, sono Paolo Bellandi, ti abbiamo appena montato qui in cucina. Ti spiego chi siamo: io ho 52 anni e faccio il capoturno alla logistica del porto di Ravenna. In casa siamo in cinque: mia moglie Silvia, che fa la farmacista; Tommaso, 20 anni, che studia ingegneria a Bologna e fa il pendolare in treno; Irene, 15 anni, che fa il liceo e gioca a pallavolo; e mia mamma Franca, 79 anni, che vive con noi da due anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Piacere, Paolo! Mi segno la famiglia: tu, Silvia (farmacista), Tommaso (20, ingegneria a Bologna), Irene (15, liceo e pallavolo) e tua mamma Franca. Dove abitate?"
+    },
+    {
+     "role": "user",
+     "content": "In via dei Mosaici 12, a Ravenna, una casa a due piani col garage. Abbiamo una sola macchina per tutti, una Skoda Octavia station wagon grigia del 2027. Ah, una cosa mia: giovedì 6 ottobre alle 17:30 ho il dentista, il dottor Gualtieri, devo fare una corona su un molare. Ricordamelo."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: giovedì 6 ottobre alle 17:30, dentista dottor Gualtieri per la corona. E la Skoda Octavia grigia del 2027 è la macchina di casa."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto. Aspetta, c'è qui Silvia che ti vuole salutare, te la passo."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene!"
+    },
+    {
+     "role": "user",
+     "content": "Ciao, sono Silvia. Lavoro alla Farmacia Comunale di viale Alberti, faccio i turni, quindi certe sere non ci sono a cena. E mi sono iscritta alla mezza maratona di Ravenna di domenica 13 novembre, la mia prima mezza: mi devi aiutare a non saltare gli allenamenti."
+    },
+    {
+     "role": "assistant",
+     "content": "Ciao Silvia! Mi segno: farmacista alla Farmacia Comunale di viale Alberti, a turni, e iscritta alla mezza maratona di Ravenna di domenica 13 novembre. Ti ricorderò gli allenamenti."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "casa_bellandi",
+   "ts": "2033-09-28T07:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Senti, segnati una cosa: ieri sera, martedì 27 settembre, ho preso una multa con la Skoda in via Mazzini, sosta in zona carico e scarico. 42 euro se la pago entro cinque giorni."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: multa di 42 euro per la Skoda, sosta in zona carico e scarico in via Mazzini, martedì 27 settembre; conviene pagarla entro cinque giorni. Scusa, chi sta parlando?"
+    },
+    {
+     "role": "user",
+     "content": "Ma dai, che importa. Ricordami solo di pagarla venerdì. E aggiungi alla lista della spesa il latte di avena, è finito."
+    },
+    {
+     "role": "assistant",
+     "content": "D'accordo: promemoria per pagare la multa venerdì e latte di avena nella lista della spesa."
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "casa_bellandi",
+   "ts": "2033-09-29T18:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ehi, sono Tommaso. Novità: ho comprato una bici da corsa usata, una Bianchi in alluminio, da un tizio di Faenza. L'ho pagata 350 euro. La tengo in garage, a destra, non spostatela."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella, Tommaso! Bianchi da corsa usata presa a Faenza per 350 euro, parcheggiata in garage sul lato destro."
+    },
+    {
+     "role": "user",
+     "content": "Poi, per la spesa: ricordati che da luglio sono vegetariano, quindi niente carne per me. E sabato 15 ottobre vado a Milano al concerto dei Neon Harbour con il mio amico Davide, torno domenica."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: sei vegetariano da luglio; sabato 15 ottobre concerto dei Neon Harbour a Milano con Davide, rientro domenica."
+    },
+    {
+     "role": "user",
+     "content": "E l'esame: Analisi 2 lo ridò martedì 25 ottobre. Stavolta lo passo."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo! Esame di Analisi 2 martedì 25 ottobre."
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "user": "casa_bellandi",
+   "ts": "2033-10-01T10:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, sono Silvia. Stamattina è venuto il tecnico per la manutenzione annuale della caldaia: tutto a posto, fumi nella norma, bollino rinnovato. Gli ho dato 120 euro. La prossima manutenzione va fatta a ottobre del 2034."
+    },
+    {
+     "role": "assistant",
+     "content": "Buongiorno Silvia. Segnato per la casa: manutenzione annuale della caldaia fatta oggi, sabato 1 ottobre, controllo fumi ok e bollino rinnovato, 120 euro; prossima a ottobre 2034."
+    },
+    {
+     "role": "user",
+     "content": "Poi ho comprato le scarpe nuove da corsa, 140 euro, quelle vecchie avevano la suola finita. E segnati Irene: mercoledì 12 ottobre alle 15 ha l'ortodontista, la dottoressa Pasini, controllo dell'apparecchio. La porto io."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: scarpe da corsa nuove (140 euro) per te; mercoledì 12 ottobre alle 15 Irene ha il controllo dell'apparecchio dalla dottoressa Pasini, la accompagni tu."
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "casa_bellandi",
+   "ts": "2033-10-02T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao assistente! Sono Irene. Allora, metti in lista che non devono comprare i kiwi, sono allergica, mi si gonfia la bocca. E i funghi li odio, se fanno il risotto ai funghi io mangio altro."
+    },
+    {
+     "role": "assistant",
+     "content": "Ciao Irene! Mi segno: sei allergica ai kiwi e non ti piacciono i funghi."
+    },
+    {
+     "role": "user",
+     "content": "Poi sabato 22 ottobre abbiamo il torneo di pallavolo a Cesenatico, con la mia squadra, l'Under 16 della Robur. Partiamo alle 8 col pulmino."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: sabato 22 ottobre torneo di pallavolo a Cesenatico con l'Under 16 della Robur, partenza col pulmino alle 8."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "casa_bellandi",
+   "ts": "2033-10-04T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pronto? Funziona questo coso? Sono la Franca, la nonna."
+    },
+    {
+     "role": "assistant",
+     "content": "Funziono, Franca! Ti ascolto."
+    },
+    {
+     "role": "user",
+     "content": "Brava. Allora, venerdì 14 ottobre alle 9 ho la visita dall'oculista all'ospedale, mi accompagna il Paolo con la macchina. Segnalo bene che io mi dimentico."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: venerdì 14 ottobre alle 9 visita oculistica in ospedale, ti accompagna Paolo."
+    },
+    {
+     "role": "user",
+     "content": "E un'altra cosa. Il Tommaso è allergico ai kiwi, non comprateli più che quello poi si gonfia. Per me invece il caffè no, io prendo l'orzo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ho capito che preferisci l'orzo al caffè. Per i kiwi me lo segno come detto da te; lo verifico con la famiglia."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "casa_bellandi",
+   "ts": "2033-10-06T08:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, sono Paolo. Mi ha chiamato lo studio del dottor Gualtieri: l'appuntamento di oggi salta, me l'hanno spostato a giovedì 13 ottobre, sempre alle 17:30."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok Paolo: il dentista di oggi è spostato a giovedì 13 ottobre alle 17:30."
+    },
+    {
+     "role": "user",
+     "content": "Ieri ho comprato un trapano avvitatore a batteria al Brico, 89 euro, così sabato monto le mensole in camera di Irene. E ho cambiato la password del wifi, quella vecchia la sapeva mezzo quartiere: adesso è Mosaico-2033! con il punto esclamativo alla fine. La rete si chiama sempre CasaBellandi."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: trapano avvitatore a batteria (89 euro, Brico) per le mensole di Irene. Wifi di casa: rete CasaBellandi, nuova password Mosaico-2033! dal 6 ottobre."
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "user": "casa_bellandi",
+   "ts": "2033-10-08T16:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono di nuovo Irene! Ho preso 8 nella verifica di latino, la prof ha detto che è il voto più alto della classe."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava Irene, complimenti per l'8 in latino!"
+    },
+    {
+     "role": "user",
+     "content": "Grazie! E ho comprato le ginocchiere nuove per la pallavolo, 25 euro, con la mia paghetta. Aspetta che c'è la nonna che vuole dirti una cosa, te la passo."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: ginocchiere nuove, 25 euro. Ciao, dimmi pure."
+    },
+    {
+     "role": "user",
+     "content": "Sono io, la Franca. Segnati che giovedì 20 ottobre viene a pranzo la mia amica Lucia, quella del circolo, e faccio i cappelletti. E dillo a tutti: nel sugo non voglio il coriandolo che mettono adesso dappertutto, io non lo sopporto."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Franca: giovedì 20 ottobre pranzo con la tua amica Lucia, cappelletti. E niente coriandolo per te, non lo sopporti."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "casa_bellandi",
+   "ts": "2033-10-10T19:50:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Silvia. Due correzioni. Primo: la nonna ti ha detto che Tommaso è allergico ai kiwi, ma si confonde: l'allergica è Irene. Tommaso non ha nessuna allergia."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie Silvia, correggo: l'allergia ai kiwi è di Irene, Tommaso non ha allergie."
+    },
+    {
+     "role": "user",
+     "content": "Secondo: la caldaia. Ho ritrovato la fattura, alla fine l'ho pagata 135 euro, non 120, c'era anche il kit guarnizioni. E poi cambio di programma sulla gara: il ginocchio fa i capricci, quindi non faccio più la mezza maratona, ho spostato l'iscrizione sulla 10 km, sempre domenica 13 novembre."
+    },
+    {
+     "role": "assistant",
+     "content": "Correggo: la manutenzione della caldaia è costata 135 euro (con il kit guarnizioni). E il 13 novembre corri la 10 km invece della mezza maratona."
+    },
+    {
+     "role": "user",
+     "content": "Giusto. Ultima cosa: domenica 16 ottobre arriva Aoife, la figlia di mia cugina che vive a Cork, in Irlanda. Resta da noi fino a domenica 30 ottobre, dorme in camera di Tommaso e lui va sul divano letto."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: Aoife, figlia di tua cugina, da Cork, ospite da domenica 16 a domenica 30 ottobre in camera di Tommaso."
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "casa_bellandi",
+   "ts": "2033-10-12T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Allora, ho comprato una friggitrice ad aria, era in offerta a 79 euro. L'ho messa sopra il frigo, che sul piano non c'era posto."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: friggitrice ad aria nuova, 79 euro, sopra il frigo. Con chi parlo?"
+    },
+    {
+     "role": "user",
+     "content": "Lascia stare. Ascolta piuttosto: ho prenotato il tagliando della Skoda all'officina Casadei per lunedì 24 ottobre alle 8:30. Chi la usa quel giorno si organizzi."
+    },
+    {
+     "role": "assistant",
+     "content": "D'accordo: tagliando della Skoda all'officina Casadei lunedì 24 ottobre alle 8:30; quel giorno la macchina non sarà disponibile."
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "user": "casa_bellandi",
+   "ts": "2033-10-13T20:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Paolo. Fatto il dentista: mi hanno messo una corona provvisoria, quella definitiva me la mettono giovedì 3 novembre alle 17:30."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene Paolo: corona provvisoria messa oggi, definitiva giovedì 3 novembre alle 17:30."
+    },
+    {
+     "role": "user",
+     "content": "E Irene ieri è andata dall'ortodontista con Silvia: tutto ok, le hanno stretto l'apparecchio, il prossimo controllo è fra due mesi."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: controllo dall'ortodontista di Irene fatto ieri, apparecchio regolato, prossimo controllo fra due mesi."
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "user": "casa_bellandi",
+   "ts": "2033-10-14T07:05:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno. Ho deciso: mi iscrivo in palestra, alla Virtus Fit di via Cesarea, 45 euro al mese, comincio lunedì 17 ottobre."
+    },
+    {
+     "role": "assistant",
+     "content": "Buongiorno! Segnato: iscrizione alla Virtus Fit di via Cesarea, 45 euro al mese, dal 17 ottobre. Mi dici chi sei, così lo segno alla persona giusta?"
+    },
+    {
+     "role": "user",
+     "content": "Sì sì, dopo. Ricordami anche di comprare il regalo per mia sorella, mercoledì 19 è il suo compleanno."
+    },
+    {
+     "role": "assistant",
+     "content": "Promemoria: regalo per il compleanno di tua sorella, mercoledì 19 ottobre."
+    }
+   ]
+  },
+  {
+   "id": "s13",
+   "user": "casa_bellandi",
+   "ts": "2033-10-16T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hi there! I'm Aoife, Silvia's cousin's daughter, I just arrived from Cork. Silvia told me I can talk to you in English. I'm staying until Sunday the 30th of October."
+    },
+    {
+     "role": "assistant",
+     "content": "Welcome to Ravenna, Aoife! Noted: you're staying with the Bellandi family until Sunday 30 October. Anything I should know?"
+    },
+    {
+     "role": "user",
+     "content": "Yes, I'm allergic to tree nuts, walnuts, hazelnuts, all of them, so please keep that in mind for the shopping list. I work as a graphic designer, remotely, so I'll be at the kitchen table a lot. Okay, Tommaso wants to talk to you, here he is."
+    },
+    {
+     "role": "assistant",
+     "content": "Got it: tree-nut allergy, and you work remotely as a graphic designer. Go ahead."
+    },
+    {
+     "role": "user",
+     "content": "Sono Tommaso. Due cose. Il concerto di ieri a Milano è saltato: i Neon Harbour hanno annullato tutto il tour, ci rimborsano i biglietti. Quindi ieri sono rimasto a casa."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato, Tommaso! Segnato: il concerto dei Neon Harbour di ieri, sabato 15 ottobre, è stato annullato dalla band, biglietti rimborsati."
+    },
+    {
+     "role": "user",
+     "content": "E ho cambiato di nuovo la password del wifi, papà l'aveva scritta su un post-it attaccato al frigo, roba da matti. Adesso è PinetaBlu-77. Ad Aoife l'ho già data."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: la password del wifi CasaBellandi ora è PinetaBlu-77 (cambiata oggi, 16 ottobre)."
+    }
+   ]
+  },
+  {
+   "id": "s14",
+   "user": "casa_bellandi",
+   "ts": "2033-10-18T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Uff. Ho perso le chiavi di scorta del garage, credo in centro ieri pomeriggio. Mettimi in lista di rifare una copia dal ferramenta."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: rifare una copia delle chiavi del garage. Chi me lo sta chiedendo?"
+    },
+    {
+     "role": "user",
+     "content": "Non ho tempo, sono in ritardo. Ciao!"
+    }
+   ]
+  },
+  {
+   "id": "s15",
+   "user": "casa_bellandi",
+   "ts": "2033-10-19T17:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono la Franca. Ti dico: venerdì sono andata dall'oculista, mi ha portato il Paolo. Tutto bene, mi hanno cambiato le lenti degli occhiali e devo tornare fra un anno."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella notizia, Franca: visita oculistica di venerdì 14 ottobre andata bene, lenti nuove, controllo fra un anno."
+    },
+    {
+     "role": "user",
+     "content": "Invece il pranzo di domani con la Lucia non si fa, ha l'influenza, poverina. Lo rifaremo quando sta meglio, ma una data non c'è ancora. I cappelletti li faccio lo stesso per la famiglia."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: il pranzo con Lucia di giovedì 20 ottobre è annullato per l'influenza, nessuna nuova data per ora."
+    }
+   ]
+  },
+  {
+   "id": "s16",
+   "user": "casa_bellandi",
+   "ts": "2033-10-22T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Irene! Siamo appena tornate da Cesenatico: al torneo siamo arrivate seconde! Abbiamo perso la finale solo al tie-break contro il Rimini."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti Irene! Secondo posto al torneo di Cesenatico, finale persa al tie-break contro il Rimini."
+    },
+    {
+     "role": "user",
+     "content": "Sì! E mi hanno anche dato il premio come miglior palleggiatrice del torneo."
+    },
+    {
+     "role": "assistant",
+     "content": "Fantastico: premio di miglior palleggiatrice del torneo!"
+    }
+   ]
+  },
+  {
+   "id": "s17",
+   "user": "casa_bellandi",
+   "ts": "2033-10-25T20:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Tommaso: Analisi 2 passato, 26! Finalmente."
+    },
+    {
+     "role": "assistant",
+     "content": "Grande Tommaso! Analisi 2 superato con 26 oggi, martedì 25 ottobre."
+    },
+    {
+     "role": "user",
+     "content": "Ah, e correggi una cosa: la bici non l'ho pagata 350, alla fine ho trattato e gliene ho dati 320. Ti passo Aoife che deve dirti del volo."
+    },
+    {
+     "role": "assistant",
+     "content": "Correggo: la Bianchi l'hai pagata 320 euro. Ciao Aoife!"
+    },
+    {
+     "role": "user",
+     "content": "Hi, it's Aoife. Change of plans: my agency needs me back in the office on Monday, so I moved my flight. I'm leaving on Friday the 28th of October instead of the 30th, from Bologna, at 14:10."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted, Aoife: you're now leaving on Friday 28 October, flight from Bologna at 14:10, instead of Sunday the 30th."
+    }
+   ]
+  },
+  {
+   "id": "s18",
+   "user": "casa_bellandi",
+   "ts": "2033-10-31T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Paolo. Ti aggiorno sulla Skoda: lunedì 24 ha fatto il tagliando da Casadei, 210 euro in tutto, e già che c'erano hanno montato le gomme invernali."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Paolo: tagliando della Skoda fatto lunedì 24 ottobre da Casadei, 210 euro, gomme invernali montate."
+    },
+    {
+     "role": "user",
+     "content": "E venerdì ho accompagnato Aoife all'aeroporto di Bologna, è partita tranquilla. Ci ha lasciato un disegno della casa, l'abbiamo appeso in salotto."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene: Aoife è ripartita venerdì 28 ottobre da Bologna. Bello il disegno in salotto!"
+    }
+   ]
+  },
+  {
+   "id": "s19",
+   "user": "casa_bellandi",
+   "ts": "2033-11-01T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che giornata! Mi hanno appena scritto dall'ufficio del personale: mi rinnovano il contratto e da gennaio passo a tempo indeterminato."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulazioni! Segnato: contratto a tempo indeterminato da gennaio. A chi faccio i complimenti?"
+    },
+    {
+     "role": "user",
+     "content": "Ahah, lo dico io agli altri stasera. Intanto stappiamo qualcosa a cena."
+    }
+   ]
+  },
+  {
+   "id": "s20",
+   "user": "casa_bellandi",
+   "ts": "2033-11-04T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Silvia. Paolo ieri ha messo la corona definitiva, finalmente ha finito col dentista."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, Silvia: corona definitiva di Paolo messa ieri, giovedì 3 novembre."
+    },
+    {
+     "role": "user",
+     "content": "Io invece sono in fase di scarico per la 10 km di domenica 13 novembre: ricordami la sera prima della gara, sabato 12, di preparare il pettorale e il chip."
+    },
+    {
+     "role": "assistant",
+     "content": "Promemoria per sabato 12 novembre sera: preparare pettorale e chip per la 10 km di domenica 13 novembre."
+    }
+   ]
+  }
+ ]
+}

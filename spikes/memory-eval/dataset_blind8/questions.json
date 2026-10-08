@@ -1,0 +1,347 @@
+{
+ "_note": "Blind set #8 (entity memory). Questions asked to the household assistant (entity 'casa_bellandi') at asked_at (systems ingest only sessions up to asked_at). expected = reference answer; facts said by someone who never identified must be reported as 'not known who', never attributed to a named person. must_not = statements that must not be asserted.",
+ "user": "casa_bellandi",
+ "questions": [
+  {
+   "id": "e01",
+   "category": "attribution",
+   "asked_at": "2033-10-10T21:00:00+02:00",
+   "q": "Chi in casa ha un appuntamento dal dentista e chi dall'ortodontista nei prossimi giorni?",
+   "expected": "Il dentista è di Paolo: giovedì 13 ottobre alle 17:30 dal dottor Gualtieri (spostato dal 6 ottobre). L'ortodontista è di Irene: mercoledì 12 ottobre alle 15 dalla dottoressa Pasini. (Dettagli secondari, non richiesti: Paolo deve fare una corona su un molare; Irene va al controllo dell'apparecchio accompagnata da Silvia.)",
+   "must_not": [
+    "Irene ha il dentista",
+    "Paolo ha l'ortodontista",
+    "Silvia ha un appuntamento dal dentista",
+    "l'appuntamento di Paolo è giovedì 6 ottobre"
+   ]
+  },
+  {
+   "id": "e02",
+   "category": "attribution",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Cosa ha comprato Paolo nelle ultime settimane?",
+   "expected": "Un trapano avvitatore a batteria, 89 euro al Brico (comprato il 5 ottobre, per montare le mensole in camera di Irene). Non risultano altri acquisti di Paolo.",
+   "must_not": [
+    "Paolo ha comprato la friggitrice ad aria",
+    "Paolo ha comprato una bici",
+    "Paolo ha comprato scarpe da corsa",
+    "Paolo ha comprato le ginocchiere"
+   ]
+  },
+  {
+   "id": "e03",
+   "category": "attribution",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi in casa è vegetariano?",
+   "expected": "Tommaso, vegetariano da luglio. Di nessun altro risulta.",
+   "must_not": [
+    "Irene è vegetariana",
+    "Aoife è vegetariana",
+    "Silvia è vegetariana",
+    "Franca è vegetariana"
+   ]
+  },
+  {
+   "id": "e04",
+   "category": "unidentified",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi ha preso la multa con la Skoda in via Mazzini?",
+   "expected": "Non si sa: chi l'ha detto il 28 settembre non si è identificato (alla domanda «chi sta parlando?» ha risposto «che importa»). (Dettagli secondari, non richiesti: 42 euro, sosta in zona carico e scarico, martedì 27 settembre.)",
+   "must_not": [
+    "l'ha presa Paolo",
+    "l'ha presa Silvia",
+    "l'ha presa Tommaso",
+    "l'ha presa Irene",
+    "l'ha presa Franca"
+   ]
+  },
+  {
+   "id": "e05",
+   "category": "unidentified",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi ha comprato la friggitrice ad aria?",
+   "expected": "Non si sa: chi ne ha parlato il 12 ottobre non ha detto chi era. (Dettagli secondari, non richiesti: 79 euro in offerta, messa sopra il frigo.)",
+   "must_not": [
+    "l'ha comprata Paolo",
+    "l'ha comprata Silvia",
+    "l'ha comprata Tommaso",
+    "l'ha comprata Irene",
+    "l'ha comprata Franca"
+   ]
+  },
+  {
+   "id": "e06",
+   "category": "unidentified",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi ha prenotato il tagliando della Skoda?",
+   "expected": "Non si sa: la prenotazione (officina Casadei, lunedì 24 ottobre alle 8:30) l'ha comunicata il 12 ottobre qualcuno che non si è identificato. Paolo ha solo riferito il 31 ottobre che il tagliando era stato fatto.",
+   "must_not": [
+    "l'ha prenotato Paolo",
+    "l'ha prenotato Silvia",
+    "l'ha prenotato Tommaso"
+   ]
+  },
+  {
+   "id": "e07",
+   "category": "carry-over",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi si è iscritto in palestra alla Virtus Fit?",
+   "expected": "Non si sa: l'ha detto la mattina del 14 ottobre qualcuno che non si è identificato (ha rimandato con «dopo»). La conversazione della sera prima era di Paolo, ma questo non dice chi parlava il 14. (Dettagli secondari, non richiesti: 45 euro al mese, dal 17 ottobre, via Cesarea.)",
+   "must_not": [
+    "si è iscritto Paolo",
+    "Paolo va in palestra",
+    "si è iscritta Silvia",
+    "si è iscritto Tommaso"
+   ]
+  },
+  {
+   "id": "e08",
+   "category": "carry-over",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi ha perso le chiavi di scorta del garage?",
+   "expected": "Non si sa: chi l'ha detto il 18 ottobre non si è identificato e ha chiuso di corsa perché era in ritardo. (Dettagli secondari, non richiesti: perse in centro il pomeriggio del 17; in lista c'è da rifare una copia dal ferramenta.)",
+   "must_not": [
+    "le ha perse Tommaso",
+    "le ha perse Aoife",
+    "le ha perse Paolo",
+    "le ha perse Silvia"
+   ]
+  },
+  {
+   "id": "e09",
+   "category": "carry-over",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi passa a tempo indeterminato da gennaio?",
+   "expected": "Non si sa: l'ha annunciato il 1° novembre qualcuno che non ha detto chi era («lo dico io agli altri stasera»). La conversazione precedente era di Paolo, ma non si può attribuirlo a lui.",
+   "must_not": [
+    "Paolo passa a tempo indeterminato",
+    "Silvia passa a tempo indeterminato",
+    "Tommaso passa a tempo indeterminato"
+   ]
+  },
+  {
+   "id": "e10",
+   "category": "hand-over",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi ha preso 8 nella verifica di latino?",
+   "expected": "Irene (l'ha detto l'8 ottobre, prima di passare il dispositivo alla nonna). (Dettagli secondari, non richiesti: il voto più alto della classe.)",
+   "must_not": [
+    "Franca ha preso 8",
+    "Tommaso ha preso 8"
+   ]
+  },
+  {
+   "id": "e11",
+   "category": "hand-over",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi non sopporta il coriandolo?",
+   "expected": "Nonna Franca (l'ha detto l'8 ottobre, dopo che Irene le ha passato il dispositivo).",
+   "must_not": [
+    "Irene non sopporta il coriandolo"
+   ]
+  },
+  {
+   "id": "e12",
+   "category": "hand-over",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi si era iscritto alla mezza maratona di Ravenna?",
+   "expected": "Silvia (il 26 settembre, dopo che Paolo le ha passato il dispositivo); il 10 ottobre ha spostato l'iscrizione sulla 10 km dello stesso giorno.",
+   "must_not": [
+    "Paolo si è iscritto alla mezza maratona",
+    "Paolo corre la mezza maratona"
+   ]
+  },
+  {
+   "id": "e13",
+   "category": "hand-over",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Who in the house is allergic to tree nuts, and who changed the wifi password on 16 October?",
+   "expected": "Aoife, the guest from Cork, is allergic to tree nuts; Tommaso changed the wifi password on 16 October (in the same conversation, after Aoife handed over to him).",
+   "must_not": [
+    "Tommaso is allergic to nuts",
+    "Aoife changed the wifi password"
+   ]
+  },
+  {
+   "id": "e14",
+   "category": "place",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Qual è adesso la password del wifi di casa?",
+   "expected": "PinetaBlu-77 (rete CasaBellandi), impostata da Tommaso il 16 ottobre. (Dettagli secondari, non richiesti: la precedente, Mosaico-2033!, l'aveva messa Paolo il 6 ottobre.)",
+   "must_not": [
+    "la password è Mosaico-2033!"
+   ]
+  },
+  {
+   "id": "e15",
+   "category": "place",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Quando è stata fatta l'ultima manutenzione della caldaia e quanto è costata?",
+   "expected": "Sabato 1 ottobre 2033, 135 euro (Silvia aveva detto prima 120, poi ha corretto: c'era anche il kit guarnizioni). (Dettagli secondari, non richiesti: fumi ok, bollino rinnovato; prossima a ottobre 2034.)",
+   "must_not": [
+    "è costata 120 euro"
+   ]
+  },
+  {
+   "id": "e16",
+   "category": "place",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Quando ha fatto il tagliando la Skoda e cosa è stato fatto?",
+   "expected": "Lunedì 24 ottobre all'officina Casadei: tagliando più montaggio delle gomme invernali, 210 euro in tutto.",
+   "must_not": []
+  },
+  {
+   "id": "e17",
+   "category": "plan",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Tommaso è poi andato al concerto dei Neon Harbour a Milano?",
+   "expected": "No: il concerto di sabato 15 ottobre è saltato perché la band ha annullato tutto il tour; i biglietti sono stati rimborsati.",
+   "must_not": [
+    "sì, è andato al concerto",
+    "è andato a Milano con Davide"
+   ]
+  },
+  {
+   "id": "e18",
+   "category": "plan",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Il pranzo della nonna Franca con l'amica Lucia si è fatto?",
+   "expected": "No: il pranzo di giovedì 20 ottobre è stato annullato perché Lucia aveva l'influenza; da rifare quando starà meglio, nessuna nuova data fissata.",
+   "must_not": [
+    "sì, il pranzo si è fatto",
+    "è stato spostato a una data precisa"
+   ]
+  },
+  {
+   "id": "e19",
+   "category": "plan",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Paolo ha finito con il dentista?",
+   "expected": "Sì: la corona definitiva gliel'hanno messa giovedì 3 novembre (lo ha riferito Silvia). (Dettagli secondari, non richiesti: appuntamento spostato dal 6 al 13 ottobre, quando gli hanno messo la corona provvisoria.)",
+   "must_not": [
+    "deve ancora mettere la corona definitiva"
+   ]
+  },
+  {
+   "id": "e20",
+   "category": "plan",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Com'è andata la visita oculistica della nonna?",
+   "expected": "Bene: venerdì 14 ottobre, l'ha accompagnata Paolo; le hanno cambiato le lenti degli occhiali e deve tornare fra un anno.",
+   "must_not": []
+  },
+  {
+   "id": "e21",
+   "category": "correction",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Chi in casa è allergico ai kiwi?",
+   "expected": "Irene. La nonna Franca aveva detto che era Tommaso, ma Silvia ha corretto: Tommaso non ha nessuna allergia.",
+   "must_not": [
+    "Tommaso è allergico ai kiwi"
+   ]
+  },
+  {
+   "id": "e22",
+   "category": "correction",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Quanto ha pagato Tommaso la bici da corsa?",
+   "expected": "320 euro (all'inizio aveva detto 350, poi ha corretto: ha trattato col venditore).",
+   "must_not": [
+    "l'ha pagata 350 euro"
+   ]
+  },
+  {
+   "id": "e23",
+   "category": "correction",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Che gara corre Silvia domenica 13 novembre?",
+   "expected": "La 10 km: si era iscritta alla mezza maratona di Ravenna, ma il 10 ottobre ha spostato l'iscrizione sulla 10 km per un problema al ginocchio.",
+   "must_not": [
+    "corre la mezza maratona"
+   ]
+  },
+  {
+   "id": "e24",
+   "category": "state-now",
+   "asked_at": "2033-10-12T21:00:00+02:00",
+   "q": "Quando ha il dentista Paolo?",
+   "expected": "Giovedì 13 ottobre alle 17:30 dal dottor Gualtieri (era il 6 ottobre, poi lo studio l'ha spostato).",
+   "must_not": [
+    "giovedì 6 ottobre",
+    "giovedì 3 novembre"
+   ]
+  },
+  {
+   "id": "e25",
+   "category": "state-now",
+   "asked_at": "2033-10-20T09:00:00+02:00",
+   "q": "Fino a quando resta da noi Aoife?",
+   "expected": "Fino a domenica 30 ottobre.",
+   "must_not": [
+    "fino a venerdì 28 ottobre",
+    "è già partita"
+   ]
+  },
+  {
+   "id": "e26",
+   "category": "state-now",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Qual era la password del wifi il 10 ottobre?",
+   "expected": "Mosaico-2033! (impostata da Paolo il 6 ottobre; il 16 ottobre Tommaso l'ha cambiata in PinetaBlu-77).",
+   "must_not": [
+    "il 10 ottobre era PinetaBlu-77"
+   ]
+  },
+  {
+   "id": "e27",
+   "category": "state-now",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Aoife è ancora ospite da noi?",
+   "expected": "No: è ripartita venerdì 28 ottobre dall'aeroporto di Bologna (l'ha accompagnata Paolo), anticipando la partenza prevista per il 30 ottobre.",
+   "must_not": [
+    "sì, resta fino al 30 ottobre",
+    "è ancora qui"
+   ]
+  },
+  {
+   "id": "e28",
+   "category": "premise-trap",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "A che ora è l'appuntamento dal dentista di Silvia?",
+   "expected": "Non risulta nessun appuntamento dal dentista per Silvia: il dentista era di Paolo (concluso il 3 novembre).",
+   "must_not": [
+    "Silvia ha il dentista alle 17:30",
+    "Silvia ha il dentista giovedì"
+   ]
+  },
+  {
+   "id": "e29",
+   "category": "premise-trap",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "In che posizione è arrivata la squadra di Tommaso al torneo di Cesenatico?",
+   "expected": "Tommaso non ha giocato nessun torneo a Cesenatico: il torneo era di Irene, e la sua squadra (Under 16 della Robur) è arrivata seconda. (Dettagli secondari, non richiesti: finale persa al tie-break contro il Rimini; Irene premiata come miglior palleggiatrice.)",
+   "must_not": [
+    "la squadra di Tommaso è arrivata seconda",
+    "Tommaso ha giocato a Cesenatico"
+   ]
+  },
+  {
+   "id": "e30",
+   "category": "negative",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Che voto ha preso Irene nella verifica di matematica?",
+   "expected": "Non risulta: è registrato solo l'8 nella verifica di latino.",
+   "must_not": [
+    "ha preso 8 in matematica"
+   ]
+  },
+  {
+   "id": "e31",
+   "category": "negative",
+   "asked_at": "2033-11-07T20:00:00+01:00",
+   "q": "Qual è la targa della Skoda?",
+   "expected": "Non risulta: la targa non è mai stata detta (si sa solo che è una Skoda Octavia station wagon grigia del 2027).",
+   "must_not": []
+  }
+ ]
+}

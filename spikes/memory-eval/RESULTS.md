@@ -401,6 +401,30 @@ more than 3 people ignored — recall adds up to 3 of that person's own chat mes
 
 Kept.
 
+### WORK_PLAN 4.8 — fresh blind sets, released engine (2026-10-08, DeepSeek direct, 3 runs each)
+
+Two new sets written blind by separate agents (no access to the service code, RESULTS or other datasets' gold), each
+re-read by a second agent before any run (blind7: 2 questions reworded; blind8: 3 session details fixed, no gold change).
+The engine developer has read only these aggregates and per-category scores. Service `deepseek-flash`, base (no noise),
+default quality profile, consolidation on; one prompt version per run (`b7_runs.sh`, `b8_runs.sh`).
+
+| Set | Content | Prompt | Runs | Mean | SD |
+|---|---|---|---|---|---|
+| `dataset_blind7` | Giacomo, pharmacist, Bergamo 2033: 31 sessions (8 group chats, ~20 % EN), 46 questions | `extract.v8` | 88.0 / 92.4 / 93.5 | **91.3 %** | 2.9 |
+| `dataset_blind8` | entity memory: a household's kitchen assistant, Ravenna 2033: 20 sessions, 31 questions | `extract.v8+entity.v3` | 86.7 / 79.0 / 80.6 | **82.1 %** | 4.1 |
+
+Per category (three runs):
+- blind7: plan, negative, recall-echo 1.0 in every run; premise-trap 1.0 / 0.9 / 0.9; state-change 1.0 / 0.83 / 1.0;
+  temporal 0.83 / 1.0 / 1.0; aggregation 0.8 / 1.0 / 1.0; assistant-addressed 0.88 / 0.75 / 0.75; **provenance
+  0.4 / 0.8 / 0.7** (the weakest, as on blind6).
+- blind8: correction, negative, place, premise-trap, state-now 1.0 in every run; plan 1.0 / 0.88 / 1.0; hand-over
+  1.0 / 0.75 / 0.75; attribution 0.5 / 0.67 / 0.67; carry-over 1.0 / 0.33 / 0.67; **unidentified 0.0 / 0.33 / 0.0**.
+
+Reading: on a person's memory the released engine holds about 91 % on unseen data (blind5's last 3 runs: 90.7 %). The
+entity memory is weaker than its dev set suggested (95.5 %, 1 run, written by the engine developer): what someone says
+without identifying themselves still gets attributed to a named person, and similar facts of different people get
+swapped. Entity memory stays **experimental** until fixed and measured on another blind entity set.
+
 ### WORK_PLAN 4.11 — plan guard and "l'owner" (2026-10-08, blind5, DeepSeek direct)
 
 Two defects found through the Diary: a plan **confirmed before its date**, and memories saying **"l'owner"** (≈ 5.7 % of

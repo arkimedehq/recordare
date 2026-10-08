@@ -114,6 +114,7 @@ Answer and judge model: `deepseek-flash`. Embeddings: `bge-m3`. Bracketed ranges
 | Held-out set (written blind to D's prompts), noise | D 86 %; Memobase 61 %; baseline 50 % |
 | `dataset_blind4` (84 q, nobody tuned on it), base | Service v4 80.8 %; Mem0 78.0 %; D 88.3 %; full context (ceiling) 89.9 %. This was the honest correction of the 95 % measured on a set that had already been seen |
 | `dataset_blind5` (87 q, fresh), base, 3 runs | Service (recall work H11) 89.2 % [85.8, 92.6]; D 91.7 %; full context 91.4 %. The gap is within noise |
+| `dataset_blind7` (46 q, fresh, written by a separate agent), base, 3 runs | Released service **91.3 %** (88.0 / 92.4 / 93.5); `dataset_blind8` (entity memory, 31 q) 82.1 % |
 | `dataset_blind3`, quality profiles | Economy 93.5 %, balanced 94.9 %, full 92.1 %, all within noise. Measured after the set had been read, so not blind |
 | Recall-echo dev set (not blind) | 79 % without the guard → 100 % with guard v3 (3 runs each) |
 
@@ -169,7 +170,8 @@ entity's memory, facts carry the person they are about, and a fact from an unide
 anyone's fact. Identification never grants access: a person's *own* memory is reached only through a secure client
 identity bound by the admin. A code guard records a fact about a person, or an episode naming one, only if the
 conversation names that person (no identity carried over from other chats). The person chooses the kind on their
-platform (Arkimede: memory settings) while the memory is empty. Measured on a non-blind dev set only (95.5 %, 1 run,
+platform (Arkimede: memory settings) while the memory is empty. **Experimental**: 95.5 % on its dev set, but **82.1 %** on a
+fresh blind set (3 runs; speakers who never identify themselves still get attributed to a named person —
 [RESULTS.md](spikes/memory-eval/RESULTS.md)).
 
 ## Beyond phase 1

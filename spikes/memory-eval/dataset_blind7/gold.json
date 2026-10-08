@@ -1,0 +1,787 @@
+{
+ "user": "giacomo",
+ "episodes": [
+  {
+   "id": "e01",
+   "kind": "event",
+   "date": "2033-02-12",
+   "date_precision": "day",
+   "content": "Smash Seriate beat Volley Dalmine 3-1 at home; Giacomo played all four sets.",
+   "sessions": [
+    "s03"
+   ],
+   "people": []
+  },
+  {
+   "id": "e02",
+   "kind": "plan",
+   "date": "2033-02-26",
+   "date_precision": "day",
+   "content": "Weekend in Verona with Martina on 26-27 Feb for her birthday; done (B&B near Piazza delle Erbe, Arena, osteria).",
+   "sessions": [
+    "s03",
+    "s07"
+   ],
+   "people": [
+    "Martina"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e03",
+   "kind": "plan",
+   "date": "2033-04-03",
+   "date_precision": "day",
+   "content": "Run the Mezza di Bergamo half marathon (goal under 1h55); done in 1h52'40\".",
+   "sessions": [
+    "s03",
+    "s11",
+    "s18"
+   ],
+   "people": [],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e04",
+   "kind": "event",
+   "date": "2033-02-15",
+   "date_precision": "day",
+   "content": "Dentist: cavity filled.",
+   "sessions": [
+    "s05"
+   ],
+   "people": []
+  },
+  {
+   "id": "e05",
+   "kind": "event",
+   "date": "2033-02-16",
+   "date_precision": "day",
+   "content": "Blood donation at AVIS (morning, before work).",
+   "sessions": [
+    "s05"
+   ],
+   "people": []
+  },
+  {
+   "id": "e06",
+   "kind": "plan",
+   "date": "2033-02-28",
+   "date_precision": "day",
+   "content": "Apply for the hospital-pharmacist call at Papa Giovanni XXIII (deadline Mon 28 Feb); application sent Sun 20 Feb.",
+   "sessions": [
+    "s05",
+    "s06"
+   ],
+   "people": [],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e07",
+   "kind": "event",
+   "date": "2033-02-19",
+   "date_precision": "day",
+   "content": "Smash Seriate lost 1-3 away at Treviglio (league leaders).",
+   "sessions": [
+    "s06"
+   ],
+   "people": []
+  },
+  {
+   "id": "e08",
+   "kind": "event",
+   "date": "2033-03-02",
+   "date_precision": "day",
+   "content": "Rear-ended in via Corridoni in the evening coming home from the pharmacy; Giacomo fine (stiff neck), Punto's rear destroyed, other driver at fault.",
+   "sessions": [
+    "s08"
+   ],
+   "people": []
+  },
+  {
+   "id": "e09",
+   "kind": "plan",
+   "date": "2033-03-12",
+   "date_precision": "day",
+   "content": "Lampioni Gialli concert at Alcatraz, Milan, with Martina; cancelled by the band hours before (singer's laryngitis), 2 x 38 euro refunded.",
+   "sessions": [
+    "s08",
+    "s11"
+   ],
+   "people": [
+    "Martina"
+   ],
+   "plan_outcome": "cancelled"
+  },
+  {
+   "id": "e10",
+   "kind": "plan",
+   "date": "2033-03-15",
+   "date_precision": "day",
+   "content": "Regional course on vaccinations in pharmacies, Milan, all day; done, now qualified.",
+   "sessions": [
+    "s09",
+    "s12"
+   ],
+   "people": [
+    "Paola Cortinovis"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e11",
+   "kind": "event",
+   "date": "2033-03-10",
+   "date_precision": "day",
+   "content": "Insurance assessor: Punto not worth repairing, to be scrapped; other party's insurer pays 2,100 euro market value.",
+   "sessions": [
+    "s10"
+   ],
+   "people": []
+  },
+  {
+   "id": "e12",
+   "kind": "plan",
+   "date": "2033-03-24",
+   "date_precision": "day",
+   "content": "Job interview at Papa Giovanni XXIII on Thu 24 Mar at 10; done, went well.",
+   "sessions": [
+    "s11",
+    "s15"
+   ],
+   "people": [],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e13",
+   "kind": "event",
+   "date": "2033-03-16",
+   "date_precision": "day",
+   "content": "Offer for the three-room flat in via Pignolo (top floor, small terrace) accepted.",
+   "sessions": [
+    "s12"
+   ],
+   "people": [
+    "Martina"
+   ]
+  },
+  {
+   "id": "e14",
+   "kind": "event",
+   "date": "2033-03-19",
+   "date_precision": "day",
+   "content": "Smash Seriate beat Stezzano 3-0; Giacomo MVP with 14 points.",
+   "sessions": [
+    "s13"
+   ],
+   "people": []
+  },
+  {
+   "id": "e15",
+   "kind": "plan",
+   "date": "2033-03-20",
+   "date_precision": "day",
+   "content": "Lunch for Ezio's 70th birthday at agriturismo Il Castagneto, Clusone (requested by Rosanna); happened, everyone there incl. Federico and Anna.",
+   "sessions": [
+    "s02",
+    "s14"
+   ],
+   "people": [
+    "Ezio",
+    "Rosanna",
+    "Federico",
+    "Anna",
+    "Martina"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e16",
+   "kind": "state_change",
+   "date": "2033-03-21",
+   "date_precision": "day",
+   "content": "Bought a used 2029 Toyota Yaris hybrid, blue, 14,500 euro; Federico lent 1,500 euro for the deposit.",
+   "sessions": [
+    "s14",
+    "s15"
+   ],
+   "people": [
+    "Federico"
+   ]
+  },
+  {
+   "id": "e17",
+   "kind": "event",
+   "date": "2033-03-25",
+   "date_precision": "day",
+   "content": "Picked up the Yaris; the Punto went to the scrapyard.",
+   "sessions": [
+    "s15"
+   ],
+   "people": []
+  },
+  {
+   "id": "e18",
+   "kind": "event",
+   "date": "2033-03-28",
+   "date_precision": "day",
+   "content": "Signed the preliminary contract (compromesso) for via Pignolo.",
+   "sessions": [
+    "s16"
+   ],
+   "people": [
+    "Martina"
+   ]
+  },
+  {
+   "id": "e19",
+   "kind": "plan",
+   "date": "2033-04-28",
+   "date_precision": "day",
+   "content": "Deed (rogito) for via Pignolo, first set for Thu 28 Apr; postponed to Fri 24 Jun (mortgage approval delayed).",
+   "sessions": [
+    "s16",
+    "s23"
+   ],
+   "people": [
+    "Martina"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "e20",
+   "kind": "plan",
+   "date": "2033-04-30",
+   "date_precision": "day",
+   "content": "Move to via Pignolo, first set for the weekend of 30 Apr; postponed to Sat 2 Jul.",
+   "sessions": [
+    "s16",
+    "s23",
+    "s31"
+   ],
+   "people": [
+    "Martina"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "e21",
+   "kind": "state_change",
+   "date": "2033-04-04",
+   "date_precision": "day",
+   "content": "Hired as hospital pharmacist at Papa Giovanni XXIII (call on Fri 1 Apr); resigned from Farmacia Santa Grata on 4 Apr, last day Sat 30 Apr, start Mon 2 May.",
+   "sessions": [
+    "s18",
+    "s19"
+   ],
+   "people": [
+    "Paola Cortinovis"
+   ]
+  },
+  {
+   "id": "e22",
+   "kind": "event",
+   "date": "2033-04-09",
+   "date_precision": "day",
+   "content": "Smash Seriate beat Osio 3-2 (tie-break 15-13).",
+   "sessions": [
+    "s20"
+   ],
+   "people": []
+  },
+  {
+   "id": "e23",
+   "kind": "plan",
+   "date": "2033-04-14",
+   "date_precision": "day",
+   "content": "Erasmus reunion in Valencia 14-17 Apr with Claire, Pieter, Joanna in a flat in Ruzafa booked by Claire; done (City of Arts and Sciences, Albufera paella, Turia park).",
+   "sessions": [
+    "s07",
+    "s17",
+    "s21",
+    "s22"
+   ],
+   "people": [
+    "Claire",
+    "Pieter",
+    "Joanna"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e24",
+   "kind": "event",
+   "date": "2033-04-16",
+   "date_precision": "day",
+   "content": "Called his mother from the Albufera for her birthday; friends sang on video.",
+   "sessions": [
+    "s22"
+   ],
+   "people": [
+    "Rosanna"
+   ]
+  },
+  {
+   "id": "e25",
+   "kind": "event",
+   "date": "2033-04-21",
+   "date_precision": "day",
+   "content": "Repaid Federico the first instalment, 750 euro, by bank transfer.",
+   "sessions": [
+    "s23"
+   ],
+   "people": [
+    "Federico"
+   ]
+  },
+  {
+   "id": "e26",
+   "kind": "plan",
+   "date": "2033-06-30",
+   "date_precision": "month",
+   "content": "Repay Federico the second 750-euro instalment in June.",
+   "sessions": [
+    "s14",
+    "s23"
+   ],
+   "people": [
+    "Federico"
+   ],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "e27",
+   "kind": "plan",
+   "date": "2033-04-29",
+   "date_precision": "day",
+   "content": "Farewell dinner with Santa Grata colleagues (Irene's proposal) on Fri 29 Apr; happened in a trattoria, gift: a lab coat embroidered «dottor Galenica».",
+   "sessions": [
+    "s19",
+    "s24"
+   ],
+   "people": [
+    "Paola Cortinovis",
+    "Samuele Rota",
+    "Irene Pesenti"
+   ],
+   "plan_outcome": "confirmed"
+  },
+  {
+   "id": "e28",
+   "kind": "plan",
+   "date": "2033-05-12",
+   "date_precision": "day",
+   "content": "Dentist check-up after the filling, Thu 12 May at 18; outcome never reported.",
+   "sessions": [
+    "s24"
+   ],
+   "people": [],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "e29",
+   "kind": "event",
+   "date": "2033-05-02",
+   "date_precision": "day",
+   "content": "First day at the Papa Giovanni XXIII hospital pharmacy (oncology compounding).",
+   "sessions": [
+    "s25"
+   ],
+   "people": []
+  },
+  {
+   "id": "e30",
+   "kind": "event",
+   "date": "2033-05-07",
+   "date_precision": "day",
+   "content": "Smash Seriate lost the playoff semifinal 0-3 to Treviglio; season over.",
+   "sessions": [
+    "s26"
+   ],
+   "people": []
+  },
+  {
+   "id": "e31",
+   "kind": "plan",
+   "date": "2033-05-15",
+   "date_precision": "day",
+   "content": "Bike trip to Monte Isola (Lake Iseo) with Martina, set for Sun 15 May; rained off, done Sun 22 May (lunch in Carzano, Ceriola sanctuary).",
+   "sessions": [
+    "s28",
+    "s29",
+    "s31"
+   ],
+   "people": [
+    "Martina"
+   ],
+   "plan_outcome": "rescheduled"
+  },
+  {
+   "id": "e32",
+   "kind": "plan",
+   "date": null,
+   "date_precision": "day",
+   "content": "Decide in September whether to keep playing volleyball next season.",
+   "sessions": [
+    "s29"
+   ],
+   "people": [],
+   "plan_outcome": "unresolved"
+  },
+  {
+   "id": "e33",
+   "kind": "event",
+   "date": "2033-05-20",
+   "date_precision": "day",
+   "content": "Second blood donation of the year at AVIS (lunch break).",
+   "sessions": [
+    "s30"
+   ],
+   "people": []
+  },
+  {
+   "id": "e34",
+   "kind": "event",
+   "date": "2033-02-10",
+   "date_precision": "day",
+   "content": "Federico and Anna expect a baby, due end of August.",
+   "sessions": [
+    "s02"
+   ],
+   "people": [
+    "Federico",
+    "Anna"
+   ]
+  },
+  {
+   "id": "e35",
+   "kind": "event",
+   "date": "2033-02-14",
+   "date_precision": "day",
+   "content": "Pietro broke his wrist skiing at Foppolo, out six weeks.",
+   "sessions": [
+    "s04"
+   ],
+   "people": [
+    "Pietro"
+   ]
+  },
+  {
+   "id": "e36",
+   "kind": "event",
+   "date": "2033-03-07",
+   "date_precision": "day",
+   "content": "Irene Pesenti announced she marries Matteo in June.",
+   "sessions": [
+    "s09"
+   ],
+   "people": [
+    "Irene Pesenti"
+   ]
+  },
+  {
+   "id": "e37",
+   "kind": "event",
+   "date": "2033-03-19",
+   "date_precision": "day",
+   "content": "Tiziano moves to Lugano for work from 2 Apr, commuting, staying in the team.",
+   "sessions": [
+    "s13"
+   ],
+   "people": [
+    "Tiziano"
+   ]
+  },
+  {
+   "id": "e38",
+   "kind": "event",
+   "date": "2033-03-29",
+   "date_precision": "day",
+   "content": "Pieter promoted to head of the port logistics team in Rotterdam.",
+   "sessions": [
+    "s17"
+   ],
+   "people": [
+    "Pieter"
+   ]
+  },
+  {
+   "id": "e39",
+   "kind": "event",
+   "date": "2033-05-11",
+   "date_precision": "day",
+   "content": "Federico and Anna's baby is a girl, to be named Bianca.",
+   "sessions": [
+    "s27"
+   ],
+   "people": [
+    "Federico",
+    "Anna"
+   ]
+  }
+ ],
+ "facts": [
+  {
+   "key": "car",
+   "history": [
+    {
+     "value": "grey 2014 Fiat Punto",
+     "from": null,
+     "to": "2033-03-25",
+     "sessions": [
+      "s01",
+      "s08",
+      "s10",
+      "s15"
+     ]
+    },
+    {
+     "value": "blue 2029 Toyota Yaris hybrid (used)",
+     "from": "2033-03-25",
+     "to": null,
+     "sessions": [
+      "s14",
+      "s15"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "employer",
+   "history": [
+    {
+     "value": "pharmacist at Farmacia Santa Grata, Bergamo",
+     "from": null,
+     "to": "2033-04-30",
+     "sessions": [
+      "s01",
+      "s18"
+     ]
+    },
+    {
+     "value": "hospital pharmacist at Papa Giovanni XXIII, Bergamo",
+     "from": "2033-05-02",
+     "to": null,
+     "sessions": [
+      "s18",
+      "s25"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "home",
+   "history": [
+    {
+     "value": "rented flat in via Borgo Palazzo, Bergamo, with Martina",
+     "from": null,
+     "to": null,
+     "sessions": [
+      "s01",
+      "s23"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "mother_birthday",
+   "history": [
+    {
+     "value": "16 April (first stated as 14 April, corrected)",
+     "from": null,
+     "to": null,
+     "sessions": [
+      "s01",
+      "s10"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "debt_to_federico",
+   "history": [
+    {
+     "value": "1,500 euro",
+     "from": "2033-03-21",
+     "to": "2033-04-21",
+     "sessions": [
+      "s14"
+     ]
+    },
+    {
+     "value": "750 euro (second instalment due in June)",
+     "from": "2033-04-21",
+     "to": null,
+     "sessions": [
+      "s23"
+     ]
+    }
+   ]
+  },
+  {
+   "key": "work_schedule",
+   "history": [
+    {
+     "value": "Mon-Fri 8-16 plus one Saturday morning a month",
+     "from": "2033-05-02",
+     "to": null,
+     "sessions": [
+      "s25"
+     ]
+    }
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "category": "people",
+   "content": "Partner Martina Locatelli, freelance graphic designer.",
+   "sessions": [
+    "s01"
+   ]
+  },
+  {
+   "category": "people",
+   "content": "Parents Rosanna and Ezio live in Clusone; brother Federico (software developer) lives in Milan with his wife Anna.",
+   "sessions": [
+    "s01",
+    "s23"
+   ]
+  },
+  {
+   "category": "people",
+   "content": "Erasmus friends from Valencia 2015: Claire (Dublin), Pieter (Rotterdam), Joanna (Kraków); next reunion planned in Kraków next year.",
+   "sessions": [
+    "s07",
+    "s22"
+   ]
+  },
+  {
+   "category": "routine",
+   "content": "Plays amateur CSI volleyball with Smash Seriate: training Wednesday evening, matches on Saturday; teammates Tiziano, Pietro, Omar.",
+   "sessions": [
+    "s01",
+    "s04"
+   ]
+  },
+  {
+   "category": "routine",
+   "content": "Runs three times a week with a long run on Sunday; donates blood at AVIS.",
+   "sessions": [
+    "s03",
+    "s05",
+    "s30"
+   ]
+  },
+  {
+   "category": "work",
+   "content": "Qualified to vaccinate in pharmacies (course of 15 March 2033).",
+   "sessions": [
+    "s12"
+   ]
+  }
+ ],
+ "not_memories": [
+  {
+   "sessions": [
+    "s02",
+    "s27"
+   ],
+   "content": "Giacomo and Martina marry in autumn (Ezio citing zia Lucia).",
+   "why": "claim by others, denied by the owner on 11 May"
+  },
+  {
+   "sessions": [
+    "s02"
+   ],
+   "content": "Rosanna asks the assistant to remind Giacomo of the 20 March lunch.",
+   "why": "message to the assistant by someone else (the owner confirmed attending; the lunch is an episode)"
+  },
+  {
+   "sessions": [
+    "s04"
+   ],
+   "content": "Omar: Giacomo owes him a beer (asked the assistant to record it).",
+   "why": "message to the assistant by someone else; denied by the owner, confirmed paid by Tiziano"
+  },
+  {
+   "sessions": [
+    "s04",
+    "s20"
+   ],
+   "content": "Giacomo will be team captain next season (Tiziano).",
+   "why": "claim by others, never confirmed; owner unsure whether he will play"
+  },
+  {
+   "sessions": [
+    "s09"
+   ],
+   "content": "Paola asks the assistant to remind everyone of the inventory on Sat 26 March 14:00.",
+   "why": "message to the assistant by someone else (a work event, not a plan stated by the owner)"
+  },
+  {
+   "sessions": [
+    "s09",
+    "s19"
+   ],
+   "content": "Giacomo is leaving for a pharmacy / job in Milan (Samuele).",
+   "why": "claim by others, denied twice by the owner"
+  },
+  {
+   "sessions": [
+    "s17"
+   ],
+   "content": "Joanna asks the assistant to remember that Giacomo brings one bottle of Valcalepio and the casoncelli recipe.",
+   "why": "message to the assistant by someone else; owner amended to two bottles"
+  },
+  {
+   "sessions": [
+    "s19"
+   ],
+   "content": "Samuele: Giacomo leaves him his road bike (asked the assistant to record it).",
+   "why": "message to the assistant by someone else; denied by the owner"
+  },
+  {
+   "sessions": [
+    "s15"
+   ],
+   "content": "The Yaris is grey (assistant's wrong recall).",
+   "why": "corrected by the owner: blue"
+  },
+  {
+   "sessions": [
+    "s21"
+   ],
+   "content": "The half marathon was in Brescia (assistant's wrong recall).",
+   "why": "wrong recall, ignored by the owner; it was the Mezza di Bergamo"
+  },
+  {
+   "sessions": [
+    "s23"
+   ],
+   "content": "Federico lives in Monza (assistant's wrong recall).",
+   "why": "corrected by the owner: Milan"
+  },
+  {
+   "sessions": [
+    "s26"
+   ],
+   "content": "The semifinal was against Dalmine (assistant's wrong recall).",
+   "why": "corrected by the owner: Treviglio"
+  },
+  {
+   "sessions": [
+    "s27"
+   ],
+   "content": "Giacomo sold the Punto to a young man from Clusone (zia Lucia via Rosanna).",
+   "why": "claim by others, denied: the Punto was scrapped"
+  },
+  {
+   "sessions": [
+    "s27"
+   ],
+   "content": "Giacomo and Martina want to get a dog after the move (Rosanna citing Federico).",
+   "why": "claim by others, never confirmed by the owner"
+  }
+ ]
+}

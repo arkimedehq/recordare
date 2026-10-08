@@ -120,6 +120,7 @@ intervalli al 95 %.
 | Set held-out (scritto alla cieca rispetto ai prompt di D), rumore | D 86 %; Memobase 61 %; baseline 50 % |
 | `dataset_blind4` (84 d., nessuno vi ha fatto tuning), base | Servizio v4 80,8 %; Mem0 78,0 %; D 88,3 %; contesto completo (tetto) 89,9 %. È stata la correzione onesta del 95 % misurato su un set già visto |
 | `dataset_blind5` (87 d., nuovo), base, 3 esecuzioni | Servizio (lavoro sul richiamo H11) 89,2 % [85,8, 92,6]; D 91,7 %; contesto completo 91,4 %. Il divario rientra nel rumore |
+| `dataset_blind7` (46 d., nuovo, scritto da un agente separato), base, 3 esecuzioni | Servizio rilasciato **91,3 %** (88,0 / 92,4 / 93,5); `dataset_blind8` (memoria di entità, 31 d.) 82,1 % |
 | `dataset_blind3`, profili di qualità | Economy 93,5 %, balanced 94,9 %, full 92,1 %, tutti nel rumore. Misurato dopo che il set era stato letto, quindi non cieco |
 | Dev set dell'eco del richiamo (non cieco) | 79 % senza la protezione → 100 % con la protezione v3 (3 esecuzioni ciascuno) |
 
@@ -178,8 +179,9 @@ un parlante non identificato non viene memorizzato come fatto di nessuno. L'iden
 l'accesso: la memoria *propria* di una persona si raggiunge solo tramite un'identità client sicura vincolata
 dall'amministratore. Una protezione nel codice registra un fatto su una persona, o un episodio che la nomina, solo se
 la conversazione nomina quella persona (nessuna identità riportata da altre chat). La persona sceglie il tipo sulla
-propria piattaforma (Arkimede: impostazioni della memoria) finché la memoria è vuota. Misurato solo su un dev set non
-cieco (95,5 %, 1 esecuzione, [RESULTS.md](spikes/memory-eval/RESULTS.md)).
+propria piattaforma (Arkimede: impostazioni della memoria) finché la memoria è vuota. **Sperimentale**: 95,5 % sul suo dev
+set, ma **82,1 %** su un nuovo set cieco (3 esecuzioni; chi non si presenta viene ancora attribuito a una persona con
+nome — [RESULTS.md](spikes/memory-eval/RESULTS.md)).
 
 ## Oltre la fase 1
 
