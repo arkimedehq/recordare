@@ -6,9 +6,9 @@ episodica a lungo termine custodita dal tuo servizio [Recordare](../../README_it
 - **Cattura**: ogni messaggio che una persona invia e ogni risposta dell'agente vanno a Recordare; quando la sessione di
   Hermes finisce (`/new`, `/reset`, uscita) Recordare estrae subito ciò che è successo, i piani, i fatti e le note invece
   di attendere il suo ritardo di inattività.
-- **Richiamo prima di ogni turno**: i ricordi pertinenti al messaggio arrivano da `POST api/v1/context` (nessuna
-  chiamata LLM, niente quando non c'è nulla di pertinente); Hermes li aggiunge al turno dentro il proprio blocco
-  `<memory-context>`.
+- **Richiamo prima di ogni turno**: una sola chiamata conserva il messaggio e restituisce i ricordi pertinenti
+  (`POST api/v1/context` con `ingest`, nessuna chiamata LLM, niente quando non c'è nulla di pertinente); Hermes li
+  aggiunge al turno dentro il proprio blocco `<memory-context>`.
 - **Strumenti di memoria**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
   `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode` (gli strumenti MCP di Recordare, legati
   nel codice alla persona e alla conversazione — né il modello né l'utente possono puntarli altrove). `log_episode` è
@@ -71,16 +71,16 @@ ricordati e chiunque altro scriva allo stesso bot resta fuori.
 |---|---|
 | linea della sessione (`gateway_session_key` o piattaforma + primo id di sessione) | conversazione `hermes:<gateway_session_key o piattaforma>/<id sessione>` (canale `hermes:<piattaforma>`, titolo = titolo della sessione o nome della chat); mantenuta attraverso la compressione del contesto e `--resume`, nuova con `/new` / `/reset` |
 | `user_id_alt` / `user_id` (+ alias), oppure `RECORDARE_USER` | l'utente (`X-Recordare-User` con una chiave client; altrimenti la persona del token) |
-| il messaggio della persona (`on_turn_start`) | messaggio `user`, id `<id sessione>:<id turno>:u`, conservato **prima** della richiesta di contesto e prima che l'agente parta (così ciò che l'agente salva con `recordare_remember` si lega alle parole della persona) |
+| il messaggio della persona (`on_turn_start`, poi `prefetch`) | messaggio `user`, id `<id sessione>:<id turno>:u`, messo in coda all'inizio del turno e conservato **prima** che l'agente parta (così ciò che l'agente salva con `recordare_remember` si lega alle parole della persona): da `prefetch` nella stessa chiamata del contesto di memoria; subito se il richiamo è spento; prima di ogni chiamata a uno strumento di memoria se `prefetch` non ha potuto conservarlo |
 | la risposta dell'agente (`sync_turn`, in background) | messaggio `assistant`, id `<id sessione>:<id turno>:a` (chiamate e risultati degli strumenti non vengono inviati) |
-| fine sessione (`on_session_end`, `on_session_switch(reset)`) | `conversationEnded` (l'ultimo messaggio reinviato con l'indicazione, dopo ogni messaggio in attesa della conversazione) → estrazione subito |
-| `prefetch` | `POST api/v1/context {query}` → il blocco **senza** la recinzione di Recordare (Hermes aggiunge la sua) |
+| fine sessione (`on_session_end`, `on_session_switch(reset)`) | `POST api/v1/ingest/conversations/{id}/end`, in coda dopo ogni messaggio in attesa della conversazione → estrazione subito |
+| `prefetch` | `POST api/v1/context {query, ingest?}` (`ingest` = il messaggio del turno in coda) → il blocco **senza** la recinzione di Recordare (Hermes aggiunge la sua) |
 | strumenti `recordare_*` | l'endpoint MCP di Recordare (`/mcp`, Streamable HTTP) con le intestazioni di utente e conversazione; una sessione MCP per persona |
 | esecuzioni cron e sub-agent (`agent_context` ≠ `primary`) | non catturate (richiamo e strumenti funzionano comunque) |
 | stanze condivise (`group_sessions_per_user: false`) | i turni scritti da qualcuno diverso dalla persona della sessione non vengono né catturati né serviti dalla memoria |
 
-Ogni richiesta porta `X-Recordare-Conversation` una volta che Recordare ha conservato la conversazione; con un token
-personale la primissima lettura di una nuova conversazione è diretta del proprietario (senza intestazione).
+Ogni lettura porta `X-Recordare-Conversation`; con un token personale una conversazione che Recordare non ha ancora
+conservato conta come della persona stessa.
 
 ## Test
 

@@ -3,10 +3,10 @@
 
 /**
  * Recordare for OpenClaw — the full client level (docs/INTEGRATION.md):
- * - before_prompt_build: sends the person's message to Recordare, then adds the memories relevant to it
- *   (`POST api/v1/context`) before the message as a fenced `<memory-context>` block;
+ * - before_prompt_build: one call (`POST api/v1/context` with `ingest`) stores the person's message and returns the
+ *   memories relevant to it, added before the message as a fenced `<memory-context>` block;
  * - agent_end: sends the agent's answer (and the message again, same id: stored once);
- * - session_end: tells Recordare the conversation ended (extraction now instead of after the idle delay);
+ * - session_end: ends the conversation (`POST …/conversations/{id}/end`: extraction now instead of after the idle delay);
  * - message_received: in group chats, the other members' messages go with the next turn as context (role `other`);
  * - recordare_* tools: Recordare's MCP tools, bound in code to the person and the conversation.
  * Never blocks or breaks OpenClaw: every call is time-boxed, every failure is logged (no content) and swallowed;
@@ -77,7 +77,7 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
   const headerUser = (user: string): string => (cfg.personal ? '' : user);
 
   const turns = new Map<string, Turn>(); // runId → the turn in progress
-  const lastSent = new Map<string, Turn>(); // conversation → its last sent message (for the end hint)
+  const captured = new Map<string, string>(); // conversation → its person (to end it)
   const groupBuffer = new Map<string, IngestMessage[]>(); // session key → other members' messages not sent yet
   const groupParticipants = new Map<string, IngestParticipant[]>(); // session key → the members seen
   const queue: Pending[] = [];
@@ -171,19 +171,26 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
       const conversation = conversationMeta(w, ctx);
       const message: IngestMessage = { externalId: `${id}:u`, role: 'user', authorRef: 'owner', content: clipUtf8(text), sentAt: now };
       remember(turns, ctx.runId ?? w.conversation, { user: w.user, conversation, message });
-      if (cfg.capture) {
-        // Sent before the agent runs: the memory tools bind what the agent writes to the person's own words.
-        const others = takeGroupMessages(ctx.sessionKey, text);
-        try {
-          await fast.ingest(headerUser(w.user), { conversation, messages: [...others, message] });
-        } catch (err) {
-          log.warn(`recordare: ingest before the turn failed (${errName(err)}), will retry`);
-          void send(w.user, { conversation, messages: [...others, message] });
-        }
+      if (!cfg.capture) {
+        const ctxRes = await fast.context(headerUser(w.user), w.conversation, text.slice(0, 4000));
+        return ctxRes.block ? { prependContext: ctxRes.block } : undefined;
       }
-      if (!cfg.autoRecall) return;
-      const ctxRes = await fast.context(headerUser(w.user), w.conversation, text.slice(0, 4000));
-      return ctxRes.block ? { prependContext: ctxRes.block } : undefined;
+      // Stored before the agent runs: the memory tools bind what the agent writes to the person's own words.
+      const turn: IngestRequest = { conversation, messages: [...takeGroupMessages(ctx.sessionKey, text), message] };
+      remember(captured, w.conversation, w.user);
+      try {
+        if (!cfg.autoRecall) {
+          await fast.ingest(headerUser(w.user), turn);
+          return undefined;
+        }
+        const ctxRes = await fast.contextWithTurn(headerUser(w.user), turn, text.slice(0, 4000));
+        return ctxRes.block ? { prependContext: ctxRes.block } : undefined;
+      } catch (err) {
+        // Same message ids: whatever was already stored is stored once.
+        log.warn(`recordare: storing the message before the turn failed (${errName(err)}), will retry; no memory context this turn`);
+        void send(w.user, turn);
+        return undefined;
+      }
     } catch (err) {
       log.warn(`recordare: memory context unavailable (${errName(err)})`);
       return undefined;
@@ -206,7 +213,7 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
         ?? (turn.user ? { externalId: `${runId}:u`, role: 'user' as const, authorRef: 'owner', content: clipUtf8(turn.user), sentAt: now } : undefined);
       const answer: IngestMessage = { externalId: `${runId}:a`, role: 'assistant', authorRef: 'assistant', content: clipUtf8(turn.assistant), sentAt: now };
       const messages = [...(userMessage ? [userMessage] : []), answer];
-      remember(lastSent, w.conversation, { user: w.user, conversation, message: answer });
+      remember(captured, w.conversation, w.user);
       await send(w.user, { conversation, messages });
     } catch (err) {
       log.warn(`recordare: capture failed (${errName(err)})`);
@@ -218,11 +225,10 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
       // Compaction and a Gateway shutdown / restart do not end the conversation (the session goes on afterwards).
       if (!cfg.capture || ['compaction', 'shutdown', 'restart'].includes(event.reason ?? '')) return;
       const conv = conversationId(event.sessionKey ?? ctx.sessionKey, event.sessionId ?? ctx.sessionId);
-      const last = conv ? lastSent.get(conv) : undefined;
-      if (!conv || !last?.message) return;
-      lastSent.delete(conv);
-      // Re-sending the last answer (same id: stored once) carries the "conversation ended" hint.
-      await send(last.user, { conversation: last.conversation, messages: [last.message], hints: { conversationEnded: true } });
+      const user = conv ? captured.get(conv) : undefined;
+      if (!conv || user === undefined) return;
+      captured.delete(conv);
+      await slow.endConversation(headerUser(user), conv);
     } catch (err) {
       log.warn(`recordare: end of conversation not sent (${errName(err)})`);
     }

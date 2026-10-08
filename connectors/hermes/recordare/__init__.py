@@ -3,13 +3,16 @@
 
 """Recordare memory provider for Hermes Agent — the full client level (capture + recall).
 
-- Capture: the person's message is ingested when the turn starts (before the context request and before the agent
-  runs, so what the agent stores with `recordare_remember` binds to the person's own words), the answer after the
-  turn (`sync_turn`, background); both through a durable SQLite outbox that retries. A session end (`/new`, `/reset`,
-  exit) sends `hints.conversationEnded`: Recordare extracts now instead of after its idle delay.
-- Recall: `prefetch` returns Recordare's pre-turn memory context (`POST api/v1/context`, no LLM call; Hermes wraps it in
-  its own `<memory-context>` fence), and the `recordare_*` tools call Recordare's MCP tools bound in code to the person
-  and the conversation.
+- Capture: the person's message is queued when the turn starts and stored before the agent runs (so what the agent
+  stores with `recordare_remember` binds to the person's own words): with recall on, `prefetch` stores it and gets the
+  memory context in one call (`POST api/v1/context` with `ingest`); otherwise, or when that cannot run, it is delivered
+  right away (and always before a memory tool call). The answer follows after the turn (`sync_turn`, background); both
+  go through a durable SQLite outbox that retries. A session end (`/new`, `/reset`, exit) queues
+  `POST …/conversations/{id}/end` after the conversation's pending messages: Recordare extracts now instead of after its
+  idle delay.
+- Recall: `prefetch` returns Recordare's pre-turn memory context (no LLM call; Hermes wraps it in its own
+  `<memory-context>` fence), and the `recordare_*` tools call Recordare's MCP tools bound in code to the person and the
+  conversation.
 - Never raises into Hermes: every failure is logged (without content) and swallowed.
 
 Config (env in `$HERMES_HOME/.env`, or `memory.recordare.*` in config.yaml for the non-secret ones): see README.md.
@@ -32,7 +35,7 @@ from .outbox import Outbox, get_outbox
 logger = logging.getLogger(__name__)
 
 MAX_CONTENT_BYTES = 60 * 1024  # Recordare accepts 64 KiB per message
-TURN_START_DEADLINE_S = 1.5    # the person's message must be stored before the context read
+TURN_START_DEADLINE_S = 1.5    # the person's message must be stored before a read or a memory tool call
 DEFAULT_TIMEOUT_S = 3.0        # context request (Hermes bounds prefetch at 8 s)
 
 
@@ -171,6 +174,7 @@ class RecordareMemoryProvider(MemoryProvider):
         self._raw_user_ids: set = set()
         self._turn_author: Optional[str] = None
         self._pending_user: Optional[tuple] = None  # (text, externalId) ingested at turn start
+        self._turn_row: Optional[int] = None    # outbox row of that message, left for prefetch to store with its context
         self._initialized = False
 
     # -- identity ---------------------------------------------------------------------------------------------------------
@@ -279,20 +283,24 @@ class RecordareMemoryProvider(MemoryProvider):
     # -- capture ----------------------------------------------------------------------------------------------------------
 
     def on_turn_start(self, turn_number: int, message: str, **kwargs: Any) -> None:
-        """Ingest the person's message before the context read and before the agent runs (bounded; on failure it
-        stays in the outbox and the turn goes on)."""
+        """Queue the person's message. With recall on, `prefetch` (which Hermes runs right after, before the agent)
+        stores it together with the context read; otherwise it is delivered now (bounded; on failure it stays in the
+        outbox and the turn goes on)."""
         try:
             author = kwargs.get("author_id")
             self._turn_author = str(author) if author else None
-            self._pending_user = None
+            self._pending_user, self._turn_row = None, None
             text = _user_instruction(message or "").strip()
             if not (self._active and self._capture and self._outbox and text) or self._other_author():
                 return
             ext_id = f"{self._session_id}:{uuid.uuid4().hex[:12]}:u"
-            self._outbox.add_batch(self._conv, self._user, {"conversation": self._conversation(), "messages": [
-                {"externalId": ext_id, "role": "user", "content": _clip(text), "sentAt": _now()}]})
+            row = self._outbox.add_batch(self._conv, self._user, {"conversation": self._conversation(), "messages": [
+                {"externalId": ext_id, "role": "user", "content": _clip(text), "sentAt": _now()}]}, wake=not self._recall)
             self._pending_user = (text, ext_id)
-            self._outbox.deliver_now(TURN_START_DEADLINE_S)
+            if self._recall:
+                self._turn_row = row
+            else:
+                self._outbox.deliver_now(TURN_START_DEADLINE_S)
         except Exception as exc:
             logger.warning("Recordare turn start: %s", exc)
 
@@ -338,14 +346,14 @@ class RecordareMemoryProvider(MemoryProvider):
                 self._conv = self._outbox.lineage_get(new_session_id) or self._conv
                 self._outbox.lineage_set(new_session_id, self._conv)
             self._session_id = new_session_id
-            self._pending_user = None
+            self._pending_user, self._turn_row = None, None
         except Exception as exc:
             logger.warning("Recordare session switch: %s", exc)
 
     def _end_conversation(self) -> None:
         try:
             if self._active and self._capture and self._outbox and self._conv:
-                self._outbox.add_end(self._conv, self._user, self._conversation())
+                self._outbox.add_end(self._conv, self._user)
         except Exception as exc:
             logger.warning("Recordare session end: %s", exc)
 
@@ -359,23 +367,29 @@ class RecordareMemoryProvider(MemoryProvider):
 
     # -- recall -----------------------------------------------------------------------------------------------------------
 
-    def _conversation_header(self) -> Optional[str]:
-        """The conversation, once Recordare stored it. Before that a personal token reads as its owner (owner-direct);
-        a client key needs the conversation (a read without one returns nothing)."""
-        if self._outbox and self._outbox.is_delivered(self._conv):
-            return self._conv
-        return None if self._client and self._client.personal else self._conv
-
     def prefetch(self, query: str, *, session_id: str = "") -> str:
+        """The memory context for the turn; the turn's message, when still queued, is stored in the same call. (Reads
+        always name the conversation: with a personal token one not stored yet counts as the person's own.)"""
+        row, self._turn_row = self._turn_row, None
         try:
             if not (self._active and self._recall and self._client and query and query.strip()) or self._other_author():
                 return ""
-            block = self._client.context(query[:4000], user=self._user, conversation=self._conversation_header(),
-                                         timeout=self._timeout)
+            q = query[:4000]
+            sent, block = False, None
+            if row is not None and self._outbox:
+                sent, block = self._outbox.send_with(row, TURN_START_DEADLINE_S, lambda body: self._client.context(
+                    q, user=self._user, conversation=self._conv, timeout=self._timeout, ingest=body))
+                if not sent:  # the outbox is busy or older messages come first: store it the usual way
+                    self._outbox.deliver_now(TURN_START_DEADLINE_S)
+            if not sent:
+                block = self._client.context(q, user=self._user, conversation=self._conv, timeout=self._timeout)
             return strip_fence(block) if block else ""
         except Exception as exc:
             logger.info("Recordare context unavailable: %s", exc)
             return ""
+        finally:
+            if row is not None and self._outbox:
+                self._outbox.wake()  # whatever is still queued (this message, if not stored here) goes now
 
     def get_tool_schemas(self) -> List[Dict[str, Any]]:
         """Hermes routes tool names from this list when the provider is added, BEFORE `initialize`: so the schemas
@@ -394,7 +408,7 @@ class RecordareMemoryProvider(MemoryProvider):
             if self._outbox:  # the turn's message must be stored for the call to bind to it
                 self._outbox.deliver_now(TURN_START_DEADLINE_S)
             return self._client.call_tool(tool_name[len("recordare_"):], clean, user=self._user,
-                                          conversation=self._conversation_header())
+                                          conversation=self._conv)
         except RecordareError as exc:
             logger.info("Recordare tool %s: %s", tool_name, exc)
             return json.dumps({"error": f"Recordare: {exc}"})

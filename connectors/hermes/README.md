@@ -6,8 +6,9 @@ memory kept by your own [Recordare](../../README.md) service — the **full** cl
 - **Capture**: each message a person sends and each answer of the agent go to Recordare; when the Hermes session ends
   (`/new`, `/reset`, exit) Recordare extracts what happened, plans, facts and notes right away instead of after its idle
   delay.
-- **Recall before each turn**: the memories relevant to the message come back from `POST api/v1/context` (no LLM call,
-  nothing when nothing is relevant); Hermes adds them to the turn inside its own `<memory-context>` block.
+- **Recall before each turn**: one call stores the message and returns the memories relevant to it
+  (`POST api/v1/context` with `ingest`, no LLM call, nothing when nothing is relevant); Hermes adds them to the turn
+  inside its own `<memory-context>` block.
 - **Memory tools**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
   `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode` (Recordare's MCP tools, bound in code to
   the person and the conversation — neither the model nor the user can point them elsewhere). `log_episode` is left out:
@@ -68,16 +69,16 @@ then only the mapped gateway users are remembered and everyone else writing to t
 |---|---|
 | session lineage (`gateway_session_key` or platform + first session id) | conversation `hermes:<gateway_session_key or platform>/<session id>` (channel `hermes:<platform>`, title = session title or chat name); kept across context compression and `--resume`, new on `/new` / `/reset` |
 | `user_id_alt` / `user_id` (+ aliases), or `RECORDARE_USER` | the user (`X-Recordare-User` with a client key; the token's person otherwise) |
-| the person's message (`on_turn_start`) | message `user`, id `<session id>:<turn id>:u`, stored **before** the context request and before the agent runs (so what the agent stores with `recordare_remember` binds to the person's own words) |
+| the person's message (`on_turn_start`, then `prefetch`) | message `user`, id `<session id>:<turn id>:u`, queued at turn start and stored **before** the agent runs (so what the agent stores with `recordare_remember` binds to the person's own words): by `prefetch` in the same call as the memory context; right away when recall is off; before any memory tool call when `prefetch` could not store it |
 | the agent's answer (`sync_turn`, background) | message `assistant`, id `<session id>:<turn id>:a` (tool calls and results are not sent) |
-| session end (`on_session_end`, `on_session_switch(reset)`) | `conversationEnded` (the last message re-sent with the hint, after every pending message of the conversation) → extraction now |
-| `prefetch` | `POST api/v1/context {query}` → the block **without** Recordare's fence (Hermes adds its own) |
+| session end (`on_session_end`, `on_session_switch(reset)`) | `POST api/v1/ingest/conversations/{id}/end`, queued after every pending message of the conversation → extraction now |
+| `prefetch` | `POST api/v1/context {query, ingest?}` (`ingest` = the turn's queued message) → the block **without** Recordare's fence (Hermes adds its own) |
 | `recordare_*` tools | Recordare's MCP endpoint (`/mcp`, Streamable HTTP) with the user and conversation headers; one MCP session per person |
 | cron and sub-agent runs (`agent_context` ≠ `primary`) | not captured (recall and tools still work) |
 | shared rooms (`group_sessions_per_user: false`) | turns written by someone other than the session's person are neither captured nor answered from memory |
 
-Every request carries `X-Recordare-Conversation` once Recordare stored the conversation; with a personal token the very
-first read of a new conversation is owner-direct (no header).
+Every read carries `X-Recordare-Conversation`; with a personal token a conversation Recordare has not stored yet counts
+as the person's own.
 
 ## Tests
 

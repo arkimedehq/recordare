@@ -79,7 +79,7 @@ echo "== turn 1 (capture)"
 agent agent:main:smoke-a "Sabato scorso ho adottato un gatto rosso che si chiama Biscotto. Rispondi in una frase."
 sql "select m.role, left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.owner_id = '$PERSON' order by m.sent_at"
 agent agent:main:smoke-a "/new" >/dev/null
-echo "== waiting for the extraction (conversationEnded)"
+echo "== waiting for the extraction (conversation ended)"
 until [ "$(sql "select count(*) from episodes where owner_id = '$PERSON'")" -gt 0 ]; do sleep 3; done
 sql "select kind, left(content, 90) from episodes where owner_id = '$PERSON'"
 

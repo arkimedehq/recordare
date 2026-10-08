@@ -66,7 +66,7 @@ Codex, IDE e app compresi).
 | sessione (thread; sopravvive a `codex resume`) | conversazione `codex:<id sessione>` (canale `codex`, titolo = cartella del progetto) |
 | la tua richiesta / la risposta di Codex | messaggi `user` / `assistant` (`last_assistant_message`; se vuoto, l'ultimo messaggio dell'agente nel file rollout). Le chiamate a strumenti non vengono inviate |
 | turni dei sotto-agenti (payload con `agent_id`) | non inviati |
-| fine sessione (`SessionEnd`) | `conversationEnded` → estrazione subito invece che dopo il ritardo di inattività |
+| fine sessione (`SessionEnd`) | `POST …/conversations/{id}/end` → estrazione subito invece che dopo il ritardo di inattività |
 
 Lo script degli hook è lo stesso file del connettore Claude Code (`node recordare-hook.mjs codex`); le due copie sono
 mantenute identiche byte per byte da `connectors/check-shared.sh`, eseguito in CI.

@@ -7,7 +7,7 @@
 #      HERMES_HOME with this provider copied into its plugins/;
 #   2. creates a test client, person (consent on) and personal token through Recordare's admin API;
 #   3. turn 1 (one-shot session) tells a personal fact → checks the messages in Recordare's database; the session end
-#      at exit sends conversationEnded → waits for the extracted episode;
+#      at exit ends the conversation (`…/end`) → waits for the extracted episode;
 #   4. turn 2 (new session) asks about it → the answer comes from the pre-turn memory context (recall_log
 #      `memory_context`); turn 3 asks for recordare_search_episodes (recall_log `search_episodes`);
 #   5. gateway path without an LLM: a client key (rk_…) and a second person bound to the client user `alice`; Hermes'

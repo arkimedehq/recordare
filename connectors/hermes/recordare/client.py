@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Andrea Genovese
 
-"""HTTP access to Recordare: REST (ingest, pre-turn context) and a minimal MCP client (Streamable HTTP, JSON-RPC).
+"""HTTP access to Recordare: REST (ingest, end of a conversation, pre-turn context) and a minimal MCP client (Streamable HTTP, JSON-RPC).
 
 Every request carries the credential (`Authorization: Bearer rp_…|rk_…`), the Recordare user with a client key
 (`X-Recordare-User`) and the conversation (`X-Recordare-Conversation`) — the headers Recordare resolves the owner and
@@ -14,6 +14,7 @@ import itertools
 import json
 import threading
 from typing import Any, Dict, Optional, Tuple
+from urllib.parse import quote
 
 import requests
 
@@ -82,19 +83,27 @@ class RecordareClient:
 
     # -- REST ---------------------------------------------------------------------------------------------------------
 
-    def post(self, path: str, body: Dict[str, Any], *, user: Optional[str], conversation: Optional[str],
+    def post(self, path: str, body: Optional[Dict[str, Any]], *, user: Optional[str], conversation: Optional[str],
              timeout: Tuple[float, float]) -> Any:
         resp = self._http.post(f"{self.url}{path}", json=body, headers=self.headers(user, conversation), timeout=timeout)
         if not resp.ok:
             raise _problem(resp)
-        return None if resp.status_code == 204 or not resp.content else resp.json()
+        return None if resp.status_code in (202, 204) or not resp.content else resp.json()
 
     def ingest(self, body: Dict[str, Any], *, user: Optional[str], conversation: str, timeout: Tuple[float, float]) -> Any:
         return self.post("/api/v1/ingest/messages", body, user=user, conversation=conversation, timeout=timeout)
 
-    def context(self, query: str, *, user: Optional[str], conversation: Optional[str], timeout: float) -> Optional[str]:
-        """The pre-turn memory block (`POST api/v1/context`), None when nothing is relevant."""
-        data = self.post("/api/v1/context", {"query": query}, user=user, conversation=conversation,
+    def end_conversation(self, conversation: str, *, user: Optional[str], timeout: Tuple[float, float]) -> None:
+        """The conversation ended (`POST …/conversations/{id}/end`): Recordare extracts now. 404 = never ingested."""
+        self.post(f"/api/v1/ingest/conversations/{quote(conversation, safe='')}/end", None, user=user,
+                  conversation=conversation, timeout=timeout)
+
+    def context(self, query: str, *, user: Optional[str], conversation: Optional[str], timeout: float,
+                ingest: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        """The pre-turn memory block (`POST api/v1/context`), None when nothing is relevant. With `ingest` (an ingest
+        body) Recordare stores the turn first and answers for its conversation: one round trip instead of two."""
+        body: Dict[str, Any] = {"query": query, **({"ingest": ingest} if ingest else {})}
+        data = self.post("/api/v1/context", body, user=user, conversation=conversation,
                          timeout=(min(1.5, timeout), timeout))
         return (data or {}).get("block") or None
 

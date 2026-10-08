@@ -6,12 +6,13 @@ tenuta dal tuo servizio [Recordare](../../README_it.md) — il livello client **
 - **Cattura**: ogni messaggio di una persona e ogni risposta dell'agente vanno a Recordare; quando la sessione di
   OpenClaw finisce (`/new`, `/reset`, il reset giornaliero o per inattività) Recordare estrae ciò che è successo, piani,
   fatti e note.
-- **Richiamo prima di ogni turno**: i ricordi rilevanti per il messaggio vengono aggiunti prima di esso in un blocco
-  delimitato `<memory-context>` (`POST api/v1/context`, nessuna chiamata LLM, nulla se nulla è rilevante).
+- **Richiamo prima di ogni turno**: una sola chiamata salva il messaggio e restituisce i ricordi rilevanti, aggiunti prima
+  di esso in un blocco delimitato `<memory-context>` (`POST api/v1/context` con `ingest`, nessuna chiamata LLM, nulla se
+  nulla è rilevante).
 - **Strumenti di memoria**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
   `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode` (gli strumenti MCP di Recordare, legati
-  nel codice alla persona e alla conversazione — né il modello né l'utente possono puntarli altrove). `log_episode` è
-  escluso: la conversazione è già catturata.
+  nel codice alla persona e alla conversazione — né il modello né l'utente possono puntarli altrove), con gli schemi
+  pubblicati dal servizio (`TOOLS` della libreria client). `log_episode` è escluso: la conversazione è già catturata.
 - **Chat di gruppo**: si catturano i turni delle persone note, con i messaggi degli altri membri come contesto (ruolo
   `other`). Recordare mostra i ricordi solo quando chi li vede è esattamente il proprietario, quindi nei gruppi il
   richiamo resta vuoto.
@@ -73,7 +74,7 @@ Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 | `capture` | `true` | Invia le conversazioni |
 | `tools` | `true` | Offre gli strumenti `recordare_*` |
 | `groups` | `true` | Cattura anche le chat di gruppo |
-| `timeoutMs` | `3000` | Per chiamata prima del turno (l'invio del messaggio, poi il contesto) |
+| `timeoutMs` | `3000` | Per la chiamata prima del turno (l'invio del messaggio con il suo contesto) |
 
 Con un token personale e la mappa `users` vuota ogni turno appartiene alla persona del token (installazione per una
 persona). Se altre persone possono parlare con l'agente, mappa i tuoi sender id in `users`: tutti gli altri restano
@@ -94,10 +95,10 @@ con `openclaw security audit`.
 |---|---|
 | sessione (chiave + session id) | conversazione `openclaw:<sessionKey>/<sessionId>` (canale `openclaw:<canale>`, titolo = chiave di sessione) |
 | `<canale>:<senderId>` (`users`), oppure `defaultUser` | l'utente (`X-Recordare-User` con una chiave client; altrimenti la persona del token) |
-| il messaggio della persona (`before_prompt_build`) | messaggio `user`, id `<currentUserMessageId o runId>:u`, inviato **prima** che l'agente parta (così ciò che l'agente salva con `recordare_remember` si lega alle parole della persona) |
+| il messaggio della persona (`before_prompt_build`) | messaggio `user`, id `<currentUserMessageId o runId>:u`, salvato **prima** che l'agente parta, nella stessa chiamata che restituisce il blocco di memoria (così ciò che l'agente salva con `recordare_remember` si lega alle parole della persona); un semplice ingest se `autoRecall` è spento |
 | il testo dell'agente che segue (`agent_end`) | messaggio `assistant`, id `<runId>:a` (chiamate e risultati degli strumenti non vengono inviati) |
 | messaggi degli altri membri di un gruppo (`message_received`) | messaggi `other`, autore `<canale>:<senderId>` (partecipante con identità di canale) |
-| fine sessione (`session_end`: new, reset, idle, daily, deleted) | `conversationEnded` → estrazione subito invece che dopo il ritardo di inattività (non su compaction, shutdown o restart) |
+| fine sessione (`session_end`: new, reset, idle, daily, deleted) | `POST api/v1/ingest/conversations/{id}/end` → estrazione subito invece che dopo il ritardo di inattività (non su compaction, shutdown o restart) |
 | blocco di memoria | `prependContext` di `before_prompt_build` (solo per il modello in OpenClaw; mai rimandato a Recordare — il plugin lo rimuove) |
 | esecuzioni cron, heartbeat, sub-agente, tra agenti e incognito | non ricordate |
 

@@ -64,7 +64,7 @@ including the IDE and the app).
 | session (thread; survives `codex resume`) | conversation `codex:<session id>` (channel `codex`, title = project folder) |
 | your prompt / Codex's answer | messages `user` / `assistant` (`last_assistant_message`; when empty, the last agent message of the rollout file). Tool calls are not sent |
 | sub-agent turns (payload with `agent_id`) | not sent |
-| end of session (`SessionEnd`) | `conversationEnded` → extraction now instead of after the idle delay |
+| end of session (`SessionEnd`) | `POST …/conversations/{id}/end` → extraction now instead of after the idle delay |
 
 The hook script is the same file as the Claude Code connector's (`node recordare-hook.mjs codex`); the two copies are
 kept byte-identical by `connectors/check-shared.sh`, run in CI.

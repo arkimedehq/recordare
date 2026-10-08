@@ -8,15 +8,16 @@ to the real provider and to Recordare.
 ```
 platform ──► proxy ──► upstream provider (any OpenAI-compatible API)
                │
-               └──► Recordare: ingest the person's message → POST api/v1/context → (answer) → ingest the answer
+               └──► Recordare: POST api/v1/context (stores the person's message) → (answer) → ingest the answer
 ```
 
 Per `POST /v1/chat/completions` (streamed or not):
 1. **Who**: an identity resolver finds the person and the conversation (below). None ⇒ pure pass-through.
-2. **Before the answer**: the person's last message goes to Recordare (`POST api/v1/ingest/messages`), then
-   `POST api/v1/context` returns the memories relevant to it as a fenced `<memory-context>` block, appended to the end
-   of the first system message (a system message is added when there is none). Each call is time-boxed
-   (`RECALL_TIMEOUT_MS`, 1.5 s); on any failure the request goes on without the block.
+2. **Before the answer**: one call (`POST api/v1/context` with `ingest`) stores the person's last message and returns
+   the memories relevant to it as a fenced `<memory-context>` block, appended to the end of the first system message (a
+   system message is added when there is none). With `RECALL=false` the message is stored with a plain
+   `POST api/v1/ingest/messages`. The call is time-boxed (`RECALL_TIMEOUT_MS`, 1.5 s); on any failure the request goes
+   on without the block and the message waits in the retry queue.
 3. **The answer** is forwarded unchanged — a stream stays a stream (SSE bytes are piped as they arrive while the text
    is accumulated) — and, when complete and final, sent to Recordare in the background.
 
@@ -63,7 +64,7 @@ instead of a client key: every resolved request is then that person.
 | `USER_MAP_ONLY` | `false` | Only mapped users are remembered; the others pass through |
 | `DEFAULT_USER` | — | AnythingLLM: the user when the marker's user is not expanded (single-user mode: `[User ID]`) |
 | `OPENWEBUI_JWT_SECRET` | — | Open WebUI JWT mode (verify `X-OpenWebUI-User-Jwt`, HS256); plain user headers are then ignored |
-| `RECALL_TIMEOUT_MS` | `1500` | Per Recordare call before the answer (ingest, then context) |
+| `RECALL_TIMEOUT_MS` | `1500` | For the Recordare call before the answer (the message's ingest with its context) |
 | `END_IDLE_SECONDS` | `0` | Quiet seconds after which the proxy tells Recordare the conversation ended; `0` = Recordare's own idle delay (`IDLE_DELAY_SECONDS`, 900 s) |
 | `TZ` | system | Time zone of the day used in synthesised conversation ids |
 | `SKIP_PATTERNS` | — | Extra regexes (JSON array or `\|\|`-separated) on the last user message marking background calls |
@@ -140,8 +141,7 @@ Title requests (`… title for the conversation …`) are skipped by a built-in 
   (AnythingLLM's jobs carry no marker), the built-in patterns (`### Task:` without `<user_query>`; "generate … title …
   conversation/chat/thread"), `SKIP_PATTERNS`, or an `X-Recordare-Skip` header.
 - **End of a conversation**: Recordare extracts a conversation after its idle delay. With `END_IDLE_SECONDS` the proxy
-  ends it earlier, re-sending the last answer (same id) with `hints.conversationEnded` — Recordare's ingest needs at
-  least one message to carry the hint.
+  ends it earlier (`POST api/v1/ingest/conversations/{id}/end`, once its messages left the retry queue).
 
 ## Never in the way
 - Recordare unreachable or slow: the request is forwarded without the block after at most `RECALL_TIMEOUT_MS` per
@@ -149,8 +149,8 @@ Title requests (`… title for the conversation …`) are skipped by a built-in 
   queues what it captures.
 - **Retry queue in memory** (v0.1): up to 1000 batches, ~8 attempts with back-off over ≈ 10 minutes (`Retry-After`
   honoured), permanent errors (400 / 413 / 422) dropped and logged; one last attempt on SIGTERM; **lost on restart**.
-- A person without consent: the first ingest answers `stored: false`; nothing is asked from Recordare for that person
-  for a minute.
+- A person without consent: an ingest answers `stored: false`; for a minute the proxy then only stores that person's
+  messages (no memory context is asked).
 - Logs carry no message content (except with `LOG_UPSTREAM`).
 
 ## Security

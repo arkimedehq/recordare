@@ -37,7 +37,7 @@ need the plugin options.
 |---|---|
 | session | conversation `claude-code:<session id>` (channel `claude-code`, title = project folder) |
 | your prompt / Claude's answer | messages `user` / `assistant` (tool calls and sub-agents are not sent) |
-| end of session | `conversationEnded` → extraction now instead of after the idle delay |
+| end of session | `POST …/conversations/{id}/end` → extraction now instead of after the idle delay |
 
 The hook script (`scripts/recordare-hook.mjs`) is shared with the [Codex connector](../codex/README.md); the two copies
 must stay byte-identical (`connectors/check-shared.sh`, run in CI): edit one, copy it to the other.

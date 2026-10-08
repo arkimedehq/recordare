@@ -5,12 +5,13 @@ own [Recordare](../../README.md) service — the **full** client level:
 
 - **Capture**: each message a person sends and each answer of the agent go to Recordare; when the OpenClaw session ends
   (`/new`, `/reset`, the daily or idle reset) Recordare extracts what happened, plans, facts and notes.
-- **Recall before each turn**: the memories relevant to the message are added before it as a fenced `<memory-context>`
-  block (`POST api/v1/context`, no LLM call, nothing added when nothing is relevant).
+- **Recall before each turn**: one call stores the message and returns the memories relevant to it, added before it as
+  a fenced `<memory-context>` block (`POST api/v1/context` with `ingest`, no LLM call, nothing added when nothing is
+  relevant).
 - **Memory tools**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
   `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode` (Recordare's MCP tools, bound in code to
-  the person and the conversation — neither the model nor the user can point them elsewhere). `log_episode` is left out:
-  the conversation is already captured.
+  the person and the conversation — neither the model nor the user can point them elsewhere), with the schemas the
+  service publishes (`TOOLS` of the client library). `log_episode` is left out: the conversation is already captured.
 - **Group chats**: the turns of known people are captured, with the other members' messages as context (role `other`).
   Recordare shows memories only when the viewers are exactly the owner, so recall stays empty in groups.
 
@@ -70,7 +71,7 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 | `capture` | `true` | Send the conversations |
 | `tools` | `true` | Offer the `recordare_*` tools |
 | `groups` | `true` | Capture group chats too |
-| `timeoutMs` | `3000` | Per call before the turn (the message's ingest, then the context) |
+| `timeoutMs` | `3000` | For the call before the turn (the message's ingest with its context) |
 
 With a personal token and an empty `users` map every turn belongs to the token's person (a single-person install). If
 other people can talk to the agent, map your own sender ids in `users`: everyone else is then left out.
@@ -90,10 +91,10 @@ person's turns would land in another's conversation context. Set
 |---|---|
 | session (key + session id) | conversation `openclaw:<sessionKey>/<sessionId>` (channel `openclaw:<channel>`, title = session key) |
 | `<channel>:<senderId>` (`users`), or `defaultUser` | the user (`X-Recordare-User` with a client key; the token's person otherwise) |
-| the person's message (`before_prompt_build`) | message `user`, id `<currentUserMessageId or runId>:u`, sent **before** the agent runs (so what the agent stores with `recordare_remember` binds to the person's own words) |
+| the person's message (`before_prompt_build`) | message `user`, id `<currentUserMessageId or runId>:u`, stored **before** the agent runs, in the same call that returns the memory block (so what the agent stores with `recordare_remember` binds to the person's own words); a plain ingest when `autoRecall` is off |
 | the agent's text after it (`agent_end`) | message `assistant`, id `<runId>:a` (tool calls and results are not sent) |
 | other members' messages in a group (`message_received`) | messages `other`, author `<channel>:<senderId>` (participant with a channel identity) |
-| session end (`session_end`: new, reset, idle, daily, deleted) | `conversationEnded` → extraction now instead of after the idle delay (not on compaction, shutdown or restart) |
+| session end (`session_end`: new, reset, idle, daily, deleted) | `POST api/v1/ingest/conversations/{id}/end` → extraction now instead of after the idle delay (not on compaction, shutdown or restart) |
 | memory block | `prependContext` of `before_prompt_build` (model-only in OpenClaw; never sent back to Recordare — the plugin strips it) |
 | cron, heartbeat, sub-agent, agent-to-agent and incognito runs | not remembered |
 
