@@ -1,0 +1,16 @@
+{
+  "name": "recordare",
+  "owner": {
+    "name": "Andrea Genovese"
+  },
+  "metadata": {
+    "description": "Recordare connectors for Claude Code: long-term episodic memory from your own Recordare service"
+  },
+  "plugins": [
+    {
+      "name": "recordare",
+      "source": "./connectors/claude-code",
+      "description": "Recordare episodic memory for Claude Code (capture + recall)"
+    }
+  ]
+}

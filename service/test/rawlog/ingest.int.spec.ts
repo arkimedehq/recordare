@@ -118,6 +118,23 @@ describe('REST ingest (Layer 0)', () => {
     expect(after ? await after.isDelayed() : false).toBe(false);
   });
 
+  it('honours "conversation ended" when the message carrying it was already stored', async () => {
+    const queue = app.get<Queue>(getQueueToken('extraction'));
+    await call(url, 'POST', '/api/v1/ingest/messages', { ...as('luca'), body: batch('c-end', [msg('e1', 'ultima risposta')]) });
+    const [conv] = await db.query(`SELECT id FROM conversations WHERE external_id = 'c-end'`);
+    expect(await (await queue.getJob(`idle-${conv.id}`))!.isDelayed()).toBe(true);
+    const res = await call(url, 'POST', '/api/v1/ingest/messages', { ...as('luca'), body: { ...batch('c-end', [msg('e1', 'ultima risposta')]), hints: { conversationEnded: true } } });
+    expect(res.body).toMatchObject({ accepted: 0, duplicates: 1 });
+    // The delayed job is promoted to "run now" asynchronously: wait for it.
+    let delayed = true;
+    for (let i = 0; i < 40 && delayed; i++) {
+      const after = await queue.getJob(`idle-${conv.id}`);
+      delayed = after ? await after.isDelayed() : false;
+      if (delayed) await new Promise((r) => setTimeout(r, 50));
+    }
+    expect(delayed).toBe(false);
+  });
+
   it('computes embeddings for non-assistant messages in the background', { timeout: 15000 }, async () => {
     for (let i = 0; i < 50; i++) {
       const [{ n }] = await db.query(`SELECT count(*)::int AS n FROM messages WHERE embedding IS NOT NULL`);
