@@ -4,7 +4,7 @@ Le modifiche rilevanti di Recordare. Formato: [Keep a Changelog](https://keepach
 seguono il [Semantic Versioning](https://semver.org/lang/it/) (0.x: l'API può ancora cambiare tra versioni minori).
 Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
-## [0.1.0] — non ancora rilasciata
+## [0.1.0] — 2026-10-08
 
 Prima versione pubblica: il **profilo privato** (un'installazione gestita da qualcuno di cui gli utenti si fidano —
 README → Limiti).

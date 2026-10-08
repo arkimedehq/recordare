@@ -282,6 +282,7 @@ runs on some clients; the owner gives the final OK). Criteria, all required:
    D33).
 5. **Docs**: README and every project document in English and Italian (done), INTEGRATION, DEPLOYMENT, KNOBS, a
    CHANGELOG; version tag `v0.1.0`.
+5b. **Released 2026-10-08**: tag `v0.1.0`, both repositories public; the npm package follows (owner's decision).
 6. **What goes public together**: `arkimedehq/recordare` and `arkimedehq/recordare-atlas`; `@arkimedehq/recordare-client`
    on npm (Arkimede then installs it instead of the synced copy); Arkimede's integration through its own public mirror.
 Not required for v0.1: the public profile (owner login, OAuth), connectors (6.6), phases 2+ of the vision.

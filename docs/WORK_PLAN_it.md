@@ -285,6 +285,7 @@ versione funzionante gira su alcuni client; l'OK finale è del proprietario). Cr
    fidato, non per sconosciuti — D33).
 5. **Documentazione**: README e ogni documento del progetto in inglese e italiano (fatto), INTEGRATION, DEPLOYMENT, KNOBS,
    un CHANGELOG; tag di versione `v0.1.0`.
+5b. **Rilasciata 2026-10-08**: tag `v0.1.0`, entrambi i repository pubblici; il pacchetto npm segue (decisione del proprietario).
 6. **Cosa diventa pubblico insieme**: `arkimedehq/recordare` e `arkimedehq/recordare-atlas`; `@arkimedehq/recordare-client`
    su npm (Arkimede lo installa al posto della copia sincronizzata); l'integrazione di Arkimede tramite il suo mirror
    pubblico.

@@ -4,7 +4,7 @@ All notable changes to Recordare. Format: [Keep a Changelog](https://keepachange
 [Semantic Versioning](https://semver.org/) (0.x: the API may still change between minor versions).
 Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
-## [0.1.0] — unreleased
+## [0.1.0] — 2026-10-08
 
 First public release: the **private profile** (an installation run by someone its users trust — README → Limits).
 
