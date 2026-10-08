@@ -20,8 +20,8 @@
  * (connectors/check-shared.sh, run in CI).
  */
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { basename, join } from 'node:path';
 
 const CLIENT = /^[a-z0-9-]+$/.test(process.argv[2] ?? '') ? process.argv[2] : 'claude-code';
@@ -51,11 +51,11 @@ async function post(path, body, conversation, ms) {
   const res = await fetch(`${URL_}${path}`, {
     method: 'POST',
     headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json', 'x-recordare-conversation': conversation },
-    body: JSON.stringify(body),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(ms),
   });
   if (!res.ok) throw new Error(`${path} ${res.status}`);
-  return res.status === 204 ? null : res.json();
+  return res.status === 204 || res.status === 202 ? null : res.json();
 }
 
 const lines = (path) => readFileSync(path, 'utf8').split('\n').flatMap((l) => { try { return [JSON.parse(l)]; } catch { return []; } });
@@ -114,32 +114,28 @@ async function main() {
   if (CODEX && input.agent_id) return; // sub-agent turns are not the person's conversation
   const conversation = `${CLIENT}:${session}`;
   const meta = { externalId: conversation, channel: CLIENT, title: input.cwd ? basename(input.cwd) : undefined };
-  const state = join(tmpdir(), `recordare-${CLIENT}-${hash(session)}.json`);
   const now = new Date().toISOString();
 
   if (input.hook_event_name === 'UserPromptSubmit') {
     const prompt = (input.prompt ?? '').trim();
     if (!prompt) return;
-    await post('/api/v1/ingest/messages', { conversation: meta, messages: [
-      { externalId: `${session}:u:${hash(prompt + now)}`, role: 'user', content: clip(prompt), sentAt: now },
-    ] }, conversation, 4000);
-    const ctx = await post('/api/v1/context', { query: prompt.slice(0, 4000) }, conversation, 4000);
+    // One round trip: Recordare stores the prompt, then answers with the memories relevant to it.
+    const ctx = await post('/api/v1/context', {
+      ingest: { conversation: meta, messages: [{ externalId: `${session}:u:${hash(prompt + now)}`, role: 'user', content: clip(prompt), sentAt: now }] },
+      query: prompt.slice(0, 4000),
+    }, conversation, 4000);
     if (ctx?.block) {
       process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: ctx.block } }));
     }
   } else if (input.hook_event_name === 'Stop') {
     const answer = lastAnswer(input).trim();
     if (!answer) return;
-    const message = { externalId: `${session}:a:${hash(answer)}`, role: 'assistant', content: clip(answer), sentAt: now };
-    await post('/api/v1/ingest/messages', { conversation: meta, messages: [message] }, conversation, 8000);
-    writeFileSync(state, JSON.stringify(message), { mode: 0o600 });
+    await post('/api/v1/ingest/messages', { conversation: meta, messages: [
+      { externalId: `${session}:a:${hash(answer)}`, role: 'assistant', content: clip(answer), sentAt: now },
+    ] }, conversation, 8000);
   } else if (input.hook_event_name === 'SessionEnd') {
-    // Re-sending the last answer (same id: stored once) carries the "conversation ended" hint.
-    // Codex caps SessionEnd hooks at 3 s, so the request gets 2.5 s there.
-    let message;
-    try { message = JSON.parse(readFileSync(state, 'utf8')); } catch { return; }
-    await post('/api/v1/ingest/messages', { conversation: meta, messages: [message], hints: { conversationEnded: true } }, conversation, CODEX ? 2500 : 8000);
-    rmSync(state, { force: true });
+    // Extraction now instead of after the idle delay. Codex caps SessionEnd hooks at 3 s, so the request gets 2.5 s there.
+    await post(`/api/v1/ingest/conversations/${encodeURIComponent(conversation)}/end`, undefined, conversation, CODEX ? 2500 : 8000);
   }
 }
 
