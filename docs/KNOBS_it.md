@@ -83,6 +83,8 @@ Modelli supportati: solo quelli che raggiungono il 95 % nella valutazione (`RESU
 | Variabile | Predefinito | Cosa fa |
 |---|---|---|
 | `RECORDARE_PORT` | 8090 | Porta del servizio sull'host |
+| `RECORDARE_PROJECT` | `recordare` | Nome del progetto Compose (container `<nome>-recordare-1`, …); un altro nome per una seconda installazione sullo stesso host — l'installer si ferma se il nome è già usato da altri file |
+| `EMBEDDER_MAX_BATCH_TOKENS` (standalone) | 2048 | Batch dell'embedder bge-m3; ≈ 4,5 GB di RAM a 2048 (il predefinito di text-embeddings-inference, 16384, esaurisce la memoria su un host da 8 GB); i testi più lunghi vengono troncati |
 | `RECORDARE_BIND` | `127.0.0.1` | `0.0.0.0` apre API e console admin sulla LAN (ogni rotta richiede comunque una chiave) |
 | `ARKIMEDE_NETWORK` | — | Impostata dall'installazione co-ospitata: la rete Docker condivisa con Arkimede |
 | `LINK_ARKIMEDE` | yes | L'installer crea il client di Arkimede e scrive il suo `.env` |

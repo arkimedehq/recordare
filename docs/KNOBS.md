@@ -81,6 +81,8 @@ Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
 | Variable | Default | What it does |
 |---|---|---|
 | `RECORDARE_PORT` | 8090 | Host port of the service |
+| `RECORDARE_PROJECT` | `recordare` | Compose project name (containers `<name>-recordare-1`, …); another name for a second installation on the same host — the installer stops if the name is already used by other files |
+| `EMBEDDER_MAX_BATCH_TOKENS` (standalone) | 2048 | Batch of the bge-m3 embedder; ≈ 4.5 GB of RAM at 2048 (text-embeddings-inference's own default, 16384, runs out of memory on an 8 GB host); longer inputs are truncated |
 | `RECORDARE_BIND` | `127.0.0.1` | `0.0.0.0` opens the API and the admin console on the LAN (every route still needs a key) |
 | `ARKIMEDE_NETWORK` | — | Set by the co-hosted install: the Docker network shared with Arkimede |
 | `LINK_ARKIMEDE` | yes | The installer creates Arkimede's client and writes its `.env` |

@@ -21,7 +21,9 @@ deploy/backup.sh             # dump of Recordare's database into deploy/backups/
 ```
 
 - **Standalone**: `deploy/docker-compose.yml` — Recordare, Postgres (pgvector), Redis e Hugging Face
-  text-embeddings-inference (Apache-2.0) che serve BAAI/bge-m3 (immagine CPU per architettura).
+  text-embeddings-inference (Apache-2.0) che serve BAAI/bge-m3 (immagine CPU per architettura). Prevedere **≈ 6 GB di
+  RAM** per lo stack (il solo embedder ≈ 4,5 GB, `EMBEDDER_MAX_BATCH_TOKENS`); su host più piccoli usare il profilo
+  co-ospitato o un endpoint di embedding esterno. Provato da capo a fondo su un clone pulito l'8/10/2026 (macOS, arm64).
 - **Co-ospitato con Arkimede**: `deploy/docker-compose.cohosted.yml` — l'installer trova lo stack di Arkimede, verifica
   che il suo Postgres usi l'immagine pgvector e che il suo embedder serva bge-m3, crea il database `recordare`, l'utente
   e l'estensione `vector`, usa il db Redis 1, si unisce alla rete condivisa da quei servizi, poi (facoltativamente)
