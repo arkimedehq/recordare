@@ -70,3 +70,21 @@ export const MONTH_NAMES: ReadonlyArray<readonly [string, number]> = (() => {
   }
   return [...out].sort((a, b) => b[0].length - a[0].length);
 })();
+
+/** Weekday names (long and, where distinct, short forms of 4+ letters) in all languages → 0 = Monday … 6 = Sunday. */
+export const WEEKDAY_NAMES: ReadonlyArray<readonly [string, number]> = (() => {
+  const out = new Map<string, number>();
+  for (const locale of LOCALES) {
+    for (const weekday of ['long', 'short'] as const) {
+      const fmt = new Intl.DateTimeFormat(locale, { weekday, timeZone: 'UTC' });
+      // 2026-10-05 is a Monday.
+      for (let i = 0; i < 7; i++) {
+        const name = normalize(fmt.format(new Date(Date.UTC(2026, 9, 5 + i, 12)))).replace(/\.$/, '');
+        // Short forms: 4+ letters, or 2+ characters in scripts without spaces ("周六").
+        const ok = weekday === 'long' || [...name].length > 3 || (/\p{Script=Han}/u.test(name) && [...name].length >= 2);
+        if (name && ok && !out.has(name)) out.set(name, i);
+      }
+    }
+  }
+  return [...out].sort((a, b) => b[0].length - a[0].length);
+})();

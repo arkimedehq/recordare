@@ -51,6 +51,11 @@ const baseSchema = z.object({
   CONSOLIDATION_SCHEDULE: bool.default(true),
   /** Give the nightly diary to period overviews in recall; set = overrides the quality profile (measured: no gain yet). */
   RECALL_DIGESTS: bool.optional(),
+  /** Memory context (WORK_PLAN 5.7): minimum similarity for facts and notes, episodes, upcoming plans, episodes of a named period. */
+  CONTEXT_MIN_FACT_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
+  CONTEXT_MIN_EPISODE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
+  CONTEXT_MIN_PLAN_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
+  CONTEXT_MIN_PERIOD_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
   /** Local hour (owner's timezone) after which the nightly consolidation runs (M5). */
