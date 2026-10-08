@@ -1,0 +1,8 @@
+**
+!packages/client/package.json
+!packages/client/package-lock.json
+!packages/client/src/**
+!connectors/openai-proxy/package.json
+!connectors/openai-proxy/package-lock.json
+!connectors/openai-proxy/tsconfig.json
+!connectors/openai-proxy/src/**

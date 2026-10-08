@@ -72,3 +72,14 @@ jobs:
       # The Claude Code and Codex connectors share one hook script (two byte-identical copies).
       - run: sh connectors/check-shared.sh
       - run: bash -n connectors/codex/install.sh
+      # TypeScript connectors bundle packages/client from its sources.
+      - run: npm ci
+        working-directory: packages/client
+      - name: OpenClaw plugin
+        working-directory: connectors/openclaw
+        run: npm ci && npm run typecheck && npm test && npm run build
+      - name: OpenAI-compatible memory proxy
+        working-directory: connectors/openai-proxy
+        run: npm ci && npm run typecheck && npm test && npm run build
+      # The Hermes provider's unit tests need Hermes itself; CI only checks that it compiles.
+      - run: python3 -m py_compile connectors/hermes/recordare/*.py
