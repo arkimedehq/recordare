@@ -28,7 +28,8 @@ can register Recordare's `/mcp` directly (`docs/INTEGRATION.md`).
 ## Run it
 
 Node ≥ 20 (local) or Docker. Build from this folder: `npm ci && npm run build && node dist/main.js` (the bundle includes
-`packages/client`, built from its sources). Docker, from the repository root:
+`packages/client`, built from its sources). Docker: the published image `ghcr.io/arkimedehq/recordare-openai-proxy` (amd64 + arm64, tags `latest` and the version),
+or build it from the repository root:
 ```sh
 docker build -f connectors/openai-proxy/Dockerfile -t recordare-openai-proxy .
 ```

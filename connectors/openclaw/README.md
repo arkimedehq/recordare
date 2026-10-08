@@ -23,15 +23,13 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 
 ## Install
 
-1. Build the plugin (the build bundles the Recordare client library; nothing to install at runtime):
+1. Install it into OpenClaw (on the Gateway's machine) from npm:
    ```
-   cd connectors/openclaw && npm ci && npm run build
+   openclaw plugins install npm:@arkimedehq/openclaw-recordare --accept-capabilities
    ```
-2. Install it into OpenClaw (on the Gateway's machine):
-   ```
-   openclaw plugins install --link /path/to/recordare/connectors/openclaw --accept-capabilities
-   ```
-   (`--link` keeps it pointing at the folder; without it OpenClaw copies it.) Restart the Gateway, then check
+2. Or from a checkout (development): `cd connectors/openclaw && npm ci && npm run build`, then
+   `openclaw plugins install --link /path/to/recordare/connectors/openclaw --accept-capabilities` (`--link` keeps it
+   pointing at the folder; without it OpenClaw copies it). Restart the Gateway, then check
    `openclaw plugins inspect recordare --runtime --json` (status `loaded`, 4 hooks, 6 tools).
 3. Ask the Recordare admin for a credential:
    - **one person** (your own assistant): a **personal token** with the scopes `mcp`, `ingest`, `read`

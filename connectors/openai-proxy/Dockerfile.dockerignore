@@ -6,3 +6,5 @@
 !connectors/openai-proxy/package-lock.json
 !connectors/openai-proxy/tsconfig.json
 !connectors/openai-proxy/src/**
+!connectors/scripts/**
+!LICENSE

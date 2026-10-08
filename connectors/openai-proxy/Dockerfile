@@ -12,13 +12,19 @@ RUN cd connectors/openai-proxy && npm ci --no-audit --no-fund
 COPY packages/client/src packages/client/src
 COPY connectors/openai-proxy/tsconfig.json connectors/openai-proxy/
 COPY connectors/openai-proxy/src connectors/openai-proxy/src
+COPY connectors/scripts connectors/scripts
 RUN cd connectors/openai-proxy && npm run build
 
 FROM node:22-alpine
+LABEL org.opencontainers.image.source=https://github.com/arkimedehq/recordare \
+      org.opencontainers.image.description="Recordare memory proxy (OpenAI-compatible)" \
+      org.opencontainers.image.licenses=AGPL-3.0-or-later
 ENV NODE_ENV=production PORT=8788
 WORKDIR /app
 # The bundle is self-contained (no node_modules at run time).
 COPY --from=build /src/connectors/openai-proxy/dist/main.js ./main.js
+COPY --from=build /src/connectors/openai-proxy/dist/THIRD_PARTY_LICENSES.txt ./
+COPY LICENSE ./
 USER node
 EXPOSE 8788
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://127.0.0.1:${PORT}/health >/dev/null || exit 1

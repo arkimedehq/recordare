@@ -11,7 +11,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "rm -rf dist && esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --alias:@arkimedehq/recordare-client=../../packages/client/src/index.ts --outfile=dist/main.js --banner:js=\"import { createRequire as __recordareCreateRequire } from 'node:module'; const require = __recordareCreateRequire(import.meta.url);\"",
+    "build": "rm -rf dist && esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --alias:@arkimedehq/recordare-client=../../packages/client/src/index.ts --metafile=dist/meta.json --outfile=dist/main.js --banner:js=\"import { createRequire as __recordareCreateRequire } from 'node:module'; const require = __recordareCreateRequire(import.meta.url);\" && node ../scripts/bundle-licenses.mjs dist/meta.json dist/THIRD_PARTY_LICENSES.txt && rm dist/meta.json",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
