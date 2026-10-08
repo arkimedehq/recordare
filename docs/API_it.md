@@ -280,11 +280,24 @@ non lo salva mai come messaggio).
 
 ## 4. API di lettura / scrittura per le UI degli host (task 1.4) — il diario (D18)
 
-**Not built yet (v1 plan)**, tranne le righe `GET / PATCH api/v1/me`. Prerequisito di un diario dell'host (WORK_PLAN 4.7,
-6.3). Nel frattempo, le scritture esplicite e l'oblio passano dagli strumenti MCP (§3).
+**Costruita (2026-10-08, WORK_PLAN 4.7)** — le righe che servono al diario dell'host: `GET episodes` (linea del tempo,
+dal più recente; `from` / `to` date locali, `kind`, `planStatus` compreso `unresolved` calcolato, `q` testo libero,
+`cursor` opaco + `nextCursor`, `limit` ≤ 200), `GET episodes/{id}` (evidenze: testo dei messaggi solo dalle
+conversazioni del client, salvo `raw_log_scope` `all`, altrimenti `otherClient`; `history` = le versioni che ha
+corretto; per un piano `planEvents`, `confirmedBy`, `rescheduledTo`), `POST episodes/{id}/corrections {content?,
+occurredAt?, datePrecision?}` → `{id}`, `DELETE episodes/{id}` (oblio che resta, come `forget_episode`), `GET digests`,
+`GET facts` (slot con `history`, `asOf`, per persona in una memoria di entità), `DELETE facts/{id}`,
+`POST facts/{id}/confirm | reject`, `GET notes`, `PATCH notes/{id} {pinned}`, `DELETE notes/{id}`,
+`POST notes/{id}/confirm | reject`, `GET plans` (aperti e irrisolti per default, dal più vicino); più le righe
+`GET / PATCH api/v1/me`. **Non ancora costruite**: inserimento manuale, correzioni di fatti / note, promozioni (5.4),
+oblio di un periodo (5.5), impostazioni, uso, export, il feed delle modifiche delle note, `GET facts/{id}` /
+`GET notes/{id}`. Libreria client: `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`,
+`correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide`).
 
-Con ambito limitato all'owner (`X-Recordare-User` + contesto del visualizzatore, token personale o sessione dell'owner).
-Le stesse pagine sono servite da Recordare stesso per gli owner senza UI dell'host.
+Con ambito limitato all'owner, e chi legge è l'owner stesso nell'interfaccia dell'host (owner-direct): una chiave
+client indica la persona con `X-Recordare-User` (scope `read` per leggere, `write` per modificare), un token personale è
+la persona; nessuna intestazione di conversazione, nessuna risoluzione del lettore (la regola del lettore vale per le
+risposte dentro le conversazioni). In una memoria di entità chiunque usi l'account la vede tutta (D48).
 
 | Metodo + percorso | Scope | Scopo |
 |---|---|---|

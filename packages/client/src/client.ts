@@ -2,13 +2,22 @@
 // Copyright © 2026 Andrea Genovese
 
 import {
-  CONVERSATION_HEADER, type IngestRequest, type IngestResult, MAX_MESSAGES_PER_REQUEST, type Me, type MeSettings, type MemoryContext,
+  CONVERSATION_HEADER, type Digest, type Episode, type EpisodeDetail, type EpisodeQuery, type Fact, type IngestRequest, type IngestResult,
+  MAX_MESSAGES_PER_REQUEST, type Me, type MeSettings, type MemoryContext, type Note, type PlanStatus, type Precision,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
 import { RecordareMcp, type McpOptions } from './mcp.js';
 
 const enc = encodeURIComponent;
+
+/** Query string from the defined values. */
+function qs(query: object): string {
+  const params = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) if (v !== undefined && v !== null) params.set(k, String(v));
+  const s = params.toString();
+  return s ? `?${s}` : '';
+}
 
 /**
  * Recordare for one platform (docs/INTEGRATION.md): who a user is and their consent, their settings, the conversations
@@ -87,6 +96,58 @@ export class RecordareClient {
   /** A deleted conversation. A conversation Recordare never had counts as done. */
   async deleteConversation(user: string, conversation: string): Promise<void> {
     await this.gone(this.http.request('DELETE', `api/v1/ingest/conversations/${enc(conversation)}`, { user }));
+  }
+
+  // ── The diary (API.md §4): what Recordare remembers, shown to the person in the platform's UI ──────────────────
+
+  /** The timeline, newest first; pass `nextCursor` back as `cursor` for the next page. */
+  episodes(user: string, query: EpisodeQuery = {}): Promise<{ items: Episode[]; nextCursor: string | null }> {
+    return this.http.request('GET', `api/v1/episodes${qs(query)}`, { user });
+  }
+
+  episode(user: string, id: string): Promise<EpisodeDetail> {
+    return this.http.request('GET', `api/v1/episodes/${enc(id)}`, { user });
+  }
+
+  /** The person corrects an episode: a new version replaces it (the wrong one stays in its history). */
+  async correctEpisode(user: string, id: string, fix: { content?: string; occurredAt?: string; datePrecision?: Exclude<Precision, 'unknown' | 'minute'> }): Promise<string> {
+    return (await this.http.request<{ id: string }>('POST', `api/v1/episodes/${enc(id)}/corrections`, { user, body: fix })).id;
+  }
+
+  /** The person forgets an episode: it is removed and never recreated. */
+  async forgetEpisode(user: string, id: string): Promise<void> {
+    await this.http.request('DELETE', `api/v1/episodes/${enc(id)}`, { user });
+  }
+
+  digests(user: string, query: { level?: 'day' | 'month'; from?: string; to?: string } = {}): Promise<Digest[]> {
+    return this.http.request('GET', `api/v1/digests${qs(query)}`, { user });
+  }
+
+  facts(user: string, query: { key?: string; asOf?: string; includePending?: boolean } = {}): Promise<Fact[]> {
+    return this.http.request('GET', `api/v1/facts${qs(query)}`, { user });
+  }
+
+  notes(user: string, query: { category?: Note['category']; pinned?: boolean; includePending?: boolean } = {}): Promise<Note[]> {
+    return this.http.request('GET', `api/v1/notes${qs(query)}`, { user });
+  }
+
+  /** Plans, soonest first (open and unresolved unless a status is given). */
+  plans(user: string, query: { status?: PlanStatus } = {}): Promise<Episode[]> {
+    return this.http.request('GET', `api/v1/plans${qs(query)}`, { user });
+  }
+
+  async pinNote(user: string, id: string, pinned: boolean): Promise<void> {
+    await this.http.request('PATCH', `api/v1/notes/${enc(id)}`, { user, body: { pinned } });
+  }
+
+  /** Removes a note or a fact. */
+  async delete(user: string, what: 'notes' | 'facts', id: string): Promise<void> {
+    await this.http.request('DELETE', `api/v1/${what}/${enc(id)}`, { user });
+  }
+
+  /** A pending (inferred) note or fact: confirmed it becomes the person's, rejected it is removed. */
+  async decide(user: string, what: 'notes' | 'facts', id: string, decision: 'confirm' | 'reject'): Promise<void> {
+    await this.http.request('POST', `api/v1/${what}/${enc(id)}/${decision}`, { user });
   }
 
   /** Closes the MCP sessions (on shutdown). */
