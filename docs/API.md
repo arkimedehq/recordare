@@ -197,9 +197,8 @@ at `initialize` (token owner, or `X-Recordare-User` for client keys); every requ
 (hosts that reuse one session across users cannot cross memories). The viewer context follows §1
 (conversation header; `_meta` may only add viewers). Tool schemas use the provider-neutral subset
 (D27). Tools are always listed (no hint whether a diary exists); with `episodicEnabled` off, reads
-return nothing and writes are rejected with a neutral error. <!-- verify: as built the tools do not check consent —
-reads find nothing only because ingest stored nothing, while log_episode / remember still write (mcp-tools.ts,
-memory-write.service.ts); intended? --> As built: a session is opened only by an `initialize` request (`404` for an
+return nothing and writes (`log_episode`, `remember`, `correct_episode`) are rejected with `{error: "memory is off for this
+person"}`; `forget_episode` stays allowed. As built: a session is opened only by an `initialize` request (`404` for an
 unknown session id); the admin credential gets `403`; a request from another credential than the one that opened the
 session is refused like an owner mismatch. Writes need a resolvable context — a personal token, or a conversation
 Recordare has ingested — otherwise they return `{error: "cannot write here"}`. The published tool schemas are in
