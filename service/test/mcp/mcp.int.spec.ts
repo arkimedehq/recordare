@@ -212,6 +212,22 @@ describe('MCP endpoint', () => {
     expect(await note(elsewhere)).toEqual({ pending: true, author_role: 'assistant' });
   });
 
+  it('finds a short fact inside a long message of the person (word similarity), not in an unrelated one', async () => {
+    const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Long', kind: 'mcp_client' } })).body.id;
+    const token = (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp', 'ingest'] } })).body.token as string;
+    await call(url, 'POST', '/api/v1/ingest/messages', { token, body: { conversation: { externalId: 'long-1' }, messages: [{ externalId: 'l1', role: 'user', sentAt: new Date().toISOString(),
+      content: 'Usa gli strumenti di memoria: prima cerca con chi sono andato allo stadio sabato scorso a vedere la partita con mio fratello, poi ricorda che il mio colore preferito è il verde, e alla fine rispondi in due righe brevi senza elenchi puntati.' }] } });
+    const db = app.get((await import('typeorm')).DataSource);
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const write = async (content: string) => {
+      const res = await client.callTool({ name: 'remember', arguments: { content, category: 'preference' } });
+      return (await db.query(`SELECT pending, author_role FROM notes WHERE id = $1`, [(res.structuredContent as { id: string }).id]))[0];
+    };
+    expect(await write('Il mio colore preferito è il verde')).toEqual({ pending: false, author_role: 'owner' });
+    expect(await write('Il mio piatto preferito è la carbonara')).toEqual({ pending: true, author_role: 'assistant' });
+    await client.close();
+  });
+
   it('keeps a few chat excerpts next to matching episodes, also the ones behind them; labels claims of others', async () => {
     const db = app.get((await import('typeorm')).DataSource);
     const [msg] = await db.query(`SELECT id FROM messages WHERE external_id = 'nas-chat-1'`);
