@@ -234,7 +234,7 @@ di entità), la 4.10, poi i connettori 6.6.
 
 | # | Compito | Dove |
 |---|---|---|
-| 6.1 | **Livello basic**: configurare Claude Code / Claude Desktop come client MCP, eseguire una sessione scriptata, verificare che gli strumenti funzionino | Questo repo (docs + smoke test) |
+| 6.1 | **Livello basic**: configurare Claude Code / Claude Desktop come client MCP, eseguire una sessione scriptata, verificare che gli strumenti funzionino | Questo repo (docs + smoke test) — **fatto 2026-10-08** (Claude Code; INTEGRATION §4b, `npm run smoke:mcp`; le scritture dell'agente attendono la conferma della persona; Claude Desktop richiede OAuth o un ponte, non provato) |
 | 6.2 | **Livello full di Arkimede**: registrare Recordare nel suo client MCP; ingest non bloccante dei messaggi persistiti (outbox + retry, non fa mai fallire la chat); mappatura delle identità utente Arkimede → persona | `personalAgent`, branch proprio |
 | 6.3 | Impostazioni di Arkimede: interruttore `episodicMemoryEnabled` + scheda Diario (D18) tramite l'API timeline di Recordare | `personalAgent` Scheda Diario **fatta (2026-10-08)**: Impostazioni → Diario (linea del tempo con dettaglio, correggi, dimentica; diario; chi sei; piani; da confermare) tramite un proxy nel backend; la chiave di Arkimede richiede lo scope `write`. |
 | 6.4 | Checklist di regressione di Arkimede (`EPISODIC_MEMORY_TODO.md` → Regression checklist): A-MEM, `search_conversations`, `search_memory` invariati | `personalAgent` |
