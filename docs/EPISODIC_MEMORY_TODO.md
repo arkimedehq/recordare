@@ -562,6 +562,30 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   the entity memory stays **experimental** — speakers who never identify and attribution between people are the weak
   spots.
 
+### D49 — Semantic memory: learned sources (proposal, 2026-10-08)
+- Owner's request: many clients have no RAG of their own (a robot with its own agent, a small assistant), so Recordare
+  should be a **complete** memory — what the person lived **and what they learned**. Recordare stays a personal memory:
+  documents are not mixed into episodes, facts or notes.
+- **Semantic memory = learned sources.** A source (a text, a document, a page, a book's notes, the person's own writing)
+  is stored in Recordare with its passages (chunks + embeddings, no LLM needed to store it), its origin (title, author,
+  where it came from: a file the client sent, a URL, the person's own text), who provided it and when.
+- **Episodic memory = the reference.** Learning is an event: "Andrea studied the boiler manual on 8 October" — an
+  episode linked to the source. The link goes both ways: from the episode to the source (what did I read that day?),
+  from the source to its episodes (when did I learn this, in which conversation, what did I decide from it?).
+- **Recall:** a tool (e.g. `search_knowledge`) returns passages with their source and the episodes that reference it;
+  the memory context may add a passage when it is clearly relevant, within its budget.
+- **What it is not:** not an organisation's knowledge base (team / org documents stay in the platform's RAG, e.g.
+  Arkimede); not tool output. A client's document-search results are not ingested as chat: at most a "consulted
+  source X" reference, so the platform's RAG and Recordare do not duplicate each other.
+- Same rules as the rest: consent, the person's own memory (or an entity memory, D48, e.g. the robot's), disclosure,
+  forgetting a source removes its passages (episodes keep a "forgotten source" marker), counts-only diagnostics.
+- Prior art (not novel): Supermemory separates documents (sources of truth) from extracted memories; Letta / MemGPT
+  keep an "archival memory" reached through tools (`docs/literature/agent-platform-memory.md`).
+- Open: how sources arrive (REST upload of text the client extracted; an MCP tool `learn_source`; formats beyond text);
+  size limits and cost per quality profile (D35); third-party texts are kept for the person's own use only (never
+  disclosed to others, D33 limits); whether takeaways in the person's words are extracted by an LLM (a later option).
+  WORK_PLAN 5.9.
+
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked

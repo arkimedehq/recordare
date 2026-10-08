@@ -567,6 +567,33 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   set 95,5 %); la memoria di entità resta **sperimentale** — chi parla senza mai presentarsi e l'attribuzione tra persone
   sono i punti deboli.
 
+### D49 — Memoria semantica: fonti imparate (proposta, 2026-10-08)
+- Richiesta del proprietario: molti client non hanno un RAG proprio (un robot con il suo agente, un piccolo
+  assistente), quindi Recordare dovrebbe essere una memoria **completa** — ciò che la persona ha vissuto **e ciò che ha
+  imparato**. Recordare resta una memoria personale: i documenti non si mescolano con episodi, fatti o note.
+- **Memoria semantica = fonti imparate.** Una fonte (un testo, un documento, una pagina, gli appunti di un libro, i
+  testi scritti dalla persona) viene salvata in Recordare con i suoi passaggi (frammenti + embedding, nessun LLM
+  necessario per salvarla), la sua origine (titolo, autore, provenienza: un file inviato dal client, un URL, un testo
+  della persona), chi l'ha fornita e quando.
+- **Memoria episodica = il riferimento.** Imparare è un evento: "Andrea ha studiato il manuale della caldaia l'8
+  ottobre" — un episodio collegato alla fonte. Il collegamento va nei due sensi: dall'episodio alla fonte (cosa ho letto
+  quel giorno?), dalla fonte ai suoi episodi (quando l'ho imparato, in quale conversazione, cosa ho deciso?).
+- **Richiamo:** uno strumento (per esempio `search_knowledge`) restituisce passaggi con la loro fonte e gli episodi che
+  la citano; il contesto di memoria può aggiungere un passaggio quando è chiaramente pertinente, entro il suo budget.
+- **Cosa non è:** non è la base di conoscenza di un'organizzazione (i documenti di team / organizzazione restano nel RAG
+  della piattaforma, per esempio Arkimede); non è l'output degli strumenti. I risultati della ricerca documentale di un
+  client non vengono inviati come chat: al più un riferimento "ha consultato la fonte X", così il RAG della piattaforma
+  e Recordare non si duplicano.
+- Stesse regole del resto: consenso, la memoria della persona (o una memoria di entità, D48, per esempio quella del
+  robot), divulgazione, l'oblio di una fonte rimuove i suoi passaggi (gli episodi tengono un segno "fonte dimenticata"),
+  diagnostica solo a conteggi.
+- Precedenti (non è nuovo): Supermemory separa i documenti (fonti di verità) dalle memorie estratte; Letta / MemGPT
+  hanno una "archival memory" raggiungibile con strumenti (`docs/literature/agent-platform-memory_it.md`).
+- Aperto: come arrivano le fonti (upload REST del testo estratto dal client; uno strumento MCP `learn_source`; formati
+  oltre al testo); limiti di dimensione e costo per profilo di qualità (D35); i testi di terzi sono conservati solo per
+  l'uso della persona (mai divulgati ad altri, limiti D33); se estrarre con un LLM i punti chiave con le parole della
+  persona (un'opzione successiva). WORK_PLAN 5.9.
+
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 ancora aperta, con WORK_PLAN 5.4). Il lavoro aperto è tracciato
