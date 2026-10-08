@@ -31,6 +31,13 @@ const res = await rc.mcp.callTool('user-42', 'chat-1', 'search_episodes', { quer
 const next = afterFailure(err, attempts);                 // { action: 'retry', delayMs } | { action: 'park', reason }
 ```
 
+## Before each turn, and at the end
+`contextWithTurn(user, turn)` stores the turn and returns its memory context in one round trip (`{block, items}`, the
+block to append to the system prompt); `endConversation(user, conversation)` tells Recordare a conversation ended
+(session closed, /new) so extraction runs now. `TOOLS` holds the MCP tool schemas the service serves (name, title,
+description, JSON Schema), for hosts that must declare tools before connecting; the conformance suite keeps it in
+sync with the service.
+
 ## The diary
 `episodes`, `episode`, `digests`, `facts`, `notes`, `plans` read what Recordare remembers for the person's own view in
 the platform's UI; `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide` are the person's edits (API.md §4).
