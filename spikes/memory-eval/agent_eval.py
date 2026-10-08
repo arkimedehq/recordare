@@ -5,8 +5,8 @@
 The answer model is an agent: it gets Recordare's read tools over MCP (their own names, descriptions and schemas) and
 decides by itself whether to call them — as a real client's agent does. Variants:
   tools          tools only (today's behaviour)
-  tools+context  the same, plus the `<memory-context>` block Recordare serves for the question, appended to the system
-                 prompt (the service instance must run with MEMORY_CONTEXT=1)
+  tools+context  the same, plus the `<memory-context>` block Recordare serves for the question (`POST api/v1/context`),
+                 appended to the system prompt
 Both variants answer every question of the same ingested memory; the judge is the usual one.
 
   EVAL_DATASET=dataset_dev_context uv run python agent_eval.py [--variants tools,tools+context]

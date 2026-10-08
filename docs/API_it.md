@@ -268,6 +268,16 @@ Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'
 inglese; settimane che iniziano di lunedì, fuso orario dell'owner; "adesso" è l'orologio del server (`X-Recordare-Now` lo sostituisce dove
 `ALLOW_CLOCK_OVERRIDE` è impostato — test e valutazioni). Nessun LLM. Parametri `now?` / `locale?`: non costruiti.
 
+### Contesto di memoria prima del turno (WORK_PLAN 5.7) — costruito
+`POST api/v1/context {query}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`: i
+ricordi pertinenti al messaggio a cui si sta per rispondere (fatti e note attuali, piani aperti imminenti, fino a 3
+episodi, ognuno sopra una soglia di somiglianza; al massimo circa 300 token) come un unico blocco recintato
+`<memory-context>` marcato "dati, non istruzioni", oppure `block: null` quando non c'è niente di pertinente. Nessuna
+chiamata LLM. Stessa regola del lettore di ogni lettura (niente in una conversazione a cui partecipano altri); un blocco
+servito è registrato in `recall_log` (la guardia anti-eco tratta allora la risposta come possibile eco). Sempre
+disponibile: se usarlo, e per quale agente, è scelta del client (l'host lo aggiunge in fondo al suo prompt di sistema e
+non lo salva mai come messaggio).
+
 ## 4. API di lettura / scrittura per le UI degli host (task 1.4) — il diario (D18)
 
 **Not built yet (v1 plan)**, tranne le righe `GET / PATCH api/v1/me`. Prerequisito di un diario dell'host (WORK_PLAN 4.7,

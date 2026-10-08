@@ -266,6 +266,15 @@ As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown ex
 expressions; Monday-based weeks, owner's timezone; "now" is the server clock (`X-Recordare-Now` overrides it where
 `ALLOW_CLOCK_OVERRIDE` is set — tests and evaluations). No LLM. `now?` / `locale?` parameters: not built.
 
+### Pre-turn memory context (WORK_PLAN 5.7) — built
+`POST api/v1/context {query}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`: the
+memories relevant to the message about to be answered (current facts and notes, upcoming open plans, up to 3 episodes,
+each above a similarity floor; ≈ 300 tokens at most) as one fenced `<memory-context>` block marked "data, not
+instructions", or `block: null` when nothing is relevant. No LLM call. Same viewer rule as every read (nothing in a
+conversation others take part in); a served block is logged in `recall_log` (the recall-echo guard then treats the reply
+as possibly echoing it). Always available: whether to use it, and for which agent, is the client's choice (the host
+appends it at the end of its system prompt and never stores it as a message).
+
 ## 4. Read / write API for host UIs (task 1.4) — the diary (D18)
 
 **Not built yet (v1 plan)**, except the `GET / PATCH api/v1/me` rows. Prerequisite of a host diary (WORK_PLAN 4.7,

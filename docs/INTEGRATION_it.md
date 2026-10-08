@@ -50,6 +50,9 @@ memorizzazione dell'outbox e la trasformazione delle sue chat.
 - **Inviare sempre `X-Recordare-Conversation: <externalConversationId>`**: Recordare stabilisce chi vedrà la risposta
   dai partecipanti che ha ricevuto in ingest; senza una conversazione risolvibile una lettura non restituisce nulla
   (regola dello spettatore, `API.md` §1).
+- Facoltativo, per agente: `POST api/v1/context {query}` prima di una risposta restituisce i ricordi pertinenti come
+  blocco recintato da mettere in fondo al prompt di sistema (`API_it.md`, WORK_PLAN 5.7) — l'agente può rispondere senza
+  chiamare uno strumento.
 - Strumenti: `search_episodes`, `search_memory` (fatti e note), `resolve_period`, `log_episode`, `correct_episode`,
   `forget_episode`, `remember`.
 

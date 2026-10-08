@@ -24,10 +24,9 @@ provider (§3).
 | `rawHitsAlongside` | 1 | 3 | 5 | Estratti di chat restituiti accanto agli episodi trovati |
 | `recallDigests` | off | off | off | Il diario notturno dato ai riepiloghi di periodo · blind5 3+3 run: −1,9 pt, nel rumore |
 | `factsReview` | off | off | off | Revisione notturna dei fatti sui nuovi episodi · nessun guadagno misurato |
-| `memoryContext` | off | off | off | Blocco di contesto di memoria prima del turno (`POST api/v1/context`, WORK_PLAN 5.7) · dev set: nessun danno, +3–7 pt, con il prompt della voce chiamate ai tool da 9 a 5 su 15 domande |
 
 Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
-`RECALL_DIGESTS`, `FACTS_REVIEW`, `MEMORY_CONTEXT`.
+`RECALL_DIGESTS`, `FACTS_REVIEW`.
 
 ## 2. Servizio (`service/.env`, oppure `deploy/.env` per il servizio installato)
 
@@ -107,6 +106,7 @@ Modelli supportati: solo quelli che raggiungono il 95 % nella valutazione (`RESU
 | `RECORDARE_OUTBOX_POLL_MS` | `.env` di Arkimede | 3000 | Ogni quanto il worker dell'outbox invia |
 | `episodicMemoryEnabled` | Impostazioni → Memoria, per utente | off | L'opt-in della piattaforma (nessuna persona viene creata prima) |
 | Tipo di memoria | Impostazioni → Memoria, per utente | personale | Personale / condivisa (`PATCH /me {kind}`, solo a memoria vuota) |
+| Contesto di memoria | Agenti → agente, per agente | off | Prima di ogni risposta, i ricordi pertinenti di Recordare (`POST api/v1/context`) in fondo al prompt (WORK_PLAN 5.7) · dev set: nessun danno, +3–7 pt; con il prompt dell'agente vocale chiamate ai tool da 9 a 5 su 15. Scelta del client: Recordare serve il blocco quando glielo si chiede (valgono consenso e regola del lettore) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | `.env` di Arkimede | off | Tracce OpenTelemetry GenAI verso l'atlas (solo metadati) |
 | Politica di consegna della libreria | `packages/client` (`DEFAULT_DELIVERY`) | 12 tentativi, 5 s → 1 h | Tentativi dell'outbox (jitter, `Retry-After`), poi parcheggio |
 

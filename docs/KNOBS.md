@@ -22,10 +22,9 @@ API or console). A profile only groups knobs; models stay provider configuration
 | `rawHitsAlongside` | 1 | 3 | 5 | Chat excerpts returned next to matching episodes |
 | `recallDigests` | off | off | off | Nightly diary given to period overviews · blind5 3+3 runs: −1.9 pt, within noise |
 | `factsReview` | off | off | off | Nightly facts review against new episodes · no gain measured |
-| `memoryContext` | off | off | off | Pre-turn memory context block (`POST api/v1/context`, WORK_PLAN 5.7) · dev set: no harm, +3–7 pt, with the voice prompt 9 → 5 tool calls on 15 questions |
 
 Installation overrides of single knobs (they win over every profile): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
-`RECALL_DIGESTS`, `FACTS_REVIEW`, `MEMORY_CONTEXT`.
+`RECALL_DIGESTS`, `FACTS_REVIEW`.
 
 ## 2. Service (`service/.env`, or `deploy/.env` for the installed service)
 
@@ -105,6 +104,7 @@ Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
 | `RECORDARE_OUTBOX_POLL_MS` | Arkimede `.env` | 3000 | How often the outbox worker sends |
 | `episodicMemoryEnabled` | Settings → Memory, per user | off | The platform's own opt-in (no person is created before it) |
 | Memory type | Settings → Memory, per user | personal | Personal / shared (`PATCH /me {kind}`, only while empty) |
+| Memory context | Agents → agent, per agent | off | Before each answer, Recordare's relevant memories (`POST api/v1/context`) at the end of the prompt (WORK_PLAN 5.7) · dev set: no harm, +3–7 pt; with the voice agent's prompt tool calls 9 → 5 of 15. A client choice: Recordare serves the block whenever asked (consent and viewer rule apply) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | Arkimede `.env` | off | OpenTelemetry GenAI traces to the atlas (metadata only) |
 | Library delivery policy | `packages/client` (`DEFAULT_DELIVERY`) | 12 attempts, 5 s → 1 h | Outbox retries (jitter, `Retry-After`), then parked |
 
