@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # Assistant-addressed messages: dev set + blind6 provenance/poisoning slice + blind4/5 poisoning slices (regression), 1 run each.
 set -u
 cd "$(dirname "$0")"

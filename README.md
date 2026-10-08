@@ -194,6 +194,21 @@ Around the memory:
   recognised person's words into their own memory.
 - **Connectors** for other agent platforms, sharing one client library and one conformance suite (planned).
 
+## Limits of this version (private profile, D33)
+
+Recordare v1 is the **private (home / research) profile**: an installation run by someone the users trust (a family,
+a lab, a small team), not a public service for strangers.
+- The admin creates people and client keys; there is no owner login, no OAuth for MCP, no self-service linking UI
+  and no read audit yet.
+- The admin and the client platforms are trusted: a client key acts for any of its users, and the operator of the
+  server can read the database.
+- Plain HTTP on a trusted network only; anything reachable from outside needs HTTPS and a firewall in front
+  ([DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+- Each person's memory is isolated from the others' (tested), but a memory written by an LLM can be wrong: people
+  see and correct it in their diary.
+
+Hardening for a public deployment is specified in [API.md](docs/API.md) §0 and deferred (the public profile).
+
 ## Quick start (development)
 
 ```bash

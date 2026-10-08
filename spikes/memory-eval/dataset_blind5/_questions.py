@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Source of dataset_blind5/questions.json. `asked_at` is local Europe/Rome wall-clock time (build.py adds the
 offset). expected = reference answer (overviews: ESSENTIAL / SECONDARY items); must_not = claims that must
 not be asserted as true."""

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """System D — prototype of Recordare's own design (docs/EPISODIC_MEMORY_TODO.md, D1–D22).
 
 Ingest — one engine call per session (a session stands for one idle window, D1):

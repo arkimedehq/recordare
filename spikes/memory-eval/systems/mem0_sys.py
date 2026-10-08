@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Market baseline — Mem0 OSS (`mem0ai`, Apache-2.0; used as an installed dependency, no code or
 prompt copied; WORK_PLAN 4b.5).
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Generate deterministic "noise" sessions (dataset_blind4/noise.json) to stress retrieval.
 
 Constraints: noise must NOT change any expected answer in questions.json:

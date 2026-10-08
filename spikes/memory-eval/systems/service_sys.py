@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """System S — the Recordare service itself, through its public contracts (WORK_PLAN 3.4).
 
 Sessions go in through REST ingest (incrementally up to each question's asked_at, as for every

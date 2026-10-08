@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """System C — Memobase (user profile + event timeline).
 
 Requires: `python embed_server.py` (local embeddings) and `docker compose -f memobase/docker-compose.yml up -d`

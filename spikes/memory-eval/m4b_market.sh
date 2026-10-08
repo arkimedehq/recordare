@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # 4b.5 market baselines: Mem0 and Cognee, 3 runs base + noise, one engine at a time (shared gateway / store dirs).
 set -u
 cd "$(dirname "$0")"

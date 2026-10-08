@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # Confirmation on blind dataset 4, ordered by priority (balance-aware): service v4 (balanced) and Mem0, base + noise,
 # then D and the full-context ceiling. 3 runs each; --resume continues a stopped chain.
 set -u

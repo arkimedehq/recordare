@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Consistency checks for dataset_blind5: ids, ordering, DST offsets, weekday+date mentions, and that every
 question is asked after the sessions supporting its expected answer. Run after build.py and gen_noise.py."""
 import json

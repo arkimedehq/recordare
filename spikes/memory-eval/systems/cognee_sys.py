@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Market baseline — Cognee OSS (`cognee`, Apache-2.0, upstream NOTICE.md by Topoteretes UG; used as an
 installed dependency, nothing redistributed, no code or prompt copied; WORK_PLAN 4b.5).
 

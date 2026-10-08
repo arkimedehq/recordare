@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # extract.v8 (facts): blind6 KB baseline on the existing ppl owner, then blind4 ×1 and blind6 ×1 with v8 (QA + extraction).
 set -u
 cd "$(dirname "$0")"

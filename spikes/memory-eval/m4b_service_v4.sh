@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # Service-only measurements of an engine version (noise and base, 3 runs each, + extraction scoring).
 set -u
 cd "$(dirname "$0")"

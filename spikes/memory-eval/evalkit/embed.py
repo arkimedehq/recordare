@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Embeddings for the spike, switchable via EMBED_MODEL.
 
 - fastembed (ONNX, in-process): any model from TextEmbedding.list_supported_models().

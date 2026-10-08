@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # Confirmation on blind dataset 5 (base): service H11 ×3, D ×3, full context ×1. Priority order, resumable.
 set -u
 cd "$(dirname "$0")"

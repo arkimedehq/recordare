@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Block until the LLM endpoint answers a tiny completion again (polls every 2 minutes, max ~2 h)."""
 import time
 

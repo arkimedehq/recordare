@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # OpenRouter engine matrix (resumable): per model, smoke with reasoning off (else lowest effort, else default) →
 # 1 base run on blind5 + extraction scoring. Models with a finished result are skipped.
 # Usage: sh or_matrix.sh [provider/model:label ...]  (no arguments = the cheap-model matrix)

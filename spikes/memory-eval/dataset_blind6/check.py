@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Consistency checks for blind set #6: loaders, ids, Europe/Rome offsets (DST), weekday/date mentions,
 questions asked after their evidence, gold references. Run: python check.py (exit code 1 on failure)."""
 import json

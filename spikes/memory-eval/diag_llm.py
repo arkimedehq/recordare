@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Minimal LLM connectivity check: streams a tiny completion per model and reports timings."""
 import sys
 import time

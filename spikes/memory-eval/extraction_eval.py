@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Per-stage scoring of the service's extraction against gold annotations (WORK_PLAN 4b.2, HaluMem).
 
     uv run --directory <this dir> python extraction_eval.py results/<service run>.json dataset_blind3/gold.json

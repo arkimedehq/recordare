@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Paired comparison of two multi-run results (WORK_PLAN 4b.2, MemDelta).
 
     uv run --directory <this dir> python compare.py results/A-agg.json results/B-agg.json

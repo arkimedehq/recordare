@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Source of dataset_blind5/conversations.json (fictional person: Nunzia Caruso, Siracusa -> Noto, 2029).
 
 Timestamps are written as local wall-clock time in Europe/Rome; build.py converts them to ISO 8601
