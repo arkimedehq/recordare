@@ -1,0 +1,28 @@
+{
+  "_note": "Pre-turn memory context dev set (WORK_PLAN 5.7, NOT blind, written by the engine developer). One user, a few weeks of chats; questions where memory helps but is not asked for (ctx-*), explicit recall controls (rec-*) and questions that have nothing to do with memory (gen-*).",
+  "users": {"giulia": "Primary user under test"},
+  "sessions": [
+    {"id": "c01", "user": "giulia", "ts": "2026-09-14T20:10:00+02:00", "messages": [
+      {"role": "user", "content": "Oggi pranzo da mia sorella Elena: ha l'orto più bello del quartiere, passa ogni weekend tra pomodori e rose antiche. Dice che le manca solo una serra piccola."},
+      {"role": "assistant", "content": "Che bello! Un orto curato così è una gran soddisfazione."}
+    ]},
+    {"id": "c02", "user": "giulia", "ts": "2026-09-20T12:30:00+02:00", "messages": [
+      {"role": "user", "content": "Ieri sera brutta reazione: sono allergica ai crostacei, i gamberi nel risotto mi hanno fatto gonfiare le labbra. E il medico mi ha ricordato che non posso prendere ibuprofene, solo paracetamolo."},
+      {"role": "assistant", "content": "Mi dispiace, spero tu stia meglio. Allergia ai crostacei e niente ibuprofene, ne terrò conto."},
+      {"role": "user", "content": "Grazie. Ah, e Paolo, il mio compagno, è vegetariano da quest'estate."}
+    ]},
+    {"id": "c03", "user": "giulia", "ts": "2026-09-28T09:00:00+02:00", "messages": [
+      {"role": "user", "content": "Ho prenotato: dal 13 al 16 ottobre vado a Oslo per lavoro, alla conferenza sulle energie rinnovabili. Volo da Bologna alle 7:05."},
+      {"role": "assistant", "content": "Ottimo, buon viaggio a Oslo!"}
+    ]},
+    {"id": "c04", "user": "giulia", "ts": "2026-10-02T18:45:00+02:00", "messages": [
+      {"role": "user", "content": "Da lunedì vado al lavoro in treno, non più in macchina: il regionale per Modena impiega 40 minuti e parte alle 7:52."},
+      {"role": "assistant", "content": "Comodo, così eviti il traffico."},
+      {"role": "user", "content": "Sì. E venerdì 9 alle 18 ho la cena da Luca e Sara per l'inaugurazione della casa nuova. Luca beve solo vino rosso, Sara è astemia."}
+    ]},
+    {"id": "c05", "user": "giulia", "ts": "2026-10-05T21:00:00+02:00", "messages": [
+      {"role": "user", "content": "Ho iniziato un corso di ceramica il mercoledì sera, mi rilassa tantissimo. Il mio colore preferito per gli smalti è il blu cobalto."},
+      {"role": "assistant", "content": "Che bello, la ceramica è un ottimo modo per staccare."}
+    ]}
+  ]
+}

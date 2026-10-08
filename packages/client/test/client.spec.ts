@@ -63,6 +63,13 @@ describe('RecordareClient', () => {
     expect(res).toEqual({ conversationId: 'c1', accepted: 1200, duplicates: 0, conflicts: [], stored: true });
   });
 
+  it('asks for the memory context of a message in its conversation', async () => {
+    reply = () => ({ status: 200, body: { block: '<memory-context>…</memory-context>', items: 1 } });
+    expect(await client().context('u1', 'chat-1', 'Che macchina ho?')).toEqual({ block: '<memory-context>…</memory-context>', items: 1 });
+    expect(seen[0]).toMatchObject({ method: 'POST', path: '/api/v1/context', body: { query: 'Che macchina ho?' } });
+    expect(seen[0]?.headers['x-recordare-conversation']).toBe('chat-1');
+  });
+
   it('treats deleting what Recordare never had as done, encodes ids, and reports outages as unavailable', async () => {
     reply = () => ({ status: 404, body: { code: 'not_found' } });
     await client().deleteMessage('u1', 'chat/1', 'm 1');
