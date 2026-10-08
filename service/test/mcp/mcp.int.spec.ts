@@ -212,6 +212,20 @@ describe('MCP endpoint', () => {
     expect(await note(elsewhere)).toEqual({ pending: true, author_role: 'assistant' });
   });
 
+  it('stores nothing through the tools without consent (D4); forgetting stays allowed', async () => {
+    const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'NoConsent', kind: 'mcp_client' } })).body.id;
+    const off = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Senza consenso' } })).body.personId;
+    const token = (await call(url, 'POST', `/api/v1/admin/owners/${off}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp'] } })).body.token as string;
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const out = async (name: string, args: Record<string, unknown>) => (await client.callTool({ name, arguments: args })).structuredContent;
+    expect(await out('log_episode', { content: 'Ho comprato una bici' })).toEqual({ error: 'memory is off for this person' });
+    expect(await out('remember', { content: 'Preferisco il tè' })).toEqual({ error: 'memory is off for this person' });
+    const db = app.get((await import('typeorm')).DataSource);
+    expect(await db.query(`SELECT (SELECT count(*) FROM episodes WHERE owner_id = $1)::int AS e, (SELECT count(*) FROM notes WHERE owner_id = $1)::int AS n,
+      (SELECT count(*) FROM messages WHERE owner_id = $1)::int AS m`, [off])).toEqual([{ e: 0, n: 0, m: 0 }]);
+    await client.close();
+  });
+
   it('finds a short fact inside a long message of the person (word similarity), not in an unrelated one', async () => {
     const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Long', kind: 'mcp_client' } })).body.id;
     const token = (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp', 'ingest'] } })).body.token as string;

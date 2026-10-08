@@ -2,8 +2,8 @@
 
 *Traduzione italiana di [DIGITAL_TWIN_VISION.md](DIGITAL_TWIN_VISION.md) — la versione inglese è quella di riferimento.*
 
-Stato: **visione / roadmap**. Il design della fase 1 si trova in
-`EPISODIC_MEMORY_TODO.md`.
+Stato: **visione / roadmap**. La fase 1 (memoria episodica) è realizzata e rilasciata come v0.1.0 (pubblica dal
+2026-10-08); il suo design si trova in `EPISODIC_MEMORY_TODO.md`, il suo stato in `WORK_PLAN.md`.
 
 ## Obiettivo
 
@@ -24,7 +24,7 @@ prende anche l'iniziativa.
 
 | Pilastro | Cattura | Oggi |
 |---|---|---|
-| **Memoria** | Fatti semantici (A-MEM), episodi (diario), narrazione autobiografica | Fatti fatti; episodi progettati (fase 1); narrazione mancante |
+| **Memoria** | Fatti e note semantiche, episodi (diario), narrazione autobiografica | Episodi, piani, fatti con storia, note e digest realizzati (fase 1, v0.1.0); narrazione mancante |
 | **Stile** | Come il proprietario scrive e parla: lessico, lunghezza delle frasi, ironia, modi di dire | Mancante — ricavabile dai messaggi del proprietario stesso |
 | **Mente** | Valori, opinioni, schemi decisionali ("che cosa farebbe?") | Mancante |
 | **Relazioni e divulgazione** | Chi è chi, e **che cosa il proprietario direbbe a chi** | Mancante — il pilastro più delicato |
@@ -215,7 +215,9 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
     `search_episodes`, …). Nessuna estrazione passiva, nessuna iniezione automatica di contesto.
   - *Completo* (MCP + ingest REST + SDK/middleware): l'host invia i messaggi della conversazione
     (abilita l'estrazione passiva, il trigger di inattività, il ripiego sul log grezzo), passa l'identità
-    dell'interlocutore (divulgazione), e può iniettare memoria fissata/recuperata nei propri prompt.
+    dell'interlocutore (divulgazione), e può iniettare memoria fissata/recuperata nei propri prompt. Realizzato per
+    Arkimede e, tramite i connettori, per Claude Code, Codex, OpenClaw, Hermes Agent e un proxy di memoria
+    compatibile con OpenAI.
 - Il servizio tiene il **proprio log grezzo** (Layer 0) dei messaggi ricevuti — provenienza
   e ripiego puntano lì, non alle tabelle dell'host.
 - Autenticazione propria: chiavi API per client + mappatura delle identità tra piattaforme (la stessa persona su
@@ -224,14 +226,15 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
   o a qualsiasi provider).
 - Licenza: AGPL — l'uso in rete obbliga a pubblicare solo il codice del servizio, non quello dei
   client.
-- La memoria semantica A-MEM esistente resta in Arkimede per ora (nessuna regressione); migrarla
-  nel servizio è una fase successiva della roadmap.
+- La memoria semantica A-MEM esistente resta in Arkimede (nessuna regressione). Dalla D34 (2026-10-03) Recordare ha
+  una memoria propria completa, note comprese, e gli utenti copiano le note in A-MEM per scelta — nessuna migrazione
+  prevista.
 
 ## Roadmap (bozza)
 
 | Fase | Contenuto | Dipende da |
 |---|---|---|
-| **1. Memoria episodica** | Diario, digest, consolidamento (`EPISODIC_MEMORY_TODO.md`, D1–D47) + emozioni / opinioni sugli episodi — **implementata** (2026-10-07; voci aperte in `WORK_PLAN.md`) | — |
+| **1. Memoria episodica** | Diario, digest, consolidamento (`EPISODIC_MEMORY_TODO.md`, D1–D48) + emozioni / opinioni sugli episodi; regole linguistiche per le lingue più diffuse — **rilasciata come v0.1.0** (pubblica dal 2026-10-08; voci aperte in `WORK_PLAN.md`) | — |
 | **2. Automodello** | Intervista vocale guidata, importazioni (propria impronta pubblica + esportazioni private), profilo di stile, valori / opinioni / schemi decisionali, narrazione autobiografica; harness di valutazione | 1 |
 | **3. Contatti e divulgazione** | Registro dei contatti con binding di canale, tier, livelli di divulgazione sui ricordi, archivio dei ricordi vissuti dal gemello | 1 |
 | **4. Interfaccia del gemello** | Modalità compagno con il proprietario; modalità procuratore che risponde agli altri (prima Telegram), dichiarazione di IA, revisione delle conversazioni da parte del proprietario | 2, 3 |
@@ -240,7 +243,6 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
 | **7. Iniziativa L2** | Agire verso terzi: matrice dei permessi, audit, kill switch | 4, 5 |
 | **8. Modalità legacy** | Esecutori, attivazione, congelamento, azioni pre-autorizzate, ritiro | 4, 7 |
 | **R. Modalità di ricerca** | Ciclo autonomo (riflessione autodiretta, obiettivi propri, iniziativa senza conferma), società di agenti simulata, snapshot di vite, metriche di deriva | 1, 2 (la simulazione può partire con la memoria della fase 1) |
-| **Migrazione A-MEM** | Spostare la memoria semantica di Arkimede in Recordare; Arkimede diventa un puro client | 1 (in qualsiasi momento dopo) |
 | **G. Memoria dell'agente** (futura, annotata il 2026-10-07) | Recordare come memoria di un **agente** anziché di una persona — ad es. l'Arkimede condiviso di una famiglia che costruisce la propria storia e personalità. Vedi sotto | 1, 3 |
 
 ### Direzione futura G — Recordare come memoria di un agente
@@ -252,9 +254,11 @@ preferenze apprese, la sua relazione con ciascuna persona; sempre `inferred` e r
 che ci stanno dietro, come in H12). Complementare al design predefinito (ogni familiare ha il proprio gemello; l'agente legge la memoria di chi sta parlando): entrambi possono
 coesistere nella stessa installazione.
 
-**Primo passo realizzato (D48, 2026-10-07): memoria delle entità** — un proprietario di tipo `entity` (un dispositivo condiviso, un robot, un
+**Primo passo realizzato (D48, 2026-10-07): memoria di entità** — un proprietario di tipo `entity` (un dispositivo condiviso, un robot, un
 luogo) che tutti coloro che lo usano leggono e scrivono; l'identificazione dice solo di chi è un ricordo; i fatti portano la persona a cui
-si riferiscono. La divulgazione al suo interno (elementi intimi solo per la loro persona) verrà dopo.
+si riferiscono. Rilasciata come **sperimentale** nella v0.1.0 (82,1 % su un insieme cieco di memoria di entità, contro il
+91,3 % della memoria di una persona: il punto debole sono i parlanti che non si identificano mai). La divulgazione al
+suo interno (elementi intimi solo per la loro persona) verrà dopo.
 
 Che cosa funziona già: episodi con date, piani, correzioni, provenienza; consolidamento notturno; persone verificate;
 affermazioni altrui tenute separate. Che cosa cambia:
@@ -271,14 +275,17 @@ affermazioni altrui tenute separate. Che cosa cambia:
 
 - **Connettori per piattaforme di agenti** (WORK_PLAN 6.6, D43): Recordare in qualsiasi piattaforma di agenti con una sola installazione — ogni
   connettore cattura i turni verso l'ingest e dà all'agente la memoria (strumenti MCP e / o un richiamo iniettato
-  prima del turno); contratto uniforme e una suite di conformità, non un meccanismo uniforme.
-- **talkiosk** (repo proprio, WORK_PLAN 5b.10 / 6.5, D45): un dispositivo domestico (Raspberry Pi con schermo) con una voce che
-  parla con Arkimede. L'ascolto continuo è opt-in: le impronte vocali restano sul dispositivo, le voci sconosciute vengono scartate, nessun
+  prima del turno); contratto uniforme e una suite di conformità, non un meccanismo uniforme. Realizzati al livello
+  completo (2026-10-08): Claude Code, Codex, OpenClaw, Hermes Agent e un proxy di memoria compatibile con OpenAI per le
+  piattaforme senza hook; Claude Desktop / claude.ai restano al livello base (solo MCP).
+- **Ascolto continuo da un dispositivo vocale domestico** (WORK_PLAN 6.5, D45): un dispositivo client con una voce che parla con
+  una piattaforma di agenti. L'ascolto continuo è opt-in: le impronte vocali restano sul dispositivo, le voci sconosciute vengono scartate, nessun
   audio viene memorizzato, e le parole di ogni persona riconosciuta vanno nella **sua propria** memoria; fatti e note sul proprietario
   uditi di sfondo restano in sospeso finché il proprietario non li conferma. Prepara il canale vocale della fase 6.
 - **Recordare Atlas** (repo proprio opzionale `arkimedehq/recordare-atlas`, D42): il compagno di osservabilità — una vista
   cervello in tempo reale di Recordare e degli agenti dei suoi client, solo metadati; Recordare funziona senza, e la telemetria non è
-  mai un canale di memoria.
+  mai un canale di memoria. L'interfaccia è in inglese e in italiano, ha una modalità leggera per le GPU poco potenti e
+  un registratore per la sua animazione dimostrativa.
 
 ## Domande aperte
 

@@ -11,11 +11,14 @@ twin** of that person. Any agent platform can use it through **MCP** (any MCP cl
 (the platform pushes its conversations and Recordare extracts the memory in the background).
 [Arkimede](https://github.com/arkimedehq/arkimede) is the first client.
 
-> **Status (2026-10-07).** Phase 1 (episodic memory) is implemented in `service/` (NestJS, Postgres + pgvector,
-> BullMQ). It covers the raw log, episodes, plans, facts, notes, nightly digests, MCP recall and write tools, the
-> admin API and live telemetry. Arkimede is integrated. Next: the read API, the client library and connectors
-> ([work plan](docs/WORK_PLAN.md)). Entity memory (D48, below) is built and measured on a dev set. Recordare is not
-> published yet.
+> **Status (2026-10-08).** **v0.1.0 is public** (2026-10-08, the private profile; [CHANGELOG](CHANGELOG.md)). Phase 1
+> (episodic memory) is implemented in `service/` (NestJS, Postgres + pgvector, BullMQ). It covers the raw log,
+> episodes, plans, facts, notes, nightly digests, MCP recall and write tools, the pre-turn memory context, the read
+> API (the person's diary), the admin API and console, and live telemetry. Clients: Arkimede, and full-level
+> connectors for Claude Code, Codex, OpenClaw, Hermes Agent and an OpenAI-compatible memory proxy, on the client
+> library `@arkimedehq/recordare-client` (npm). Entity memory (D48, below) is experimental. Next: a memory context
+> that misses less (WORK_PLAN 5.7), then the output of extractions that write nothing (4.12) and news as memories (4.10)
+> ([work plan](docs/WORK_PLAN.md)).
 
 *Italian version: [README_it.md](README_it.md). Every project document has an Italian copy (`*_it.md`); the English
 one is the reference.*
@@ -82,9 +85,9 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 ### MCP tools (as built)
 
 `search_episodes` (modes `search | list | latest`, date range, automatic fallback to the raw log, chat excerpts),
-`search_memory` (notes and facts, optionally as of a date), `resolve_period` (deterministic IT/EN period parser:
-"last week", month names), `log_episode`, `remember`, `correct_episode`, `forget_episode`. No LLM runs at read time:
-the calling agent fills the parameters. Contracts: [API](docs/API.md), [data model](docs/DATA_MODEL.md).
+`search_memory` (notes and facts, optionally as of a date), `resolve_period` (deterministic period parser for the
+25 most used languages: "last week", month names), `log_episode`, `remember`, `correct_episode`, `forget_episode`. No
+LLM runs at read time: the calling agent fills the parameters. Contracts: [API](docs/API.md), [data model](docs/DATA_MODEL.md).
 
 ## The most important points
 
@@ -116,12 +119,13 @@ Answer and judge model: `deepseek-flash`. Embeddings: `bge-m3`. Bracketed ranges
 | Spike round 2, noise (187 sessions) | Our design's prototype (D) 96 %; Memobase 88 %; Graphiti 81 %; raw-log baseline 67 % |
 | Held-out set (written blind to D's prompts), noise | D 86 %; Memobase 61 %; baseline 50 % |
 | `dataset_blind4` (84 q, nobody tuned on it), base | Service v4 80.8 %; Mem0 78.0 %; D 88.3 %; full context (ceiling) 89.9 %. This was the honest correction of the 95 % measured on a set that had already been seen |
-| `dataset_blind5` (87 q, fresh), base, 3 runs | Service (recall work H11) 89.2 % [85.8, 92.6]; D 91.7 %; full context 91.4 %. The gap is within noise |
+| `dataset_blind5` (87 q, fresh), base, 3 runs | Service (recall work H11) 89.2 % [85.8, 92.6]; D 91.7 %; full context 91.4 %. The gap is within noise. Latest 3 runs (people-aware recall): 90.7 % |
 | `dataset_blind7` (46 q, fresh, written by a separate agent), base, 3 runs | Released service **91.3 %** (88.0 / 92.4 / 93.5); `dataset_blind8` (entity memory, 31 q) 82.1 % |
 | `dataset_blind3`, quality profiles | Economy 93.5 %, balanced 94.9 %, full 92.1 %, all within noise. Measured after the set had been read, so not blind |
 | Recall-echo dev set (not blind) | 79 % without the guard → 100 % with guard v3 (3 runs each) |
+| Memory-context dev set (not blind, agent mode, 1 run) | Tools only 93.3 % → tools + memory context 100 %; with a real voice agent's prompt 90 → 93.3 %, tool calls 9 → 5 of 15 |
 
-What these numbers do **not** show: the blind sets are small (36–87 questions), so gaps under about 5 points are
+What these numbers do **not** show: the blind sets are small (31–87 questions), so gaps under about 5 points are
 noise. Several blind sets were later read while fixing failures, and the docs mark which. Local 8–20B engines score
 60–83 %, below the project's 95 % bar for a supported engine model.
 
@@ -195,9 +199,8 @@ Around the memory:
 - **Recordare Atlas** ([`arkimedehq/recordare-atlas`](https://github.com/arkimedehq/recordare-atlas), optional, its
   own repo): a live "brain" view of Recordare and its clients' agents. It shows metadata only, and every animation
   is a real event ([contract](docs/ATLAS_EVENTS.md)). Recordare works without it.
-- **talkiosk** (own repo): a home voice device talking to Arkimede. Continuous listening is opt-in and puts each
-  recognised person's words into their own memory.
-- **Connectors** for other agent platforms, sharing one client library and one conformance suite (planned).
+- **Connectors** for other agent platforms (Claude Code, Codex, OpenClaw, Hermes Agent, an OpenAI-compatible memory
+  proxy), sharing one client library and one conformance suite ([`connectors/`](connectors/)).
 
 ## Install
 
@@ -222,7 +225,7 @@ keeps the key off the command line).
 
 After the install, open the **admin console** at `http://<host>:<port>/admin` with `ADMIN_API_KEY` from `deploy/.env`:
 create the people, switch their consent on, and give each client platform a key ([INTEGRATION.md](docs/INTEGRATION.md);
-Claude Code: §4b). Then:
+Claude Code: §4b). Then connect your agent platforms (next section) and keep the installation up to date:
 
 ```bash
 deploy/update.sh    # backup, pull, rebuild, restart (migrations run at start)
@@ -241,6 +244,21 @@ Main settings (all in `deploy/.env`; every knob with its default in [KNOBS.md](d
 | `RECORDARE_PROJECT` | Compose project name, for a second installation on the same host |
 
 More in [DEPLOYMENT.md](docs/DEPLOYMENT.md) (profiles, co-hosting details, HTTPS in front).
+
+### Connect an agent platform
+
+Each connector captures the conversation, gives the agent the memory context before each turn and the memory tools
+(the full level); its README has the set-up:
+
+| Platform | How |
+|---|---|
+| [Claude Code](connectors/claude-code/README.md) | Plugin: `/plugin marketplace add arkimedehq/recordare`, then `/plugin install recordare@recordare` |
+| [Codex](connectors/codex/README.md) | Installer for hooks + MCP (`connectors/codex/install.sh`) |
+| [OpenClaw](connectors/openclaw/README.md) | npm plugin `@arkimedehq/openclaw-recordare` (`openclaw plugins install npm:@arkimedehq/openclaw-recordare`) |
+| [Hermes Agent](connectors/hermes/README.md) | Memory provider (Python) |
+| [OpenAI-compatible memory proxy](connectors/openai-proxy/README.md) | Image `ghcr.io/arkimedehq/recordare-openai-proxy`, for platforms without hooks (AnythingLLM tested; Open WebUI, LibreChat) |
+| Your own platform (TypeScript) | Client library [`@arkimedehq/recordare-client`](packages/client/README.md) on npm ([INTEGRATION.md](docs/INTEGRATION.md)) |
+| Any other MCP client | Basic level (recall and explicit writes, no capture) with a personal token ([INTEGRATION.md](docs/INTEGRATION.md) §4b) |
 
 ## Limits of this version (private profile, D33)
 
@@ -278,10 +296,11 @@ co-hosted with Arkimede on a small server).
 |---|---|
 | `service/` | The Recordare service (NestJS, TypeScript) |
 | `connectors/` | Full-level connectors: [Claude Code](connectors/claude-code/README.md), [Codex](connectors/codex/README.md), [OpenClaw](connectors/openclaw/README.md), [Hermes Agent](connectors/hermes/README.md), [OpenAI-compatible memory proxy](connectors/openai-proxy/README.md) (AnythingLLM, Open WebUI, LibreChat) |
-| `packages/client/` | `@arkimedehq/recordare-client`, the TypeScript client library the connectors and Arkimede use |
+| `packages/client/` | `@arkimedehq/recordare-client` (on npm), the TypeScript client library the connectors and Arkimede use |
 | `deploy/` | Installer, update and backup scripts, Compose files (standalone / co-hosted) |
 | `spikes/memory-eval/` | Evaluation harness and datasets: engine comparison, blind sets, results ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
-| `docs/` | Vision, design decisions D1–D48 ([episodic memory design](docs/EPISODIC_MEMORY_TODO.md)), [work plan](docs/WORK_PLAN.md), contracts, research notes, literature cards |
+| `docs/` | Vision, design decisions D1–D48 ([episodic memory design](docs/EPISODIC_MEMORY_TODO.md)), [work plan](docs/WORK_PLAN.md), contracts, [every setting](docs/KNOBS.md), research notes, literature cards, connector research notes (`docs/connectors/`) |
+| `CHANGELOG.md` | Release notes ([v0.1.0](CHANGELOG.md)) |
 | `docker-compose.yml` | Local development stack (Postgres + pgvector, Redis, service) |
 | `CLAUDE.md` | Context and conventions for development sessions |
 
@@ -289,7 +308,6 @@ co-hosted with Arkimede on a small server).
 
 - [Arkimede](https://github.com/arkimedehq/arkimede): agent platform, the first client.
 - [Recordare Atlas](https://github.com/arkimedehq/recordare-atlas): optional live brain view.
-- talkiosk: home voice device talking to Arkimede (own repo).
 
 ## Support the project
 

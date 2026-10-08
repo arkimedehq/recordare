@@ -9,19 +9,24 @@ Infrastructure (standalone, or co-hosted with Arkimede on a small server): `DEPL
 platform — person, consent and name sync, ingest, deletions, MCP recall with the right headers, the outbox delivery
 policy — and passes the conformance suite. A platform keeps only its outbox storage and its chat mapping.
 
+**Ready-made connectors** (`connectors/`, full level, §4c): Claude Code, Codex, OpenClaw, Hermes Agent, and an
+OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, Open WebUI, LibreChat).
+
 ## 1. Set-up (admin, once)
 1. Create the client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
 2. Create its key: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read", "write"]}` (`write` for the person's own edits in a diary UI) — shown once; store it
    as a secret of the platform.
 3. **Consent stays with the admin / the owner** (D4): a client key can never turn a person's episodic memory on.
    Home profile: the admin enables it per person (`PATCH api/v1/admin/owners/{ownerId} {episodicEnabled: true}`).
-   Public profile: the host's toggle opens Recordare's owner page.
+   Public profile: the host's toggle opens Recordare's owner page. The admin console (`/admin`) lists the people
+   whose client sent messages while their consent was off ("waiting for consent", `API.md` §6) — nothing of those
+   messages is stored.
 
 ## 2. People
 - Every request names the platform's user: `X-Recordare-User: <the platform's own user id>`. With `autoProvision`
   the person is created at first contact; `GET api/v1/me` returns `ownerId` — store it next to your user (it ties
   your telemetry to the person: OpenTelemetry attribute `recordare.owner_id`).
-- Name the person after your user and keep it in sync: `PATCH api/v1/me {displayName}` whenever the user renames their
+- Name the person after your user and keep it in sync (client key only): `PATCH api/v1/me {displayName}` whenever the user renames their
   profile (the name follows the platform). The user's choice of memory kind goes the same way: `PATCH api/v1/me
   {kind: human | entity}` (D48 — `entity` for a shared account everyone uses), accepted only while the memory is empty
   (409 `memory_not_empty`). `GET api/v1/me` returns `kind` (show a shared memory as such) and `atlasUrl` when Recordare
@@ -35,6 +40,8 @@ policy — and passes the conformance suite. A platform keeps only its outbox st
   with stable `externalId`s (idempotent: a retry never duplicates) and the conversation's participants.
 - Use an **outbox**: write the message to your own table first, send asynchronously, retry with back-off; a Recordare
   outage must never fail or slow the chat. Edits and deletions follow (`API.md` §2).
+- When a conversation ends on your side (session closed, /new), say so: `POST api/v1/ingest/conversations/{id}/end`
+  (or `hints.conversationEnded` on the last batch) — extraction then runs at once instead of after the idle delay.
 
 ## 4. Recall — MCP
 - Register Recordare's MCP endpoint (`/mcp`) in your MCP client with the key and `X-Recordare-User`.
@@ -42,9 +49,15 @@ policy — and passes the conformance suite. A platform keeps only its outbox st
   the participants it ingested; without a resolvable conversation a read returns nothing (viewer rule, `API.md` §1) — with a client key; a personal
   token reads as the person even before its conversation is stored.
 - Optional, per agent: `POST api/v1/context {query}` before an answer returns the relevant memories as a fenced
-  block for the end of the system prompt (`API.md`, WORK_PLAN 5.7) — the agent may answer without a tool call.
+  block for the end of the system prompt (`API.md` §3, WORK_PLAN 5.7) — the agent may answer without a tool call.
+  `POST api/v1/context {ingest}` (scopes `read` + `ingest`; client library `contextWithTurn`) stores the user's turn
+  and returns its context in one call — one round trip before each turn instead of two.
 - Tools: `search_episodes`, `search_memory` (facts and notes), `resolve_period`, `log_episode`, `correct_episode`,
-  `forget_episode`, `remember`.
+  `forget_episode`, `remember`. A platform that already ingests every turn may leave `log_episode` out (the
+  connectors do); tool schemas: `TOOLS` in the client library.
+- The person's own diary in your UI (`API.md` §4, e.g. the Arkimede Diary): timeline, episode detail, day / month
+  diary, facts, notes, plans, and the person's edits (correct, forget, pin, confirm / reject what is pending) — scope
+  `read`, `write` for edits; owner-direct (no conversation header).
 
 ## 4b. Standard MCP clients — Claude Code (basic level, WORK_PLAN 6.1)
 A client that only speaks MCP (no ingest) uses a **personal token** bound to one person and one client:
@@ -62,11 +75,23 @@ claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --head
   behind what the agent writes. `log_episode` is stored as stated by the assistant (inferred), `remember` as a pending
   note that recall shows only with `include_pending`; the person confirms it in their diary (read API §4, e.g. the
   Arkimede Diary). This is the poisoning guard (API.md §3), kept on purpose; a client that also ingests the
-  conversation (Arkimede) gets confirmed memories.
+  conversation (Arkimede) gets confirmed memories — and so does a personal-token client that ingests the person's turns
+  (the connectors, §4c): without a conversation named, the person's own messages from the same client in the last 30
+  minutes are the evidence.
 - Smoke test of the basic level (use a test person: it writes one episode, then forgets it, and one pending note):
   `RECORDARE_URL=… RECORDARE_TOKEN=rp_… npm run smoke:mcp` in `service/`. Tested with Claude Code 2026-10-08.
 - Claude Desktop: its remote connectors expect OAuth, which v1 does not provide (D33); a local bridge that adds the
   header (e.g. `mcp-remote` with `--header`) should work but is untested.
+
+## 4c. Connectors (full level, WORK_PLAN 6.6)
+`connectors/` holds ready-made full-level clients, each with its README (English and Italian): **Claude Code** (plugin)
+and **Codex** (installer) with shared capture hooks, **OpenClaw** (native plugin), **Hermes Agent** (memory provider),
+and an **OpenAI-compatible memory proxy** (AnythingLLM, Open WebUI, LibreChat). Each one captures the turns, adds the
+memory context before each turn (`POST api/v1/context`, with `ingest` where the turn is stored in the same call), ends
+the conversation with `…/end` and, except the proxy, exposes the MCP tools (as `recordare_*` in OpenClaw and Hermes).
+Credentials: a **personal token** with `mcp`, `ingest`, `read` for one person (client of kind `mcp_client`), or a
+**client key** with the same scopes for a gateway serving several people (OpenClaw, Hermes, the proxy — which needs
+only `ingest` + `read` — each person named with `X-Recordare-User`).
 
 ## 5. Observability (optional)
 Recordare Atlas shows Recordare's own work from its telemetry stream; your agents (LLM calls, tools) appear when you

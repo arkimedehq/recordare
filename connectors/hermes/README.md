@@ -30,8 +30,9 @@ Tested with Hermes Agent v0.21.6. Pure Python, only `requests` (a Hermes depende
    - **several people** (a gateway: Telegram, Discord, …): a **client key** with the same scopes; each person is a
      client user (`X-Recordare-User`), bound by the admin (`POST api/v1/admin/identities`) or auto-provisioned if the
      client allows it.
-2. Copy the provider into the profile's plugins (or, once the repository is public,
-   `hermes plugins install arkimedehq/recordare/connectors/hermes/recordare`):
+2. Install the provider from the public repository with
+   `hermes plugins install arkimedehq/recordare/connectors/hermes/recordare` (not tested yet), or copy it into the
+   profile's plugins:
    ```
    cp -r connectors/hermes/recordare "$HERMES_HOME/plugins/recordare"     # default HERMES_HOME: ~/.hermes
    ```

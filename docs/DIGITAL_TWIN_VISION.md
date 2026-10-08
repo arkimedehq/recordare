@@ -1,7 +1,7 @@
 # Digital twin — vision
 
-Status: **vision / roadmap**. Phase 1 design lives in
-`EPISODIC_MEMORY_TODO.md`.
+Status: **vision / roadmap**. Phase 1 (episodic memory) is built and released as v0.1.0 (public 2026-10-08); its
+design lives in `EPISODIC_MEMORY_TODO.md`, its status in `WORK_PLAN.md`.
 
 ## Goal
 
@@ -22,7 +22,7 @@ it also takes initiative.
 
 | Pillar | Captures | Today |
 |---|---|---|
-| **Memory** | Semantic facts (A-MEM), episodes (diary), autobiographical narrative | Facts done; episodes designed (phase 1); narrative missing |
+| **Memory** | Semantic facts and notes, episodes (diary), autobiographical narrative | Episodes, plans, facts with history, notes and digests built (phase 1, v0.1.0); narrative missing |
 | **Style** | How the owner writes and speaks: lexicon, sentence length, irony, idioms | Missing — derivable from the owner's own messages |
 | **Mind** | Values, opinions, decision patterns ("what would they do?") | Missing |
 | **Relationships & disclosure** | Who is who, and **what the owner would tell whom** | Missing — most delicate pillar |
@@ -213,7 +213,8 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
     `search_episodes`, …). No passive extraction, no automatic context injection.
   - *Full* (MCP + REST ingest + SDK/middleware): the host pushes conversation messages
     (enables passive extraction, idle trigger, raw-log fallback), passes interlocutor
-    identity (disclosure), and can inject pinned/retrieved memory into its prompts.
+    identity (disclosure), and can inject pinned/retrieved memory into its prompts. Built for Arkimede and, through
+    connectors, for Claude Code, Codex, OpenClaw, Hermes Agent and an OpenAI-compatible memory proxy.
 - The service keeps its **own raw log** (Layer 0) of ingested messages — provenance
   and fallback point there, not to the host's tables.
 - Own auth: per-client API keys + cross-platform identity mapping (same person on
@@ -222,14 +223,14 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
   or any provider).
 - Licence: AGPL — network use obliges publishing the service's code only, not the
   clients'.
-- Existing A-MEM semantic memory stays in Arkimede for now (no regression); migrating
-  it into the service is a later roadmap phase.
+- Existing A-MEM semantic memory stays in Arkimede (no regression). Since D34 (2026-10-03) Recordare holds its own
+  complete memory, notes included, and users copy notes into A-MEM by choice — no migration planned.
 
 ## Roadmap (draft)
 
 | Phase | Content | Depends on |
 |---|---|---|
-| **1. Episodic memory** | Diary, digests, consolidation (`EPISODIC_MEMORY_TODO.md`, D1–D47) + emotions / opinions on episodes — **implemented** (2026-10-07; open items in `WORK_PLAN.md`) | — |
+| **1. Episodic memory** | Diary, digests, consolidation (`EPISODIC_MEMORY_TODO.md`, D1–D48) + emotions / opinions on episodes; language rules for the most used languages — **released as v0.1.0** (public 2026-10-08; open items in `WORK_PLAN.md`) | — |
 | **2. Self-model** | Guided voice interview, imports (own public footprint + private exports), style profile, values / opinions / decision patterns, autobiographical narrative; evaluation harness | 1 |
 | **3. Contacts & disclosure** | Contact registry with channel binding, tiers, disclosure levels on memories, twin-lived memory store | 1 |
 | **4. Twin interface** | Companion mode with the owner; proxy mode answering others (Telegram first), AI disclosure, owner review of conversations | 2, 3 |
@@ -238,7 +239,6 @@ Other platforms ──REST / MCP / SDK─┘        ├─ scheduler (consolidat
 | **7. Initiative L2** | Act toward third parties: permission matrix, audit, kill switch | 4, 5 |
 | **8. Legacy mode** | Executors, activation, freeze, pre-authorized actions, retirement | 4, 7 |
 | **R. Research mode** | Autonomous loop (self-directed reflection, own goals, initiative without confirmation), simulated agent society, life snapshots, drift metrics | 1, 2 (sim can start with phase-1 memory) |
-| **A-MEM migration** | Move Arkimede semantic memory into Recordare; Arkimede becomes a pure client | 1 (any time after) |
 | **G. Agent memory** (future, noted 2026-10-07) | Recordare as the memory of an **agent** rather than of one person — e.g. a family's shared Arkimede building its own history and personality. See below | 1, 3 |
 
 ### Future direction G — Recordare as the memory of an agent
@@ -252,7 +252,9 @@ coexist on the same installation.
 
 **First step built (D48, 2026-10-07): entity memory** — an owner of kind `entity` (a shared device, a robot, a
 place) that everyone using it reads and writes; identification only says whose a memory is; facts carry the person
-they are about. Disclosure inside it (intimate items for their person only) comes later.
+they are about. Released as **experimental** in v0.1.0 (82.1 % on a blind entity set, against 91.3 % for a person's
+memory: speakers who never identify themselves are the weak spot). Disclosure inside it (intimate items for their
+person only) comes later.
 
 What works already: episodes with dates, plans, corrections, provenance; nightly consolidation; verified persons;
 others' claims kept apart. What changes:
@@ -269,14 +271,17 @@ others' claims kept apart. What changes:
 
 - **Connectors for agent platforms** (WORK_PLAN 6.6, D43): Recordare in any agent platform with one install — each
   connector captures the turns into ingest and gives the agent the memory (MCP tools and / or a recall injected
-  before the turn); uniform contract and a conformance suite, not a uniform mechanism.
-- **talkiosk** (own repo, WORK_PLAN 5b.10 / 6.5, D45): a home device (Raspberry Pi with a screen) with a voice that
-  talks to Arkimede. Continuous listening is opt-in: voiceprints stay on the device, unknown voices are discarded, no
+  before the turn); uniform contract and a conformance suite, not a uniform mechanism. Built at the full level
+  (2026-10-08): Claude Code, Codex, OpenClaw, Hermes Agent and an OpenAI-compatible memory proxy for platforms without
+  hooks; Claude Desktop / claude.ai stay at the basic level (MCP only).
+- **Continuous listening from a home voice device** (WORK_PLAN 6.5, D45): a client device with a voice that talks to an
+  agent platform. Continuous listening is opt-in: voiceprints stay on the device, unknown voices are discarded, no
   audio is stored, and each recognised person's words go into **their own** memory; facts and notes about the owner
   heard ambiently stay pending until the owner confirms them. Prepares the voice channel of phase 6.
 - **Recordare Atlas** (own optional repo `arkimedehq/recordare-atlas`, D42): the observability companion — a live
   brain view of Recordare and of its clients' agents, metadata only; Recordare works without it, and telemetry is
-  never a memory channel.
+  never a memory channel. Its interface is in English and Italian, has a light mode for low-power GPUs and a
+  recorder for its demo animation.
 
 ## Open questions
 

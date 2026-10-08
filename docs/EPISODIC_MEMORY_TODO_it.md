@@ -4,7 +4,10 @@
 
 Stato: **implementata** (2026-10-07) in `service/` — log grezzo, episodi, piani, fatti, note, digest, strumenti di richiamo,
 scritture esplicite e dimenticanza di un singolo episodio; i punti aperti per milestone sono in `WORK_PLAN.md` (M5 parziale, M6 in
-corso). Valutazione dei motori (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): un prototipo di questo design (D)
+corso). Aggiornamento (2026-10-08): **rilasciata come v0.1.0** (pubblica, profilo privato — D33), con l'API di lettura per
+il diario, il contesto di memoria prima del turno, la libreria client e i connettori; aperti: passaggio notturno dei
+messaggi in attesa (D1), dimenticare un periodo (D16), promozioni dei pattern (D20 / D26), l'endpoint del feed delle
+modifiche delle note (D34) — WORK_PLAN M4–M7. Valutazione dei motori (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): un prototipo di questo design (D)
 ha battuto Memobase, Graphiti e la baseline grezza; D23 (approvata) lo costruisce. Decisioni prese durante la realizzazione: D36–D48.
 
 Questa è la **fase 1** della visione del digital twin (`DIGITAL_TWIN_VISION.md`): la memoria
@@ -159,6 +162,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   Allo scatto: estrarre la coda non elaborata a prescindere dalla soglia.
 - **Passaggio notturno**: prima del consolidamento, elaborare ogni coda di chat rimasta non elaborata
   (job persi, riavvii). Rete di sicurezza, non il percorso primario.
+- Come realizzato (2026-10-08): il debounce a riposo gira per conversazione nel servizio (D5, D22); il passaggio notturno
+  delle code non elaborate **non è realizzato** (WORK_PLAN 4.1) — il passaggio orario si limita a consolidare.
 
 ### D2 — Fatti ed episodi: due chiamate LLM separate (2026-10-01)
 - Il prompt e il flusso esistenti di estrazione dei fatti restano **intatti** (rischio zero di
@@ -235,6 +240,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D16 — Conservati per sempre, solo cancellazione su iniziativa dell'utente (2026-10-01)
 - Nessun TTL. L'utente cancella singoli episodi o un periodo ("dimentica marzo"); i digest
   interessati vengono ricalcolati (o cancellati) di conseguenza; le voci vettoriali rimosse.
+- Come realizzato (2026-10-08): dimenticare un episodio (MCP `forget_episode`, API di lettura `DELETE episodes/{id}`; i digest
+  costruiti su di esso vengono sostituiti); dimenticare un periodo è TODO (WORK_PLAN 5.5).
 
 ### D17 — Voce rinviata alla persistenza delle chat vocali (2026-10-01)
 - Fuori dalla v1. Arriva con la voce di backlog "persistenza opzionale delle chat vocali", così la
@@ -247,6 +254,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "dimentica questo periodo".
 - Come realizzato: resta il piano per Arkimede (WORK_PLAN 6.3), alimentato dall'API di lettura / timeline di Recordare (`API.md` §4, non
   ancora realizzata); nel frattempo gli strumenti MCP di Recordare `correct_episode` / `forget_episode` coprono modifica e cancellazione.
+- Aggiornamento (2026-10-08): la parte dell'API di lettura che serve al diario è realizzata (WORK_PLAN 4.7) e Arkimede ha la
+  sua scheda Diario (Impostazioni → Diario: linea del tempo con dettaglio, correggi, dimentica; diario; fatti e note; piani;
+  da confermare — WORK_PLAN 6.3); "dimentica questo periodo" è ancora TODO (WORK_PLAN 5.5).
 
 ### D19 — Boost di richiamo delle note semantiche collegate: rinviato alla v2 (2026-10-01)
 - Cos'è: quando `search_episodes` restituisce un episodio collegato (dal consolidamento) a
@@ -348,6 +358,11 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   held-out) entro un margine stabilito rispetto al riferimento e il suo output strutturato si valida; un comando CLI
   esegue la suite su una data configurazione; risultati conservati in una tabella dei modelli supportati.
   A parità di qualità vince il modello più economico.
+- Come realizzato (2026-10-08): un solo set di prompt scritto in inglese, con una riga che indica la lingua del proprietario;
+  i dati linguistici delle parti deterministiche (periodi, nomi dei mesi, parole di relazione, nome del proprietario) stanno
+  in `service/src/lang` per le lingue più usate (regola del proprietario: tutte le lingue, mai solo IT / EN). CLI di
+  certificazione e tabella dei modelli supportati non realizzate (WORK_PLAN 4.5b); regola del proprietario: un modello del
+  motore è supportato solo se raggiunge il 95 % sulla suite.
 
 ### D28 — Il modello dati della fase 1 riserva i campi di cui le ipotesi di ricerca hanno bisogno (2026-10-02)
 - Da `RESEARCH_NOTES.md` (H1–H3): aggiungerli dopo significherebbe migrare gli episodi, quindi
@@ -423,6 +438,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   UI di collegamento e revoca guidata dal proprietario, audit di lettura, idempotenza persistente, politica di backup / retention
   del provider, protezione di rete. Specificati in `API.md` §0 così che abilitarli non richieda alcuna migrazione
   dei dati.
+- Stato (2026-10-08): la v0.1.0 è stata rilasciata pubblicamente con questo profilo, con i suoi limiti dichiarati nel README
+  (WORK_PLAN M7); il profilo pubblico resta rinviato.
 
 ### D34 — Recordare è completo; A-MEM resta in Arkimede; sceglie l'utente (2026-10-03)
 - **Recordare possiede una memoria personale completa**: episodi, piani, digest, fatti di stato **e
@@ -441,6 +458,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   memoria di note personali (estrazione + uso), note team / org (uso), Recordare (connesso o no).
   Gli utenti senza Recordare ottengono la stessa flessibilità. Se un utente abilita sia l'estrazione personale di A-MEM
   sia le note di Recordare, sono possibili duplicati: la UI avvisa, non vieta (scelta dell'utente).
+- Stato (2026-10-08): le note di Recordare sono realizzate; i cambiamenti sono registrati (`note_changes`) ma l'endpoint del
+  feed delle modifiche non è ancora realizzato (WORK_PLAN 4.3 / 4.7); il lato Arkimede (divisione dell'interruttore, copia
+  delle note in A-MEM) è TODO.
 
 ### D35 — Il costo è un'opzione, non un limite: profili di qualità (2026-10-03)
 - Indicazione del proprietario: i modelli diventano più economici e i modelli locali più forti; gli utenti scelgono la qualità
@@ -502,16 +522,18 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Arkimede è il client nativo lato server; i connettori (hook + MCP + richiamo pre-turno) servono le piattaforme che non
   controlliamo; una libreria client dentro questo repo (`packages/client`) e una suite di conformità che ogni client supera
   (WORK_PLAN 6.6, 6.7).
+- Stato (2026-10-08): realizzato — `packages/client` (su npm come `@arkimedehq/recordare-client`), la suite di conformità e
+  i connettori di livello completo per Claude Code, Codex, OpenClaw, Hermes Agent e un proxy di memoria compatibile OpenAI
+  (WORK_PLAN 6.6, 6.6b).
 
 ### D44 — Profili di infrastruttura: autonomo o co-ospitato (2026-10-07)
 - Autonomo per default; co-ospitato con Arkimede su piccoli server (database + utente propri sul Postgres pgvector di Arkimede,
   db Redis + prefisso di coda propri, embedder bge-m3 di Arkimede) — `docs/DEPLOYMENT.md`. I default di Arkimede sono passati
   a `pgvector/pgvector:pg16` e BAAI/bge-m3 (e voce Piper `it_IT-serena-medium`).
 
-### D45 — talkiosk (2026-10-07)
-- Repo proprio; parla direttamente con l'API compatibile OpenAI di Arkimede (niente Home Assistant); Rust. L'ascolto continuo è
-  opt-in: impronte vocali sul dispositivo, voci sconosciute scartate, nessun audio memorizzato, le parole di ciascuno nella propria
-  memoria. WORK_PLAN 5b.10 / 6.5.
+### D45 — Ascolto continuo da un dispositivo vocale domestico (2026-10-07)
+- Un dispositivo client che ascolta in modo continuo, opt-in: impronte vocali sul dispositivo, voci sconosciute scartate, nessun
+  audio memorizzato, le parole di ciascuno nella propria memoria. WORK_PLAN 6.5.
 
 ### D46 — Regola di valutazione 9: un'istanza del servizio per coda (2026-10-07)
 - Un run le cui estrazioni portano più di una versione di prompt viene scartato (un'istanza obsoleta ha contaminato dei run; corretto
@@ -541,6 +563,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Seguito del proprietario (2026-10-07): la **persona sceglie il tipo sulla sua piattaforma** (impostazioni di memoria di Arkimede →
   `PATCH /me {kind}`), solo finché la memoria è vuota; il **nome segue sempre il profilo della piattaforma** (una
   sincronizzazione del client sovrascrive una rinomina dell'admin); il consenso resta all'admin di Recordare.
+- Stato (2026-10-08): su un nuovo set cieco per la memoria di entità (`dataset_blind8`, WORK_PLAN 4.8) 82,1 % su 3 run (dev
+  set 95,5 %); la memoria di entità resta **sperimentale** — chi parla senza mai presentarsi e l'attribuzione tra persone
+  sono i punti deboli.
 
 ## Questioni aperte (da discutere)
 

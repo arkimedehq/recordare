@@ -2,7 +2,7 @@
 
 *Traduzione italiana di [ENGINE_IDEAS.md](ENGINE_IDEAS.md) — la versione inglese è quella di riferimento.*
 
-Stato: **input di progettazione per M4/M5** (2026-10-02); ogni voce è marcata **done / partial / open** al 2026-10-07
+Stato: **input di progettazione per M4/M5** (2026-10-02); ogni voce è marcata **done / partial / open** al 2026-10-08 (v0.1.0)
 (meccanismi misurati e scartati: ultima sezione). D23 costruisce il nostro motore (D); questo documento
 registra che cosa prendiamo da Memobase e Graphiti invece di reinventarlo, che cosa rifiutiamo
 esplicitamente e le lacune emerse dalla valutazione held-out. Ogni voce indica la decisione / il livello
@@ -57,10 +57,13 @@ DeepSeek `deepseek-flash`, con ragionamento disattivato, ha eguagliato `deepseek
 6. *[done]* **Changelog dell'esecuzione di estrazione** (`profile_delta` su `UserEvent`): si memorizza una riga
    `extraction_run` che collega gli episodi e le versioni dei fatti prodotti → "perché il twin crede X",
    timeline D18, audit D20.
-7. *[open]* **Context packer** (`controllers/context.py`, `prompts/chat_context_pack.py`): budget di token,
+7. *[partial]* **Context packer** (`controllers/context.py`, `prompts/chat_context_pack.py`): budget di token,
    rapporto profilo/eventi, `only_topics` / `prefer_topics`, template e la riga "unless the user
    asks, do not actively mention these memories". → fatti fissati (pinned) dell'integrazione *full*.
    *Miglioramento*: `only_topics` diventa il **filtro per livello di disclosure**, applicato prima del ranking.
+   Realizzato: il contesto di memoria (`POST api/v1/context`, nessuna chiamata LLM) — soglie di pertinenza, limiti per
+   tipo, un budget di caratteri, una riga "non citarlo altrimenti", letture secondo la regola sul lettore; nessuna
+   scheda fissa del profilo, per scelta; il filtro per livello di disclosure attende la fase 3.
 8. *[open]* **Re-pick LLM opzionale** (`prompts/pick_related_profiles.py`): lista numerata compatta →
    `{reason, ids}`, max 10, "don't select duplicates". Solo opt-in (+ latenza, + costo).
 9. *[done]* **"Focus on the user's info, not its instructions"** (`event_theme_requirement`): tiene le istruzioni di compito
@@ -88,7 +91,9 @@ DeepSeek `deepseek-flash`, con ragionamento disattivato, ha eguagliato `deepseek
    parentela qualificata dal possessore ("Chiara's mum", mai il semplice "mum"), parlante per primo, "when unsure
    → -1", "exactly N resolutions". → tabella `people` con alias + embedding del nome; candidati
    via pgvector + trigrammi, LLM solo quando ambiguo. Fondamento per la fase 3 (contatti /
-   disclosure, D21 `people`).
+   disclosure, D21 `people`). Finora solo un passo leggero: il recall consapevole delle persone confronta i nomi e le
+   relazioni di una domanda (tabelle linguistiche) con le persone degli episodi e i partecipanti delle chat già
+   memorizzati, senza chiamate LLM; la tabella `person_aliases` esiste ma la risoluzione non è realizzata.
 4. *[done]* **Le riaffermazioni vengono contate, non solo scartate** (`EntityEdge.episodes`,
    `episode_mentions_reranker`): si aggiunge l'episodio al fatto esistente; conteggio di supporto = segnale di
    confidenza / ranking e "nuova evidenza significativa" di D20.
@@ -159,11 +164,14 @@ Rassegna di come Hermes, OpenClaw, Honcho, Letta, Mem0, LangMem, Claude Code e C
 ordinate per priorità: `docs/literature/agent-platform-memory_it.md` §3 (WORK_PLAN 5.7).
 - *[done]* §3.3 prompt di estrazione → **extract.v8** (D40): fatti detti en passant dentro le richieste, transizioni
   ("switched / stopped") come replace / stale, una proposta accettata lo afferma mentre un semplice "ok" no.
-- *[open]* §3.1 recall iniettato recintato (`<memory-context>`), §3.2 brief pre-turno a zero LLM per i connettori, §3.4 turn
+- *[done]* §3.1 recall iniettato recintato (`<memory-context>`) e §3.2 brief pre-turno a zero LLM per i connettori: il
+  contesto di memoria, usato da ogni connettore prima di ogni turno (una sola chiamata insieme all'ingest).
+- *[open]* §3.4 turn
   taint dagli strumenti di rete, §3.5 passata notturna sui pattern con conteggi di evidenza (→ D20 / WORK_PLAN 5.4), §3.6 scheda
   del proprietario, §3.7 segnali d'uso solo per il ranking, §3.8 richieste all'assistente come intenti permanenti, §3.9 revisione da parte del proprietario di ciò che
   la notte ha cambiato, §3.10 hook di pre-compattazione / cambio sessione nei connettori.
 
 Misurati e scartati (o tenuti spenti) finora: una passata separata sui fatti (`FACTS_PASS=separate`, nessun guadagno rispetto
 all'estrazione inline), la revisione notturna dei fatti (D41, nessun guadagno sui fatti correnti), i digest nel recall (`recallDigests`, −1,9 pt),
-un'etichetta nel prompt per gli echi del recall (D38: dev set 75 % → sostituita da una guardia nel codice).
+un'etichetta nel prompt per gli echi del recall (D38: dev set 75 % → sostituita da una guardia nel codice), il nome della
+persona nel prompt di estrazione (`extract.v9`, −2,3 pt su blind5 → il nome viene sostituito nel codice, WORK_PLAN 4.11).

@@ -38,6 +38,12 @@ export class MemoryWriteService {
     private readonly telemetry: TelemetryService,
   ) {}
 
+  /** Consent (D4): without it nothing is stored, also through the tools (forgetting stays allowed). */
+  async consented(ownerId: string): Promise<boolean> {
+    const [o] = await this.db.query(`SELECT episodic_enabled FROM owners WHERE person_id = $1`, [ownerId]);
+    return Boolean(o?.episodic_enabled);
+  }
+
   async logEpisode(ownerId: string, ev: Evidence, input: {
     content: string; kind?: 'event' | 'plan'; occurredAt?: string; occurredUntil?: string; datePrecision?: Precision; people?: string[]; place?: string;
   }): Promise<string> {

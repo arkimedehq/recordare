@@ -8,6 +8,8 @@ host adapts to them: MCP through the official SDK (streamable HTTP), errors as R
 `Retry-After` (RFC 9110) honoured, W3C trace context forwarded, native `fetch` (a host may pass its own, e.g. one
 enforcing an outbound-host policy). No host-specific code.
 
+On npm since Recordare v0.1.0: `npm install @arkimedehq/recordare-client` (Node ≥ 20, ES module).
+
 ```ts
 import { PersonDirectory, RecordareClient, afterFailure } from '@arkimedehq/recordare-client';
 
@@ -33,7 +35,7 @@ const next = afterFailure(err, attempts);                 // { action: 'retry', 
 
 ## Before each turn, and at the end
 `contextWithTurn(user, turn)` stores the turn and returns its memory context in one round trip (`{block, items}`, the
-block to append to the system prompt); `endConversation(user, conversation)` tells Recordare a conversation ended
+block to append to the system prompt; `context(user, conversation, query)` when the turn is already stored); `endConversation(user, conversation)` tells Recordare a conversation ended
 (session closed, /new) so extraction runs now. `TOOLS` holds the MCP tool schemas the service serves (name, title,
 description, JSON Schema), for hosts that must declare tools before connecting; the conformance suite keeps it in
 sync with the service.
@@ -51,10 +53,10 @@ Everything else is here, the same for every client.
 nothing stored before consent, deletions propagate, the name and kind follow the platform, recall over MCP carries the
 user and the conversation. Type checks there fail the build when this contract drifts from the service's schemas.
 
-## Hosts that cannot install the package yet
-Recordare is not published: `scripts/sync-to.sh <dir>` copies the sources into a host repository with a header naming
-the source commit (Arkimede: `backend/src/recordare/client/`). The host never edits them; change the library here and
-sync again. When Recordare is published the host switches to the npm package by changing its imports.
+## Synced copy (Arkimede)
+Arkimede still uses a copy of the sources instead of the npm package: `scripts/sync-to.sh <dir>` copies them into a
+host repository with a header naming the source commit (Arkimede: `backend/src/recordare/client/`). The host never
+edits them; change the library here and sync again. Switching to the npm package only changes the imports.
 
 ## Development
 `npm ci`, `npm run typecheck`, `npm test`, `npm run build` (Node ≥ 20).

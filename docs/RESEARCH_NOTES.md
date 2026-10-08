@@ -1,6 +1,7 @@
 # Research notes — hypotheses register
 
-Status: **open register** (started 2026-10-02). Where Recordare might contribute something new to
+Status: **open register** (started 2026-10-02; statuses checked against `spikes/memory-eval/RESULTS.md` on
+2026-10-08, after the v0.1.0 release). Where Recordare might contribute something new to
 agent memory, beyond integrating known ideas. Each hypothesis has: the claim (narrowed after the
 literature review), closest prior work, a verdict, how we would measure it, and what the phase-1
 data model must already store so the experiment stays possible without migrations.
@@ -24,10 +25,10 @@ twin, owner vs twin provenance, and unresolved user plans.
 | H4 | Legacy mode as enforceable mechanisms (frozen persona, executor state machine, pre-authorised actions) | Principles done; engineering open | 8 |
 | H5 | Cost-aware memory (gates, cost per item) | Already done / crowded — engineering only | 1 |
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
-| H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis) | after M4 |
+| H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis); the gap is now measured (below) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the owner's own messages | To test | 2 |
 | H12 | Resting-state thinking ("default mode"): a budgeted background process that replays recent episodes, links them, keeps open loops (unresolved plans, promises), prepares questions / proposals and updates the self-model improves recall and initiative without confabulation | To design with M5 / track R | 5 / R |
-| H11 | Retrieval beyond a single embedding: cross-encoder reranking, bge-m3 sparse vectors, a people / entity index improve recall on negations, exact details and "everything about X" | To test (engineering) | 1 / 3 |
+| H11 | Retrieval beyond a single embedding: cross-encoder reranking, bge-m3 sparse vectors, a people / entity index improve recall on negations, exact details and "everything about X" | To test (engineering); recall fixes and a people-aware leg measured, reranker / sparse vectors not yet | 1 / 3 |
 | H10 | Autonomous evolution: a twin free in thought and action drifts from its owner in measurable ways; lives from the same start diverge | To review (literature not yet searched) | R |
 | H9 | Twin as a reflective companion of its owner (dialogue with oneself; non-sycophantic, evidence from own memories) | To review (literature not yet searched) | 4 |
 
@@ -67,13 +68,15 @@ vs change, bi-temporal "as told" vs "as true" questions. Metrics: closed-pool gr
 (correct / stale-or-assumed / abstained), **unjustified-assertion rate**, **over-abstention
 rate**, Set-F1 for lists, cost per user. Baselines: full context, plain RAG, Mem0,
 Zep/Graphiti, Memobase, Letta, A-Mem, a PIS-style typed store. Our two datasets already contain
-seeds of (a)–(d).
+seeds of (a)–(d). Since then the blind sets 3–7 carry plan categories (confirmed / cancelled / rescheduled /
+unresolved, premise traps) and the service is measured on them (RESULTS.md); the comparison with the baselines above on
+these categories is still to do.
 
 **Phase-1 data model must store.** Plan status `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, status date, evidence episode); episode kind
 `event | plan | state-change`; facts with world time (`validFrom` / `validTo`) **and**
 knowledge time (`recordedAt` / `expiredAt`); `corrects` (never true) distinct from `supersedes`
-(true until t).
+(true until t). — Built in phase 1 (`plan_status` with these values, `corrects` / `supersedes`, bi-temporal facts).
 
 ## H2 — Disclosure-aware memory for a personal twin
 
@@ -117,7 +120,9 @@ Weak spot to measure: **write-time labelling accuracy** (the filter is only as g
 **Phase-1 data model must store.** `people` on episodes (D21) with resolved person ids later;
 `source` of each memory (who told it, in which conversation, with which audience present);
 a `disclosure` label column (default `owner`) on episodes, facts and digests; derived artefacts
-keep the ids of their sources so labels can propagate.
+keep the ids of their sources so labels can propagate. — Built in phase 1: `disclosure` (default `owner`) and
+`audience` columns; reads follow a viewer rule (what is said in a conversation others take part in does not leak to
+them). Tiers are not used yet (phase 3).
 
 ## H3 — Source monitoring: owner-lived vs twin-experienced
 
@@ -138,7 +143,9 @@ owner, discussed it); rate of twin-experienced content asserted as owner's; owne
 accuracy.
 
 **Phase-1 data model must store.** `origin: owner_lived | owner_told | twin_experienced` on every
-episode / fact (phase 1 writes only the first two) and the interlocutor of the conversation.
+episode / fact (phase 1 writes only the first two) and the interlocutor of the conversation. — Built: phase 1 writes
+`owner_lived`, `owner_told` and `assistant_stated` (assistant turns, D30); `twin_experienced` waits for phases 3–4.
+<!-- verify: the origin enum has no `twin_experienced` value yet (InitialSchema) — added when the twin speaks to others -->
 
 ## H4 — Legacy mode
 
@@ -167,13 +174,17 @@ gold answers, lenient judges; Thakur et al. arXiv:2406.12624 [S]; MemDelta). Par
 modest: the **blind held-out set written by a separate agent** that never saw the prompts, and
 the **over-strict judge** artefact (must-not rules penalising correct answers), the reverse of the
 usual leniency. Measure judge false negatives against human labels; multiple seeds; full-context
-and grep / RAG baselines. Methods appendix, not a headline.
+and grep / RAG baselines. Methods appendix, not a headline. — Applied in phase 1: blind sets 3–8 written and re-read by
+separate agents, 3 runs each with paired bootstrap; a seen set overstated the service (blind3 post-hoc 94.9 % → fresh
+blind4 80.8 %), which is the evidence for the method (RESULTS.md).
 
 ## H7 — Distilled local extraction model
 
 **Claim.** A 4–8 B open model fine-tuned (LoRA) on extraction outputs of a stronger model
 (teacher: the certified cloud model) recovers most of the 12–23 points the local `qwen3:8b`
-loses on the eval suite, at zero per-call cost and with data staying local.
+loses on the eval suite, at zero per-call cost and with data staying local. Measured since on the service (blind3,
+1 run each, RESULTS.md 4b.4): `qwen3:8b` 59.7 %, Qwen3.5-9B 73.6 %, gpt-oss 20B 83.3 % against ~95 % for
+`deepseek-flash` — a larger gap than the spike's, mostly extraction coverage and dates, not JSON validity.
 
 **Prerequisites.** Stable extraction schema (after M4); training data only synthetic or
 consented; per-run logging of extraction inputs / outputs (M3–M4). **Measure**: eval suite
@@ -231,13 +242,19 @@ fuses full-text + vector; the spike showed structure matters more than the embed
 **Measure:** recall@k of gold episodes and QA accuracy per category (negation / detail / people),
 latency and cost; adopt only with a significant gain at acceptable latency.
 
+**Measured so far (RESULTS.md):** the first step was not a new representation but recall policy (relevant episodes
+first, chat excerpts kept, period lists): blind4 80.8 % → 86.9 % (1 run), confirmed on a fresh blind5 at 89.2 % (3 runs,
+within noise of prototype D). A lightweight form of candidate 3 — people named by a question, by name or relation,
+add their own messages, no LLM call — lifted blind6's "messages addressed to the assistant by others" 0.25 → 0.62
+(1 run) and was kept. Candidates 1, 2 and 4 are not measured yet.
+
 ## H12 — Resting-state thinking ("the mind never stops")
 
 **Inspiration.** When we are not focused on a task the brain's default mode network replays
 autobiographical memories, links them, simulates the future, thinks about self and others, keeps
 pending intentions alive and consolidates while awake (hippocampal replay), not only in sleep.
-Recordare today encodes on input (idle extraction) and will consolidate at night (M5); a third,
-**resting** mode is missing.
+Recordare today encodes on input (idle extraction) and consolidates at night (M5: daily and monthly digests,
+built); a third, **resting** mode is missing.
 
 **Two modes (D35):** *economy* — gated and budgeted (no new material / no open loops → no call;
 open loops computed deterministically); *full* — no cost ceiling: regular replay of recent and

@@ -2,8 +2,8 @@
 
 Status: **M1 contracts, revision 3** (2026-10-03): consistency + security reviews applied; tables
 of the **public** deployment profile (`API.md` §0, D33) are marked and not built in v1.
-Built (2026-10-07): migrations in `service/src/db/migrations` match this document; tables of the public profile
-are not created, tables marked **created, unused yet** exist without code using them.
+Built (2026-10-08): migrations in `service/src/db/migrations` (initial schema to `ConsentWaiting`) match this document;
+tables of the public profile are not created, tables marked **created, unused yet** exist without code using them.
 Postgres 16 + pgvector ≥ 0.8. Implements D6–D32 (`EPISODIC_MEMORY_TODO.md`), the identity model of
 `API.md` and the vision's provenance / disclosure rules.
 
@@ -12,7 +12,7 @@ Rule for what exists in v1 (D28 refined): **columns on memory rows** that later 
 because adding them later means a backfill. **Whole tables and enum values** that only later
 phases use are deferred — adding them later is purely additive (see the last section).
 
-Conventions: `uuid` v7 primary keys; `timestamptz` everywhere; Postgres enums; memory rows are
+Conventions: `uuid` primary keys (v7 planned; as built `gen_random_uuid()`, v4); `timestamptz` everywhere; Postgres enums; memory rows are
 append + link, never rewritten (D29); `owner_id` on every memory row and every query filtered by
 it; FKs `ON DELETE` behaviour stated per table.
 
@@ -54,7 +54,8 @@ returned only if the viewer set `V` ⊆ `audience` and every viewer's tier ≥ `
 there are no tiers yet, so effectively: **rows are returned only when the viewers are exactly the
 owner**; any other viewer set gets nothing (shared conversations see no diary). Derived rows take
 `audience = ∩ sources`, `disclosure = most restrictive source`; a derived row without sources fails
-closed. Missing and forbidden rows return the same "not found".
+closed. Missing and forbidden rows return the same "not found". The diary routes (`API.md` §4) are owner-direct: the
+reader is the owner in the host's UI, so they return the owner's rows without a viewer set.
 
 **Time.** Dates with coarse precision are stored as the **start of the period in the owner's
 timezone** plus `date_precision` (day → local midnight, month → first day, year → 1 January);
@@ -72,7 +73,8 @@ requested range.
 **Embeddings**: `embedding vector(N)`, `embedding_model text`, `embedding_text text`. N fixed per
 installation (D27). HNSW (`vector_cosine_ops`) queried with `owner_id` filter and pgvector
 iterative scan (`hnsw.iterative_scan = relaxed_order`) so per-owner recall holds in multi-owner
-installs; partition by owner if an install grows large.
+installs; partition by owner if an install grows large. <!-- verify: hnsw.iterative_scan is not set anywhere in
+service/src (main) — not built yet? -->
 
 ## Identity
 
@@ -81,7 +83,7 @@ installs; partition by owner if an install grows large.
 |---|---|---|
 | `id` | uuid | |
 | `owner_scope` | uuid null → owners | **null for owners themselves; set for contacts** — a contact belongs to one owner's memory, never shared across owners |
-| `display_name` | text | |
+| `display_name` | text | An owner auto-provisioned by a client is first named after the client's user id; the client then keeps it in sync (`PATCH api/v1/me`) |
 | `kind` | enum `human \| entity` | `entity` (D48): an owner that is a shared device, robot or place — an **entity memory** everyone using the account reads and writes. `synthetic` (research simulator) added with track R |
 | `created_at` | timestamptz | |
 
@@ -98,10 +100,10 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 |---|---|---|
 | `person_id` | uuid PK → persons | |
 | `email` | text unique null | Owner login (magic link, `API.md` §1) — used by the public profile only |
-| `locale`, `timezone` | text | |
-| `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
+| `locale`, `timezone` | text | Defaults `it`, `Europe/Rome`; the admin API accepts `it` / `en`. The locale only formats dates and recall notices: the deterministic language helpers (periods, months, relations, owner naming — `service/src/lang`, 25 most used languages) apply all languages at once |
+| `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token); v1 as built: by the admin (`episodic_enabled_by = 'admin'`), never by a client key |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
-| `ingest_refused_at` | timestamptz | Last time a client sent messages while consent was off (nothing stored); the admin console shows "waiting for consent" |
+| `ingest_refused_at` | timestamptz null | Last time a client sent messages while consent was off (nothing stored); the admin console shows "waiting for consent" (`waitingForConsentSince`) while consent stays off (WORK_PLAN 6.6b) |
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
@@ -125,13 +127,16 @@ the owner's clients; raw chats are not, unless the owner widens it).
 
 ### access_tokens and oauth_clients (oauth parts: public profile)
 `access_tokens(id, owner_id, client_id, kind enum (personal|oauth_access|oauth_refresh), prefix,
-hash, scopes text[], created_at, expires_at, last_used_at, revoked_at)`;
+hash, scopes text[], created_at, expires_at, last_used_at, revoked_at)` — as built the `kind` enum holds only
+`personal` (the OAuth values come with the public profile);
 `oauth_clients(id, client_id, redirect_uris text[], registered_at)` (MCP dynamic registration).
 
 ### external_identities
 `id, owner_scope null, person_id, kind enum (client_user|channel), client_id null, channel text
 null, external_id, verified_at null, created_at`; unique `(kind, client_id, external_id)` and
-`(owner_scope, kind, channel, external_id)` — channel bindings of contacts are scoped to one owner's
+`(owner_scope, kind, channel, external_id)` (as built: partial unique indexes `(client_id, external_id) WHERE kind =
+'client_user'` and `(owner_scope, channel, external_id) WHERE kind = 'channel'`, a null `owner_scope` counting as one
+value) — channel bindings of contacts are scoped to one owner's
 memory (client A cannot attach owner B's Telegram id to A's memories). Only verified bindings
 identify interlocutors and enter `audience`.
 
@@ -176,7 +181,7 @@ joined_at` — source of every row's `audience` and of the viewer set for reads 
 | `extracted_run_id` | uuid null → extraction_runs | **null = pending extraction**; the idle / nightly jobs take pending messages by `sent_at`, so late-arriving messages (imports, out-of-order batches) are never skipped |
 | `edited_at` | timestamptz null | Previous text in `message_revisions(message_id, content, replaced_at)` |
 | `tsv` | tsvector | Generated `to_tsvector('simple', content)`, GIN (the `unaccent` extension is created but not used yet) |
-| `embedding` | vector(N) null | Raw-log fallback only (D13), lazy |
+| `embedding` | vector(N) null | Raw-log fallback only (D13); computed asynchronously after ingest, for non-assistant messages |
 
 ## Layer 1 — episodes
 
@@ -202,7 +207,7 @@ joined_at` — source of every row's `audience` and of the viewer set for reads 
 | `linked_notes` | text[] | External refs to semantic notes (A-MEM ids while it lives in the client — D19, D31) |
 | `access_count`, `last_accessed_at` | int, timestamptz | Ranking only |
 | *provenance*, *disclosure*, *embedding* | | |
-| `deleted_at` | timestamptz null | Forgetting in progress (purged by job) |
+| `deleted_at` | timestamptz null | Forgetting in progress (purged by job). As built forgetting deletes the rows at once and the column is never set (reads still filter on it) |
 
 Indexes: `(owner_id, occurred_at) WHERE deleted_at IS NULL AND invalidated_at IS NULL AND
 duplicate_of IS NULL`, `(owner_id, kind, plan_status)`, HNSW `embedding`, GIN `tags`, `keywords`,
@@ -213,7 +218,7 @@ FTS on `content`.
 quote text null, created_at` — every episode has ≥ 1 row; the quote is validated in code against
 the message before insert (D29). `agent_paraphrase` = basic-level `log_episode` without a
 user message to cite (the agent's wording, kept distinguishable). Late binding: a full-level
-`log_episode` whose conversation message has not arrived yet gets its evidence row when it lands.
+`log_episode` whose conversation message has not arrived yet gets its evidence row when it lands (not built yet).
 
 ### episode_people
 `episode_id (CASCADE), alias text, person_id null, role text null`
@@ -301,7 +306,9 @@ Semantic notes: who the owner is, beyond state slots.
 `note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`;
 `note_changes(seq bigserial, owner_id, note_id uuid, change enum (created|updated|corrected|
 confirmed|forgotten), at)` — the change feed clients use to keep copies aligned (forgotten notes are
-purged, the feed keeps only their id).
+purged, the feed keeps only their id). As built the extraction writes `created` / `updated` / `corrected` and
+`remember` writes `created`; deleting, confirming or rejecting a note through the read API (`API.md` §4) writes no entry,
+and the feed route (`GET api/v1/notes/changes`) is not built yet.
 
 ## Engine bookkeeping
 
@@ -318,8 +325,9 @@ cached_input_tokens, output_tokens, latency_ms, status, created_at` — no promp
 text stored. Aggregated per owner / client / day for budgets and the CI cost gate.
 
 ### recall_log
-`id bigserial, owner_id CASCADE, tool, mode null, items, conversation_id null → conversations (SET NULL), served_at` —
-one row per recall served (`search_episodes`, `search_memory`), metadata only: never the query, never the memories;
+`id bigserial, owner_id → persons (CASCADE), tool, mode null, items, conversation_id null → conversations (SET NULL),
+served_at` — one row per recall served (`search_episodes`, `search_memory`, a pre-turn memory-context block:
+`memory_context`), metadata only: never the query, never the memories;
 `conversation_id` tells the extraction which conversations had a recall served (recall-echo guard, D38). Lifetime totals for the operators' dashboard;
 the public profile's `read_audit` (below) extends it with client, viewers and returned row ids.
 
@@ -337,9 +345,11 @@ configurable.
 
 ## Forgetting and deletion (D16)
 
-Built (2026-10-07): forget an episode (MCP `forget_episode`) and the synchronous message / conversation purge.
-Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of facts on forgotten evidence, deletion of episodes left
-without evidence.
+Built (2026-10-08): forget an episode (MCP `forget_episode`, `DELETE api/v1/episodes/{id}`), the synchronous message
+/ conversation purge, and deleting a fact or a note from the diary (`DELETE api/v1/facts/{id}` / `notes/{id}`, also a
+rejected pending one: the row and its evidence are deleted, no tombstone — <!-- verify: a deleted fact / note can be
+extracted again from the same messages; intended? -->). Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of
+facts on forgotten evidence, deletion of episodes left without evidence.
 
 - **Forget an episode**: tombstone + delete the episode, its evidence rows, people, plan events,
   promotions referencing it; the correction chain (`corrects` in both directions) is forgotten

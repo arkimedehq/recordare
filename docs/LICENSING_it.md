@@ -2,9 +2,10 @@
 
 *Traduzione italiana di [LICENSING.md](LICENSING.md) — la versione inglese è quella di riferimento.*
 
-Recordare è sotto licenza **AGPL-3.0** (`LICENSE`). Tutto ciò che prendiamo da altre fonti deve essere
-compatibile con essa e con un possibile servizio commerciale sopra. Non è consulenza legale: prima di un rilascio
-pubblico o commerciale, far rivedere a un avvocato questo file e `THIRD_PARTY_NOTICES.md`.
+Recordare è sotto licenza **AGPL-3.0-or-later** (`LICENSE`; intestazioni SPDX nei file sorgente). Tutto ciò che
+prendiamo da altre fonti deve essere compatibile con essa e con un possibile servizio commerciale sopra. Non è
+consulenza legale: Recordare è pubblico dalla v0.1.0 (2026-10-08); prima di un rilascio commerciale, far rivedere a un
+avvocato questo file e `THIRD_PARTY_NOTICES.md` (non ancora fatto: il rilascio pubblico è avvenuto senza; per ora non è previsto alcun uso a pagamento).
 
 ## Regole
 
@@ -41,6 +42,12 @@ pubblico o commerciale, far rivedere a un avvocato questo file e `THIRD_PARTY_NO
    i paper possono descrivere metodi brevettati. Prima di un rilascio commerciale, eseguire una verifica di
    freedom-to-operate sui meccanismi centrali (fatti temporali, ciclo di vita dei piani, filtraggio della divulgazione).
 7. **Ogni riuso viene registrato nel momento in cui avviene** — niente "aggiungeremo l'attribuzione dopo".
+8. **I pacchetti pubblicati portano le loro licenze**: i pacchetti npm (`@arkimedehq/recordare-client`,
+   `@arkimedehq/openclaw-recordare`) e l'immagine del proxy (`ghcr.io/arkimedehq/recordare-openai-proxy`) includono il
+   testo dell'AGPL; un bundle che contiene codice di terzi (il plugin OpenClaw, il proxy) include anche
+   `THIRD_PARTY_LICENSES.txt`, scritto in fase di build dal contenuto del bundle con
+   `connectors/scripts/bundle-licenses.mjs`. Le dipendenze installate, non incluse nel bundle, mantengono i propri file
+   di licenza.
 
 ## Licenze delle fonti note (verificate il 2026-10-02)
 

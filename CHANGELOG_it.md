@@ -41,8 +41,9 @@ README → Limiti).
   a una data, note, piani, e le modifiche della persona (correggere, dimenticare, fissare, confermare, rifiutare).
 - **API admin** e **console admin** (`/admin`): persone, consenso, tipo di memoria, client, chiavi, token.
 - **Libreria client** `@arkimedehq/recordare-client` (`packages/client`): consegna con ritentativi, rubrica delle
-  persone, sessioni MCP, errori RFC 9457; suite di conformità contro il servizio. Pubblicata su npm quando il repository
-  diventa pubblico.
+  persone, sessioni MCP, errori RFC 9457; suite di conformità contro il servizio. Pubblicata su npm
+  (`@arkimedehq/recordare-client`), insieme al plugin OpenClaw (`@arkimedehq/openclaw-recordare`); il proxy compatibile
+  OpenAI come immagine (`ghcr.io/arkimedehq/recordare-openai-proxy`).
 - Contratto di telemetria per la vista dal vivo opzionale **Recordare Atlas** (`arkimedehq/recordare-atlas`, solo
   metadati).
 

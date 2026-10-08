@@ -2,8 +2,11 @@
 
 Standalone memory + **digital twin** service for agentic platforms (MCP + REST ingest + SDK).
 Arkimede (`~/Development/personalAgent`, public mirror `arkimedehq/arkimede`) is the first
-client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done, M5 done or partial, M5b mostly done,
-**M6 in progress** (Arkimede integrated), M7 not started — per-row status in `docs/WORK_PLAN.md`.
+client. Status (2026-10-08): **v0.1.0 released and public** (2026-10-08, private profile; `CHANGELOG.md`): service
+implemented (`service/`): M0–M4b done, M5 done or partial (5.7 memory context in progress), M5b mostly done, M6 mostly
+done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 criteria met — per-row status in
+`docs/WORK_PLAN.md`. Published: npm `@arkimedehq/recordare-client` and `@arkimedehq/openclaw-recordare` (0.1.0), image
+`ghcr.io/arkimedehq/recordare-openai-proxy`; GitHub Sponsors (`.github/FUNDING.yml`).
 
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
@@ -18,13 +21,17 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
   `REASONING_OFF_BODY`).
 - `docs/API.md`, `docs/DATA_MODEL.md` — contracts: identity / auth (D24), REST ingest, MCP tools as built
   (`search_episodes`, `search_memory` — notes + facts with `as_of`, `resolve_period`, `log_episode`, `remember`,
-  `correct_episode`, `forget_episode`; `search_facts` planned), viewer context on every read; read API (§4), SDK and
-  OpenAPI **not built yet**; data model v1. **D33**: build only the v1
+  `correct_episode`, `forget_episode`; `search_facts` planned), viewer context on every read; memory context
+  `POST api/v1/context`; read API (§4) built; client library (§5) built as `packages/client`; OpenAPI **not built yet**;
+  data model v1. **D33**: build only the v1
   home / research profile; public-profile hardening is specified but deferred (stay on the twin).
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 with done / partial / TODO per row, watch list, open D26,
   evaluation budget rules 1–9.
 - `docs/INTEGRATION.md` — the client-platform guide (set-up, consent with the admin, people, outbox ingest, MCP with
   the conversation header, telemetry).
+- `connectors/*/README.md` — the full-level connectors (Claude Code, Codex, OpenClaw, Hermes Agent, OpenAI-compatible
+  memory proxy); `docs/connectors/` — research notes on the target platforms; WORK_PLAN 6.6 / 6.6b.
+- `CHANGELOG.md` — release notes (Keep a Changelog, SemVer 0.x).
 - `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H12) with literature verdicts: phase 1 is
   mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), owner vs
   twin provenance (H3). Never claim novelty without re-checking it.
@@ -44,11 +51,13 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 ## Conventions (the owner's preferences — follow them)
 - Chat with the owner in **Italian**; code comments and dev-facing docs in **English**.
 - **Bilingual docs** (owner's rule 2026-10-07): every project document (`README.md`, `service/README.md`, `docs/*.md`,
-  `docs/literature/*.md`) has an Italian copy next to it, `<name>_it.md`; the English one is the reference. Any change
+  `docs/literature/*.md`, `docs/connectors/*.md`, `connectors/*/README.md`, `packages/client/README.md`,
+  `CHANGELOG.md`) has an Italian copy next to it, `<name>_it.md`; the English one is the reference. Any change
   to an English document updates its `_it.md` in the same commit. Not translated: `CLAUDE.md` and the evaluation
   artefacts (`spikes/**`: RESULTS, GOLD_AUDIT, dataset READMEs).
 - Commits as the owner (`andreagenovese <info@rstonline.it>`), **no Claude/Anthropic trailers**.
-- **Ask before any push / publish** (repo is private for now).
+- **Ask before any push / publish** (the repositories are public since v0.1.0; so are the npm packages and the proxy
+  image — a release, tag, npm publish or image push always needs the owner's OK).
 - Substantial work on a dedicated branch, merge `--no-ff` after the owner's OK; small obvious
   fixes directly on `main`. Delete merged branches.
 - Never break existing behaviour: enumerate call sites, prefer additive changes, test old and new.
@@ -98,13 +107,19 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
   SDK, RFC 9457, Retry-After, W3C trace context); no host-specific code. Checks: `npm run typecheck`, `npm test` in
   `packages/client`; the conformance suite runs it against the service (`service/test/conformance`, needs `npm ci` in
   `packages/client` first).
-- Arkimede uses a synced copy (`packages/client/scripts/sync-to.sh ../personalAgent/backend/src/recordare/client`):
-  never edit the copy; change the library, sync, commit in both repos.
+- Published on npm (0.1.0); Arkimede still uses a synced copy
+  (`packages/client/scripts/sync-to.sh ../personalAgent/backend/src/recordare/client`) until it switches to the
+  package: never edit the copy; change the library, sync, commit in both repos.
+
+## Connectors (`connectors/`)
+- Claude Code plugin, Codex (hooks + MCP installer), OpenClaw plugin (npm `@arkimedehq/openclaw-recordare`), Hermes
+  Agent memory provider (Python), OpenAI-compatible memory proxy (image built by `.github/workflows/proxy-image.yml`
+  on `v*` tags). TypeScript connectors build on `packages/client`; CI typechecks, tests and builds them.
+- The Claude Code / Codex hook script is shared: the two copies stay byte-identical (`connectors/check-shared.sh`).
+- Bundles ship `THIRD_PARTY_LICENSES.txt` (`connectors/scripts/bundle-licenses.mjs`, `docs/LICENSING.md` rule 8).
 
 ## Related repos
 - `~/Development/recordare-atlas` (`arkimedehq/recordare-atlas`) — optional live brain view (D42).
-- `~/Development/talkiosk` — home voice device talking to Arkimede, continuous listening into each person's memory
-  (D45, design in its `docs/DESIGN.md`).
 
 ## Arkimede facts relevant here
 - Embeddings: Arkimede now runs **BAAI/bge-m3** (1024 dims) in its own `embedding-service`;
@@ -119,6 +134,7 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md` (M6 status line; connectors last, owner's decision): 5.7 ideas (each measured) → 4.7 read API
-(+ Arkimede Diary 6.3) → 4.8 fresh blind dataset (and a blind entity-memory set) → 4.10 → 6.6 connectors (on
-`packages/client`).
+Follow `docs/WORK_PLAN.md`: 5.7 memory context **in progress** (it misses questions with instruction suffixes, other
+languages or periods — 6.6b (8); each change measured) → 4.12 keep the output of extractions that write nothing → 4.10
+news received as a memory → the rest of 6.6b and the open rows (D34 A-MEM toggle split, 5.8 decision model, entity
+memory on a new blind set). <!-- verify: order after 4.10 not fixed in WORK_PLAN -->

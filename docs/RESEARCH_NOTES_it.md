@@ -2,7 +2,8 @@
 
 *Traduzione italiana di [RESEARCH_NOTES.md](RESEARCH_NOTES.md) — la versione inglese è quella di riferimento.*
 
-Stato: **registro aperto** (avviato il 2026-10-02). Dove Recordare potrebbe contribuire con qualcosa di nuovo alla
+Stato: **registro aperto** (avviato il 2026-10-02; stati verificati su `spikes/memory-eval/RESULTS.md` il
+2026-10-08, dopo il rilascio della v0.1.0). Dove Recordare potrebbe contribuire con qualcosa di nuovo alla
 memoria degli agenti, oltre all'integrazione di idee note. Ogni ipotesi ha: l'affermazione (ristretta dopo la
 revisione della letteratura), il lavoro precedente più vicino, un verdetto, come la misureremmo e che cosa
 il modello dati della fase 1 deve già memorizzare perché l'esperimento resti possibile senza migrazioni.
@@ -26,10 +27,10 @@ provenienza proprietario vs twin e piani utente irrisolti.
 | H4 | Modalità legacy come meccanismi applicabili (persona congelata, macchina a stati dell'esecutore, azioni pre-autorizzate) | Principi fatti; ingegneria aperta | 8 |
 | H5 | Memoria attenta ai costi (gate, costo per elemento) | Già fatta / affollata — solo ingegneria | 1 |
 | H6 | Metodo di valutazione: set held-out cieco scritto da un agente separato; artefatti di giudice troppo severo | Parzialmente nuova, modesta (appendice metodi) | 1 |
-| H7 | Distillare il motore di estrazione in un piccolo modello locale chiude gran parte del divario dei modelli locali | Da testare (ipotesi di ingegneria) | dopo M4 |
+| H7 | Distillare il motore di estrazione in un piccolo modello locale chiude gran parte del divario dei modelli locali | Da testare (ipotesi di ingegneria); il divario ora è misurato (sotto) | dopo M4 |
 | H8 | Stile del twin: fine-tuning per persona vs recupero few-shot dei messaggi del proprietario | Da testare | 2 |
 | H12 | Pensiero a riposo ("default mode"): un processo in background con budget che rivede gli episodi recenti, li collega, mantiene i cicli aperti (piani irrisolti, promesse), prepara domande / proposte e aggiorna il self-model migliora recall e iniziativa senza confabulazione | Da progettare con M5 / traccia R | 5 / R |
-| H11 | Retrieval oltre il singolo embedding: reranking con cross-encoder, vettori sparsi bge-m3, un indice persone / entità migliorano il recall su negazioni, dettagli esatti e "tutto su X" | Da testare (ingegneria) | 1 / 3 |
+| H11 | Retrieval oltre il singolo embedding: reranking con cross-encoder, vettori sparsi bge-m3, un indice persone / entità migliorano il recall su negazioni, dettagli esatti e "tutto su X" | Da testare (ingegneria); misurate correzioni del recall e un ramo per le persone, reranker / vettori sparsi non ancora | 1 / 3 |
 | H10 | Evoluzione autonoma: un twin libero nel pensiero e nell'azione si allontana dal proprietario in modi misurabili; vite partite dallo stesso inizio divergono | Da rivedere (letteratura non ancora cercata) | R |
 | H9 | Twin come compagno riflessivo del proprietario (dialogo con se stessi; non accondiscendente, evidenze dai propri ricordi) | Da rivedere (letteratura non ancora cercata) | 4 |
 
@@ -68,13 +69,16 @@ vs cambiamento, domande bi-temporali "come detto" vs "come vero". Metriche: valu
 (corretto / obsoleto-o-assunto / astenuto), **tasso di asserzioni ingiustificate**, **tasso di
 astensione eccessiva**, Set-F1 per le liste, costo per utente. Baseline: contesto completo, RAG semplice, Mem0,
 Zep/Graphiti, Memobase, Letta, A-Mem, un archivio tipizzato in stile PIS. I nostri due dataset contengono già
-i semi di (a)–(d).
+i semi di (a)–(d). Da allora i set ciechi 3–7 contengono categorie sui piani (confermati / annullati / spostati /
+irrisolti, trappole di premessa) e il servizio è misurato su di esse (RESULTS.md); il confronto con le baseline qui
+sopra su queste categorie resta da fare.
 
 **Il modello dati della fase 1 deve memorizzare.** Stato del piano `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, data dello stato, episodio di evidenza); tipo di episodio
 `event | plan | state-change`; fatti con tempo del mondo (`validFrom` / `validTo`) **e**
 tempo della conoscenza (`recordedAt` / `expiredAt`); `corrects` (mai stato vero) distinto da `supersedes`
-(vero fino a t).
+(vero fino a t). — Realizzato nella fase 1 (`plan_status` con questi valori, `corrects` / `supersedes`, fatti
+bi-temporali).
 
 ## H2 — Memoria consapevole della disclosure per un twin personale
 
@@ -118,7 +122,9 @@ Punto debole da misurare: **accuratezza dell'etichettatura in fase di scrittura*
 **Il modello dati della fase 1 deve memorizzare.** `people` sugli episodi (D21) con id di persona risolti in seguito;
 `source` di ogni ricordo (chi l'ha raccontato, in quale conversazione, con quale pubblico presente);
 una colonna etichetta `disclosure` (default `owner`) su episodi, fatti e digest; gli artefatti derivati
-conservano gli id delle loro fonti così le etichette possono propagarsi.
+conservano gli id delle loro fonti così le etichette possono propagarsi. — Realizzato nella fase 1: colonne
+`disclosure` (default `owner`) e `audience`; le letture seguono una regola sul lettore (ciò che si dice in una
+conversazione con altri partecipanti non trapela verso di loro). I tier non sono ancora usati (fase 3).
 
 ## H3 — Source monitoring: vissuto dal proprietario vs vissuto dal twin
 
@@ -138,7 +144,10 @@ Johnson, Hashtroudi & Lindsay 1993 (source monitoring, classico).
 proprietario); tasso di contenuto vissuto-dal-twin affermato come del proprietario; accuratezza dei digest del proprietario.
 
 **Il modello dati della fase 1 deve memorizzare.** `origin: owner_lived | owner_told | twin_experienced` su ogni
-episodio / fatto (la fase 1 scrive solo i primi due) e l'interlocutore della conversazione.
+episodio / fatto (la fase 1 scrive solo i primi due) e l'interlocutore della conversazione. — Realizzato: la fase 1
+scrive `owner_lived`, `owner_told` e `assistant_stated` (turni dell'assistente, D30); `twin_experienced` attende le
+fasi 3–4.
+<!-- verify: the origin enum has no `twin_experienced` value yet (InitialSchema) — added when the twin speaks to others -->
 
 ## H4 — Modalità legacy
 
@@ -167,13 +176,18 @@ gold sbagliate, giudici indulgenti; Thakur et al. arXiv:2406.12624 [S]; MemDelta
 modesta: il **set held-out cieco scritto da un agente separato** che non ha mai visto i prompt, e
 l'artefatto del **giudice troppo severo** (regole must-not che penalizzano risposte corrette), l'opposto della
 consueta indulgenza. Misurare i falsi negativi del giudice rispetto a etichette umane; più seed; baseline a
-contesto completo e grep / RAG. Appendice metodi, non un titolo principale.
+contesto completo e grep / RAG. Appendice metodi, non un titolo principale. — Applicato nella fase 1: set ciechi 3–8
+scritti e riletti da agenti separati, 3 run ciascuno con bootstrap appaiato; un set già visto sovrastimava il servizio
+(blind3 post-hoc 94,9 % → blind4 nuovo 80,8 %), ed è questa l'evidenza a favore del metodo (RESULTS.md).
 
 ## H7 — Modello di estrazione locale distillato
 
 **Affermazione.** Un modello aperto da 4–8 B con fine-tuning (LoRA) sugli output di estrazione di un modello più forte
 (insegnante: il modello cloud certificato) recupera la maggior parte dei 12–23 punti che `qwen3:8b` locale
-perde sulla suite di valutazione, a costo zero per chiamata e con i dati che restano in locale.
+perde sulla suite di valutazione, a costo zero per chiamata e con i dati che restano in locale. Misurato poi sul
+servizio (blind3, 1 run ciascuno, RESULTS.md 4b.4): `qwen3:8b` 59,7 %, Qwen3.5-9B 73,6 %, gpt-oss 20B 83,3 % contro circa
+il 95 % di `deepseek-flash` — un divario più ampio di quello dello spike, dovuto soprattutto a copertura dell'estrazione
+e date, non alla validità del JSON.
 
 **Prerequisiti.** Schema di estrazione stabile (dopo M4); dati di addestramento solo sintetici o
 con consenso; logging per run degli input / output di estrazione (M3–M4). **Misura**: suite di valutazione
@@ -231,12 +245,20 @@ fonde full-text + vettori; lo spike ha mostrato che la struttura conta più del 
 **Misura:** recall@k degli episodi gold e accuratezza QA per categoria (negazione / dettaglio / persone),
 latenza e costo; adottare solo con un guadagno significativo a latenza accettabile.
 
+**Misurato finora (RESULTS.md):** il primo passo non è stata una nuova rappresentazione ma la politica di recall
+(prima gli episodi pertinenti, estratti di chat mantenuti, elenchi per periodo): blind4 da 80,8 % a 86,9 % (1 run),
+confermato su un blind5 nuovo all'89,2 % (3 run, entro il rumore rispetto al prototipo D). Una forma leggera del
+candidato 3 — le persone nominate da una domanda, per nome o per relazione, aggiungono i propri messaggi, senza
+chiamate LLM — ha portato la categoria di blind6 "messaggi rivolti all'assistente da altri" da 0,25 a 0,62 (1 run) ed
+è stata mantenuta. I candidati 1, 2 e 4 non sono ancora misurati.
+
 ## H12 — Pensiero a riposo ("la mente non si ferma mai")
 
 **Ispirazione.** Quando non siamo concentrati su un compito, la default mode network del cervello rivive
 i ricordi autobiografici, li collega, simula il futuro, pensa a sé e agli altri, mantiene vive le
 intenzioni pendenti e consolida da svegli (replay ippocampale), non solo nel sonno.
-Oggi Recordare codifica in ingresso (estrazione idle) e consoliderà di notte (M5); manca una terza
+Oggi Recordare codifica in ingresso (estrazione idle) e consolida di notte (M5: digest giornalieri e mensili,
+realizzati); manca una terza
 modalità, **a riposo**.
 
 **Due modalità (D35):** *economy* — con gate e budget (nessun materiale nuovo / nessun ciclo aperto → nessuna chiamata;

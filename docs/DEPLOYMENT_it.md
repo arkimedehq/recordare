@@ -15,8 +15,8 @@ Recordare richiede:
 ## Installare con gli script (`deploy/`)
 
 ```sh
-deploy/install.sh            # asks the profile (standalone | cohosted), the LLM provider and key; writes deploy/.env (600)
-deploy/update.sh             # backup, rebuild on the current code, restart (migrations run at start)
+deploy/install.sh            # asks the profile (standalone | cohosted), the LLM provider and key, the port and LAN access; writes deploy/.env (600)
+deploy/update.sh             # backup, git pull (in a clone), rebuild, restart (migrations run at start)
 deploy/backup.sh             # dump of Recordare's database into deploy/backups/ (keeps the last 14)
 ```
 
@@ -46,7 +46,7 @@ pesante, quindi condividere l'embedder è il risparmio maggiore.
 
 | Servizio | Come è condiviso | Impostazioni di Recordare |
 |---|---|---|
-| Postgres | Stesso server, **database proprio e utente proprio**. Il Postgres di Arkimede deve usare l'immagine `pgvector/pgvector:pg16` (default di Arkimede da quella modifica in poi; un'installazione esistente passa con lo script di aggiornamento di Arkimede, che ricostruisce gli indici di testo per il passaggio musl → glibc) | `DATABASE_URL=postgres://recordare:<pw>@postgres:5432/recordare` |
+| Postgres | Stesso server, **database proprio e utente proprio**. Il Postgres di Arkimede deve usare un'immagine `pgvector/pgvector` (`pg16`: default di Arkimede da quella modifica in poi; un'installazione esistente passa con lo script di aggiornamento di Arkimede, che ricostruisce gli indici di testo per il passaggio musl → glibc) | `DATABASE_URL=postgres://recordare:<pw>@postgres:5432/recordare` |
 | Redis | Stessa istanza, **database logico proprio** e prefisso di coda proprio | `REDIS_URL=redis://redis:6379/1`, `QUEUE_PREFIX=recordare` |
 | Embedding | L'`embedding-service` di Arkimede, **solo se serve il modello che usa Recordare** (`BAAI/bge-m3`, 1024 dimensioni — il modello con cui Recordare è stato misurato; default di Arkimede) | `EMBEDDING_BASE_URL=http://embedding:8000/v1`, `EMBEDDING_MODEL=BAAI/bge-m3`, `EMBEDDING_DIM=1024` |
 
@@ -79,3 +79,8 @@ Recordare ascolta su `127.0.0.1` per impostazione predefinita: aprila sulla LAN 
 `deploy/.env` (ogni rotta della API richiede comunque una chiave), oppure raggiungila con un tunnel SSH
 (`ssh -L 8090:127.0.0.1:8090 <server>`). In HTTP semplice la chiave admin attraversa la rete in chiaro: solo su una rete di
 casa fidata, oppure mettici davanti HTTPS.
+
+**Connettori** (`connectors/`): girano dal lato della piattaforma di agenti, non qui; l'unico che è un servizio a sé è
+il proxy di memoria compatibile OpenAI (immagine `ghcr.io/arkimedehq/recordare-openai-proxy`, amd64 + arm64), da mettere
+sulla rete privata della piattaforma, accanto a essa (`connectors/openai-proxy/compose.example.yml`). Impostazioni:
+`docs/KNOBS_it.md` §8b.

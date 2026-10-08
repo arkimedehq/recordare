@@ -28,7 +28,7 @@ know.
 | `work.started` / `work.finished` | `op` (`embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`), `id` (pairs them) / `ms` | work without an LLM call starts / ends |
 | `memory.written` | `runId`, `table` (`episodes`, `facts`, `notes`), `id`, `kind`, `authorRole`, `importance`, `corrects` | a memory row written |
 | `episode.linked` | `relation` (`duplicate`, `corrects`), `from`, `to` | the resolver linked two episodes |
-| `recall.served` | `tool`, `mode`, `episodeIds`, `claimIds`, `chats`, `digests`, `facts`, `notes` | a recall answered |
+| `recall.served` | `tool` (an MCP tool, or `memory_context` for the pre-turn block, only when it is not empty), `mode`, `episodeIds`, `claimIds`, `chats`, `digests`, `facts`, `notes` | a recall answered |
 | `digest.written` | `level` (`day`, `month`), `period`, `sources` | a nightly diary written |
 | `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | an owner's consolidation ends |
 | `episode.forgotten` | `ids` | episodes forgotten |

@@ -36,7 +36,9 @@ First public release: the **private profile** (an installation run by someone it
   and the person's edits (correct, forget, pin, confirm, reject).
 - **Admin API** and **admin console** (`/admin`): people, consent, memory kind, clients, keys, tokens.
 - **Client library** `@arkimedehq/recordare-client` (`packages/client`): delivery with retries, people directory, MCP
-  sessions, RFC 9457 errors; conformance suite against the service. Published on npm after the repository goes public.
+  sessions, RFC 9457 errors; conformance suite against the service. Published on npm
+  (`@arkimedehq/recordare-client`), with the OpenClaw plugin (`@arkimedehq/openclaw-recordare`); the OpenAI-compatible proxy
+  as an image (`ghcr.io/arkimedehq/recordare-openai-proxy`).
 - Telemetry contract for the optional live view **Recordare Atlas** (`arkimedehq/recordare-atlas`, metadata only).
 
 ### Installation

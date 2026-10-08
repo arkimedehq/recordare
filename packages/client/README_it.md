@@ -8,6 +8,8 @@ costruita sugli standard, così è l'host ad adattarsi: MCP con l'SDK ufficiale 
 details RFC 9457, `Retry-After` (RFC 9110) rispettato, contesto di traccia W3C inoltrato, `fetch` nativo (l'host può
 passarne una sua, ad esempio con una politica sugli host in uscita). Nessun codice specifico di un host.
 
+Su npm da Recordare v0.1.0: `npm install @arkimedehq/recordare-client` (Node ≥ 20, modulo ES).
+
 ```ts
 import { PersonDirectory, RecordareClient, afterFailure } from '@arkimedehq/recordare-client';
 
@@ -33,7 +35,8 @@ const next = afterFailure(err, attempts);                 // { action: 'retry', 
 
 ## Prima di ogni turno, e alla fine
 `contextWithTurn(user, turn)` salva il turno e restituisce il suo contesto di memoria in una sola andata e ritorno
-(`{block, items}`, il blocco da aggiungere in coda al prompt di sistema); `endConversation(user, conversation)` dice a
+(`{block, items}`, il blocco da aggiungere in coda al prompt di sistema; `context(user, conversation, query)` quando il
+turno è già salvato); `endConversation(user, conversation)` dice a
 Recordare che una conversazione è finita (sessione chiusa, /new), così l'estrazione parte subito. `TOOLS` contiene gli
 schemi degli strumenti MCP che il servizio offre (nome, titolo, descrizione, JSON Schema), per gli host che devono
 dichiarare gli strumenti prima di collegarsi; la suite di conformità li tiene allineati al servizio.
@@ -53,10 +56,10 @@ volta sola, nulla conservato prima del consenso, le cancellazioni si propagano, 
 richiamo via MCP porta l'utente e la conversazione. I controlli di tipo lì fanno fallire la build se questo contratto si
 allontana dagli schemi del servizio.
 
-## Host che non possono ancora installare il pacchetto
-Recordare non è pubblicato: `scripts/sync-to.sh <dir>` copia i sorgenti nel repository dell'host con un'intestazione che
-indica il commit di origine (Arkimede: `backend/src/recordare/client/`). L'host non li modifica mai; si cambia la
-libreria qui e si sincronizza di nuovo. Quando Recordare sarà pubblicato l'host passerà al pacchetto npm cambiando solo
+## Copia sincronizzata (Arkimede)
+Arkimede usa ancora una copia dei sorgenti invece del pacchetto npm: `scripts/sync-to.sh <dir>` copia i sorgenti nel
+repository dell'host con un'intestazione che indica il commit di origine (Arkimede: `backend/src/recordare/client/`).
+L'host non li modifica mai; si cambia la libreria qui e si sincronizza di nuovo. Passare al pacchetto npm cambia solo
 gli import.
 
 ## Sviluppo
