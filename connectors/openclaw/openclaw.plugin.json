@@ -1,0 +1,53 @@
+{
+  "id": "recordare",
+  "name": "Recordare",
+  "description": "Long-term episodic memory kept by your own Recordare service: capture, recall before each turn, memory tools.",
+  "categories": ["memory"],
+  "activation": { "onStartup": true },
+  "contracts": {
+    "tools": [
+      "recordare_search_episodes",
+      "recordare_search_memory",
+      "recordare_resolve_period",
+      "recordare_remember",
+      "recordare_correct_episode",
+      "recordare_forget_episode"
+    ]
+  },
+  "toolMetadata": {
+    "recordare_remember": { "sideEffecting": true },
+    "recordare_correct_episode": { "sideEffecting": true },
+    "recordare_forget_episode": { "sideEffecting": true }
+  },
+  "uiHints": {
+    "url": { "label": "Recordare URL", "placeholder": "http://localhost:8080", "help": "Address of your Recordare service" },
+    "apiKey": {
+      "label": "API key or personal token",
+      "sensitive": true,
+      "placeholder": "rk_… or rp_…",
+      "help": "A client key (several people, needs scopes ingest, mcp, read) or a personal token (one person)"
+    },
+    "users": { "label": "People", "help": "\"<channel>:<senderId>\" → Recordare user (e.g. \"telegram:123456\": \"alice\")" },
+    "defaultUser": { "label": "Default user", "help": "Recordare user for turns without a channel sender (CLI, Control UI)" },
+    "autoRecall": { "label": "Recall before each turn", "help": "Add the relevant memories before the agent answers" },
+    "capture": { "label": "Capture", "help": "Send the conversations to Recordare" },
+    "tools": { "label": "Memory tools", "help": "Offer the recordare_* tools to the agent" },
+    "groups": { "label": "Group chats", "help": "Capture the turns of mapped people in groups too", "advanced": true },
+    "timeoutMs": { "label": "Timeout before the turn (ms)", "placeholder": "3000", "advanced": true }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "url": { "type": "string" },
+      "apiKey": { "type": "string" },
+      "users": { "type": "object", "additionalProperties": { "type": "string" } },
+      "defaultUser": { "type": "string" },
+      "autoRecall": { "type": "boolean" },
+      "capture": { "type": "boolean" },
+      "tools": { "type": "boolean" },
+      "groups": { "type": "boolean" },
+      "timeoutMs": { "type": "integer", "minimum": 500, "maximum": 14000 }
+    }
+  }
+}
