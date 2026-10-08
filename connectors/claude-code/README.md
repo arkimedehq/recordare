@@ -27,8 +27,9 @@ Recordare is down, the turn goes on without memory.
    system keychain).
 3. Requires Node.js ≥ 18 on the PATH (the hooks are a small dependency-free script).
 
-Alternative to the options (e.g. for `claude -p` or CI): `RECORDARE_URL` and `RECORDARE_TOKEN` in the environment are
-used by the hooks; the MCP tools need the plugin options.
+Alternative to the options (e.g. for `claude -p` or CI): `RECORDARE_URL` and `RECORDARE_TOKEN` in the environment, or
+the file `~/.config/recordare/claude-code.json` (`{"url", "token"}`, mode 600), are used by the hooks; the MCP tools
+need the plugin options.
 
 ## How it maps
 
@@ -37,6 +38,9 @@ used by the hooks; the MCP tools need the plugin options.
 | session | conversation `claude-code:<session id>` (channel `claude-code`, title = project folder) |
 | your prompt / Claude's answer | messages `user` / `assistant` (tool calls and sub-agents are not sent) |
 | end of session | `conversationEnded` → extraction now instead of after the idle delay |
+
+The hook script (`scripts/recordare-hook.mjs`) is shared with the [Codex connector](../codex/README.md); the two copies
+must stay byte-identical (`connectors/check-shared.sh`, run in CI): edit one, copy it to the other.
 
 Test without installing: `RECORDARE_URL=… RECORDARE_TOKEN=rp_… claude -p --plugin-dir connectors/claude-code "…"`.
 

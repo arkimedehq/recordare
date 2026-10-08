@@ -61,3 +61,14 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  connectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # The Claude Code and Codex connectors share one hook script (two byte-identical copies).
+      - run: sh connectors/check-shared.sh
+      - run: bash -n connectors/codex/install.sh
