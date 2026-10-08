@@ -26,15 +26,13 @@ Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 
 ## Installazione
 
-1. Compila il plugin (la build include la libreria client di Recordare; nulla da installare a runtime):
+1. Installalo in OpenClaw (sulla macchina del Gateway) da npm:
    ```
-   cd connectors/openclaw && npm ci && npm run build
+   openclaw plugins install npm:@arkimedehq/openclaw-recordare --accept-capabilities
    ```
-2. Installalo in OpenClaw (sulla macchina del Gateway):
-   ```
-   openclaw plugins install --link /percorso/di/recordare/connectors/openclaw --accept-capabilities
-   ```
-   (`--link` lo lascia puntato alla cartella; senza, OpenClaw lo copia.) Riavvia il Gateway, poi controlla
+2. Oppure da un checkout (sviluppo): `cd connectors/openclaw && npm ci && npm run build`, poi
+   `openclaw plugins install --link /percorso/di/recordare/connectors/openclaw --accept-capabilities` (`--link` lo
+   lascia puntato alla cartella; senza, OpenClaw lo copia). Riavvia il Gateway, poi controlla
    `openclaw plugins inspect recordare --runtime --json` (stato `loaded`, 4 hook, 6 strumenti).
 3. Chiedi all'amministratore di Recordare una credenziale:
    - **una persona** (il tuo assistente): un **token personale** con gli scope `mcp`, `ingest`, `read`

@@ -4,7 +4,15 @@
   "description": "Recordare for OpenClaw: long-term episodic memory kept by your own Recordare service (capture, recall before each turn, memory tools).",
   "license": "AGPL-3.0-or-later",
   "author": "Andrea Genovese",
-  "private": true,
+  "homepage": "https://github.com/arkimedehq/recordare/tree/main/connectors/openclaw#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arkimedehq/recordare.git",
+    "directory": "connectors/openclaw"
+  },
+  "bugs": {
+    "url": "https://github.com/arkimedehq/recordare/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "files": [
@@ -17,9 +25,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --external:openclaw --alias:@arkimedehq/recordare-client=../../packages/client/src/index.ts --outfile=dist/index.js --banner:js=\"import { createRequire as __recordareCreateRequire } from 'node:module'; const require = __recordareCreateRequire(import.meta.url);\"",
+    "build": "rm -rf dist && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --external:openclaw --alias:@arkimedehq/recordare-client=../../packages/client/src/index.ts --metafile=dist/meta.json --outfile=dist/index.js --banner:js=\"import { createRequire as __recordareCreateRequire } from 'node:module'; const require = __recordareCreateRequire(import.meta.url);\" && node ../scripts/bundle-licenses.mjs dist/meta.json dist/THIRD_PARTY_LICENSES.txt && rm dist/meta.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm test"
   },
   "openclaw": {
     "extensions": [
@@ -51,5 +60,8 @@
     "esbuild": "^0.25.0",
     "typescript": "6.0",
     "vitest": "^4.1.11"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

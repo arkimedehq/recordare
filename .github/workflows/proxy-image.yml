@@ -1,0 +1,39 @@
+# Builds the Recordare memory proxy image (connectors/openai-proxy) for amd64 + arm64 and pushes it to GitHub
+# Container Registry: on a release tag (vX.Y.Z → X.Y.Z + latest) or by hand with an explicit version.
+name: proxy-image
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Image version tag (e.g. 0.1.0)
+        required: true
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: v
+        run: |
+          v="${{ inputs.version }}"; [ -n "$v" ] || v="${GITHUB_REF_NAME#v}"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: connectors/openai-proxy/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/arkimedehq/recordare-openai-proxy:${{ steps.v.outputs.version }}
+            ghcr.io/arkimedehq/recordare-openai-proxy:latest

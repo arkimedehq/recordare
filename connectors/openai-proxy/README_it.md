@@ -29,6 +29,8 @@ Il richiamo con **strumenti MCP** non fa parte del proxy: le piattaforme che sup
 
 Node ≥ 20 (locale) o Docker. Build da questa cartella: `npm ci && npm run build && node dist/main.js` (il bundle include
 `packages/client`, compilato dai sorgenti). Docker, dalla radice del repository:
+L'immagine pubblicata è `ghcr.io/arkimedehq/recordare-openai-proxy` (amd64 + arm64, tag `latest` e la versione); oppure,
+dalla radice del repository:
 ```sh
 docker build -f connectors/openai-proxy/Dockerfile -t recordare-openai-proxy .
 ```

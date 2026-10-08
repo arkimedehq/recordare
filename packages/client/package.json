@@ -4,17 +4,38 @@
   "description": "Client library for Recordare, the memory service for agent platforms: identity, consent, ingest, deletions, MCP recall.",
   "license": "AGPL-3.0-or-later",
   "author": "Andrea Genovese",
-  "private": true,
+  "homepage": "https://github.com/arkimedehq/recordare/tree/main/packages/client#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arkimedehq/recordare.git",
+    "directory": "packages/client"
+  },
+  "bugs": {
+    "url": "https://github.com/arkimedehq/recordare/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
-  "files": ["dist", "src", "README.md"],
-  "engines": { "node": ">=20" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "README_it.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.0"
@@ -23,5 +44,8 @@
     "@types/node": "^20.19.43",
     "typescript": "6.0",
     "vitest": "^4.1.11"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
