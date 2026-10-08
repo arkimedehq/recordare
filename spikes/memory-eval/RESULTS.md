@@ -424,6 +424,21 @@ helps but is not asked for (ctx), 2 explicit recalls (rec), 6 with nothing to do
 - Within noise on 15 questions; stays **off by default**. Next: the same run with a less tool-eager model (where the
   benefit is expected), and a blind set before any default change.
 
+**Run 2 — the voice agent's real prompt** (Arkimede's "Voce" agent on Kinox: same model, its own 1.3 k-character
+system prompt via `AGENT_SYSTEM_FILE`; agent, judge and the service's extraction through OpenRouter,
+`~deepseek/deepseek-flash-latest`). 1 run:
+
+| Variant | All | ctx (implicit) | rec | gen (no-harm) | Tool use | Block served |
+|---|---|---|---|---|---|---|
+| tools | 90.0 % | 0.786 | 1.00 | 1.00 | 9 / 15 | — |
+| tools+context | **93.3 %** | **0.857** | 1.00 | 1.00 | **5 / 15** | 8 / 15 |
+
+- With the voice prompt the block **replaces tool calls**: 4 questions answered from the block alone (ctx01, ctx02,
+  ctx07, rec02) — for a voice assistant each avoided round is an LLM call plus an MCP call less before the answer.
+- Accuracy +3.3 pt (ctx06 partial → correct); ctx02 and ctx05 partial in both (short voice answers leave out half of
+  the reference). No harm again: no block on gen questions.
+- Within noise; a measured reason to offer it where latency matters (voice). Still off by default.
+
 ### Entity memory (D48, 2026-10-07, dev set `dataset_dev_entity` — NOT blind, written by the engine developer)
 
 One shared home device (owner `casa`, kind `entity`), 5 sessions, 11 questions: purchases and facts of named family

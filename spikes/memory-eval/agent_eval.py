@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import time
 from collections import defaultdict
 
@@ -61,8 +62,17 @@ def memory_context(token: str, question: dict) -> tuple[str | None, int]:
     return body.get("block"), body.get("items", 0)
 
 
+def system_prompt(question: dict) -> str:
+    """The neutral prompt, or a real agent's prompt (AGENT_SYSTEM_FILE, e.g. a platform's voice agent) plus today's date."""
+    today = fmt_when(question["asked_at"])
+    path = os.getenv("AGENT_SYSTEM_FILE")
+    if path:
+        return f"{open(path, encoding='utf-8').read().strip()}\n\nOggi è {today}."
+    return SYSTEM.replace("TODAY", today)
+
+
 def run_agent(question: dict, token: str, tools: list[dict], with_context: bool) -> dict:
-    system = SYSTEM.replace("TODAY", fmt_when(question["asked_at"]))
+    system = system_prompt(question)
     items = 0
     if with_context:
         block, items = memory_context(token, question)

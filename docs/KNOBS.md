@@ -1,0 +1,116 @@
+# Knobs — every setting in one place
+
+*Italian version: [KNOBS_it.md](KNOBS_it.md).*
+
+Every setting of Recordare, its optional companions and its client side, with where it is set, its default and — for the
+engine's knobs — whether and how it was measured. Cost is the owner's option, never a silent limit (D35); a knob that
+did not show a gain stays off until a measurement says otherwise (evaluation rules, `WORK_PLAN.md`).
+
+## 1. Quality profiles (per installation, per person)
+
+`QUALITY_PROFILE` sets the installation default (`balanced`); each person may have their own (`qualityProfile`, admin
+API or console). A profile only groups knobs; models stay provider configuration (§3).
+
+| Knob | economy | balanced | full | What it does · measured |
+|---|---|---|---|---|
+| `windowChars` | 16 000 | 12 000 | 8 000 | Characters of messages per extraction call (fewer = more calls, finer extraction) · blind3: profiles within noise |
+| `extractionTask` | `extract_economy` | `extract` | `extract` | Which task's model runs the extraction (§3) |
+| `reasoning` | off | off | on | Lets the extraction model reason (slower, more output) |
+| `factsPass` | inline | inline | inline | Facts and notes in the episode call, or a separate call on the `facts` model · blind5 with V4 Pro: no gain, +65 calls |
+| `recentEpisodes` / `relatedEpisodes` | 6 / 6 | 8 / 10 | 12 / 20 | Episodes shown to the extractor (recent + related to the window) |
+| `resolverWindowDays` / `resolverSimilarity` | 3 / 0.7 | 3 / 0.7 | 7 / 0.6 | Near-duplicate candidates (± days, min similarity) |
+| `rawHitsAlongside` | 1 | 3 | 5 | Chat excerpts returned next to matching episodes |
+| `recallDigests` | off | off | off | Nightly diary given to period overviews · blind5 3+3 runs: −1.9 pt, within noise |
+| `factsReview` | off | off | off | Nightly facts review against new episodes · no gain measured |
+| `memoryContext` | off | off | off | Pre-turn memory context block (`POST api/v1/context`, WORK_PLAN 5.7) · dev set: no harm, +3–7 pt, with the voice prompt 9 → 5 tool calls on 15 questions |
+
+Installation overrides of single knobs (they win over every profile): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
+`RECALL_DIGESTS`, `FACTS_REVIEW`, `MEMORY_CONTEXT`.
+
+## 2. Service (`service/.env`, or `deploy/.env` for the installed service)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `DATABASE_URL`, `REDIS_URL` | — | Postgres (pgvector) and Redis |
+| `QUEUE_PREFIX` | `recordare` | Separates installations or evaluation instances on one Redis (rule 9: one instance per queue) |
+| `PORT` | 8080 | HTTP port inside the container |
+| `ADMIN_API_KEY` | — | Admin credential (≥ 32 characters): admin API and console |
+| `ATLAS_URL` | — | Where people open Recordare Atlas; handed to clients in `GET /me` (admins only see it in Arkimede) |
+| `IDLE_DELAY_SECONDS` | 900 | Quiet time before a conversation is extracted (a new message restarts it) |
+| `CONSOLIDATION_SCHEDULE` | on | Nightly consolidation on its own; off = only on demand (evaluations) |
+| `CONSOLIDATION_HOUR` | 3 | Local hour (person's timezone) after which the night runs |
+| `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
+| `LOG_LLM_CALLS` | on | One `llm_calls` row per call (tokens, latency; never content) |
+| `ALLOW_CLOCK_OVERRIDE` | off | Evaluations / tests only: honour `X-Recordare-Now` |
+| `NODE_ENV` | development | — |
+
+## 3. Models and providers (any provider, D27)
+
+| Variable | What it does |
+|---|---|
+| `LLM_PROVIDER` | `openai-compatible` (default), `anthropic`, `claude-cli` (local evaluations only) |
+| `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Default endpoint and model of every task |
+| `LLM_PROFILE` / `LLM_PROFILE_JSON` | Provider profile — how to switch reasoning off, structured output: `generic`, `deepseek`, `openrouter`, `ollama`, `vllm`, `anthropic`, `openai`, or a JSON definition |
+| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Per-task override; tasks: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST` |
+| `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Embedding endpoint (measured with `BAAI/bge-m3`) |
+| `EMBEDDING_DIM` | Fixed per installation (1024 for bge-m3); changing the model needs a re-embed |
+
+Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
+
+## 4. Per person (admin API, console, or the person's platform)
+
+| Setting | Who sets it | Default | What it does |
+|---|---|---|---|
+| `episodicEnabled` (consent) | Recordare admin | off | Until on, ingest stores nothing |
+| `kind` | the person on their platform (only while the memory is empty), or the admin | `human` | `entity` = a memory shared by everyone using the account (D48) |
+| `displayName` | follows the platform's profile (synced) | the client's user id | The person's name |
+| `qualityProfile` | admin | installation default | §1 |
+| `locale`, `timezone` | admin | `it`, `Europe/Rome` | Language of the memories, local dates and the night |
+
+## 5. Per client (admin API or console)
+
+| Setting | Default | What it does |
+|---|---|---|
+| `kind` | — | `platform`, `mcp_client`, `import` |
+| `autoProvision` | off | Create a person at the first contact of a new user |
+| `rawLogScope` | `own` | Raw-log excerpts from this client's conversations only, or all |
+| `disabled` | off | Every key and token of the client stops at once |
+| Key scopes | — | `ingest`, `mcp`, `read`, `write` (never admin, consent or export) |
+
+## 6. Installation scripts (`deploy/`)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `RECORDARE_PORT` | 8090 | Host port of the service |
+| `RECORDARE_BIND` | `127.0.0.1` | `0.0.0.0` opens the API and the admin console on the LAN (every route still needs a key) |
+| `ARKIMEDE_NETWORK` | — | Set by the co-hosted install: the Docker network shared with Arkimede |
+| `LINK_ARKIMEDE` | yes | The installer creates Arkimede's client and writes its `.env` |
+| `KEEP` (backup.sh) | 14 | Database dumps kept |
+
+## 7. Recordare Atlas (`recordare-atlas`, optional)
+
+| Variable | Default | What it does |
+|---|---|---|
+| `RECORDARE_URL`, `RECORDARE_ADMIN_KEY` | — | The service it reads (the admin key stays on the atlas server) |
+| `ATLAS_INGEST_TOKEN` | — | Bearer token OTLP senders must present at `/v1/traces` |
+| `ATLAS_HOST`, `ATLAS_PORT` | `127.0.0.1`, 5175 | Listen address (container: `0.0.0.0`) |
+| `ATLAS_BIND`, `ATLAS_PUBLIC_PORT`, `ATLAS_NETWORK` | `127.0.0.1`, 5175, — | Compose: host binding (LAN only on a trusted network), host port, Recordare's Docker network |
+| `ATLAS_ALLOWED_HOSTS` | — | Development server only: extra Host names (e.g. `host.docker.internal`) |
+
+## 8. Client side — Arkimede (any client through `packages/client`)
+
+| Setting | Where | Default | What it does |
+|---|---|---|---|
+| `RECORDARE_URL`, `RECORDARE_API_KEY` | Arkimede `.env` | — | Off unless both are set |
+| `RECORDARE_OUTBOX_POLL_MS` | Arkimede `.env` | 3000 | How often the outbox worker sends |
+| `episodicMemoryEnabled` | Settings → Memory, per user | off | The platform's own opt-in (no person is created before it) |
+| Memory type | Settings → Memory, per user | personal | Personal / shared (`PATCH /me {kind}`, only while empty) |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | Arkimede `.env` | off | OpenTelemetry GenAI traces to the atlas (metadata only) |
+| Library delivery policy | `packages/client` (`DEFAULT_DELIVERY`) | 12 attempts, 5 s → 1 h | Outbox retries (jitter, `Retry-After`), then parked |
+
+## 9. Evaluation spike (`spikes/memory-eval/.env`)
+
+`LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` (answer and judge), `ENGINE_MODEL`, `ENGINE_NO_THINKING`, `EMBED_MODEL`,
+`EVAL_DATASET`, `RECORDARE_URL` / `RECORDARE_ADMIN_KEY` / `RECORDARE_DB_URL` (service system), `CONSOLIDATE`,
+`AGENT_SYSTEM_FILE` (agent mode: a real agent's prompt), `REASONING_OFF_BODY`, `OPEN_ROUTER_API_KEY`. Spike runs cost
+money: the evaluation budget rules in `WORK_PLAN.md` apply.

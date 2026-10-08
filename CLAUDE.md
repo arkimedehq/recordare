@@ -35,6 +35,8 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
 - `docs/ATLAS_EVENTS.md` — contract v1 (endpoints + telemetry events, metadata only) with the optional live brain
   view **Recordare Atlas**, its own repo `~/Development/recordare-atlas` (`arkimedehq/recordare-atlas`, published with
   Recordare); Recordare must work without it.
+- `docs/KNOBS.md` — every setting in one place (quality profiles, service env, models, per person / client, deploy, atlas,
+  client side, spike), with defaults and what was measured. Update it with every new knob.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
   gaps, and **cost principles** (economy-profile defaults: zero LLM calls when nothing to do, cheap
   model, no reasoning, prefix caching — D35 makes cost an owner's option).
