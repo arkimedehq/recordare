@@ -56,6 +56,7 @@ describe('entity memory (D48)', () => {
     const req = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1);
     expect(req?.messages[0]?.content).toContain('THIS MEMORY BELONGS TO AN ENTITY');
     expect(req?.messages[1]?.content).toContain(' person: Sono Andrea');
+    expect(req?.messages[1]?.content).not.toContain('OWNER NAME'); // an entity names each person, not itself
 
     await extract('Casa', 'e2', 'Sono Marta, anche io ho una macchina nuova: una Clio.', {
       facts: [{ key: 'car', value: 'Renault Clio', verdict: 'new', subject: 'Marta (figlia)', evidence: [1] }],
@@ -71,7 +72,7 @@ describe('entity memory (D48)', () => {
       { about: null, key: 'spare_keys_location', value: 'cassetto blu', status: 'current' },
     ]);
     expect((await db.query(`SELECT DISTINCT prompt_version FROM extraction_runs WHERE owner_id = $1`, [home])))
-      .toEqual([{ prompt_version: 'extract.v8+entity.v3' }]);
+      .toEqual([{ prompt_version: 'extract.v9+entity.v3' }]);
 
     const found = await app.get(MemorySearchService).search(home, { query: 'macchina auto car' }, new Date('2026-06-08T10:00:00Z'));
     expect(found.facts.filter((f) => f.key === 'car').map((f) => [f.about, f.value]).sort())
@@ -97,6 +98,7 @@ describe('entity memory (D48)', () => {
     const req = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1);
     expect(req?.messages[0]?.content).not.toContain('THIS MEMORY BELONGS TO AN ENTITY');
     expect(req?.messages[1]?.content).toContain(' owner: Ho comprato');
+    expect(req?.messages[1]?.content).toContain('OWNER NAME: Luca'); // memories name the person, never "l'owner"
     expect(await app.get(DataSource).query(`SELECT subject_person_id, value FROM facts WHERE owner_id = $1`, [luca]))
       .toEqual([{ subject_person_id: null, value: 'VW Golf' }]);
   });

@@ -125,6 +125,30 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(await db.query(`SELECT alias FROM episode_people WHERE episode_id = $1`, [plan.confirmed_by])).toEqual([{ alias: 'Irene' }]);
   });
 
+  it('never confirms a plan before its date: details said beforehand amend it, or change nothing', async () => {
+    const c = await ingest('fp1', [{ id: 'fp1', role: 'user', content: 'Il 12 ottobre parto per il Giappone.', at: '2026-10-05T20:00:00+02:00' }]);
+    llm.queue.push({ episodes: [{ content: 'Partenza per il Giappone il 12 ottobre 2026.', kind: 'plan', occurred_at: '2026-10-12', place: 'Giappone', keywords: ['Giappone'], evidence: [1] }] });
+    await runner.runForConversation(c);
+    const pOf = async () => {
+      const open = await db.query(`SELECT content FROM episodes WHERE kind = 'plan' AND plan_status = 'open' ORDER BY recorded_at DESC`);
+      return `P${open.findIndex((p: { content: string }) => p.content.includes('Giappone')) + 1}`;
+    };
+    const plans = async () => db.query(`SELECT content, plan_status FROM episodes WHERE kind = 'plan' AND content LIKE '%Giappone%' ORDER BY recorded_at`);
+    // "Confirmed" days before the trip, without new details: nothing changes.
+    const d = await ingest('fp2', [{ id: 'fp2', role: 'user', content: 'Confermo il Giappone, tutto prenotato.', at: '2026-10-07T13:00:00+02:00' }]);
+    llm.queue.push({ plan_patches: [{ plan: await pOf(), patch: 'confirm', evidence: [1] }] });
+    await runner.runForConversation(d);
+    expect(await plans()).toEqual([{ content: 'Partenza per il Giappone il 12 ottobre 2026.', plan_status: 'open' }]);
+    // With new details: the plan is amended, still open — not "done".
+    const e = await ingest('fp3', [{ id: 'fp3', role: 'user', content: 'Il viaggio in Giappone è per tutta la famiglia.', at: '2026-10-07T13:05:00+02:00' }]);
+    llm.queue.push({ plan_patches: [{ plan: await pOf(), patch: 'confirm', new_content: 'Partenza per il Giappone con tutta la famiglia il 12 ottobre 2026.', evidence: [1] }] });
+    await runner.runForConversation(e);
+    expect(await plans()).toEqual([
+      { content: 'Partenza per il Giappone il 12 ottobre 2026.', plan_status: 'rescheduled' },
+      { content: 'Partenza per il Giappone con tutta la famiglia il 12 ottobre 2026.', plan_status: 'open' },
+    ]);
+  });
+
   it('links an unlinked correction through the near-duplicate check (one extra call only when candidates exist)', async () => {
     const a = await ingest('ort1', [{ id: 'o1', role: 'user', content: "Lunedì sono stata dall'ortopedico.", at: '2026-11-04T21:00:00+01:00' }]);
     llm.queue.push({ episodes: [{ content: "Visita dall'ortopedico lunedì 2 novembre 2026.", occurred_at: '2026-11-02', evidence: [1] }] });

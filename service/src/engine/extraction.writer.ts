@@ -222,11 +222,18 @@ export class ExtractionWriter {
   // ── plans ─────────────────────────────────────────────────────────────────────
 
   private async applyPlanPatches(out: ExtractionOutput, episodeIds: Array<string | null>): Promise<void> {
-    for (const p of out.plan_patches) {
+    for (const patch of out.plan_patches) {
+      let p = patch;
       const planId = this.input.plans.get(p.plan);
       const msgs = this.evidence(p.evidence);
       if (!planId || msgs.length === 0 || this.forgotten(msgs, null)) continue;
       if (!(await this.speaksOfPlan(planId, msgs))) continue;
+      // A plan cannot have happened before its date: a "confirm" said before the plan starts confirms details, not an
+      // outcome ("the trip is for the whole family" days before the trip). With a new text it amends the plan.
+      if (p.patch === 'confirm' && await this.startsAfter(planId, msgs)) {
+        if (!p.new_content) continue;
+        p = { ...p, patch: 'amend' };
+      }
       if ((p.patch === 'reschedule' || p.patch === 'amend') && !(await this.changesPlan(planId, p))) continue;
       const at = msgs[0]?.sentAt ?? new Date();
       let newPlanId: string | null = null;
@@ -268,6 +275,14 @@ export class ExtractionWriter {
     const said = new Set(msgs.flatMap((m) => words(m.content)).map(stem));
     if (anchors.some((a) => said.has(a))) return true;
     return plan.sim === null || plan.sim >= PLAN_EVIDENCE_MIN_SIMILARITY;
+  }
+
+  /** The plan starts after the day of its evidence (in the owner's timezone): it cannot have happened yet. */
+  private async startsAfter(planId: string, msgs: WindowMessage[]): Promise<boolean> {
+    const [plan]: Array<{ occurred_at: Date | null; date_precision: Precision }> = await this.tx.query(
+      `SELECT occurred_at, date_precision FROM episodes WHERE id = $1`, [planId]);
+    if (!plan?.occurred_at || plan.date_precision === 'unknown') return false;
+    return localDate(plan.occurred_at, this.ctx.timezone) > this.messageDay(msgs);
   }
 
   /** A reschedule or amend that leaves the plan as it is (same date, no new text) is a repeat, not a change. */

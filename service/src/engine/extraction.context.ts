@@ -34,6 +34,8 @@ export interface WindowMessage {
 
 export interface Owner {
   id: string;
+  /** The person's name (display name). */
+  name?: string;
   locale: string;
   timezone: string;
   /** An entity memory (D48): everyone using the account writes into it; facts carry the person they are about. */
@@ -166,6 +168,7 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
     notes: noteMap,
     episodes: episodeMap,
     prompt: {
+      ...(owner.name && !owner.entity ? { ownerName: owner.name } : {}),
       locale: owner.locale,
       messageDay,
       calendar: calendar(messageDay, 14, 21, owner.locale),
