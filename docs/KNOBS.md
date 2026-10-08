@@ -36,6 +36,7 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `ADMIN_API_KEY` | — | Admin credential (≥ 32 characters): admin API and console |
 | `ATLAS_URL` | — | Where people open Recordare Atlas; handed to clients in `GET /me` (admins only see it in Arkimede) |
 | `IDLE_DELAY_SECONDS` | 900 | Quiet time before a conversation is extracted (a new message restarts it) |
+| `CONTEXT_MIN_FACT_SIMILARITY`, `…_EPISODE_…`, `…_PLAN_…`, `…_PERIOD_…` | 0.50, 0.55, 0.45, 0.35 | Memory context (`POST api/v1/context`): minimum similarity for facts and notes, episodes, upcoming plans, episodes of a named period. Lower floors (0.45 / 0.48 / 0.42) measured: no gain (RESULTS 5.7) |
 | `CONSOLIDATION_SCHEDULE` | on | Nightly consolidation on its own; off = only on demand (evaluations) |
 | `CONSOLIDATION_HOUR` | 3 | Local hour (person's timezone) after which the night runs |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |

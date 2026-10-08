@@ -3,7 +3,7 @@
 Standalone memory + **digital twin** service for agentic platforms (MCP + REST ingest + SDK).
 Arkimede (`~/Development/personalAgent`, public mirror `arkimedehq/arkimede`) is the first
 client. Status (2026-10-08): **v0.1.0 released and public** (2026-10-08, private profile; `CHANGELOG.md`): service
-implemented (`service/`): M0–M4b done, M5 done or partial (5.7 memory context in progress), M5b mostly done, M6 mostly
+implemented (`service/`): M0–M4b done, M5 done or partial (5.7 memory context done 2026-10-08), M5b mostly done, M6 mostly
 done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 criteria met — per-row status in
 `docs/WORK_PLAN.md`. Published: npm `@arkimedehq/recordare-client` and `@arkimedehq/openclaw-recordare` (0.1.0), image
 `ghcr.io/arkimedehq/recordare-openai-proxy`; GitHub Sponsors (`.github/FUNDING.yml`).
@@ -134,7 +134,6 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md`: 5.7 memory context **in progress** (it misses questions with instruction suffixes, other
-languages or periods — 6.6b (8); each change measured) → 4.12 keep the output of extractions that write nothing → 4.10
-news received as a memory → the rest of 6.6b and the open rows (D34 A-MEM toggle split, 5.8 decision model, entity
-memory on a new blind set). <!-- verify: order after 4.10 not fixed in WORK_PLAN -->
+Follow `docs/WORK_PLAN.md`: 4.12 keep the output of extractions that write nothing → 4.10 news received as a memory →
+4.13 tombstones for deleted facts and notes → 4.14 `hnsw.iterative_scan` → the rest of 6.6b and the open rows (D34 A-MEM
+toggle split, 5.8 decision model, entity memory on a new blind set).

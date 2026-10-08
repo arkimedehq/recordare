@@ -38,6 +38,7 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `ADMIN_API_KEY` | — | Credenziale admin (≥ 32 caratteri): API admin e console |
 | `ATLAS_URL` | — | Dove si apre Recordare Atlas; comunicato ai client in `GET /me` (in Arkimede lo vedono solo gli admin) |
 | `IDLE_DELAY_SECONDS` | 900 | Silenzio prima che una conversazione venga estratta (un nuovo messaggio fa ripartire l'attesa) |
+| `CONTEXT_MIN_FACT_SIMILARITY`, `…_EPISODE_…`, `…_PLAN_…`, `…_PERIOD_…` | 0.50, 0.55, 0.45, 0.35 | Contesto di memoria (`POST api/v1/context`): similarità minima per fatti e note, episodi, piani imminenti, episodi di un periodo nominato. Soglie più basse (0.45 / 0.48 / 0.42) misurate: nessun guadagno (RESULTS 5.7) |
 | `CONSOLIDATION_SCHEDULE` | on | Consolidamento notturno automatico; off = solo su richiesta (valutazioni) |
 | `CONSOLIDATION_HOUR` | 3 | Ora locale (fuso della persona) dopo la quale gira la notte |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
