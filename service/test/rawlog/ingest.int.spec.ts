@@ -44,6 +44,9 @@ describe('REST ingest (Layer 0)', () => {
     const res = await call(url, 'POST', '/api/v1/ingest/messages', { ...as('luca'), body: batch('c0', [msg('m1', 'ciao')]) });
     expect(res).toMatchObject({ status: 200, body: { stored: false, accepted: 0 } });
     expect(await db.query('SELECT count(*)::int AS n FROM messages')).toEqual([{ n: 0 }]);
+    // The admin sees who is waiting for consent (WORK_PLAN 6.6b).
+    const persons = (await call(url, 'GET', '/api/v1/admin/persons', { token: ADMIN_KEY })).body as Array<{ waitingForConsentSince: string | null }>;
+    expect(persons.some((p) => p.waitingForConsentSince !== null)).toBe(true);
   });
 
   it('ingests idempotently, records conflicts, applies upserts as edits with revisions', async () => {

@@ -103,6 +103,7 @@ stringhe "Nome (relazione)" sugli episodi (`episode_people.alias`), che il recal
 | `locale`, `timezone` | text | |
 | `episodic_enabled` | bool, default false | D4 — modificato solo dall'owner (sessione dell'owner o token con scope owner) |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Registro del consenso (chi / quale UI del client) |
+| `ingest_refused_at` | timestamptz | Ultima volta in cui un client ha inviato messaggi con il consenso spento (nulla salvato); la console admin mostra "chiede il consenso" |
 | `consolidated_at` | timestamptz null | Ultimo consolidamento notturno (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark della revisione notturna dei fatti (WORK_PLAN 5.6, sull'orologio di registrazione) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = default dell'installazione (`QUALITY_PROFILE`) |

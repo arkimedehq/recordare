@@ -36,7 +36,11 @@ export class IngestService {
 
   async ingest(clientId: string, ownerId: string, req: IngestRequest): Promise<IngestResult> {
     const [owner] = await this.db.query(`SELECT episodic_enabled FROM owners WHERE person_id = $1`, [ownerId]);
-    if (!owner?.episodic_enabled) return { conversationId: null, accepted: 0, duplicates: 0, conflicts: [], stored: false };
+    if (!owner?.episodic_enabled) {
+      // Nothing is stored without consent; the admin console shows who is waiting for it (WORK_PLAN 6.6b).
+      if (owner) await this.db.query(`UPDATE owners SET ingest_refused_at = now() WHERE person_id = $1`, [ownerId]);
+      return { conversationId: null, accepted: 0, duplicates: 0, conflicts: [], stored: false };
+    }
 
     const sentAts = req.messages.map((m) => new Date(m.sentAt).getTime());
     const first = new Date(Math.min(...sentAts));

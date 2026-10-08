@@ -94,6 +94,7 @@ export class AdminService {
   async listPersons(): Promise<unknown[]> {
     const owners: Array<Record<string, unknown> & { id: string }> = await this.db.query(
       `SELECT p.id, p.display_name AS name, p.kind, o.episodic_enabled AS "episodicEnabled", o.episodic_enabled_at AS "episodicEnabledAt",
+              CASE WHEN o.episodic_enabled THEN NULL ELSE o.ingest_refused_at END AS "waitingForConsentSince",
               o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.created_at AS "createdAt",
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.owner_id = p.id) AS messages,
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id

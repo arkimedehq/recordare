@@ -101,6 +101,7 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 | `locale`, `timezone` | text | |
 | `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token) |
 | `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
+| `ingest_refused_at` | timestamptz | Last time a client sent messages while consent was off (nothing stored); the admin console shows "waiting for consent" |
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
