@@ -34,6 +34,8 @@ export interface WindowMessage {
 
 export interface Owner {
   id: string;
+  /** The person's name (display name). */
+  name?: string;
   locale: string;
   timezone: string;
   /** An entity memory (D48): everyone using the account writes into it; facts carry the person they are about. */
