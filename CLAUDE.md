@@ -53,6 +53,9 @@ client. Status (2026-10-07): **service implemented** (`service/`): M0–M4b done
   fixes directly on `main`. Delete merged branches.
 - Never break existing behaviour: enumerate call sites, prefer additive changes, test old and new.
 - Platform code and prompts stay generic (no customer/domain names hardcoded).
+- **All languages** (owner's rule 2026-10-08): Recordare supports all languages, at least the most used. Never add a
+  word list for IT / EN only: language data lives in `service/src/lang/` (Intl where possible, tables otherwise; scripts
+  without spaces matched as substrings), one test per language.
 - Development phase: clean code over backward compatibility (no dual paths / lazy migrations).
 - Stack preference: TypeScript / NestJS (service), Postgres; i18n IT/EN. Before committing service code run, in
   `service/`, `npm run typecheck`, `npm run lint` and `npm test` (CI runs the same; lint broke CI once).

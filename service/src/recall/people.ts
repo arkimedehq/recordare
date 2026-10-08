@@ -8,22 +8,8 @@
  * points to a few people (a word like "friend" that matches many is left alone).
  */
 import { type DataSource } from 'typeorm';
+import { containsPhrase, normalize, RELATION_GROUPS } from '../lang';
 
-/** Relation words, IT / EN; each group is one relation. */
-const RELATIONS: string[][] = [
-  ['madre', 'mamma', 'mother', 'mom', 'mum'],
-  ['padre', 'papà', 'papa', 'babbo', 'father', 'dad'],
-  ['sorella', 'sister'], ['fratello', 'brother'],
-  ['moglie', 'wife'], ['marito', 'husband'],
-  ['compagno', 'compagna', 'fidanzato', 'fidanzata', 'partner', 'boyfriend', 'girlfriend'],
-  ['figlio', 'son'], ['figlia', 'daughter'],
-  ['nonno', 'nonna', 'grandfather', 'grandmother', 'grandpa', 'grandma'],
-  ['zio', 'zia', 'uncle', 'aunt'], ['cugino', 'cugina', 'cousin'],
-  ['nipote', 'nephew', 'niece', 'grandson', 'granddaughter'],
-  ['suocero', 'suocera', 'cognato', 'cognata'],
-  ['collega', 'colleghi', 'colleague', 'coworker'],
-  ['capo', 'boss'], ['amico', 'amica', 'friend'],
-];
 /** A relation naming more people than this is too vague to narrow anything. */
 const MAX_PER_RELATION = 3;
 
@@ -47,14 +33,15 @@ export async function peopleInQuestion(db: DataSource, ownerId: string, question
     const first = tokens(who)[0];
     if (!first || first.length < 3) continue;
     if (asked.has(first)) found.add(first);
-    const relWords = new Set(tokens(rel));
-    RELATIONS.forEach((group, i) => {
-      if (group.some((w) => relWords.has(fold(w)))) (byRelation.get(i) ?? byRelation.set(i, new Set()).get(i)!).add(first);
+    const relation = normalize(rel);
+    RELATION_GROUPS.forEach((group, i) => {
+      if (group.words.some((w) => containsPhrase(relation, w))) (byRelation.get(i) ?? byRelation.set(i, new Set()).get(i)!).add(first);
     });
   }
-  RELATIONS.forEach((group, i) => {
+  const question_ = normalize(question);
+  RELATION_GROUPS.forEach((group, i) => {
     const names = byRelation.get(i);
-    if (names && names.size <= MAX_PER_RELATION && group.some((w) => asked.has(fold(w)))) names.forEach((n) => found.add(n));
+    if (names && names.size <= MAX_PER_RELATION && group.words.some((w) => containsPhrase(question_, w))) names.forEach((n) => found.add(n));
   });
   return [...found];
 }

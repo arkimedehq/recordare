@@ -267,8 +267,9 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   person's name); facts without it are the entity's own.
 
 ### `resolve_period` (D12, deterministic)
-As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); Italian and English
-expressions; Monday-based weeks, owner's timezone; "now" is the server clock (`X-Recordare-Now` overrides it where
+As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); expressions in the
+most used languages (`service/src/lang`: relative periods and month names from Intl for 25 locales, plus seasons and
+synonyms); Monday-based weeks, owner's timezone; "now" is the server clock (`X-Recordare-Now` overrides it where
 `ALLOW_CLOCK_OVERRIDE` is set — tests and evaluations). No LLM. `now?` / `locale?` parameters: not built.
 
 ### Pre-turn memory context (WORK_PLAN 5.7) — built

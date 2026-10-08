@@ -20,6 +20,7 @@
 import { type EntityManager } from 'typeorm';
 import { type ExtractionInput, isMemoryTool, type WindowMessage } from './extraction.context';
 import { type ExtractionOutput } from './extraction.schema';
+import { nameOwner } from '../lang';
 import { localDate, toStored, type Precision } from './time';
 
 type AuthorRole = 'owner' | 'assistant' | 'other' | 'tool';
@@ -511,26 +512,6 @@ export class ExtractionWriter {
 }
 
 const tokens = (s: string): string[] => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-/**
- * "l'owner", "dell'owner", "the owner"… → the person's name ("di Andrea", "Andrea's"). The extraction prompt calls the
- * person OWNER and the model sometimes copies the word (≈ 5 % of episodes and notes, 2026-10-08); naming the person in
- * the prompt instead cost ≈ 2 points on blind5 (extract.v9, 3 runs), so the fix is here, deterministic.
- */
-export function nameOwner(text: string, name: string): string {
-  const A = "['’]";
-  const prep: Record<string, string> = { al: 'a', dal: 'da', nel: 'in', sul: 'su', del: 'di' };
-  const NOT_OF = String.raw`(?!\s+(?:del|della|dello|dei|degli|delle|di|d['’]|dell['’])\b)`;
-  return text
-    .replace(new RegExp(`\\bdell${A}owner\\b`, 'gi'), `di ${name}`)
-    .replace(new RegExp(`\\b(al|dal|nel|sul)l${A}owner\\b`, 'gi'), (_m, p: string) => `${prep[p.toLowerCase()]} ${name}`)
-    .replace(new RegExp(`\\bl${A}owner\\b`, 'gi'), name)
-    // The model sometimes translates "l'owner" as "il proprietario": the same person — but not "il proprietario del bar".
-    .replace(new RegExp(`\\b(del|al|dal|nel|sul)(?:la)? propriet(?:ario|aria)\\b${NOT_OF}`, 'gi'), (_m, p: string) => `${prep[p.toLowerCase()] ?? 'di'} ${name}`)
-    .replace(new RegExp(`\\b(?:il|la) propriet(?:ario|aria)\\b${NOT_OF}`, 'gi'), name)
-    .replace(/\bthe owner['’]s\b/gi, `${name}'s`)
-    .replace(/\bthe owner\b/gi, name);
-}
-
 const words = (s: string): string[] => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4);
 /** A crude cross-inflection key (cena / cene, festa / feste, spostata / spostato). */
 const stem = (w: string): string => w.slice(0, 5);

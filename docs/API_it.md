@@ -269,8 +269,8 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   riportano `about` (il nome della persona); quelli senza `about` sono dell'entità stessa.
 
 ### `resolve_period` (D12, deterministico)
-Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'espressione sconosciuta); espressioni in italiano e
-inglese; settimane che iniziano di lunedì, fuso orario dell'owner; "adesso" è l'orologio del server (`X-Recordare-Now` lo sostituisce dove
+Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'espressione sconosciuta); espressioni nelle
+lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl per 25 locale, più stagioni e sinonimi); settimane che iniziano di lunedì, fuso orario dell'owner; "adesso" è l'orologio del server (`X-Recordare-Now` lo sostituisce dove
 `ALLOW_CLOCK_OVERRIDE` è impostato — test e valutazioni). Nessun LLM. Parametri `now?` / `locale?`: non costruiti.
 
 ### Contesto di memoria prima del turno (WORK_PLAN 5.7) — costruito
