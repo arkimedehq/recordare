@@ -285,6 +285,9 @@ compito. Altre due guide: [integrare una piattaforma client](docs/INTEGRATION_it
 | Percorso | Che cosa |
 |---|---|
 | `service/` | Il servizio Recordare (NestJS, TypeScript) |
+| `connectors/` | Connettori al livello completo: [Claude Code](connectors/claude-code/README_it.md), [Codex](connectors/codex/README_it.md), [OpenClaw](connectors/openclaw/README_it.md), [Hermes Agent](connectors/hermes/README_it.md), [proxy di memoria compatibile OpenAI](connectors/openai-proxy/README_it.md) (AnythingLLM, Open WebUI, LibreChat) |
+| `packages/client/` | `@arkimedehq/recordare-client`, la libreria client TypeScript usata dai connettori e da Arkimede |
+| `deploy/` | Script di installazione, aggiornamento e backup, file Compose (standalone / co-ospitato) |
 | `spikes/memory-eval/` | Harness di valutazione e dataset: confronto tra motori, set ciechi, risultati ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
 | `docs/` | Visione, decisioni di design D1–D48 ([design della memoria episodica](docs/EPISODIC_MEMORY_TODO_it.md)), [piano di lavoro](docs/WORK_PLAN_it.md), contratti, note di ricerca, schede di letteratura |
 | `docker-compose.yml` | Stack di sviluppo locale (Postgres + pgvector, Redis, servizio) |
