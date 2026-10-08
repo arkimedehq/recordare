@@ -1,6 +1,6 @@
 # Recordare
 
-<p align="center"><img src="docs/media/atlas-demo.webp" alt="Recordare Atlas: messages arrive, an agent recalls memories and calls its LLM, extraction writes a new memory, then the nightly consolidation in the sleep palette" width="100%"></p>
+<p align="center"><img src="docs/media/atlas-demo.webp" alt="Recordare Atlas: messages arrive, an agent recalls memories and calls its LLM, extraction writes new memories, then the nightly consolidation in the sleep palette" width="100%"></p>
 <p align="center"><sub><a href="https://github.com/arkimedehq/recordare-atlas">Recordare Atlas</a>, the optional live brain view: real events from a scripted session; idle gaps cut.</sub></p>
 
 *Recordare*: Latin for "remember!" (*re-* + *cor*, "bring back to the heart").

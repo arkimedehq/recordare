@@ -1,7 +1,7 @@
 # Recordare
 
-<p align="center"><img src="docs/media/atlas-demo.webp" alt="Recordare Atlas: arrivano messaggi, un agente richiama ricordi e chiama il suo LLM, l'estrazione scrive un nuovo ricordo, poi il consolidamento notturno con la palette del sonno" width="100%"></p>
-<p align="center"><sub><a href="https://github.com/arkimedehq/recordare-atlas">Recordare Atlas</a>, la vista live opzionale del cervello: eventi reali di una sessione scriptata; tagliate le pause senza attività.</sub></p>
+<p align="center"><img src="docs/media/atlas-demo.webp" alt="Recordare Atlas: arrivano messaggi, un agente richiama ricordi e chiama il suo LLM, l'estrazione scrive nuovi ricordi, poi il consolidamento notturno con la palette del sonno" width="100%"></p>
+<p align="center"><sub><a href="https://github.com/arkimedehq/recordare-atlas">Recordare Atlas</a>, la vista live opzionale del cervello: eventi reali di una sessione scriptata (pagina in inglese); tagliate le pause senza attività.</sub></p>
 
 *Recordare*: in latino "ricorda!" (*re-* + *cor*, "riporta al cuore").
 
