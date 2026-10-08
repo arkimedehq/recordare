@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
+name: recordare
+version: 0.1.0
+description: "Recordare — episodic memory and digital twin on your own server: capture, pre-turn memory context, recordare_* memory tools."
+requires_env:
+  - RECORDARE_URL
+  - RECORDARE_API_KEY
