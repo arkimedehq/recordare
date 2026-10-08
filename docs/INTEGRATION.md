@@ -11,7 +11,7 @@ policy — and passes the conformance suite. A platform keeps only its outbox st
 
 ## 1. Set-up (admin, once)
 1. Create the client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
-2. Create its key: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read"]}` — shown once; store it
+2. Create its key: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read", "write"]}` (`write` for the person's own edits in a diary UI) — shown once; store it
    as a secret of the platform.
 3. **Consent stays with the admin / the owner** (D4): a client key can never turn a person's episodic memory on.
    Home profile: the admin enables it per person (`PATCH api/v1/admin/owners/{ownerId} {episodicEnabled: true}`).
