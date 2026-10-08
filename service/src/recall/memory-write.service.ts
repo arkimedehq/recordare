@@ -14,6 +14,14 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { toStored, type Precision } from '../engine/time';
 import { TelemetryService } from '../telemetry/telemetry.service';
 
+/**
+ * The agent's text is backed by a message of the owner when the two overlap as a whole (trigram similarity ≥ 0.2) or
+ * when the text is found inside the message (word similarity ≥ 0.6): a long message ("use the tools: … remember that
+ * my favourite colour is green") dilutes the whole-text similarity of the short fact it contains.
+ */
+const OVERLAP = (col: string) => `(similarity(${col}, $3) >= 0.2 OR word_similarity($3, ${col}) >= 0.6)`;
+const SCORE = (col: string) => `GREATEST(similarity(${col}, $3), word_similarity($3, ${col}))`;
+
 export interface Evidence {
   /** Conversation the tool was called from (resolved viewer context), if any. */
   conversationId?: string;
@@ -147,8 +155,8 @@ export class MemoryWriteService {
       const [m] = await tx.query(
         `SELECT id FROM messages
          WHERE conversation_id = $1 AND owner_id = $2 AND (role = 'user' OR author_person_id = $2)
-           AND received_at > now() - interval '30 minutes' AND similarity(content, $3) >= 0.2
-         ORDER BY similarity(content, $3) DESC, sent_at DESC LIMIT 1`,
+           AND received_at > now() - interval '30 minutes' AND ${OVERLAP('content')}
+         ORDER BY ${SCORE('content')} DESC, sent_at DESC LIMIT 1`,
         [ev.conversationId, ownerId, text]);
       if (m) return { messageId: m.id, byOwner: true };
     } else if (ev.ownerDirect) {
@@ -157,8 +165,8 @@ export class MemoryWriteService {
       const [m] = await tx.query(
         `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
          WHERE c.client_id = $1 AND m.owner_id = $2 AND (m.role = 'user' OR m.author_person_id = $2)
-           AND m.received_at > now() - interval '30 minutes' AND similarity(m.content, $3) >= 0.2
-         ORDER BY similarity(m.content, $3) DESC, m.sent_at DESC LIMIT 1`,
+           AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
+         ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
         [ev.clientId, ownerId, text]);
       if (m) return { messageId: m.id, byOwner: true };
     }
