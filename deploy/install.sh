@@ -165,7 +165,7 @@ if [[ $PROFILE == cohosted ]]; then
     else
       client=$(admin POST /api/v1/admin/clients '{"name":"arkimede","kind":"platform","autoProvision":true}')
       cid=$(echo "$client" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
-      key=$(admin POST "/api/v1/admin/clients/$cid/keys" '{"scopes":["ingest","mcp","read"]}' | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
+      key=$(admin POST "/api/v1/admin/clients/$cid/keys" '{"scopes":["ingest","mcp","read","write"]}' | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
       [[ -n "$key" ]] || die "could not create Arkimede's client key"
       cp -p "$ARKIMEDE_DIR/.env" "$ARKIMEDE_DIR/.env.bak-$(date +%Y%m%d-%H%M%S)"
       sed -i.tmp '/^RECORDARE_URL=/d; /^RECORDARE_API_KEY=/d' "$ARKIMEDE_DIR/.env" && rm -f "$ARKIMEDE_DIR/.env.tmp"

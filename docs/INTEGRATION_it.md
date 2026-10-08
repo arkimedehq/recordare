@@ -15,7 +15,7 @@ memorizzazione dell'outbox e la trasformazione delle sue chat.
 
 ## 1. Configurazione (amministratore, una volta)
 1. Creare il client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
-2. Creare la sua chiave: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read"]}` — mostrata una sola
+2. Creare la sua chiave: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read", "write"]}` (`write` per le modifiche della persona in un diario) — mostrata una sola
    volta; conservarla come segreto della piattaforma.
 3. **Il consenso resta all'amministratore / al proprietario** (D4): la chiave di un client non può mai attivare la
    memoria episodica di una persona. Profilo home: l'amministratore la attiva per persona
