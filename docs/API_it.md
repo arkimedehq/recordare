@@ -191,7 +191,8 @@ non restituiscono nulla e le scritture sono rifiutate con un errore neutro.
 | `place` | string | |
 
 Restituisce `{id, stored}`. Evidenza (come costruito): il messaggio dell'owner nella conversazione della chiamata ricevuto negli ultimi
-30 minuti il cui testo si sovrappone al contenuto (similarità trigramma); pianificato, non ancora costruito: deduplica di 10 minuti dei
+30 minuti il cui testo si sovrappone al contenuto (similarità trigramma) — con un token personale e nessuna conversazione
+indicata, i messaggi dell'owner dallo stesso client (un connettore che invia i turni); pianificato, non ancora costruito: deduplica di 10 minuti dei
 retry dell'agente e late binding quando l'ingest non è ancora arrivato. **Importanza 10 e `stance: stated` solo quando
 l'evidenza si lega a un messaggio `user` dell'owner**; altrimenti (`stance: inferred`, confidenza 0.6) (livello basic, o nessun messaggio dell'owner)
 la chiamata è memorizzata in una conversazione giornaliera per client (`source: mcp_tool`, `evidence_kind:
