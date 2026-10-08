@@ -12,8 +12,10 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { type z } from 'zod';
 import {
-  type IngestRequest as ClientIngest, type IngestResult as ClientIngestResult, MemoryNotEmptyError, PersonDirectory, RecordareClient,
+  type Episode as ClientEpisode, type IngestRequest as ClientIngest, type IngestResult as ClientIngestResult, MemoryNotEmptyError,
+  PersonDirectory, RecordareClient,
 } from '../../../packages/client/src/index.js';
+import { type EpisodeItem } from '../../src/read/read.service';
 import { type IngestResult, type ingestSchema } from '../../src/rawlog/ingest.schemas';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
@@ -22,6 +24,7 @@ type Assert<T extends true> = T;
 type Extends<A, B> = [A] extends [B] ? true : false;
 export type ClientIngestFitsService = Assert<Extends<ClientIngest, z.input<typeof ingestSchema>>>;
 export type ServiceResultFitsClient = Assert<Extends<IngestResult, ClientIngestResult>>;
+export type ServiceEpisodeFitsClient = Assert<Extends<EpisodeItem, ClientEpisode>>;
 
 describe('client conformance (packages/client against the service)', () => {
   let app: INestApplication;
@@ -39,7 +42,7 @@ describe('client conformance (packages/client against the service)', () => {
     await resetSchema();
     ({ app, url } = await startApp());
     clientId = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Platform', kind: 'platform', autoProvision: true } })).body.id;
-    const key = (await call(url, 'POST', `/api/v1/admin/clients/${clientId}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'mcp', 'read'] } })).body.key;
+    const key = (await call(url, 'POST', `/api/v1/admin/clients/${clientId}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'mcp', 'read', 'write'] } })).body.key;
     rc = new RecordareClient({ baseUrl: url, apiKey: key });
   });
   afterAll(async () => { await rc?.close(); await app?.close(); llm?.server.close(); emb?.close(); });
@@ -87,6 +90,16 @@ describe('client conformance (packages/client against the service)', () => {
        SELECT o.person_id, 'preference', 'x', 'owner_lived', 'owner', 'stated', 1, 'owner', ARRAY[o.person_id] FROM owners o
        JOIN external_identities i ON i.person_id = o.person_id WHERE i.external_id = 'user-1'`);
     await expect(rc.updateMe('user-1', { kind: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);
+  });
+
+  it('reads and edits the person\'s diary', async () => {
+    const notes = await rc.notes('user-1');
+    expect(notes.map((n) => n.content)).toEqual(['x']);
+    await rc.pinNote('user-1', notes[0]!.id, true);
+    expect((await rc.notes('user-1', { pinned: true })).map((n) => n.pinned)).toEqual([true]);
+    expect(await rc.episodes('user-1')).toEqual({ items: [], nextCursor: null });
+    await rc.delete('user-1', 'notes', notes[0]!.id);
+    expect(await rc.notes('user-1')).toEqual([]);
   });
 
   it('recalls over MCP with the user and the conversation bound to the session', async () => {

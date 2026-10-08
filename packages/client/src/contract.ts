@@ -97,6 +97,82 @@ export interface IngestResult {
   stored: boolean;
 }
 
+// ── The diary: read / write API for host UIs (API.md §4) ─────────────────────────────────────────────────────────
+
+export type PlanStatus = 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
+export type Precision = 'minute' | 'day' | 'month' | 'year' | 'approximate' | 'unknown';
+
+export interface Episode {
+  id: string;
+  kind: 'event' | 'plan' | 'state_change';
+  content: string;
+  /** Local date (YYYY-MM-DD, or YYYY-MM / YYYY by precision). */
+  occurredAt: string | null;
+  occurredUntil: string | null;
+  datePrecision: Precision;
+  timeExpression: string | null;
+  place: string | null;
+  planStatus?: PlanStatus;
+  importance: number;
+  valence: number | null;
+  feelings: string[];
+  opinion: string | null;
+  people: string[];
+  origin: string;
+  authorRole: string;
+  inferred: boolean;
+  corrected: boolean;
+  recordedAt: string;
+}
+
+export interface EpisodeDetail extends Episode {
+  /** The messages behind it; text only from the client's own conversations (`otherClient` otherwise). */
+  evidence: Array<{ messageId?: string; conversation?: string; role: string; author?: string | null; sentAt: string; text?: string; kind: string; otherClient?: true }>;
+  /** Earlier, wrong versions this one corrected (newest first). */
+  history: Array<{ id: string; content: string; occurredAt: string | null; recordedAt: string }>;
+  planEvents?: Array<{ patch: string; note: string | null; at: string }>;
+  confirmedBy?: Episode | null;
+  rescheduledTo?: Episode | null;
+}
+
+export interface EpisodeQuery {
+  from?: string;
+  to?: string;
+  kind?: Episode['kind'];
+  planStatus?: PlanStatus;
+  q?: string;
+  cursor?: string;
+  limit?: number;
+}
+
+export interface Digest { id: string; level: 'day' | 'month'; periodStart: string; periodEnd: string; content: string; writtenAt: string }
+
+export interface Fact {
+  id: string;
+  /** Entity memories: the person the fact is about. */
+  about?: string;
+  key: string;
+  value: string | null;
+  status: string;
+  validFrom: string | null;
+  validTo: string | null;
+  pending: boolean;
+  inferred: boolean;
+  history: Array<{ id: string; value: string | null; from: string | null; to: string | null; status: string }>;
+}
+
+export interface Note {
+  id: string;
+  category: 'preference' | 'habit' | 'value' | 'relationship' | 'knowledge' | 'profile' | 'constraint';
+  content: string;
+  pinned: boolean;
+  pending: boolean;
+  inferred: boolean;
+  authorRole: string;
+  supportCount: number;
+  recordedAt: string;
+}
+
 /** `POST api/v1/context`: the memories relevant to the message a host is about to answer (WORK_PLAN 5.7). */
 export interface MemoryContext {
   /** A fenced `<memory-context>` block to append to the prompt, or null (nothing relevant, not owner-only, or off). */

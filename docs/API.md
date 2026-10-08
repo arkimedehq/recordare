@@ -277,11 +277,23 @@ appends it at the end of its system prompt and never stores it as a message).
 
 ## 4. Read / write API for host UIs (task 1.4) — the diary (D18)
 
-**Not built yet (v1 plan)**, except the `GET / PATCH api/v1/me` rows. Prerequisite of a host diary (WORK_PLAN 4.7,
-6.3). Meanwhile, explicit writes and forgetting go through the MCP tools (§3).
+**Built (2026-10-08, WORK_PLAN 4.7)** — the rows the host diary needs: `GET episodes` (timeline, newest first; `from`
+/ `to` local dates, `kind`, `planStatus` incl. computed `unresolved`, `q` full text, opaque `cursor` + `nextCursor`,
+`limit` ≤ 200), `GET episodes/{id}` (evidence: message text only from the client's own conversations unless its
+`raw_log_scope` is `all`, `otherClient` otherwise; `history` = the versions it corrected; for a plan `planEvents`,
+`confirmedBy`, `rescheduledTo`), `POST episodes/{id}/corrections {content?, occurredAt?, datePrecision?}` →
+`{id}`, `DELETE episodes/{id}` (forgetting that sticks, as `forget_episode`), `GET digests`, `GET facts` (slots with
+`history`, `asOf`, per person in an entity memory), `DELETE facts/{id}`, `POST facts/{id}/confirm | reject`,
+`GET notes`, `PATCH notes/{id} {pinned}`, `DELETE notes/{id}`, `POST notes/{id}/confirm | reject`, `GET plans`
+(open and unresolved by default, soonest first); plus the `GET / PATCH api/v1/me` rows. **Not built yet**: manual entry,
+fact / note corrections, promotions (5.4), forgetting a period (5.5), settings, usage, exports, the notes change feed,
+`GET facts/{id}` / `GET notes/{id}`. Client library: `packages/client` (`episodes`, `episode`, `digests`, `facts`,
+`notes`, `plans`, `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide`).
 
-Scoped to the owner (`X-Recordare-User` + viewer context, personal token, or owner session).
-The same pages are served by Recordare itself for owners without a host UI.
+Scoped to the owner, and the reader is the owner themself in the host's UI (owner-direct): a client key names the person
+with `X-Recordare-User` (scope `read` to read, `write` to edit), a personal token is the person; no conversation header,
+no viewer resolution (the viewer rule is for answers inside conversations). In an entity memory everyone using the
+account sees all of it (D48).
 
 | Method + path | Scope | Purpose |
 |---|---|---|

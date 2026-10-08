@@ -70,6 +70,16 @@ describe('RecordareClient', () => {
     expect(seen[0]?.headers['x-recordare-conversation']).toBe('chat-1');
   });
 
+  it('reads the diary with query strings and acts on its items', async () => {
+    reply = () => ({ status: 200, body: { items: [], nextCursor: null } });
+    await client().episodes('u1', { from: '2026-10-01', planStatus: 'unresolved', limit: 20 });
+    expect(seen[0]?.path).toBe('/api/v1/episodes?from=2026-10-01&planStatus=unresolved&limit=20');
+    reply = () => ({ status: 204 });
+    await client().decide('u1', 'notes', 'n 1', 'confirm');
+    await client().pinNote('u1', 'n1', true);
+    expect(seen.slice(1).map((s) => `${s.method} ${s.path}`)).toEqual(['POST /api/v1/notes/n%201/confirm', 'PATCH /api/v1/notes/n1']);
+  });
+
   it('treats deleting what Recordare never had as done, encodes ids, and reports outages as unavailable', async () => {
     reply = () => ({ status: 404, body: { code: 'not_found' } });
     await client().deleteMessage('u1', 'chat/1', 'm 1');

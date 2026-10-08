@@ -31,6 +31,11 @@ const res = await rc.mcp.callTool('user-42', 'chat-1', 'search_episodes', { quer
 const next = afterFailure(err, attempts);                 // { action: 'retry', delayMs } | { action: 'park', reason }
 ```
 
+## Il diario
+`episodes`, `episode`, `digests`, `facts`, `notes`, `plans` leggono ciò che Recordare ricorda, per la vista della persona
+nell'interfaccia della piattaforma; `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide` sono le modifiche
+della persona (API.md §4).
+
 ## Cosa resta all'host
 Come conserva la sua outbox (il suo database, la sua transazione) e come trasforma le sue chat nel contratto di
 ingest. Tutto il resto è qui, uguale per ogni client.

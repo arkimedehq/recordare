@@ -31,6 +31,10 @@ const res = await rc.mcp.callTool('user-42', 'chat-1', 'search_episodes', { quer
 const next = afterFailure(err, attempts);                 // { action: 'retry', delayMs } | { action: 'park', reason }
 ```
 
+## The diary
+`episodes`, `episode`, `digests`, `facts`, `notes`, `plans` read what Recordare remembers for the person's own view in
+the platform's UI; `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide` are the person's edits (API.md §4).
+
 ## What stays with the host
 How it stores its outbox (its own database, its own transaction) and how it maps its chats to the ingest contract.
 Everything else is here, the same for every client.

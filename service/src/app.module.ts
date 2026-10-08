@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { ConsoleModule } from './console/console.module';
 import { ContextModule } from './recall/context.module';
+import { ReadModule } from './read/read.module';
 import { MeController } from './me/me.controller';
 import { QueueModule } from './queue/queue.module';
 import { EngineModule } from './engine/engine.module';
@@ -39,6 +40,7 @@ import { McpModule } from './mcp/mcp.module';
     AdminModule,
     ConsoleModule,
     ContextModule,
+    ReadModule,
     EngineModule,
     QueueModule,
     RawLogModule,
