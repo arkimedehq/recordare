@@ -291,6 +291,10 @@ co-hosted with Arkimede on a small server).
 - [Recordare Atlas](https://github.com/arkimedehq/recordare-atlas): optional live brain view.
 - talkiosk: home voice device talking to Arkimede (own repo).
 
+## Support the project
+
+Recordare is free and open source under AGPL-3.0. If it is useful to you or your organization, you can support its ongoing development through [GitHub Sponsors](https://github.com/sponsors/andreagenovese). Sponsorship is entirely voluntary: it does **not** change the license or grant any additional rights — it simply helps sustain maintenance and new features.
+
 ## Licence
 
 [AGPL-3.0-or-later](LICENSE) © 2026 Andrea Genovese. Third-party notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md);

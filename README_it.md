@@ -302,6 +302,10 @@ compito. Altre due guide: [integrare una piattaforma client](docs/INTEGRATION_it
 - [Recordare Atlas](https://github.com/arkimedehq/recordare-atlas): vista cervello in tempo reale opzionale.
 - talkiosk: dispositivo vocale domestico che parla con Arkimede (repo proprio).
 
+## Sostieni il progetto
+
+Recordare è libero e open source sotto AGPL-3.0. Se è utile a te o alla tua organizzazione, puoi sostenerne lo sviluppo tramite [GitHub Sponsors](https://github.com/sponsors/andreagenovese). La sponsorizzazione è del tutto volontaria: **non** modifica la licenza né concede diritti aggiuntivi — serve solo a sostenere la manutenzione e le nuove funzionalità.
+
 ## Licenza
 
 [AGPL-3.0-or-later](LICENSE) © 2026 Andrea Genovese. Avvisi di terze parti: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md);
