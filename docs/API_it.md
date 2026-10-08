@@ -202,9 +202,8 @@ a `initialize` (owner del token, oppure `X-Recordare-User` per le chiavi client)
 (gli host che riutilizzano una sessione per più utenti non possono incrociare le memorie). Il contesto del visualizzatore segue il §1
 (header di conversazione; `_meta` può solo aggiungere visualizzatori). Gli schemi degli strumenti usano il sottoinsieme neutrale rispetto al provider
 (D27). Gli strumenti sono sempre elencati (nessun indizio sull'esistenza di un diario); con `episodicEnabled` disattivato, le letture
-non restituiscono nulla e le scritture sono rifiutate con un errore neutro. <!-- verify: come costruito gli strumenti
-non controllano il consenso — le letture non trovano nulla solo perché l'ingest non ha salvato nulla, mentre
-log_episode / remember scrivono comunque (mcp-tools.ts, memory-write.service.ts); voluto? --> Come costruito: una
+non restituiscono nulla e le scritture (`log_episode`, `remember`, `correct_episode`) sono rifiutate con `{error: "memory is off for
+this person"}`; `forget_episode` resta consentito. Come costruito: una
 sessione si apre solo con una richiesta `initialize` (`404` per un id di sessione sconosciuto); la credenziale admin
 riceve `403`; una richiesta da una credenziale diversa da quella che ha aperto la sessione è rifiutata come una
 discrepanza di owner. Le scritture richiedono un contesto risolvibile — un token personale, o una conversazione che

@@ -144,7 +144,7 @@ export class IngestService {
   }
 
   /** Physical purge of a conversation and its messages (cascade). */
-  /** Ends a conversation without a message: schedules its extraction now (404 when unknown, nothing when no consent). */
+  /** Ends a conversation without a message: schedules its extraction now (404 when unknown — also when nothing was stored for lack of consent). */
   async end(clientId: string, ownerId: string, conversationExternalId: string): Promise<void> {
     const [conv] = await this.db.query(
       `SELECT id FROM conversations WHERE client_id = $1 AND owner_id = $2 AND external_id = $3 AND deleted_at IS NULL`,
