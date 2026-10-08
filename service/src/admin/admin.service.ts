@@ -90,6 +90,16 @@ export class AdminService {
 
   // ── Reads for the admin console (metadata only: names, settings, counts — never memory content) ──────────────────
 
+  /** Recent extraction runs of a person, newest first (metadata and counts only). */
+  async listRuns(ownerId: string, conversationId: string | undefined, limit: number): Promise<unknown[]> {
+    return this.db.query(
+      `SELECT r.id, r.kind, r.status, r.model, r.prompt_version AS "promptVersion", r.error, r.started_at AS "startedAt",
+              r.finished_at AS "finishedAt", r.conversation_id AS "conversationId", c.external_id AS "conversation", r.summary
+       FROM extraction_runs r LEFT JOIN conversations c ON c.id = r.conversation_id
+       WHERE r.owner_id = $1 AND ($2::uuid IS NULL OR r.conversation_id = $2)
+       ORDER BY r.started_at DESC LIMIT $3`, [ownerId, conversationId ?? null, limit]);
+  }
+
   /** Owners with their settings, memory size, linked identities and personal tokens. */
   async listPersons(): Promise<unknown[]> {
     const owners: Array<Record<string, unknown> & { id: string }> = await this.db.query(

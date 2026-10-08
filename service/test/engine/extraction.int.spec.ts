@@ -162,6 +162,30 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       .toEqual([{ content: "Luca takes the car to the same garage; Luca's mechanic is trusted." }]);
   });
 
+  it('keeps a summary of each run: returned, written, dropped and why — counts only (WORK_PLAN 4.12)', async () => {
+    const c = await ingest('sum1', [{ id: 'sum1', role: 'user', content: 'Oggi ho comprato un ombrello giallo.', at: '2026-10-03T18:00:00+02:00' }]);
+    llm.queue.push({
+      episodes: [
+        { content: 'Il 3 ottobre 2026 Luca ha comprato un ombrello giallo.', evidence: [1] },
+        { content: 'Qualcosa senza prove.', evidence: [] },
+      ],
+      notes: [{ category: 'preference', content: 'Nota senza prove.', evidence: [9] }],
+    });
+    await runner.runForConversation(c);
+    const [run] = await db.query(
+      `SELECT r.id, r.owner_id, r.conversation_id, r.summary FROM extraction_runs r JOIN conversations c ON c.id = r.conversation_id
+       WHERE c.external_id = 'sum1'`);
+    expect(run.summary).toEqual({
+      returned: { episodes: 2, plan_patches: 0, facts: 0, notes: 1 },
+      written: { episodes: 1 },
+      dropped: { episode: { no_evidence: 1 }, note: { no_evidence: 1 } },
+    });
+    expect(JSON.stringify(run.summary)).not.toContain('ombrello'); // never text
+    const runs = (await call(url, 'GET', `/api/v1/admin/owners/${run.owner_id}/runs?conversation=${run.conversation_id}`, { token: ADMIN_KEY })).body;
+    expect(runs).toEqual([expect.objectContaining({ id: run.id, status: 'done', conversation: 'sum1', summary: run.summary })]);
+    expect((await call(url, 'GET', `/api/v1/admin/owners/${run.owner_id}/runs?conversation=not-a-uuid`, { token: ADMIN_KEY })).status).toBe(400);
+  });
+
   it('links an unlinked correction through the near-duplicate check (one extra call only when candidates exist)', async () => {
     const a = await ingest('ort1', [{ id: 'o1', role: 'user', content: "Lunedì sono stata dall'ortopedico.", at: '2026-11-04T21:00:00+01:00' }]);
     llm.queue.push({ episodes: [{ content: "Visita dall'ortopedico lunedì 2 novembre 2026.", occurred_at: '2026-11-02', evidence: [1] }] });

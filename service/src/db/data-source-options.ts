@@ -13,6 +13,7 @@ import { RecallLogConversation1791010000000 } from './migrations/1791010000000-R
 import { FactsReview1791020000000 } from './migrations/1791020000000-FactsReview';
 import { EntityMemory1791030000000 } from './migrations/1791030000000-EntityMemory';
 import { ConsentWaiting1791040000000 } from './migrations/1791040000000-ConsentWaiting';
+import { RunSummary1791050000000 } from './migrations/1791050000000-RunSummary';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -22,7 +23,7 @@ import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog
  */
 export const ENTITIES = [Person, Owner, Client, ApiKey, AccessToken, ExternalIdentity, Conversation, ConversationParticipant, Message];
 export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, MessageAuthorRef1790970000000, OwnerQualityProfile1790980000000, Consolidation1790990000000, RecallLog1791000000000, RecallLogConversation1791010000000, FactsReview1791020000000,
-  EntityMemory1791030000000, ConsentWaiting1791040000000];
+  EntityMemory1791030000000, ConsentWaiting1791040000000, RunSummary1791050000000];
 
 export function dataSourceOptions(url: string): DataSourceOptions {
   return { type: 'postgres', url, entities: ENTITIES, migrations: MIGRATIONS, migrationsRun: false, synchronize: false };

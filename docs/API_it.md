@@ -398,7 +398,8 @@ direttamente le stesse rotte.
 ### Console admin (WORK_PLAN 6.9)
 `GET /admin` serve una pagina statica (pubblica: non contiene dati) sopra la API admin; l'operatore digita la chiave
 admin, che resta solo in quella scheda del browser (CSP restrittiva, `no-store`). Rotte usate oltre a quelle sopra, tutte
-solo admin e solo metadati: `GET api/v1/admin/persons` (owner con impostazioni, conteggi di messaggi / episodi / fatti /
+solo admin e solo metadati: `GET api/v1/admin/owners/{id}/runs?conversation=&limit=` (le esecuzioni di estrazione recenti di una persona con il
+loro riassunto — restituito, scritto, scartato e perché, solo conteggi; WORK_PLAN 4.12), `GET api/v1/admin/persons` (owner con impostazioni, conteggi di messaggi / episodi / fatti /
 note, estrazione in attesa, ultimo messaggio, `waitingForConsentSince` — quando un client ha inviato messaggi l'ultima
 volta mentre il consenso era spento, `owners.ingest_refused_at`, null una volta dato il consenso — identità collegate,
 token personali attivi per prefisso), `GET api/v1/admin/clients` (client

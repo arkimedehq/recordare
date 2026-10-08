@@ -389,7 +389,8 @@ routes directly.
 ### Admin console (WORK_PLAN 6.9)
 `GET /admin` serves a static page (public: it holds no data) over the admin API; the operator types the admin key, kept
 in that browser tab only (strict CSP, `no-store`). Routes it uses besides those above, all admin only and metadata only:
-`GET api/v1/admin/persons` (owners with settings, message / episode / fact / note counts, pending extraction, last
+`GET api/v1/admin/owners/{id}/runs?conversation=&limit=` (a person's recent extraction runs with their summary — returned,
+written, dropped and why, counts only; WORK_PLAN 4.12), `GET api/v1/admin/persons` (owners with settings, message / episode / fact / note counts, pending extraction, last
 message, `waitingForConsentSince` — when a client last sent messages while consent was off, `owners.ingest_refused_at`,
 null once consent is on — linked identities, active personal tokens by prefix), `GET api/v1/admin/clients` (clients with active keys by prefix),
 `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = every key and token of the client stops at
