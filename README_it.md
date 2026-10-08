@@ -206,6 +206,49 @@ Attorno alla memoria:
 - **Connettori** per altre piattaforme di agenti, che condividono una libreria client e una suite di conformità
   (pianificati).
 
+## Installazione
+
+Servono Docker con Compose v2 e una chiave API di un qualsiasi provider LLM compatibile OpenAI (il migliore misurato:
+DeepSeek `deepseek-flash`; funziona anche un server locale come Ollama).
+
+```bash
+git clone https://github.com/arkimedehq/recordare.git
+cd recordare
+deploy/install.sh
+```
+
+L'**installer guidato** chiede il profilo (**standalone**: Postgres + pgvector, Redis ed embedder bge-m3 propri; oppure
+**co-ospitato** accanto ad Arkimede, riusandone Postgres, Redis ed embedder), URL, modello e chiave dell'LLM (nascosta),
+la porta e se altri dispositivi della LAN possono raggiungerlo; genera i segreti in `deploy/.env` (permessi 600),
+costruisce e avvia lo stack e, nel profilo co-ospitato, può collegare Arkimede. Idempotente: si può rilanciare.
+Non interattivo: `deploy/install.sh --profile standalone --yes` con le risposte nell'ambiente (`LLM_API_KEY_FILE`
+tiene la chiave fuori dalla riga di comando).
+
+> **Risorse**: standalone ≈ 6 GB di RAM (il solo embedder ≈ 4,5 GB); co-ospitato aggiunge ad Arkimede solo il servizio
+> (≈ 100 MB). Disco ≈ 5 GB per immagini e modello. Solo CPU.
+
+Dopo l'installazione, aprire la **console admin** su `http://<host>:<porta>/admin` con `ADMIN_API_KEY` di
+`deploy/.env`: creare le persone, attivarne il consenso e dare una chiave a ogni piattaforma client
+([INTEGRATION_it.md](docs/INTEGRATION_it.md); Claude Code: §4b). Poi:
+
+```bash
+deploy/update.sh    # backup, pull, ricostruzione, riavvio (le migrazioni girano all'avvio)
+deploy/backup.sh    # dump del database in deploy/backups/ (da mettere in cron)
+```
+
+Impostazioni principali (tutte in `deploy/.env`; ogni manopola con il suo predefinito in [KNOBS_it.md](docs/KNOBS_it.md)):
+
+| Variabile | Cosa imposta |
+|---|---|
+| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_PROFILE` | Il provider LLM (qualsiasi compatibile OpenAI; `LLM_PROFILE` = particolarità del provider) |
+| `QUALITY_PROFILE` | `economy` / `balanced` (predefinito) / `full`: costo contro qualità, per installazione, modificabile per persona |
+| `RECORDARE_PORT`, `RECORDARE_BIND` | Porta sull'host (8090) e indirizzo (`127.0.0.1`, o `0.0.0.0` per la LAN) |
+| `IDLE_DELAY_SECONDS`, `CONSOLIDATION_HOUR` | Quando una conversazione viene elaborata (dopo 15 min di inattività) e l'ora del riassunto notturno |
+| `EMBEDDER_MAX_BATCH_TOKENS` | Batch dell'embedder standalone (2048 ≈ 4,5 GB di RAM) |
+| `RECORDARE_PROJECT` | Nome del progetto Compose, per una seconda installazione sullo stesso host |
+
+Altro in [DEPLOYMENT_it.md](docs/DEPLOYMENT_it.md) (profili, dettagli del co-hosting, HTTPS davanti).
+
 ## Limiti di questa versione (profilo privato, D33)
 
 Recordare v1 è il **profilo privato (uso personale / ricerca)**: un'installazione gestita da qualcuno di cui gli utenti si

@@ -196,6 +196,49 @@ Around the memory:
   recognised person's words into their own memory.
 - **Connectors** for other agent platforms, sharing one client library and one conformance suite (planned).
 
+## Install
+
+Needs Docker with Compose v2 and an API key of any OpenAI-compatible LLM provider (measured best: DeepSeek
+`deepseek-flash`; a local server such as Ollama works too).
+
+```bash
+git clone https://github.com/arkimedehq/recordare.git
+cd recordare
+deploy/install.sh
+```
+
+The **guided installer** asks the profile (**standalone**: its own Postgres + pgvector, Redis and bge-m3 embedder; or
+**co-hosted** next to Arkimede, reusing its Postgres, Redis and embedder), the LLM URL, model and key (hidden), the
+port and whether other devices on the LAN may reach it; it generates the secrets into `deploy/.env` (mode 600), builds
+and starts the stack, and in the co-hosted profile can link Arkimede. Idempotent: safe to re-run.
+Non-interactive: `deploy/install.sh --profile standalone --yes` with the answers in the environment (`LLM_API_KEY_FILE`
+keeps the key off the command line).
+
+> **Footprint**: standalone ≈ 6 GB RAM (the embedder alone ≈ 4.5 GB); co-hosted adds only the service (≈ 100 MB) to
+> Arkimede. Disk ≈ 5 GB for images and the model. CPU only.
+
+After the install, open the **admin console** at `http://<host>:<port>/admin` with `ADMIN_API_KEY` from `deploy/.env`:
+create the people, switch their consent on, and give each client platform a key ([INTEGRATION.md](docs/INTEGRATION.md);
+Claude Code: §4b). Then:
+
+```bash
+deploy/update.sh    # backup, pull, rebuild, restart (migrations run at start)
+deploy/backup.sh    # database dump into deploy/backups/ (put it in cron)
+```
+
+Main settings (all in `deploy/.env`; every knob with its default in [KNOBS.md](docs/KNOBS.md)):
+
+| Variable | What it sets |
+|---|---|
+| `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_PROFILE` | The LLM provider (any OpenAI-compatible; `LLM_PROFILE` = provider quirks) |
+| `QUALITY_PROFILE` | `economy` / `balanced` (default) / `full`: cost against quality, per installation, overridable per person |
+| `RECORDARE_PORT`, `RECORDARE_BIND` | Host port (8090) and address (`127.0.0.1`, or `0.0.0.0` for the LAN) |
+| `IDLE_DELAY_SECONDS`, `CONSOLIDATION_HOUR` | When a conversation is processed (after 15 min idle) and the nightly digest hour |
+| `EMBEDDER_MAX_BATCH_TOKENS` | Standalone embedder batch (2048 ≈ 4.5 GB RAM) |
+| `RECORDARE_PROJECT` | Compose project name, for a second installation on the same host |
+
+More in [DEPLOYMENT.md](docs/DEPLOYMENT.md) (profiles, co-hosting details, HTTPS in front).
+
 ## Limits of this version (private profile, D33)
 
 Recordare v1 is the **private (home / research) profile**: an installation run by someone the users trust (a family,

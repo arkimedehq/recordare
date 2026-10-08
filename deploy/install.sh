@@ -15,7 +15,7 @@
 # Usage:
 #   deploy/install.sh                 interactive
 #   deploy/install.sh --profile cohosted --yes     answers from the environment / defaults:
-#     LLM_BASE_URL, LLM_MODEL, LLM_API_KEY (or LLM_API_KEY_FILE), ARKIMEDE_DIR, RECORDARE_PORT, LINK_ARKIMEDE=yes|no,
+#     LLM_BASE_URL, LLM_MODEL, LLM_API_KEY (or LLM_API_KEY_FILE), ARKIMEDE_DIR, RECORDARE_PORT, RECORDARE_BIND, LINK_ARKIMEDE=yes|no,
 #     RECORDARE_PROJECT (Compose project name, default recordare: another one for a second installation on the host)
 set -euo pipefail
 
@@ -121,9 +121,18 @@ else
     || EMBEDDER_IMAGE="ghcr.io/huggingface/text-embeddings-inference:cpu-1.9"
   ok "own Postgres (pgvector), Redis and embedder ($EMBEDDER_IMAGE, bge-m3)"
 fi
-RECORDARE_PORT=${RECORDARE_PORT:-$(get RECORDARE_PORT)}; RECORDARE_PORT=${RECORDARE_PORT:-8090}
+step "5 · Network"
+RECORDARE_PORT=${RECORDARE_PORT:-$(get RECORDARE_PORT)}; RECORDARE_PORT=$(ask "Host port" "${RECORDARE_PORT:-8090}")
+RECORDARE_BIND=${RECORDARE_BIND:-$(get RECORDARE_BIND)}
+if [[ -z "$RECORDARE_BIND" ]]; then
+  # Other devices on the LAN (a client platform on another machine, the admin console from a laptop) need 0.0.0.0;
+  # every route still needs a key, but traffic is plain HTTP: a trusted network only (README → Limits).
+  if yesno "Reachable from other devices on the local network (plain HTTP, trusted network only)?" N; then RECORDARE_BIND=0.0.0.0
+  else RECORDARE_BIND=127.0.0.1; fi
+fi
+ok "listening on $RECORDARE_BIND:$RECORDARE_PORT"
 
-step "5 · Configuration (deploy/.env, mode 600)"
+step "6 · Configuration (deploy/.env, mode 600)"
 umask 077
 cat > "$ENV_FILE" <<ENV
 # Written by deploy/install.sh ($PROFILE) on $(date -u +%Y-%m-%dT%H:%MZ). Secrets: keep this file private.
@@ -147,20 +156,21 @@ EMBEDDING_BASE_URL=$EMBEDDING_BASE_URL
 EMBEDDING_MODEL=$EMBEDDING_MODEL
 EMBEDDING_DIM=1024
 RECORDARE_PORT=$RECORDARE_PORT
+RECORDARE_BIND=$RECORDARE_BIND
 RECORDARE_PROJECT=$PROJECT_NAME
 ${NET:+ARKIMEDE_NETWORK=$NET}
 ${EMBEDDER_IMAGE:+EMBEDDER_IMAGE=$EMBEDDER_IMAGE}
 ENV
 chmod 600 "$ENV_FILE"; ok "$ENV_FILE"
 
-step "6 · Build and start"
+step "7 · Build and start"
 "${COMPOSE[@]}" --env-file "$ENV_FILE" up -d --build 2>&1 | grep -E 'Built|Started|Running|Healthy|Error' || true
 for i in $(seq 1 60); do
   [[ "$(docker inspect $RC --format '{{.State.Health.Status}}' 2>/dev/null)" == healthy ]] && break; sleep 5
 done
 [[ "$(docker inspect $RC --format '{{.State.Health.Status}}' 2>/dev/null)" == healthy ]] \
   || die "Recordare did not become healthy — see: docker logs $RC"
-ok "Recordare is up (migrations applied) on 127.0.0.1:$RECORDARE_PORT"
+ok "Recordare is up (migrations applied) on $RECORDARE_BIND:$RECORDARE_PORT"
 
 admin() { docker exec -i $RC node -e "
   const [m, p, b] = process.argv.slice(1);
@@ -168,7 +178,7 @@ admin() { docker exec -i $RC node -e "
     body: b || undefined }).then(async (r) => { process.stdout.write(await r.text()); process.exit(r.ok ? 0 : 1); });" "$@"; }
 
 if [[ $PROFILE == cohosted ]]; then
-  step "7 · Link Arkimede"
+  step "8 · Link Arkimede"
   ARKIMEDE_DIR=${ARKIMEDE_DIR:-$(docker inspect "$PROJECT-backend-1" --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' 2>/dev/null || true)}
   if [[ "${LINK_ARKIMEDE:-yes}" != no ]] && [[ -f "$ARKIMEDE_DIR/.env" ]] && yesno "Create Arkimede's client and set RECORDARE_URL / RECORDARE_API_KEY in $ARKIMEDE_DIR/.env?" Y; then
     if grep -q '^RECORDARE_API_KEY=.' "$ARKIMEDE_DIR/.env"; then
@@ -188,5 +198,9 @@ if [[ $PROFILE == cohosted ]]; then
 fi
 
 echo
-echo "${B}Done.${N} Recordare ($PROFILE) on http://127.0.0.1:$RECORDARE_PORT · admin key in $ENV_FILE (ADMIN_API_KEY)."
-echo "Next: give each person's consent (PATCH /api/v1/admin/owners/{id} {episodicEnabled: true}); backups: deploy/backup.sh."
+HOSTNAME_SHOWN=$([[ $RECORDARE_BIND == 0.0.0.0 ]] && (hostname -I 2>/dev/null | awk '{print $1}' || true) || true)
+URL="http://${HOSTNAME_SHOWN:-127.0.0.1}:$RECORDARE_PORT"
+echo "${B}Done.${N} Recordare ($PROFILE) on $URL"
+echo "  Admin console: $URL/admin — sign in with ADMIN_API_KEY from $ENV_FILE (read it there; it is not printed)."
+echo "  Next: in the console create a person, switch their consent on, and give each client platform a key"
+echo "  (docs/INTEGRATION.md); backups: deploy/backup.sh (cron), upgrades: deploy/update.sh."
