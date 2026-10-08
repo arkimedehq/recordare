@@ -401,6 +401,24 @@ more than 3 people ignored — recall adds up to 3 of that person's own chat mes
 
 Kept.
 
+### WORK_PLAN 4.11 — plan guard and "l'owner" (2026-10-08, blind5, DeepSeek direct)
+
+Two defects found through the Diary: a plan **confirmed before its date**, and memories saying **"l'owner"** (≈ 5.7 % of
+episodes, 5.3 % of notes in the local database).
+
+| Version | Runs | Mean | "owner" in episodes / notes | Plans confirmed before their date |
+|---|---|---|---|---|
+| v8 (reference, earlier days) | 91.9 / 91.9 / 93.1 | **92.3 %** | ≈ 5–6 % | not checked |
+| v9 = owner name in the prompt (`extract.v9`, `facts.v2`) + plan guard | 90.2 / 91.4 / 88.5 | **90.0 %** | 0 / 0 | 0 |
+| **v8 prompt + name substituted in code + plan guard** | 90.8 | — | 0 / 0 | 0 |
+
+- Naming the person in the prompt cost ≈ 2 points (all three v9 runs below v8's worst; spread, no question worse every
+  time; one run also lost a window to two invalid outputs). Kept out: back to `extract.v8`.
+- The code-side substitution fixes the wording without touching extraction; 90.8 % is −1.5 pt from v8's mean on one
+  run, within the noise of this set (≈ 1.3 questions), with a clean run. Kept, with the plan guard (code only; it did
+  not fire on this set).
+- An OpenRouter run of v9 (88.5 %) is discarded: 12 % invalid outputs on extraction (2 failed windows).
+
 ### Pre-turn memory context (WORK_PLAN 5.7, 2026-10-07, dev set `dataset_dev_context` — NOT blind, written by the engine developer)
 
 `agent_eval.py`: the answer model is an **agent** (DeepSeek `deepseek-flash`, function calling) with Recordare's read
