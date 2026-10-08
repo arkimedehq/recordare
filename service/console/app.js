@@ -21,7 +21,7 @@ const T = {
     unlinkConfirm: 'Scollegare questa identità? Quell\'utente del client non raggiungerà più questa memoria (i ricordi restano).',
     revokeConfirm: 'Revocare? Smette di funzionare subito.', consentOn: 'Attivare la memoria di {name}? Da ora i messaggi vengono conservati ed estratti.',
     consentOff: 'Sospendere la memoria di {name}? I nuovi messaggi non verranno più conservati.',
-    keys: 'Chiavi', newKey: 'Nuova chiave', scopes: 'permessi', autoProvision: 'Crea le persone al primo contatto',
+    keys: 'Chiavi', newKey: 'Nuova chiave', newKeyScopes: 'Permessi per una nuova chiave:', scopes: 'permessi', autoProvision: 'Crea le persone al primo contatto',
     disabled: 'Disabilitato', active: 'attivo', disableConfirm: 'Disabilitare il client? Tutte le sue chiavi e i token smettono di funzionare.',
     clientName: 'Nome del client', kindLabel: 'Tipo', personName: 'Nome della persona', create: 'Crea', cancel: 'Annulla',
     secretTitle: 'Copia ora il segreto', secretHint: 'Non verrà più mostrato: Recordare ne conserva solo l\'impronta.',
@@ -43,7 +43,7 @@ const T = {
     unlinkConfirm: 'Unlink this identity? That client user will no longer reach this memory (memories stay).',
     revokeConfirm: 'Revoke? It stops working at once.', consentOn: 'Turn on {name}\'s memory? From now on messages are stored and extracted.',
     consentOff: 'Pause {name}\'s memory? New messages will no longer be stored.',
-    keys: 'Keys', newKey: 'New key', scopes: 'scopes', autoProvision: 'Create people on first contact',
+    keys: 'Keys', newKey: 'New key', newKeyScopes: 'Scopes for a new key:', scopes: 'scopes', autoProvision: 'Create people on first contact',
     disabled: 'Disabled', active: 'active', disableConfirm: 'Disable the client? All its keys and tokens stop working.',
     clientName: 'Client name', kindLabel: 'Kind', personName: 'Person\'s name', create: 'Create', cancel: 'Cancel',
     secretTitle: 'Copy the secret now', secretHint: 'It will not be shown again: Recordare keeps only its hash.',
@@ -216,7 +216,7 @@ function newPersonForm() {
 // ── Clients ────────────────────────────────────────────────────────────────────
 
 function clientCard(c) {
-  const scopeBoxes = KEY_SCOPES.map((s) => h('label', { class: 'switch' }, h('input', { type: 'checkbox', value: s, checked: s !== 'write' }), s));
+  const scopeBoxes = KEY_SCOPES.map((s) => h('label', { class: 'switch' }, h('input', { type: 'checkbox', value: s, checked: true }), s));
   return h('div', { class: 'card' },
     h('div', { class: 'head' },
       h('span', { class: 'name' }, c.name), h('span', { class: 'chip' }, c.kind),
@@ -241,7 +241,7 @@ function clientCard(c) {
         h('span', { class: 'muted' }, `${t('used')}: ${when(k.lastUsedAt)}`),
         h('button', { class: 'danger small', onclick: () => confirm(t('revokeConfirm')) && act(() => api('DELETE', `keys/${k.id}`)) }, t('revoke')),
       )) : h('div', { class: 'muted' }, t('none')),
-      h('div', { class: 'row' }, scopeBoxes, h('button', {
+      h('div', { class: 'row' }, h('span', { class: 'muted' }, t('newKeyScopes')), scopeBoxes, h('button', {
         class: 'ghost small',
         onclick: () => {
           const scopes = scopeBoxes.map((l) => l.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
