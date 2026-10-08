@@ -4,9 +4,12 @@
 
 Stato: **contratti M1, revisione 3** (2026-10-03): applicate le revisioni di coerenza e di sicurezza, poi suddiviso
 in profili di deployment (§0) così che la v1 resti focalizzata sul twin.
-**Costruito (2026-10-07)**: §2 ingest, §3 strumenti MCP (come indicato per ciascuno), `GET / PATCH api/v1/me`, l'API
-admin, la telemetria live e lo snapshot dell'atlas. Le sezioni o righe contrassegnate **not built yet (v1 plan)** sono il
-contratto ancora da costruire (§4 API di lettura, §5 SDK, OpenAPI, `Idempotency-Key`).
+**Costruito (2026-10-08)**: §2 ingest (con `…/end`), §3 strumenti MCP (come indicato per ciascuno) e il contesto di
+memoria prima del turno (`POST api/v1/context`, con `ingest`), le righe della §4 che servono al diario dell'host
+(WORK_PLAN 4.7), `GET / PATCH api/v1/me`, la §5 libreria client, l'API admin e la console, la telemetria live e lo
+snapshot dell'atlas; `GET api/v1/health` (senza autenticazione: il servizio è vivo e raggiunge il database). Le sezioni o
+righe contrassegnate **not built yet (v1 plan)** sono il contratto ancora da costruire (le altre righe della §4, OpenAPI,
+`Idempotency-Key`).
 Neutrale rispetto al client: nulla qui è specifico di Arkimede. Modello dati: `DATA_MODEL.md`. Due livelli di
 integrazione (visione → Architecture): **basic** = solo strumenti MCP; **full** = ingest REST + MCP + API di lettura
 + SDK.
@@ -14,7 +17,8 @@ integrazione (visione → Architecture): **basic** = solo strumenti MCP; **full*
 Convenzioni: JSON su HTTPS; i controller hard-codano `api/v1/…` (nessun prefisso globale); ISO 8601 con
 offset; uuid; errori come problem details RFC 9457 (`{type, title, status, detail, code}`); gli schemi zod
 sono l'unica fonte di verità e generano `GET /api/v1/openapi.json` (**not built yet**); paginazione
-`?cursor&limit` → `{items, nextCursor}`; ogni POST non idempotente accetta un header `Idempotency-Key`
+`?cursor&limit` → `{items, nextCursor}` (come costruito pagina solo `GET api/v1/episodes`; le altre liste della §4
+restituiscono semplici array); ogni POST non idempotente accetta un header `Idempotency-Key`
 (finestra di replay di 24 h, viene restituita la stessa risposta — **not built yet**; l'ingest è idempotente sugli id dei messaggi).
 
 ## 0. Profili di deployment (D33)
@@ -38,9 +42,11 @@ dei dati.
   (`telegram:…`, `phone:+39…`, `email:…`); solo i collegamenti verificati identificano gli interlocutori.
 
 ### Autenticazione dell'owner (public profile)
-**v1**: gli owner sono creati dall'admin (`POST api/v1/admin/owners`); il consenso (`episodicEnabled`),
-i token personali e i collegamenti di identità sono gestiti tramite l'API admin o un personal token dell'owner;
-non esistono pagine dell'owner. Il consolidamento notturno si avvia da solo (`CONSOLIDATION_HOUR`, fuso orario dell'owner); `POST api/v1/admin/owners/:id/consolidate` lo esegue subito (rispetta `X-Recordare-Now` dove consentito); `POST api/v1/admin/owners/:id/review-facts` esegue subito la sola revisione dei fatti (WORK_PLAN 5.6, stesso lock del consolidamento). Profilo di qualità (D35): `qualityProfile` `economy | balanced | full` alla creazione dell'owner /
+**v1**: gli owner sono creati dall'admin (`POST api/v1/admin/owners`), oppure auto-provisionati alla prima richiesta
+di un client che lo consente (`autoProvision`, con il nome dell'id utente del client finché il client non li rinomina);
+il consenso (`episodicEnabled`), i token personali e i collegamenti di identità sono gestiti tramite l'API admin (e la
+sua console, §6) — come costruito nessuna rotta permette a un personal token dell'owner di cambiarli; non esistono pagine
+dell'owner. Il consolidamento notturno si avvia da solo (`CONSOLIDATION_HOUR`, fuso orario dell'owner); `POST api/v1/admin/owners/:id/consolidate` lo esegue subito (rispetta `X-Recordare-Now` dove consentito); `POST api/v1/admin/owners/:id/review-facts` esegue subito la sola revisione dei fatti (WORK_PLAN 5.6, stesso lock del consolidamento). Profilo di qualità (D35): `qualityProfile` `economy | balanced | full` alla creazione dell'owner /
 `PATCH api/v1/admin/owners/:id` (`null` = il default dell'installazione `QUALITY_PROFILE`, `balanced` se non impostato). Le stesse
 route accettano `kind` `human | entity` (D48: una **memoria di entità**, condivisa da tutti coloro che usano l'account — un dispositivo domestico,
 un robot, un luogo) e `PATCH` accetta `displayName` (una successiva sincronizzazione del nome del suo utente da parte di un client lo sovrascrive: il nome segue la piattaforma).
@@ -63,20 +69,23 @@ diario self-service.
 | Livello | Credenziale | Agisce come |
 |---|---|---|
 | Full | **Client API key** `Authorization: Bearer rk_…` | Gli owner associati a quel client, selezionati per richiesta con `X-Recordare-User: <externalUserId>` |
-| Basic | **Personal access token** `rp_…`, legato a un owner + un client, creato dall'owner (sessione dell'owner) — per i client MCP in grado di inviare header (Claude Code, Cursor, SDK) | Quell'owner |
+| Basic | **Personal access token** `rp_…`, legato a un owner + un client, creato dall'owner (sessione dell'owner; v1: dall'admin, `POST api/v1/admin/owners/:id/tokens {clientId, scopes, expiresAt?}`) — per i client MCP in grado di inviare header (Claude Code, Cursor, SDK); con anche `ingest` e `read` serve pure i connettori di livello full per una sola persona (`connectors/`). Disabilitare il suo client lo ferma | Quell'owner |
 | Basic (OAuth) — public profile | **OAuth 2.1** secondo la specifica di autorizzazione MCP (code + PKCE, registrazione dinamica del client, metadati della risorsa protetta); l'owner accede (magic link) e acconsente — per i client che lo richiedono (connettori Claude Desktop / claude.ai). Pianificato per M6; i token personali coprono M3–M5 | Quell'owner |
-| Admin | Chiave API con scope `admin` | Gestione dell'installazione |
+| Admin | Chiave API con scope `admin` (v1: l'unica `ADMIN_API_KEY` dell'installazione, impostata nel suo ambiente) | Gestione dell'installazione |
 
 ### Scope
 | Scope | Consente |
 |---|---|
-| `ingest` | §2 ingest, modifiche, cancellazioni delle conversazioni del client stesso |
-| `mcp` | §3 strumenti (lettura + `log_episode`, `correct_episode`, `forget_episode`) |
-| `read` | §4 endpoint GET |
-| `write` | §4 inserimenti manuali, correzioni, oblio, modifiche dei fatti |
-| `owner_settings` | `PATCH settings` incluso `episodicEnabled` — mai le chiavi API dei client (consenso, D4). v1: chiave admin o token personale dell'owner; public profile: sessioni dell'owner / token creati dall'owner |
-| `export` | §4 job di export — v1: chiave admin o token personale dell'owner; public profile: solo sessioni dell'owner, download con scadenza |
-| `admin` | `api/v1/admin/…` |
+| `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me` (chiavi client) |
+| `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `correct_episode`, `forget_episode`) |
+| `read` | §4 endpoint GET, `GET api/v1/me`, `POST api/v1/context` |
+| `write` | §4 inserimenti manuali, correzioni, oblio, modifiche di fatti / note |
+| `owner_settings` | `PATCH settings` incluso `episodicEnabled` — mai le chiavi API dei client (consenso, D4). v1: chiave admin o token personale dell'owner; public profile: sessioni dell'owner / token creati dall'owner. Come costruito nessuna rotta lo usa ancora: il consenso lo imposta l'admin (`PATCH api/v1/admin/owners/:id`) |
+| `export` | §4 job di export — v1: chiave admin o token personale dell'owner; public profile: solo sessioni dell'owner, download con scadenza. Non ancora costruito |
+| `admin` | `api/v1/admin/…` (come costruito: solo la credenziale `ADMIN_API_KEY`; una chiave o un token che elenca `admin` non ottiene alcuna rotta admin) |
+
+Le chiavi client si creano solo con `ingest`, `mcp`, `read`, `write` (`POST api/v1/admin/clients/:id/keys {scopes}`);
+`admin`, `owner_settings` ed `export` non vengono mai dati a una chiave client.
 
 Chiavi e token: hash argon2id, mostrati una sola volta, prefisso visibile, rotazione tramite crea + revoca. Un
 client non può mai emettere token per un altro client. I replay di `Idempotency-Key` hanno ambito
@@ -86,12 +95,13 @@ public profile).
 ### Contesto del visualizzatore (chi vedrà il risultato) — ogni lettura
 L'insieme dei visualizzatori è **risolto da Recordare, mai dichiarato dal client o dall'LLM**:
 - **Chiavi API dei client e sessioni MCP aperte con esse**: l'unica fonte accettata è
-  `X-Recordare-Conversation: <externalConversationId>`, risolto rispetto ai partecipanti che Recordare
-  ha ingerito per quella conversazione. `X-Recordare-Viewers` e `_meta.recordare.viewers` possono solo
+  `X-Recordare-Conversation: <externalConversationId>` (le chiamate MCP possono portarlo invece come
+  `_meta.recordare.conversation`), risolto rispetto ai partecipanti che Recordare ha ingerito per quella conversazione. `X-Recordare-Viewers` e `_meta.recordare.viewers` possono solo
   **aggiungere** visualizzatori (restringendo ciò che viene restituito), mai sostituire l'insieme risolto. Una lettura **senza
   una conversazione risolvibile non restituisce nulla**.
 - **Token personali e sessioni dell'owner** (uso diretto dell'owner, ad es. Claude Code): nessun header → visualizzatori =
-  l'owner; un header di conversazione, se inviato, si applica come sopra.
+  l'owner; un header di conversazione, se inviato, si applica come sopra — salvo che una conversazione non ancora salvata
+  (un client che legge prima di inviarla) conta come della persona (visualizzatori = l'owner).
 - (Public profile) l'insieme dei visualizzatori risolto e la sua fonte sono scritti in `read_audit`.
 
 Regola (`DATA_MODEL.md` → regola di lettura): nella fase 1 i ricordi — e i dati grezzi derivati dalle chat
@@ -116,14 +126,21 @@ channel, externalId}`); collegare un id già legato a un altro owner fallisce co
 4. L'owner può elencare e revocare in qualsiasi momento i client e le identità connessi:
    `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` (sessione dell'owner).
 
-Admin (`api/v1/admin/…`), costruito: `POST clients`, `POST clients/:id/keys`, `DELETE keys/:id`, `POST owners`,
-`PATCH owners/:id`, `POST identities`, `POST owners/:id/tokens`, `DELETE tokens/:id`, `POST owners/:id/consolidate`,
+Admin (`api/v1/admin/…`), costruito: `POST clients {name, kind: platform | mcp_client | import, autoProvision?,
+rawLogScope?}`, `GET clients`, `PATCH clients/:id`, `POST clients/:id/keys {scopes}` (→ `{id, key, prefix}`, la chiave
+mostrata una sola volta), `DELETE keys/:id`, `POST owners {displayName, kind?, locale? (it | en), timezone?,
+episodicEnabled?, qualityProfile?}`, `PATCH owners/:id`, `GET persons`, `POST identities {kind: client_user, personId,
+clientId, externalId} | {kind: channel, personId, ownerScope?, channel, externalId, verified?}`, `DELETE identities/:id`,
+`POST owners/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST owners/:id/consolidate`,
 `POST owners/:id/review-facts`, `GET owners` (owner con dimensione della memoria, per l'atlas), `GET owners/:id/atlas`,
-`GET telemetry/stream` (§6). Non ancora costruiti: job di export dell'owner / cancellazione totale.
+`GET telemetry/stream` (§6; le rotte della console sono descritte lì). Le revoche hanno effetto subito (la cache delle
+credenziali viene svuotata). Non ancora costruiti: job di export dell'owner / cancellazione totale.
 
 ## 2. Ingest REST (task 1.2) — integrazione full
 
 ### `POST api/v1/ingest/messages` (scope `ingest`)
+Una chiave client indica la persona con `X-Recordare-User`; un token personale con `ingest` invia per il suo owner (i
+connettori per una sola persona). La credenziale admin non può fare ingest (403).
 ```ts
 {
   conversation: {
@@ -154,20 +171,24 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
 `{conversationId, accepted, duplicates, conflicts: [externalId…], stored: boolean}`.
 - Stesso `externalId` e stesso contenuto → duplicato (ignorato). Stesso `externalId`, contenuto diverso →
   elencato in `conflicts` (stile `409` per elemento) a meno che `upsert: true`, che registra una modifica.
-- **Owner senza `episodicEnabled`** → non viene memorizzato nulla, `stored: false` (nessun log grezzo senza
-  consenso). Disabilitarlo in seguito interrompe ingest ed estrazione; i ricordi esistenti restano finché l'owner
-  non li cancella ("disabilita e cancella" è offerto nella pagina dell'owner).
+- **Owner senza `episodicEnabled`** → non viene memorizzato nulla, `stored: false`, `conversationId: null` (nessun log
+  grezzo senza consenso); Recordare annota solo quando ha rifiutato l'ultima volta (`owners.ingest_refused_at`), così la
+  console admin mostra la persona in attesa del consenso (WORK_PLAN 6.6b). Disabilitarlo in seguito interrompe ingest ed
+  estrazione; i ricordi esistenti restano finché l'owner non li cancella ("disabilita e cancella" è offerto nella pagina
+  dell'owner — public profile).
 - Ogni batch accettato (ri)pianifica il job idle della conversazione (D1, D5, ritardo globale); i messaggi
   sono estratti quando in attesa, per `sentAt`, così i messaggi in ritardo o fuori ordine non vengono mai saltati.
 
 ### Modifiche e cancellazioni
-- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}`.
+- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` se
+  sconosciuto); il testo precedente va in `message_revisions` e il messaggio viene estratto di nuovo.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
   purge (`DATA_MODEL.md` → Forgetting and deletion). Come costruito: la purge viene eseguita in modo sincrono e restituisce `202` senza
-  corpo (piano: `202` + id del job).
+  corpo (piano: `202` + id del job); `404` se sconosciuto (la libreria client lo tratta come fatto).
 - `POST api/v1/ingest/conversations/{externalId}/end` → `202`: la conversazione è finita sul client (sessione chiusa,
-  /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta.
-  Stesso effetto di `hints.conversationEnded`, senza reinviare un messaggio.
+  /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta
+  (quindi anche quando non è stato salvato nulla per mancanza di consenso). Stesso effetto di `hints.conversationEnded`
+  (rispettato anche in un batch i cui messaggi sono tutti duplicati), senza reinviare un messaggio.
 
 ### Import
 `source: import_*` con `sentAt` storico, in batch; estratti dal percorso notturno con segmentazione per
@@ -181,14 +202,22 @@ a `initialize` (owner del token, oppure `X-Recordare-User` per le chiavi client)
 (gli host che riutilizzano una sessione per più utenti non possono incrociare le memorie). Il contesto del visualizzatore segue il §1
 (header di conversazione; `_meta` può solo aggiungere visualizzatori). Gli schemi degli strumenti usano il sottoinsieme neutrale rispetto al provider
 (D27). Gli strumenti sono sempre elencati (nessun indizio sull'esistenza di un diario); con `episodicEnabled` disattivato, le letture
-non restituiscono nulla e le scritture sono rifiutate con un errore neutro.
+non restituiscono nulla e le scritture sono rifiutate con un errore neutro. <!-- verify: come costruito gli strumenti
+non controllano il consenso — le letture non trovano nulla solo perché l'ingest non ha salvato nulla, mentre
+log_episode / remember scrivono comunque (mcp-tools.ts, memory-write.service.ts); voluto? --> Come costruito: una
+sessione si apre solo con una richiesta `initialize` (`404` per un id di sessione sconosciuto); la credenziale admin
+riceve `403`; una richiesta da una credenziale diversa da quella che ha aperto la sessione è rifiutata come una
+discrepanza di owner. Le scritture richiedono un contesto risolvibile — un token personale, o una conversazione che
+Recordare ha ricevuto — altrimenti restituiscono `{error: "cannot write here"}`. Gli schemi pubblicati degli strumenti
+sono in `packages/client` (`TOOLS`, tenuti allineati dalla suite di conformità) per i connettori che dichiarano gli
+strumenti in anticipo.
 
 ### `log_episode` (D11)
 | Param | Tipo | Note |
 |---|---|---|
 | `content` | string, obbligatorio | |
 | `kind` | `"event" \| "plan"` | default `event` |
-| `occurred_at`, `occurred_until` | string | data / datetime ISO risolta dall'agente |
+| `occurred_at`, `occurred_until` | string | data ISO risolta dall'agente (come costruito `YYYY-MM-DD` o `YYYY-MM`; un datetime è rifiutato) |
 | `date_precision` | `"day" \| "month" \| "year" \| "approximate"` | |
 | `people` | string[] | Nomi come menzionati |
 | `place` | string | |
@@ -205,27 +234,30 @@ assistant" — così l'output iniettato di uno strumento non può creare un rico
 
 ### `correct_episode` / `forget_episode` (D16, D18 — anche per gli owner solo MCP)
 - `correct_episode {id, content?, occurred_at?, date_precision?}` → nuova riga con `corrects`, vecchia
-  riga invalidata.
-- `forget_episode {id}` → oblio come in `DATA_MODEL.md` (tombstone, nessun ritorno).
+  riga invalidata; restituisce `{id, stored}` (l'id della nuova riga).
+- `forget_episode {id}` → oblio come in `DATA_MODEL.md` (tombstone, nessun ritorno); restituisce `{forgotten: true}`.
 
 ### `search_episodes` (D12, D13, D29)
 | Param | Tipo | Note |
 |---|---|---|
 | `query` | string | Facoltativo per panoramiche pure di un periodo |
-| `from`, `to` | string | Date ISO, estremi inclusi, abbinate per sovrapposizione (`resolve_period` aiuta) |
+| `from`, `to` | string | Date ISO (`YYYY-MM-DD`, oppure `YYYY-MM` = il mese intero), estremi inclusi, abbinate per sovrapposizione (`resolve_period` aiuta) |
 | `mode` | `"search" \| "list" \| "latest"` | `search` per rilevanza; `list` cronologico nell'intervallo; `latest` prima le corrispondenze più recenti |
 | `include_plans` | boolean | default true |
-| `limit` | integer | default: search 10, list 30, latest 5 |
+| `limit` | integer, 1–50 | default: search 10, list 30, latest 5 |
 
-Restituisce:
+Restituisce (come costruito):
 ```ts
 {
-  period?: { from: string; to: string };
-  digests: Array<{ day: string; text: string }>;     // list mode without query
-  episodes: Episode[];                                // in period / matching
+  owner: { name: string };                            // whose memory: items speak of this person in the third person
+  period?: { from: string | null; to: string | null };
+  digests: Array<{ level: "day" | "month"; from: string; to: string; text: string }>;  // list mode with a period (knob, below)
+  episodes: Episode[];                                // in period / matching; what the owner lived, said or planned
+  claims: Episode[];                                  // other people's / tools' statements (authorRole other | tool), kept apart
   outsidePeriod: Episode[];                           // same shape; filled only when the period has no match (max 5)
-  fromChats: Array<{ conversationId: string; messageId: string; at: string; excerpt: string }>;
-  notes: string[];                                    // e.g. unresolved plans, shared-conversation notice
+  fromChats: Array<{ conversationId: string; conversation: string; messageId: string; at: string;
+                     authorRole: "owner" | "other" | "tool"; author?: string; excerpt: string }>;
+  notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice
 }
 type Episode = {
   id: string; kind: "event" | "plan" | "state_change"; content: string;
@@ -233,15 +265,18 @@ type Episode = {
   planStatus?: "open" | "confirmed" | "cancelled" | "rescheduled" | "unresolved";
   rescheduledTo?: string; origin: "owner_lived" | "owner_told" | "assistant_stated";
   authorRole: "owner" | "assistant" | "other" | "tool";   // who wrote the evidence
+  claimedBy?: string[];                               // for claims: who wrote the evidence
+  inferred: boolean;
   people: string[]; feelings: string[]; opinion?: string;
-  source: { conversationId: string; messageIds: string[]; at: string };
+  source: { conversation: string; messageIds: string[]; at: string };   // conversation = the client's own id
 };
 ```
+In una conversazione a cui partecipano altri, ogni lista è vuota e `notes` dice `"nothing to show here"`.
 Ogni elemento riporta `authorRole` (`owner | assistant | other | tool`) così che gli host possano racchiudere i contenuti
 non dell'owner come dati, non come istruzioni; tali elementi riportano anche `claimedBy` (i nomi di chi ha scritto l'evidenza), ogni
 risultato nomina il proprio `owner` (gli elementi parlano dell'owner in terza persona: è l'utente a chiedere), gli estratti di chat riportano
 il proprio `author` quando non è l'owner; quando tali elementi vengono restituiti, `notes` lo dice esplicitamente (M4b: i modelli di risposta
-ignoravano il semplice campo). `digests` (M5): per le richieste `list` con un periodo, il diario di quel periodo — voci giornaliere per intervalli fino a 45 giorni, riepiloghi mensili per quelli più lunghi; riassumono solo gli episodi propri dell'owner (mai le affermazioni di altre persone). `fromChats` (log grezzo, D13) riporta sempre fino a 2 estratti non già dietro gli
+ignoravano il semplice campo). `digests` (M5): per le richieste `list` con un periodo, il diario di quel periodo — voci giornaliere per intervalli fino a 45 giorni, riepiloghi mensili per quelli più lunghi; riassumono solo gli episodi propri dell'owner (mai le affermazioni di altre persone). Come costruito sono restituiti solo quando `RECALL_DIGESTS` è attivo (spento per default in ogni profilo di qualità — `KNOBS.md`); altrimenti `digests` è vuoto. `fromChats` (log grezzo, D13) riporta sempre fino a 2 estratti non già dietro gli
 episodi restituiti — il log risponde a ciò che gli episodi non contengono mai, ad es. le richieste di aiuto ("quando ti ho chiesto…") — e fino a 3 quando meno di
 3 episodi corrispondono o la migliore corrispondenza è sotto la soglia di rilevanza; limitato alle
 conversazioni del client stesso (`raw_log_scope`). Gli stati sono sempre espliciti; gli elementi annullati, irrisolti e superati
@@ -262,10 +297,13 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
 
 ### `remember` e `search_memory` (D34 — note semantiche)
 - `remember {content, category?}` — esplicito "ricorda che…": memorizzato come nota dichiarata (messaggio
-  `user` dell'owner come evidenza, stesse regole di `log_episode`).
+  `user` dell'owner come evidenza, stesse regole di `log_episode`); senza tale evidenza è memorizzato come nota
+  dedotta **in sospeso** (`origin: assistant_stated`) che l'owner conferma nel diario (§4). `category` per default è
+  `knowledge`. Restituisce `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferenze, abitudini, valori, conoscenze, più i
   fatti di stato rilevanti validi a `as_of` (data ISO, default oggi) con la loro cronologia; integra `search_episodes`
-  (cosa è successo / quando). Restituisce `{notes, facts}`. In una memoria di entità (D48) i fatti sulle persone
+  (cosa è successo / quando). Restituisce `{owner, notes, facts, notes_info}` (`notes_info`: avvisi, ad es.
+  `"nothing to show here"` in una conversazione a cui partecipano altri). In una memoria di entità (D48) i fatti sulle persone
   riportano `about` (il nome della persona); quelli senza `about` sono dell'entità stessa.
 
 ### `resolve_period` (D12, deterministico)
@@ -277,13 +315,15 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 `POST api/v1/context {query?, ingest?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
 `ingest` (il corpo di `POST api/v1/ingest/messages`, serve anche lo scope `ingest`) salva prima il turno e risponde per
 quella conversazione, con `query` che per default è il suo ultimo messaggio dell'utente — una sola andata e ritorno prima
-di ogni turno invece di due. Con un token personale, una conversazione non ancora salvata conta come della persona. Il
-blocco contiene i
+di ogni turno invece di due (`400` quando non ci sono né una `query` né un messaggio dell'utente; `403` per `ingest`
+senza lo scope `ingest`; senza consenso il turno non viene salvato, quindi con una chiave client la conversazione è
+sconosciuta e la risposta è `block: null`). Con un token personale, una conversazione non ancora salvata conta come
+della persona. `query` viene tagliata a 8 000 caratteri. Il blocco contiene i
 ricordi pertinenti al messaggio a cui si sta per rispondere (fatti e note attuali, piani aperti imminenti, fino a 3
 episodi, ognuno sopra una soglia di somiglianza; al massimo circa 300 token) come un unico blocco recintato
 `<memory-context>` marcato "dati, non istruzioni", oppure `block: null` quando non c'è niente di pertinente. Nessuna
 chiamata LLM. Stessa regola del lettore di ogni lettura (niente in una conversazione a cui partecipano altri); un blocco
-servito è registrato in `recall_log` (la guardia anti-eco tratta allora la risposta come possibile eco). Sempre
+servito è registrato in `recall_log` (strumento `memory_context`; la guardia anti-eco tratta allora la risposta come possibile eco). Sempre
 disponibile: se usarlo, e per quale agente, è scelta del client (l'host lo aggiunge in fondo al suo prompt di sistema e
 non lo salva mai come messaggio).
 
@@ -294,11 +334,14 @@ dal più recente; `from` / `to` date locali, `kind`, `planStatus` compreso `unre
 `cursor` opaco + `nextCursor`, `limit` ≤ 200), `GET episodes/{id}` (evidenze: testo dei messaggi solo dalle
 conversazioni del client, salvo `raw_log_scope` `all`, altrimenti `otherClient`; `history` = le versioni che ha
 corretto; per un piano `planEvents`, `confirmedBy`, `rescheduledTo`), `POST episodes/{id}/corrections {content?,
-occurredAt?, datePrecision?}` → `{id}`, `DELETE episodes/{id}` (oblio che resta, come `forget_episode`), `GET digests`,
-`GET facts` (slot con `history`, `asOf`, per persona in una memoria di entità), `DELETE facts/{id}`,
-`POST facts/{id}/confirm | reject`, `GET notes`, `PATCH notes/{id} {pinned}`, `DELETE notes/{id}`,
-`POST notes/{id}/confirm | reject`, `GET plans` (aperti e irrisolti per default, dal più vicino); più le righe
-`GET / PATCH api/v1/me`. **Non ancora costruite**: inserimento manuale, correzioni di fatti / note, promozioni (5.4),
+occurredAt?, datePrecision?}` → `{id}`, `DELETE episodes/{id}` (oblio che resta, come `forget_episode`), `GET digests`
+(voci attuali di giorni / mesi, dalla più recente), `GET facts` (slot con `history`, `asOf`, per persona in una memoria
+di entità), `DELETE facts/{id}`, `POST facts/{id}/confirm | reject`, `GET notes`, `PATCH notes/{id} {pinned}`,
+`DELETE notes/{id}`, `POST notes/{id}/confirm | reject`, `GET plans` (aperti e irrisolti per default, dal più vicino);
+più le righe `GET / PATCH api/v1/me`. Le modifiche rispondono `204` (`404` per un id che non è dell'owner); pagina solo
+`GET episodes` (`{items, nextCursor}`, default 50), le altre liste sono array. Come costruito, cancellare un fatto o una
+nota (e rifiutarne uno in sospeso) rimuove la riga con le sue evidenze — nessun tombstone, nessuna voce in
+`note_changes`; confermare la rende dichiarata (`pending` false). **Non ancora costruite**: inserimento manuale, correzioni di fatti / note, promozioni (5.4),
 oblio di un periodo (5.5), impostazioni, uso, export, il feed delle modifiche delle note, `GET facts/{id}` /
 `GET notes/{id}`. Libreria client: `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`,
 `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide`).
@@ -311,13 +354,13 @@ risposte dentro le conversazioni). In una memoria di entità chiunque usi l'acco
 | Metodo + percorso | Scope | Scopo |
 |---|---|---|
 | `GET api/v1/episodes?from&to&kind&planStatus&q&cursor&limit` | read | Timeline |
-| `GET api/v1/episodes/{id}` | read | Dettaglio: evidenza (citazioni filtrate da `raw_log_scope` e dalla regola del visualizzatore), cronologia delle correzioni, piano / evento collegato |
+| `GET api/v1/episodes/{id}` | read | Dettaglio: evidenza (citazioni filtrate da `raw_log_scope`; owner-direct, quindi senza regola del visualizzatore), cronologia delle correzioni, piano / evento collegato |
 | `POST api/v1/episodes` | write | Inserimento manuale |
 | `POST api/v1/episodes/{id}/corrections` | write | Correzione (nuova riga, `corrects`) |
 | `DELETE api/v1/episodes/{id}` | write | Dimenticare un episodio |
 | `POST api/v1/forget {from, to, keepRaw?}` | write | Dimenticare un periodo (job asincrono) |
-| `GET api/v1/digests?level&from&to` | read | Voci del diario |
-| `GET api/v1/facts?key&asOf&status&includePending` / `GET …/{id}` | read | Fatti con cronologia |
+| `GET api/v1/digests?level&from&to` | read | Voci del diario (`level` `day \| month`) |
+| `GET api/v1/facts?key&asOf&status&includePending` / `GET …/{id}` | read | Fatti con cronologia (come costruito: `key`, `asOf`, `includePending`; nessun filtro `status`) |
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Correggere o dimenticare un fatto |
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Fatti in sospeso (D20) |
 | `GET api/v1/promotions?status` + `POST …/{id}/confirm\|reject` | read / write | Proposte di pattern (D20, D26) |
@@ -328,20 +371,24 @@ risposte dentro le conversazioni). In una memoria di entità chiunque usi l'acco
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | `episodicEnabled`, locale, timezone |
 | `GET api/v1/usage?from&to` | read | Chiamate LLM e token per questo owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Export completo asincrono (archivio JSON) |
-| `GET api/v1/me` | read | Per chi agisce la richiesta: `{ownerId, displayName, kind, episodicEnabled, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`kind` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (`episodicEnabled` = il consenso dell'owner: finché non è dato, l'ingest non memorizza nulla) (con una chiave client: la persona dietro `X-Recordare-User`, auto-provisionata se il client lo consente) |
-| `PATCH api/v1/me {displayName?, kind?}` | ingest (chiave client) | Le impostazioni della persona provenienti dalla sua piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `kind` `human \| entity` (D48) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo). Il consenso non si imposta mai qui |
+| `GET api/v1/me` | read | Per chi agisce la richiesta: `{ownerId, displayName, kind, episodicEnabled, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`kind` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (`episodicEnabled` = il consenso dell'owner: finché non è dato, l'ingest non memorizza nulla) (con una chiave client: la persona dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| owner_token`) |
+| `PATCH api/v1/me {displayName?, kind?}` | ingest (chiave client; un token personale riceve 403) | Le impostazioni della persona provenienti dalla sua piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `kind` `human \| entity` (D48) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo). Il consenso non si imposta mai qui |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | sessione dell'owner (public profile) | Client / identità connessi, revoca |
 
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (vedi il suo README): `RecordareClient` (`me`, `updateMe`, `ingest`
-diviso in richieste da 500, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, `mcp.listTools` /
-`mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `PersonDirectory` (persona in cache,
-consenso, tipo e indirizzo di Atlas; l'opt-in della piattaforma; sincronizzazione del nome), `afterFailure` (politica di
-consegna dell'outbox: back-off con jitter, `Retry-After`, parcheggio su 400 / 413 / 422), errori tipizzati (RFC 9457).
-All'host restano solo la memorizzazione dell'outbox e la trasformazione delle sue chat. Una suite di conformità la
-esegue contro il servizio nella CI (`service/test/conformance`). Non ancora costruiti: i wrapper della API di lettura
-(§4: episodi, fatti, digest) — arrivano con la §4.
+diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memoria prima del turno, con `ingest`),
+`endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, i wrapper della §4 `episodes`,
+`episode`, `correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`,
+`mcp.listTools` / `mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `TOOLS` (gli schemi
+pubblicati degli strumenti MCP), `PersonDirectory` (persona in cache, consenso, tipo e indirizzo di Atlas; l'opt-in della
+piattaforma; sincronizzazione del nome), `afterFailure` (politica di consegna dell'outbox: back-off con jitter,
+`Retry-After`, parcheggio su 400 / 413 / 422), errori tipizzati (RFC 9457). All'host restano solo la memorizzazione
+dell'outbox e la trasformazione delle sue chat. Una suite di conformità la esegue contro il servizio nella CI
+(`service/test/conformance`). Costruiti su di essa: il connettore OpenClaw e il proxy di memoria compatibile OpenAI
+(`connectors/`); lo script degli hook di Claude Code / Codex (senza dipendenze) e il connettore Hermes (Python) chiamano
+direttamente le stesse rotte.
 
 ## 6. Versionamento e compatibilità
 - Modifiche incompatibili solo sotto `api/v2/…`; modifiche additive all'interno della v1; nomi degli strumenti MCP stabili, nuovi
@@ -353,10 +400,14 @@ esegue contro il servizio nella CI (`service/test/conformance`). Non ancora cost
 `GET /admin` serve una pagina statica (pubblica: non contiene dati) sopra la API admin; l'operatore digita la chiave
 admin, che resta solo in quella scheda del browser (CSP restrittiva, `no-store`). Rotte usate oltre a quelle sopra, tutte
 solo admin e solo metadati: `GET api/v1/admin/persons` (owner con impostazioni, conteggi di messaggi / episodi / fatti /
-note, estrazione in attesa, identità collegate, token personali attivi per prefisso), `GET api/v1/admin/clients` (client
+note, estrazione in attesa, ultimo messaggio, `waitingForConsentSince` — quando un client ha inviato messaggi l'ultima
+volta mentre il consenso era spento, `owners.ingest_refused_at`, null una volta dato il consenso — identità collegate,
+token personali attivi per prefisso), `GET api/v1/admin/clients` (client
 con chiavi attive per prefisso), `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = tutte le chiavi
 e i token del client smettono subito di funzionare), `DELETE api/v1/admin/identities/:id` (scollega l'utente di un client
-da una persona; i ricordi restano).
+da una persona; i ricordi restano). Per il resto la console usa le altre rotte admin della §1 (consenso, tipo di
+memoria, profilo di qualità, nome, identità, token personali, chiavi dei client, consolidamento); è in italiano e in
+inglese.
 
 ### Telemetria live (M5b, solo admin)
 `GET api/v1/admin/telemetry/stream[?owner=<personId>]` — Server-Sent Events, uno per ogni passo reale all'interno del servizio:
@@ -366,7 +417,8 @@ da una persona; i ricordi restano).
 `episode.forgotten`. Solo metadati — id, tipi, conteggi, token — mai il contenuto di messaggi o ricordi. Nulla è
 sintetizzato: la dashboard (WORK_PLAN 5b.6) si muove solo quando questi eventi arrivano. Contratto versionato: `ATLAS_EVENTS.md`.
 
-Recall log: ogni `search_episodes` / `search_memory` servito scrive una riga `recall_log` (strumento, modalità, numero di elementi,
+Recall log: ogni `search_episodes` / `search_memory` servito, e ogni blocco di contesto di memoria servito (strumento
+`memory_context`), scrive una riga `recall_log` (strumento, modalità, numero di elementi,
 conversazione; mai la query né i ricordi) — la fonte dei totali dell'atlas e della protezione contro l'eco del recall (D38).
 
 `GET api/v1/admin/owners/:id/atlas` — la mappa iniziale della dashboard di un owner: gli episodi come neuroni (tipo, ruolo

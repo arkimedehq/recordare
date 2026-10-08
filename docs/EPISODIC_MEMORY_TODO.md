@@ -2,7 +2,9 @@
 
 Status: **implemented** (2026-10-07) in `service/` — raw log, episodes, plans, facts, notes, digests, recall tools,
 explicit writes and forgetting of one episode; open items per milestone in `WORK_PLAN.md` (M5 partial, M6 in
-progress). Engine evaluation (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D)
+progress). Update (2026-10-08): **released as v0.1.0** (public, private profile — D33), with the read API for the
+diary, the pre-turn memory context, the client library and connectors; open: nightly sweep of pending messages
+(D1), forgetting a period (D16), pattern promotions (D20 / D26), the notes change-feed endpoint (D34) — WORK_PLAN M4–M7. Engine evaluation (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D)
 beat Memobase, Graphiti and the raw baseline; D23 (approved) builds it. Decisions taken while building: D36–D48.
 
 This is **phase 1** of the digital twin vision (`DIGITAL_TWIN_VISION.md`): episodic
@@ -157,6 +159,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   On fire: extract the unprocessed tail regardless of threshold.
 - **Nightly sweep**: before consolidation, process every chat tail left unprocessed
   (lost jobs, restarts). Safety net, not the primary path.
+- As built (2026-10-08): the idle debounce runs per conversation in the service (D5, D22); the nightly sweep of
+  unprocessed tails is **not built** (WORK_PLAN 4.1) — the hourly sweep only consolidates.
 
 ### D2 — Facts and episodes: two separate LLM calls (2026-10-01)
 - The existing fact-extraction prompt and flow stay **untouched** (zero regression
@@ -233,6 +237,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D16 — Kept forever, user-driven deletion only (2026-10-01)
 - No TTL. User deletes single episodes or a period ("forget March"); affected
   digests are recomputed (or deleted) accordingly; vector entries removed.
+- As built (2026-10-08): forgetting one episode (MCP `forget_episode`, read API `DELETE episodes/{id}`; the digests
+  built on it are superseded); forgetting a period is TODO (WORK_PLAN 5.5).
 
 ### D17 — Voice deferred to voice-chat persistence (2026-10-01)
 - Out of v1. Arrives with the backlog item "optional persistence of voice chats", so
@@ -245,6 +251,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "forget this period".
 - As built: still the plan for Arkimede (WORK_PLAN 6.3), fed by Recordare's read / timeline API (`API.md` §4, not
   built yet); Recordare's MCP tools `correct_episode` / `forget_episode` cover edit and delete meanwhile.
+- Update (2026-10-08): the diary part of the read API is built (WORK_PLAN 4.7) and Arkimede has its Diary tab
+  (Settings → Diary: timeline with detail, correct, forget; diary; facts and notes; plans; to confirm — WORK_PLAN 6.3);
+  "forget this period" is still TODO (WORK_PLAN 5.5).
 
 ### D19 — Recall boost of linked semantic notes: deferred to v2 (2026-10-01)
 - What it is: when `search_episodes` returns an episode linked (by consolidation) to
@@ -346,6 +355,10 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   held-out) within a set margin of the reference and its structured output validates; a CLI
   command runs the suite against a given configuration; results kept in a supported-models table.
   At equal quality the cheaper model wins.
+- As built (2026-10-08): one prompt set written in English with a line naming the owner's language; the deterministic
+  language data (periods, month names, relation words, owner naming) lives in `service/src/lang` for the most used
+  languages (owner's rule: all languages, never IT / EN only). Certification CLI and supported-models table not built
+  (WORK_PLAN 4.5b); owner's rule: an engine model is supported only at ≥ 95 % on the suite.
 
 ### D28 — Phase-1 data model reserves the fields the research hypotheses need (2026-10-02)
 - From `RESEARCH_NOTES.md` (H1–H3): adding these later would mean migrating episodes, so they
@@ -421,6 +434,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   owner-driven linking and revocation UI, read audit, persistent idempotency, backup / provider
   retention policy, network protection. Specified in `API.md` §0 so enabling them needs no data
   migration.
+- Status (2026-10-08): v0.1.0 was released publicly on this profile, its limits stated in the README (WORK_PLAN M7);
+  the public profile is still deferred.
 
 ### D34 — Recordare is complete; A-MEM stays in Arkimede; the user chooses (2026-10-03)
 - **Recordare owns a complete personal memory**: episodes, plans, digests, state facts **and
@@ -439,6 +454,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   personal notes memory (extraction + use), team / org notes (use), Recordare (connected or not).
   Users without Recordare get the same flexibility. If a user enables both personal A-MEM extraction
   and Recordare notes, duplicates are possible: the UI warns, it does not forbid (user's choice).
+- Status (2026-10-08): Recordare's notes are built; changes are recorded (`note_changes`) but the change-feed endpoint
+  is not built yet (WORK_PLAN 4.3 / 4.7); the Arkimede side (toggle split, copying notes into A-MEM) is TODO.
 
 ### D35 — Cost is an option, not a limit: quality profiles (2026-10-03)
 - The owner's guidance: models get cheaper and local models stronger; users choose the quality they
@@ -500,16 +517,18 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Arkimede is the native server-side client; connectors (hooks + MCP + pre-turn recall) serve platforms we do not
   control; one client library inside this repo (`packages/client`) and a conformance suite every client passes
   (WORK_PLAN 6.6, 6.7).
+- Status (2026-10-08): built — `packages/client` (on npm as `@arkimedehq/recordare-client`), the conformance suite, and
+  full-level connectors for Claude Code, Codex, OpenClaw, Hermes Agent and an OpenAI-compatible memory proxy
+  (WORK_PLAN 6.6, 6.6b).
 
 ### D44 — Infrastructure profiles: standalone or co-hosted (2026-10-07)
 - Standalone by default; co-hosted with Arkimede on small servers (own database + user on Arkimede's pgvector
   Postgres, own Redis db + queue prefix, Arkimede's bge-m3 embedder) — `docs/DEPLOYMENT.md`. Arkimede's defaults moved
   to `pgvector/pgvector:pg16` and BAAI/bge-m3 (and Piper voice `it_IT-serena-medium`).
 
-### D45 — talkiosk (2026-10-07)
-- Own repo; talks directly to Arkimede's OpenAI-compatible API (no Home Assistant); Rust. Continuous listening is
-  opt-in: voiceprints on the device, unknown voices discarded, no audio stored, each person's words into their own
-  memory. WORK_PLAN 5b.10 / 6.5.
+### D45 — Continuous listening from a home voice device (2026-10-07)
+- A client device that listens continuously, opt-in: voiceprints on the device, unknown voices discarded, no audio
+  stored, each person's words into their own memory. WORK_PLAN 6.5.
 
 ### D46 — Evaluation rule 9: one service instance per queue (2026-10-07)
 - A run whose extractions carry more than one prompt version is discarded (a stale instance contaminated runs; fixed
@@ -539,6 +558,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Owner's follow-up (2026-10-07): the **person chooses the kind on their platform** (Arkimede's memory settings →
   `PATCH /me {kind}`), only while the memory is empty; the **name always follows the platform's profile** (a client's
   sync overwrites an admin rename); consent stays with the Recordare admin.
+- Status (2026-10-08): on a fresh blind entity set (`dataset_blind8`, WORK_PLAN 4.8) 82.1 % over 3 runs (dev set 95.5 %);
+  the entity memory stays **experimental** — speakers who never identify and attribution between people are the weak
+  spots.
 
 ## Open questions (to discuss)
 

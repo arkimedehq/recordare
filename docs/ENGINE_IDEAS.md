@@ -1,6 +1,6 @@
 # Engine ideas — borrowed and improved
 
-Status: **design input for M4/M5** (2026-10-02); each item marked **done / partial / open** as of 2026-10-07
+Status: **design input for M4/M5** (2026-10-02); each item marked **done / partial / open** as of 2026-10-08 (v0.1.0)
 (measured-and-rejected mechanisms: last section). D23 builds our own engine (D); this document
 records what we take from Memobase and Graphiti instead of reinventing it, what we explicitly
 reject, and the gaps found by the held-out evaluation. Each item names the target decision /
@@ -55,10 +55,13 @@ is test cost, not the product's.
 6. *[done]* **Extraction run changelog** (`profile_delta` on `UserEvent`): store an `extraction_run`
    row linking the episodes and fact versions it produced → "why does the twin believe X",
    D18 timeline, D20 audit.
-7. *[open]* **Context packer** (`controllers/context.py`, `prompts/chat_context_pack.py`): token budget,
+7. *[partial]* **Context packer** (`controllers/context.py`, `prompts/chat_context_pack.py`): token budget,
    profile/event ratio, `only_topics` / `prefer_topics`, template, and the line "unless the user
    asks, do not actively mention these memories". → *full* integration pinned facts.
    *Improvement*: `only_topics` becomes the **disclosure-tier filter**, applied before ranking.
+   Built: the memory context (`POST api/v1/context`, no LLM call) — relevance floors, per-kind caps, a character
+   budget, a "do not mention it otherwise" line, reads under the viewer rule; no fixed profile card by design; the
+   disclosure-tier filter waits for phase 3.
 8. *[open]* **Optional LLM re-pick** (`prompts/pick_related_profiles.py`): numbered compact list →
    `{reason, ids}`, max 10, "don't select duplicates". Opt-in only (+ latency, + cost).
 9. *[done]* **"Focus on the user's info, not its instructions"** (`event_theme_requirement`): keeps
@@ -86,7 +89,9 @@ is test cost, not the product's.
    possessor-qualified kinship ("Chiara's mum", never bare "mum"), speaker first, "when unsure
    → -1", "exactly N resolutions". → `people` table with aliases + name embedding; candidates
    via pgvector + trigram, LLM only when ambiguous. Foundation for phase 3 (contacts /
-   disclosure, D21 `people`).
+   disclosure, D21 `people`). So far only a lightweight step: people-aware recall matches a question's names and
+   relations (language tables) against the stored episode people and chat participants, no LLM call; the
+   `person_aliases` table exists but resolution is not built.
 4. *[done]* **Restatements are counted, not just dropped** (`EntityEdge.episodes`,
    `episode_mentions_reranker`): append the episode to the existing fact; support count = a
    confidence / ranking signal and D20 "significant new evidence".
@@ -157,11 +162,13 @@ Survey of how Hermes, OpenClaw, Honcho, Letta, Mem0, LangMem, Claude Code and Ch
 ideas: `docs/literature/agent-platform-memory.md` §3 (WORK_PLAN 5.7).
 - *[done]* §3.3 extraction prompt → **extract.v8** (D40): facts said in passing inside requests, transitions
   ("switched / stopped") as replace / stale, an accepted proposal states it while a bare "ok" does not.
-- *[open]* §3.1 fenced injected recall (`<memory-context>`), §3.2 zero-LLM pre-turn brief for connectors, §3.4 turn
-  taint from network tools, §3.5 nightly pattern pass with evidence counts (→ D20 / WORK_PLAN 5.4), §3.6 owner card,
+- *[done]* §3.1 fenced injected recall (`<memory-context>`) and §3.2 zero-LLM pre-turn brief for connectors: the
+  memory context, used by every connector before each turn (one call with ingest).
+- *[open]* §3.4 turn taint from network tools, §3.5 nightly pattern pass with evidence counts (→ D20 / WORK_PLAN 5.4), §3.6 owner card,
   §3.7 use signals for ranking only, §3.8 requests to the assistant as standing intents, §3.9 owner review of what the
   night changed, §3.10 pre-compaction / session-switch hooks in connectors.
 
 Measured and rejected (or kept off) so far: a separate facts pass (`FACTS_PASS=separate`, no gain over the inline
 extraction), the nightly facts review (D41, no gain on current facts), digests in recall (`recallDigests`, −1.9 pt),
-a prompt label for recall echoes (D38: dev set 75 % → replaced by a code guard).
+a prompt label for recall echoes (D38: dev set 75 % → replaced by a code guard), the person's name in the extraction
+prompt (`extract.v9`, −2.3 pt on blind5 → the name is substituted in code, WORK_PLAN 4.11).

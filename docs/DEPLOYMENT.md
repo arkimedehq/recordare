@@ -12,8 +12,8 @@ Recordare needs:
 ## Install with the scripts (`deploy/`)
 
 ```sh
-deploy/install.sh            # asks the profile (standalone | cohosted), the LLM provider and key; writes deploy/.env (600)
-deploy/update.sh             # backup, rebuild on the current code, restart (migrations run at start)
+deploy/install.sh            # asks the profile (standalone | cohosted), the LLM provider and key, the port and LAN access; writes deploy/.env (600)
+deploy/update.sh             # backup, git pull (in a clone), rebuild, restart (migrations run at start)
 deploy/backup.sh             # dump of Recordare's database into deploy/backups/ (keeps the last 14)
 ```
 
@@ -42,7 +42,7 @@ part, so sharing the embedder is the biggest saving.
 
 | Service | Shared how | Recordare settings |
 |---|---|---|
-| Postgres | Same server, **own database and own user**. Arkimede's Postgres must use the `pgvector/pgvector:pg16` image (Arkimede's default from that change on; an existing install switches with Arkimede's upgrade script, which rebuilds text indexes for the musl → glibc change) | `DATABASE_URL=postgres://recordare:<pw>@postgres:5432/recordare` |
+| Postgres | Same server, **own database and own user**. Arkimede's Postgres must use a `pgvector/pgvector` image (`pg16`: Arkimede's default from that change on; an existing install switches with Arkimede's upgrade script, which rebuilds text indexes for the musl → glibc change) | `DATABASE_URL=postgres://recordare:<pw>@postgres:5432/recordare` |
 | Redis | Same instance, **own logical database** and own queue prefix | `REDIS_URL=redis://redis:6379/1`, `QUEUE_PREFIX=recordare` |
 | Embeddings | Arkimede's `embedding-service`, **only if it serves the model Recordare uses** (`BAAI/bge-m3`, 1024 dims — the model Recordare was measured with; Arkimede's default) | `EMBEDDING_BASE_URL=http://embedding:8000/v1`, `EMBEDDING_MODEL=BAAI/bge-m3`, `EMBEDDING_DIM=1024` |
 
@@ -73,3 +73,7 @@ change it for one side only.
 listens on `127.0.0.1` by default: open it on the home LAN with `RECORDARE_BIND=0.0.0.0` in `deploy/.env` (every API route
 still needs a key), or reach it through an SSH tunnel (`ssh -L 8090:127.0.0.1:8090 <server>`). Over plain HTTP the admin
 key crosses the network unencrypted: a trusted home network only, or put HTTPS in front.
+
+**Connectors** (`connectors/`) run on the agent platform's side, not here; the only one that is a service of its own is
+the OpenAI-compatible memory proxy (image `ghcr.io/arkimedehq/recordare-openai-proxy`, amd64 + arm64), placed on the
+platform's private network next to it (`connectors/openai-proxy/compose.example.yml`). Settings: `docs/KNOBS.md` §8b.

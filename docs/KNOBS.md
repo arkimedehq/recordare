@@ -86,6 +86,11 @@ Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
 | `RECORDARE_BIND` | `127.0.0.1` | `0.0.0.0` opens the API and the admin console on the LAN (every route still needs a key) |
 | `ARKIMEDE_NETWORK` | — | Set by the co-hosted install: the Docker network shared with Arkimede |
 | `LINK_ARKIMEDE` | yes | The installer creates Arkimede's client and writes its `.env` |
+| `ARKIMEDE_DIR` (co-hosted) | found from Arkimede's running backend | Arkimede's folder, whose `.env` the installer updates |
+| `LLM_API_KEY_FILE` (install.sh) | — | Non-interactive install: read the LLM key from this file (never on the command line) |
+| `EMBEDDER_IMAGE` (standalone) | text-embeddings-inference CPU 1.9 image for the host's architecture | Set by the installer (`cpu-arm64-1.9` on arm64) |
+| `RECORDARE_MEM_LIMIT` (co-hosted) | `768m` | Memory limit of the service container next to Arkimede |
+| `RECORDARE_DB_PASSWORD`, `POSTGRES_PASSWORD` | generated | Database password written by the installer (kept on re-runs) |
 | `KEEP` (backup.sh) | 14 | Database dumps kept |
 
 ## 7. Recordare Atlas (`recordare-atlas`, optional)
@@ -109,6 +114,16 @@ Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
 | Memory context | Agents → agent, per agent | off | Before each answer, Recordare's relevant memories (`POST api/v1/context`) at the end of the prompt (WORK_PLAN 5.7) · dev set: no harm, +3–7 pt; with the voice agent's prompt tool calls 9 → 5 of 15. A client choice: Recordare serves the block whenever asked (consent and viewer rule apply) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | Arkimede `.env` | off | OpenTelemetry GenAI traces to the atlas (metadata only) |
 | Library delivery policy | `packages/client` (`DEFAULT_DELIVERY`) | 12 attempts, 5 s → 1 h | Outbox retries (jitter, `Retry-After`), then parked |
+
+## 8b. Connectors (`connectors/`, each README has the full list)
+
+| Connector | Where | Main settings |
+|---|---|---|
+| Claude Code | plugin options (`url`, `token` in the keychain); or `RECORDARE_URL` / `RECORDARE_TOKEN`, or `~/.config/recordare/claude-code.json` (hooks only) | A personal token with the scopes `mcp`, `ingest`, `read` |
+| Codex | `install.sh --url … [--trust]` → `~/.config/recordare/codex.json`, `$CODEX_HOME/hooks.json` and `config.toml` | `RECORDARE_URL`, `RECORDARE_TOKEN`, `RECORDARE_TRUST_HOOKS=1` (= `--trust`), `CODEX_HOME` (default `~/.codex`) |
+| OpenClaw | plugin options | `url`, `apiKey` (default `RECORDARE_URL` / `RECORDARE_API_KEY`), `users`, `defaultUser`, `autoRecall` (on), `capture` (on), `tools` (on), `groups` (on), `timeoutMs` (3000) |
+| Hermes Agent | env or `memory.recordare.*` | `RECORDARE_URL`, `RECORDARE_API_KEY`, `RECORDARE_USER`, `RECORDARE_USER_ALIASES`, `RECORDARE_RECALL` / `_TOOLS` / `_CAPTURE` (on), `RECORDARE_TIMEOUT` (3 s) |
+| OpenAI-compatible memory proxy | env | `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `PROXY_API_KEY`, `RECORDARE_URL`, `RECORDARE_API_KEY`, `RESOLVERS`, `USER_MAP`, `USER_MAP_ONLY`, `DEFAULT_USER`, `OPENWEBUI_JWT_SECRET`, `RECALL_TIMEOUT_MS` (1500), `END_IDLE_SECONDS` (0 = Recordare's idle delay), `SKIP_PATTERNS`, `RECALL` / `CAPTURE` (on), `LOG_UPSTREAM` (off), `PORT` (8788), `MAX_BODY_BYTES` (25 MB), `TZ` |
 
 ## 9. Evaluation spike (`spikes/memory-eval/.env`)
 

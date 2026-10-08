@@ -11,11 +11,15 @@ di un **gemello digitale** dichiarato di quella persona. Qualsiasi piattaforma d
 (qualsiasi client MCP) oppure tramite **MCP + ingest REST** (la piattaforma invia le sue conversazioni e Recordare
 estrae la memoria in background). [Arkimede](https://github.com/arkimedehq/arkimede) è il primo client.
 
-> **Stato (2026-10-07).** La fase 1 (memoria episodica) è implementata in `service/` (NestJS, Postgres + pgvector,
-> BullMQ). Comprende il log grezzo, gli episodi, i piani, i fatti, le note, i digest notturni, gli strumenti MCP di
-> lettura e scrittura, l'API di amministrazione e la telemetria in tempo reale. Arkimede è integrato. Prossimi passi:
-> l'API di lettura, la libreria client e i connettori ([piano di lavoro](docs/WORK_PLAN_it.md)). La memoria delle
-> entità (D48, più sotto) è realizzata e misurata su un dev set. Recordare non è ancora pubblicato.
+> **Stato (2026-10-08).** **La v0.1.0 è pubblica** (2026-10-08, il profilo privato; [CHANGELOG](CHANGELOG_it.md)). La
+> fase 1 (memoria episodica) è implementata in `service/` (NestJS, Postgres + pgvector, BullMQ). Comprende il log
+> grezzo, gli episodi, i piani, i fatti, le note, i digest notturni, gli strumenti MCP di lettura e scrittura, il
+> contesto di memoria prima di ogni turno, l'API di lettura (il diario della persona), l'API e la console di
+> amministrazione e la telemetria in tempo reale. Client: Arkimede e i connettori al livello completo per Claude Code,
+> Codex, OpenClaw, Hermes Agent e un proxy di memoria compatibile OpenAI, costruiti sulla libreria client
+> `@arkimedehq/recordare-client` (npm). La memoria di entità (D48, più sotto) è sperimentale. Prossimi passi: un
+> contesto di memoria che sbagli meno spesso (WORK_PLAN 5.7), poi l'output delle estrazioni che non scrivono nulla
+> (4.12) e le notizie come ricordi (4.10) ([piano di lavoro](docs/WORK_PLAN_it.md)).
 
 *Versione inglese (di riferimento): [README.md](README.md). Ogni documento del progetto ha una copia italiana (`*_it.md`); quella inglese è il riferimento.*
 
@@ -32,7 +36,7 @@ rispondere a "che cosa ho fatto la settimana scorsa?" o "quando ho cambiato auto
 Fa attenzione a **chi ha detto che cosa**: ciò che dici tu conta come tua memoria, ciò che ti dice un altro resta suo,
 e ciò che l'assistente ha solo ipotizzato non diventa mai un fatto. Puoi correggere un ricordo, e ciò che chiedi di
 dimenticare non ritorna. Ogni persona ha la **propria memoria privata**; un dispositivo usato da tutta la famiglia (l'assistente
-vocale di casa) può avere una **memoria condivisa**, dove chi si presenta firma i propri ricordi. Nulla parte senza
+vocale di casa) può avere una **memoria di entità**, condivisa, dove chi si presenta firma i propri ricordi. Nulla parte senza
 **consenso**. Recordare funziona con qualsiasi assistente e qualsiasi modello di IA; Arkimede è il primo a usarlo.
 
 ## Che tipo di memoria è
@@ -85,7 +89,7 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 
 `search_episodes` (modalità `search | list | latest`, intervallo di date, ripiego automatico sul log grezzo, estratti
 di chat), `search_memory` (note e fatti, opzionalmente as of una data), `resolve_period` (parser deterministico di
-periodi IT/EN: "la settimana scorsa", nomi dei mesi), `log_episode`, `remember`, `correct_episode`, `forget_episode`.
+periodi per le 25 lingue più parlate: "la settimana scorsa", nomi dei mesi), `log_episode`, `remember`, `correct_episode`, `forget_episode`.
 Nessun LLM gira in lettura: l'agente chiamante compila i parametri. Contratti: [API](docs/API_it.md), [modello dei
 dati](docs/DATA_MODEL_it.md).
 
@@ -122,12 +126,13 @@ intervalli al 95 %.
 | Spike round 2, rumore (187 sessioni) | Prototipo del nostro design (D) 96 %; Memobase 88 %; Graphiti 81 %; baseline sul log grezzo 67 % |
 | Set held-out (scritto alla cieca rispetto ai prompt di D), rumore | D 86 %; Memobase 61 %; baseline 50 % |
 | `dataset_blind4` (84 d., nessuno vi ha fatto tuning), base | Servizio v4 80,8 %; Mem0 78,0 %; D 88,3 %; contesto completo (tetto) 89,9 %. È stata la correzione onesta del 95 % misurato su un set già visto |
-| `dataset_blind5` (87 d., nuovo), base, 3 esecuzioni | Servizio (lavoro sul richiamo H11) 89,2 % [85,8, 92,6]; D 91,7 %; contesto completo 91,4 %. Il divario rientra nel rumore |
+| `dataset_blind5` (87 d., nuovo), base, 3 esecuzioni | Servizio (lavoro sul richiamo H11) 89,2 % [85,8, 92,6]; D 91,7 %; contesto completo 91,4 %. Il divario rientra nel rumore. Ultime 3 esecuzioni (richiamo attento alle persone): 90,7 % |
 | `dataset_blind7` (46 d., nuovo, scritto da un agente separato), base, 3 esecuzioni | Servizio rilasciato **91,3 %** (88,0 / 92,4 / 93,5); `dataset_blind8` (memoria di entità, 31 d.) 82,1 % |
 | `dataset_blind3`, profili di qualità | Economy 93,5 %, balanced 94,9 %, full 92,1 %, tutti nel rumore. Misurato dopo che il set era stato letto, quindi non cieco |
 | Dev set dell'eco del richiamo (non cieco) | 79 % senza la protezione → 100 % con la protezione v3 (3 esecuzioni ciascuno) |
+| Dev set del contesto di memoria (non cieco, modalità agente, 1 esecuzione) | Solo strumenti 93,3 % → strumenti + contesto di memoria 100 %; con il prompt di un vero agente vocale 90 → 93,3 %, chiamate agli strumenti 9 → 5 su 15 |
 
-Ciò che questi numeri **non** mostrano: i set ciechi sono piccoli (36–87 domande), quindi divari sotto i 5 punti circa
+Ciò che questi numeri **non** mostrano: i set ciechi sono piccoli (31–87 domande), quindi divari sotto i 5 punti circa
 sono rumore. Diversi set ciechi sono stati letti in seguito per correggere errori, e i documenti indicano quali.
 I motori locali da 8–20B ottengono 60–83 %, sotto la soglia del 95 % del progetto per un modello di motore supportato.
 
@@ -173,7 +178,7 @@ Ciò che è nuovo è più circoscritto:
     meccanismi applicabili (H4, solo ingegneria). La memoria attenta ai costi (H5) è già un tema affollato: riportiamo
     i costi e non rivendichiamo nulla.
 
-## Memoria delle entità (D48)
+## Memoria di entità (D48)
 
 Un proprietario può anche essere un'**entità**: un dispositivo condiviso, un robot domestico, un luogo. Chiunque usi
 l'entità legge e scrive la sua memoria. L'identificazione ("sono Andrea"; in seguito un'impronta vocale) dice solo
@@ -204,10 +209,8 @@ Attorno alla memoria:
 - **Recordare Atlas** ([`arkimedehq/recordare-atlas`](https://github.com/arkimedehq/recordare-atlas), opzionale, repo
   proprio): una vista "cervello" in tempo reale di Recordare e degli agenti dei suoi client. Mostra solo metadati, e
   ogni animazione è un evento reale ([contratto](docs/ATLAS_EVENTS_it.md)). Recordare funziona senza.
-- **talkiosk** (repo proprio): un dispositivo vocale domestico che parla con Arkimede. L'ascolto continuo è opt-in e
-  inserisce le parole di ogni persona riconosciuta nella sua memoria.
-- **Connettori** per altre piattaforme di agenti, che condividono una libreria client e una suite di conformità
-  (pianificati).
+- **Connettori** per altre piattaforme di agenti (Claude Code, Codex, OpenClaw, Hermes Agent, un proxy di memoria
+  compatibile OpenAI), che condividono una libreria client e una suite di conformità ([`connectors/`](connectors/)).
 
 ## Installazione
 
@@ -232,7 +235,8 @@ tiene la chiave fuori dalla riga di comando).
 
 Dopo l'installazione, aprire la **console admin** su `http://<host>:<porta>/admin` con `ADMIN_API_KEY` di
 `deploy/.env`: creare le persone, attivarne il consenso e dare una chiave a ogni piattaforma client
-([INTEGRATION_it.md](docs/INTEGRATION_it.md); Claude Code: §4b). Poi:
+([INTEGRATION_it.md](docs/INTEGRATION_it.md); Claude Code: §4b). Poi collegare le piattaforme di agenti (sezione
+seguente) e tenere aggiornata l'installazione:
 
 ```bash
 deploy/update.sh    # backup, pull, ricostruzione, riavvio (le migrazioni girano all'avvio)
@@ -251,6 +255,21 @@ Impostazioni principali (tutte in `deploy/.env`; ogni manopola con il suo predef
 | `RECORDARE_PROJECT` | Nome del progetto Compose, per una seconda installazione sullo stesso host |
 
 Altro in [DEPLOYMENT_it.md](docs/DEPLOYMENT_it.md) (profili, dettagli del co-hosting, HTTPS davanti).
+
+### Collegare una piattaforma di agenti
+
+Ogni connettore cattura la conversazione, dà all'agente il contesto di memoria prima di ogni turno e gli strumenti di
+memoria (il livello completo); il suo README spiega la configurazione:
+
+| Piattaforma | Come |
+|---|---|
+| [Claude Code](connectors/claude-code/README_it.md) | Plugin: `/plugin marketplace add arkimedehq/recordare`, poi `/plugin install recordare@recordare` |
+| [Codex](connectors/codex/README_it.md) | Installer di hook + MCP (`connectors/codex/install.sh`) |
+| [OpenClaw](connectors/openclaw/README_it.md) | Plugin npm `@arkimedehq/openclaw-recordare` (`openclaw plugins install npm:@arkimedehq/openclaw-recordare`) |
+| [Hermes Agent](connectors/hermes/README_it.md) | Provider di memoria (Python) |
+| [Proxy di memoria compatibile OpenAI](connectors/openai-proxy/README_it.md) | Immagine `ghcr.io/arkimedehq/recordare-openai-proxy`, per le piattaforme senza hook (provato con AnythingLLM; Open WebUI, LibreChat) |
+| La propria piattaforma (TypeScript) | Libreria client [`@arkimedehq/recordare-client`](packages/client/README_it.md) su npm ([INTEGRATION_it.md](docs/INTEGRATION_it.md)) |
+| Qualsiasi altro client MCP | Livello base (richiamo e scritture esplicite, nessuna cattura) con un token personale ([INTEGRATION_it.md](docs/INTEGRATION_it.md) §4b) |
 
 ## Limiti di questa versione (profilo privato, D33)
 
@@ -289,10 +308,11 @@ compito. Altre due guide: [integrare una piattaforma client](docs/INTEGRATION_it
 |---|---|
 | `service/` | Il servizio Recordare (NestJS, TypeScript) |
 | `connectors/` | Connettori al livello completo: [Claude Code](connectors/claude-code/README_it.md), [Codex](connectors/codex/README_it.md), [OpenClaw](connectors/openclaw/README_it.md), [Hermes Agent](connectors/hermes/README_it.md), [proxy di memoria compatibile OpenAI](connectors/openai-proxy/README_it.md) (AnythingLLM, Open WebUI, LibreChat) |
-| `packages/client/` | `@arkimedehq/recordare-client`, la libreria client TypeScript usata dai connettori e da Arkimede |
+| `packages/client/` | `@arkimedehq/recordare-client` (su npm), la libreria client TypeScript usata dai connettori e da Arkimede |
 | `deploy/` | Script di installazione, aggiornamento e backup, file Compose (standalone / co-ospitato) |
 | `spikes/memory-eval/` | Harness di valutazione e dataset: confronto tra motori, set ciechi, risultati ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
-| `docs/` | Visione, decisioni di design D1–D48 ([design della memoria episodica](docs/EPISODIC_MEMORY_TODO_it.md)), [piano di lavoro](docs/WORK_PLAN_it.md), contratti, note di ricerca, schede di letteratura |
+| `docs/` | Visione, decisioni di design D1–D48 ([design della memoria episodica](docs/EPISODIC_MEMORY_TODO_it.md)), [piano di lavoro](docs/WORK_PLAN_it.md), contratti, [tutte le impostazioni](docs/KNOBS_it.md), note di ricerca, schede di letteratura, note di ricerca sui connettori (`docs/connectors/`) |
+| `CHANGELOG.md` | Note di rilascio ([v0.1.0](CHANGELOG_it.md)) |
 | `docker-compose.yml` | Stack di sviluppo locale (Postgres + pgvector, Redis, servizio) |
 | `CLAUDE.md` | Contesto e convenzioni per le sessioni di sviluppo |
 
@@ -300,7 +320,6 @@ compito. Altre due guide: [integrare una piattaforma client](docs/INTEGRATION_it
 
 - [Arkimede](https://github.com/arkimedehq/arkimede): piattaforma di agenti, il primo client.
 - [Recordare Atlas](https://github.com/arkimedehq/recordare-atlas): vista cervello in tempo reale opzionale.
-- talkiosk: dispositivo vocale domestico che parla con Arkimede (repo proprio).
 
 ## Sostieni il progetto
 

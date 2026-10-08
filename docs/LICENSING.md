@@ -1,8 +1,9 @@
 # Licensing policy for reused ideas, code, prompts and data
 
-Recordare is licensed **AGPL-3.0** (`LICENSE`). Anything we take from other sources must be
-compatible with it and with a possible commercial service on top. Not legal advice: before a
-public or commercial release, have a lawyer review this file and `THIRD_PARTY_NOTICES.md`.
+Recordare is licensed **AGPL-3.0-or-later** (`LICENSE`; SPDX headers in the source files). Anything we take from
+other sources must be compatible with it and with a possible commercial service on top. Not legal advice: Recordare
+is public since v0.1.0 (2026-10-08); before a commercial release, have a lawyer review this file and
+`THIRD_PARTY_NOTICES.md` (not done yet: the public release went out without it; no paid use is planned for now).
 
 ## Rules
 
@@ -39,6 +40,11 @@ public or commercial release, have a lawyer review this file and `THIRD_PARTY_NO
    papers may describe patented methods. Before a commercial release, run a freedom-to-operate
    check on the core mechanisms (temporal facts, plan lifecycle, disclosure filtering).
 7. **Every reuse is recorded when it happens** — no "we'll add attribution later".
+8. **Published packages** carry their licences: the npm packages (`@arkimedehq/recordare-client`,
+   `@arkimedehq/openclaw-recordare`) and the proxy image (`ghcr.io/arkimedehq/recordare-openai-proxy`) include the
+   AGPL text; a bundle that contains third-party code (the OpenClaw plugin, the proxy) also ships
+   `THIRD_PARTY_LICENSES.txt`, written at build time from the bundle's contents by
+   `connectors/scripts/bundle-licenses.mjs`. Dependencies that are installed, not bundled, keep their own licence files.
 
 ## Known source licences (checked 2026-10-02)
 
