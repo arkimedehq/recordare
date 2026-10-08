@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # 4b.3: measure the economy and full quality profiles (balanced = service v4), 3 base runs each + extraction scoring.
 set -u
 cd "$(dirname "$0")"

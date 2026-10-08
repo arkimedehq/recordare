@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Judge validation (WORK_PLAN M0.5.2): run the judge on hand-labelled candidate answers and
 measure false accepts (a wrong answer graded correct) and false rejects (a correct answer graded
 wrong). Usage:

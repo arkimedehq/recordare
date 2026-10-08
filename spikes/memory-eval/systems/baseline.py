@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """System A — raw baseline: hybrid BM25 + vector over raw messages, fused with RRF.
 
 Approximates Arkimede's `search_conversations` plus a vector leg. No LLM at ingest.

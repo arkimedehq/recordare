@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Questions of blind set #6. `ev` = evidence sessions (kept out of questions.json, used by check.py).
 
 `expected` convention (second-reader audit, see GOLD_AUDIT.md): the text BEFORE the bracket

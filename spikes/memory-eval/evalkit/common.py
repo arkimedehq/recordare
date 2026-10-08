@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Shared pieces of the memory-engine spike: config, LLM client, dataset, answer and judge."""
 from __future__ import annotations
 

@@ -204,6 +204,22 @@ Attorno alla memoria:
 - **Connettori** per altre piattaforme di agenti, che condividono una libreria client e una suite di conformità
   (pianificati).
 
+## Limiti di questa versione (profilo privato, D33)
+
+Recordare v1 è il **profilo privato (uso personale / ricerca)**: un'installazione gestita da qualcuno di cui gli utenti si
+fidano (una famiglia, un laboratorio, un piccolo gruppo), non un servizio pubblico per sconosciuti.
+- L'amministratore crea le persone e le chiavi dei client; non ci sono ancora login del titolare, OAuth per MCP,
+  collegamento self-service né registro delle letture.
+- L'amministratore e le piattaforme client sono fidati: una chiave client agisce per qualunque suo utente, e chi
+  gestisce il server può leggere il database.
+- HTTP semplice solo su una rete fidata; tutto ciò che è raggiungibile dall'esterno richiede HTTPS e un firewall
+  davanti ([DEPLOYMENT_it.md](docs/DEPLOYMENT_it.md)).
+- La memoria di ogni persona è isolata da quella degli altri (testato), ma una memoria scritta da un LLM può
+  sbagliare: le persone la vedono e la correggono nel loro diario.
+
+Il rafforzamento per un'installazione pubblica è specificato in [API_it.md](docs/API_it.md) §0 ed è rimandato (il
+profilo pubblico).
+
 ## Avvio rapido (sviluppo)
 
 ```bash

@@ -232,7 +232,7 @@ connectors.
 
 | # | Task | Where |
 |---|---|---|
-| 6.1 | **Basic level**: configure Claude Code / Claude Desktop as MCP client, run a scripted session, verify tools work | This repo (docs + smoke test) |
+| 6.1 | **Basic level**: configure Claude Code / Claude Desktop as MCP client, run a scripted session, verify tools work | This repo (docs + smoke test) — **done 2026-10-08** (Claude Code; INTEGRATION §4b, `npm run smoke:mcp`; agent writes wait for the person's confirmation; Claude Desktop needs OAuth or a bridge, untested) |
 | 6.2 | **Arkimede full level**: register Recordare in its MCP client; non-blocking ingest of persisted messages (outbox + retry, never fails the chat); identity mapping Arkimede user → person | `personalAgent`, own branch |
 | 6.3 | Arkimede settings: `episodicMemoryEnabled` toggle + Diary tab (D18) via the Recordare timeline API | `personalAgent` Diary tab **done (2026-10-08)**: Settings → Diary (timeline with detail, correct, forget; diary; who you are; plans; to confirm) over a backend proxy; Arkimede's key needs the `write` scope. |
 | 6.4 | Arkimede regression checklist (`EPISODIC_MEMORY_TODO.md` → Regression checklist): A-MEM, `search_conversations`, `search_memory` unchanged | `personalAgent` |

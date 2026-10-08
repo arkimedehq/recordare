@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Source of dataset_blind5/gold.json: what an ideal memory should hold for Nunzia after s60.
 
 episodes: kind event | plan | state_change; plan_outcome confirmed | cancelled | rescheduled | unresolved

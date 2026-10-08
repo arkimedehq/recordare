@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Sessions of blind set #6 (fictional owner Elisa Venturelli, Udine, 2031).
 
 Message tuples: ("u", text) owner, ("a", text) assistant, ("o", author, text) someone else in a group chat.

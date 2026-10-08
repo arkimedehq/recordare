@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Check whether the provider lets us disable reasoning ("thinking") per request."""
 import time
 

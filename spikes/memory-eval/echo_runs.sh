@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # Recall echo: dev set (NOT blind), 1 run of the code under test. RUN_TAG names the variant.
 set -u
 cd "$(dirname "$0")"

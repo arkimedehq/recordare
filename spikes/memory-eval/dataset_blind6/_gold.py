@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Gold memory of blind set #6: what a perfect memory of Elisa should hold (and must not hold)."""
 
 EPISODES = [

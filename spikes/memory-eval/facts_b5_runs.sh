@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # extract.v8 decision: blind5 base ×3 (QA), paired with the ppl runs (same code except the prompt).
 set -u
 cd "$(dirname "$0")"

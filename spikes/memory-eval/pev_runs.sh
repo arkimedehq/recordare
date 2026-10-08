@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # Plan-evidence guard + extract.v6: blind5 base, 3 runs, no consolidation — paired with m5off (same setup, previous code).
 set -u
 cd "$(dirname "$0")"

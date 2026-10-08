@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # Remainder of m4b_runs.sh (D and controls) after the service runs. Usage: sh m4b_rest.sh base|noise
 set -u
 cd "$(dirname "$0")"

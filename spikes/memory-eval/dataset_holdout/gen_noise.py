@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Generate deterministic "noise" sessions (dataset_holdout/noise.json) for the held-out set.
 
 Constraints: noise must NOT change any expected answer in dataset_holdout/questions.json:

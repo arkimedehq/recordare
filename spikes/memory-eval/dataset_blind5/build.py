@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Build conversations.json, questions.json and gold.json of dataset_blind5 from _sessions.py,
 _questions.py and _gold.py (local Europe/Rome times -> ISO 8601 with the correct DST offset).
 

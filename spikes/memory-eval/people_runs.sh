@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # People-aware recall: blind6 base ×1 (assistant-addressed category no longer blind), then blind5 base ×3 (regression).
 set -u
 cd "$(dirname "$0")"

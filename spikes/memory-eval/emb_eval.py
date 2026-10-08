@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Retrieval-only comparison of embedding models (no LLM): recall@K of gold sessions.
 
 For each question, a hit = at least one message of a gold session among the top-K retrieved

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Build conversations.json, questions.json and gold.json of blind set #6 from the _*.py sources."""
 import json
 from pathlib import Path

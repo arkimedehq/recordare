@@ -56,6 +56,28 @@ memorizzazione dell'outbox e la trasformazione delle sue chat.
 - Strumenti: `search_episodes`, `search_memory` (fatti e note), `resolve_period`, `log_episode`, `correct_episode`,
   `forget_episode`, `remember`.
 
+## 4b. Client MCP standard — Claude Code (livello basic, WORK_PLAN 6.1)
+Un client che parla solo MCP (senza ingest) usa un **token personale** legato a una persona e a un client:
+```bash
+# amministratore, una volta: un client e il token della persona (scope mcp)
+curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
+  -d '{"name":"Claude Code","kind":"mcp_client"}' $RECORDARE_URL/api/v1/admin/clients
+curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
+  -d '{"clientId":"<id client>","scopes":["mcp"]}' $RECORDARE_URL/api/v1/admin/owners/<id persona>/tokens
+# la persona, in Claude Code (scope local = solo questo progetto; user = tutti i progetti)
+claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --header "Authorization: Bearer rp_…"
+```
+- Con un token personale le letture sono dirette del titolare (non serve l'intestazione della conversazione).
+- **Le scritture attendono la persona**: un client così non invia conversazioni, quindi Recordare non ha le parole
+  della persona dietro ciò che l'agente scrive. `log_episode` viene salvato come affermato dall'assistente (dedotto),
+  `remember` come nota in attesa che il richiamo mostra solo con `include_pending`; la persona la conferma nel suo
+  diario (API di lettura §4, per esempio il Diario di Arkimede). È la protezione contro l'avvelenamento (API.md §3),
+  voluta; un client che invia anche la conversazione (Arkimede) ottiene ricordi confermati.
+- Smoke test del livello basic (usare una persona di prova: scrive un episodio, poi lo dimentica, e una nota in
+  attesa): `RECORDARE_URL=… RECORDARE_TOKEN=rp_… npm run smoke:mcp` in `service/`. Provato con Claude Code l'8/10/2026.
+- Claude Desktop: i suoi connettori remoti richiedono OAuth, che la v1 non offre (D33); un ponte locale che aggiunge
+  l'intestazione (per esempio `mcp-remote` con `--header`) dovrebbe funzionare ma non è provato.
+
 ## 5. Osservabilità (opzionale)
 Recordare Atlas mostra il lavoro di Recordare stesso dal suo flusso di telemetria; i propri agenti (chiamate LLM,
 strumenti) compaiono quando si esportano le tracce OpenTelemetry GenAI verso l'atlas (README di `recordare-atlas`) —

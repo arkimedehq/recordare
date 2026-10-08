@@ -45,6 +45,28 @@ policy — and passes the conformance suite. A platform keeps only its outbox st
 - Tools: `search_episodes`, `search_memory` (facts and notes), `resolve_period`, `log_episode`, `correct_episode`,
   `forget_episode`, `remember`.
 
+## 4b. Standard MCP clients — Claude Code (basic level, WORK_PLAN 6.1)
+A client that only speaks MCP (no ingest) uses a **personal token** bound to one person and one client:
+```bash
+# admin, once: a client for it and the person's token (scope mcp)
+curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
+  -d '{"name":"Claude Code","kind":"mcp_client"}' $RECORDARE_URL/api/v1/admin/clients
+curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
+  -d '{"clientId":"<client id>","scopes":["mcp"]}' $RECORDARE_URL/api/v1/admin/owners/<person id>/tokens
+# the person, in Claude Code (scope local = this project only; user = every project)
+claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --header "Authorization: Bearer rp_…"
+```
+- With a personal token reads are owner-direct (no conversation header needed).
+- **Writes wait for the person**: such a client sends no conversation, so Recordare has none of the person's own words
+  behind what the agent writes. `log_episode` is stored as stated by the assistant (inferred), `remember` as a pending
+  note that recall shows only with `include_pending`; the person confirms it in their diary (read API §4, e.g. the
+  Arkimede Diary). This is the poisoning guard (API.md §3), kept on purpose; a client that also ingests the
+  conversation (Arkimede) gets confirmed memories.
+- Smoke test of the basic level (use a test person: it writes one episode, then forgets it, and one pending note):
+  `RECORDARE_URL=… RECORDARE_TOKEN=rp_… npm run smoke:mcp` in `service/`. Tested with Claude Code 2026-10-08.
+- Claude Desktop: its remote connectors expect OAuth, which v1 does not provide (D33); a local bridge that adds the
+  header (e.g. `mcp-remote` with `--header`) should work but is untested.
+
 ## 5. Observability (optional)
 Recordare Atlas shows Recordare's own work from its telemetry stream; your agents (LLM calls, tools) appear when you
 export OpenTelemetry GenAI traces to the atlas (`recordare-atlas` README) — metadata only, with `recordare.owner_id`

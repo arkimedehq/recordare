@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # M4b measurements on the blind dataset 3 (DeepSeek flash everywhere). Usage: sh m4b_runs.sh base|noise
 set -u
 cd "$(dirname "$0")"

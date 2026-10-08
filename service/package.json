@@ -18,7 +18,8 @@
     "test:watch": "vitest",
     "migration:run": "typeorm migration:run -d dist/db/data-source.js",
     "migration:revert": "typeorm migration:revert -d dist/db/data-source.js",
-    "smoke:llm": "node -r @swc-node/register scripts/smoke-llm.ts"
+    "smoke:llm": "node -r @swc-node/register scripts/smoke-llm.ts",
+    "smoke:mcp": "node -r @swc-node/register scripts/smoke-mcp.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

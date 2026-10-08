@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 """Shared plumbing for the market-baseline adapters (Mem0, Cognee): engine endpoint, local
 embeddings through the gateway, group-chat rendering, fresh per-run storage, token accounting."""
 from __future__ import annotations

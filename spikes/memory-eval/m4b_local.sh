@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # One base run of the service engine on a local model (Ollama) + extraction scoring. Answer and judge
 # stay on the spike's LLM (DeepSeek flash) so scores compare with the hosted runs.
 # Usage: RECORDARE_URL=http://localhost:8082 SERVICE_MODEL=<label> sh m4b_local.sh

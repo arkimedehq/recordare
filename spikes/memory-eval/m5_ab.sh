@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # M5 decision: blind5 base, 3 runs with nightly consolidation (digests for period overviews) vs 3 without, same code.
 set -u
 cd "$(dirname "$0")"

@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
 # H11 recall check: 1 run blind3 base (non-regression, seen set) + 1 run blind4 base (category-level target).
 set -u
 cd "$(dirname "$0")"
