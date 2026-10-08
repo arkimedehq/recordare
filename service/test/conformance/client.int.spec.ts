@@ -12,6 +12,7 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { type z } from 'zod';
 import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   type Episode as ClientEpisode, type IngestRequest as ClientIngest, type IngestResult as ClientIngestResult, MemoryNotEmptyError,
   PersonDirectory, RecordareClient, TOOLS,
@@ -128,7 +129,7 @@ describe('client conformance (packages/client against the service)', () => {
       .map(({ name, title, description, inputSchema }) => ({ name, title, description, inputSchema }))
       .sort((a, b) => a.name.localeCompare(b.name));
     if (process.env['RECORDARE_UPDATE_TOOLS']) {
-      writeFileSync(new URL('../../../packages/client/src/tools.ts', import.meta.url), `${TOOLS_HEADER}export const TOOLS = ${JSON.stringify(served, null, 2)} as const;\n`);
+      writeFileSync(join(__dirname, '../../../packages/client/src/tools.ts'), `${TOOLS_HEADER}export const TOOLS = ${JSON.stringify(served, null, 2)} as const;\n`);
     }
     // Regenerate with RECORDARE_UPDATE_TOOLS=1 npx vitest run test/conformance when a tool changes.
     expect(JSON.parse(JSON.stringify(TOOLS))).toEqual(JSON.parse(JSON.stringify(served)));
