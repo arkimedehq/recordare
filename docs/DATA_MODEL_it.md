@@ -319,7 +319,11 @@ alcuna voce, e la rotta del feed (`GET api/v1/notes/changes`) non è ancora cost
 `id, owner_id, conversation_id null, kind enum (extraction|digest|consolidation), window_from
 timestamptz, window_to timestamptz, model, provider, prompt_version, status enum
 (running|done|failed), error text null (nessun contenuto dell'utente), started_at, finished_at` — una
-run `extraction` per finestra produce episodi, patch di piano e candidati di fatto (D32).
+run `extraction` per finestra produce episodi, patch di piano e candidati di fatto (D32). `summary jsonb null`
+(WORK_PLAN 4.12, migrazione `RunSummary`): `{returned: {episodes, plan_patches, facts, notes}, written: {tabella: n},
+dropped: {tipo: {motivo: n}}}` — cosa ha restituito il modello, cosa è stato scritto, cosa le regole lato codice hanno
+scartato e perché (`no_evidence`, `forgotten`, `recall_echo`, `person_not_named`, `not_about_plan`, `confirm_before_date`,
+`no_change`, `not_reasserted_after_recall`, …); solo conteggi, mai testo, così l'oblio resta completo.
 `run_outputs(run_id CASCADE, table_name, row_id)` — changelog; righe rimosse dal job di purge.
 
 ### llm_calls

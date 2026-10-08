@@ -68,6 +68,8 @@ export class ExtractionWriter {
   private audienceUnverified: string[] = [];
   private tombstones: Tombstones = { messageIds: new Set(), periods: [] };
   private readonly subjects = new Map<string, string>();
+  /** What the model returned but the code-side rules did not write, by kind and reason (WORK_PLAN 4.12; no content). */
+  private readonly dropped: Record<string, Record<string, number>> = {};
 
   constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {}
 
@@ -100,6 +102,32 @@ export class ExtractionWriter {
     await this.loadTombstones();
     await this.writeFacts({ episodes: [], plan_patches: [], facts, notes: [] } as unknown as ExtractionOutput);
     return this.written;
+  }
+
+  /**
+   * The run's summary for extraction_runs.summary (WORK_PLAN 4.12): what the model returned, what was written, what the
+   * rules dropped and why — counts only, never text, so forgetting stays complete.
+   */
+  summary(raw: ExtractionOutput): Record<string, unknown> {
+    const written: Record<string, number> = {};
+    for (const w of this.written) written[w.table] = (written[w.table] ?? 0) + 1;
+    return {
+      returned: { episodes: raw.episodes.length, plan_patches: raw.plan_patches.length, facts: raw.facts.length, notes: raw.notes.length },
+      written, dropped: this.dropped,
+    };
+  }
+
+  private drop(kind: 'episode' | 'plan_patch' | 'fact' | 'note', reason: string): void {
+    const k = (this.dropped[kind] ??= {});
+    k[reason] = (k[reason] ?? 0) + 1;
+  }
+
+  /** Why an item's evidence does not hold: no message, forgotten, or only an echo of a recall. */
+  private evidenceProblem(msgs: WindowMessage[], at: Date | null, text: string | null | undefined): string | null {
+    if (msgs.length === 0) return 'no_evidence';
+    if (this.forgotten(msgs, at)) return 'forgotten';
+    if (text && this.echoOnly(text)) return 'recall_echo';
+    return null;
   }
 
   // ── shared ────────────────────────────────────────────────────────────────────
@@ -201,8 +229,10 @@ export class ExtractionWriter {
       const msgs = this.evidence(e.evidence);
       const at = toStored(e.occurred_at, e.date_precision as Precision | undefined, this.ctx.timezone);
       const until = toStored(e.occurred_until, 'day', this.ctx.timezone);
-      if (msgs.length === 0 || this.forgotten(msgs, at.at) || this.echoOnly(e.content)
-        || (this.ctx.entity && !e.people.every((p) => this.namedInWindow(p)))) {
+      const problem = this.evidenceProblem(msgs, at.at, e.content)
+        ?? (this.ctx.entity && !e.people.every((p) => this.namedInWindow(p)) ? 'person_not_named' : null);
+      if (problem) {
+        this.drop('episode', problem);
         ids.push(null);
         continue;
       }
@@ -242,15 +272,17 @@ export class ExtractionWriter {
       let p = patch;
       const planId = this.input.plans.get(p.plan);
       const msgs = this.evidence(p.evidence);
-      if (!planId || msgs.length === 0 || this.forgotten(msgs, null)) continue;
-      if (!(await this.speaksOfPlan(planId, msgs))) continue;
+      if (!planId) { this.drop('plan_patch', 'unknown_plan'); continue; }
+      const problem = this.evidenceProblem(msgs, null, null);
+      if (problem) { this.drop('plan_patch', problem); continue; }
+      if (!(await this.speaksOfPlan(planId, msgs))) { this.drop('plan_patch', 'not_about_plan'); continue; }
       // A plan cannot have happened before its date: a "confirm" said before the plan starts confirms details, not an
       // outcome ("the trip is for the whole family" days before the trip). With a new text it amends the plan.
       if (p.patch === 'confirm' && await this.startsAfter(planId, msgs)) {
-        if (!p.new_content) continue;
+        if (!p.new_content) { this.drop('plan_patch', 'confirm_before_date'); continue; }
         p = { ...p, patch: 'amend' };
       }
-      if ((p.patch === 'reschedule' || p.patch === 'amend') && !(await this.changesPlan(planId, p))) continue;
+      if ((p.patch === 'reschedule' || p.patch === 'amend') && !(await this.changesPlan(planId, p))) { this.drop('plan_patch', 'no_change'); continue; }
       const at = msgs[0]?.sentAt ?? new Date();
       let newPlanId: string | null = null;
       if (p.patch === 'confirm') {
@@ -363,16 +395,20 @@ export class ExtractionWriter {
   private async writeFacts(out: ExtractionOutput): Promise<void> {
     for (const f of out.facts) {
       const msgs = this.evidence(f.evidence);
-      if (msgs.length === 0 || this.forgotten(msgs, null) || (f.value && this.echoOnly(f.value))) continue;
+      const problem = this.evidenceProblem(msgs, null, f.value);
+      if (problem) { this.drop('fact', problem); continue; }
       const key = f.key.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-      if (!key) continue;
-      if (f.verdict !== 'new' && f.verdict !== 'keep' && !this.assertedAfterRecall(msgs, `${key.replace(/_/g, ' ')} ${f.value ?? ''}`)) continue;
+      if (!key) { this.drop('fact', 'bad_key'); continue; }
+      if (f.verdict !== 'new' && f.verdict !== 'keep' && !this.assertedAfterRecall(msgs, `${key.replace(/_/g, ' ')} ${f.value ?? ''}`)) {
+        this.drop('fact', 'not_reasserted_after_recall');
+        continue;
+      }
       await this.tx.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ($1, $1, $2) ON CONFLICT (key) DO NOTHING`, [key, f.cardinality ?? 'single']);
       const [{ cardinality }] = await this.tx.query(`SELECT cardinality FROM fact_slots WHERE key = $1`, [key]);
       const role = this.authorRole(msgs);
       const inferred = role === 'other' || role === 'tool';
       const from = toStored(f.valid_from ?? this.messageDay(msgs), f.date_precision as Precision | undefined, this.ctx.timezone);
-      if (this.ctx.entity && f.subject && !this.namedInWindow(f.subject)) continue;
+      if (this.ctx.entity && f.subject && !this.namedInWindow(f.subject)) { this.drop('fact', 'person_not_named'); continue; }
       const subjectId = this.ctx.entity ? await this.subject(f.subject) : null;
       let target = f.target ? this.input.facts.get(f.target) : undefined;
       if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
@@ -398,7 +434,7 @@ export class ExtractionWriter {
         }
       }
       if (!target && (verdict === 'replace' || verdict === 'stale' || verdict === 'unknown' || verdict === 'corrects')) {
-        if (verdict === 'corrects' || !f.value) continue;
+        if (verdict === 'corrects' || !f.value) { this.drop('fact', 'nothing_to_change'); continue; }
         verdict = 'new';
       }
 
@@ -407,12 +443,12 @@ export class ExtractionWriter {
       let correctsId: string | null = null;
       let validTo: Date | null = null;
       const value = verdict === 'stale' || verdict === 'unknown' ? null : (f.value ?? null);
-      if (value === null && verdict !== 'stale' && verdict !== 'unknown') continue;
+      if (value === null && verdict !== 'stale' && verdict !== 'unknown') { this.drop('fact', 'no_value'); continue; }
 
       if (target && (verdict === 'replace' || verdict === 'stale' || verdict === 'unknown')) {
         if (target.validFrom && from.at && from.at < target.validFrom) {
           // Older evidence that a value became unknown changes nothing in the newer history.
-          if (value === null) continue;
+          if (value === null) { this.drop('fact', 'older_than_history'); continue; }
           // Forward-only: an older value (late import) becomes history, the newer fact stays current.
           status = 'superseded';
           validTo = target.validFrom;
@@ -477,7 +513,8 @@ export class ExtractionWriter {
   private async writeNotes(out: ExtractionOutput): Promise<void> {
     for (const n of out.notes) {
       const msgs = this.evidence(n.evidence);
-      if (msgs.length === 0 || this.forgotten(msgs, null) || (n.content && this.echoOnly(n.content))) continue;
+      const problem = this.evidenceProblem(msgs, null, n.content);
+      if (problem) { this.drop('note', problem); continue; }
       const target = n.target ? this.input.notes.get(n.target) : undefined;
       if (n.verdict === 'keep') {
         if (target) await this.tx.query(`UPDATE notes SET support_count = support_count + 1 WHERE id = $1 AND owner_id = $2`, [target, this.ctx.ownerId]);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { Body, Controller, Delete, Get, Headers, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
@@ -27,6 +27,15 @@ export class AdminController {
   @Get('persons')
   listPersons() {
     return this.admin.listPersons();
+  }
+
+  /**
+   * Recent extraction runs of a person (WORK_PLAN 4.12): status, model, prompt version and the summary — what the model
+   * returned, what was written, what the rules dropped and why (counts only). `conversation` = a conversation's id.
+   */
+  @Get('owners/:id/runs')
+  listRuns(@Param('id', ParseUUIDPipe) id: string, @Query('conversation', new ParseUUIDPipe({ optional: true })) conversation?: string, @Query('limit') limit?: string) {
+    return this.admin.listRuns(id, conversation, Math.min(Math.max(Number(limit) || 20, 1), 200));
   }
 
   @Get('clients')

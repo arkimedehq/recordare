@@ -316,7 +316,11 @@ and the feed route (`GET api/v1/notes/changes`) is not built yet.
 `id, owner_id, conversation_id null, kind enum (extraction|digest|consolidation), window_from
 timestamptz, window_to timestamptz, model, provider, prompt_version, status enum
 (running|done|failed), error text null (no user content), started_at, finished_at` — one
-`extraction` run per window produces episodes, plan patches and fact candidates (D32).
+`extraction` run per window produces episodes, plan patches and fact candidates (D32). `summary jsonb null`
+(WORK_PLAN 4.12, migration `RunSummary`): `{returned: {episodes, plan_patches, facts, notes}, written: {table: n},
+dropped: {kind: {reason: n}}}` — what the model returned, what was written, what the code-side rules dropped and why
+(`no_evidence`, `forgotten`, `recall_echo`, `person_not_named`, `not_about_plan`, `confirm_before_date`, `no_change`,
+`not_reasserted_after_recall`, …); counts only, never text, so forgetting stays complete.
 `run_outputs(run_id CASCADE, table_name, row_id)` — changelog; rows removed by the purge job.
 
 ### llm_calls
