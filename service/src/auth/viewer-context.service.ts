@@ -38,7 +38,8 @@ export class ViewerContextService {
       `SELECT id FROM conversations WHERE client_id = $1 AND owner_id = $2 AND external_id = $3 AND deleted_at IS NULL`,
       [principal.clientId, ownerId, conversationExternalId],
     );
-    if (!conv) return { ownerOnly: false, source: 'none' };
+    // A personal token is the person: a conversation not stored yet (a client asking before it ingests) is theirs alone.
+    if (!conv) return principal.kind === 'owner_token' ? { ownerOnly: !added, source: 'owner_direct' } : { ownerOnly: false, source: 'none' };
     const [{ others }] = await this.db.query(
       `SELECT count(*)::int AS others FROM conversation_participants
        WHERE conversation_id = $1 AND role = 'other' AND (person_id IS NULL OR person_id <> $2)`,

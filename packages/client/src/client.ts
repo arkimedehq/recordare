@@ -83,6 +83,19 @@ export class RecordareClient {
     return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { query }, headers: { [CONVERSATION_HEADER]: conversation } });
   }
 
+  /**
+   * Stores the turn and returns the memory context for it in one round trip (needs the `ingest` and `read` scopes):
+   * the context is computed for the ingested conversation, from `query` or else the turn's last user message.
+   */
+  contextWithTurn(user: string, turn: IngestRequest, query?: string): Promise<MemoryContext> {
+    return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { ingest: turn, ...(query ? { query } : {}) } });
+  }
+
+  /** The conversation ended (session closed, /new): extraction runs now. A conversation Recordare never had is done. */
+  async endConversation(user: string, conversation: string): Promise<void> {
+    await this.gone(this.http.request('POST', `api/v1/ingest/conversations/${enc(conversation)}/end`, { user }));
+  }
+
   /** An edited message: Recordare re-extracts what depended on it. */
   async editMessage(user: string, conversation: string, message: string, content: string): Promise<void> {
     await this.http.request('PATCH', `api/v1/ingest/conversations/${enc(conversation)}/messages/${enc(message)}`, { user, body: { content } });

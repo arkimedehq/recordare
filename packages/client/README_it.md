@@ -31,6 +31,13 @@ const res = await rc.mcp.callTool('user-42', 'chat-1', 'search_episodes', { quer
 const next = afterFailure(err, attempts);                 // { action: 'retry', delayMs } | { action: 'park', reason }
 ```
 
+## Prima di ogni turno, e alla fine
+`contextWithTurn(user, turn)` salva il turno e restituisce il suo contesto di memoria in una sola andata e ritorno
+(`{block, items}`, il blocco da aggiungere in coda al prompt di sistema); `endConversation(user, conversation)` dice a
+Recordare che una conversazione è finita (sessione chiusa, /new), così l'estrazione parte subito. `TOOLS` contiene gli
+schemi degli strumenti MCP che il servizio offre (nome, titolo, descrizione, JSON Schema), per gli host che devono
+dichiarare gli strumenti prima di collegarsi; la suite di conformità li tiene allineati al servizio.
+
 ## Il diario
 `episodes`, `episode`, `digests`, `facts`, `notes`, `plans` leggono ciò che Recordare ricorda, per la vista della persona
 nell'interfaccia della piattaforma; `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide` sono le modifiche

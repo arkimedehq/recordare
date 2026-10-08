@@ -41,6 +41,14 @@ export class IngestController {
     await this.ingestion.deleteMessage(clientId, ownerId, conv, msg);
   }
 
+  /** The conversation ended (client side: session closed, /new): extraction runs now instead of after the idle delay. */
+  @Post('conversations/:conv/end')
+  @HttpCode(202)
+  async end(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('conv') conv: string): Promise<void> {
+    const { clientId, ownerId } = await this.scope(p, user);
+    await this.ingestion.end(clientId, ownerId, conv);
+  }
+
   @Delete('conversations/:conv')
   @HttpCode(202)
   async deleteConversation(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('conv') conv: string): Promise<void> {

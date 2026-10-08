@@ -43,6 +43,6 @@ export async function setup(env: Record<string, string>) {
     token: key, headers: { 'x-recordare-user': 'u1', 'x-recordare-conversation': conversation, 'x-recordare-now': '2026-10-07T10:00:00+02:00' },
     body: { query },
   });
-  return { app, fake, db, ownerId, context };
+  return { app, fake, db, ownerId, context, url, key, query: QUERY };
 }
 

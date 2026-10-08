@@ -48,7 +48,8 @@ memorizzazione dell'outbox e la trasformazione delle sue chat.
 ## 4. Richiamo — MCP
 - Registrare l'endpoint MCP di Recordare (`/mcp`) nel proprio client MCP con la chiave e `X-Recordare-User`.
 - **Inviare sempre `X-Recordare-Conversation: <externalConversationId>`**: Recordare stabilisce chi vedrà la risposta
-  dai partecipanti che ha ricevuto in ingest; senza una conversazione risolvibile una lettura non restituisce nulla
+  dai partecipanti che ha ricevuto in ingest; senza una conversazione risolvibile una lettura con una chiave client non restituisce nulla (un token personale legge
+  come la persona anche prima che la sua conversazione sia salvata)
   (regola dello spettatore, `API.md` §1).
 - Facoltativo, per agente: `POST api/v1/context {query}` prima di una risposta restituisce i ricordi pertinenti come
   blocco recintato da mettere in fondo al prompt di sistema (`API_it.md`, WORK_PLAN 5.7) — l'agente può rispondere senza
