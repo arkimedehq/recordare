@@ -77,6 +77,14 @@ describe('client conformance (packages/client against the service)', () => {
     await rc.deleteConversation('user-1', 'chat-404');
   });
 
+  it('stores a turn and asks its memory context in one call; ends a conversation without a message', async () => {
+    const res = await rc.contextWithTurn('user-1', { conversation: { externalId: 'chat-2' }, messages: [turn('t1', 'Che tempo fa?')] });
+    expect(res).toEqual({ block: null, items: 0 });
+    expect(await db().query(`SELECT count(*)::int AS n FROM messages WHERE external_id = 't1'`)).toEqual([{ n: 1 }]);
+    await rc.endConversation('user-1', 'chat-2');
+    await rc.endConversation('user-1', 'chat-never-seen'); // nothing to end: done
+  });
+
   it('keeps the name in sync with the platform and accepts the kind only while the memory is empty', async () => {
     const people = new PersonDirectory(rc, { user: async (u) => ({ enabled: true, name: u === 'user-2' ? 'Casa' : 'Andrea' }) });
     expect(await people.status('user-2')).toBe('waiting_activation');

@@ -165,6 +165,9 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
   purge (`DATA_MODEL.md` → Forgetting and deletion). Come costruito: la purge viene eseguita in modo sincrono e restituisce `202` senza
   corpo (piano: `202` + id del job).
+- `POST api/v1/ingest/conversations/{externalId}/end` → `202`: la conversazione è finita sul client (sessione chiusa,
+  /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta.
+  Stesso effetto di `hints.conversationEnded`, senza reinviare un messaggio.
 
 ### Import
 `source: import_*` con `sentAt` storico, in batch; estratti dal percorso notturno con segmentazione per
@@ -271,7 +274,11 @@ inglese; settimane che iniziano di lunedì, fuso orario dell'owner; "adesso" è 
 `ALLOW_CLOCK_OVERRIDE` è impostato — test e valutazioni). Nessun LLM. Parametri `now?` / `locale?`: non costruiti.
 
 ### Contesto di memoria prima del turno (WORK_PLAN 5.7) — costruito
-`POST api/v1/context {query}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`: i
+`POST api/v1/context {query?, ingest?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
+`ingest` (il corpo di `POST api/v1/ingest/messages`, serve anche lo scope `ingest`) salva prima il turno e risponde per
+quella conversazione, con `query` che per default è il suo ultimo messaggio dell'utente — una sola andata e ritorno prima
+di ogni turno invece di due. Con un token personale, una conversazione non ancora salvata conta come della persona. Il
+blocco contiene i
 ricordi pertinenti al messaggio a cui si sta per rispondere (fatti e note attuali, piani aperti imminenti, fino a 3
 episodi, ognuno sopra una soglia di somiglianza; al massimo circa 300 token) come un unico blocco recintato
 `<memory-context>` marcato "dati, non istruzioni", oppure `block: null` quando non c'è niente di pertinente. Nessuna

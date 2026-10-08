@@ -140,6 +140,17 @@ export class IngestService {
   }
 
   /** Physical purge of a conversation and its messages (cascade). */
+  /** Ends a conversation without a message: schedules its extraction now (404 when unknown, nothing when no consent). */
+  async end(clientId: string, ownerId: string, conversationExternalId: string): Promise<void> {
+    const [conv] = await this.db.query(
+      `SELECT id FROM conversations WHERE client_id = $1 AND owner_id = $2 AND external_id = $3 AND deleted_at IS NULL`,
+      [clientId, ownerId, conversationExternalId],
+    );
+    if (!conv) throw new NotFoundException();
+    await this.db.query(`UPDATE conversations SET idle_job_at = now() WHERE id = $1`, [conv.id]);
+    await this.queue.scheduleIdleExtraction(conv.id, 0);
+  }
+
   async deleteConversation(clientId: string, ownerId: string, conversationExternalId: string): Promise<void> {
     const [row] = await this.db.query(
       `WITH d AS (DELETE FROM conversations WHERE client_id = $1 AND owner_id = $2 AND external_id = $3 RETURNING id)

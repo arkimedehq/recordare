@@ -39,7 +39,8 @@ policy — and passes the conformance suite. A platform keeps only its outbox st
 ## 4. Recall — MCP
 - Register Recordare's MCP endpoint (`/mcp`) in your MCP client with the key and `X-Recordare-User`.
 - **Always send `X-Recordare-Conversation: <externalConversationId>`**: Recordare resolves who will see the answer from
-  the participants it ingested; without a resolvable conversation a read returns nothing (viewer rule, `API.md` §1).
+  the participants it ingested; without a resolvable conversation a read returns nothing (viewer rule, `API.md` §1) — with a client key; a personal
+  token reads as the person even before its conversation is stored.
 - Optional, per agent: `POST api/v1/context {query}` before an answer returns the relevant memories as a fenced
   block for the end of the system prompt (`API.md`, WORK_PLAN 5.7) — the agent may answer without a tool call.
 - Tools: `search_episodes`, `search_memory` (facts and notes), `resolve_period`, `log_episode`, `correct_episode`,

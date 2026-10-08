@@ -163,6 +163,9 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
   purge (`DATA_MODEL.md` → Forgetting and deletion). As built: the purge runs synchronously and returns `202` with no
   body (plan: `202` + job id).
+- `POST api/v1/ingest/conversations/{externalId}/end` → `202`: the conversation ended on the client (session closed,
+  /new) — extraction runs now instead of after the idle delay; `404` for a conversation never ingested. Same effect as
+  `hints.conversationEnded`, without re-sending a message.
 
 ### Imports
 `source: import_*` with historical `sentAt`, batched; extracted by the nightly path with topic
@@ -269,7 +272,10 @@ expressions; Monday-based weeks, owner's timezone; "now" is the server clock (`X
 `ALLOW_CLOCK_OVERRIDE` is set — tests and evaluations). No LLM. `now?` / `locale?` parameters: not built.
 
 ### Pre-turn memory context (WORK_PLAN 5.7) — built
-`POST api/v1/context {query}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`: the
+`POST api/v1/context {query?, ingest?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
+`ingest` (the body of `POST api/v1/ingest/messages`, scope `ingest` too) stores the turn first and answers for that
+conversation, `query` defaulting to its last user message — one round trip before each turn instead of two. With a
+personal token, a conversation not stored yet counts as the person's own. The block holds the
 memories relevant to the message about to be answered (current facts and notes, upcoming open plans, up to 3 episodes,
 each above a similarity floor; ≈ 300 tokens at most) as one fenced `<memory-context>` block marked "data, not
 instructions", or `block: null` when nothing is relevant. No LLM call. Same viewer rule as every read (nothing in a
