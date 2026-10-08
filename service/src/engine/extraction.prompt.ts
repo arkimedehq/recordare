@@ -6,7 +6,7 @@
  * variable goes in the user message. Rules come from the prototype that passed the blind held-out
  * check (spikes/memory-eval/systems/d_sys.py) plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v9';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v8';
 
 export const EXTRACTION_SYSTEM = `You are the memory encoder of a personal memory service. You read a window of one \
 conversation (numbered messages) and record what should be remembered about the OWNER's life. \
@@ -129,10 +129,6 @@ keeping, write it as the claim ("Giorgio dice che Sofia…", stance "inferred"),
 or plans; it never creates or changes facts or notes unless the owner confirms it.
 - Every item needs evidence: the numbers of the messages that support it.
 
-NAMING
-- Write episodes and notes in the third person, naming the owner by OWNER NAME ("Andrea ha comprato…"); never write \
-"the owner", "l'owner" or "the user" in them — the person reads their own memories.
-
 Empty lists when there is nothing to remember. Output JSON only.`;
 
 /**
@@ -172,8 +168,6 @@ export interface PromptMessage {
 }
 
 export interface PromptContext {
-  /** The owner's name, for a person's memory (entity memories name each person in the window instead). */
-  ownerName?: string;
   locale: string;
   messageDay: string;
   calendar: string;
@@ -189,7 +183,6 @@ const NONE = '(none)';
 
 export function buildExtractionUser(ctx: PromptContext): string {
   return [
-    ...(ctx.ownerName ? [`OWNER NAME: ${ctx.ownerName}`] : []),
     `OWNER LANGUAGE: ${ctx.locale}`,
     `CALENDAR (around ${ctx.messageDay}):\n${ctx.calendar}`,
     `OPEN PLANS:\n${ctx.openPlans.join('\n') || NONE}`,

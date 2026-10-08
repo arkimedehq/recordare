@@ -112,7 +112,8 @@ export class EngineExtractionRunner implements ExtractionRunner {
       ]);
       const output = factsOut ? { ...episodesOut, facts: factsOut.facts, notes: factsOut.notes } : episodesOut;
       const written = await this.db.transaction(async (tx) => {
-        const rows = await new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId, entity: !!owner.entity }, input).apply(output);
+        const rows = await new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId, entity: !!owner.entity,
+          ...(owner.entity || !owner.name ? {} : { ownerName: owner.name }) }, input).apply(output);
         await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [runId]);
         return rows;
       });

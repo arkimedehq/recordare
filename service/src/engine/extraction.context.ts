@@ -168,7 +168,6 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
     notes: noteMap,
     episodes: episodeMap,
     prompt: {
-      ...(owner.name && !owner.entity ? { ownerName: owner.name } : {}),
       locale: owner.locale,
       messageDay,
       calendar: calendar(messageDay, 14, 21, owner.locale),

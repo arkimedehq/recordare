@@ -149,6 +149,19 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     ]);
   });
 
+  it('writes the person\'s name where the model wrote "l\'owner" / "the owner"', async () => {
+    const c = await ingest('ow1', [{ id: 'ow1', role: 'user', content: 'Oggi ho portato la Panda dal meccanico.', at: '2026-10-02T18:00:00+02:00' }]);
+    llm.queue.push({
+      episodes: [{ content: "Il 2 ottobre 2026 l'owner ha portato la Panda dal meccanico; la macchina dell'owner era rumorosa.", evidence: [1] }],
+      notes: [{ category: 'habit', content: 'The owner takes the car to the same garage; the owner\'s mechanic is trusted.', evidence: [1] }],
+    });
+    await runner.runForConversation(c);
+    expect(await db.query(`SELECT content FROM episodes WHERE content LIKE '%meccanico%'`))
+      .toEqual([{ content: 'Il 2 ottobre 2026 Luca ha portato la Panda dal meccanico; la macchina di Luca era rumorosa.' }]);
+    expect(await db.query(`SELECT content FROM notes WHERE content LIKE '%garage%'`))
+      .toEqual([{ content: "Luca takes the car to the same garage; Luca's mechanic is trusted." }]);
+  });
+
   it('links an unlinked correction through the near-duplicate check (one extra call only when candidates exist)', async () => {
     const a = await ingest('ort1', [{ id: 'o1', role: 'user', content: "Lunedì sono stata dall'ortopedico.", at: '2026-11-04T21:00:00+01:00' }]);
     llm.queue.push({ episodes: [{ content: "Visita dall'ortopedico lunedì 2 novembre 2026.", occurred_at: '2026-11-02', evidence: [1] }] });
@@ -242,8 +255,8 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     await runner.runForConversation(c7);
     // An unverified group member is still named to the extractor, so a claim is attributed to its author.
     expect(llm.requests.at(-1)?.messages[1]?.content ?? '').toContain('other:Sconosciuto');
-    expect(await db.query(`SELECT author_role, stance, pending FROM notes`)).toEqual([{ author_role: 'other', stance: 'inferred', pending: true }]);
-    expect(await db.query(`SELECT change FROM note_changes`)).toEqual([{ change: 'created' }]);
+    expect(await db.query(`SELECT author_role, stance, pending FROM notes WHERE content = 'Luca vende la casa'`)).toEqual([{ author_role: 'other', stance: 'inferred', pending: true }]);
+    expect(await db.query(`SELECT c.change FROM note_changes c JOIN notes n ON n.id = c.note_id WHERE n.content = 'Luca vende la casa'`)).toEqual([{ change: 'created' }]);
   });
 
   it('shows older episodes related to the window, not only the most recent ones', async () => {

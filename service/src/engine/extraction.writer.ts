@@ -39,6 +39,8 @@ export interface WriteContext {
   conversationId: string;
   /** An entity memory (D48): facts name the person they are about. */
   entity?: boolean;
+  /** A person's memory: their name, written in place of "l'owner" / "the owner" in what is stored. */
+  ownerName?: string;
 }
 
 export interface WrittenRow {
@@ -68,7 +70,8 @@ export class ExtractionWriter {
 
   constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {}
 
-  async apply(out: ExtractionOutput): Promise<WrittenRow[]> {
+  async apply(raw: ExtractionOutput): Promise<WrittenRow[]> {
+    const out = this.named(raw);
     // Concurrency guard: lock the window's messages; if another run already extracted any of them,
     // this run writes nothing (no duplicates, no double processing).
     const pending: Array<{ id: string }> = await this.tx.query(
@@ -99,6 +102,18 @@ export class ExtractionWriter {
   }
 
   // ── shared ────────────────────────────────────────────────────────────────────
+
+  /** The person reads their own memories (the Diary): the prompt's word "owner" never reaches what is stored. */
+  private named(out: ExtractionOutput): ExtractionOutput {
+    const name = this.ctx.ownerName;
+    if (!name) return out;
+    return {
+      ...out,
+      episodes: out.episodes.map((e) => ({ ...e, content: nameOwner(e.content, name) })),
+      plan_patches: out.plan_patches.map((p) => (p.new_content ? { ...p, new_content: nameOwner(p.new_content, name) } : p)),
+      notes: out.notes.map((n) => ({ ...n, content: nameOwner(n.content, name) })),
+    };
+  }
 
   private async loadAudience(): Promise<void> {
     const rows: Array<{ person_id: string | null; display_name: string | null; role: string }> = await this.tx.query(
@@ -496,6 +511,22 @@ export class ExtractionWriter {
 }
 
 const tokens = (s: string): string[] => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+/**
+ * "l'owner", "dell'owner", "the owner"… → the person's name ("di Andrea", "Andrea's"). The extraction prompt calls the
+ * person OWNER and the model sometimes copies the word (≈ 5 % of episodes and notes, 2026-10-08); naming the person in
+ * the prompt instead cost ≈ 2 points on blind5 (extract.v9, 3 runs), so the fix is here, deterministic.
+ */
+export function nameOwner(text: string, name: string): string {
+  const A = "['’]";
+  const prep: Record<string, string> = { al: 'a', dal: 'da', nel: 'in', sul: 'su' };
+  return text
+    .replace(new RegExp(`\\bdell${A}owner\\b`, 'gi'), `di ${name}`)
+    .replace(new RegExp(`\\b(al|dal|nel|sul)l${A}owner\\b`, 'gi'), (_m, p: string) => `${prep[p.toLowerCase()]} ${name}`)
+    .replace(new RegExp(`\\bl${A}owner\\b`, 'gi'), name)
+    .replace(/\bthe owner['’]s\b/gi, `${name}'s`)
+    .replace(/\bthe owner\b/gi, name);
+}
+
 const words = (s: string): string[] => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4);
 /** A crude cross-inflection key (cena / cene, festa / feste, spostata / spostato). */
 const stem = (w: string): string => w.slice(0, 5);
