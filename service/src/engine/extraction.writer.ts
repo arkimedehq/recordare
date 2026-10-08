@@ -518,11 +518,15 @@ const tokens = (s: string): string[] => s.toLowerCase().normalize('NFD').replace
  */
 export function nameOwner(text: string, name: string): string {
   const A = "['’]";
-  const prep: Record<string, string> = { al: 'a', dal: 'da', nel: 'in', sul: 'su' };
+  const prep: Record<string, string> = { al: 'a', dal: 'da', nel: 'in', sul: 'su', del: 'di' };
+  const NOT_OF = String.raw`(?!\s+(?:del|della|dello|dei|degli|delle|di|d['’]|dell['’])\b)`;
   return text
     .replace(new RegExp(`\\bdell${A}owner\\b`, 'gi'), `di ${name}`)
     .replace(new RegExp(`\\b(al|dal|nel|sul)l${A}owner\\b`, 'gi'), (_m, p: string) => `${prep[p.toLowerCase()]} ${name}`)
     .replace(new RegExp(`\\bl${A}owner\\b`, 'gi'), name)
+    // The model sometimes translates "l'owner" as "il proprietario": the same person — but not "il proprietario del bar".
+    .replace(new RegExp(`\\b(del|al|dal|nel|sul)(?:la)? propriet(?:ario|aria)\\b${NOT_OF}`, 'gi'), (_m, p: string) => `${prep[p.toLowerCase()] ?? 'di'} ${name}`)
+    .replace(new RegExp(`\\b(?:il|la) propriet(?:ario|aria)\\b${NOT_OF}`, 'gi'), name)
     .replace(/\bthe owner['’]s\b/gi, `${name}'s`)
     .replace(/\bthe owner\b/gi, name);
 }

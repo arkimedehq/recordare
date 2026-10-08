@@ -2,8 +2,8 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * The Recordare side of the proxy: the person's message is sent before the answer, then the memories relevant to it
- * come back as a `<memory-context>` block; the answer is sent after it. Never in the way of the chat: every call
+ * The Recordare side of the proxy: before the answer one call stores the person's message and returns the memories
+ * relevant to it as a `<memory-context>` block; the answer is sent after it. Never in the way of the chat: every call
  * before the answer is time-boxed, a Recordare outage turns the proxy into a pass-through for a while, and messages that
  * could not be sent are retried in the background (in memory: lost on restart — README → Limits).
  */
@@ -50,7 +50,8 @@ function put<K, V>(map: Map<K, V>, key: K, value: V, max = MAX_TRACKED): void {
 
 interface TurnState { at: number; ingested: boolean; block: string | null | undefined }
 interface Pending { user: string; req: IngestRequest; attempts: number }
-interface LastSent { user: string; conversation: IngestConversation; message: IngestMessage; timer?: NodeJS.Timeout }
+/** A conversation with a captured answer, to end after it goes quiet (`END_IDLE_SECONDS`). */
+interface Open { user: string; timer?: NodeJS.Timeout }
 
 /** The stable id of the person's message: the platform's own, else a hash of conversation, text and position. */
 export function userMessageId(turn: Turn): string {
@@ -62,7 +63,7 @@ export class Memory {
   private readonly fast: RecordareClient;
   private readonly slow: RecordareClient;
   private readonly turns = new Map<string, TurnState>();
-  private readonly lastSent = new Map<string, LastSent>();
+  private readonly open = new Map<string, Open>();
   private readonly noConsent = new Map<string, number>();
   private readonly queue: Pending[] = [];
   private timer: NodeJS.Timeout | undefined;
@@ -81,8 +82,8 @@ export class Memory {
   }
 
   /**
-   * Before the answer: sends the person's message (once per turn), then asks the memory context (once per turn; a
-   * repeated call reuses it). Returns the block to inject, or null. Never throws.
+   * Before the answer: stores the person's message and gets the memory context in one call (each once per turn; a
+   * repeated call reuses the block). Returns the block to inject, or null. Never throws.
    */
   async beforeTurn(turn: Turn): Promise<string | null> {
     const { identity } = turn;
@@ -95,31 +96,36 @@ export class Memory {
     put(this.turns, key, st);
     this.cancelEnd(identity.conversation);
 
-    const down = now < this.downUntil;
-    if (this.cfg.capture && !st.ingested) {
-      const req: IngestRequest = { conversation: this.conversation(turn), messages: [this.userMessage(turn)] };
-      st.ingested = true;
-      if (down) {
-        this.enqueue({ user: identity.user, req, attempts: 0 });
-      } else {
-        try {
-          const res = await this.fast.ingest(this.headerUser(identity.user), req);
-          if (!res.stored) put(this.noConsent, identity.user, now);
-        } catch (err) {
-          this.failed(err, 'ingest before the answer');
-          this.enqueue({ user: identity.user, req, attempts: 1 }, err);
-        }
-      }
+    const req: IngestRequest | undefined = this.cfg.capture && !st.ingested
+      ? { conversation: this.conversation(turn), messages: [this.userMessage(turn)] } : undefined;
+    if (req) st.ingested = true;
+    if (now < this.downUntil) {
+      if (req) this.enqueue({ user: identity.user, req, attempts: 0 });
+      return null;
     }
-    if (!this.cfg.recall || now < this.downUntil) return null;
     const refused = this.noConsent.get(identity.user);
-    if (refused !== undefined && now - refused < NO_CONSENT_FOR_MS) return null;
+    const recall = this.cfg.recall && !(refused !== undefined && now - refused < NO_CONSENT_FOR_MS);
+    const user = this.headerUser(identity.user);
+    const query = turn.text.slice(0, 4000);
+    if (req && !recall) {
+      try {
+        const res = await this.fast.ingest(user, req);
+        if (!res.stored) put(this.noConsent, identity.user, now);
+      } catch (err) {
+        this.failed(err, 'ingest before the answer');
+        this.enqueue({ user: identity.user, req, attempts: 1 }, err);
+      }
+      return null;
+    }
+    if (!recall) return null;
     try {
-      const res = await this.fast.context(this.headerUser(identity.user), identity.conversation, turn.text.slice(0, 4000));
+      const res = req ? await this.fast.contextWithTurn(user, req, query) : await this.fast.context(user, identity.conversation, query);
       st.block = res.block;
       return res.block;
     } catch (err) {
-      this.failed(err, 'memory context');
+      this.failed(err, req ? 'storing the message with its memory context' : 'memory context');
+      // Retried as a plain ingest (same id: stored once), which needs only the `ingest` scope.
+      if (req) this.enqueue({ user: identity.user, req, attempts: 0 });
       return null;
     }
   }
@@ -133,22 +139,30 @@ export class Memory {
       content: clipUtf8(answer), sentAt: new Date(this.now()).toISOString(), upsert: true,
     };
     void this.deliver({ user: turn.identity.user, req: { conversation, messages: [message] }, attempts: 0 });
-    this.scheduleEnd({ user: turn.identity.user, conversation, message });
+    this.scheduleEnd(conversation.externalId, turn.identity.user);
   }
 
-  /** Tells Recordare the conversation ended (re-sending its last answer, same id: stored once). */
+  /** Tells Recordare the conversation ended (extraction now); waits while its messages are still in the retry queue. */
   async endConversation(conversationId: string): Promise<void> {
-    const last = this.lastSent.get(conversationId);
-    if (!last) return;
+    const open = this.open.get(conversationId);
+    if (!open) return;
+    if (this.queue.some((p) => p.req.conversation.externalId === conversationId)) {
+      this.scheduleEnd(conversationId, open.user);
+      return;
+    }
     this.cancelEnd(conversationId);
-    this.lastSent.delete(conversationId);
-    await this.deliver({ user: last.user, req: { conversation: last.conversation, messages: [last.message], hints: { conversationEnded: true } }, attempts: 0 });
+    this.open.delete(conversationId);
+    try {
+      await this.slow.endConversation(this.headerUser(open.user), conversationId);
+    } catch (err) {
+      this.failed(err, 'end of the conversation'); // Recordare's own idle delay ends it anyway
+    }
   }
 
   async stop(): Promise<void> {
     this.stopped = true;
     if (this.timer) clearTimeout(this.timer);
-    for (const l of this.lastSent.values()) if (l.timer) clearTimeout(l.timer);
+    for (const o of this.open.values()) if (o.timer) clearTimeout(o.timer);
     const pending = this.queue.splice(0);
     await Promise.race([
       Promise.all(pending.map((p) => this.slow.ingest(this.headerUser(p.user), p.req).catch(() => undefined))),
@@ -225,17 +239,17 @@ export class Memory {
   }
 
   private cancelEnd(conversationId: string): void {
-    const last = this.lastSent.get(conversationId);
-    if (last?.timer) clearTimeout(last.timer);
-    if (last) last.timer = undefined;
+    const open = this.open.get(conversationId);
+    if (open?.timer) clearTimeout(open.timer);
+    if (open) open.timer = undefined;
   }
 
-  private scheduleEnd(last: LastSent): void {
-    const id = last.conversation.externalId;
-    this.cancelEnd(id);
-    put(this.lastSent, id, last);
+  private scheduleEnd(id: string, user: string): void {
     if (this.cfg.endIdleSeconds <= 0 || this.stopped) return;
-    last.timer = setTimeout(() => { void this.endConversation(id); }, this.cfg.endIdleSeconds * 1000);
-    last.timer.unref?.();
+    this.cancelEnd(id);
+    const open: Open = { user };
+    put(this.open, id, open);
+    open.timer = setTimeout(() => { void this.endConversation(id); }, this.cfg.endIdleSeconds * 1000);
+    open.timer.unref?.();
   }
 }

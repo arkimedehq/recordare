@@ -36,6 +36,7 @@ function recordare(calls: RCall[], opts: { down?: boolean; block?: string | null
     const path = new URL(String(input)).pathname;
     const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
     calls.push({ path, headers: new Headers(init?.headers), body });
+    if (path.endsWith('/end')) return new Response(null, { status: 202 });
     if (path.endsWith('/context')) return Response.json({ block: opts.block === undefined ? '<memory-context>Il gatto si chiama Biscotto</memory-context>' : opts.block, items: 1 });
     return Response.json({ conversationId: 'c1', accepted: 1, duplicates: 0, conflicts: [], stored: true });
   };
@@ -79,13 +80,16 @@ describe('proxy', () => {
     expect(system).toBe('You are kind.\n\n<memory-context>Il gatto si chiama Biscotto</memory-context>');
     expect(JSON.stringify(sent.body)).not.toContain('[[recordare');
 
-    await until(() => calls.length >= 3);
-    expect(calls.map((c) => c.path)).toEqual(['/api/v1/ingest/messages', '/api/v1/context', '/api/v1/ingest/messages']);
+    await until(() => calls.length >= 2);
+    expect(calls.map((c) => c.path)).toEqual(['/api/v1/context', '/api/v1/ingest/messages']); // message + context: one call
     expect(calls[0]!.headers.get('x-recordare-user')).toBe('anythingllm:7');
-    expect(calls[1]!.headers.get('x-recordare-conversation')).toMatch(/^anythingllm:3:7:\d{4}-\d{2}-\d{2}$/);
-    const answer = (calls[2]!.body.messages as Array<Record<string, unknown>>)[0]!;
+    const ingest = calls[0]!.body.ingest as { conversation: { externalId: string }; messages: Array<{ externalId: string; role: string }> };
+    expect(ingest.conversation.externalId).toMatch(/^anythingllm:3:7:\d{4}-\d{2}-\d{2}$/);
+    expect(ingest.messages[0]!.role).toBe('user');
+    expect(calls[0]!.body.query).toBe('Come si chiama il mio gatto?');
+    const answer = (calls[1]!.body.messages as Array<Record<string, unknown>>)[0]!;
     expect(answer).toMatchObject({ role: 'assistant', content: 'Hello', upsert: true });
-    expect(answer.externalId).toBe(`${(calls[0]!.body.messages as Array<{ externalId: string }>)[0]!.externalId}:a`);
+    expect(answer.externalId).toBe(`${ingest.messages[0]!.externalId}:a`);
   });
 
   it('a repeated call of the same turn (regeneration, agent loop) sends the message and asks the context once', async () => {
@@ -95,10 +99,9 @@ describe('proxy', () => {
     const loop = { ...anythingllm('ciao'), stream: false };
     loop.messages = [...loop.messages, { role: 'assistant', content: '', tool_calls: [{ id: 't' }] } as never, { role: 'tool', content: 'r', tool_call_id: 't' } as never];
     await (await chat(base, loop)).text();
-    await until(() => calls.filter((c) => c.path.endsWith('/ingest/messages')).length >= 3);
+    await until(() => calls.filter((c) => c.path.endsWith('/ingest/messages')).length >= 2);
     expect(calls.filter((c) => c.path.endsWith('/context'))).toHaveLength(1);
-    const userIngests = calls.filter((c) => (c.body.messages as Array<{ role: string }> | undefined)?.[0]?.role === 'user');
-    expect(userIngests).toHaveLength(1);
+    expect(calls.filter((c) => (c.body.messages as Array<{ role: string }> | undefined)?.[0]?.role === 'user')).toHaveLength(0);
     // both upstream calls got the block
     for (const s of seen) expect(JSON.stringify(s.body)).toContain('Biscotto');
   });
@@ -155,12 +158,24 @@ describe('proxy', () => {
     expect(seen[0]!.headers.authorization).toBe('Bearer sk-up');
   });
 
-  it('ends an idle conversation with the end hint', async () => {
+  it('ends an idle conversation', async () => {
     const seen: Seen[] = []; const calls: RCall[] = [];
     const { base } = await start({ END_IDLE_SECONDS: '0.05' }, seen, calls);
     await (await chat(base, anythingllm('ciao'))).text();
-    await until(() => calls.some((c) => (c.body.hints as { conversationEnded?: boolean } | undefined)?.conversationEnded));
-    const end = calls.find((c) => (c.body.hints as { conversationEnded?: boolean } | undefined)?.conversationEnded)!;
-    expect((end.body.messages as Array<{ role: string }>)[0]!.role).toBe('assistant');
+    await until(() => calls.some((c) => c.path.endsWith('/end')));
+    const end = calls.find((c) => c.path.endsWith('/end'))!;
+    const conversation = (calls[0]!.body.ingest as { conversation: { externalId: string } }).conversation.externalId;
+    expect(end.path).toBe(`/api/v1/ingest/conversations/${encodeURIComponent(conversation)}/end`);
+    expect(end.headers.get('x-recordare-user')).toBe('anythingllm:7');
+    expect(calls.filter((c) => c.path.endsWith('/end'))).toHaveLength(1);
+  });
+
+  it('with recall off, stores the message with a plain ingest', async () => {
+    const seen: Seen[] = []; const calls: RCall[] = [];
+    const { base } = await start({ RECALL: 'false' }, seen, calls);
+    await (await chat(base, { ...anythingllm('ciao'), stream: false })).text();
+    await until(() => calls.length >= 2);
+    expect(calls.map((c) => c.path)).toEqual(['/api/v1/ingest/messages', '/api/v1/ingest/messages']);
+    expect(JSON.stringify(seen[0]!.body)).not.toContain('memory-context');
   });
 });

@@ -8,15 +8,16 @@ suo provider; il proxy parla col provider vero e con Recordare.
 ```
 piattaforma ──► proxy ──► provider upstream (qualunque API compatibile OpenAI)
                   │
-                  └──► Recordare: ingest del messaggio della persona → POST api/v1/context → (risposta) → ingest della risposta
+                  └──► Recordare: POST api/v1/context (salva il messaggio della persona) → (risposta) → ingest della risposta
 ```
 
 Per ogni `POST /v1/chat/completions` (in streaming o no):
 1. **Chi**: un resolver d'identità trova la persona e la conversazione (sotto). Nessuna ⇒ puro pass-through.
-2. **Prima della risposta**: l'ultimo messaggio della persona va a Recordare (`POST api/v1/ingest/messages`), poi
-   `POST api/v1/context` restituisce i ricordi pertinenti come blocco recintato `<memory-context>`, aggiunto in fondo al
-   primo messaggio di sistema (se manca, se ne aggiunge uno). Ogni chiamata ha un tempo massimo (`RECALL_TIMEOUT_MS`,
-   1,5 s); a qualunque errore la richiesta prosegue senza blocco.
+2. **Prima della risposta**: una sola chiamata (`POST api/v1/context` con `ingest`) salva l'ultimo messaggio della
+   persona e restituisce i ricordi pertinenti come blocco recintato `<memory-context>`, aggiunto in fondo al primo
+   messaggio di sistema (se manca, se ne aggiunge uno). Con `RECALL=false` il messaggio è salvato con un semplice
+   `POST api/v1/ingest/messages`. La chiamata ha un tempo massimo (`RECALL_TIMEOUT_MS`, 1,5 s); a qualunque errore la
+   richiesta prosegue senza blocco e il messaggio attende nella coda di ritentativi.
 3. **La risposta** è inoltrata invariata — uno stream resta uno stream (i byte SSE passano appena arrivano mentre il
    testo viene accumulato) — e, se completa e finale, inviata a Recordare in background.
 
@@ -65,7 +66,7 @@ persona.
 | `USER_MAP_ONLY` | `false` | Solo gli utenti mappati sono ricordati; gli altri passano e basta |
 | `DEFAULT_USER` | — | AnythingLLM: l'utente quando quello del marcatore non è espanso (modalità utente singolo: `[User ID]`) |
 | `OPENWEBUI_JWT_SECRET` | — | Modalità JWT di Open WebUI (verifica `X-OpenWebUI-User-Jwt`, HS256); gli header utente semplici sono allora ignorati |
-| `RECALL_TIMEOUT_MS` | `1500` | Per ogni chiamata a Recordare prima della risposta (ingest, poi contesto) |
+| `RECALL_TIMEOUT_MS` | `1500` | Per la chiamata a Recordare prima della risposta (l'ingest del messaggio con il suo contesto) |
 | `END_IDLE_SECONDS` | `0` | Secondi di silenzio dopo cui il proxy dice a Recordare che la conversazione è finita; `0` = il ritardo di inattività di Recordare (`IDLE_DELAY_SECONDS`, 900 s) |
 | `TZ` | di sistema | Fuso orario del giorno usato negli id di conversazione sintetizzati |
 | `SKIP_PATTERNS` | — | Regex aggiuntive (array JSON o separate da `\|\|`) sull'ultimo messaggio utente che marcano le chiamate di background |
@@ -146,8 +147,8 @@ Le richieste di titolo (`… title for the conversation …`) sono saltate da un
   nessuna identità (i lavori di AnythingLLM non hanno marcatore), i pattern incorporati (`### Task:` senza
   `<user_query>`; "generate … title … conversation/chat/thread"), `SKIP_PATTERNS`, o un header `X-Recordare-Skip`.
 - **Fine di una conversazione**: Recordare estrae una conversazione dopo il suo ritardo di inattività. Con
-  `END_IDLE_SECONDS` il proxy la chiude prima, reinviando l'ultima risposta (stesso id) con
-  `hints.conversationEnded` — l'ingest di Recordare richiede almeno un messaggio per portare il segnale.
+  `END_IDLE_SECONDS` il proxy la chiude prima (`POST api/v1/ingest/conversations/{id}/end`, quando i suoi messaggi
+  hanno lasciato la coda di ritentativi).
 
 ## Mai d'intralcio
 - Recordare irraggiungibile o lento: la richiesta è inoltrata senza blocco dopo al massimo `RECALL_TIMEOUT_MS` per
@@ -156,8 +157,8 @@ Le richieste di titolo (`… title for the conversation …`) sono saltate da un
 - **Coda di ritentativi in memoria** (v0.1): fino a 1000 lotti, ~8 tentativi con back-off in ≈ 10 minuti
   (`Retry-After` rispettato), errori permanenti (400 / 413 / 422) scartati e registrati; un ultimo tentativo al
   SIGTERM; **persa al riavvio**.
-- Una persona senza consenso: il primo ingest risponde `stored: false`; per un minuto non si chiede nulla a Recordare
-  per quella persona.
+- Una persona senza consenso: un ingest risponde `stored: false`; per un minuto il proxy si limita a salvare i
+  messaggi di quella persona (senza chiedere il contesto di memoria).
 - I log non contengono testo dei messaggi (salvo con `LOG_UPSTREAM`).
 
 ## Sicurezza

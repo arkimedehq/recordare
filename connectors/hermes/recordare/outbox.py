@@ -4,14 +4,15 @@
 """Durable ingest outbox: a small SQLite file in the profile's HERMES_HOME.
 
 Turns are written here first and delivered to `POST api/v1/ingest/messages` by one background worker per file (and
-synchronously when the provider needs a message stored before it reads, see `deliver_now`). Delivery is at least once:
+synchronously when the provider needs a message stored before it reads, see `deliver_now`, or stores it with its memory
+context in one call, see `send_with`). Delivery is at least once:
 message externalIds are fixed when a row is written, so a re-sent batch is stored once by Recordare. Back-off is
 exponential, Retry-After is honoured, a 4xx other than 408 / 425 / 429 drops the row (it would never succeed), rows older
 than `MAX_AGE_S` are dropped. Rows left at exit are delivered the next time Hermes starts with this provider.
 
-"End of conversation" rows carry no message of their own: when sent they re-send the conversation's last delivered
-message (same externalId, stored once) with `hints.conversationEnded`, and they wait until every pending batch of that
-conversation is delivered, so extraction starts only after the last turn arrived.
+"End of conversation" rows become `POST api/v1/ingest/conversations/{id}/end` (a 404 — never ingested — is done), and
+they wait until every pending batch of that conversation is delivered, so extraction starts only after the last turn
+arrived.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ import threading
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, Optional
+from typing import Any, Callable, Dict, Iterator, Optional, Tuple
 
 from .client import RecordareClient, RecordareError
 
@@ -41,14 +42,12 @@ CREATE TABLE IF NOT EXISTS outbox (
   kind TEXT NOT NULL,                 -- 'batch' | 'end'
   conv TEXT NOT NULL,                 -- conversation externalId (also the X-Recordare-Conversation header)
   user TEXT,                          -- X-Recordare-User (client keys); NULL with a personal token
-  payload TEXT NOT NULL,              -- ingest body ('batch') or conversation meta ('end')
+  payload TEXT NOT NULL,              -- ingest body ('batch'); '{}' ('end')
   dedupe TEXT UNIQUE,                 -- one pending 'end' per conversation
   attempts INTEGER NOT NULL DEFAULT 0,
   next_at REAL NOT NULL DEFAULT 0,
   created_at REAL NOT NULL
 );
-CREATE TABLE IF NOT EXISTS last_message (conv TEXT PRIMARY KEY, message TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS delivered (conv TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS lineage (session_id TEXT PRIMARY KEY, conv TEXT NOT NULL);
 """
 
@@ -89,24 +88,23 @@ class Outbox:
 
     # -- writing --------------------------------------------------------------------------------------------------------
 
-    def add_batch(self, conv: str, user: Optional[str], body: Dict[str, Any]) -> None:
-        last = body["messages"][-1]
+    def add_batch(self, conv: str, user: Optional[str], body: Dict[str, Any], *, wake: bool = True) -> int:
+        """Queue an ingest body; returns its row id. `wake=False` leaves it to `send_with` (or the worker's next round)."""
         with self._db() as db:
-            db.execute("INSERT INTO outbox (kind, conv, user, payload, created_at) VALUES ('batch', ?, ?, ?, ?)",
-                       (conv, user, json.dumps(body), time.time()))
-            db.execute("INSERT OR REPLACE INTO last_message (conv, message) VALUES (?, ?)", (conv, json.dumps(last)))
-        self._wake.set()
+            rid = db.execute("INSERT INTO outbox (kind, conv, user, payload, created_at) VALUES ('batch', ?, ?, ?, ?)",
+                             (conv, user, json.dumps(body), time.time())).lastrowid
+        if wake:
+            self._wake.set()
+        return int(rid)
 
-    def add_end(self, conv: str, user: Optional[str], meta: Dict[str, Any]) -> None:
+    def add_end(self, conv: str, user: Optional[str]) -> None:
         with self._db() as db:
             db.execute("INSERT OR IGNORE INTO outbox (kind, conv, user, payload, dedupe, created_at) "
-                       "VALUES ('end', ?, ?, ?, ?, ?)", (conv, user, json.dumps(meta), f"end:{conv}", time.time()))
+                       "VALUES ('end', ?, ?, '{}', ?, ?)", (conv, user, f"end:{conv}", time.time()))
         self._wake.set()
 
-    def is_delivered(self, conv: str) -> bool:
-        """Whether Recordare stored at least one batch of this conversation (so it can resolve it as a viewer context)."""
-        with self._db() as db:
-            return db.execute("SELECT 1 FROM delivered WHERE conv = ?", (conv,)).fetchone() is not None
+    def wake(self) -> None:
+        self._wake.set()
 
     def lineage_get(self, session_id: str) -> Optional[str]:
         with self._db() as db:
@@ -135,6 +133,26 @@ class Outbox:
     def deliver_now(self, deadline_s: float) -> None:
         """Deliver what is due now, within `deadline_s` (the caller is about to read and needs its message stored)."""
         self.flush(deadline=time.monotonic() + deadline_s, timeout=(min(1.5, deadline_s), deadline_s))
+
+    def send_with(self, rid: int, deadline_s: float, call: Callable[[Dict[str, Any]], Any]) -> Tuple[bool, Any]:
+        """Deliver batch `rid` through `call(ingest body)` instead of a plain ingest (the provider's ingest with memory
+        context), when it is still pending and no older row of its conversation is (order kept). Returns (True, result)
+        when `call` stored it; (False, None) when it did not run (already delivered, an older row comes first, or the
+        worker held the outbox past the deadline). An error of `call` propagates and the row stays for the worker."""
+        if not self._send_lock.acquire(timeout=deadline_s):
+            return False, None
+        try:
+            with self._db() as db:
+                row = db.execute("SELECT conv, payload FROM outbox WHERE id = ? AND kind = 'batch'", (rid,)).fetchone()
+                older = row is not None and db.execute("SELECT 1 FROM outbox WHERE conv = ? AND id < ? LIMIT 1",
+                                                       (row[0], rid)).fetchone() is not None
+            if row is None or older:
+                return False, None
+            result = call(json.loads(row[1]))
+            self._delete(rid)
+            return True, result
+        finally:
+            self._send_lock.release()
 
     def flush(self, deadline: Optional[float] = None, timeout=SEND_TIMEOUT) -> float:
         """Send every due row (batches before end markers). Returns seconds until the next row is due."""
@@ -166,19 +184,15 @@ class Outbox:
 
     def _send(self, row, timeout) -> None:
         rid, kind, conv, user, payload, attempts = row
-        if kind == "batch":
-            body = json.loads(payload)
-        else:
-            with self._db() as db:
-                last = db.execute("SELECT message FROM last_message WHERE conv = ?", (conv,)).fetchone()
-            if last is None:  # nothing was ever captured in this conversation
+        try:
+            if kind == "batch":
+                self.client.ingest(json.loads(payload), user=user, conversation=conv, timeout=timeout)
+            else:
+                self.client.end_conversation(conv, user=user, timeout=timeout)
+        except RecordareError as err:
+            if kind == "end" and err.status == 404:  # nothing was ever stored in this conversation: nothing to end
                 self._delete(rid)
                 return
-            body = {"conversation": json.loads(payload), "messages": [json.loads(last[0])],
-                    "hints": {"conversationEnded": True}}
-        try:
-            result = self.client.ingest(body, user=user, conversation=conv, timeout=timeout)
-        except RecordareError as err:
             if err.status < 500 and err.status not in _RETRYABLE_4XX:
                 logger.warning("Recordare ingest rejected (%s): dropping %s of %s", err, kind, conv)
                 self._delete(rid)
@@ -190,10 +204,7 @@ class Outbox:
             self._retry(rid, attempts, None)
             logger.info("Recordare ingest deferred (%s)", type(exc).__name__)
             return
-        with self._db() as db:
-            db.execute("DELETE FROM outbox WHERE id = ?", (rid,))
-            if (result or {}).get("stored", True):
-                db.execute("INSERT OR IGNORE INTO delivered (conv) VALUES (?)", (conv,))
+        self._delete(rid)
 
     def _retry(self, rid: int, attempts: int, retry_after: Optional[float]) -> None:
         delay = retry_after if retry_after is not None else min(MAX_BACKOFF_S, 5.0 * 2 ** attempts)

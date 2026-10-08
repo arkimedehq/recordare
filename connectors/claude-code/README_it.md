@@ -37,7 +37,7 @@ richiedono le opzioni del plugin.
 |---|---|
 | sessione | conversazione `claude-code:<id sessione>` (canale `claude-code`, titolo = cartella del progetto) |
 | la tua richiesta / la risposta di Claude | messaggi `user` / `assistant` (chiamate a strumenti e sotto-agenti non vengono inviati) |
-| fine sessione | `conversationEnded` → estrazione subito invece che dopo il ritardo di inattività |
+| fine sessione | `POST …/conversations/{id}/end` → estrazione subito invece che dopo il ritardo di inattività |
 
 Lo script degli hook (`scripts/recordare-hook.mjs`) è condiviso con il [connettore Codex](../codex/README_it.md); le
 due copie devono restare identiche byte per byte (`connectors/check-shared.sh`, eseguito in CI): modificane una e
