@@ -64,7 +64,7 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
   lo spettatore è il proprietario. Gli elementi mancanti e quelli vietati appaiono uguali. Ogni ricordo memorizza già
   il proprio pubblico e un'etichetta di divulgazione, quindi la divulgazione graduata (fase 3) non richiede migrazioni.
 - **Consenso per persona.** La chiave API di un client non può mai attivare la memoria di una persona. Il consenso
-  viene dall'amministratore (profilo home) o dal proprietario, e i client non inviano nulla prima del consenso.
+  viene dall'amministratore (profilo privato) o dal proprietario, e i client non inviano nulla prima del consenso.
 - **Dimenticare in modo definitivo.** Dimenticare un episodio lascia una lapide (tombstone). L'estrazione, la
   ri-estrazione e il consolidamento controllano le lapidi prima di scrivere, così il contenuto dimenticato non ritorna.
   I digest che avevano usato l'episodio vengono riscritti. (Dimenticare un intero periodo è progettato ma non ancora

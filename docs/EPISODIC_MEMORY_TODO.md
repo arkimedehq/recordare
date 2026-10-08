@@ -410,6 +410,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   Arkimede's, not Recordare's).
 
 ### D33 — Deployment profiles: v1 home / research, hardening deferred (2026-10-03)
+- Terminology: the "home" profile is about who runs the installation; it has nothing to do with a memory shared by a device or a household, which is the **entity memory** (D48).
 - The owner's guidance: stay on the twin; when more security is needed, put firewalls and
   hardening in front. v1 = **home / research profile**: admin-created owners, client keys, personal
   tokens, simple scopes, per-owner isolation.

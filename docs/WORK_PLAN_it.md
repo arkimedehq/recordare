@@ -87,7 +87,7 @@ di 1.4 **non è realizzata** (vedi 4.7); 1.6 scheletro SDK e OpenAPI generato **
 
 **Completata il 2026-10-03** (branch `m2-scaffold`): NestJS 12 + TypeScript 6 strict (build con tsc, SWC per sviluppo e
 test — la CLI di Nest 12 non gira su Node 20), validazione dell'env, health, migrazione iniziale del modello
-dati v1 (profilo home / ricerca), `LlmPort` indipendente dal provider con adattatori compatibili OpenAI e Anthropic
+dati v1 (profilo privato / di ricerca), `LlmPort` indipendente dal provider con adattatori compatibili OpenAI e Anthropic
 nativo e profili (verificati dal vivo su DeepSeek e Ollama con `npm run smoke:llm`),
 porte per embedding e clock, auth v1 (chiavi API dei client, token personali, API admin, risoluzione del proprietario),
 docker-compose, CI, Dockerfile. Spostati dove vengono usati per la prima volta: `QueuePort` (job idle BullMQ) →
@@ -100,7 +100,7 @@ Stato (2026-10-07): completata tranne 2.3 `VectorStorePort` (**TODO** — l'SQL 
 | 2.1 | Progetto NestJS, TS strict, lint, `tsc --noEmit`, test runner; CI a ogni push |
 | 2.2 | Postgres + migrazioni (TypeORM); pgvector con indice HNSW (**D25**) |
 | 2.3 | Porte e adattatori: `LlmPort` (adattatori compatibili OpenAI + Anthropic nativo, profili provider dalla configurazione — ragionamento disattivato, modalità di output strutturato, parametro dei token, caching, usage — validazione + retry; D27), `EmbeddingPort` (compatibile OpenAI, default `bge-m3`), `VectorStorePort` (adattatore pgvector; Qdrant sarebbe solo un altro adattatore), `ClockPort`, `QueuePort` (BullMQ) |
-| 2.4 | Auth (profilo v1 home / ricerca, D33): chiavi API dei client con hash, token personali, bootstrap dell'admin, tabelle person / identity |
+| 2.4 | Auth (profilo v1 privato / di ricerca, D33): chiavi API dei client con hash, token personali, bootstrap dell'admin, tabelle person / identity |
 | 2.5 | `docker-compose.yml` (servizio, Postgres, Redis), endpoint health, configurazione via env |
 | 2.6 | Impalcatura i18n per prompt e messaggi (IT/EN) |
 
@@ -269,7 +269,7 @@ di rete davanti (firewall / WAF / rate limit).
 - Pubblicare su `arkimedehq/recordare` — **solo dopo l'OK del proprietario**.
 
 
-**Prima versione pubblica — v0.1, profilo casa / ricerca** (richiesta del proprietario 2026-10-08: pubblicare quando una
+**Prima versione pubblica — v0.1, profilo privato / di ricerca** (richiesta del proprietario 2026-10-08: pubblicare quando una
 versione funzionante gira su alcuni client; l'OK finale è del proprietario). Criteri, tutti richiesti:
 1. **Client**: Arkimede al livello completo (ingest, richiamo MCP, Diario) — fatto; almeno un client MCP standard al
    livello base (Claude Code o Claude Desktop con un token personale: richiamo, `remember`, `log_episode`) — 6.1, una
@@ -278,7 +278,7 @@ versione funzionante gira su alcuni client; l'OK finale è del proprietario). Cr
    standalone (con text-embeddings-inference) ancora da provare.
 3. **Qualità**: un nuovo set cieco (4.8) misurato con il motore rilasciato (3 run, numeri in RESULTS.md); CI verde.
 4. **Igiene**: nessun segreto nella storia dei repository; intestazioni AGPL; `THIRD_PARTY_NOTICES.md` e licenze delle
-   dipendenze verificate; test di isolamento per persona; i limiti del profilo casa dichiarati chiaramente (operatore
+   dipendenze verificate; test di isolamento per persona; i limiti del profilo privato dichiarati chiaramente (operatore
    fidato, non per sconosciuti — D33).
 5. **Documentazione**: README e ogni documento del progetto in inglese e italiano (fatto), INTEGRATION, DEPLOYMENT, KNOBS,
    un CHANGELOG; tag di versione `v0.1.0`.
@@ -293,7 +293,7 @@ Non richiesti per la v0.1: il profilo pubblico (login dell'owner, OAuth), i conn
 | D23 | Motore: costruire D / adottare Memobase / ibrido | **Costruire D — approvato il 2026-10-02** | Fatto |
 | D35 | Costo | Un'opzione: profili di qualità economy / balanced / full, per installazione + override del proprietario | Fatto (2026-10-03) |
 | D34 | Note: Recordare completo, A-MEM invariato | Recordare ha note semantiche; copie unidirezionali verso A-MEM a scelta dell'utente; interruttore di Arkimede diviso in M6 | Fatto (2026-10-03) |
-| D33 | Profili di deployment | v1 home / ricerca; hardening del profilo pubblico rinviato a M7 | Fatto (2026-10-03) |
+| D33 | Profili di deployment | v1 privato / di ricerca; hardening del profilo pubblico rinviato a M7 | Fatto (2026-10-03) |
 | D31 | Fatti in Recordare | Slot di stato con catena di valori; le note restano in A-MEM fino alla migrazione | Fatto (2026-10-03) |
 | D32 | Chiamate di estrazione per finestra | Una chiamata (modifica D2) | Fatto (2026-10-03) |
 | D29 | Aggiunte al modello dati / al richiamo dalla letteratura | Approvato (`EPISODIC_MEMORY_TODO.md`) | Fatto (2026-10-02) |

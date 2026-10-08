@@ -2,7 +2,7 @@
 
 *Traduzione italiana di [README.md](README.md) — la versione inglese è quella di riferimento.*
 
-Servizio NestJS che implementa `docs/API.md` e `docs/DATA_MODEL.md` (profilo v1 home / ricerca, D33). Stato
+Servizio NestJS che implementa `docs/API.md` e `docs/DATA_MODEL.md` (profilo v1 privato / di ricerca, D33). Stato
 (2026-10-07): ingest, motore, consolidamento, strumenti MCP, API di amministrazione e telemetria realizzati; l'API di
 lettura (`API.md` §4) e la libreria client non sono ancora realizzate (`docs/WORK_PLAN.md`). Guida per i client:
 `docs/INTEGRATION.md`; deployment: `docs/DEPLOYMENT.md`.

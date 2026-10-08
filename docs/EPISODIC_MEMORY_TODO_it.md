@@ -411,9 +411,10 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   quando i fatti vivevano solo in A-MEM; l'estrazione propria di A-MEM in Arkimede resta intatta (la sua chiamata
   è di Arkimede, non di Recordare).
 
-### D33 — Profili di deployment: v1 home / ricerca, hardening rinviato (2026-10-03)
+### D33 — Profili di deployment: v1 privato / di ricerca, hardening rinviato (2026-10-03)
+- Terminologia: "profilo privato" (in inglese `home`) indica chi gestisce l'installazione; non ha nulla a che fare con la memoria condivisa di un dispositivo o di una casa, che è la **memoria di entità** (D48).
 - Indicazione del proprietario: restare sul twin; quando serve più sicurezza, mettere firewall e
-  hardening davanti. v1 = **profilo home / ricerca**: proprietari creati dall'admin, chiavi client, token
+  hardening davanti. v1 = **profilo privato / di ricerca**: proprietari creati dall'admin, chiavi client, token
   personali, scope semplici, isolamento per proprietario.
 - Mantenuti nella v1 perché fanno parte del twin, non sono aggiunte di sicurezza: contesto del visualizzatore risolto da
   Recordare (sapere cosa dire a chi — pilastro della disclosure), provenienza `author_role` (principio 3,
@@ -466,7 +467,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 
 ### D36 — Consenso in due passi (2026-10-07)
 - L'interruttore per utente di un client governa il lato del client; il consenso episodico vero e proprio è dato dall'admin di Recordare
-  (profilo home) o dal proprietario (profilo pubblico). `GET api/v1/me` restituisce `episodicEnabled`; i client non mettono in buffer
+  (profilo privato) o dal proprietario (profilo pubblico). `GET api/v1/me` restituisce `episodicEnabled`; i client non mettono in buffer
   i messaggi prima del consenso (mostrano "in attesa di attivazione").
 
 ### D37 — Le patch dei piani richiedono evidenza su quel piano (2026-10-06)

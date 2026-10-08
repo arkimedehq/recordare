@@ -2,7 +2,7 @@
 
 *Traduzione italiana di [DEPLOYMENT.md](DEPLOYMENT.md) — la versione inglese è quella di riferimento.*
 
-Come è organizzata l'infrastruttura di Recordare. (Da non confondere con i profili di **fiducia** home / public di
+Come è organizzata l'infrastruttura di Recordare. (Da non confondere con i profili di **fiducia** privato / pubblico (`home` / `public`) di
 `API.md` §0, D33.) Il codice di Recordare non dipende mai da un altro prodotto: condividere l'infrastruttura è solo
 configurazione.
 

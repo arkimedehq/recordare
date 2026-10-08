@@ -18,7 +18,7 @@ memorizzazione dell'outbox e la trasformazione delle sue chat.
 2. Creare la sua chiave: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read", "write"]}` (`write` per le modifiche della persona in un diario) — mostrata una sola
    volta; conservarla come segreto della piattaforma.
 3. **Il consenso resta all'amministratore / al proprietario** (D4): la chiave di un client non può mai attivare la
-   memoria episodica di una persona. Profilo home: l'amministratore la attiva per persona
+   memoria episodica di una persona. Profilo privato: l'amministratore la attiva per persona
    (`PATCH api/v1/admin/owners/{ownerId} {episodicEnabled: true}`). Profilo public: l'interruttore dell'host apre la
    pagina del proprietario di Recordare.
 
