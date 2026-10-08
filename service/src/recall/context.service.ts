@@ -6,14 +6,12 @@
  * relevant to it, as one fenced block the host appends to its prompt — so the agent has them even when it would not
  * think of calling a recall tool. No LLM call. Minimal by design (the risk is distraction): no fixed profile card,
  * only items above a relevance threshold, a small character budget, empty when nothing is relevant; reads follow the
- * viewer rule (owner-only conversations); off unless the owner's quality profile turns it on.
+ * viewer rule (owner-only conversations). Always available, like the recall tools: whether to use it — for which
+ * agent — is the client's choice (Arkimede: per agent, off by default).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { type Env } from '../config/env';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
-import { qualityProfile } from '../engine/quality-profile';
 import { describe as when, localDate, type Precision } from '../engine/time';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { logRecall } from './recall-log';
@@ -35,7 +33,7 @@ const MAX_EPISODES = 3;
 const MAX_CHARS = 1_200;
 
 export interface MemoryContext {
-  /** The fenced block to append to the prompt, or null when nothing is relevant (or the feature is off). */
+  /** The fenced block to append to the prompt, or null when nothing is relevant. */
   block: string | null;
   items: number;
 }
@@ -50,16 +48,12 @@ export class ContextService {
     private readonly db: DataSource,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly telemetry: TelemetryService,
-    private readonly config: ConfigService<Env, true>,
   ) {}
 
   async build(ownerId: string, query: string, conversationId: string | undefined, now: Date): Promise<MemoryContext> {
     const [owner] = await this.db.query(
-      `SELECT o.timezone, o.locale, o.quality_profile, p.kind FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    if (!owner) return EMPTY;
-    const override = this.config.get('MEMORY_CONTEXT', { infer: true });
-    const on = override ?? qualityProfile(owner.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true })).memoryContext;
-    if (!on || !query.trim()) return EMPTY;
+      `SELECT o.timezone, o.locale, p.kind FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+    if (!owner || !query.trim()) return EMPTY;
     return this.telemetry.track('recall', ownerId, () => this.collect(ownerId, owner, query, conversationId, now));
   }
 
