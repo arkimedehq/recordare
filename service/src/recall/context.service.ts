@@ -10,10 +10,14 @@
  * agent — is the client's choice (Arkimede: per agent, off by default).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+import { type Env } from '../config/env';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
-import { describe as when, localDate, type Precision } from '../engine/time';
+import { addDays, describe as when, localDate, type Precision, weekdayIndex } from '../engine/time';
+import { containsPhrase, normalize, WEEKDAY_NAMES } from '../lang';
 import { TelemetryService } from '../telemetry/telemetry.service';
+import { resolvePeriod } from './period';
 import { logRecall } from './recall-log';
 
 /**
@@ -29,6 +33,10 @@ const MAX_FACTS = 4;
 const MAX_NOTES = 3;
 const MAX_PLANS = 2;
 const MAX_EPISODES = 3;
+/** Episodes of the period a message names ("what did I do last Saturday?") enter with this lower bar. */
+const MIN_PERIOD_SIMILARITY = 0.35;
+/** At most this many sentences of a message are matched on their own (besides the whole message). */
+const MAX_SENTENCES = 3;
 /** Character budget of the block's lines (≈ 300 tokens). */
 const MAX_CHARS = 1_200;
 
@@ -48,7 +56,15 @@ export class ContextService {
     private readonly db: DataSource,
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly telemetry: TelemetryService,
-  ) {}
+    config: ConfigService<Env, true>,
+  ) {
+    const knob = (k: 'CONTEXT_MIN_FACT_SIMILARITY' | 'CONTEXT_MIN_EPISODE_SIMILARITY' | 'CONTEXT_MIN_PLAN_SIMILARITY' | 'CONTEXT_MIN_PERIOD_SIMILARITY', d: number) =>
+      config.get(k, { infer: true }) ?? d;
+    this.floors = { fact: knob('CONTEXT_MIN_FACT_SIMILARITY', MIN_FACT_SIMILARITY), episode: knob('CONTEXT_MIN_EPISODE_SIMILARITY', MIN_EPISODE_SIMILARITY),
+      plan: knob('CONTEXT_MIN_PLAN_SIMILARITY', MIN_PLAN_SIMILARITY), period: knob('CONTEXT_MIN_PERIOD_SIMILARITY', MIN_PERIOD_SIMILARITY) };
+  }
+
+  private readonly floors: { fact: number; episode: number; plan: number; period: number };
 
   async build(ownerId: string, query: string, conversationId: string | undefined, now: Date): Promise<MemoryContext> {
     const [owner] = await this.db.query(
@@ -59,38 +75,54 @@ export class ContextService {
 
   private async collect(ownerId: string, owner: { timezone: string; locale: string; kind: string }, query: string,
     conversationId: string | undefined, now: Date): Promise<MemoryContext> {
-    let vec: number[] | undefined;
+    // The whole message and its sentences, each embedded: an item matches by its best one, so an instruction tacked on
+    // a question ("…? Answer in one line.") does not dilute it.
+    const texts = [query, ...sentences(query)].slice(0, 1 + MAX_SENTENCES);
+    let vecs: number[][];
     try {
-      [vec] = await this.embeddings.embed([query], 'query');
+      vecs = await this.embeddings.embed(texts, 'query');
     } catch (err) {
       this.log.warn(`memory context skipped: ${(err as Error).message}`);
       return EMPTY;
     }
-    const v = `[${(vec ?? []).join(',')}]`;
+    const vectors = vecs.map((x) => `[${x.join(',')}]`);
+    // $2 … $(1 + n): the vectors; similarity of a column = the best over them.
+    const sim = (col: string) => `GREATEST(${vectors.map((_, i) => `1 - (${col} <=> $${i + 2}::vector)`).join(', ')})`;
+    const at = (k: number) => `$${vectors.length + 2 + k}`; // parameters after the vectors
     const tz = owner.timezone;
     const day = (d: Date | null) => (d ? localDate(d, tz) : null);
 
     const facts: Array<{ key: string; value: string | null; valid_from: Date | null; about: string | null }> = await this.db.query(
       `SELECT f.key, f.value, f.valid_from, s.display_name AS about FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
        WHERE f.owner_id = $1 AND f.status = 'current' AND NOT f.pending AND f.deleted_at IS NULL AND f.embedding IS NOT NULL
-         AND 1 - (f.embedding <=> $2::vector) >= $3
-       ORDER BY f.embedding <=> $2::vector LIMIT $4`, [ownerId, v, MIN_FACT_SIMILARITY, MAX_FACTS]);
+         AND ${sim('f.embedding')} >= ${at(0)}
+       ORDER BY ${sim('f.embedding')} DESC LIMIT ${at(1)}`, [ownerId, ...vectors, this.floors.fact, MAX_FACTS]);
     const notes: Array<{ content: string }> = await this.db.query(
       `SELECT content FROM notes
        WHERE owner_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND embedding IS NOT NULL
-         AND 1 - (embedding <=> $2::vector) >= $3
-       ORDER BY embedding <=> $2::vector LIMIT $4`, [ownerId, v, MIN_FACT_SIMILARITY, MAX_NOTES]);
+         AND ${sim('embedding')} >= ${at(0)}
+       ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [ownerId, ...vectors, this.floors.fact, MAX_NOTES]);
     const visible = `owner_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL AND embedding IS NOT NULL`;
     const plans: Array<{ content: string; occurred_at: Date | null; date_precision: Precision }> = await this.db.query(
       `SELECT content, occurred_at, date_precision FROM episodes
        WHERE ${visible} AND kind = 'plan' AND plan_status = 'open'
-         AND occurred_at >= $4::timestamptz - interval '1 day' AND occurred_at < $4::timestamptz + make_interval(days => $5)
-         AND 1 - (embedding <=> $2::vector) >= $3
-       ORDER BY embedding <=> $2::vector LIMIT $6`, [ownerId, v, MIN_PLAN_SIMILARITY, now, PLAN_HORIZON_DAYS, MAX_PLANS]);
+         AND occurred_at >= ${at(1)}::timestamptz - interval '1 day' AND occurred_at < ${at(1)}::timestamptz + make_interval(days => ${at(2)})
+         AND ${sim('embedding')} >= ${at(0)}
+       ORDER BY ${sim('embedding')} DESC LIMIT ${at(3)}`, [ownerId, ...vectors, this.floors.plan, now, PLAN_HORIZON_DAYS, MAX_PLANS]);
     const episodes: Array<{ content: string; occurred_at: Date | null; date_precision: Precision }> = await this.db.query(
       `SELECT content, occurred_at, date_precision FROM episodes
-       WHERE ${visible} AND kind <> 'plan' AND 1 - (embedding <=> $2::vector) >= $3
-       ORDER BY embedding <=> $2::vector LIMIT $4`, [ownerId, v, MIN_EPISODE_SIMILARITY, MAX_EPISODES]);
+       WHERE ${visible} AND kind <> 'plan' AND ${sim('embedding')} >= ${at(0)}
+       ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [ownerId, ...vectors, this.floors.episode, MAX_EPISODES]);
+    // A message naming a period ("last week", "sabato scorso", "昨天"): what happened then, by relevance, with a lower bar.
+    const period = namedPeriod(query, localDate(now, tz));
+    if (period) {
+      const inPeriod: typeof episodes = await this.db.query(
+        `SELECT content, occurred_at, date_precision FROM episodes
+         WHERE ${visible} AND kind <> 'plan' AND ${sim('embedding')} >= ${at(0)}
+           AND occurred_at >= (${at(1)}::date::timestamp AT TIME ZONE ${at(3)}) AND occurred_at < ((${at(2)}::date + 1)::timestamp AT TIME ZONE ${at(3)})
+         ORDER BY ${sim('embedding')} DESC LIMIT ${at(4)}`, [ownerId, ...vectors, this.floors.period, period.from, period.to, tz, MAX_EPISODES]);
+      for (const e of inPeriod) if (!episodes.some((x) => x.content === e.content)) episodes.push(e);
+    }
 
     const lines: string[] = [];
     for (const f of facts) {
@@ -121,4 +153,22 @@ export class ContextService {
     ].join('\n');
     return { block, items: kept.length };
   }
+}
+
+/** The sentences of a message, when it has more than one (".", "?", "!", and their CJK forms end a sentence). */
+export function sentences(text: string): string[] {
+  const parts = text.split(/(?<=[.?!。？！])\s*/u).map((p) => p.trim()).filter((p) => /\p{L}{2}/u.test(p));
+  return parts.length > 1 ? parts : [];
+}
+
+/** The period a message names: a period expression (period.ts), or a weekday — its most recent past occurrence. */
+export function namedPeriod(text: string, today: string): { from: string; to: string } | null {
+  const p = resolvePeriod(text, today);
+  if (p) return p;
+  const t = normalize(text);
+  const hit = WEEKDAY_NAMES.find(([name]) => containsPhrase(t, name));
+  if (!hit) return null;
+  const back = ((weekdayIndex(today) - hit[1] + 7) % 7) || 7;
+  const d = addDays(today, -back);
+  return { from: d, to: d };
 }

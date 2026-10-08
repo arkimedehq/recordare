@@ -9,7 +9,7 @@
  */
 export { containsPhrase, LOCALES, normalize } from './locales';
 export { nameOwner } from './owner';
-export { MONTH_NAMES, periodPhrases } from './periods';
+export { MONTH_NAMES, periodPhrases, WEEKDAY_NAMES } from './periods';
 export { PERIOD_KEYS, type PeriodKey, type RelationKey } from './types';
 import { RELATIONS } from './relations';
 import { normalize } from './locales';

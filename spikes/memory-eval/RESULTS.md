@@ -401,6 +401,31 @@ more than 3 people ignored — recall adds up to 3 of that person's own chat mes
 
 Kept.
 
+### WORK_PLAN 5.7 — memory context: sentences and named periods (2026-10-08, blind7, agent mode, DeepSeek direct)
+
+Probes on a live memory (bge-m3, `probe_ctx` in the scratchpad): questions in other languages land 0.45–0.59 on the
+right Italian memories (cross-language is fine), unrelated ones ≤ 0.34; the misses came from the floors (episodes
+0.55: the right episode sat at 0.50–0.54) and from period questions ("cosa ho fatto sabato scorso?" → 0.33). Changes:
+each sentence of the message is matched on its own (an item matches by its best one, so "…? Rispondi in una frase."
+no longer dilutes the question), and a period the message names (period expressions and weekdays, all languages via
+`src/lang`) adds that period's episodes with a lower bar (0.35).
+
+Exploration, 1 run (`ctx57_runs.sh`): tools only 89.1 %; new code with the current floors (A) 92.4 %, with lower
+floors 0.45 / 0.48 / 0.42 (B) 91.3 % — dev context set A 100 %, B 96.7 %, no harm on either (gen 1.0). Lower floors
+rejected.
+
+Decision, 3 runs each (`ctx57_decide.sh`, `agent_eval.py --variants tools+context`, two instances, rule 9):
+
+| Memory context | Runs | Mean | Context served |
+|---|---|---|---|
+| old (main) | 89.1 / 91.3 / 95.7 | 92.0 % | 37 / 37 / 40 of 46 |
+| new (sentences + named periods) | 95.7 / 91.3 / 90.2 | 92.4 % | 38 / 39 / 40 of 46 |
+
+Parity on blind7 (within noise; the agent calls the tools in ≈ 96 % of the questions, so the block rarely decides the
+answer there); the new code is kept because it fixes the misses seen in the probes and in the connectors (instruction
+suffixes, period questions, all languages) at no cost. Floors stay as they were; they are now knobs
+(`CONTEXT_MIN_*_SIMILARITY`).
+
 ### WORK_PLAN 4.8 — fresh blind sets, released engine (2026-10-08, DeepSeek direct, 3 runs each)
 
 Two new sets written blind by separate agents (no access to the service code, RESULTS or other datasets' gold), each

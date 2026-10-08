@@ -1,6 +1,6 @@
 # Work plan
 
-Status: **2026-10-08** — phase 1 implemented through M5 (some rows partial; 5.7 in progress), M4b done except the
+Status: **2026-10-08** — phase 1 implemented through M5 (some rows partial), M4b done except the
 provider matrix, M5b mostly done, M6 mostly done (Arkimede integrated with the Diary, connectors 6.6 done), M7: the
 **v0.1.0 release criteria are met and v0.1.0 is public** (2026-10-08; public profile still deferred, D33). Each
 milestone below has a status line; rows say **done / partial / TODO**.
@@ -197,7 +197,7 @@ fresh blind7 / blind8 of 4.8 (91.3 % person memory, 82.1 % entity memory).
 ### M5 — Layer 2: consolidation
 
 Status (2026-10-07): 5.1, 5.2 done; 5.3, 5.5 partial; 5.4 TODO; 5.6 built and off; 5.7 one idea done (extract.v8).
-Status (2026-10-08): 5.1, 5.2 done; 5.3, 5.5 partial; 5.4 TODO; 5.6 built and off; 5.7 partial and **in progress**
+Status (2026-10-08): 5.1, 5.2 done; 5.3, 5.5 partial; 5.4 TODO; 5.6 built and off; 5.7 partial (memory-context work done 2026-10-08)
 (extract.v8 and the pre-turn memory context built; now its misses from 6.6b (8)); 5.8 TODO (idea).
 
 | # | Task |
@@ -208,7 +208,7 @@ Status (2026-10-08): 5.1, 5.2 done; 5.3, 5.5 partial; 5.4 TODO; 5.6 built and of
 | 5.4 | Pattern promotions with `episode_promotions` (D20) — destination depends on **D26** — **TODO** (table created, unused) |
 | 5.5 | User-driven deletion: episode, period; digests recomputed; vectors removed (D16) — **partial**: forget one episode done; TODO: forget a period, re-verdict facts whose evidence was forgotten, delete episodes left without evidence when a message is deleted |
 | 5.6 | **Nightly facts review** (2026-10-07) — **built, off**: built (`facts_review.v1`, task `facts`, admin `POST owners/:id/review-facts`), measured on blind5 — no gain on current facts (0.769 ×3), history +1 fact in 1/3, rewording churn → knob `factsReview` off. Facts work moves to the extraction prompt |
-| 5.7 | **Ideas from other platforms' memory** (`docs/literature/agent-platform-memory.md`, 2026-10-07) — **partial**: the extraction-prompt idea is done as extract.v8 (D40), the others TODO; each to be measured: fenced injected memory (`<memory-context>`) so the echo guard keeps working with connectors; a no-LLM pre-turn recall block for connectors (owner card, current facts, upcoming plans + ≤ 3 matches); extraction prompt for personal facts said in passing and transitions ("switched / stopped" → replace; accepting a proposal states it, a bare "ok" does not); web-tool taint (assistant text after a web result never becomes an owner fact); a nightly pattern pass proposing pending inferred notes backed by ≥ 2 episodes Pre-turn memory context **built** (`POST api/v1/context`, always available; the client decides per agent — Arkimede: agent option, off by default): dev set in agent mode, 1 run each — neutral prompt 93.3 → 100 %, voice agent's prompt 90 → 93.3 % with tool calls 9 → 5 of 15, no harm on unrelated questions (RESULTS.md); next: a blind set. **In progress (2026-10-08, branch `context-5.7`, not merged)**: the memory-context misses found by the connectors (6.6b (8)) — each sentence of the message matched on its own so an instruction suffix does not dilute the question, and a period named in the message ("last Saturday") brings that period's episodes; to be measured. The other ideas (web-tool taint, nightly pattern pass) TODO. |
+| 5.7 | **Ideas from other platforms' memory** (`docs/literature/agent-platform-memory.md`, 2026-10-07) — **partial**: the extraction-prompt idea is done as extract.v8 (D40), the others TODO; each to be measured: fenced injected memory (`<memory-context>`) so the echo guard keeps working with connectors; a no-LLM pre-turn recall block for connectors (owner card, current facts, upcoming plans + ≤ 3 matches); extraction prompt for personal facts said in passing and transitions ("switched / stopped" → replace; accepting a proposal states it, a bare "ok" does not); web-tool taint (assistant text after a web result never becomes an owner fact); a nightly pattern pass proposing pending inferred notes backed by ≥ 2 episodes Pre-turn memory context **built** (`POST api/v1/context`, always available; the client decides per agent — Arkimede: agent option, off by default): dev set in agent mode, 1 run each — neutral prompt 93.3 → 100 %, voice agent's prompt 90 → 93.3 % with tool calls 9 → 5 of 15, no harm on unrelated questions (RESULTS.md); next: a blind set. **Done (2026-10-08)**: the memory-context misses found by the connectors (6.6b (8)) — each sentence of the message matched on its own so an instruction suffix does not dilute the question, and a period named in the message ("last Saturday") brings that period's episodes (all languages); measured on blind7, 3 runs: 92.4 % vs 92.0 % (parity), fixes the misses seen in probes and connectors — kept, floors unchanged and now knobs (RESULTS 5.7). The other ideas (web-tool taint, nightly pattern pass) TODO. |
 | 5.8 | **TODO — idea to evaluate when accessible** (owner's request 2026-10-08): a **decision model** (e.g. Jev by TypeSafe AI, Sept 2026: typed probabilistic decisions in 70–500 ms, no text; or, open and local, a small LLM forced to a closed JSON answer by constrained decoding — e.g. Spark-X2.5-4B by iFLYTEK, Sept 2026, 4 B parameters, Ollama / llama.cpp / vLLM; licence to check — measured per decision, not against the 95 % extraction bar, which small models missed at 60–83 %) Open, local, AGPL-compatible options (2026-10): **SemIf** (MIT; reads the probability of each allowed answer from an open 4 B model in one forward pass, decisions defined per request — no training; ~5× faster than generating JSON, 0.81 balanced accuracy reported), **Kev** (Apache-2.0; LoRA adapters on Qwen3.5 0.8 / 4 / 9 B serving Jev's own API — one contract for hosted Jev and local Kev, chosen by provider configuration), **jevlike** (MIT; a classifier trained on our own labels over a frozen encoder — fits the skip-window gate, our eval sets give the labels). as a fast, cheap judge for the engine's internal decisions — never for writing episodes, notes or digests. Candidates: skip windows with nothing to remember (fewer extraction calls), near-duplicate resolution (`resolve`), plan patches (happened / cancelled / only details, next to the D37 and 4.11 guards), memory-context relevance instead of a fixed similarity floor, who is speaking in an entity memory. Conditions: an optional provider task (D27: Recordare works without it), availability / price / local use checked, measured on the dev and blind sets (first: the skip-window gate, cost and accuracy vs the LLM) |
 
 **Watch** (weak spots seen in the blind sets, not yet worked on): third-party news in group chats (extract.v8),
@@ -252,11 +252,10 @@ Status (2026-10-07): 6.1 TODO; **6.2 done** in Arkimede (outbox, identity + nami
 Recordare → A-MEM TODO. Next in order (owner's decision 2026-10-07: connectors last): the 5.7 ideas,
 4.7 read API (then the Diary tab, 6.3), 4.8 fresh blind dataset (and a blind entity-memory set), 4.10, then 6.6
 connectors.
-Status (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b mostly done ((5), (6), (10) TODO, (8) in progress with
-5.7); 6.4 partial (unit tests; no recorded regression run); 6.5 TODO; D34's A-MEM
+Status (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b mostly done ((5), (6), (10) TODO, (8) done with 5.7); 6.4 partial (unit tests; no recorded regression run); 6.5 TODO; D34's A-MEM
 toggle split and the notes copy Recordare → A-MEM TODO; Arkimede still uses the synced copy of the client library, not
 the npm package. Of the order above, 4.7 (diary
-part), 6.3, 4.8 and 6.6 are done; next: 5.7 (in progress), 4.10, 4.12, the rest of 6.6b.
+part), 6.3, 4.8 and 6.6 are done; next: 4.12, 4.10, 4.13, 4.14, the rest of 6.6b.
 
 | # | Task | Where |
 |---|---|---|
