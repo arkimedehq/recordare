@@ -550,7 +550,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "someone" and their personal facts are not recorded. Every conversation starts with nobody identified.
 - Code guard: a fact about a person, or an episode naming one, is recorded only if that name occurs in the window
   (no identity carried over from earlier chats — measured: the model did that without it).
-- Prompt: `extract.v8` + `ENTITY_RULES` (`entity.v3`), appended only for entity owners (person memories unchanged).
+- Prompt: `extract.v8` (now `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), appended only for entity owners (person memories unchanged).
   Measured on `dataset_dev_entity` (RESULTS.md).
 - TODO (later): stronger identification so the most intimate memories in an entity memory are readable only by the
   person they belong to — then the entity can be a home robot everyone confides in (vision direction G). A client's
@@ -561,6 +561,70 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Status (2026-10-08): on a fresh blind entity set (`dataset_blind8`, WORK_PLAN 4.8) 82.1 % over 3 runs (dev set 95.5 %);
   the entity memory stays **experimental** — speakers who never identify and attribution between people are the weak
   spots.
+
+### D49 — Semantic memory: learned sources (proposal, 2026-10-08)
+- Owner's request: many clients have no RAG of their own (a robot with its own agent, a small assistant), so Recordare
+  should be a **complete** memory — what the person lived **and what they learned**. Recordare stays a personal memory:
+  documents are not mixed into episodes, facts or notes.
+- **Semantic memory = learned sources.** A source (a text, a document, a page, a book's notes, the person's own writing)
+  is stored in Recordare with its passages (chunks + embeddings, no LLM needed to store it), its origin (title, author,
+  where it came from: a file the client sent, a URL, the person's own text), who provided it and when.
+- **Episodic memory = the reference.** Learning is an event: "Andrea studied the boiler manual on 8 October" — an
+  episode linked to the source. The link goes both ways: from the episode to the source (what did I read that day?),
+  from the source to its episodes (when did I learn this, in which conversation, what did I decide from it?).
+- **Recall:** a tool (e.g. `search_knowledge`) returns passages with their source and the episodes that reference it;
+  the memory context may add a passage when it is clearly relevant, within its budget.
+- **What it is not:** not an organisation's knowledge base (team / org documents stay in the platform's RAG, e.g.
+  Arkimede); not tool output. A client's document-search results are not ingested as chat: at most a "consulted
+  source X" reference, so the platform's RAG and Recordare do not duplicate each other.
+- Same rules as the rest: consent, the person's own memory (or an entity memory, D48, e.g. the robot's), disclosure,
+  forgetting a source removes its passages (episodes keep a "forgotten source" marker), counts-only diagnostics.
+- Prior art (not novel): Supermemory separates documents (sources of truth) from extracted memories; Letta / MemGPT
+  keep an "archival memory" reached through tools (`docs/literature/agent-platform-memory.md`).
+- Open: how sources arrive (REST upload of text the client extracted; an MCP tool `learn_source`; formats beyond text);
+  size limits and cost per quality profile (D35); third-party texts are kept for the person's own use only (never
+  disclosed to others, D33 limits); whether takeaways in the person's words are extracted by an LLM (a later option).
+  WORK_PLAN 5.9.
+
+### D50 — Agent memory: every memory belongs to the agent (owner's decision, 2026-10-09)
+Supersedes "one memory per person" (D24 identity, D48's person / entity split as two kinds of owner), the consent
+switch (D4), the viewer rule as a filter on answers (§1 of API.md), and turns the digital twin (VISION) into an
+emergent case. Research: `docs/literature/human-memory-and-agent-architectures.md`; inventory and plan:
+`docs/AGENT_MEMORY_AUDIT.md`.
+- **A memory belongs to an agent**: one client account ("Caino" — e.g. an Arkimede account) = one memory; another
+  account ("Abele") = another memory, isolated as if it were another installation. Humans are not owners any more:
+  they are **contacts the agent knows**, scoped to that memory. Goal: anyone can give a machine a brain (later a
+  robot with cameras, microphones and other sensors builds its own memories).
+- **Everything that comes in enriches the agent's memory**: chats, voice, documents, photos, audio, video, sensors;
+  D49's learned sources are part of it. The agent tells kinds of memory apart (episodic, semantic, prospective…, see
+  the literature card) and **always records who said what and whose it is** — the source at write time, with how it
+  was established (declared, voiceprint, face, inferred) and how sure.
+- **Two modes per memory:**
+  - **personal** — anything arriving without a declared identity is the agent's own, written in the **first
+    person**; the account holder's name is the name of "I" (what concerns them is first person); the assistant's
+    actions are first person too, with no distinction (the personal memory *is* the digital twin). Identified
+    other people are attributed by name.
+  - **entity** — anything undeclared belongs to **"someone"** (third person); identified people by name; content
+    explicitly marked as the agent's **own** (knowledge given to it, what a robot perceives or does on its own) is the
+    agent's, first person. Ingest gets an "own" marker (message, text, document).
+- **Recall**: an identified speaker asking about themselves ("what did I do yesterday?") gets **their** memories; an
+  undeclared one gets the agent's own. Results carry the subject of each item.
+- **No consent**: neither of the speakers nor of the account; the client has the switch, Recordare is always on.
+  Whoever deploys the agent is responsible for telling the people around it (GDPR) — stated in the docs.
+- **No viewer filter for now**: answers always use the whole memory, in every conversation; who-may-be-told-what
+  (privacy, disclosure tiers) is a later decision. `audience` / `disclosure` stay recorded for it.
+- **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38), in the owner's words:
+  when the agent answers from a memory it already has ("where was I yesterday?" → "at the sea"), the answer does not
+  go back in, right or wrong; when it says something new ("what's the weather in Ispica?" → the forecast), that is
+  something the agent learned and may become its memory, selected by importance like any other input; append-only
+  history, idle + nightly consolidation, forgetting by choice.
+- **First person in a gendered language**: a per-memory setting (masculine / feminine / neutral), defaulting from the
+  account's profile.
+- **Later, from the literature**: reflection (the agent's own thoughts, always inferred), a self-model, procedural
+  memory, the agent's own promises and intents, a perceptual layer for photos / audio / video / sensors; perceived and
+  generated "own" memories kept apart (reality monitoring).
+- Plan: WORK_PLAN M8 (steps 0–11 of the audit), each prompt step measured on dev sets + 3 blind runs; existing
+  memories on Kinox migrated after the voice is final (backup first).
 
 ## Open questions (to discuss)
 

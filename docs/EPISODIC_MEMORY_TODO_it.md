@@ -555,7 +555,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "qualcuno" e i suoi fatti personali non vengono registrati. Ogni conversazione inizia senza nessuno identificato.
 - Guardia nel codice: un fatto su una persona, o un episodio che ne nomina una, è registrato solo se quel nome compare nella finestra
   (nessuna identità riportata da chat precedenti — misurato: senza questa il modello lo faceva).
-- Prompt: `extract.v8` + `ENTITY_RULES` (`entity.v3`), aggiunto solo per i proprietari entità (memorie di persona invariate).
+- Prompt: `extract.v8` (ora `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), aggiunto solo per i proprietari entità (memorie di persona invariate).
   Misurato su `dataset_dev_entity` (RESULTS.md).
 - TODO (più avanti): identificazione più forte così che i ricordi più intimi in una memoria di entità siano leggibili solo dalla
   persona a cui appartengono — allora l'entità potrà essere un robot domestico a cui tutti si confidano (direzione G della visione). La
@@ -566,6 +566,75 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Stato (2026-10-08): su un nuovo set cieco per la memoria di entità (`dataset_blind8`, WORK_PLAN 4.8) 82,1 % su 3 run (dev
   set 95,5 %); la memoria di entità resta **sperimentale** — chi parla senza mai presentarsi e l'attribuzione tra persone
   sono i punti deboli.
+
+### D49 — Memoria semantica: fonti imparate (proposta, 2026-10-08)
+- Richiesta del proprietario: molti client non hanno un RAG proprio (un robot con il suo agente, un piccolo
+  assistente), quindi Recordare dovrebbe essere una memoria **completa** — ciò che la persona ha vissuto **e ciò che ha
+  imparato**. Recordare resta una memoria personale: i documenti non si mescolano con episodi, fatti o note.
+- **Memoria semantica = fonti imparate.** Una fonte (un testo, un documento, una pagina, gli appunti di un libro, i
+  testi scritti dalla persona) viene salvata in Recordare con i suoi passaggi (frammenti + embedding, nessun LLM
+  necessario per salvarla), la sua origine (titolo, autore, provenienza: un file inviato dal client, un URL, un testo
+  della persona), chi l'ha fornita e quando.
+- **Memoria episodica = il riferimento.** Imparare è un evento: "Andrea ha studiato il manuale della caldaia l'8
+  ottobre" — un episodio collegato alla fonte. Il collegamento va nei due sensi: dall'episodio alla fonte (cosa ho letto
+  quel giorno?), dalla fonte ai suoi episodi (quando l'ho imparato, in quale conversazione, cosa ho deciso?).
+- **Richiamo:** uno strumento (per esempio `search_knowledge`) restituisce passaggi con la loro fonte e gli episodi che
+  la citano; il contesto di memoria può aggiungere un passaggio quando è chiaramente pertinente, entro il suo budget.
+- **Cosa non è:** non è la base di conoscenza di un'organizzazione (i documenti di team / organizzazione restano nel RAG
+  della piattaforma, per esempio Arkimede); non è l'output degli strumenti. I risultati della ricerca documentale di un
+  client non vengono inviati come chat: al più un riferimento "ha consultato la fonte X", così il RAG della piattaforma
+  e Recordare non si duplicano.
+- Stesse regole del resto: consenso, la memoria della persona (o una memoria di entità, D48, per esempio quella del
+  robot), divulgazione, l'oblio di una fonte rimuove i suoi passaggi (gli episodi tengono un segno "fonte dimenticata"),
+  diagnostica solo a conteggi.
+- Precedenti (non è nuovo): Supermemory separa i documenti (fonti di verità) dalle memorie estratte; Letta / MemGPT
+  hanno una "archival memory" raggiungibile con strumenti (`docs/literature/agent-platform-memory_it.md`).
+- Aperto: come arrivano le fonti (upload REST del testo estratto dal client; uno strumento MCP `learn_source`; formati
+  oltre al testo); limiti di dimensione e costo per profilo di qualità (D35); i testi di terzi sono conservati solo per
+  l'uso della persona (mai divulgati ad altri, limiti D33); se estrarre con un LLM i punti chiave con le parole della
+  persona (un'opzione successiva). WORK_PLAN 5.9.
+
+### D50 — Memoria dell'agente: ogni memoria appartiene all'agente (decisione del proprietario, 2026-10-09)
+Sostituisce "una memoria per persona" (identità D24, la divisione persona / entità di D48 come due tipi di owner),
+l'interruttore del consenso (D4), la regola dello spettatore come filtro sulle risposte (§1 di API.md), e fa del
+gemello digitale (VISION) un caso emergente. Ricerca: `docs/literature/human-memory-and-agent-architectures_it.md`;
+inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
+- **Una memoria appartiene a un agente**: un account del client ("Caino" — per esempio un account di Arkimede) = una
+  memoria; un altro account ("Abele") = un'altra memoria, isolata come fosse un'altra installazione. Gli umani non
+  sono più proprietari: sono **contatti che l'agente conosce**, dentro quella memoria. Obiettivo: chiunque possa dare un
+  cervello a una macchina (domani un robot con telecamere, microfoni e altri sensori costruisce i propri ricordi).
+- **Tutto ciò che arriva arricchisce la memoria dell'agente**: chat, voce, documenti, foto, audio, video, sensori; le
+  fonti imparate di D49 ne fanno parte. L'agente distingue i tipi di memoria (episodica, semantica, prospettica…, vedi
+  la scheda di letteratura) e **registra sempre chi ha detto cosa e di chi è** — la fonte al momento della scrittura,
+  con il metodo (dichiarata, impronta vocale, volto, dedotta) e la certezza.
+- **Due modalità per memoria:**
+  - **personale** — ciò che arriva senza identità dichiarata è dell'agente, scritto in **prima persona**; il nome del
+    titolare dell'account è il nome di "io" (ciò che lo riguarda è prima persona); anche le azioni dell'assistente sono
+    in prima persona, senza distinzione (la memoria personale *è* il gemello digitale). Le altre persone identificate
+    sono attribuite per nome.
+  - **entità** — ciò che non è dichiarato è di **"qualcuno"** (terza persona); le persone identificate per nome; il
+    contenuto marcato esplicitamente come **proprio** dell'agente (conoscenza che gli viene data, ciò che un robot
+    percepisce o fa da solo) è dell'agente, in prima persona. L'ingest riceve un marcatore "proprio" (messaggio, testo,
+    documento).
+- **Richiamo**: chi si è identificato e chiede di sé ("cosa ho fatto ieri?") riceve i **suoi** ricordi; chi non si
+  dichiara riceve quelli dell'agente. I risultati indicano il soggetto di ogni elemento.
+- **Nessun consenso**: né di chi parla né dell'account; l'interruttore sta nel client, Recordare è sempre attivo. Chi
+  installa l'agente è responsabile di informare le persone intorno (GDPR) — scritto nei documenti.
+- **Nessun filtro su chi ascolta, per ora**: le risposte usano sempre tutta la memoria, in ogni conversazione; chi può
+  sapere cosa (riservatezza, livelli di divulgazione) è una decisione successiva. `audience` / `disclosure` restano
+  registrati per allora.
+- **Resta**: il Diario (strumento di correzione per chi mantiene la memoria); la protezione contro l'eco del richiamo (D38),
+  nelle parole del proprietario: quando l'agente risponde con un ricordo che ha già ("ieri dove sono stato?" → "al
+  mare"), la risposta non rientra, giusta o sbagliata che sia; quando dice qualcosa di nuovo ("che tempo fa a Ispica?" →
+  le previsioni), è una cosa che l'agente ha appreso e può diventare memoria, scelta per importanza come ogni altro input;
+  storia solo in aggiunta, consolidamento a inattività e notturno, oblio per scelta.
+- **Prima persona nelle lingue con il genere**: un'impostazione per memoria (maschile / femminile / neutro), con default
+  dal profilo dell'account.
+- **Più avanti, dalla letteratura**: riflessione (i pensieri propri dell'agente, sempre dedotti), un modello di sé,
+  memoria procedurale, promesse e intenzioni dell'agente, un livello percettivo per foto / audio / video / sensori; le
+  memorie "proprie" percepite e generate tenute distinte (reality monitoring).
+- Piano: WORK_PLAN M8 (passi 0–11 dell'audit), ogni passo sui prompt misurato su set di sviluppo + 3 run ciechi; le
+  memorie esistenti su Kinox migrate quando la voce è definitiva (prima un backup).
 
 ## Questioni aperte (da discutere)
 

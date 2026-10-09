@@ -401,6 +401,28 @@ more than 3 people ignored — recall adds up to 3 of that person's own chat mes
 
 Kept.
 
+### WORK_PLAN 4.10 — news received as a memory: extract.v11 (2026-10-08, DeepSeek direct)
+
+Rule added to the extraction prompt: news the owner received (assistant, tool result, someone else) is a low-importance
+event — "<owner> learned that …" — only when it touches their life (an open plan, a person they know, something they own)
+or when they react to it; trivia and general answers stay in the chat log. Dev set `dataset_dev_news` (not blind, 7
+sessions, 4 questions): linked news (rain on a trip day + "I'll take the umbrella", a train strike on the trip day, a
+colleague's new job) vs trivia (a capital, a recipe, university courses, a race result). Two instances per comparison
+(rule 9); local migrations applied first (a first attempt ran without the new `extraction_runs.summary` column: every
+extraction failed — discarded).
+
+| Prompt | Dev set (1 run) | blind7 (3 runs) | Paired vs v8 |
+|---|---|---|---|
+| `extract.v8` | 62.5 % (rain not stored) | 91.3 % (88.0 / 92.4 / 93.5, 4.8) | — |
+| `extract.v10` (rule) | 75 % | 88.4 % (83.7 / 87.0 / 94.6) | −2.9 [−8.0, +1.4]; provenance −0.17, temporal −0.11 |
+| **`extract.v11`** (+ others' claims about the owner are not news; both dates kept) | **75 %** | **91.7 %** (91.3 / 92.4 / 91.3) | **+0.4** (within noise); provenance ±0 |
+
+Kept: `extract.v11`. Both v10 and v11 store exactly the linked news (with the learning date and the news' own date) and
+none of the trivia; the remaining dev miss ("is there a problem with my Saturday trip?") is recall, not extraction (the
+strike episode exists but was not tied to the trip). v10's loss matched its mechanism: a rumour about the owner in a group
+is "news touching their life" — v11 excludes it. Notes: DeepSeek returned a few empty judge completions and one
+consolidation exceeded the harness's 60 s timeout (now 600 s) during the v10 runs; the affected attempt was resumed.
+
 ### WORK_PLAN 5.7 — memory context: sentences and named periods (2026-10-08, blind7, agent mode, DeepSeek direct)
 
 Probes on a live memory (bge-m3, `probe_ctx` in the scratchpad): questions in other languages land 0.45–0.59 on the

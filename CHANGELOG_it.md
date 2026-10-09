@@ -4,6 +4,28 @@ Le modifiche rilevanti di Recordare. Formato: [Keep a Changelog](https://keepach
 seguono il [Semantic Versioning](https://semver.org/lang/it/) (0.x: l'API può ancora cambiare tra versioni minori).
 Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
+## [Non rilasciato]
+
+### Aggiunto
+- **Notizie ricevute come ricordo** (`extract.v11`): una notizia che tocca la vita della persona (un piano aperto, una
+  persona che conosce, una cosa che possiede, o una sua reazione) diventa un episodio a bassa importanza con entrambe le
+  date; le curiosità restano nel log delle chat.
+- **Contesto di memoria**: ogni frase del messaggio viene confrontata anche da sola, e un periodo nominato nel messaggio
+  (in qualsiasi lingua supportata, giorni della settimana compresi) aggiunge gli episodi di quel periodo; soglie
+  configurabili (`CONTEXT_MIN_*_SIMILARITY`).
+- **Lingue**: `service/src/lang` — espressioni di periodo e nomi di mesi / giorni da Intl per 25 delle lingue più usate;
+  tabelle di parentele e del nome della persona per molte lingue.
+- **Chiamate per i connettori**: `POST api/v1/ingest/conversations/{id}/end`; `POST api/v1/context {ingest}` (salva il
+  turno e restituisce il contesto in una chiamata); i token personali leggono prima che la conversazione sia salvata;
+  `TOOLS` (schemi degli strumenti MCP) nella libreria client; i connettori li usano.
+- **Diagnostica**: ogni estrazione conserva un riassunto (restituito, scritto, scartato e perché — solo conteggi);
+  `GET api/v1/admin/owners/{id}/runs`. La console mostra chi attende il consenso.
+
+### Corretto
+- Le scritture MCP (`log_episode`, `remember`, `correct_episode`) rispettano il consenso.
+- Un fatto breve dentro un messaggio lungo della persona conta come sue parole; "il proprietario" viene sostituito dal
+  nome.
+
 ## [0.1.0] — 2026-10-08
 
 Prima versione pubblica: il **profilo privato** (un'installazione gestita da qualcuno di cui gli utenti si fidano —

@@ -4,6 +4,25 @@ All notable changes to Recordare. Format: [Keep a Changelog](https://keepachange
 [Semantic Versioning](https://semver.org/) (0.x: the API may still change between minor versions).
 Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
+## [Unreleased]
+
+### Added
+- **News received as a memory** (`extract.v11`): news that touches the person's life (an open plan, a person they know,
+  something they own, or a reaction) becomes a low-importance episode with both dates; trivia stays in the chat log.
+- **Memory context**: each sentence of a message is matched on its own, and a period the message names (any supported
+  language, weekdays included) adds that period's episodes; floors are knobs (`CONTEXT_MIN_*_SIMILARITY`).
+- **Languages**: `service/src/lang` — period expressions and month / weekday names from Intl for 25 of the most used
+  languages; relations and owner-naming tables for many.
+- **Connector calls**: `POST api/v1/ingest/conversations/{id}/end`; `POST api/v1/context {ingest}` (store the turn and get
+  its context in one call); personal tokens read before their conversation is stored; `TOOLS` (MCP tool schemas) in the
+  client library; the connectors use them.
+- **Diagnostics**: every extraction run keeps a summary (returned, written, dropped and why — counts only);
+  `GET api/v1/admin/owners/{id}/runs`. The console shows people waiting for consent.
+
+### Fixed
+- MCP writes (`log_episode`, `remember`, `correct_episode`) respect consent.
+- A short fact inside a long message of the person counts as their words; "il proprietario" is replaced by the name.
+
 ## [0.1.0] — 2026-10-08
 
 First public release: the **private profile** (an installation run by someone its users trust — README → Limits).

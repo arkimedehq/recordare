@@ -1,0 +1,43 @@
+{
+ "_note": "Questions for dataset_dev_news (not blind).",
+ "user": "sara",
+ "questions": [
+  {
+   "id": "w01",
+   "category": "linked-reaction",
+   "asked_at": "2026-10-09T19:00:00+02:00",
+   "q": "Cosa ho saputo del tempo per sabato a Torino, e cosa ho deciso?",
+   "expected": "Pioggia tutto il giorno sabato 10 ottobre a Torino (14 gradi); ha deciso di portarsi l'ombrello.",
+   "must_not": []
+  },
+  {
+   "id": "w02",
+   "category": "linked-plan",
+   "asked_at": "2026-10-09T19:00:00+02:00",
+   "q": "C'è qualche problema per il mio viaggio di sabato?",
+   "expected": "Sì: sciopero nazionale dei treni sabato 10 ottobre dalle 9 alle 17 (il treno di Sara parte alle 8 da Milano Centrale per Torino); inoltre è prevista pioggia.",
+   "must_not": []
+  },
+  {
+   "id": "w03",
+   "category": "linked-person",
+   "asked_at": "2026-10-09T19:00:00+02:00",
+   "q": "Che novità ci sono su Marco?",
+   "expected": "Marco, collega dell'ufficio acquisti, ha cambiato lavoro e va in Barilla (lo ha detto Luca).",
+   "must_not": []
+  },
+  {
+   "id": "w04",
+   "category": "summary-no-trivia",
+   "asked_at": "2026-10-09T19:00:00+02:00",
+   "q": "Riassumimi le notizie importanti per me di questa settimana.",
+   "expected": "Pioggia prevista sabato a Torino (porterà l'ombrello), sciopero dei treni sabato 10 ottobre (giorno del suo viaggio), Marco ha cambiato lavoro (Barilla).",
+   "must_not": [
+    "Canberra",
+    "carbonara",
+    "Politecnico",
+    "Leclerc"
+   ]
+  }
+ ]
+}
