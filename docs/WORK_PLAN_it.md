@@ -331,6 +331,30 @@ versione funzionante gira su alcuni client; l'OK finale è del proprietario). Cr
 Non richiesti per la v0.1: il profilo pubblico (login del proprietario, OAuth), i connettori (6.6), le fasi 2+ della vision
 (i connettori sono comunque usciti con la v0.1).
 
+### M8 — Memoria dell'agente (D50, decisione del proprietario 2026-10-09)
+
+Ogni memoria appartiene a un agente (un account del client); modalità personale = prima persona (il gemello digitale
+emerge), modalità entità = "qualcuno" se non marcato come proprio; nessun consenso, nessun filtro su chi ascolta per
+ora. Inventario con i riferimenti ai file e i punti aperti: `docs/AGENT_MEMORY_AUDIT.md`; ricerca:
+`docs/literature/human-memory-and-agent-architectures_it.md`. Ogni passo sui prompt: set di sviluppo (1 run mentre si
+itera) + 3 run ciechi per confermare; prima dichiarare il budget (regole 1–9).
+
+| # | Attività |
+|---|---|
+| 8.0 | **D50** scritta (EPISODIC_MEMORY_TODO), M8 pianificata — **fatto 2026-10-09** |
+| 8.1 | **Nessun consenso**: togliere il controllo del consenso ovunque (ingest, estrazione, consolidamento, scritture MCP, `/me`, admin, console, libreria client, connettori, Arkimede); la migrazione elimina `episodic_enabled*`, `ingest_refused_at`; i documenti dicono il dovere di chi installa di informare (GDPR). Solo test |
+| 8.2 | **Nessun filtro su chi ascolta**: le risposte usano tutta la memoria in ogni conversazione; resta un risolutore di conversazione (alle scritture MCP serve per le prove); `audience` / `disclosure` restano registrati. Solo test |
+| 8.3 | **Identità della memoria**: memoria = account con `mode` personale / entità (migrazione da `persons.kind`), contatti per memoria, identità dell'account e dei partecipanti, metodo + certezza dell'attribuzione su partecipanti e messaggi, marcatore `own` nell'ingest, il titolare dell'account come "io", autore non dichiarato = io (personale) / qualcuno (entità). Input del prompt invariato: 1 run blind7 + 1 run dev_entity come controllo che nulla cambi |
+| 8.4 | **Prima persona nella memoria personale** (`extract.v12` e prompt di fatti / risolutore): la voce dell'agente, soggetto su episodi / note / fatti, impostazione del genere, il richiamo restituisce il soggetto (chi si è identificato riceve i propri ricordi), un rilevatore di fughe al posto di `nameOwner`. Nuovo set di sviluppo `dataset_dev_agent_personal`; set di sviluppo 1 run ciascuno; conferma blind7 × 3 (soglia 91,7 %) |
+| 8.5 | **Agente di entità**: input marcato come proprio in prima persona, "qualcuno" altrimenti, soggetti ovunque; nuovo set di sviluppo `dataset_dev_entity_own`; conferma blind8 × 3 (soglia 82,1 %) |
+| 8.6 | **Riassunti** con la voce dell'agente (diari del giorno / mese), revisione dei fatti con soggetti; un consolidamento sui set di sviluppo |
+| 8.7 | **Arkimede, libreria client, connettori**: account = memoria, gli altri utenti come partecipanti, modalità nelle Impostazioni, la scelta dell'account di ogni connettore; conformità + prove dei connettori |
+| 8.8 | **Migrazione di Kinox** (dopo 8.4–8.6): contare, backup, riscrivere in prima persona la memoria di Andrea (correzioni del Diario mantenute), soggetti / contatti per Arkim3de; controllo a campione |
+| 8.9 | **Fonti imparate** (D49) come conoscenza dell'agente: fonti, passaggi + embedding, proprio / fornito da, collegamenti episodio ↔ fonte, `search_knowledge`, passaggio nel contesto; nuovo set di sviluppo |
+| 8.10 | **Rinomina** `owners → memories`, `owner_id → memory_id`, token e intestazioni, versione del contratto di Atlas; solo test |
+| 8.11 | **Nuovi set ciechi** per la memoria dell'agente (personale con persone dichiarate; entità con input proprio), scritti da agenti separati e riletti; 3 run ciascuno per i numeri ufficiali |
+| 8.12 | Più avanti: riflessione (pensieri propri dell'agente), modello di sé, memoria procedurale, intenzioni dell'agente, livello percettivo (foto / audio / video / sensori), riservatezza e divulgazione |
+
 ## Decisioni aperte da prendere lungo il percorso
 
 | Id | Domanda | Proposta | Quando |

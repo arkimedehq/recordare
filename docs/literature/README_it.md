@@ -27,6 +27,7 @@ citarli all'esterno. Licenze del codice riutilizzabile: `../LICENSING_it.md`.
 | [memdelta](memdelta_it.md) | Wang, arXiv:2606.29914 | Confondenti, controlli, costo del percorso di scrittura |
 | [halumem](halumem_it.md) | Chen et al., arXiv:2511.03506 | Valutazione delle allucinazioni per operazione |
 | [penfield-locomo-audit](penfield-locomo-audit_it.md) | Penfield Labs, 2026 | Risposte gold sbagliate, giudici indulgenti |
+| [human-memory-and-agent-architectures](human-memory-and-agent-architectures_it.md) | Rassegna: Tulving, Squire, Conway, Johnson et al. 1993, CLS; CoALA, Generative Agents, MemGPT, Voyager, Soar / ACT-R (2026-10-09) | Sistemi della memoria umana e architetture di agenti riportati sulla memoria propria dell'agente |
 
 ## Sintesi — che cosa cambia nel nostro progetto
 

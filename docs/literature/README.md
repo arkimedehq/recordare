@@ -25,6 +25,7 @@ quoting them externally. Licences of reusable code: `../LICENSING.md`.
 | [memdelta](memdelta.md) | Wang, arXiv:2606.29914 | Confounds, controls, write-path cost |
 | [halumem](halumem.md) | Chen et al., arXiv:2511.03506 | Per-operation hallucination eval |
 | [penfield-locomo-audit](penfield-locomo-audit.md) | Penfield Labs, 2026 | Wrong gold answers, lenient judges |
+| [human-memory-and-agent-architectures](human-memory-and-agent-architectures.md) | Survey: Tulving, Squire, Conway, Johnson et al. 1993, CLS; CoALA, Generative Agents, MemGPT, Voyager, Soar / ACT-R (2026-10-09) | Human memory systems and agent architectures mapped onto the agent's own memory |
 
 ## Synthesis — what changes in our design
 

@@ -586,6 +586,44 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   disclosed to others, D33 limits); whether takeaways in the person's words are extracted by an LLM (a later option).
   WORK_PLAN 5.9.
 
+### D50 — Agent memory: every memory belongs to the agent (owner's decision, 2026-10-09)
+Supersedes "one memory per person" (D24 identity, D48's person / entity split as two kinds of owner), the consent
+switch (D4), the viewer rule as a filter on answers (§1 of API.md), and turns the digital twin (VISION) into an
+emergent case. Research: `docs/literature/human-memory-and-agent-architectures.md`; inventory and plan:
+`docs/AGENT_MEMORY_AUDIT.md`.
+- **A memory belongs to an agent**: one client account ("Caino" — e.g. an Arkimede account) = one memory; another
+  account ("Abele") = another memory, isolated as if it were another installation. Humans are not owners any more:
+  they are **contacts the agent knows**, scoped to that memory. Goal: anyone can give a machine a brain (later a
+  robot with cameras, microphones and other sensors builds its own memories).
+- **Everything that comes in enriches the agent's memory**: chats, voice, documents, photos, audio, video, sensors;
+  D49's learned sources are part of it. The agent tells kinds of memory apart (episodic, semantic, prospective…, see
+  the literature card) and **always records who said what and whose it is** — the source at write time, with how it
+  was established (declared, voiceprint, face, inferred) and how sure.
+- **Two modes per memory:**
+  - **personal** — anything arriving without a declared identity is the agent's own, written in the **first
+    person**; the account holder's name is the name of "I" (what concerns them is first person); the assistant's
+    actions are first person too, with no distinction (the personal memory *is* the digital twin). Identified
+    other people are attributed by name.
+  - **entity** — anything undeclared belongs to **"someone"** (third person); identified people by name; content
+    explicitly marked as the agent's **own** (knowledge given to it, what a robot perceives or does on its own) is the
+    agent's, first person. Ingest gets an "own" marker (message, text, document).
+- **Recall**: an identified speaker asking about themselves ("what did I do yesterday?") gets **their** memories; an
+  undeclared one gets the agent's own. Results carry the subject of each item.
+- **No consent**: neither of the speakers nor of the account; the client has the switch, Recordare is always on.
+  Whoever deploys the agent is responsible for telling the people around it (GDPR) — stated in the docs.
+- **No viewer filter for now**: answers always use the whole memory, in every conversation; who-may-be-told-what
+  (privacy, disclosure tiers) is a later decision. `audience` / `disclosure` stay recorded for it.
+- **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38: a repeated wrong
+  recall acknowledged with "ok" is not new evidence — the agent does not learn from its own echoes); append-only
+  history, idle + nightly consolidation, forgetting by choice.
+- **First person in a gendered language**: a per-memory setting (masculine / feminine / neutral), defaulting from the
+  account's profile.
+- **Later, from the literature**: reflection (the agent's own thoughts, always inferred), a self-model, procedural
+  memory, the agent's own promises and intents, a perceptual layer for photos / audio / video / sensors; perceived and
+  generated "own" memories kept apart (reality monitoring).
+- Plan: WORK_PLAN M8 (steps 0–11 of the audit), each prompt step measured on dev sets + 3 blind runs; existing
+  memories on Kinox migrated after the voice is final (backup first).
+
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked

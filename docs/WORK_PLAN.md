@@ -325,6 +325,29 @@ runs on some clients; the owner gives the final OK). Criteria, all required:
 Not required for v0.1: the public profile (owner login, OAuth), connectors (6.6), phases 2+ of the vision (the
 connectors shipped with v0.1 anyway).
 
+### M8 — Agent memory (D50, owner's decision 2026-10-09)
+
+Every memory belongs to an agent (a client account); personal mode = first person (the digital twin emerges),
+entity mode = "someone" unless marked own; no consent, no viewer filter for now. Inventory with file references and
+the open points: `docs/AGENT_MEMORY_AUDIT.md`; research: `docs/literature/human-memory-and-agent-architectures.md`.
+Each prompt step: dev sets (1 run while iterating) + 3 blind runs to confirm; state the budget first (rules 1–9).
+
+| # | Task |
+|---|---|
+| 8.0 | **D50** written (EPISODIC_MEMORY_TODO), M8 planned — **done 2026-10-09** |
+| 8.1 | **No consent**: remove the consent gate everywhere (ingest, extraction, consolidation, MCP writes, `/me`, admin, console, client library, connectors, Arkimede); migration drops `episodic_enabled*`, `ingest_refused_at`; docs state the deployer's duty to inform (GDPR). Tests only |
+| 8.2 | **No viewer filter**: answers use the whole memory in every conversation; keep a conversation resolver (MCP writes need it for evidence); `audience` / `disclosure` stay recorded. Tests only |
+| 8.3 | **Memory identity**: memory = account with `mode` personal / entity (migration from `persons.kind`), contacts per memory, account vs participant identities, attribution method + confidence on participants and messages, `own` marker on ingest, the account holder as "self", undeclared author = self (personal) / someone (entity). Prompt input unchanged: 1 run blind7 + 1 run dev_entity as a no-change check |
+| 8.4 | **Personal first person** (`extract.v12` and facts / resolver prompts): the agent's voice, subject on episodes / notes / facts, gender setting, recall returns the subject (an identified speaker gets their own memories), a leak detector instead of `nameOwner`. New dev set `dataset_dev_agent_personal`; dev sets 1 run each; confirm blind7 × 3 (bar 91.7 %) |
+| 8.5 | **Entity agent**: own-marked input in first person, "someone" otherwise, subjects everywhere; new dev set `dataset_dev_entity_own`; confirm blind8 × 3 (bar 82.1 %) |
+| 8.6 | **Digests** in the agent's voice (day / month diaries), facts review with subjects; one consolidation run on the dev sets |
+| 8.7 | **Arkimede, client library, connectors**: account = memory, other users as participants, mode in Settings, each connector's account choice; conformance + smoke tests |
+| 8.8 | **Kinox migration** (after 8.4–8.6): count, back up, rewrite Andrea's memory in the first person (Diary corrections kept), subjects / contacts for Arkim3de; sample-checked |
+| 8.9 | **Learned sources** (D49) as the agent's knowledge: sources, passages + embeddings, own / provided-by, episode ↔ source links, `search_knowledge`, context passage; new dev set |
+| 8.10 | **Rename** `owners → memories`, `owner_id → memory_id`, tokens and headers, Atlas contract version; tests only |
+| 8.11 | **Fresh blind sets** for the agent memory (personal with declared speakers; entity with own input), written by separate agents and re-read; 3 runs each for the reported numbers |
+| 8.12 | Later: reflection (the agent's own thoughts), self-model, procedural memory, the agent's own intents, perceptual layer (photos / audio / video / sensors), privacy and disclosure |
+
 ## Open decisions to take along the way
 
 | Id | Question | Proposal | When |

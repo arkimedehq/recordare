@@ -594,6 +594,46 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   l'uso della persona (mai divulgati ad altri, limiti D33); se estrarre con un LLM i punti chiave con le parole della
   persona (un'opzione successiva). WORK_PLAN 5.9.
 
+### D50 — Memoria dell'agente: ogni memoria appartiene all'agente (decisione del proprietario, 2026-10-09)
+Sostituisce "una memoria per persona" (identità D24, la divisione persona / entità di D48 come due tipi di owner),
+l'interruttore del consenso (D4), la regola dello spettatore come filtro sulle risposte (§1 di API.md), e fa del
+gemello digitale (VISION) un caso emergente. Ricerca: `docs/literature/human-memory-and-agent-architectures_it.md`;
+inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
+- **Una memoria appartiene a un agente**: un account del client ("Caino" — per esempio un account di Arkimede) = una
+  memoria; un altro account ("Abele") = un'altra memoria, isolata come fosse un'altra installazione. Gli umani non
+  sono più proprietari: sono **contatti che l'agente conosce**, dentro quella memoria. Obiettivo: chiunque possa dare un
+  cervello a una macchina (domani un robot con telecamere, microfoni e altri sensori costruisce i propri ricordi).
+- **Tutto ciò che arriva arricchisce la memoria dell'agente**: chat, voce, documenti, foto, audio, video, sensori; le
+  fonti imparate di D49 ne fanno parte. L'agente distingue i tipi di memoria (episodica, semantica, prospettica…, vedi
+  la scheda di letteratura) e **registra sempre chi ha detto cosa e di chi è** — la fonte al momento della scrittura,
+  con il metodo (dichiarata, impronta vocale, volto, dedotta) e la certezza.
+- **Due modalità per memoria:**
+  - **personale** — ciò che arriva senza identità dichiarata è dell'agente, scritto in **prima persona**; il nome del
+    titolare dell'account è il nome di "io" (ciò che lo riguarda è prima persona); anche le azioni dell'assistente sono
+    in prima persona, senza distinzione (la memoria personale *è* il gemello digitale). Le altre persone identificate
+    sono attribuite per nome.
+  - **entità** — ciò che non è dichiarato è di **"qualcuno"** (terza persona); le persone identificate per nome; il
+    contenuto marcato esplicitamente come **proprio** dell'agente (conoscenza che gli viene data, ciò che un robot
+    percepisce o fa da solo) è dell'agente, in prima persona. L'ingest riceve un marcatore "proprio" (messaggio, testo,
+    documento).
+- **Richiamo**: chi si è identificato e chiede di sé ("cosa ho fatto ieri?") riceve i **suoi** ricordi; chi non si
+  dichiara riceve quelli dell'agente. I risultati indicano il soggetto di ogni elemento.
+- **Nessun consenso**: né di chi parla né dell'account; l'interruttore sta nel client, Recordare è sempre attivo. Chi
+  installa l'agente è responsabile di informare le persone intorno (GDPR) — scritto nei documenti.
+- **Nessun filtro su chi ascolta, per ora**: le risposte usano sempre tutta la memoria, in ogni conversazione; chi può
+  sapere cosa (riservatezza, livelli di divulgazione) è una decisione successiva. `audience` / `disclosure` restano
+  registrati per allora.
+- **Resta**: il Diario (strumento di correzione per chi mantiene la memoria); la protezione contro l'eco del richiamo
+  (D38: un ricordo sbagliato ripetuto e accolto con "ok" non è una nuova prova — l'agente non impara dalle proprie eco);
+  storia solo in aggiunta, consolidamento a inattività e notturno, oblio per scelta.
+- **Prima persona nelle lingue con il genere**: un'impostazione per memoria (maschile / femminile / neutro), con default
+  dal profilo dell'account.
+- **Più avanti, dalla letteratura**: riflessione (i pensieri propri dell'agente, sempre dedotti), un modello di sé,
+  memoria procedurale, promesse e intenzioni dell'agente, un livello percettivo per foto / audio / video / sensori; le
+  memorie "proprie" percepite e generate tenute distinte (reality monitoring).
+- Piano: WORK_PLAN M8 (passi 0–11 dell'audit), ogni passo sui prompt misurato su set di sviluppo + 3 run ciechi; le
+  memorie esistenti su Kinox migrate quando la voce è definitiva (prima un backup).
+
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 ancora aperta, con WORK_PLAN 5.4). Il lavoro aperto è tracciato
