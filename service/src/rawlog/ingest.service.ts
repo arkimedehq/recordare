@@ -3,8 +3,9 @@
 
 /**
  * REST ingest into Layer 0 (docs/API.md §2): idempotent on (client, owner, conversation, message),
- * nothing stored without consent (D4), participants resolved to persons only through verified
- * identities (audience, D29), idle extraction (re)scheduled after commit (D1, D5).
+ * always stored (no consent flag, D50: the on/off switch belongs to the client), participants resolved
+ * to persons only through verified identities (audience, D29), idle extraction (re)scheduled after
+ * commit (D1, D5).
  */
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -35,13 +36,6 @@ export class IngestService {
   }
 
   async ingest(clientId: string, ownerId: string, req: IngestRequest): Promise<IngestResult> {
-    const [owner] = await this.db.query(`SELECT episodic_enabled FROM owners WHERE person_id = $1`, [ownerId]);
-    if (!owner?.episodic_enabled) {
-      // Nothing is stored without consent; the admin console shows who is waiting for it (WORK_PLAN 6.6b).
-      if (owner) await this.db.query(`UPDATE owners SET ingest_refused_at = now() WHERE person_id = $1`, [ownerId]);
-      return { conversationId: null, accepted: 0, duplicates: 0, conflicts: [], stored: false };
-    }
-
     const sentAts = req.messages.map((m) => new Date(m.sentAt).getTime());
     const first = new Date(Math.min(...sentAts));
     const last = new Date(Math.max(...sentAts));
@@ -112,7 +106,7 @@ export class IngestService {
       for (const m of req.messages) roles[m.role] = (roles[m.role] ?? 0) + 1;
       this.telemetry.emit({ type: 'message.ingested', ownerId, conversationId: outcome.conversationId, messages: outcome.accepted, roles });
     }
-    return { conversationId: outcome.conversationId, accepted: outcome.accepted, duplicates: outcome.duplicates, conflicts: outcome.conflicts, stored: true };
+    return { conversationId: outcome.conversationId, accepted: outcome.accepted, duplicates: outcome.duplicates, conflicts: outcome.conflicts };
   }
 
   async edit(clientId: string, ownerId: string, conversationExternalId: string, messageExternalId: string, content: string): Promise<void> {
@@ -144,7 +138,7 @@ export class IngestService {
   }
 
   /** Physical purge of a conversation and its messages (cascade). */
-  /** Ends a conversation without a message: schedules its extraction now (404 when unknown — also when nothing was stored for lack of consent). */
+  /** Ends a conversation without a message: schedules its extraction now (404 when unknown). */
   async end(clientId: string, ownerId: string, conversationExternalId: string): Promise<void> {
     const [conv] = await this.db.query(
       `SELECT id FROM conversations WHERE client_id = $1 AND owner_id = $2 AND external_id = $3 AND deleted_at IS NULL`,

@@ -20,7 +20,7 @@ export const updateClientSchema = z.object({
   disabled: z.boolean().optional(),
 });
 
-/** Client keys never carry `admin`, `owner_settings` or `export` (consent stays with the owner, D33). */
+/** Client keys never carry `admin`, `owner_settings` or `export` (installation-level powers stay with the admin). */
 export const createKeySchema = z.object({
   scopes: z.array(z.enum(['ingest', 'mcp', 'read', 'write'])).min(1),
 });
@@ -31,7 +31,6 @@ export const createOwnerSchema = z.object({
   kind: z.enum(['human', 'entity']).default('human'),
   locale: z.enum(['it', 'en']).default('it'),
   timezone: z.string().min(1).default('Europe/Rome'),
-  episodicEnabled: z.boolean().default(false),
   /** D35; omitted = installation default. */
   qualityProfile: z.enum(QUALITY_PROFILES).nullable().default(null),
 });
@@ -41,7 +40,6 @@ export const updateOwnerSchema = z.object({
   kind: z.enum(['human', 'entity']).optional(),
   locale: z.enum(['it', 'en']).optional(),
   timezone: z.string().min(1).optional(),
-  episodicEnabled: z.boolean().optional(),
   /** null = back to the installation default. */
   qualityProfile: z.enum(QUALITY_PROFILES).nullable().optional(),
 });

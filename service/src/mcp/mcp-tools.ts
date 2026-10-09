@@ -126,7 +126,6 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    if (!(await deps.writes.consented(deps.ownerId))) return result({ error: 'memory is off for this person' });
     const id = await deps.writes.logEpisode(deps.ownerId, { conversationId: ctx.conversationId, clientId: clientId as string, ownerDirect: deps.principal.kind === 'owner_token' }, {
       content: args.content, kind: args.kind, occurredAt: args.occurred_at, occurredUntil: args.occurred_until,
       datePrecision: args.date_precision, people: args.people, place: args.place,
@@ -144,7 +143,6 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    if (!(await deps.writes.consented(deps.ownerId))) return result({ error: 'memory is off for this person' });
     const id = await deps.writes.remember(deps.ownerId, { conversationId: ctx.conversationId, clientId: clientId as string, ownerDirect: deps.principal.kind === 'owner_token' }, args);
     return result({ id, stored: true });
   });
@@ -156,7 +154,6 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    if (!(await deps.writes.consented(deps.ownerId))) return result({ error: 'memory is off for this person' });
     const id = await deps.writes.correctEpisode(deps.ownerId, { conversationId: ctx.conversationId, clientId: clientId as string, ownerDirect: deps.principal.kind === 'owner_token' }, {
       id: args.id, content: args.content, occurredAt: args.occurred_at, datePrecision: args.date_precision,
     });

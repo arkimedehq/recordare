@@ -40,22 +40,20 @@ describe('REST ingest (Layer 0)', () => {
   });
   const msg = (id: string, content: string, role = 'user', sentAt = '2026-01-18T19:30:00+01:00') => ({ externalId: id, role, content, sentAt });
 
-  it('stores nothing without consent (D4)', async () => {
+  it('stores what the client sends without any consent step (D50: the switch is the client\'s)', async () => {
     const res = await call(url, 'POST', '/api/v1/ingest/messages', { ...as('luca'), body: batch('c0', [msg('m1', 'ciao')]) });
-    expect(res).toMatchObject({ status: 200, body: { stored: false, accepted: 0 } });
-    expect(await db.query('SELECT count(*)::int AS n FROM messages')).toEqual([{ n: 0 }]);
-    // The admin sees who is waiting for consent (WORK_PLAN 6.6b).
-    const persons = (await call(url, 'GET', '/api/v1/admin/persons', { token: ADMIN_KEY })).body as Array<{ waitingForConsentSince: string | null }>;
-    expect(persons.some((p) => p.waitingForConsentSince !== null)).toBe(true);
+    expect(res).toMatchObject({ status: 200, body: { accepted: 1, duplicates: 0, conflicts: [] } });
+    expect(res.body).not.toHaveProperty('stored');
+    expect(await db.query(`SELECT count(*)::int AS n FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.external_id = 'c0'`)).toEqual([{ n: 1 }]);
+    expect((await call(url, 'DELETE', '/api/v1/ingest/conversations/c0', as('luca'))).status).toBe(202); // a clean slate for the next tests
   });
 
   it('ingests idempotently, records conflicts, applies upserts as edits with revisions', async () => {
-    await call(url, 'PATCH', `/api/v1/admin/owners/${ownerId}`, { token: ADMIN_KEY, body: { episodicEnabled: true } });
     const first = await call(url, 'POST', '/api/v1/ingest/messages', {
       ...as('luca'),
       body: batch('c1', [msg('m1', 'Ieri sono andato a sciare a Cervinia'), msg('m2', 'Che bello!', 'assistant', '2026-01-18T19:31:00+01:00')]),
     });
-    expect(first.body).toMatchObject({ stored: true, accepted: 2, duplicates: 0, conflicts: [] });
+    expect(first.body).toMatchObject({ accepted: 2, duplicates: 0, conflicts: [] });
 
     const again = await call(url, 'POST', '/api/v1/ingest/messages', {
       ...as('luca'),

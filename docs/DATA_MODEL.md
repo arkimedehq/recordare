@@ -2,7 +2,7 @@
 
 Status: **M1 contracts, revision 3** (2026-10-03): consistency + security reviews applied; tables
 of the **public** deployment profile (`API.md` §0, D33) are marked and not built in v1.
-Built (2026-10-08): migrations in `service/src/db/migrations` (initial schema to `ConsentWaiting`) match this document;
+Built (2026-10-08): migrations in `service/src/db/migrations` (initial schema to `NoConsent`) match this document;
 tables of the public profile are not created, tables marked **created, unused yet** exist without code using them.
 Postgres 16 + pgvector ≥ 0.8. Implements D6–D32 (`EPISODIC_MEMORY_TODO.md`), the identity model of
 `API.md` and the vision's provenance / disclosure rules.
@@ -101,19 +101,18 @@ owner is rejected); a future merge must remap `audience` arrays and FKs in one t
 | `person_id` | uuid PK → persons | |
 | `email` | text unique null | Owner login (magic link, `API.md` §1) — used by the public profile only |
 | `locale`, `timezone` | text | Defaults `it`, `Europe/Rome`; the admin API accepts `it` / `en`. The locale only formats dates and recall notices: the deterministic language helpers (periods, months, relations, owner naming — `service/src/lang`, 25 most used languages) apply all languages at once |
-| `episodic_enabled` | bool, default false | D4 — changed only by the owner (owner session or owner-scoped token); v1 as built: by the admin (`episodic_enabled_by = 'admin'`), never by a client key |
-| `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Consent record (who / which client UI) |
-| `ingest_refused_at` | timestamptz null | Last time a client sent messages while consent was off (nothing stored); the admin console shows "waiting for consent" (`waitingForConsentSince`) while consent stays off (WORK_PLAN 6.6b) |
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `created_at` | timestamptz | |
 
-Idle delay is a global setting (D5), not per owner.
+Idle delay is a global setting (D5), not per owner. No consent columns (D50): migration `NoConsent` dropped
+`episodic_enabled`, `episodic_enabled_at`, `episodic_enabled_by` and `ingest_refused_at` — every memory stores what its
+client sends; the on/off switch belongs to the client platform.
 
 ### owner_sessions (public profile)
 `id, owner_id, created_at, expires_at, revoked_at, user_agent` — the owner's own login session on
-Recordare's pages (consent, link codes, OAuth authorisation, self-service diary).
+Recordare's pages (link codes, OAuth authorisation, self-service diary).
 
 ### clients
 `id, name, kind enum (platform|mcp_client|import), auto_provision bool, raw_log_scope enum

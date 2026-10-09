@@ -30,7 +30,7 @@ Checks — run all three before every commit (CI runs them): `npm run typecheck`
 | `src/auth`, `src/admin`, `src/me` | Client API keys, personal tokens, admin API, owner resolution, viewer context; `GET / PATCH api/v1/me` |
 | `src/console` | Admin console, a static page served at `/admin` over the admin API |
 | `src/identity` | Identity entities |
-| `src/rawlog` | Layer 0: REST ingest (idempotent, consent-gated), edits and purges, raw-log search (full-text + vector) |
+| `src/rawlog` | Layer 0: REST ingest (idempotent, always stores — the client holds the on/off switch, D50), edits and purges, raw-log search (full-text + vector) |
 | `src/queue` | BullMQ: debounced idle extraction jobs, message embeddings, hourly consolidation sweep |
 | `src/engine` | Extraction (one call per window, writer with lifecycle rules and the recall-echo guard), near-duplicate / correction resolver, quality profiles, nightly consolidation (digests), facts review |
 | `src/recall` | `search_episodes`, `search_memory`, period resolver, people-aware recall, explicit writes and forgetting, the pre-turn memory context (`POST api/v1/context`), recall log |

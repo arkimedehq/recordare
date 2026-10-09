@@ -5,7 +5,7 @@
 # End-to-end smoke test of the Hermes Agent provider against a local Recordare (dev machine, no Docker for Hermes):
 #   1. installs Hermes Agent from source into a venv under SMOKE_DIR (unless HERMES_BIN is given) and a throwaway
 #      HERMES_HOME with this provider copied into its plugins/;
-#   2. creates a test client, person (consent on) and personal token through Recordare's admin API;
+#   2. creates a test client, person and personal token through Recordare's admin API;
 #   3. turn 1 (one-shot session) tells a personal fact → checks the messages in Recordare's database; the session end
 #      at exit ends the conversation (`…/end`) → waits for the extracted episode;
 #   4. turn 2 (new session) asks about it → the answer comes from the pre-turn memory context (recall_log
@@ -62,7 +62,7 @@ cp "$HERE"/recordare/*.py "$HERE"/recordare/plugin.yaml "$HH/plugins/recordare/"
 if [ "${SKIP_LLM:-0}" != 1 ]; then
 echo "== Recordare: test person + personal token"
 CLIENT="$(admin clients '{"name":"hermes-smoke","kind":"mcp_client"}' | json "['id']")"
-PERSON="$(admin owners '{"displayName":"Hermes Smoke","episodicEnabled":true}' | json "['personId']")"
+PERSON="$(admin owners '{"displayName":"Hermes Smoke"}' | json "['personId']")"
 TOKEN="$(admin "owners/$PERSON/tokens" "{\"clientId\":\"$CLIENT\",\"scopes\":[\"mcp\",\"ingest\",\"read\"]}" | json "['token']")"
 printf 'RECORDARE_URL=%s\nRECORDARE_API_KEY=%s\nLLM_API_KEY=%s\n' "$URL" "$TOKEN" "$(envval LLM_API_KEY)" > "$HH/.env"
 unset TOKEN
@@ -105,7 +105,7 @@ fi
 
 echo "== gateway path (client key, X-Recordare-User; no LLM)"
 GCLIENT="$(admin clients '{"name":"hermes-gateway-smoke","kind":"platform"}' | json "['id']")"
-GPERSON="$(admin owners '{"displayName":"Hermes Gateway Smoke","episodicEnabled":true}' | json "['personId']")"
+GPERSON="$(admin owners '{"displayName":"Hermes Gateway Smoke"}' | json "['personId']")"
 admin identities "{\"personId\":\"$GPERSON\",\"kind\":\"client_user\",\"clientId\":\"$GCLIENT\",\"externalId\":\"alice\"}" >/dev/null
 KEY="$(admin "clients/$GCLIENT/keys" '{"scopes":["mcp","ingest","read"]}' | json "['key']")"
 printf 'RECORDARE_URL=%s\nRECORDARE_API_KEY=%s\nRECORDARE_USER_ALIASES={"telegram:4242":"alice"}\n' "$URL" "$KEY" > "$HH/.env"

@@ -10,7 +10,7 @@ const T = {
     persons: 'Persone', clients: 'Client', logout: 'Esci', signIn: 'Accesso amministratore',
     signInHint: 'Inserisci la chiave admin di Recordare (ADMIN_API_KEY). Resta solo in questa scheda.', enter: 'Entra',
     badKey: 'Chiave non valida.', newPerson: 'Nuova persona', newClient: 'Nuovo client',
-    human: 'personale', entity: 'condivisa', consent: 'Consenso (memoria attiva)', kind: 'Tipo di memoria',
+    human: 'personale', entity: 'condivisa', kind: 'Tipo di memoria',
     kindHuman: 'Personale', kindEntity: 'Condivisa (entità)', profile: 'Profilo qualità', profileDefault: 'predefinito',
     name: 'Nome', rename: 'Rinomina', renameHint: 'Se la persona è collegata a un client, il nome segue il suo profilo lì e verrà riscritto.',
     messages: 'messaggi', pending: 'da estrarre', episodes: 'episodi', facts: 'fatti', notes: 'note', last: 'ultimo messaggio',
@@ -19,10 +19,9 @@ const T = {
     consolidate: 'Consolida ora', consolidated: 'Consolidamento eseguito', saved: 'Salvato',
     kindConfirm: 'La memoria contiene già ricordi: cambiare tipo mescola ricordi personali e condivisi. Continuare?',
     unlinkConfirm: 'Scollegare questa identità? Quell\'utente del client non raggiungerà più questa memoria (i ricordi restano).',
-    revokeConfirm: 'Revocare? Smette di funzionare subito.', consentOn: 'Attivare la memoria di {name}? Da ora i messaggi vengono conservati ed estratti.',
-    consentOff: 'Sospendere la memoria di {name}? I nuovi messaggi non verranno più conservati.',
+    revokeConfirm: 'Revocare? Smette di funzionare subito.',
     keys: 'Chiavi', newKey: 'Nuova chiave', newKeyScopes: 'Permessi per una nuova chiave:', scopes: 'permessi', autoProvision: 'Crea le persone al primo contatto',
-    disabled: 'Disabilitato', active: 'attivo', waiting: 'chiede il consenso', waitingTitle: 'Un client ha inviato messaggi per questa persona: senza consenso non vengono salvati. Ultimo invio:', disableConfirm: 'Disabilitare il client? Tutte le sue chiavi e i token smettono di funzionare.',
+    disabled: 'Disabilitato', active: 'attivo', disableConfirm: 'Disabilitare il client? Tutte le sue chiavi e i token smettono di funzionare.',
     clientName: 'Nome del client', kindLabel: 'Tipo', personName: 'Nome della persona', create: 'Crea', cancel: 'Annulla',
     secretTitle: 'Copia ora il segreto', secretHint: 'Non verrà più mostrato: Recordare ne conserva solo l\'impronta.',
     copy: 'Copia', close: 'Chiudi', copied: 'Copiato', client: 'client', never: 'mai', used: 'usato', search: 'Cerca per nome',
@@ -32,7 +31,7 @@ const T = {
     persons: 'People', clients: 'Clients', logout: 'Sign out', signIn: 'Administrator sign-in',
     signInHint: 'Enter Recordare\'s admin key (ADMIN_API_KEY). It stays in this tab only.', enter: 'Sign in',
     badKey: 'Invalid key.', newPerson: 'New person', newClient: 'New client',
-    human: 'personal', entity: 'shared', consent: 'Consent (memory on)', kind: 'Memory type',
+    human: 'personal', entity: 'shared', kind: 'Memory type',
     kindHuman: 'Personal', kindEntity: 'Shared (entity)', profile: 'Quality profile', profileDefault: 'default',
     name: 'Name', rename: 'Rename', renameHint: 'If the person is linked to a client, the name follows their profile there and will be overwritten.',
     messages: 'messages', pending: 'to extract', episodes: 'episodes', facts: 'facts', notes: 'notes', last: 'last message',
@@ -41,10 +40,9 @@ const T = {
     consolidate: 'Consolidate now', consolidated: 'Consolidation done', saved: 'Saved',
     kindConfirm: 'The memory already holds memories: changing its type mixes personal and shared ones. Continue?',
     unlinkConfirm: 'Unlink this identity? That client user will no longer reach this memory (memories stay).',
-    revokeConfirm: 'Revoke? It stops working at once.', consentOn: 'Turn on {name}\'s memory? From now on messages are stored and extracted.',
-    consentOff: 'Pause {name}\'s memory? New messages will no longer be stored.',
+    revokeConfirm: 'Revoke? It stops working at once.',
     keys: 'Keys', newKey: 'New key', newKeyScopes: 'Scopes for a new key:', scopes: 'scopes', autoProvision: 'Create people on first contact',
-    disabled: 'Disabled', active: 'active', waiting: 'waiting for consent', waitingTitle: 'A client sent messages for this person: without consent they are not stored. Last attempt:', disableConfirm: 'Disable the client? All its keys and tokens stop working.',
+    disabled: 'Disabled', active: 'active', disableConfirm: 'Disable the client? All its keys and tokens stop working.',
     clientName: 'Client name', kindLabel: 'Kind', personName: 'Person\'s name', create: 'Create', cancel: 'Cancel',
     secretTitle: 'Copy the secret now', secretHint: 'It will not be shown again: Recordare keeps only its hash.',
     copy: 'Copy', close: 'Close', copied: 'Copied', client: 'client', never: 'never', used: 'used', search: 'Search by name',
@@ -120,14 +118,6 @@ const when = (d) => (d ? new Date(d).toLocaleString(lang === 'it' ? 'it-IT' : 'e
 
 function personCard(p) {
   const hasMemories = p.episodes + p.facts + p.notes > 0;
-  const consent = h('input', {
-    type: 'checkbox', checked: p.episodicEnabled,
-    onchange: (e) => {
-      const on = e.target.checked;
-      if (!confirm(t(on ? 'consentOn' : 'consentOff', { name: p.name }))) { e.target.checked = !on; return; }
-      act(() => api('PATCH', `owners/${p.id}`, { episodicEnabled: on }));
-    },
-  });
   const kind = h('select', {
     onchange: (e) => {
       if (hasMemories && !confirm(t('kindConfirm'))) { e.target.value = p.kind; return; }
@@ -150,8 +140,6 @@ function personCard(p) {
     h('div', { class: 'head' },
       h('span', { class: 'name' }, p.name),
       h('span', { class: `chip ${p.kind === 'entity' ? 'warn' : ''}` }, t(p.kind)),
-      h('span', { class: `chip ${p.episodicEnabled ? 'ok' : 'danger'}` }, p.episodicEnabled ? t('active') : t('disabled')),
-      p.waitingForConsentSince ? h('span', { class: 'chip warn', title: `${t('waitingTitle')} ${new Date(p.waitingForConsentSince).toLocaleString()}` }, t('waiting')) : null,
     ),
     h('div', { class: 'stats' },
       h('span', {}, h('b', {}, p.messages), ` ${t('messages')}`),
@@ -162,7 +150,6 @@ function personCard(p) {
       h('span', {}, `${t('last')}: ${when(p.lastMessage)}`),
     ),
     h('div', { class: 'grid' },
-      h('label', { class: 'switch' }, consent, t('consent')),
       h('label', { class: 'field' }, h('span', {}, t('kind')), kind),
       h('label', { class: 'field' }, h('span', {}, t('profile')), profile),
       h('div', { class: 'field' }, h('span', { title: t('renameHint') }, `${t('name')} ⓘ`),

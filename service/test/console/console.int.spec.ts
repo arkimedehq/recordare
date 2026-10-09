@@ -39,7 +39,7 @@ describe('admin console (WORK_PLAN 6.9)', () => {
 
     const persons = (await call(url, 'GET', '/api/v1/admin/persons', { token: ADMIN_KEY })).body;
     expect(persons).toEqual([expect.objectContaining({
-      id: ownerId, name: 'Casa', kind: 'entity', episodicEnabled: false, messages: 0, episodes: 0, facts: 0, notes: 0,
+      id: ownerId, name: 'Casa', kind: 'entity', messages: 0, episodes: 0, facts: 0, notes: 0,
       identities: [expect.objectContaining({ id: identity.id, client: 'Arkimede', externalId: 'voice' })], tokens: [],
     })]);
     const clients = (await call(url, 'GET', '/api/v1/admin/clients', { token: ADMIN_KEY })).body;

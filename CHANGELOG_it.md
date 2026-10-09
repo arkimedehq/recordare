@@ -19,10 +19,19 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   turno e restituisce il contesto in una chiamata); i token personali leggono prima che la conversazione sia salvata;
   `TOOLS` (schemi degli strumenti MCP) nella libreria client; i connettori li usano.
 - **Diagnostica**: ogni estrazione conserva un riassunto (restituito, scritto, scartato e perché — solo conteggi);
-  `GET api/v1/admin/owners/{id}/runs`. La console mostra chi attende il consenso.
+  `GET api/v1/admin/owners/{id}/runs`.
+
+### Modificato
+- **Niente più flag di consenso** (D50, WORK_PLAN 8.1) — **incompatibile**. Recordare conserva, estrae e consolida
+  sempre ciò che un client invia (sempre zero chiamate LLM quando non c'è nulla da fare); l'interruttore acceso / spento
+  appartiene alla piattaforma client, e informare le persone attorno all'agente è compito di chi lo installa. La
+  migrazione `NoConsent1791060000000` elimina `owners.episodic_enabled`, `episodic_enabled_at`, `episodic_enabled_by` e
+  `ingest_refused_at`; `stored` esce dal risultato dell'ingest; `episodicEnabled` esce da `GET api/v1/me` e dall'API
+  admin (con `episodicEnabledAt` e `waitingForConsentSince`); spariscono l'interruttore del consenso e l'etichetta "in
+  attesa del consenso" della console; le scritture MCP non rispondono più "memoria spenta". Libreria client: rimossi
+  `ConsentState`, `PersonDirectory.knownOff()` e `status()`, `MeResponse.episodicEnabled` e `IngestResult.stored`.
 
 ### Corretto
-- Le scritture MCP (`log_episode`, `remember`, `correct_episode`) rispettano il consenso.
 - Un fatto breve dentro un messaggio lungo della persona conta come sue parole; "il proprietario" viene sostituito dal
   nome.
 

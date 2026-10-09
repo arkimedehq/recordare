@@ -64,7 +64,7 @@ class ServiceSystem:
 
     def _owner(self, user: str) -> dict:
         if user not in self.owners:
-            o = self._post("/api/v1/admin/owners", {"displayName": user.capitalize(), "episodicEnabled": True,
+            o = self._post("/api/v1/admin/owners", {"displayName": user.capitalize(),
                                                     **({"kind": "entity"} if user in self.entities else {})})
             ext = f"{user}-{self.run}"
             self._post("/api/v1/admin/identities", {"kind": "client_user", "personId": o["personId"], "clientId": self.client_id, "externalId": ext})
@@ -97,7 +97,7 @@ class ServiceSystem:
             res = self._post("/api/v1/ingest/messages", {"conversation": conversation, "messages": messages,
                                                          "hints": {"conversationEnded": True}},
                              token=self.key, headers={"x-recordare-user": owner["ext"]})
-            assert res.get("stored"), res
+            assert res.get("conversationId"), res
         self._wait_processed()
 
     def cost(self) -> dict:

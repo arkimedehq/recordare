@@ -45,8 +45,8 @@ curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/jso
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"scopes":["ingest","read"]}' $RECORDARE_URL/api/v1/admin/clients/<client id>/keys
 ```
-Consent stays with the admin: an auto-provisioned person stores nothing until `PATCH api/v1/admin/owners/{id}
-{episodicEnabled: true}`. To attach the platform's user to an existing person instead, bind the identity:
+Recordare has no consent flag (D50): an auto-provisioned person's turns are stored from the first request; to stop,
+turn `CAPTURE` / `RECALL` off or remove the proxy. To attach the platform's user to an existing person instead, bind the identity:
 `POST api/v1/admin/identities {kind: "client_user", personId, clientId, externalId: "anythingllm:2"}` (the external id
 is the Recordare user the proxy resolves, see Identity). A single-person install can use a **personal token** (`rp_…`)
 instead of a client key: every resolved request is then that person.
@@ -149,14 +149,12 @@ Title requests (`… title for the conversation …`) are skipped by a built-in 
   queues what it captures.
 - **Retry queue in memory** (v0.1): up to 1000 batches, ~8 attempts with back-off over ≈ 10 minutes (`Retry-After`
   honoured), permanent errors (400 / 413 / 422) dropped and logged; one last attempt on SIGTERM; **lost on restart**.
-- A person without consent: an ingest answers `stored: false`; for a minute the proxy then only stores that person's
-  messages (no memory context is asked).
 - Logs carry no message content (except with `LOG_UPSTREAM`).
 
 ## Security
 The proxy trusts the identity its caller states: whoever can reach it can claim any user. Keep it on the platform's
 private network, or set `PROXY_API_KEY` so only the platform can call it; with Open WebUI use the JWT mode. The
-Recordare key is a client key: it never sees consent settings (`owner_settings` is not a client scope).
+Recordare key is a client key: it never changes a person's settings (`owner_settings` is not a client scope).
 
 ## Limits (v0.1)
 - No MCP tool injection (the model gets memories in the prompt, not `recordare_*` tools); use the platform's MCP support.

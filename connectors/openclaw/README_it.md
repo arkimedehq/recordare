@@ -17,11 +17,11 @@ tenuta dal tuo servizio [Recordare](../../README_it.md) — il livello client **
   `other`). Recordare mostra i ricordi solo quando chi li vede è esattamente il proprietario, quindi nei gruppi il
   richiamo resta vuoto.
 
-Non occupa lo slot memoria di OpenClaw: `memory-core` (`MEMORY.md`, `memory_search`) continua a funzionare accanto. Nulla
-viene salvato finché l'amministratore di Recordare non ha attivato il consenso della persona. Il plugin non blocca né
-rompe mai un turno: ogni chiamata ha un limite di tempo (3 s prima del turno), gli errori finiscono nel log senza
-contenuti, i messaggi catturati non inviati vengono ritentati in background per una decina di minuti (in memoria: un
-riavvio del Gateway li perde).
+Non occupa lo slot memoria di OpenClaw: `memory-core` (`MEMORY.md`, `memory_search`) continua a funzionare accanto.
+Recordare conserva ogni turno che il plugin invia (non ha un flag di consenso, D50). Il plugin non blocca né rompe mai
+un turno: ogni chiamata ha un limite di tempo (3 s prima del turno), gli errori finiscono nel log senza contenuti, i
+messaggi catturati non inviati vengono ritentati in background per una decina di minuti (in memoria: un riavvio del
+Gateway li perde).
 
 Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 

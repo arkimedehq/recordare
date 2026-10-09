@@ -45,10 +45,10 @@ export class EngineExtractionRunner implements ExtractionRunner {
 
   async runForConversation(conversationId: string): Promise<void> {
     const [conv] = await this.db.query(
-      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.episodic_enabled, o.quality_profile, p.kind, p.display_name
+      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.quality_profile, p.kind, p.display_name
        FROM conversations c JOIN owners o ON o.person_id = c.owner_id JOIN persons p ON p.id = c.owner_id
        WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
-    if (!conv?.episodic_enabled) return;
+    if (!conv) return;
     const owner: Owner = { id: conv.owner_id, name: conv.display_name, locale: conv.locale, timezone: conv.timezone, entity: conv.kind === 'entity' };
     const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride, this.factsPassOverride);
 

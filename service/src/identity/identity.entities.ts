@@ -25,9 +25,6 @@ export class Owner {
   @Column({ type: 'text', nullable: true }) email!: string | null;
   @Column({ type: 'text', default: 'it' }) locale!: string;
   @Column({ type: 'text', default: 'Europe/Rome' }) timezone!: string;
-  @Column({ name: 'episodic_enabled', type: 'boolean', default: false }) episodicEnabled!: boolean;
-  @Column({ name: 'episodic_enabled_at', type: 'timestamptz', nullable: true }) episodicEnabledAt!: Date | null;
-  @Column({ name: 'episodic_enabled_by', type: 'text', nullable: true }) episodicEnabledBy!: string | null;
   /** D35: null = installation default. */
   @Column({ name: 'quality_profile', type: 'text', nullable: true }) qualityProfile!: QualityProfileName | null;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;

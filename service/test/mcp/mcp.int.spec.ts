@@ -45,12 +45,12 @@ describe('MCP endpoint', () => {
     const b = await mk('Other platform');
     keyA = a.key;
     keyB = b.key;
-    ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca', episodicEnabled: true } })).body.personId;
+    ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
     for (const [cid, ext] of [[a.id, 'luca-a'], [b.id, 'luca-b']]) {
       await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: ownerId, clientId: cid, externalId: ext } });
     }
     token = (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: a.id, scopes: ['mcp'] } })).body.token;
-    const other = await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Elena', episodicEnabled: true } });
+    const other = await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Elena' } });
     await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: other.body.personId, clientId: a.id, externalId: 'elena' } });
 
     const ingest = (user: string, conv: string, content: string, participants: unknown[] = []) => call(url, 'POST', '/api/v1/ingest/messages', {
@@ -212,17 +212,17 @@ describe('MCP endpoint', () => {
     expect(await note(elsewhere)).toEqual({ pending: true, author_role: 'assistant' });
   });
 
-  it('stores nothing through the tools without consent (D4); forgetting stays allowed', async () => {
-    const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'NoConsent', kind: 'mcp_client' } })).body.id;
-    const off = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Senza consenso' } })).body.personId;
-    const token = (await call(url, 'POST', `/api/v1/admin/owners/${off}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp'] } })).body.token as string;
+  it('writes through the tools for any memory: there is no consent step (D50)', async () => {
+    const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Fresh', kind: 'mcp_client' } })).body.id;
+    const fresh = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Nuova' } })).body.personId;
+    const token = (await call(url, 'POST', `/api/v1/admin/owners/${fresh}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp'] } })).body.token as string;
     const { client } = await connect(url, { authorization: `Bearer ${token}` });
     const out = async (name: string, args: Record<string, unknown>) => (await client.callTool({ name, arguments: args })).structuredContent;
-    expect(await out('log_episode', { content: 'Ho comprato una bici' })).toEqual({ error: 'memory is off for this person' });
-    expect(await out('remember', { content: 'Preferisco il tè' })).toEqual({ error: 'memory is off for this person' });
+    expect(await out('log_episode', { content: 'Ho comprato una bici' })).toMatchObject({ stored: true });
+    expect(await out('remember', { content: 'Preferisco il tè' })).toMatchObject({ stored: true });
     const db = app.get((await import('typeorm')).DataSource);
-    expect(await db.query(`SELECT (SELECT count(*) FROM episodes WHERE owner_id = $1)::int AS e, (SELECT count(*) FROM notes WHERE owner_id = $1)::int AS n,
-      (SELECT count(*) FROM messages WHERE owner_id = $1)::int AS m`, [off])).toEqual([{ e: 0, n: 0, m: 0 }]);
+    expect(await db.query(`SELECT (SELECT count(*) FROM episodes WHERE owner_id = $1)::int AS e, (SELECT count(*) FROM notes WHERE owner_id = $1)::int AS n`, [fresh]))
+      .toEqual([{ e: 1, n: 1 }]);
     await client.close();
   });
 

@@ -3,6 +3,9 @@
 Status: **vision / roadmap**. Phase 1 (episodic memory) is built and released as v0.1.0 (public 2026-10-08); its
 design lives in `EPISODIC_MEMORY_TODO.md`, its status in `WORK_PLAN.md`.
 
+> Since D50 (2026-10-09) Recordare has no consent flag: every memory stores what its client sends; the on/off switch
+> belongs to the client platform. Older consent text below is marked superseded.
+
 ## Goal
 
 Recreate a user's memory and persona so that an LLM-driven agent can act as their
@@ -49,7 +52,7 @@ it also takes initiative.
 5. **Treat the twin as a high-value secret.** Full memory + cloned voice = perfect
    impersonation kit. Voice model and memory are protected like credentials; the
    cloned voice is never an authentication factor; only the account owner's own voice
-   can be cloned (consent).
+   can be cloned, by their own choice.
 6. **Evaluate, don't assume.** Park-style harness: ask the owner and the twin the same
    questions, measure agreement over time.
 
@@ -57,10 +60,12 @@ it also takes initiative.
    owner and reinforce their biases. In companion mode it may — and should — disagree, using the
    owner's own memories as evidence ("three months ago you said the opposite"), point out
    recurring patterns and check decisions against the owner's stated values.
-8. **Only consenting people are modelled.** The twin is built from the owner's own data with
-   their consent. Cloning a third party (from web content or anything else) without their consent
-   is out of scope and blocked by design; legacy mode uses only what the owner authorised while
-   alive.
+8. **The deployer informs the people around the agent.** Recordare has no consent flag (D50, 2026-10-09): every
+   memory stores what its client sends, and the on/off switch belongs to the client platform. Whoever deploys the
+   agent tells the people around it that it remembers, and holds the legal basis (e.g. under the GDPR); extra care
+   for minors. Cloning a third party (from web content or anything else) behind their back stays out of scope; legacy
+   mode uses only what the owner authorised while alive. *(Superseded wording, before D50: "Only consenting people are
+   modelled" — the twin built from the owner's own data with their consent, a consent flag in Recordare.)*
 
 ## Interaction modes (decided 2026-10-03)
 
@@ -265,7 +270,8 @@ others' claims kept apart. What changes:
    next to private; per-audience digests (already anticipated in DATA_MODEL). The same rules are needed for the twin
    speaking to third parties (phase 3), so the work is shared.
 3. **Self-model notes** describe the agent, not a person; never stated, always inferred and pending.
-4. **Consent** of every family member that the agent remembers; extra care for minors.
+4. **Informing** every family member that the agent remembers — the deployer's duty, not a Recordare consent flag
+   (D50 supersedes "consent of every family member"); extra care for minors.
 
 ### Around the memory: reach, voice at home, observability (noted 2026-10-07)
 

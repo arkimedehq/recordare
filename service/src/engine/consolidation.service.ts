@@ -68,8 +68,8 @@ export class ConsolidationService {
 
   private async run(ownerId: string, now: Date, report: ConsolidationReport): Promise<void> {
     const [owner] = await this.db.query(
-      `SELECT o.timezone, o.locale, o.episodic_enabled, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    if (!owner?.episodic_enabled) return;
+      `SELECT o.timezone, o.locale, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+    if (!owner) return;
     const tz: string = owner.timezone;
     const today = localDate(now, tz);
     const episodes: EpisodeRow[] = await this.db.query(

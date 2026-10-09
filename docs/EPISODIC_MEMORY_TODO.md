@@ -177,6 +177,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D4 — Separate per-user toggle `episodicMemoryEnabled`, default off (2026-10-01)
 - A diary is more sensitive than durable facts → explicit opt-in, independent of
   `autoMemoryEnabled`.
+- **Superseded by D50 (2026-10-09)**: Recordare has no consent flag any more (WORK_PLAN 8.1); the on/off switch belongs
+  to the client platform.
 
 ### D5 — Idle delay: global setting, default 15 min (2026-10-01)
 - As built: env `IDLE_DELAY_SECONDS` (default 900), no per-user override.
@@ -429,7 +431,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   tokens, simple scopes, per-owner isolation.
 - Kept in v1 because they are part of the twin, not security add-ons: viewer context resolved by
   Recordare (knowing what to tell whom — disclosure pillar), `author_role` provenance (principle 3,
-  memory quality), consent flag (D4), forgetting that sticks (D16).
+  memory quality), consent flag (D4 — *superseded by D50, 2026-10-09: no consent flag*), forgetting that sticks (D16).
 - Deferred to the **public profile** (M7 / public release): owner login and pages, OAuth for MCP,
   owner-driven linking and revocation UI, read audit, persistent idempotency, backup / provider
   retention policy, network protection. Specified in `API.md` §0 so enabling them needs no data
@@ -484,6 +486,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - A client's per-user switch gates the client's side; the episodic consent itself is given by the Recordare admin
   (home profile) or the owner (public profile). `GET api/v1/me` returns `episodicEnabled`; clients do not buffer
   messages before consent (they show "waiting for activation").
+- **Superseded by D50 (2026-10-09)**: no consent step in Recordare (WORK_PLAN 8.1). The client's per-user switch is the
+  only one; `episodicEnabled` and the "waiting for activation" state are gone.
 
 ### D37 — Plan patches need evidence about that plan (2026-10-06)
 - A patch applies only when its evidence speaks of that plan (shared name / place / keyword, or embedding ≥ 0.37);
@@ -557,7 +561,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   rename of its user propagates to Recordare (WORK_PLAN 6.8).
 - Owner's follow-up (2026-10-07): the **person chooses the kind on their platform** (Arkimede's memory settings →
   `PATCH /me {kind}`), only while the memory is empty; the **name always follows the platform's profile** (a client's
-  sync overwrites an admin rename); consent stays with the Recordare admin.
+  sync overwrites an admin rename); consent stays with the Recordare admin (*superseded by D50, 2026-10-09: no consent*).
 - Status (2026-10-08): on a fresh blind entity set (`dataset_blind8`, WORK_PLAN 4.8) 82.1 % over 3 runs (dev set 95.5 %);
   the entity memory stays **experimental** — speakers who never identify and attribution between people are the weak
   spots.
@@ -577,7 +581,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - **What it is not:** not an organisation's knowledge base (team / org documents stay in the platform's RAG, e.g.
   Arkimede); not tool output. A client's document-search results are not ingested as chat: at most a "consulted
   source X" reference, so the platform's RAG and Recordare do not duplicate each other.
-- Same rules as the rest: consent, the person's own memory (or an entity memory, D48, e.g. the robot's), disclosure,
+- Same rules as the rest: consent (*superseded by D50: no consent*), the person's own memory (or an entity memory, D48, e.g. the robot's), disclosure,
   forgetting a source removes its passages (episodes keep a "forgotten source" marker), counts-only diagnostics.
 - Prior art (not novel): Supermemory separates documents (sources of truth) from extracted memories; Letta / MemGPT
   keep an "archival memory" reached through tools (`docs/literature/agent-platform-memory.md`).
@@ -611,6 +615,7 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   undeclared one gets the agent's own. Results carry the subject of each item.
 - **No consent**: neither of the speakers nor of the account; the client has the switch, Recordare is always on.
   Whoever deploys the agent is responsible for telling the people around it (GDPR) — stated in the docs.
+  Implemented in WORK_PLAN 8.1 (2026-10-09): migration `NoConsent1791060000000` drops the consent columns.
 - **No viewer filter for now**: answers always use the whole memory, in every conversation; who-may-be-told-what
   (privacy, disclosure tiers) is a later decision. `audience` / `disclosure` stay recorded for it.
 - **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38), in the owner's words:

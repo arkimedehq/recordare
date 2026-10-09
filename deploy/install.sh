@@ -202,5 +202,5 @@ HOSTNAME_SHOWN=$([[ $RECORDARE_BIND == 0.0.0.0 ]] && (hostname -I 2>/dev/null | 
 URL="http://${HOSTNAME_SHOWN:-127.0.0.1}:$RECORDARE_PORT"
 echo "${B}Done.${N} Recordare ($PROFILE) on $URL"
 echo "  Admin console: $URL/admin — sign in with ADMIN_API_KEY from $ENV_FILE (read it there; it is not printed)."
-echo "  Next: in the console create a person, switch their consent on, and give each client platform a key"
+echo "  Next: in the console create a person and give each client platform a key"
 echo "  (docs/INTEGRATION.md); backups: deploy/backup.sh (cron), upgrades: deploy/update.sh."

@@ -3,7 +3,7 @@
 # Copyright © 2026 Andrea Genovese
 #
 # End-to-end smoke test of the OpenClaw plugin against a local Recordare (dev machine, Docker):
-#   1. creates a test client, person (consent on) and personal token through Recordare's admin API;
+#   1. creates a test client, person and personal token through Recordare's admin API;
 #   2. runs an OpenClaw Gateway in Docker with a throwaway state dir and the plugin linked from this folder;
 #   3. turn 1 tells a personal fact → checks the messages in Recordare's database; /new ends the session →
 #      waits for the extracted episode;
@@ -42,7 +42,7 @@ echo "== build"
 
 echo "== Recordare: test person + personal token"
 CLIENT="$(admin clients '{"name":"openclaw-smoke","kind":"mcp_client"}' | json "['id']")"
-PERSON="$(admin owners '{"displayName":"OpenClaw Smoke","episodicEnabled":true}' | json "['personId']")"
+PERSON="$(admin owners '{"displayName":"OpenClaw Smoke"}' | json "['personId']")"
 admin "owners/$PERSON/tokens" "{\"clientId\":\"$CLIENT\",\"scopes\":[\"mcp\",\"ingest\",\"read\"]}" | json "['token']" > "$SMOKE_DIR/secrets/token"
 { printf 'LLM_KEY=%s\n' "$(envval LLM_API_KEY)"; printf 'RECORDARE_API_KEY=%s\n' "$(cat "$SMOKE_DIR/secrets/token")"; } > "$SMOKE_DIR/secrets/env"
 chmod 600 "$SMOKE_DIR/secrets/"*

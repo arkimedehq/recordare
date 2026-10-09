@@ -2,20 +2,17 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Who each of the platform's users is in Recordare, cached: the person (ownerId), their consent, the kind of memory and
- * the Atlas address. The synchronous readers never wait on Recordare: they answer from the cache (even if stale) and
- * refresh in the background. Each lookup also keeps the person's name in sync with the platform's profile.
+ * Who each of the platform's users is in Recordare, cached: the person (ownerId), the kind of memory and the Atlas
+ * address. Recordare has no consent flag (D50): the platform's own switch (`enabled`) decides whether it is contacted.
+ * The synchronous readers never wait on Recordare: they answer from the cache (even if stale) and refresh in the
+ * background. Each lookup also keeps the person's name in sync with the platform's profile.
  */
 import { type MemoryKind } from './contract.js';
 import { type RecordareClient } from './client.js';
 
-/** The person's memory as the platform shows it: consent given, not yet, or Recordare unreachable. */
-export type ConsentState = 'waiting_activation' | 'active' | 'unknown';
-
 export interface Person {
+  /** null = not known yet (not opted in on the platform, or Recordare unreachable before the first lookup). */
   ownerId: string | null;
-  /** true / false, null = unknown (Recordare unreachable). */
-  consent: boolean | null;
   kind: MemoryKind | null;
   atlasUrl: string | null;
 }
@@ -58,29 +55,12 @@ export class PersonDirectory {
 
   /** A person known from the host's own storage (e.g. after a restart), marked stale so it is refreshed on first use. */
   seed(user: string, ownerId: string): void {
-    if (!this.cache.has(user)) this.cache.set(user, { ownerId, consent: null, kind: null, atlasUrl: null, until: 0 });
+    if (!this.cache.has(user)) this.cache.set(user, { ownerId, kind: null, atlasUrl: null, until: 0 });
   }
 
   /** Forgets a user (e.g. after their switch or name changed): the next read asks Recordare again. */
   invalidate(user: string): void {
     this.cache.delete(user);
-  }
-
-  /** Users whose consent is known to be off: a sender skips them (nothing is buffered before consent). */
-  knownOff(): string[] {
-    return [...this.cache].filter(([, e]) => e.consent === false).map(([u]) => u);
-  }
-
-  /** Re-checks now, waiting at most `timeoutMs`; falls back to the last known state. */
-  async status(user: string, timeoutMs = 3_000): Promise<ConsentState> {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const fresh = await Promise.race([
-      this.refresh(user).catch(() => undefined),
-      new Promise<undefined>((r) => { timer = setTimeout(() => r(undefined), timeoutMs); }),
-    ]);
-    if (timer) clearTimeout(timer);
-    const consent = (fresh ?? this.cache.get(user))?.consent ?? null;
-    return consent === true ? 'active' : consent === false ? 'waiting_activation' : 'unknown';
   }
 
   /** Asks Recordare now (one request in flight per user). */
@@ -102,18 +82,18 @@ export class PersonDirectory {
     try {
       const platform = await this.options.user(user);
       // Not opted in on the platform: never contact Recordare; a person already known stays known (e.g. for tracing).
-      if (!platform?.enabled) return remember({ ownerId: last?.ownerId ?? null, consent: null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
+      if (!platform?.enabled) return remember({ ownerId: last?.ownerId ?? null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
       const me = await this.client.me(user);
       const name = platform.name?.trim().slice(0, 100);
       if (name && me.displayName !== name) {
         await this.client.updateMe(user, { displayName: name }).catch((err) => this.options.onError?.(user, err));
       }
-      const person: Person = { ownerId: me.ownerId, consent: me.episodicEnabled, kind: me.kind, atlasUrl: me.atlasUrl ?? null };
+      const person: Person = { ownerId: me.ownerId, kind: me.kind, atlasUrl: me.atlasUrl ?? null };
       await this.options.onResolved?.(user, person);
       return remember(person);
     } catch (err) {
       this.options.onError?.(user, err);
-      return remember({ ownerId: last?.ownerId ?? null, consent: null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
+      return remember({ ownerId: last?.ownerId ?? null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
     }
   }
 }

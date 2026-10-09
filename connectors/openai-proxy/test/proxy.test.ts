@@ -38,7 +38,7 @@ function recordare(calls: RCall[], opts: { down?: boolean; block?: string | null
     calls.push({ path, headers: new Headers(init?.headers), body });
     if (path.endsWith('/end')) return new Response(null, { status: 202 });
     if (path.endsWith('/context')) return Response.json({ block: opts.block === undefined ? '<memory-context>Il gatto si chiama Biscotto</memory-context>' : opts.block, items: 1 });
-    return Response.json({ conversationId: 'c1', accepted: 1, duplicates: 0, conflicts: [], stored: true });
+    return Response.json({ conversationId: 'c1', accepted: 1, duplicates: 0, conflicts: [] });
   };
 }
 

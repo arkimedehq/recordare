@@ -5,6 +5,9 @@
 
 *Recordare*: Latin for "remember!" (*re-* + *cor*, "bring back to the heart").
 
+> Since D50 (2026-10-09) Recordare has no consent flag: every memory stores what its client sends; the on/off switch
+> belongs to the client platform (WORK_PLAN 8.1).
+
 Recordare is a standalone **long-term memory service for AI agents**. It keeps one memory per person: what they
 lived, planned, said and were told, with dates, sources and history. It is the foundation of a declared **digital
 twin** of that person. Any agent platform can use it through **MCP** (any MCP client) or through **MCP + REST ingest**
@@ -36,8 +39,8 @@ car?".
 It is careful about **who said what**: what you say counts as your memory, what someone else tells you stays theirs,
 and what the assistant only guessed never becomes a fact. You can correct a memory, and what you ask it to forget does
 not come back. Each person has their **own private memory**; a device the whole family uses (the home voice assistant)
-can have a **shared memory**, where whoever introduces themselves signs their own memories. Nothing starts without
-**consent**. Recordare works with any assistant and any AI model; Arkimede is the first to use it.
+can have a **shared memory**, where whoever introduces themselves signs their own memories. The **on/off switch** is
+the assistant's: Recordare remembers what it is sent. Recordare works with any assistant and any AI model; Arkimede is the first to use it.
 
 ## What kind of memory it is
 
@@ -69,8 +72,9 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
   neither the client nor the LLM can assert it. In phase 1, memories are returned only when the viewer is the owner.
   Missing and forbidden items look the same. Each memory already stores its audience and a disclosure label, so
   graded disclosure (phase 3) needs no migration.
-- **Consent per person.** A client's API key can never turn a person's memory on. Consent comes from the admin (home
-  profile) or the owner, and clients send nothing before consent.
+- **The client holds the switch** (D50). Recordare has no consent flag: every memory stores what its client sends,
+  and the client platform decides whether to send (a per-user memory switch). Informing the people around the agent —
+  and any legal basis, e.g. under the GDPR — is the duty of whoever deploys it.
 - **Forgetting that sticks.** Forgetting an episode leaves a tombstone. Extraction, re-extraction and consolidation
   check tombstones before writing, so forgotten content does not come back. The digests that used the episode are
   rewritten. (Forgetting a whole period is designed but not built yet.)
@@ -193,7 +197,7 @@ The [vision](docs/DIGITAL_TWIN_VISION.md) adds the next phases:
 - legacy mode;
 - a research mode on autonomous twins.
 
-Only consenting people are modelled.
+Whoever deploys the agent informs the people around it (GDPR); Recordare holds no consent flag (D50).
 
 Around the memory:
 - **Recordare Atlas** ([`arkimedehq/recordare-atlas`](https://github.com/arkimedehq/recordare-atlas), optional, its
@@ -224,7 +228,7 @@ keeps the key off the command line).
 > Arkimede. Disk ≈ 5 GB for images and the model. CPU only.
 
 After the install, open the **admin console** at `http://<host>:<port>/admin` with `ADMIN_API_KEY` from `deploy/.env`:
-create the people, switch their consent on, and give each client platform a key ([INTEGRATION.md](docs/INTEGRATION.md);
+create the people (or let a client create them) and give each client platform a key ([INTEGRATION.md](docs/INTEGRATION.md);
 Claude Code: §4b). Then connect your agent platforms (next section) and keep the installation up to date:
 
 ```bash

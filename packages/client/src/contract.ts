@@ -25,8 +25,6 @@ export interface Me {
   ownerId: string;
   displayName: string | null;
   kind: MemoryKind;
-  /** The person's consent, given by the Recordare admin: until then ingest stores nothing. */
-  episodicEnabled: boolean;
   /** Recordare Atlas, when installed: link it for the platform's admins only (it shows every person's activity). */
   atlasUrl?: string;
   via: string;
@@ -89,12 +87,11 @@ export interface IngestRequest {
 }
 
 export interface IngestResult {
+  /** null only when no message was sent. */
   conversationId: string | null;
   accepted: number;
   duplicates: number;
   conflicts: string[];
-  /** false = consent not given yet: nothing was stored. */
-  stored: boolean;
 }
 
 // ── The diary: read / write API for host UIs (API.md §4) ─────────────────────────────────────────────────────────

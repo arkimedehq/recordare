@@ -36,7 +36,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     ({ app, url } = await startApp());
     db = app.get(DataSource);
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
-    ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca', episodicEnabled: true } })).body.personId;
+    ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
     token = (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: client.body.id, scopes: ['mcp'] } })).body.token;
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });

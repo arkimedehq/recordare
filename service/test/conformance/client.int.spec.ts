@@ -3,8 +3,8 @@
 
 /**
  * Conformance suite (WORK_PLAN 6.7): the client library (`packages/client`) against the real service. Every client
- * passes the same behaviour: a turn ingested once, nothing stored before consent, deletions propagate, the name and kind
- * follow the platform, recall over MCP carries the user AND the conversation. The type checks below fail the build when
+ * passes the same behaviour: a turn ingested once (always stored: no consent step, D50), deletions propagate, the name
+ * and kind follow the platform, recall over MCP carries the user AND the conversation. The type checks below fail the build when
  * the client's hand-written contract drifts from the service's schemas.
  */
 import { type INestApplication } from '@nestjs/common';
@@ -49,24 +49,19 @@ describe('client conformance (packages/client against the service)', () => {
   });
   afterAll(async () => { await rc?.close(); await app?.close(); llm?.server.close(); emb?.close(); });
 
-  const consent = async (ownerId: string) =>
-    call(url, 'PATCH', `/api/v1/admin/owners/${ownerId}`, { token: ADMIN_KEY, body: { episodicEnabled: true } });
   const turn = (id: string, content: string): ClientIngest['messages'][number] =>
     ({ externalId: id, role: 'user', content, sentAt: '2026-10-07T10:00:00+02:00' });
   const db = () => app.get(DataSource);
 
-  it('stores nothing before consent, then each turn exactly once', async () => {
+  it('stores each turn exactly once, with no consent step (D50)', async () => {
     const me = await rc.me('user-1');
-    expect(me).toMatchObject({ kind: 'human', episodicEnabled: false });
-    const before = await rc.ingest('user-1', { conversation: { externalId: 'chat-1' }, messages: [turn('m1', 'Ciao')] });
-    expect(before.stored).toBe(false);
-    expect(await db().query(`SELECT count(*)::int AS n FROM messages`)).toEqual([{ n: 0 }]);
-
-    await consent(me.ownerId);
+    expect(me).toMatchObject({ kind: 'human' });
+    expect(me).not.toHaveProperty('episodicEnabled');
     const first = await rc.ingest('user-1', { conversation: { externalId: 'chat-1' }, messages: [turn('m1', 'Ciao'), turn('m2', 'Domani vado a Bologna')] });
-    expect(first).toMatchObject({ stored: true, accepted: 2, duplicates: 0 });
+    expect(first).toMatchObject({ accepted: 2, duplicates: 0 });
+    expect(first).not.toHaveProperty('stored');
     const again = await rc.ingest('user-1', { conversation: { externalId: 'chat-1' }, messages: [turn('m1', 'Ciao'), turn('m2', 'Domani vado a Bologna')] });
-    expect(again).toMatchObject({ stored: true, accepted: 0, duplicates: 2 });
+    expect(again).toMatchObject({ accepted: 0, duplicates: 2 });
   });
 
   it('propagates deletions; deleting what Recordare never had is done', async () => {
@@ -89,7 +84,7 @@ describe('client conformance (packages/client against the service)', () => {
 
   it('keeps the name in sync with the platform and accepts the kind only while the memory is empty', async () => {
     const people = new PersonDirectory(rc, { user: async (u) => ({ enabled: true, name: u === 'user-2' ? 'Casa' : 'Andrea' }) });
-    expect(await people.status('user-2')).toBe('waiting_activation');
+    expect(await people.refresh('user-2')).toMatchObject({ kind: 'human', atlasUrl: null });
     expect((await rc.me('user-2')).displayName).toBe('Casa');
     await rc.updateMe('user-2', { kind: 'entity' });
     expect((await rc.me('user-2')).kind).toBe('entity');

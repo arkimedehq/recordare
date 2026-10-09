@@ -180,6 +180,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D4 — Interruttore per utente separato `episodicMemoryEnabled`, default off (2026-10-01)
 - Un diario è più sensibile dei fatti durevoli → opt-in esplicito, indipendente da
   `autoMemoryEnabled`.
+- **Superata da D50 (2026-10-09)**: Recordare non ha più un flag di consenso (WORK_PLAN 8.1); l'interruttore acceso /
+  spento appartiene alla piattaforma client.
 
 ### D5 — Ritardo a riposo: impostazione globale, default 15 min (2026-10-01)
 - Come realizzato: env `IDLE_DELAY_SECONDS` (default 900), nessuna sovrascrittura per utente.
@@ -433,7 +435,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   personali, scope semplici, isolamento per proprietario.
 - Mantenuti nella v1 perché fanno parte del twin, non sono aggiunte di sicurezza: contesto del visualizzatore risolto da
   Recordare (sapere cosa dire a chi — pilastro della disclosure), provenienza `author_role` (principio 3,
-  qualità della memoria), flag di consenso (D4), oblio che resta (D16).
+  qualità della memoria), flag di consenso (D4 — *superato da D50, 2026-10-09: niente flag di consenso*), oblio che resta (D16).
 - Rinviati al **profilo pubblico** (M7 / rilascio pubblico): login e pagine del proprietario, OAuth per MCP,
   UI di collegamento e revoca guidata dal proprietario, audit di lettura, idempotenza persistente, politica di backup / retention
   del provider, protezione di rete. Specificati in `API.md` §0 così che abilitarli non richieda alcuna migrazione
@@ -489,6 +491,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - L'interruttore per utente di un client governa il lato del client; il consenso episodico vero e proprio è dato dall'admin di Recordare
   (profilo privato) o dal proprietario (profilo pubblico). `GET api/v1/me` restituisce `episodicEnabled`; i client non mettono in buffer
   i messaggi prima del consenso (mostrano "in attesa di attivazione").
+- **Superata da D50 (2026-10-09)**: nessun passo di consenso in Recordare (WORK_PLAN 8.1). L'interruttore per utente del
+  client è l'unico; `episodicEnabled` e lo stato "in attesa di attivazione" non esistono più.
 
 ### D37 — Le patch dei piani richiedono evidenza su quel piano (2026-10-06)
 - Una patch si applica solo quando la sua evidenza parla di quel piano (nome / luogo / parola chiave in comune, o embedding ≥ 0.37);
@@ -562,7 +566,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   rinomina di un utente da parte del client si propaga a Recordare (WORK_PLAN 6.8).
 - Seguito del proprietario (2026-10-07): la **persona sceglie il tipo sulla sua piattaforma** (impostazioni di memoria di Arkimede →
   `PATCH /me {kind}`), solo finché la memoria è vuota; il **nome segue sempre il profilo della piattaforma** (una
-  sincronizzazione del client sovrascrive una rinomina dell'admin); il consenso resta all'admin di Recordare.
+  sincronizzazione del client sovrascrive una rinomina dell'admin); il consenso resta all'admin di Recordare (*superato da D50, 2026-10-09: niente consenso*).
 - Stato (2026-10-08): su un nuovo set cieco per la memoria di entità (`dataset_blind8`, WORK_PLAN 4.8) 82,1 % su 3 run (dev
   set 95,5 %); la memoria di entità resta **sperimentale** — chi parla senza mai presentarsi e l'attribuzione tra persone
   sono i punti deboli.
@@ -584,7 +588,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   della piattaforma, per esempio Arkimede); non è l'output degli strumenti. I risultati della ricerca documentale di un
   client non vengono inviati come chat: al più un riferimento "ha consultato la fonte X", così il RAG della piattaforma
   e Recordare non si duplicano.
-- Stesse regole del resto: consenso, la memoria della persona (o una memoria di entità, D48, per esempio quella del
+- Stesse regole del resto: consenso (*superato da D50: niente consenso*), la memoria della persona (o una memoria di entità, D48, per esempio quella del
   robot), divulgazione, l'oblio di una fonte rimuove i suoi passaggi (gli episodi tengono un segno "fonte dimenticata"),
   diagnostica solo a conteggi.
 - Precedenti (non è nuovo): Supermemory separa i documenti (fonti di verità) dalle memorie estratte; Letta / MemGPT
@@ -620,6 +624,7 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   dichiara riceve quelli dell'agente. I risultati indicano il soggetto di ogni elemento.
 - **Nessun consenso**: né di chi parla né dell'account; l'interruttore sta nel client, Recordare è sempre attivo. Chi
   installa l'agente è responsabile di informare le persone intorno (GDPR) — scritto nei documenti.
+  Realizzato in WORK_PLAN 8.1 (2026-10-09): la migrazione `NoConsent1791060000000` elimina le colonne del consenso.
 - **Nessun filtro su chi ascolta, per ora**: le risposte usano sempre tutta la memoria, in ogni conversazione; chi può
   sapere cosa (riservatezza, livelli di divulgazione) è una decisione successiva. `audience` / `disclosure` restano
   registrati per allora.
