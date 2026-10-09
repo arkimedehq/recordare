@@ -144,7 +144,8 @@ class ServiceSystem:
         # The nights before the question have passed: run the consolidation as of that moment (M5). Idempotent and
         # free when nothing changed; set CONSOLIDATE=0 to measure without it.
         if os.getenv("CONSOLIDATE", "1") != "0":
-            r = self.http.post(f"/api/v1/admin/owners/{owner['id']}/consolidate", headers={"x-recordare-now": question["asked_at"]})
+            # The first call digests every past day: minutes with a slow provider.
+            r = self.http.post(f"/api/v1/admin/owners/{owner['id']}/consolidate", headers={"x-recordare-now": question["asked_at"]}, timeout=600)
             r.raise_for_status()
         now = datetime.fromisoformat(question["asked_at"])
         raw = chat([{"role": "system", "content": PLAN_SYSTEM}, {"role": "user", "content": (

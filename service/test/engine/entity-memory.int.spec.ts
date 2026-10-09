@@ -71,7 +71,7 @@ describe('entity memory (D48)', () => {
       { about: null, key: 'spare_keys_location', value: 'cassetto blu', status: 'current' },
     ]);
     expect((await db.query(`SELECT DISTINCT prompt_version FROM extraction_runs WHERE owner_id = $1`, [home])))
-      .toEqual([{ prompt_version: 'extract.v8+entity.v3' }]);
+      .toEqual([{ prompt_version: 'extract.v11+entity.v3' }]);
 
     const found = await app.get(MemorySearchService).search(home, { query: 'macchina auto car' }, new Date('2026-06-08T10:00:00Z'));
     expect(found.facts.filter((f) => f.key === 'car').map((f) => [f.about, f.value]).sort())

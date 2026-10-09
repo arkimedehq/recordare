@@ -1,0 +1,117 @@
+{
+ "_note": "News-as-memory dev set (WORK_PLAN 4.10, NOT blind, written by the engine developer): news linked to the person's life (a plan, a person they know, a reaction) vs unlinked trivia and how-tos.",
+ "users": {
+  "sara": "Sara, lives in Milan"
+ },
+ "sessions": [
+  {
+   "id": "n01",
+   "user": "sara",
+   "ts": "2026-10-05T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sabato 10 vado a Torino in treno a trovare mia cugina Elena, parto alle 8 da Milano Centrale."
+    },
+    {
+     "role": "assistant",
+     "content": "Bello! Buon viaggio sabato."
+    }
+   ]
+  },
+  {
+   "id": "n02",
+   "user": "sara",
+   "ts": "2026-10-06T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Qual è la capitale dell'Australia?"
+    },
+    {
+     "role": "assistant",
+     "content": "La capitale dell'Australia è Canberra, non Sydney."
+    }
+   ]
+  },
+  {
+   "id": "n03",
+   "user": "sara",
+   "ts": "2026-10-07T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Come si fa la carbonara?"
+    },
+    {
+     "role": "assistant",
+     "content": "Guanciale, uova, pecorino e pepe: niente panna."
+    }
+   ]
+  },
+  {
+   "id": "n04",
+   "user": "sara",
+   "ts": "2026-10-08T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che tempo farà sabato a Torino?"
+    },
+    {
+     "role": "assistant",
+     "content": "Le previsioni per sabato 10 ottobre a Torino danno pioggia tutto il giorno, 14 gradi."
+    },
+    {
+     "role": "user",
+     "content": "Allora mi porto l'ombrello."
+    }
+   ]
+  },
+  {
+   "id": "n05",
+   "user": "sara",
+   "ts": "2026-10-08T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ci sono notizie interessanti oggi?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì: è stato annunciato uno sciopero nazionale dei treni per sabato 10 ottobre, dalle 9 alle 17. Inoltre il Politecnico ha presentato tre nuovi corsi di laurea in robotica."
+    }
+   ]
+  },
+  {
+   "id": "n06",
+   "user": "sara",
+   "ts": "2026-10-09T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi ha scritto Luca: Marco, il mio collega dell'ufficio acquisti, ha cambiato lavoro, va in Barilla."
+    },
+    {
+     "role": "assistant",
+     "content": "Ah, una bella novità per lui."
+    }
+   ]
+  },
+  {
+   "id": "n07",
+   "user": "sara",
+   "ts": "2026-10-09T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Chi ha vinto il Gran Premio di Monza quest'anno?"
+    },
+    {
+     "role": "assistant",
+     "content": "Secondo i risultati che ho trovato ha vinto la Ferrari di Leclerc."
+    }
+   ]
+  }
+ ]
+}

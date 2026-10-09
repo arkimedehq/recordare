@@ -555,7 +555,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "qualcuno" e i suoi fatti personali non vengono registrati. Ogni conversazione inizia senza nessuno identificato.
 - Guardia nel codice: un fatto su una persona, o un episodio che ne nomina una, è registrato solo se quel nome compare nella finestra
   (nessuna identità riportata da chat precedenti — misurato: senza questa il modello lo faceva).
-- Prompt: `extract.v8` + `ENTITY_RULES` (`entity.v3`), aggiunto solo per i proprietari entità (memorie di persona invariate).
+- Prompt: `extract.v8` (ora `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), aggiunto solo per i proprietari entità (memorie di persona invariate).
   Misurato su `dataset_dev_entity` (RESULTS.md).
 - TODO (più avanti): identificazione più forte così che i ricordi più intimi in una memoria di entità siano leggibili solo dalla
   persona a cui appartengono — allora l'entità potrà essere un robot domestico a cui tutti si confidano (direzione G della visione). La

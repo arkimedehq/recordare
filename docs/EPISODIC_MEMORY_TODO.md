@@ -550,7 +550,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "someone" and their personal facts are not recorded. Every conversation starts with nobody identified.
 - Code guard: a fact about a person, or an episode naming one, is recorded only if that name occurs in the window
   (no identity carried over from earlier chats — measured: the model did that without it).
-- Prompt: `extract.v8` + `ENTITY_RULES` (`entity.v3`), appended only for entity owners (person memories unchanged).
+- Prompt: `extract.v8` (now `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), appended only for entity owners (person memories unchanged).
   Measured on `dataset_dev_entity` (RESULTS.md).
 - TODO (later): stronger identification so the most intimate memories in an entity memory are readable only by the
   person they belong to — then the entity can be a home robot everyone confides in (vision direction G). A client's

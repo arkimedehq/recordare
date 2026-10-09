@@ -6,7 +6,7 @@
  * variable goes in the user message. Rules come from the prototype that passed the blind held-out
  * check (spikes/memory-eval/systems/d_sys.py) plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v8';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v11';
 
 export const EXTRACTION_SYSTEM = `You are the memory encoder of a personal memory service. You read a window of one \
 conversation (numbered messages) and record what should be remembered about the OWNER's life. \
@@ -71,6 +71,14 @@ that contains them, using the CALENDAR. Never use any other notion of today. Wri
 WHAT IS AN EPISODE
 - Events the owner lived or reports about people close to them, and the owner's plans. Help requests, how-tos, general \
 knowledge and small talk are NOT episodes (they stay in the chat log).
+- News the owner RECEIVED (from the assistant, a tool result or someone else: a forecast, a strike, a delay, something \
+about a person they know) is a low-importance "event" episode on the message date — "<owner> learned that …", with \
+the news itself and its date — ONLY when it touches the owner's life: one of their open plans, a person they know, \
+something they own, or when they react to it ("then I'll take the umbrella": say what they decided). Unrelated news, \
+trivia and answers to general questions stay in the chat log. What others say ABOUT THE OWNER (rumours, claims, gossip \
+in a group) is never "news the owner learned": the rules on others' claims below apply. In the content keep both dates: \
+when the owner learned it and when the news itself happens or happened ("on 8 October Sara learned that a train strike \
+is called for Saturday 10 October"); occurred_at is the learning date.
 - Keep specifics: never generalise names, numbers, places or objects; every concrete detail survives.
 - A change of state the owner lived (bought / sold something, moved, changed job) is BOTH an episode (kind \
 "state_change") on its date AND a fact.
