@@ -28,6 +28,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `episodicEnabledAt` and `waitingForConsentSince`); the console's consent switch and "waiting for consent" chip are
   gone; MCP writes no longer answer "memory is off". Client library: `ConsentState`, `PersonDirectory.knownOff()` and
   `status()`, `MeResponse.episodicEnabled` and `IngestResult.stored` removed.
+- **No viewer filter any more** (D50, WORK_PLAN 8.2). MCP recall (`search_episodes`, `search_memory`) and the memory
+  context (`POST api/v1/context`) answer with the whole memory in every conversation — shared and group conversations,
+  conversations not stored yet, no conversation, extra viewers — instead of nothing; privacy and disclosure come later.
+  `X-Recordare-Viewers` / `_meta.recordare.viewers` are ignored and the `"nothing to show here"` notice is gone.
+  `audience` / `disclosure` are still recorded; one memory still never sees another's data. The conversation header is
+  still resolved: MCP writes bind their evidence to it.
 
 ### Fixed
 - A short fact inside a long message of the person counts as their words; "il proprietario" is replaced by the name.

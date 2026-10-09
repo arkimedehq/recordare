@@ -29,7 +29,7 @@ await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
   { externalId: 'm1', role: 'user', content: 'Domani vado a Bologna', sentAt: new Date().toISOString() },
 ] });
 
-// Recall: one MCP session per user AND conversation (the viewer context), both bound in code.
+// Recall: one MCP session per user AND conversation (evidence of writes, the current turn), both bound in code.
 const tools = await rc.mcp.listTools('user-42', 'chat-1'); // build the agent's tools from these schemas
 const res = await rc.mcp.callTool('user-42', 'chat-1', 'search_episodes', { query: 'Bologna' });
 

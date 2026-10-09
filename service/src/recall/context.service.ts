@@ -5,8 +5,8 @@
  * Pre-turn memory context (WORK_PLAN 5.7): for the message a host is about to answer, the few memories clearly
  * relevant to it, as one fenced block the host appends to its prompt — so the agent has them even when it would not
  * think of calling a recall tool. No LLM call. Minimal by design (the risk is distraction): no fixed profile card,
- * only items above a relevance threshold, a small character budget, empty when nothing is relevant; reads follow the
- * viewer rule (owner-only conversations). Always available, like the recall tools: whether to use it — for which
+ * only items above a relevance threshold, a small character budget, empty when nothing is relevant; the whole memory
+ * in every conversation (D50: no viewer filter for now). Always available, like the recall tools: whether to use it — for which
  * agent — is the client's choice (Arkimede: per agent, off by default).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';

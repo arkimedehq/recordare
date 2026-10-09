@@ -9,7 +9,7 @@
 
 /** The client's user the request acts for (with a client key). */
 export const USER_HEADER = 'X-Recordare-User';
-/** The conversation a read happens in: Recordare resolves who will see the answer from it (viewer context). */
+/** The conversation a read or write happens in: evidence of MCP writes, the current turn left out of recall (D50: no viewer filter). */
 export const CONVERSATION_HEADER = 'X-Recordare-Conversation';
 
 /** Largest message content Recordare accepts (UTF-8 bytes). */

@@ -104,7 +104,9 @@ peers in a local JSON file (`~/.honcho/openclaw-peers.json`). Docs: [Honcho memo
   Limits that matter for Recordare: the resolver gets **no session/conversation**, so it cannot set
   `X-Recordare-Conversation`; runs without a trusted sender (cron, Control UI owner, CLI) never get the server; the
   resolved transport is cached and revalidated at most every 5 min. → Static/requester MCP alone cannot satisfy
-  Recordare's viewer rule (INTEGRATION.md §4). Use plugin-registered tools instead (§5).
+  Recordare's viewer rule (INTEGRATION.md §4). Use plugin-registered tools instead (§5). *(Since D50 / WORK_PLAN 8.2
+  there is no viewer rule: recall works without a conversation; MCP writes from a client key still need one, so the
+  plugin tools remain the better route.)*
 
 ## 3. Identity: person, session, channel, groups
 `PluginHookAgentContext` (agent hooks) has: `agentId`, `sessionKey`, `sessionId`, `runId`, `channel` /

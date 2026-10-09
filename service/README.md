@@ -27,7 +27,7 @@ Checks — run all three before every commit (CI runs them): `npm run typecheck`
 | `src/db` | Data source, migrations (explicit SQL: enums, HNSW / GIN / partial indexes) |
 | `src/llm` | `LlmPort` + OpenAI-compatible and native Anthropic adapters, provider profiles (D27), per-call accounting |
 | `src/embedding`, `src/clock` | Embedding port (any OpenAI-compatible server), clock port |
-| `src/auth`, `src/admin`, `src/me` | Client API keys, personal tokens, admin API, owner resolution, viewer context; `GET / PATCH api/v1/me` |
+| `src/auth`, `src/admin`, `src/me` | Client API keys, personal tokens, admin API, owner resolution, conversation resolver; `GET / PATCH api/v1/me` |
 | `src/console` | Admin console, a static page served at `/admin` over the admin API |
 | `src/identity` | Identity entities |
 | `src/rawlog` | Layer 0: REST ingest (idempotent, always stores — the client holds the on/off switch, D50), edits and purges, raw-log search (full-text + vector) |

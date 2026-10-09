@@ -60,7 +60,7 @@ is test cost, not the product's.
    asks, do not actively mention these memories". → *full* integration pinned facts.
    *Improvement*: `only_topics` becomes the **disclosure-tier filter**, applied before ranking.
    Built: the memory context (`POST api/v1/context`, no LLM call) — relevance floors, per-kind caps, a character
-   budget, a "do not mention it otherwise" line, reads under the viewer rule; no fixed profile card by design; the
+   budget, a "do not mention it otherwise" line, the whole memory in every conversation (D50: the viewer rule is gone for now); no fixed profile card by design; the
    disclosure-tier filter waits for phase 3.
 8. *[open]* **Optional LLM re-pick** (`prompts/pick_related_profiles.py`): numbered compact list →
    `{reason, ids}`, max 10, "don't select duplicates". Opt-in only (+ latency, + cost).

@@ -3,7 +3,7 @@
 
 /**
  * Recall over MCP with the official SDK (streamable HTTP). Recordare fixes the owner when a session starts and resolves
- * the viewer context from the conversation header (docs/API.md §1), so a session belongs to one user AND one
+ * the conversation from its header (docs/API.md §1: evidence of writes), so a session belongs to one user AND one
  * conversation: both headers are bound here, in code — neither the LLM nor the user can change them. Sessions are
  * reused (bounded, least recently used closed first) and an expired one is re-opened once.
  */

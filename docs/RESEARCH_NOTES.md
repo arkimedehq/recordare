@@ -80,6 +80,9 @@ knowledge time (`recordedAt` / `expiredAt`); `corrects` (never true) distinct fr
 
 ## H2 — Disclosure-aware memory for a personal twin
 
+**Status: deferred (D50, owner 2026-10-09).** Answers use the whole memory in every conversation for now (WORK_PLAN
+8.2); privacy and disclosure come later (8.12). The research below stays as the starting point of that work.
+
 **Claim (narrowed).** Pre-context filtering by authenticated audience is published; what is open
 is the **combination** for a personal twin: graded social tiers + per-person grants, provenance
 of third-party confidences ("Marco told me X" → disclosable to owner and Marco only), label
@@ -121,8 +124,8 @@ Weak spot to measure: **write-time labelling accuracy** (the filter is only as g
 `source` of each memory (who told it, in which conversation, with which audience present);
 a `disclosure` label column (default `owner`) on episodes, facts and digests; derived artefacts
 keep the ids of their sources so labels can propagate. — Built in phase 1: `disclosure` (default `owner`) and
-`audience` columns; reads follow a viewer rule (what is said in a conversation others take part in does not leak to
-them). Tiers are not used yet (phase 3).
+`audience` columns; reads followed a viewer rule (what is said in a conversation others take part in did not leak to
+them) until D50 removed it (8.2) — the columns are still written. Tiers are not used yet (phase 3).
 
 ## H3 — Source monitoring: owner-lived vs twin-experienced
 

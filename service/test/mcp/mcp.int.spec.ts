@@ -75,21 +75,22 @@ describe('MCP endpoint', () => {
     await client.close();
   });
 
-  it('client keys see nothing without a conversation, and nothing in shared conversations', async () => {
-    const none = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a' });
-    expect(await search(none.client, { query: 'backup' })).toMatchObject({ fromChats: [], notes: ['nothing to show here'] });
-    await none.client.close();
-
-    const group = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', 'x-recordare-conversation': 'group-chat' });
-    expect(await search(group.client, { query: 'backup' })).toMatchObject({ fromChats: [] });
-    await group.client.close();
-
-    const own = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', 'x-recordare-conversation': 'nas-chat' });
-    expect(((await search(own.client, { query: 'backup NAS' }))['fromChats'] as unknown[]).length).toBeGreaterThan(0);
-    // Added viewers can only narrow.
-    const res = await own.client.callTool({ name: 'search_episodes', arguments: { query: 'backup' }, _meta: { recordare: { viewers: ['telegram:123'] } } });
-    expect(res.structuredContent).toMatchObject({ fromChats: [] });
-    await own.client.close();
+  it('answers with the whole memory in every conversation: none named, shared, unknown, extra viewers (D50)', async () => {
+    const found = async (headers: Record<string, string>, meta?: Record<string, unknown>) => {
+      const { client } = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', ...headers });
+      const res = await client.callTool({ name: 'search_episodes', arguments: { query: 'backup del NAS' }, ...(meta ? { _meta: meta } : {}) });
+      await client.close();
+      return ((res.structuredContent as Record<string, unknown>)['fromChats'] as Array<{ excerpt: string }>).map((h) => h.excerpt);
+    };
+    const nas = 'Come faccio un backup del NAS Synology su un disco esterno USB?';
+    expect(await found({})).toContain(nas);
+    expect(await found({ 'x-recordare-conversation': 'group-chat' })).toContain(nas);
+    expect(await found({ 'x-recordare-conversation': 'never-seen' })).toContain(nas);
+    // Extra viewers (the old narrowing header / _meta) are ignored. In nas-chat its message is the current turn, left out.
+    expect(await found({ 'x-recordare-conversation': 'group-chat', 'x-recordare-viewers': 'telegram:123' }, { recordare: { viewers: ['telegram:123'] } }))
+      .toContain(nas);
+    // Per-memory isolation stays: Elena's memory never shows up in Luca's.
+    expect((await found({ 'x-recordare-conversation': 'group-chat' })).some((e) => e.includes('Elena'))).toBe(false);
   });
 
   it('does not return the question being asked as a chat excerpt (the current turn of the conversation)', async () => {

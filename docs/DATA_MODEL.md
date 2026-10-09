@@ -49,13 +49,13 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 | `audience_unverified` | text[] | Display names of present participants without a verified identity (never used to disclose) |
 | `confidence_of` | uuid null (person id) | A third party's confidence ("Marco told me…"): at most owner + that person, unless granted (phase 3) |
 
-**Read rule, enforced in code in every read path from v1** (`API.md` §1 viewer context): rows are
-returned only if the viewer set `V` ⊆ `audience` and every viewer's tier ≥ `disclosure`. In phase 1
-there are no tiers yet, so effectively: **rows are returned only when the viewers are exactly the
-owner**; any other viewer set gets nothing (shared conversations see no diary). Derived rows take
-`audience = ∩ sources`, `disclosure = most restrictive source`; a derived row without sources fails
-closed. Missing and forbidden rows return the same "not found". The diary routes (`API.md` §4) are owner-direct: the
-reader is the owner in the host's UI, so they return the owner's rows without a viewer set.
+**Read rule: none for now (D50, WORK_PLAN 8.2, 2026-10-09).** Every answer uses the whole memory, in every
+conversation; `disclosure`, `audience` and `audience_unverified` are **still written** (recorded data for the later
+privacy / disclosure work, WORK_PLAN 8.12) but **no read path filters on them**. Per-memory isolation stays (every read
+is scoped to one `owner_id`). *Superseded (phase-1 rule)*: rows were returned only if the viewer set `V` ⊆ `audience`
+and every viewer's tier ≥ `disclosure` — with no tiers yet, only when the viewers were exactly the owner (shared
+conversations saw no diary); derived rows took `audience = ∩ sources`, `disclosure = most restrictive source` (still how
+they are written).
 
 **Time.** Dates with coarse precision are stored as the **start of the period in the owner's
 timezone** plus `date_precision` (day → local midnight, month → first day, year → 1 January);
@@ -162,7 +162,7 @@ the first four; 24 h retention.
 
 ### conversation_participants
 `conversation_id, person_id null, role enum (owner|assistant|other), display_name, ref text,
-joined_at` — source of every row's `audience` and of the viewer set for reads in this conversation.
+joined_at` — source of every row's `audience` (recorded; no read filters on it since D50).
 
 ### messages
 | Column | Type | Notes |

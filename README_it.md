@@ -69,10 +69,10 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
   persona o uno strumento (`author_role`). Registra anche la sua origine (`owner_lived`, `owner_told`,
   `assistant_stated`) e cita gli id dei messaggi di evidenza. L'affermazione di un'altra persona ("Giorgio dice che
   Sofia si trasferisce a Londra") è memorizzata come affermazione di quella persona, mai come fatto del proprietario.
-- **Contesto dello spettatore su ogni lettura.** Recordare stabilisce chi vedrà un risultato a partire dai partecipanti
-  alla conversazione; né il client né l'LLM possono dichiararlo. Nella fase 1 i ricordi vengono restituiti solo quando
-  lo spettatore è il proprietario. Gli elementi mancanti e quelli vietati appaiono uguali. Ogni ricordo memorizza già
-  il proprio pubblico e un'etichetta di divulgazione, quindi la divulgazione graduata (fase 3) non richiede migrazioni.
+- **Per ora tutta la memoria in ogni conversazione** (D50). Le risposte usano l'intera memoria, anche nelle chat di
+  gruppo e nelle conversazioni a cui partecipano altre persone: privacy e riservatezza verranno dopo. Ogni ricordo
+  memorizza già il proprio pubblico e un'etichetta di riservatezza, quindi quel lavoro non richiede migrazioni. Una
+  memoria non vede mai i dati di un'altra.
 - **L'interruttore è del client** (D50). Recordare non ha un flag di consenso: ogni memoria conserva ciò che il suo
   client invia, e la piattaforma client decide se inviare (un interruttore della memoria per utente). Informare le
   persone attorno all'agente — e l'eventuale base giuridica, per esempio secondo il GDPR — è compito di chi lo installa.

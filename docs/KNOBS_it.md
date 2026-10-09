@@ -115,7 +115,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `RECORDARE_OUTBOX_POLL_MS` | `.env` di Arkimede | 3000 | Ogni quanto il worker dell'outbox invia |
 | `episodicMemoryEnabled` | Impostazioni → Memoria, per utente | off | L'opt-in della piattaforma, l'unico interruttore acceso / spento (D50): finché è spento non si invia nulla e non viene creata nessuna persona |
 | Tipo di memoria | Impostazioni → Memoria, per utente | personale | Personale / condivisa (`PATCH /me {kind}`, solo a memoria vuota) |
-| Contesto di memoria | Agenti → agente, per agente | off | Prima di ogni risposta, i ricordi pertinenti di Recordare (`POST api/v1/context`) in fondo al prompt (WORK_PLAN 5.7) · dev set: nessun danno, +3–7 pt; con il prompt dell'agente vocale chiamate ai tool da 9 a 5 su 15. Scelta del client: Recordare serve il blocco quando glielo si chiede (vale la regola del lettore) |
+| Contesto di memoria | Agenti → agente, per agente | off | Prima di ogni risposta, i ricordi pertinenti di Recordare (`POST api/v1/context`) in fondo al prompt (WORK_PLAN 5.7) · dev set: nessun danno, +3–7 pt; con il prompt dell'agente vocale chiamate ai tool da 9 a 5 su 15. Scelta del client: Recordare serve il blocco quando glielo si chiede, da tutta la memoria in ogni conversazione (D50) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | `.env` di Arkimede | off | Tracce OpenTelemetry GenAI verso l'atlas (solo metadati) |
 | Politica di consegna della libreria | `packages/client` (`DEFAULT_DELIVERY`) | 12 tentativi, 5 s → 1 h | Tentativi dell'outbox (jitter, `Retry-After`), poi parcheggio |
 

@@ -13,7 +13,8 @@ own [Recordare](../../README.md) service — the **full** client level:
   the person and the conversation — neither the model nor the user can point them elsewhere), with the schemas the
   service publishes (`TOOLS` of the client library). `log_episode` is left out: the conversation is already captured.
 - **Group chats**: the turns of known people are captured, with the other members' messages as context (role `other`).
-  Recordare shows memories only when the viewers are exactly the owner, so recall stays empty in groups.
+  Recall works in groups too: Recordare answers with the whole memory in every conversation (D50: no viewer filter
+  for now — privacy and disclosure come later), so what the agent remembers can surface in front of the group.
 
 It does not take OpenClaw's memory slot: `memory-core` (`MEMORY.md`, `memory_search`) keeps working beside it. Recordare
 stores every turn the plugin sends (it has no consent flag, D50). The plugin never blocks or breaks a turn: every call

@@ -3,13 +3,13 @@
 
 /**
  * MCP tools (docs/API.md §3). Schemas stay in the provider-neutral subset (flat objects, enums,
- * plain strings — D27). Reads follow the viewer rule (phase 1: only when the viewers are exactly
- * the owner); writes need a resolvable context (owner token or an ingested conversation).
+ * plain strings — D27). Reads use the whole memory in every conversation (D50: no viewer filter for now); writes
+ * need a resolvable conversation (an ingested one, or none with a personal token) to bind their evidence.
  */
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { type Principal } from '../auth/principal';
-import { CONVERSATION_HEADER, VIEWERS_HEADER, type ViewerContext, type ViewerContextService } from '../auth/viewer-context.service';
+import { CONVERSATION_HEADER, type ConversationResolver, type ResolvedConversation } from '../auth/conversation-resolver.service';
 import { localDate } from '../engine/time';
 import { type ClockPort } from '../clock/clock.port';
 import { type EpisodeSearchService } from '../recall/episode-search.service';
@@ -20,7 +20,7 @@ import { resolvePeriod } from '../recall/period';
 export interface ToolDeps {
   principal: Principal;
   ownerId: string;
-  viewers: ViewerContextService;
+  conversations: ConversationResolver;
   episodes: EpisodeSearchService;
   memory: MemorySearchService;
   writes: MemoryWriteService;
@@ -37,7 +37,6 @@ function header(h: Headers | undefined, name: string): string | undefined {
   return Array.isArray(v) ? v[0] : v;
 }
 
-const NOTHING = 'nothing to show here';
 export const NOW_HEADER = 'x-recordare-now';
 const precision = z.enum(['day', 'month', 'year', 'approximate']).optional();
 /** ISO date (YYYY-MM-DD) or month (YYYY-MM): anything else is rejected with a clear message. */
@@ -46,16 +45,12 @@ const isoDay = z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, 'use an ISO date YYYY-
 export function registerTools(server: McpServer, deps: ToolDeps): void {
   const clientId = deps.principal.kind === 'admin' ? null : deps.principal.clientId;
 
-  async function context(extra: Extra): Promise<ViewerContext> {
+  async function context(extra: Extra): Promise<ResolvedConversation> {
     const headers = extra.requestInfo?.headers as Headers | undefined;
-    const meta = (extra._meta ?? {}) as { recordare?: { conversation?: string; viewers?: string[] } };
-    return deps.viewers.resolve(
-      deps.principal, deps.ownerId,
-      header(headers, CONVERSATION_HEADER) ?? meta.recordare?.conversation,
-      [header(headers, VIEWERS_HEADER), ...(meta.recordare?.viewers ?? [])].filter(Boolean).join(','),
-    );
+    const meta = (extra._meta ?? {}) as { recordare?: { conversation?: string } };
+    return deps.conversations.resolve(deps.principal, deps.ownerId, header(headers, CONVERSATION_HEADER) ?? meta.recordare?.conversation);
   }
-  const writable = (ctx: ViewerContext) => ctx.source !== 'none' && clientId !== null;
+  const writable = (ctx: ResolvedConversation) => ctx.source !== 'none' && clientId !== null;
   /** "Now" of the request: the clock, or X-Recordare-Now when the deployment allows it (eval / tests). */
   function now(extra: Extra): Date {
     const v = deps.allowClockOverride ? header(extra.requestInfo?.headers as Headers | undefined, NOW_HEADER) : undefined;
@@ -80,7 +75,6 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    if (!ctx.ownerOnly) return result({ episodes: [], claims: [], outsidePeriod: [], digests: [], fromChats: [], notes: [NOTHING] });
     return result(await deps.episodes.search(deps.ownerId, clientId, {
       conversationId: ctx.conversationId, query: args.query, from: args.from, to: args.to, mode: args.mode, includePlans: args.include_plans, limit: args.limit,
     }, now(extra)) as unknown as Record<string, unknown>);
@@ -97,7 +91,6 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    if (!ctx.ownerOnly) return result({ notes: [], facts: [], notes_info: [NOTHING] });
     return result(await deps.memory.search(deps.ownerId, { conversationId: ctx.conversationId, query: args.query, asOf: args.as_of, includePending: args.include_pending }, now(extra)) as unknown as Record<string, unknown>);
   });
 

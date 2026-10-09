@@ -5,7 +5,7 @@
 
 Every request carries the credential (`Authorization: Bearer rp_…|rk_…`), the Recordare user with a client key
 (`X-Recordare-User`) and the conversation (`X-Recordare-Conversation`) — the headers Recordare resolves the owner and
-the viewers from (docs/API.md §1). Errors are raised to the caller (the provider logs and swallows them).
+the conversation from (docs/API.md §1). Errors are raised to the caller (the provider logs and swallows them).
 """
 
 from __future__ import annotations

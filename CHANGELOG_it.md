@@ -30,6 +30,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   admin (con `episodicEnabledAt` e `waitingForConsentSince`); spariscono l'interruttore del consenso e l'etichetta "in
   attesa del consenso" della console; le scritture MCP non rispondono più "memoria spenta". Libreria client: rimossi
   `ConsentState`, `PersonDirectory.knownOff()` e `status()`, `MeResponse.episodicEnabled` e `IngestResult.stored`.
+- **Niente più filtro su chi legge** (D50, WORK_PLAN 8.2). Il richiamo MCP (`search_episodes`, `search_memory`) e il
+  contesto di memoria (`POST api/v1/context`) rispondono con tutta la memoria in ogni conversazione — conversazioni
+  condivise e di gruppo, conversazioni non ancora salvate, nessuna conversazione, lettori aggiunti — invece di niente;
+  privacy e riservatezza verranno dopo. `X-Recordare-Viewers` / `_meta.recordare.viewers` sono ignorati e l'avviso
+  `"nothing to show here"` non c'è più. `audience` / `disclosure` continuano a essere registrati; una memoria non vede
+  comunque mai i dati di un'altra. L'header della conversazione è ancora risolto: le scritture MCP vi legano le loro prove.
 
 ### Corretto
 - Un fatto breve dentro un messaggio lungo della persona conta come sue parole; "il proprietario" viene sostituito dal
