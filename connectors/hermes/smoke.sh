@@ -10,9 +10,10 @@
 #      at exit ends the conversation (`…/end`) → waits for the extracted episode;
 #   4. turn 2 (new session) asks about it → the answer comes from the pre-turn memory context (recall_log
 #      `memory_context`); turn 3 asks for recordare_search_episodes (recall_log `search_episodes`);
-#   5. gateway path without an LLM: a client key (rk_…) and a second person bound to the client user `alice`; Hermes'
-#      own MemoryManager drives the provider as a Telegram gateway would (user `4242` → alias `alice`): turn start,
-#      pre-turn context, recordare_remember, sync, session end; then a new session recalls the note;
+#   5. gateway path without an LLM: a client key (rk_…) and the agent's memory, the client user `alice` (memory per
+#      agent, D50); Hermes' own MemoryManager drives the provider as a Telegram gateway would (user `4242` = the account
+#      holder, RECORDARE_SELF_IDS): turn start, pre-turn context, recordare_remember, sync, session end; then a new
+#      session recalls the note; another Telegram user (`999`) is stored in the same memory as a participant (contact);
 #   6. deletes the secrets it wrote (the test persons stay, with their memories, for inspection).
 # Secrets are read from files and never printed. Costs 3 short LLM turns + Recordare's extraction.
 # SKIP_LLM=1 runs only step 5.
@@ -108,7 +109,7 @@ GCLIENT="$(admin clients '{"name":"hermes-gateway-smoke","kind":"platform"}' | j
 GPERSON="$(admin owners '{"displayName":"Hermes Gateway Smoke"}' | json "['personId']")"
 admin identities "{\"personId\":\"$GPERSON\",\"kind\":\"account\",\"clientId\":\"$GCLIENT\",\"externalId\":\"alice\"}" >/dev/null
 KEY="$(admin "clients/$GCLIENT/keys" '{"scopes":["mcp","ingest","read"]}' | json "['key']")"
-printf 'RECORDARE_URL=%s\nRECORDARE_API_KEY=%s\nRECORDARE_USER_ALIASES={"telegram:4242":"alice"}\n' "$URL" "$KEY" > "$HH/.env"
+printf 'RECORDARE_URL=%s\nRECORDARE_API_KEY=%s\nRECORDARE_USER=alice\nRECORDARE_SELF_IDS=telegram:4242\n' "$URL" "$KEY" > "$HH/.env"
 unset KEY
 echo "person $GPERSON"
 PY="$(dirname "$HERMES_BIN")/python"
@@ -120,11 +121,11 @@ os.environ.update({k: v for k, v in dotenv_values(Path(os.environ["HERMES_HOME"]
 from agent.memory_manager import MemoryManager
 from plugins.memory import load_memory_provider
 
-def session(sid, user_id):
+def session(sid, user_id, name="Alice"):
     mm = MemoryManager()
     mm.add_provider(load_memory_provider("recordare"))
     mm.initialize_all(session_id=sid, platform="telegram", hermes_home=os.environ["HERMES_HOME"], agent_context="primary",
-                      user_id=user_id, user_name="Alice", chat_type="dm", gateway_session_key=f"agent:main:telegram:dm:{user_id}")
+                      user_id=user_id, user_name=name, chat_type="dm", gateway_session_key=f"agent:main:telegram:dm:{user_id}")
     return mm
 
 mm = session("gw-1", "4242")
@@ -143,10 +144,11 @@ print("context after:", mm.prefetch_all(q))
 print("search_memory:", mm.handle_tool_call("recordare_search_memory", {"query": "allergie"})[:300])
 mm.shutdown_all()
 
-other = session("gw-3", "999")  # not in the alias map: unknown to Recordare, nothing stored
-other.on_turn_start(1, "Ciao, sono un altro utente che scrive al bot.")
+other = session("gw-3", "999", "Bruno")  # someone else: a participant of the same memory (a contact)
+other.on_turn_start(1, "Ciao, sono Bruno, un amico di Alice.", author_id="999", author_name="Bruno")
+other.prefetch_all("Ciao, sono Bruno, un amico di Alice.")
 other.shutdown_all()
 PYEOF
 sql "select c.external_id || ' | ' || m.role || ': ' || left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.owner_id = '$GPERSON' order by m.sent_at"
 sql "select 'note: ' || content from notes where owner_id = '$GPERSON'"
-sql "select count(*) || ' conversations of telegram:999' from conversations where external_id like 'hermes:agent:main:telegram:dm:999/%'"
+sql "select m.author_kind || ' ' || coalesce(p.display_name, '-') || ': ' || left(m.content, 50) from messages m left join persons p on p.id = m.author_person_id where m.owner_id = '$GPERSON' and m.role <> 'assistant' order by m.sent_at"

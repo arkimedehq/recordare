@@ -103,9 +103,14 @@ and **Codex** (installer) with shared capture hooks, **OpenClaw** (native plugin
 and an **OpenAI-compatible memory proxy** (AnythingLLM, Open WebUI, LibreChat). Each one captures the turns, adds the
 memory context before each turn (`POST api/v1/context`, with `ingest` where the turn is stored in the same call), ends
 the conversation with `…/end` and, except the proxy, exposes the MCP tools (as `recordare_*` in OpenClaw and Hermes).
-Credentials: a **personal token** with `mcp`, `ingest`, `read` for one person (client of kind `mcp_client`), or a
-**client key** with the same scopes for a gateway serving several people (OpenClaw, Hermes, the proxy — which needs
-only `ingest` + `read` — each person named with `X-Recordare-User`).
+**One memory per agent** (D50): an agent platform's agent has one memory — a **personal token** with `mcp`, `ingest`,
+`read` (client of kind `mcp_client`), or a **client key** with the same scopes (the proxy needs only `ingest` + `read`)
+and the agent's account in its settings (`X-Recordare-User`). The people who talk to the agent (OpenClaw senders, Hermes
+gateway users, the proxy's platform users) are **participants** with an identity, recognised inside that memory as its
+contacts, and their turns are sent as role `other` with their author; the account holder (listed in each connector's
+settings) is the memory's "I". One memory per person stays a setting (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`,
+`MEMORY_PER=user`). Claude Code and Codex: the personal token's memory. Mode and gender of a memory are set by the
+admin or with `PATCH api/v1/me`, not by the connectors.
 
 ## 5. Observability (optional)
 Recordare Atlas shows Recordare's own work from its telemetry stream; your agents (LLM calls, tools) appear when you

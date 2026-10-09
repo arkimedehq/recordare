@@ -115,10 +115,16 @@ claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --head
 Agent** (memory provider), e un **proxy di memoria compatibile OpenAI** (AnythingLLM, Open WebUI, LibreChat). Ognuno
 cattura i turni, aggiunge il contesto di memoria prima di ogni turno (`POST api/v1/context`, con `ingest` dove il turno
 viene salvato nella stessa chiamata), chiude la conversazione con `…/end` e, tranne il proxy, espone gli strumenti MCP
-(come `recordare_*` in OpenClaw e Hermes). Credenziali: un **token personale** con `mcp`, `ingest`, `read` per una sola
-persona (client di tipo `mcp_client`), oppure una **chiave client** con gli stessi scope per un gateway che serve più
-persone (OpenClaw, Hermes, il proxy — a cui bastano `ingest` + `read` — ogni persona indicata con
-`X-Recordare-User`).
+(come `recordare_*` in OpenClaw e Hermes). **Una memoria per agente** (D50): l'agente di una
+piattaforma ha una sola memoria — un **token personale** con `mcp`, `ingest`, `read` (client di tipo `mcp_client`),
+oppure una **chiave client** con gli stessi scope (al proxy bastano `ingest` + `read`) e l'account dell'agente nelle sue
+impostazioni (`X-Recordare-User`). Le persone che parlano con l'agente (i mittenti di OpenClaw, gli utenti del gateway
+di Hermes, gli utenti della piattaforma del proxy) sono **partecipanti** con un'identità, riconosciuti dentro quella
+memoria come suoi contatti, e i loro turni sono inviati con ruolo `other` e il loro autore; il titolare dell'account
+(indicato nelle impostazioni di ciascun connettore) è l'"io" della memoria. Una memoria per persona resta
+un'impostazione (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`, `MEMORY_PER=user`). Claude Code e Codex: la memoria
+del token personale. Modalità e genere di una memoria li imposta l'amministratore o `PATCH api/v1/me`, non i
+connettori.
 
 ## 5. Osservabilità (opzionale)
 Recordare Atlas mostra il lavoro di Recordare stesso dal suo flusso di telemetria; i propri agenti (chiamate LLM,

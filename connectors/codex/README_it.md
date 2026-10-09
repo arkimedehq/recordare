@@ -15,10 +15,16 @@ episodica a lungo termine tenuta dal tuo servizio [Recordare](../../README_it.md
 Recordare conserva ogni turno che gli hook inviano (non ha un flag di consenso, D50): per smettere, disattivare il
 plugin. Gli hook non bloccano mai Codex: se Recordare non risponde, il turno prosegue senza memoria.
 
+**Di chi è la memoria** (D50): il token personale apre una sola memoria — quella del tuo agente, in cui tu sei l'"io"
+(una memoria `personal`: sei insieme il suo utente e il suo agente). La stessa
+memoria può servire anche i tuoi altri agenti (un altro token o client). La modalità e il genere della sua prima persona
+li imposta l'amministratore (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`; `gender` `masculine` per default,
+`feminine`, `neutral`); il plugin non ha impostazioni per questi valori.
+
 ## Installazione
 
 1. Chiedi all'amministratore di Recordare un **token personale** con gli scope `mcp`, `ingest` e `read` (console admin →
-   la tua persona → token, client di tipo `mcp_client`; oppure `POST api/v1/admin/owners/{id}/tokens`).
+   la tua memoria → token, client di tipo `mcp_client`; oppure `POST api/v1/admin/owners/{id}/tokens`).
 2. Avvia l'installer (serve Node.js ≥ 18 nel PATH; niente sudo). Da una copia del repository:
    ```sh
    connectors/codex/install.sh --url http://localhost:8090

@@ -167,7 +167,7 @@ export class Memory {
   }
 
   // ── Internals ──────────────────────────────────────────────────────────────────────────────────────────────────
-  /** With a personal token the token is the person: no user header. */
+  /** With a personal token the token is the memory: no user header. */
   private headerUser(user: string): string {
     return this.cfg.personal ? '' : user;
   }
@@ -180,13 +180,17 @@ export class Memory {
       participants: [
         { ref: 'owner', role: 'owner' },
         { ref: 'assistant', role: 'assistant', displayName: turn.model || 'assistant' },
+        // A platform user who is not the account holder: a participant Recordare links to a contact of the memory.
+        ...(turn.identity.participant ? [{ ...turn.identity.participant, role: 'other' as const }] : []),
       ],
     };
   }
 
+  /** The person's message: `user` for the account holder; `other` with its author for anyone else (kept as theirs). */
   private userMessage(turn: Turn): IngestMessage {
+    const author = turn.identity.participant;
     return {
-      externalId: userMessageId(turn), role: 'user', authorRef: 'owner',
+      externalId: userMessageId(turn), role: author ? 'other' : 'user', authorRef: author ? author.ref : 'owner',
       content: clipUtf8(turn.text), sentAt: new Date(this.now()).toISOString(),
     };
   }

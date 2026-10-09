@@ -50,7 +50,11 @@ declare module 'openclaw/plugin-sdk/plugin-entry' {
     reason?: 'new' | 'reset' | 'idle' | 'daily' | 'compaction' | 'deleted' | 'shutdown' | 'restart' | 'unknown';
   }
   export interface MessageContext { channelId: string; accountId?: string; conversationId?: string; sessionKey?: string; messageId?: string; senderId?: string }
-  export interface MessageReceivedEvent { from: string; content: string; timestamp?: number; messageId?: string; senderId?: string; sessionKey?: string }
+  export interface MessageReceivedEvent {
+    from: string; content: string; timestamp?: number; messageId?: string; senderId?: string; sessionKey?: string;
+    /** The channel's facts about the message (OpenClaw fills `senderName` / `senderUsername` when the channel knows them). */
+    metadata?: Record<string, unknown>;
+  }
 
   export interface HookMap {
     before_prompt_build: (event: BeforePromptBuildEvent, ctx: AgentContext) => Promise<BeforePromptBuildResult | void> | BeforePromptBuildResult | void;

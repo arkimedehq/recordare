@@ -49,6 +49,19 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `perception`, `ambient`. The console shows mode, gender, contacts and identity kinds. Client library: `MemoryKind` →
   `MemoryMode` + `MemoryGender`, `Me.kind` → `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` →
   `mode`, `IngestMessage.own`, the new sources. The extraction prompts and their inputs are unchanged.
+- **Connectors: one memory per agent, people as participants** (D50) — **breaking for multi-person set-ups**. OpenClaw:
+  the Gateway's agent has one memory (a personal token, or a client key with `defaultUser`); every sender is a
+  participant with the channel identity `<channel>:<senderId>` and their channel name, the account holder is listed in
+  `selfSenders` (CLI and Control UI turns are theirs); the `users` map is now `memoryPer: "user"`. Hermes Agent: one
+  memory for the agent (a personal token, or a client key with a fixed `RECORDARE_USER`); gateway users and each turn's
+  author in shared sessions are participants (`<platform>:<user id>`, their name), the account holder in
+  `RECORDARE_SELF_IDS`; per-user memories with `RECORDARE_MEMORY_PER=user`, the alias map gives a person one id across
+  platforms. OpenAI-compatible proxy: one memory per proxy (`RECORDARE_USER` or the personal token), platform users as
+  participants with their names (Open WebUI user name, LibreChat `X-Recordare-User-Name`, AnythingLLM marker `name=`),
+  the account holder in `SELF_USERS`; `MEMORY_PER=workspace` (one memory per AnythingLLM workspace) or `user` (the
+  previous behaviour). Other people's turns are sent as role `other` with their author, so they are never read as the
+  account holder's words. Claude Code / Codex: unchanged (the personal token's memory), wording only. Upgrading with a
+  per-person mapping: set `memoryPer: "user"` / `RECORDARE_MEMORY_PER=user` / `MEMORY_PER=user`.
 
 ### Fixed
 - A short fact inside a long message of the person counts as their words; "il proprietario" is replaced by the name.

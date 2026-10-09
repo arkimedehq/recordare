@@ -11,8 +11,14 @@ platform ──► proxy ──► upstream provider (any OpenAI-compatible API)
                └──► Recordare: POST api/v1/context (stores the person's message) → (answer) → ingest the answer
 ```
 
+**One memory per proxy** (D50, default `MEMORY_PER=instance`): the agent behind the proxy has one memory; the
+platform's users who chat with it are **participants** recognised inside it (each becomes a contact of the memory,
+named after them), and the account holder (`SELF_USERS`) is its "I". One memory per AnythingLLM workspace
+(`MEMORY_PER=workspace`) or per platform user (`MEMORY_PER=user`, the behaviour before D50) are a setting away.
+
 Per `POST /v1/chat/completions` (streamed or not):
-1. **Who**: an identity resolver finds the person and the conversation (below). None ⇒ pure pass-through.
+1. **Who**: an identity resolver finds the person and the conversation (below), then the memory. None ⇒ pure
+   pass-through.
 2. **Before the answer**: one call (`POST api/v1/context` with `ingest`) stores the person's last message and returns
    the memories relevant to it as a fenced `<memory-context>` block, appended to the end of the first system message (a
    system message is added when there is none). With `RECALL=false` the message is stored with a plain
@@ -39,17 +45,22 @@ docker build -f connectors/openai-proxy/Dockerfile -t recordare-openai-proxy .
 
 ### Recordare set-up (admin, once)
 ```sh
-# a client for the platform, its key; persons are created on first use (autoProvision)
+# a client for the platform, its key; the proxy's memory (RECORDARE_USER) is created on first use (autoProvision)
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"name":"AnythingLLM","kind":"platform","autoProvision":true}' $RECORDARE_URL/api/v1/admin/clients
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"scopes":["ingest","read"]}' $RECORDARE_URL/api/v1/admin/clients/<client id>/keys
 ```
-Recordare has no consent flag (D50): an auto-provisioned person's turns are stored from the first request; to stop,
-turn `CAPTURE` / `RECALL` off or remove the proxy. To attach the platform's user to an existing person instead, bind the identity:
-`POST api/v1/admin/identities {kind: "account", personId, clientId, externalId: "anythingllm:2"}` (the external id
-is the Recordare user the proxy resolves, see Identity). A single-person install can use a **personal token** (`rp_…`)
-instead of a client key: every resolved request is then that person.
+Recordare has no consent flag (D50): turns are stored from the first request; to stop, turn `CAPTURE` / `RECALL` off
+or remove the proxy. To use an existing memory as the proxy's, bind its account:
+`POST api/v1/admin/identities {kind: "account", personId, clientId, externalId: "<RECORDARE_USER>"}`, or use a
+**personal token** (`rp_…`) instead of a client key: every resolved request then goes to the token's memory.
+
+The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`) or, with
+the client key, by `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`): `personal` (one person's assistant: they
+are "I", what arrives undeclared is theirs) or `entity` (a family, team or office assistant: what arrives undeclared is
+"someone"'s); `gender` `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The
+proxy has no setting for them.
 
 ### Configuration (environment)
 
@@ -59,8 +70,11 @@ instead of a client key: every resolved request is then that person.
 | `UPSTREAM_API_KEY` | — | Sent upstream as `Authorization: Bearer …`. Unset: the caller's `Authorization` is passed through (the platform keeps the provider key) |
 | `PROXY_API_KEY` | — | Callers must present it as their bearer key; needs `UPSTREAM_API_KEY` |
 | `RECORDARE_URL`, `RECORDARE_API_KEY` | — | Recordare and a client key (`rk_…`, scopes `ingest` + `read`) or a personal token (`rp_…`). Unset: plain proxy |
+| `MEMORY_PER` | `instance` | `instance`: one memory for the proxy, platform users are participants of it. `workspace`: one memory per AnythingLLM workspace (`anythingllm:ws:<id>`, or mapped with `USER_MAP`; other platforms: the instance's). `user`: one memory per platform user |
+| `RECORDARE_USER` | — | Client key, `instance` / `workspace`: the proxy's Recordare account (its memory). Without it nothing is remembered (a warning at start) |
+| `SELF_USERS` | — | `instance` / `workspace`: comma-separated platform users who are the account holder — the memory's "I" (`openwebui:<uuid>`, `anythingllm:2`, the bare generic id, or their `USER_MAP` id). Everyone else is a participant |
 | `RESOLVERS` | `generic,openwebui,anythingllm` | Identity resolvers, in order (the first that finds a user wins) |
-| `USER_MAP` | `{}` | JSON alias map: `{"anythingllm:2":"andrea","openwebui:<uuid>":"andrea"}` (generic headers: the bare id) |
+| `USER_MAP` | `{}` | JSON alias map: `{"anythingllm:2":"andrea","openwebui:<uuid>":"andrea"}` (generic headers: the bare id) — `user`: their Recordare user; otherwise their participant id, one contact across platforms |
 | `USER_MAP_ONLY` | `false` | Only mapped users are remembered; the others pass through |
 | `DEFAULT_USER` | — | AnythingLLM: the user when the marker's user is not expanded (single-user mode: `[User ID]`) |
 | `OPENWEBUI_JWT_SECRET` | — | Open WebUI JWT mode (verify `X-OpenWebUI-User-Jwt`, HS256); plain user headers are then ignored |
@@ -79,23 +93,38 @@ A request is remembered only when a resolver finds a person; otherwise it is for
 come from the **platform's admin configuration**; user-typed text is never read for identity (a marker in a user
 message is ignored).
 
-| Resolver | Reads | Recordare user | Conversation |
-|---|---|---|---|
-| `generic` | `X-Recordare-User`, `X-Recordare-Conversation`, `X-Recordare-Message` (the person's message id, optional) | the header value | the header value |
-| `openwebui` | `X-OpenWebUI-User-Id`, `X-OpenWebUI-Chat-Id` (or the signed `X-OpenWebUI-User-Jwt`, claim `sub`) | `openwebui:<id>` | `openwebui:<chat id>` |
-| `anythingllm` | the marker `[[recordare user=… ws=…]]` in the **first system message** | `anythingllm:<user>` | `anythingllm:<ws>:<user>:<day>` |
+| Resolver | Reads | Person id | Name | Conversation |
+|---|---|---|---|---|
+| `generic` | `X-Recordare-User`, `X-Recordare-Conversation`, `X-Recordare-Message` (the person's message id, optional), `X-Recordare-User-Name` (optional) | the header value | `X-Recordare-User-Name` | the header value |
+| `openwebui` | `X-OpenWebUI-User-Id`, `X-OpenWebUI-User-Name`, `X-OpenWebUI-Chat-Id` (or the signed `X-OpenWebUI-User-Jwt`, claims `sub`, `name`) | `openwebui:<id>` | its name | `openwebui:<chat id>` |
+| `anythingllm` | the marker `[[recordare user=… name="…" ws=…]]` in the **first system message** | `anythingllm:<user>` | `name` | `anythingllm:<ws>:<user>:<day>` |
 
-All mapped through `USER_MAP`. Unexpanded placeholders (`{{…}}`, `[User ID]`) and values like `null` / `new` count as
-missing. Without a conversation id the conversation is **one per user (and workspace) and day**; identity headers
+The person id goes through `USER_MAP`. Then the memory (`MEMORY_PER`):
+- **`instance`** (default): the memory is `RECORDARE_USER` (or the personal token's). A person in `SELF_USERS` is the
+  account holder: message `user`, participant `owner`. Anyone else is a participant with the identity
+  `{externalUserId: <person id>}` and their name, message `other` with that author: Recordare links it to a contact of
+  the memory (created on first sight), so what they say about themselves stays theirs. Recordare answers with the whole
+  memory in every conversation (D50): what one person told the assistant can come up with another; whoever runs the
+  platform tells its users.
+- **`workspace`**: as `instance`, but each AnythingLLM workspace is its own memory (`anythingllm:ws:<ws id>`, or the
+  `USER_MAP` value of that key) — e.g. a family workspace and a work workspace; Open WebUI / LibreChat requests use
+  `RECORDARE_USER`.
+- **`user`**: the person id is the Recordare user — one memory per platform user, each its "I" (the behaviour before
+  D50; set it when upgrading to keep memories split per person).
+
+Unexpanded placeholders (`{{…}}`, `[User ID]`, `{user.name}`) and values like `null` / `new` count as missing.
+Without a conversation id the conversation is **one per user (and workspace) and day**; identity headers
 (`X-Recordare-*`, `X-OpenWebUI-*`) are never sent upstream, and markers are removed from every system message.
 
 ### AnythingLLM (v1.17)
 1. LLM provider **Generic OpenAI**: base URL `http://recordare-proxy:8788/v1`, API key = `PROXY_API_KEY` (or the
    provider key when the proxy passes it through), the model name of the upstream, its context window.
 2. In each workspace's **system prompt**, add (anywhere, it is removed before the provider sees it):
-   `[[recordare user={user.id} ws={workspace.id}]]`. AnythingLLM expands the variables for normal and agent chats.
+   `[[recordare user={user.id} name="{user.name}" ws={workspace.id}]]`. AnythingLLM expands the variables for normal
+   and agent chats.
    Multi-user mode gives each person their id (`anythingllm:<id>`); in single-user mode `{user.id}` stays
-   `[User ID]` — set `DEFAULT_USER`, or write a literal user in the marker.
+   `[User ID]` — set `DEFAULT_USER`, or write a literal user in the marker (and list `anythingllm:<that user>` in
+   `SELF_USERS` when it is the account holder).
 3. Turn off AnythingLLM's own memories (two memories feeding one prompt). Its background LLM calls (memory extraction,
    thread names, …) carry no marker and pass through.
 
@@ -126,6 +155,7 @@ endpoints:
         X-Recordare-User: "{{LIBRECHAT_USER_ID}}"
         X-Recordare-Conversation: "librechat:{{LIBRECHAT_BODY_CONVERSATIONID}}"
         X-Recordare-Message: "{{LIBRECHAT_BODY_MESSAGEID}}"
+        X-Recordare-User-Name: "{{LIBRECHAT_USER_NAME}}"
 ```
 Title requests (`… title for the conversation …`) are skipped by a built-in pattern; add others with `SKIP_PATTERNS`.
 

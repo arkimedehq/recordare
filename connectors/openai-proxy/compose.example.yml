@@ -15,6 +15,9 @@ services:
       PROXY_API_KEY: ${PROXY_API_KEY:-}                # optional: the key the platform must present
       RECORDARE_URL: http://recordare:8080             # or http://host.docker.internal:8080
       RECORDARE_API_KEY: ${RECORDARE_API_KEY}          # rk_… (client key) or rp_… (personal token)
+      RECORDARE_USER: my-assistant                     # client key: the proxy's one memory (D50)
+      # SELF_USERS: anythingllm:1                      # the account holder (the memory's "I"); others are participants
+      # MEMORY_PER: workspace                          # or user: one memory per platform user (before D50)
       TZ: Europe/Rome
       # USER_MAP: '{"anythingllm:1":"andrea"}'
       # END_IDLE_SECONDS: "600"

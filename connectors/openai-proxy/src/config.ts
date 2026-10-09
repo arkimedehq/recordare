@@ -4,6 +4,13 @@
 /** The proxy's configuration, from the environment (README → Configuration). */
 
 export type ResolverName = 'generic' | 'openwebui' | 'anythingllm';
+/**
+ * Which memory a request goes to (D50). `instance` (default): one memory for the proxy (`RECORDARE_USER`, or the
+ * personal token's), the platform's users are participants recognised inside it; `workspace`: one memory per
+ * AnythingLLM workspace (other platforms: the instance's); `user`: one memory per platform user.
+ */
+export type MemoryPer = 'instance' | 'workspace' | 'user';
+const MEMORY_PER: MemoryPer[] = ['instance', 'workspace', 'user'];
 
 export interface ProxyConfig {
   port: number;
@@ -15,13 +22,23 @@ export interface ProxyConfig {
   proxyApiKey?: string;
   /** Recordare; unset = a plain pass-through proxy (nothing remembered). */
   recordareUrl?: string;
-  /** A client key (`rk_…`, several people, `X-Recordare-User`) or a personal token (`rp_…`, one person). */
+  /** A client key (`rk_…`, `X-Recordare-User`) or a personal token (`rp_…`, one memory). */
   recordareApiKey?: string;
   /** True for a personal token. */
   personal: boolean;
+  /** Which memory a request goes to. */
+  memoryPer: MemoryPer;
+  /** `instance` with a client key: the proxy's Recordare account (the memory's client user id). */
+  recordareUser?: string;
+  /** The platform users (`"<platform>:<id>"`, the bare id for generic headers, or their mapped id) who are the account holder. */
+  selfUsers: string[];
   /** Identity resolvers, tried in this order. */
   resolvers: ResolverName[];
-  /** `"<platform>:<platform user id>"` (or the bare id for generic headers) → Recordare user. */
+  /**
+   * `"<platform>:<platform user id>"` (or the bare id for generic headers) → the person's id: their Recordare user
+   * (`user`), or their participant id in the memory (`instance` / `workspace`: one id across platforms). `workspace`
+   * also maps `"anythingllm:ws:<workspace id>"` → the workspace's Recordare user.
+   */
   userMap: Record<string, string>;
   /** Only mapped users are remembered. */
   mapOnly: boolean;
@@ -82,6 +99,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ProxyConfig {
   const recordareApiKey = str(env.RECORDARE_API_KEY);
   const resolvers = (str(env.RESOLVERS) ?? RESOLVERS.join(',')).split(',').map((s) => s.trim()).filter(Boolean);
   for (const r of resolvers) if (!RESOLVERS.includes(r as ResolverName)) throw new Error(`unknown resolver "${r}"`);
+  const memoryPer = (str(env.MEMORY_PER) ?? 'instance').toLowerCase();
+  if (!MEMORY_PER.includes(memoryPer as MemoryPer)) throw new Error(`MEMORY_PER must be one of ${MEMORY_PER.join(', ')}`);
   return {
     port: num(env.PORT, 8788),
     upstreamBaseUrl: upstreamBaseUrl.replace(/\/+$/, ''),
@@ -90,6 +109,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ProxyConfig {
     recordareUrl: str(env.RECORDARE_URL),
     recordareApiKey,
     personal: !!recordareApiKey?.startsWith('rp_'),
+    memoryPer: memoryPer as MemoryPer,
+    recordareUser: str(env.RECORDARE_USER),
+    selfUsers: (str(env.SELF_USERS) ?? '').split(',').map((s) => s.trim()).filter(Boolean),
     resolvers: resolvers as ResolverName[],
     userMap: parseMap(env.USER_MAP),
     mapOnly: bool(env.USER_MAP_ONLY, false),

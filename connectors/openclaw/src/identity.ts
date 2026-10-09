@@ -1,21 +1,58 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-/** Who a turn belongs to in Recordare, which conversation it is, and which turns are never remembered. */
+/** Which memory a turn goes to, who said it, which conversation it is, and which turns are never remembered. */
+import type { IngestParticipant } from '@arkimedehq/recordare-client';
 import { type RecordareConfig } from './config.js';
 
 /**
- * The Recordare user of a sender: the `users` mapping, else — for turns without a channel sender (CLI, Control UI) —
- * `defaultUser`. An unmapped sender is not remembered, except with a personal token and no mapping at all
- * (a single-person install: every turn is the token's person).
+ * The Recordare user (the memory) of a turn. `agent` mode: always the agent's account (`defaultUser`; the token's memory
+ * with a personal token). `user` mode: the `users` mapping, else — for turns without a channel sender (CLI, Control UI)
+ * — `defaultUser`; an unmapped sender is not remembered, except with a personal token and no mapping at all (every
+ * turn is the token's memory).
  */
 export function resolveUser(cfg: RecordareConfig, channel: string | undefined, senderId: string | undefined): string | undefined {
+  if (cfg.memoryPer === 'agent') return cfg.defaultUser;
   if (senderId) {
     const mapped = channel ? cfg.users[`${channel}:${senderId}`] : undefined;
     if (mapped) return mapped;
     return cfg.personal && Object.keys(cfg.users).length === 0 ? cfg.defaultUser : undefined;
   }
   return cfg.defaultUser;
+}
+
+/** The participant ref of a channel sender (also their message author). */
+export const senderRef = (channel: string | undefined, senderId: string): string => `${channel ?? 'openclaw'}:${senderId}`;
+
+/** A channel sender as a participant of the agent's memory: their channel identity, their name when known. */
+export function senderParticipant(channel: string | undefined, senderId: string, displayName?: string): IngestParticipant {
+  return {
+    ref: senderRef(channel, senderId), role: 'other', identity: { channel: channel ?? 'openclaw', externalId: senderId },
+    ...(displayName ? { displayName } : {}),
+  };
+}
+
+/** Who wrote the person's message of a turn: the memory's owner ("I"), or a participant recognised inside the memory. */
+export interface Speaker {
+  /** `authorRef` of the message. */
+  ref: string;
+  /** `user` for the account holder; `other` for anyone else (an identified participant). */
+  role: 'user' | 'other';
+  /** The participant to declare, for anyone but the account holder. */
+  participant?: IngestParticipant;
+}
+
+/**
+ * The speaker of a turn. `user` mode, turns without a channel sender (CLI, Control UI) and `selfSenders`: the account
+ * holder (participant `owner`). Anyone else in `agent` mode: a participant with the channel identity
+ * `<channel>:<senderId>` — Recordare links it to a contact of the agent's memory (created on first sight).
+ */
+export function resolveSpeaker(cfg: RecordareConfig, channel: string | undefined, senderId: string | undefined, displayName?: string): Speaker {
+  if (cfg.memoryPer === 'user' || !senderId || cfg.selfSenders.includes(senderRef(channel, senderId))) {
+    return { ref: 'owner', role: 'user' };
+  }
+  const participant = senderParticipant(channel, senderId, displayName);
+  return { ref: participant.ref, role: 'other', participant };
 }
 
 /**

@@ -25,14 +25,29 @@
       "label": "API key or personal token",
       "sensitive": true,
       "placeholder": "rk_… or rp_…",
-      "help": "A client key (several people, needs scopes ingest, mcp, read) or a personal token (one person)"
+      "help": "A personal token (the agent's memory) or a client key (scopes ingest, mcp, read; the account in Agent account, or one per person)"
     },
-    "users": { "label": "People", "help": "\"<channel>:<senderId>\" → Recordare user (e.g. \"telegram:123456\": \"alice\")" },
-    "defaultUser": { "label": "Default user", "help": "Recordare user for turns without a channel sender (CLI, Control UI)" },
+    "memoryPer": {
+      "label": "Memory per",
+      "help": "agent (default): one memory for this agent, the people who talk to it are participants recognised inside it; user: one memory per person (People)"
+    },
+    "defaultUser": {
+      "label": "Agent account",
+      "help": "With a client key: the agent's Recordare user (memoryPer agent), or the user of turns without a channel sender (memoryPer user). Not needed with a personal token"
+    },
+    "selfSenders": {
+      "label": "Account holder's senders",
+      "help": "\"<channel>:<senderId>\" ids that are you, the memory's \"I\" (e.g. \"telegram:123456\"); everyone else is a participant. CLI and Control UI turns are always yours"
+    },
+    "users": {
+      "label": "People (memory per user)",
+      "help": "memoryPer user: \"<channel>:<senderId>\" → Recordare user (e.g. \"telegram:123456\": \"alice\")",
+      "advanced": true
+    },
     "autoRecall": { "label": "Recall before each turn", "help": "Add the relevant memories before the agent answers" },
     "capture": { "label": "Capture", "help": "Send the conversations to Recordare" },
     "tools": { "label": "Memory tools", "help": "Offer the recordare_* tools to the agent" },
-    "groups": { "label": "Group chats", "help": "Capture the turns of mapped people in groups too", "advanced": true },
+    "groups": { "label": "Group chats", "help": "Capture group chats too (every member a participant)", "advanced": true },
     "timeoutMs": { "label": "Timeout before the turn (ms)", "placeholder": "3000", "advanced": true }
   },
   "configSchema": {
@@ -41,8 +56,10 @@
     "properties": {
       "url": { "type": "string" },
       "apiKey": { "type": "string" },
-      "users": { "type": "object", "additionalProperties": { "type": "string" } },
+      "memoryPer": { "type": "string", "enum": ["agent", "user"] },
       "defaultUser": { "type": "string" },
+      "selfSenders": { "type": "array", "items": { "type": "string" } },
+      "users": { "type": "object", "additionalProperties": { "type": "string" } },
       "autoRecall": { "type": "boolean" },
       "capture": { "type": "boolean" },
       "tools": { "type": "boolean" },

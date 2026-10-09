@@ -7,8 +7,11 @@
  *   memories relevant to it, added before the message as a fenced `<memory-context>` block;
  * - agent_end: sends the agent's answer (and the message again, same id: stored once);
  * - session_end: ends the conversation (`POST …/conversations/{id}/end`: extraction now instead of after the idle delay);
- * - message_received: in group chats, the other members' messages go with the next turn as context (role `other`);
- * - recordare_* tools: Recordare's MCP tools, bound in code to the person and the conversation.
+ * - message_received: senders' names (for their participants); in group chats, the other members' messages go with the
+ *   next turn as context (role `other`);
+ * - recordare_* tools: Recordare's MCP tools, bound in code to the memory and the conversation.
+ * Which memory (D50): by default the agent's one memory, every sender a participant recognised inside it
+ * (`memoryPer: agent`); optionally one memory per person (`memoryPer: user`).
  * Never blocks or breaks OpenClaw: every call is time-boxed, every failure is logged (no content) and swallowed;
  * captured messages that could not be sent are retried in the background.
  */
@@ -19,7 +22,9 @@ import {
 } from '@arkimedehq/recordare-client';
 import type { AgentContext, AgentTool, OpenClawPluginApi, ToolContext } from 'openclaw/plugin-sdk/plugin-entry';
 import { type RecordareConfig } from './config.js';
-import { conversationId, isGroupSession, isSystemRun, resolveUser } from './identity.js';
+import {
+  conversationId, isGroupSession, isSystemRun, resolveSpeaker, resolveUser, senderParticipant, senderRef, type Speaker,
+} from './identity.js';
 import { TOOLS, toolName } from './tools.js';
 import { cleanUserText, lastTurn } from './transcript.js';
 
@@ -37,9 +42,11 @@ const RETRY: DeliveryPolicy = { maxAttempts: 8, baseDelayMs: 2_000, maxDelayMs: 
 const MAX_QUEUE = 500;
 const MAX_TRACKED = 500;
 const MAX_GROUP_BUFFER = 50;
+const MAX_NAMES = 1000;
 
 const hash = (s: string): string => createHash('sha256').update(s).digest('hex').slice(0, 16);
 const errName = (err: unknown): string => (err instanceof Error ? err.message : 'error');
+const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
 
 /** A Map that forgets its oldest entries past `max`. */
 function remember<K, V>(map: Map<K, V>, key: K, value: V, max = MAX_TRACKED): void {
@@ -65,7 +72,7 @@ interface Turn {
 interface Pending { user: string; req: IngestRequest; attempts: number }
 
 /** The turn's identity, or null when the turn is not remembered. */
-interface Who { user: string; conversation: string; channel?: string }
+interface Who { user: string; conversation: string; channel?: string; speaker: Speaker }
 
 export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, kinds: SessionKinds): { stop: () => Promise<void> } {
   const log = api.logger;
@@ -73,16 +80,23 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
   // Before the agent answers: short timeouts (the turn waits). Background sends and tools: Recordare's usual 15 s.
   const fast = new RecordareClient({ baseUrl: cfg.url, apiKey: cfg.apiKey, timeoutMs: cfg.timeoutMs, mcp: { clientInfo } });
   const slow = new RecordareClient({ baseUrl: cfg.url, apiKey: cfg.apiKey, mcp: { clientInfo, maxSessions: 50 } });
-  /** Header user: none with a personal token (it is the person). */
+  /** Header user: none with a personal token (it is the memory). */
   const headerUser = (user: string): string => (cfg.personal ? '' : user);
 
   const turns = new Map<string, Turn>(); // runId → the turn in progress
   const captured = new Map<string, string>(); // conversation → its person (to end it)
   const groupBuffer = new Map<string, IngestMessage[]>(); // session key → other members' messages not sent yet
   const groupParticipants = new Map<string, IngestParticipant[]>(); // session key → the members seen
+  const names = new Map<string, string>(); // "<channel>:<senderId>" → the sender's name on the channel
   const queue: Pending[] = [];
   let timer: NodeJS.Timeout | undefined;
   let stopped = false;
+  if (cfg.memoryPer === 'agent' && !cfg.defaultUser) {
+    log.warn('recordare: set defaultUser (the agent\'s Recordare account) or use a personal token; memory is off');
+  }
+  if (cfg.memoryPer === 'agent' && Object.keys(cfg.users).length) {
+    log.warn('recordare: `users` is used only with memoryPer "user"; every sender is a participant of the agent\'s memory');
+  }
 
   // ── Delivery: one try now, then background retries with back-off ─────────────────────────────────────────────
   async function deliver(p: Pending): Promise<boolean> {
@@ -132,15 +146,19 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
     const user = resolveUser(cfg, channel, ctx.senderId);
     const conversation = conversationId(key, ctx.sessionId);
     if (!user || !conversation) return null;
-    return { user, conversation, channel };
+    const name = ctx.senderId ? names.get(senderRef(channel, ctx.senderId)) : undefined;
+    return { user, conversation, channel, speaker: resolveSpeaker(cfg, channel, ctx.senderId, name) };
   }
 
   function conversationMeta(w: Who, ctx: AgentContext): IngestConversation {
     const participants: IngestParticipant[] = [
       { ref: 'owner', role: 'owner' },
       { ref: 'assistant', role: 'assistant', displayName: ctx.agentId ?? 'assistant' },
-      ...(ctx.sessionKey ? groupParticipants.get(ctx.sessionKey) ?? [] : []),
+      ...(w.speaker.participant ? [w.speaker.participant] : []),
     ];
+    for (const p of ctx.sessionKey ? groupParticipants.get(ctx.sessionKey) ?? [] : []) {
+      if (!participants.some((q) => q.ref === p.ref)) participants.push(p);
+    }
     return {
       externalId: w.conversation,
       source: 'chat',
@@ -169,7 +187,7 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
       const now = new Date().toISOString();
       const id = event.currentUserMessageId ?? ctx.runId ?? hash(`${w.conversation}\u0000${text}\u0000${now}`);
       const conversation = conversationMeta(w, ctx);
-      const message: IngestMessage = { externalId: `${id}:u`, role: 'user', authorRef: 'owner', content: clipUtf8(text), sentAt: now };
+      const message: IngestMessage = { externalId: `${id}:u`, role: w.speaker.role, authorRef: w.speaker.ref, content: clipUtf8(text), sentAt: now };
       remember(turns, ctx.runId ?? w.conversation, { user: w.user, conversation, message });
       if (!cfg.capture) {
         const ctxRes = await fast.context(headerUser(w.user), w.conversation, text.slice(0, 4000));
@@ -210,7 +228,7 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
       const runId = event.runId ?? ctx.runId ?? hash(`${w.conversation}\u0000${turn.assistant}`);
       const conversation = conversationMeta(w, ctx);
       const userMessage = stashed?.message
-        ?? (turn.user ? { externalId: `${runId}:u`, role: 'user' as const, authorRef: 'owner', content: clipUtf8(turn.user), sentAt: now } : undefined);
+        ?? (turn.user ? { externalId: `${runId}:u`, role: w.speaker.role, authorRef: w.speaker.ref, content: clipUtf8(turn.user), sentAt: now } : undefined);
       const answer: IngestMessage = { externalId: `${runId}:a`, role: 'assistant', authorRef: 'assistant', content: clipUtf8(turn.assistant), sentAt: now };
       const messages = [...(userMessage ? [userMessage] : []), answer];
       remember(captured, w.conversation, w.user);
@@ -238,17 +256,24 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
     try {
       const key = event.sessionKey ?? ctx.sessionKey;
       const senderId = event.senderId ?? ctx.senderId;
-      if (!cfg.capture || !cfg.groups || !isGroupSession(key) || !senderId || !event.content?.trim()) return;
-      const ref = `${ctx.channelId}:${senderId}`;
+      if (!senderId) return;
+      const ref = senderRef(ctx.channelId, senderId);
+      const name = str(event.metadata?.senderName) ?? str(event.metadata?.senderUsername);
+      if (name) remember(names, ref, name, MAX_NAMES);
+      if (!cfg.capture || !cfg.groups || !isGroupSession(key) || !event.content?.trim()) return;
+      // `user` mode: every member is someone else for the mapped person; `agent` mode: the account holder is "I".
+      const speaker: Speaker = cfg.memoryPer === 'agent'
+        ? resolveSpeaker(cfg, ctx.channelId, senderId, name)
+        : { ref, role: 'other', participant: senderParticipant(ctx.channelId, senderId, name) };
       const members = groupParticipants.get(key as string) ?? [];
-      if (!members.some((p) => p.ref === ref)) {
-        remember(groupParticipants, key as string, [...members, { ref, role: 'other', identity: { channel: ctx.channelId, externalId: senderId } }]);
+      if (speaker.participant && !members.some((p) => p.ref === speaker.ref)) {
+        remember(groupParticipants, key as string, [...members, speaker.participant]);
       }
       const at = event.timestamp ? new Date(event.timestamp) : new Date();
       const buffered = groupBuffer.get(key as string) ?? [];
       buffered.push({
         externalId: `msg:${event.messageId ?? ctx.messageId ?? hash(`${ref}\u0000${event.content}\u0000${at.toISOString()}`)}`,
-        role: 'other', authorRef: ref, content: clipUtf8(event.content), sentAt: at.toISOString(),
+        role: speaker.role, authorRef: speaker.ref, content: clipUtf8(event.content), sentAt: at.toISOString(),
       });
       remember(groupBuffer, key as string, buffered.slice(-MAX_GROUP_BUFFER));
     } catch (err) {

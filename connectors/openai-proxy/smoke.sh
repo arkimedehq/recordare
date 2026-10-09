@@ -3,7 +3,8 @@
 # Copyright © 2026 Andrea Genovese
 #
 # End-to-end smoke test of the memory proxy with AnythingLLM against a local Recordare (dev machine, Docker):
-#   1. creates a test client (platform) + key and a person, bound to AnythingLLM's user 2;
+#   1. creates a test client (platform) + key and the proxy's memory (client user `proxy-smoke`, D50: one memory per
+#      proxy), whose account holder is AnythingLLM's user 2 (SELF_USERS);
 #   2. runs the proxy (node, this folder) and AnythingLLM in Docker with the Generic OpenAI provider → the proxy,
 #      multi-user mode, a workspace whose system prompt carries the marker;
 #   3. turn 1 tells a personal fact → messages in Recordare; the proxy ends the conversation after END_IDLE_SECONDS →
@@ -50,13 +51,14 @@ trap cleanup EXIT
 echo "== build"
 (cd "$HERE" && npm ci --no-audit --no-fund >/dev/null && npm run build >/dev/null)
 
-echo "== Recordare: client key + person bound to anythingllm:2"
+echo "== Recordare: client key + the proxy's memory (account proxy-smoke; anythingllm:2 is its holder)"
 CLIENT="$(admin clients '{"name":"openai-proxy-smoke","kind":"platform","autoProvision":true}' | json "['id']")"
 admin "clients/$CLIENT/keys" '{"scopes":["ingest","mcp","read"]}' | json "['key']" > "$S/rk"
 PERSON="$(admin owners '{"displayName":"Proxy Smoke"}' | json "['personId']")"
-admin identities "{\"kind\":\"account\",\"personId\":\"$PERSON\",\"clientId\":\"$CLIENT\",\"externalId\":\"anythingllm:2\"}" >/dev/null
+admin identities "{\"kind\":\"account\",\"personId\":\"$PERSON\",\"clientId\":\"$CLIENT\",\"externalId\":\"proxy-smoke\"}" >/dev/null
 { echo "UPSTREAM_BASE_URL=${LLM_BASE_URL:-https://api.deepseek.com/v1}"; echo "UPSTREAM_API_KEY=$(envval LLM_API_KEY)"
-  echo "PROXY_API_KEY=$(openssl rand -hex 16)"; echo "RECORDARE_URL=$URL"; echo "RECORDARE_API_KEY=$(cat "$S/rk")"; } > "$S/proxy.env"
+  echo "PROXY_API_KEY=$(openssl rand -hex 16)"; echo "RECORDARE_URL=$URL"; echo "RECORDARE_API_KEY=$(cat "$S/rk")"
+  echo "RECORDARE_USER=proxy-smoke"; echo "SELF_USERS=anythingllm:2"; } > "$S/proxy.env"
 echo "GENERIC_OPEN_AI_API_KEY=$(grep PROXY_API_KEY "$S/proxy.env" | cut -d= -f2)" > "$S/allm.env"
 chmod 600 "$S"/*
 echo "person $PERSON"

@@ -30,8 +30,8 @@ function parameters(schema: Record<string, unknown>): Record<string, unknown> {
 export const TOOLS: ToolSpec[] = OFFERED.map((t) => ({
   mcpName: t.name,
   label: `Recordare: ${t.title.charAt(0).toLowerCase()}${t.title.slice(1)}`,
-  // Tool names the description mentions are the plugin's (`recordare_…`); the memory is the user's long-term one.
-  description: `${t.description.replace(NAMES, 'recordare_$1')} (Recordare: the user's long-term memory.)`,
+  // Tool names the description mentions are the plugin's (`recordare_…`); the memory is the agent's long-term one (D50).
+  description: `${t.description.replace(NAMES, 'recordare_$1')} (Recordare: your long-term memory.)`,
   parameters: parameters(t.inputSchema as Record<string, unknown>),
 }));
 
