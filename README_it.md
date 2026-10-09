@@ -190,7 +190,7 @@ l'entità legge e scrive la sua memoria. L'identificazione ("sono Andrea"; in se
 un parlante non identificato non viene memorizzato come fatto di nessuno. L'identificazione non concede mai
 l'accesso: la memoria *propria* di una persona si raggiunge solo tramite un'identità client sicura vincolata
 dall'amministratore. Una protezione nel codice registra un fatto su una persona, o un episodio che la nomina, solo se
-la conversazione nomina quella persona (nessuna identità riportata da altre chat). La persona sceglie il tipo sulla
+la conversazione nomina quella persona (nessuna identità riportata da altre chat). La persona sceglie il modo (`entity`) sulla
 propria piattaforma (Arkimede: impostazioni della memoria) finché la memoria è vuota. **Sperimentale**: 95,5 % sul suo dev
 set, ma **82,1 %** su un nuovo set cieco (3 esecuzioni; chi non si presenta viene ancora attribuito a una persona con
 nome — [RESULTS.md](spikes/memory-eval/RESULTS.md)).

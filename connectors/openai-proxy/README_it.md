@@ -11,8 +11,15 @@ piattaforma ──► proxy ──► provider upstream (qualunque API compatibi
                   └──► Recordare: POST api/v1/context (salva il messaggio della persona) → (risposta) → ingest della risposta
 ```
 
+**Una memoria per proxy** (D50, predefinito `MEMORY_PER=instance`): l'agente dietro il proxy ha una sola memoria; gli
+utenti della piattaforma che chattano con lui sono **partecipanti** riconosciuti al suo interno (ognuno diventa un
+contatto della memoria, con il suo nome), e il titolare dell'account (`SELF_USERS`) è il suo "io". Una memoria per
+workspace di AnythingLLM (`MEMORY_PER=workspace`) o per utente della piattaforma (`MEMORY_PER=user`, il comportamento
+prima di D50) si ottengono con un'impostazione.
+
 Per ogni `POST /v1/chat/completions` (in streaming o no):
-1. **Chi**: un resolver d'identità trova la persona e la conversazione (sotto). Nessuna ⇒ puro pass-through.
+1. **Chi**: un resolver d'identità trova la persona e la conversazione (sotto), poi la memoria. Nessuna ⇒ puro
+   pass-through.
 2. **Prima della risposta**: una sola chiamata (`POST api/v1/context` con `ingest`) salva l'ultimo messaggio della
    persona e restituisce i ricordi pertinenti come blocco recintato `<memory-context>`, aggiunto in fondo al primo
    messaggio di sistema (se manca, se ne aggiunge uno). Con `RECALL=false` il messaggio è salvato con un semplice
@@ -40,18 +47,22 @@ piattaforma (nessuna porta pubblicata), oppure imposta `PROXY_API_KEY` (vedi Sic
 
 ### Configurazione di Recordare (admin, una volta)
 ```sh
-# un client per la piattaforma e la sua chiave; le persone sono create al primo uso (autoProvision)
+# un client per la piattaforma e la sua chiave; la memoria del proxy (RECORDARE_USER) è creata al primo uso (autoProvision)
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"name":"AnythingLLM","kind":"platform","autoProvision":true}' $RECORDARE_URL/api/v1/admin/clients
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"scopes":["ingest","read"]}' $RECORDARE_URL/api/v1/admin/clients/<id client>/keys
 ```
-Recordare non ha un flag di consenso (D50): i turni di una persona creata automaticamente sono salvati dalla prima
-richiesta; per smettere, spegnere `CAPTURE` / `RECALL` o togliere il proxy. Per legare l'utente della piattaforma a una persona esistente,
-collega l'identità: `POST api/v1/admin/identities {kind: "client_user", personId, clientId, externalId:
-"anythingllm:2"}` (l'external id è l'utente Recordare che il proxy risolve, vedi Identità). Un'installazione con una
-sola persona può usare un **token personale** (`rp_…`) al posto della chiave client: ogni richiesta risolta è di quella
-persona.
+Recordare non ha un flag di consenso (D50): i turni sono salvati dalla prima richiesta; per smettere, spegnere
+`CAPTURE` / `RECALL` o togliere il proxy. Per usare una memoria esistente come quella del proxy, collega il suo account:
+`POST api/v1/admin/identities {kind: "account", personId, clientId, externalId: "<RECORDARE_USER>"}`, oppure usa un
+**token personale** (`rp_…`) al posto della chiave client: ogni richiesta risolta va allora nella memoria del token.
+
+**Modalità** e **genere** della memoria li imposta l'admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`) oppure,
+con la chiave client, `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`): `personal` (l'assistente di una
+persona: è lei l'"io", ciò che arriva senza identità dichiarata è suo) o `entity` (un assistente di famiglia, di team o
+di ufficio: ciò che arriva senza identità è di "qualcuno"); `gender` `masculine` (predefinito) | `feminine` | `neutral`
+per la prima persona nelle lingue con il genere. Il proxy non ha impostazioni per questi valori.
 
 ### Configurazione (ambiente)
 
@@ -61,8 +72,11 @@ persona.
 | `UPSTREAM_API_KEY` | — | Inviata upstream come `Authorization: Bearer …`. Non impostata: passa l'`Authorization` del chiamante (la piattaforma tiene la chiave del provider) |
 | `PROXY_API_KEY` | — | I chiamanti devono presentarla come chiave bearer; richiede `UPSTREAM_API_KEY` |
 | `RECORDARE_URL`, `RECORDARE_API_KEY` | — | Recordare e una chiave client (`rk_…`, scope `ingest` + `read`) o un token personale (`rp_…`). Non impostate: proxy semplice |
+| `MEMORY_PER` | `instance` | `instance`: una memoria per il proxy, gli utenti della piattaforma sono suoi partecipanti. `workspace`: una memoria per workspace di AnythingLLM (`anythingllm:ws:<id>`, o mappata con `USER_MAP`; altre piattaforme: quella dell'istanza). `user`: una memoria per utente della piattaforma |
+| `RECORDARE_USER` | — | Chiave client, `instance` / `workspace`: l'account Recordare del proxy (la sua memoria). Senza, nulla viene ricordato (un avviso all'avvio) |
+| `SELF_USERS` | — | `instance` / `workspace`: utenti della piattaforma, separati da virgola, che sono il titolare dell'account — l'"io" della memoria (`openwebui:<uuid>`, `anythingllm:2`, l'id generico nudo, o il loro id di `USER_MAP`). Tutti gli altri sono partecipanti |
 | `RESOLVERS` | `generic,openwebui,anythingllm` | Resolver d'identità, in ordine (vince il primo che trova un utente) |
-| `USER_MAP` | `{}` | Mappa alias JSON: `{"anythingllm:2":"andrea","openwebui:<uuid>":"andrea"}` (header generici: l'id nudo) |
+| `USER_MAP` | `{}` | Mappa alias JSON: `{"anythingllm:2":"andrea","openwebui:<uuid>":"andrea"}` (header generici: l'id nudo) — `user`: il suo utente Recordare; altrimenti il suo id di partecipante, un solo contatto su più piattaforme |
 | `USER_MAP_ONLY` | `false` | Solo gli utenti mappati sono ricordati; gli altri passano e basta |
 | `DEFAULT_USER` | — | AnythingLLM: l'utente quando quello del marcatore non è espanso (modalità utente singolo: `[User ID]`) |
 | `OPENWEBUI_JWT_SECRET` | — | Modalità JWT di Open WebUI (verifica `X-OpenWebUI-User-Jwt`, HS256); gli header utente semplici sono allora ignorati |
@@ -81,14 +95,26 @@ Una richiesta è ricordata solo se un resolver trova una persona; altrimenti è 
 vengono dalla **configurazione admin della piattaforma**; il testo scritto dall'utente non è mai letto per l'identità
 (un marcatore in un messaggio utente è ignorato).
 
-| Resolver | Legge | Utente Recordare | Conversazione |
-|---|---|---|---|
-| `generic` | `X-Recordare-User`, `X-Recordare-Conversation`, `X-Recordare-Message` (id del messaggio della persona, facoltativo) | il valore dell'header | il valore dell'header |
-| `openwebui` | `X-OpenWebUI-User-Id`, `X-OpenWebUI-Chat-Id` (o il firmato `X-OpenWebUI-User-Jwt`, claim `sub`) | `openwebui:<id>` | `openwebui:<id chat>` |
-| `anythingllm` | il marcatore `[[recordare user=… ws=…]]` nel **primo messaggio di sistema** | `anythingllm:<utente>` | `anythingllm:<ws>:<utente>:<giorno>` |
+| Resolver | Legge | Id della persona | Nome | Conversazione |
+|---|---|---|---|---|
+| `generic` | `X-Recordare-User`, `X-Recordare-Conversation`, `X-Recordare-Message` (id del messaggio della persona, facoltativo), `X-Recordare-User-Name` (facoltativo) | il valore dell'header | `X-Recordare-User-Name` | il valore dell'header |
+| `openwebui` | `X-OpenWebUI-User-Id`, `X-OpenWebUI-User-Name`, `X-OpenWebUI-Chat-Id` (o il firmato `X-OpenWebUI-User-Jwt`, claim `sub`, `name`) | `openwebui:<id>` | il suo nome | `openwebui:<id chat>` |
+| `anythingllm` | il marcatore `[[recordare user=… name="…" ws=…]]` nel **primo messaggio di sistema** | `anythingllm:<utente>` | `name` | `anythingllm:<ws>:<utente>:<giorno>` |
 
-Tutti passano per `USER_MAP`. Segnaposto non espansi (`{{…}}`, `[User ID]`) e valori come `null` / `new` contano come
-mancanti. Senza id di conversazione, la conversazione è **una per utente (e workspace) e giorno**; gli header
+L'id della persona passa per `USER_MAP`. Poi la memoria (`MEMORY_PER`):
+- **`instance`** (predefinito): la memoria è `RECORDARE_USER` (o quella del token personale). Una persona in
+  `SELF_USERS` è il titolare dell'account: messaggio `user`, partecipante `owner`. Chiunque altro è un partecipante con
+  l'identità `{externalUserId: <id della persona>}` e il suo nome, messaggio `other` con quell'autore: Recordare lo
+  lega a un contatto della memoria (creato alla prima occasione), così ciò che dice di sé resta suo. Recordare risponde
+  con tutta la memoria in ogni conversazione (D50): ciò che una persona ha detto all'assistente può emergere con
+  un'altra; chi gestisce la piattaforma lo dice ai suoi utenti.
+- **`workspace`**: come `instance`, ma ogni workspace di AnythingLLM è una memoria a sé (`anythingllm:ws:<id ws>`, o il
+  valore di `USER_MAP` per quella chiave) — per esempio un workspace di famiglia e uno di lavoro; le richieste di Open
+  WebUI / LibreChat usano `RECORDARE_USER`.
+- **`user`**: l'id della persona è l'utente Recordare — una memoria per utente della piattaforma, ognuno il suo "io"
+  (il comportamento prima di D50; impostalo aggiornando per tenere le memorie divise per persona).
+
+Segnaposto non espansi (`{{…}}`, `[User ID]`, `{user.name}`) e valori come `null` / `new` contano come mancanti. Senza id di conversazione, la conversazione è **una per utente (e workspace) e giorno**; gli header
 d'identità (`X-Recordare-*`, `X-OpenWebUI-*`) non vanno mai upstream, e i marcatori sono tolti da ogni messaggio di
 sistema.
 
@@ -96,9 +122,11 @@ sistema.
 1. Provider LLM **Generic OpenAI**: base URL `http://recordare-proxy:8788/v1`, API key = `PROXY_API_KEY` (o la chiave
    del provider se il proxy la lascia passare), il nome del modello upstream, la sua finestra di contesto.
 2. Nel **prompt di sistema** di ogni workspace aggiungi (dove vuoi, viene tolto prima che il provider lo veda):
-   `[[recordare user={user.id} ws={workspace.id}]]`. AnythingLLM espande le variabili nelle chat normali e agent.
+   `[[recordare user={user.id} name="{user.name}" ws={workspace.id}]]`. AnythingLLM espande le variabili nelle chat
+   normali e agent.
    La modalità multi-utente dà a ogni persona il suo id (`anythingllm:<id>`); in modalità utente singolo `{user.id}`
-   resta `[User ID]` — imposta `DEFAULT_USER`, o scrivi un utente letterale nel marcatore.
+   resta `[User ID]` — imposta `DEFAULT_USER`, o scrivi un utente letterale nel marcatore (e metti
+   `anythingllm:<quell'utente>` in `SELF_USERS` se è il titolare dell'account).
 3. Spegni le memorie proprie di AnythingLLM (due memorie che alimentano lo stesso prompt). Le sue chiamate LLM di
    background (estrazione memorie, nomi dei thread, …) non hanno marcatore e passano e basta.
 
@@ -130,6 +158,7 @@ endpoints:
         X-Recordare-User: "{{LIBRECHAT_USER_ID}}"
         X-Recordare-Conversation: "librechat:{{LIBRECHAT_BODY_CONVERSATIONID}}"
         X-Recordare-Message: "{{LIBRECHAT_BODY_MESSAGEID}}"
+        X-Recordare-User-Name: "{{LIBRECHAT_USER_NAME}}"
 ```
 Le richieste di titolo (`… title for the conversation …`) sono saltate da un pattern incorporato; aggiungine altri con
 `SKIP_PATTERNS`.

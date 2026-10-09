@@ -10,6 +10,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
+import { accountSpeaker } from './attribution';
 
 export interface RawHit {
   conversationId: string;
@@ -91,10 +92,10 @@ export class RawLogSearchService {
     const top = [...scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, opts.limit ?? 5);
     if (top.length === 0) return [];
 
-    const rows: { id: string; conversation_id: string; external_id: string; sent_at: Date; role: string; author_person_id: string | null;
+    const rows: { id: string; conversation_id: string; external_id: string; sent_at: Date; role: string; account_speaker: boolean;
       author_name: string | null; tool_name: string | null; content: string }[] =
       await this.db.query(
-        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, m.author_person_id, m.tool_name, m.content,
+        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, ${accountSpeaker('m')} AS account_speaker, m.tool_name, m.content,
                 COALESCE(p.display_name, cp.display_name) AS author_name
          FROM messages m JOIN conversations c ON c.id = m.conversation_id
            LEFT JOIN persons p ON p.id = m.author_person_id
@@ -105,7 +106,7 @@ export class RawLogSearchService {
     return top.flatMap(([id, score]) => {
       const r = byId.get(id);
       if (!r) return [];
-      const authorRole = r.role === 'tool' ? 'tool' : r.author_person_id === ownerId ? 'owner' : 'other';
+      const authorRole = r.role === 'tool' ? 'tool' : r.account_speaker ? 'owner' : 'other';
       const author = authorRole === 'tool' ? r.tool_name : authorRole === 'other' ? r.author_name : null;
       return [{
         conversationId: r.conversation_id, conversation: r.external_id, messageId: r.id, at: r.sent_at.toISOString(), authorRole,

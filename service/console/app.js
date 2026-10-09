@@ -10,14 +10,16 @@ const T = {
     persons: 'Persone', clients: 'Client', logout: 'Esci', signIn: 'Accesso amministratore',
     signInHint: 'Inserisci la chiave admin di Recordare (ADMIN_API_KEY). Resta solo in questa scheda.', enter: 'Entra',
     badKey: 'Chiave non valida.', newPerson: 'Nuova persona', newClient: 'Nuovo client',
-    human: 'personale', entity: 'condivisa', kind: 'Tipo di memoria',
-    kindHuman: 'Personale', kindEntity: 'Condivisa (entità)', profile: 'Profilo qualità', profileDefault: 'predefinito',
+    personal: 'personale', entity: 'condivisa', mode: 'Modo della memoria',
+    modePersonal: 'Personale', modeEntity: 'Condivisa (entità)', profile: 'Profilo qualità', profileDefault: 'predefinito',
+    gender: 'Genere della prima persona', masculine: 'Maschile', feminine: 'Femminile', neutral: 'Neutro', contacts: 'contatti',
+    account: 'account', participant: 'partecipante',
     name: 'Nome', rename: 'Rinomina', renameHint: 'Se la persona è collegata a un client, il nome segue il suo profilo lì e verrà riscritto.',
     messages: 'messaggi', pending: 'da estrarre', episodes: 'episodi', facts: 'fatti', notes: 'note', last: 'ultimo messaggio',
     identities: 'Identità collegate', none: 'nessuna', noneM: 'nessuno', unlink: 'Scollega', link: 'Collega un utente di un client',
     externalId: 'id utente nel client', tokens: 'Token personali', newToken: 'Nuovo token', revoke: 'Revoca',
     consolidate: 'Consolida ora', consolidated: 'Consolidamento eseguito', saved: 'Salvato',
-    kindConfirm: 'La memoria contiene già ricordi: cambiare tipo mescola ricordi personali e condivisi. Continuare?',
+    modeConfirm: 'La memoria contiene già ricordi: cambiare modo mescola ricordi in prima persona e ricordi di "qualcuno". Continuare?',
     unlinkConfirm: 'Scollegare questa identità? Quell\'utente del client non raggiungerà più questa memoria (i ricordi restano).',
     revokeConfirm: 'Revocare? Smette di funzionare subito.',
     keys: 'Chiavi', newKey: 'Nuova chiave', newKeyScopes: 'Permessi per una nuova chiave:', scopes: 'permessi', autoProvision: 'Crea le persone al primo contatto',
@@ -31,14 +33,16 @@ const T = {
     persons: 'People', clients: 'Clients', logout: 'Sign out', signIn: 'Administrator sign-in',
     signInHint: 'Enter Recordare\'s admin key (ADMIN_API_KEY). It stays in this tab only.', enter: 'Sign in',
     badKey: 'Invalid key.', newPerson: 'New person', newClient: 'New client',
-    human: 'personal', entity: 'shared', kind: 'Memory type',
-    kindHuman: 'Personal', kindEntity: 'Shared (entity)', profile: 'Quality profile', profileDefault: 'default',
+    personal: 'personal', entity: 'shared', mode: 'Memory mode',
+    modePersonal: 'Personal', modeEntity: 'Shared (entity)', profile: 'Quality profile', profileDefault: 'default',
+    gender: 'First-person gender', masculine: 'Masculine', feminine: 'Feminine', neutral: 'Neutral', contacts: 'contacts',
+    account: 'account', participant: 'participant',
     name: 'Name', rename: 'Rename', renameHint: 'If the person is linked to a client, the name follows their profile there and will be overwritten.',
     messages: 'messages', pending: 'to extract', episodes: 'episodes', facts: 'facts', notes: 'notes', last: 'last message',
     identities: 'Linked identities', none: 'none', noneM: 'none', unlink: 'Unlink', link: 'Link a client\'s user',
     externalId: 'user id in the client', tokens: 'Personal tokens', newToken: 'New token', revoke: 'Revoke',
     consolidate: 'Consolidate now', consolidated: 'Consolidation done', saved: 'Saved',
-    kindConfirm: 'The memory already holds memories: changing its type mixes personal and shared ones. Continue?',
+    modeConfirm: 'The memory already holds memories: changing its mode mixes first-person memories with "someone"\'s. Continue?',
     unlinkConfirm: 'Unlink this identity? That client user will no longer reach this memory (memories stay).',
     revokeConfirm: 'Revoke? It stops working at once.',
     keys: 'Keys', newKey: 'New key', newKeyScopes: 'Scopes for a new key:', scopes: 'scopes', autoProvision: 'Create people on first contact',
@@ -118,13 +122,16 @@ const when = (d) => (d ? new Date(d).toLocaleString(lang === 'it' ? 'it-IT' : 'e
 
 function personCard(p) {
   const hasMemories = p.episodes + p.facts + p.notes > 0;
-  const kind = h('select', {
+  const mode = h('select', {
     onchange: (e) => {
-      if (hasMemories && !confirm(t('kindConfirm'))) { e.target.value = p.kind; return; }
-      act(() => api('PATCH', `owners/${p.id}`, { kind: e.target.value }));
+      if (hasMemories && !confirm(t('modeConfirm'))) { e.target.value = p.mode; return; }
+      act(() => api('PATCH', `owners/${p.id}`, { mode: e.target.value }));
     },
-  }, h('option', { value: 'human', selected: p.kind === 'human' }, t('kindHuman')),
-     h('option', { value: 'entity', selected: p.kind === 'entity' }, t('kindEntity')));
+  }, h('option', { value: 'personal', selected: p.mode === 'personal' }, t('modePersonal')),
+     h('option', { value: 'entity', selected: p.mode === 'entity' }, t('modeEntity')));
+  const gender = h('select', {
+    onchange: (e) => act(() => api('PATCH', `owners/${p.id}`, { gender: e.target.value })),
+  }, ['masculine', 'feminine', 'neutral'].map((g) => h('option', { value: g, selected: p.gender === g }, t(g))));
   const profile = h('select', {
     onchange: (e) => act(() => api('PATCH', `owners/${p.id}`, { qualityProfile: e.target.value || null })),
   }, h('option', { value: '', selected: !p.qualityProfile }, t('profileDefault')),
@@ -139,7 +146,7 @@ function personCard(p) {
   return h('div', { class: 'card' },
     h('div', { class: 'head' },
       h('span', { class: 'name' }, p.name),
-      h('span', { class: `chip ${p.kind === 'entity' ? 'warn' : ''}` }, t(p.kind)),
+      h('span', { class: `chip ${p.mode === 'entity' ? 'warn' : ''}` }, t(p.mode)),
     ),
     h('div', { class: 'stats' },
       h('span', {}, h('b', {}, p.messages), ` ${t('messages')}`),
@@ -147,10 +154,12 @@ function personCard(p) {
       h('span', {}, h('b', {}, p.episodes), ` ${t('episodes')}`),
       h('span', {}, h('b', {}, p.facts), ` ${t('facts')}`),
       h('span', {}, h('b', {}, p.notes), ` ${t('notes')}`),
+      h('span', {}, h('b', {}, p.contacts), ` ${t('contacts')}`),
       h('span', {}, `${t('last')}: ${when(p.lastMessage)}`),
     ),
     h('div', { class: 'grid' },
-      h('label', { class: 'field' }, h('span', {}, t('kind')), kind),
+      h('label', { class: 'field' }, h('span', {}, t('mode')), mode),
+      h('label', { class: 'field' }, h('span', {}, t('gender')), gender),
       h('label', { class: 'field' }, h('span', {}, t('profile')), profile),
       h('div', { class: 'field' }, h('span', { title: t('renameHint') }, `${t('name')} ⓘ`),
         h('div', { class: 'row' }, nameInput, h('button', {
@@ -160,13 +169,14 @@ function personCard(p) {
     h('div', { class: 'sub' },
       h('h4', {}, t('identities')),
       p.identities.length ? p.identities.map((i) => h('div', { class: 'item' },
-        h('span', { class: 'chip' }, i.client ?? i.channel ?? i.kind), h('code', {}, i.externalId),
+        h('span', { class: 'chip' }, t(i.kind)), h('span', { class: 'chip' }, i.client ?? i.channel), h('code', {}, i.externalId),
+        i.kind === 'participant' ? h('span', { class: 'muted' }, i.person) : null,
         h('button', { class: 'danger small', onclick: () => confirm(t('unlinkConfirm')) && act(() => api('DELETE', `identities/${i.id}`)) }, t('unlink')),
       )) : h('div', { class: 'muted' }, t('none')),
       clientsCache.length ? h('div', { class: 'row' }, linkClient, linkId, h('button', {
         class: 'ghost small',
         onclick: () => linkId.value.trim() && act(() => api('POST', 'identities',
-          { kind: 'client_user', personId: p.id, clientId: linkClient.value, externalId: linkId.value.trim() })),
+          { kind: 'account', personId: p.id, clientId: linkClient.value, externalId: linkId.value.trim() })),
       }, t('link'))) : null,
     ),
     h('div', { class: 'sub' },
@@ -192,11 +202,11 @@ function personCard(p) {
 
 function newPersonForm() {
   const name = h('input', { placeholder: t('personName'), required: true, maxlength: 200 });
-  const kind = h('select', {}, h('option', { value: 'human' }, t('kindHuman')), h('option', { value: 'entity' }, t('kindEntity')));
+  const mode = h('select', {}, h('option', { value: 'personal' }, t('modePersonal')), h('option', { value: 'entity' }, t('modeEntity')));
   const form = h('form', {
     class: 'card',
-    onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'owners', { displayName: name.value.trim(), kind: kind.value })); },
-  }, h('div', { class: 'row' }, name, kind, h('button', { type: 'submit' }, t('create')),
+    onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'owners', { displayName: name.value.trim(), mode: mode.value })); },
+  }, h('div', { class: 'row' }, name, mode, h('button', { type: 'submit' }, t('create')),
     h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))));
   return form;
 }

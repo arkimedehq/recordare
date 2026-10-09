@@ -60,7 +60,7 @@ export class MemorySearchService {
 
   private async searchNow(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
     const [owner] = await this.db.query(
-      `SELECT o.timezone, o.locale, p.display_name, p.kind FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+      `SELECT o.timezone, o.locale, p.display_name, o.mode FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     const tz: string = owner.timezone;
     const asOfDay = args.asOf ? (args.asOf.length === 7 ? `${args.asOf}-01` : args.asOf.slice(0, 10)) : null;
     const asOf = asOfDay ? zonedMidnight(addDays(asOfDay, 1), tz) : now; // end of that day
@@ -97,7 +97,7 @@ export class MemorySearchService {
        WHERE f.owner_id = $1 AND ($5::boolean OR f.subject_person_id IS NULL) AND f.deleted_at IS NULL AND f.status <> 'corrected'
          AND ($4::boolean OR NOT f.pending)
        ORDER BY f.key, f.valid_from NULLS FIRST, f.recorded_at`,
-      [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false, owner.kind === 'entity']);
+      [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false, owner.mode === 'entity']);
     // One slot per (person, key): Andrea's car and Marta's car are two histories.
     const byKey = new Map<string, typeof factRows>();
     for (const f of factRows) {

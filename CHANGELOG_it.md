@@ -36,6 +36,37 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   privacy e riservatezza verranno dopo. `X-Recordare-Viewers` / `_meta.recordare.viewers` sono ignorati e l'avviso
   `"nothing to show here"` non c'è più. `audience` / `disclosure` continuano a essere registrati; una memoria non vede
   comunque mai i dati di un'altra. L'header della conversazione è ancora risolto: le scritture MCP vi legano le loro prove.
+- **Identità della memoria** (D50, WORK_PLAN 8.3) — **incompatibile**. Una memoria appartiene a un account di un client;
+  le persone che conosce sono contatti di quella sola memoria. Migrazione `MemoryIdentity1791070000000`: `persons.kind`
+  diventa `owners.mode` (`personal | entity`) con `owners.gender` (`masculine | feminine | neutral`, default maschile);
+  ogni persona che non è una memoria è un contatto di esattamente una memoria (`full_name`, `relation`, nomi in
+  `person_aliases`), e i contatti che mancavano a una memoria vengono creati (per esempio una persona con una propria
+  memoria che parla anche a un dispositivo condiviso); `external_identities.kind` diventa `account` (era `client_user`:
+  apre una memoria) o `participant` (era `channel`, ora anche l'id di partecipante di un client: nomina un contatto
+  dentro una sola memoria, creato dall'ingest al primo incontro); ogni messaggio registra chi l'ha detto (`author_kind`
+  `self | contact | someone | agent | own | tool`, `attribution_method`, `attribution_confidence`); episodi, fatti e
+  note registrano di chi sono (`subject_kind`, `subject_person_id`, `subject_candidates`); viene creata una tabella
+  `clarifications` per dopo. API: `GET / PATCH api/v1/me` e le rotte admin degli owner accettano `mode` e `gender` al
+  posto di `kind`; `POST api/v1/admin/identities` accetta `kind: account | participant`; l'ingest accetta `own: true`
+  su un messaggio (contenuto proprio dell'agente) e le sorgenti `document`, `perception`, `ambient`. La console mostra
+  modo, genere, contatti e tipi di identità. Libreria client: `MemoryKind` → `MemoryMode` + `MemoryGender`, `Me.kind` →
+  `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` → `mode`, `IngestMessage.own`, le nuove
+  sorgenti. I prompt di estrazione e i loro input non cambiano.
+- **Connettori: una memoria per agente, le persone come partecipanti** (D50) — **incompatibile per le installazioni con
+  più persone**. OpenClaw: l'agente del Gateway ha una sola memoria (un token personale, o una chiave client con
+  `defaultUser`); ogni mittente è un partecipante con l'identità di canale `<canale>:<senderId>` e il nome che ha sul
+  canale, il titolare dell'account sta in `selfSenders` (i turni da CLI e Control UI sono suoi); la mappa `users` è ora
+  `memoryPer: "user"`. Hermes Agent: una memoria per l'agente (un token personale, o una chiave client con un
+  `RECORDARE_USER` fisso); gli utenti del gateway e l'autore di ogni turno nelle sessioni condivise sono partecipanti
+  (`<piattaforma>:<id utente>`, il loro nome), il titolare dell'account in `RECORDARE_SELF_IDS`; memorie per utente con
+  `RECORDARE_MEMORY_PER=user`, la mappa di alias dà a una persona un solo id su più piattaforme. Proxy compatibile
+  OpenAI: una memoria per proxy (`RECORDARE_USER` o il token personale), gli utenti della piattaforma come partecipanti
+  con il loro nome (nome utente di Open WebUI, `X-Recordare-User-Name` di LibreChat, `name=` nel marcatore di
+  AnythingLLM), il titolare dell'account in `SELF_USERS`; `MEMORY_PER=workspace` (una memoria per workspace di
+  AnythingLLM) o `user` (il comportamento precedente). I turni delle altre persone sono inviati con ruolo `other` e il
+  loro autore, così non vengono mai letti come parole del titolare dell'account. Claude Code / Codex: invariati (la
+  memoria del token personale), solo testi. Chi aggiorna con una mappatura per persona: imposti `memoryPer: "user"` /
+  `RECORDARE_MEMORY_PER=user` / `MEMORY_PER=user`.
 
 ### Corretto
 - Un fatto breve dentro un messaggio lungo della persona conta come sue parole; "il proprietario" viene sostituito dal

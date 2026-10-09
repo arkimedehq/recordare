@@ -3,8 +3,8 @@
 
 /**
  * Conformance suite (WORK_PLAN 6.7): the client library (`packages/client`) against the real service. Every client
- * passes the same behaviour: a turn ingested once (always stored: no consent step, D50), deletions propagate, the name
- * and kind follow the platform, recall over MCP carries the user AND the conversation. The type checks below fail the build when
+ * passes the same behaviour: a turn ingested once (always stored: no consent step, D50), deletions propagate, the name,
+ * mode and gender follow the platform, the agent's own content is marked, recall over MCP carries the user AND the conversation. The type checks below fail the build when
  * the client's hand-written contract drifts from the service's schemas.
  */
 import { type INestApplication } from '@nestjs/common';
@@ -55,13 +55,24 @@ describe('client conformance (packages/client against the service)', () => {
 
   it('stores each turn exactly once, with no consent step (D50)', async () => {
     const me = await rc.me('user-1');
-    expect(me).toMatchObject({ kind: 'human' });
+    expect(me).toMatchObject({ mode: 'personal', gender: 'masculine' });
     expect(me).not.toHaveProperty('episodicEnabled');
     const first = await rc.ingest('user-1', { conversation: { externalId: 'chat-1' }, messages: [turn('m1', 'Ciao'), turn('m2', 'Domani vado a Bologna')] });
     expect(first).toMatchObject({ accepted: 2, duplicates: 0 });
     expect(first).not.toHaveProperty('stored');
     const again = await rc.ingest('user-1', { conversation: { externalId: 'chat-1' }, messages: [turn('m1', 'Ciao'), turn('m2', 'Domani vado a Bologna')] });
     expect(again).toMatchObject({ accepted: 0, duplicates: 2 });
+  });
+
+  it("marks the agent's own content and accepts the new sources (D50)", async () => {
+    const res = await rc.ingest('user-1', {
+      conversation: { externalId: 'doc-1', source: 'document', title: 'Manuale della caldaia' },
+      messages: [{ ...turn('d1', 'La caldaia va revisionata ogni due anni.'), own: true }],
+    });
+    expect(res).toMatchObject({ accepted: 1 });
+    expect(await db().query(`SELECT m.author_kind, c.source FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE m.external_id = 'd1'`))
+      .toEqual([{ author_kind: 'own', source: 'document' }]);
+    await rc.deleteConversation('user-1', 'doc-1');
   });
 
   it('propagates deletions; deleting what Recordare never had is done', async () => {
@@ -82,19 +93,19 @@ describe('client conformance (packages/client against the service)', () => {
     await rc.endConversation('user-1', 'chat-never-seen'); // nothing to end: done
   });
 
-  it('keeps the name in sync with the platform and accepts the kind only while the memory is empty', async () => {
+  it('keeps the name in sync with the platform and accepts the mode only while the memory is empty', async () => {
     const people = new PersonDirectory(rc, { user: async (u) => ({ enabled: true, name: u === 'user-2' ? 'Casa' : 'Andrea' }) });
-    expect(await people.refresh('user-2')).toMatchObject({ kind: 'human', atlasUrl: null });
+    expect(await people.refresh('user-2')).toMatchObject({ mode: 'personal', atlasUrl: null });
     expect((await rc.me('user-2')).displayName).toBe('Casa');
-    await rc.updateMe('user-2', { kind: 'entity' });
-    expect((await rc.me('user-2')).kind).toBe('entity');
-    await expect(rc.updateMe('user-1', { kind: 'entity' })).resolves.toBeUndefined(); // no episodes yet: allowed
-    await rc.updateMe('user-1', { kind: 'human' });
+    await rc.updateMe('user-2', { mode: 'entity', gender: 'feminine' });
+    expect(await rc.me('user-2')).toMatchObject({ mode: 'entity', gender: 'feminine' });
+    await expect(rc.updateMe('user-1', { mode: 'entity' })).resolves.toBeUndefined(); // no episodes yet: allowed
+    await rc.updateMe('user-1', { mode: 'personal' });
     await db().query(
       `INSERT INTO notes (owner_id, category, content, origin, author_role, stance, confidence, disclosure, audience)
        SELECT o.person_id, 'preference', 'x', 'owner_lived', 'owner', 'stated', 1, 'owner', ARRAY[o.person_id] FROM owners o
        JOIN external_identities i ON i.person_id = o.person_id WHERE i.external_id = 'user-1'`);
-    await expect(rc.updateMe('user-1', { kind: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);
+    await expect(rc.updateMe('user-1', { mode: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);
   });
 
   it('reads and edits the person\'s diary', async () => {

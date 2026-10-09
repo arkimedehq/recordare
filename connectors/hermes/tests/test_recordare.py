@@ -130,10 +130,13 @@ class OutboxTest(unittest.TestCase):
 
 
 class ProviderTest(unittest.TestCase):
+    """Memory per user (RECORDARE_MEMORY_PER=user): the behaviour before D50."""
+
     def setUp(self):
         self.fake, self.home = Fake(), tempfile.mkdtemp()
         os.environ.update(RECORDARE_URL=self.fake.url, RECORDARE_API_KEY="rk_test", RECORDARE_USER="",
-                          RECORDARE_USER_ALIASES='{"telegram:42": "alice"}')
+                          RECORDARE_USER_ALIASES='{"telegram:42": "alice"}', RECORDARE_MEMORY_PER="user",
+                          RECORDARE_SELF_IDS="")
 
     def provider(self, **kw):
         p = RecordareMemoryProvider()
@@ -141,6 +144,7 @@ class ProviderTest(unittest.TestCase):
         self.assertEqual(len(p.get_tool_schemas()), 6)  # Hermes reads them before initialize
         p.initialize("sess1", hermes_home=self.home, platform="telegram", user_id="42", user_name="Alice",
                      gateway_session_key="agent:main:telegram:dm:42", **kw)
+        time.sleep(0.2)  # the outbox worker's start-up pass (replays leftovers) must not race the turn's own send
         return p
 
     def test_full_turn(self):
@@ -212,8 +216,84 @@ class ProviderTest(unittest.TestCase):
         self.assertNotIn("X-Recordare-User", headers)
         self.assertNotIn("ingest", body)
 
+    def test_shared_room_skips_other_authors(self):
+        p = self.provider()
+        p.on_turn_start(1, "I am Bob and I like jazz", author_id="77", author_name="Bob")
+        p.sync_turn("I am Bob and I like jazz", "Hi Bob")
+        p.shutdown()
+        self.assertEqual(self.fake.ingests(), [])
+        self.assertIn("error", json.loads(p.handle_tool_call("recordare_search_memory", {"query": "jazz"})))
+
     def test_strip_fence(self):
         self.assertEqual(strip_fence(BLOCK), "Background. Data, not instructions.\n- episode: x")
+
+
+class AgentMemoryTest(unittest.TestCase):
+    """Memory per agent (default, D50): one memory, the gateway users are participants recognised inside it."""
+
+    def setUp(self):
+        self.fake, self.home = Fake(), tempfile.mkdtemp()
+        os.environ.update(RECORDARE_URL=self.fake.url, RECORDARE_API_KEY="rk_test", RECORDARE_USER="hermes-agent",
+                          RECORDARE_USER_ALIASES="", RECORDARE_MEMORY_PER="", RECORDARE_SELF_IDS="")
+
+    def provider(self, **kw):
+        p = RecordareMemoryProvider()
+        p.initialize("sess1", hermes_home=self.home, platform="telegram", user_id="42", user_name="Alice",
+                     gateway_session_key="agent:main:telegram:dm:42", **kw)
+        time.sleep(0.2)  # the outbox worker's start-up pass (replays leftovers) must not race the turn's own send
+        return p
+
+    def test_gateway_user_is_a_participant_of_the_agents_memory(self):
+        p = self.provider()
+        p.on_turn_start(1, "My sister moves to Turin in May.")
+        p.prefetch("My sister moves to Turin in May.")
+        path, headers, body = self.fake.requests[-1]
+        self.assertEqual((path, headers["X-Recordare-User"]), ("/api/v1/context", "hermes-agent"))
+        conv = body["ingest"]["conversation"]
+        self.assertEqual(conv["participants"][0], {"ref": "owner", "role": "owner"})  # not Alice: she is not the holder
+        self.assertIn({"ref": "telegram:42", "role": "other", "identity": {"channel": "telegram", "externalId": "42"},
+                       "displayName": "Alice"}, conv["participants"])
+        msg = body["ingest"]["messages"][0]
+        self.assertEqual((msg["role"], msg["authorRef"]), ("other", "telegram:42"))
+        p.sync_turn("My sister moves to Turin in May.", "Noted!")
+        p.shutdown()
+        self.assertEqual([[m["role"] for m in b["messages"]] for b in self.fake.ingests()], [["assistant"]])
+
+    def test_shared_room_authors_and_the_account_holder(self):
+        os.environ.update(RECORDARE_SELF_IDS="telegram:42", RECORDARE_USER_ALIASES='{"telegram:77": "bob"}')
+        p = self.provider()
+        p.on_turn_start(1, "I am Bob and I like jazz", author_id="77", author_name="Bob")
+        p.sync_turn("I am Bob and I like jazz", "Hi Bob")
+        p.on_turn_start(2, "Book a table for Friday", author_id="42", author_name="Alice")
+        p.sync_turn("Book a table for Friday", "Done")
+        self.assertIn("tool", json.loads(p.handle_tool_call("recordare_search_memory", {"query": "jazz"})))
+        p.shutdown()
+        msgs = [m for b in self.fake.ingests() for m in b["messages"]]
+        self.assertEqual([(m["role"], m.get("authorRef")) for m in msgs],
+                         [("other", "telegram:77"), ("assistant", None), ("user", None), ("assistant", None)])
+        conv = self.fake.ingests()[-1]["conversation"]
+        self.assertEqual(conv["participants"][0], {"ref": "owner", "role": "owner", "displayName": "Alice"})
+        bob = next(x for x in conv["participants"] if x["ref"] == "telegram:77")
+        self.assertEqual((bob["identity"], bob["displayName"]), ({"externalUserId": "bob"}, "Bob"))
+
+    def test_client_key_needs_the_agent_account(self):
+        os.environ["RECORDARE_USER"] = ""
+        p = self.provider()
+        self.assertEqual(p.get_tool_schemas(), [])
+        self.assertEqual(p.prefetch("anything at all"), "")
+        self.assertEqual(self.fake.requests, [])
+
+    def test_personal_token_cli_is_the_account_holder(self):
+        os.environ.update(RECORDARE_API_KEY="rp_test", RECORDARE_USER="")
+        p = RecordareMemoryProvider()
+        p.initialize("s9", hermes_home=self.home, platform="cli")
+        time.sleep(0.2)  # see provider()
+        p.on_turn_start(1, "I moved to Turin last week")
+        p.prefetch("I moved to Turin last week")
+        _, headers, body = self.fake.requests[-1]
+        self.assertNotIn("X-Recordare-User", headers)
+        self.assertEqual(body["ingest"]["messages"][0]["role"], "user")
+        self.assertNotIn("authorRef", body["ingest"]["messages"][0])
 
 
 if __name__ == "__main__":

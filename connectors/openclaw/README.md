@@ -10,9 +10,13 @@ own [Recordare](../../README.md) service — the **full** client level:
   relevant).
 - **Memory tools**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
   `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode` (Recordare's MCP tools, bound in code to
-  the person and the conversation — neither the model nor the user can point them elsewhere), with the schemas the
+  the memory and the conversation — neither the model nor the user can point them elsewhere), with the schemas the
   service publishes (`TOOLS` of the client library). `log_episode` is left out: the conversation is already captured.
-- **Group chats**: the turns of known people are captured, with the other members' messages as context (role `other`).
+- **One memory for the agent** (D50): the Gateway's agent has one memory; the people who talk to it — on any channel,
+  in direct chats and groups — are **participants** recognised inside it (each `<channel>:<senderId>` becomes a contact
+  of the memory, named after their channel name). You, the account holder, are the memory's "I". One memory per person
+  stays available (`memoryPer: "user"`).
+- **Group chats**: every member's messages are captured with the turn that follows (other members as role `other`).
   Recall works in groups too: Recordare answers with the whole memory in every conversation (D50: no viewer filter
   for now — privacy and disclosure come later), so what the agent remembers can surface in front of the group.
 
@@ -33,11 +37,17 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
    `openclaw plugins install --link /path/to/recordare/connectors/openclaw --accept-capabilities` (`--link` keeps it
    pointing at the folder; without it OpenClaw copies it). Restart the Gateway, then check
    `openclaw plugins inspect recordare --runtime --json` (status `loaded`, 4 hooks, 6 tools).
-3. Ask the Recordare admin for a credential:
-   - **one person** (your own assistant): a **personal token** with the scopes `mcp`, `ingest`, `read`
-     (`POST api/v1/admin/owners/{id}/tokens`, client of kind `mcp_client`);
-   - **several people**: a **client key** with the same scopes; each person is a client user (`X-Recordare-User`),
-     known to Recordare or auto-provisioned if the client allows it.
+3. Ask the Recordare admin for a credential for the agent's memory:
+   - a **personal token** with the scopes `mcp`, `ingest`, `read` (`POST api/v1/admin/owners/{id}/tokens`, client of
+     kind `mcp_client`) — the token's memory is the agent's;
+   - or a **client key** with the same scopes and the agent's account in `defaultUser` (a client user, known to
+     Recordare or auto-provisioned if the client allows it); a client key is also what one memory per person needs.
+
+   The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`), or
+   with a client key by `PATCH api/v1/me`: `personal` (your own assistant: you are "I", what arrives undeclared is
+   yours) or `entity` (an agent shared by a family, a team, a place: what arrives undeclared is "someone"'s); `gender`
+   `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The plugin has no setting
+   for them.
 4. Configure it in `~/.openclaw/openclaw.json`:
    ```json5
    {
@@ -49,9 +59,9 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
            hooks: { allowConversationAccess: true },
            config: {
              url: "http://localhost:8080",
-             apiKey: "${RECORDARE_API_KEY}",          // rp_… or rk_…; ${VAR} is read from the environment
-             users: { "telegram:123456789": "alice" }, // "<channel>:<senderId>" → Recordare user
-             defaultUser: "alice",                     // turns without a channel sender (CLI, Control UI)
+             apiKey: "${RECORDARE_API_KEY}",   // rp_… or rk_…; ${VAR} is read from the environment
+             selfSenders: ["telegram:123456789"], // your own sender ids: you are the memory's "I"
+             // defaultUser: "my-agent",         // with a client key: the agent's Recordare account
            },
          },
        },
@@ -66,35 +76,45 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 |---|---|---|
 | `url` | `RECORDARE_URL` | Recordare's address |
 | `apiKey` | `RECORDARE_API_KEY` | Client key (`rk_…`) or personal token (`rp_…`) |
-| `users` | `{}` | `"<channel>:<senderId>"` → Recordare user. Unmapped senders are not remembered |
-| `defaultUser` | — (`me` with a personal token) | User of turns without a channel sender |
+| `memoryPer` | `agent` | `agent`: one memory for the agent, every sender a participant of it. `user`: one memory per person (`users`) |
+| `defaultUser` | — (`me` with a personal token) | `agent`: the agent's Recordare account (client key; without it memory is off). `user`: the user of turns without a channel sender |
+| `selfSenders` | `[]` | `agent`: the `"<channel>:<senderId>"` ids that are the account holder — the memory's "I". Turns without a channel sender (CLI, Control UI) are always theirs |
+| `users` | `{}` | `user`: `"<channel>:<senderId>"` → Recordare user. Unmapped senders are not remembered |
 | `autoRecall` | `true` | Add the memory block before each turn |
 | `capture` | `true` | Send the conversations |
 | `tools` | `true` | Offer the `recordare_*` tools |
 | `groups` | `true` | Capture group chats too |
 | `timeoutMs` | `3000` | For the call before the turn (the message's ingest with its context) |
 
-With a personal token and an empty `users` map every turn belongs to the token's person (a single-person install). If
-other people can talk to the agent, map your own sender ids in `users`: everyone else is then left out.
+**Your own sender ids.** With `memoryPer: "agent"` a sender not in `selfSenders` is somebody the agent knows, not you:
+list your ids there (or have the admin bind them to the memory's self, `POST api/v1/admin/identities`
+`{kind: "participant", ownerScope, personId: <the memory>, channel, externalId}`, before you first write). Other
+people's words are kept as theirs (role `other`, attributed to their contact), so what they say about themselves never
+becomes a fact about you.
+
+**Upgrading from a `users` map.** The earlier behaviour (each mapped sender a separate Recordare user, unmapped senders
+not remembered) is `memoryPer: "user"`: add it to keep your memories split per person.
 
 ### Several people on one Gateway
-OpenClaw's default `session.dmScope: "main"` puts **all direct messages of all people into one session**, so one
-person's turns would land in another's conversation context. Set
+OpenClaw's default `session.dmScope: "main"` puts **all direct messages of all people into one session**. Every message
+is still attributed to its sender, but the agent sees one person's turns in another's context. Set
 ```json5
 { session: { dmScope: "per-channel-peer" } }
 ```
-(or `per-peer` with `session.identityLinks` for people who write from several channels) and map every person in
-`users`. Check with `openclaw security audit`.
+(or `per-peer` with `session.identityLinks` for people who write from several channels). Check with
+`openclaw security audit`. Recordare answers with the whole memory in every conversation (D50): what one person told
+the agent can come up with another; whoever runs the Gateway tells the people who talk to it.
 
 ## How it maps
 
 | OpenClaw | Recordare |
 |---|---|
 | session (key + session id) | conversation `openclaw:<sessionKey>/<sessionId>` (channel `openclaw:<channel>`, title = session key) |
-| `<channel>:<senderId>` (`users`), or `defaultUser` | the user (`X-Recordare-User` with a client key; the token's person otherwise) |
-| the person's message (`before_prompt_build`) | message `user`, id `<currentUserMessageId or runId>:u`, stored **before** the agent runs, in the same call that returns the memory block (so what the agent stores with `recordare_remember` binds to the person's own words); a plain ingest when `autoRecall` is off |
+| the agent (`memoryPer: agent`) — or `<channel>:<senderId>` (`users`) / `defaultUser` (`memoryPer: user`) | the memory (`X-Recordare-User` with a client key; the token's memory otherwise) |
+| a sender (`memoryPer: agent`) | the account holder (`selfSenders`, CLI, Control UI): participant `owner`, message `user`; anyone else: participant `<channel>:<senderId>` with the channel identity `{channel, externalId: senderId}` and their channel name (from `message_received`), message `other` — Recordare links it to a contact of the memory, created on first sight |
+| the person's message (`before_prompt_build`) | message (as above), id `<currentUserMessageId or runId>:u`, stored **before** the agent runs, in the same call that returns the memory block (so what the agent stores with `recordare_remember` binds to the person's own words); a plain ingest when `autoRecall` is off |
 | the agent's text after it (`agent_end`) | message `assistant`, id `<runId>:a` (tool calls and results are not sent) |
-| other members' messages in a group (`message_received`) | messages `other`, author `<channel>:<senderId>` (participant with a channel identity) |
+| other members' messages in a group (`message_received`) | messages `other`, author `<channel>:<senderId>` (participant with a channel identity); the account holder's own as `user` (`memoryPer: agent`) |
 | session end (`session_end`: new, reset, idle, daily, deleted) | `POST api/v1/ingest/conversations/{id}/end` → extraction now instead of after the idle delay (not on compaction, shutdown or restart) |
 | memory block | `prependContext` of `before_prompt_build` (model-only in OpenClaw; never sent back to Recordare — the plugin strips it) |
 | cron, heartbeat, sub-agent, agent-to-agent and incognito runs | not remembered |

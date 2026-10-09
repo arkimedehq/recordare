@@ -31,9 +31,9 @@ export class AdminService {
 
   createOwner(input: CreateOwner): Promise<Owner> {
     return this.db.transaction(async (tx) => {
-      const person = await tx.getRepository(Person).save({ displayName: input.displayName, kind: input.kind, ownerScope: null });
+      const person = await tx.getRepository(Person).save({ displayName: input.displayName, ownerScope: null });
       return tx.getRepository(Owner).save({
-        personId: person.id, locale: input.locale, timezone: input.timezone, qualityProfile: input.qualityProfile,
+        personId: person.id, locale: input.locale, timezone: input.timezone, qualityProfile: input.qualityProfile, mode: input.mode, gender: input.gender,
       });
     });
   }
@@ -42,22 +42,32 @@ export class AdminService {
     const repo = this.db.getRepository(Owner);
     const owner = await repo.findOneBy({ personId });
     if (!owner) throw new NotFoundException();
-    if (input.displayName || input.kind) {
-      await this.db.getRepository(Person).update(personId, {
-        ...(input.displayName ? { displayName: input.displayName } : {}), ...(input.kind ? { kind: input.kind } : {}) });
-    }
+    if (input.displayName) await this.db.getRepository(Person).update(personId, { displayName: input.displayName });
+    // The admin may change the mode of a memory that already holds memories (the console asks first).
+    if (input.mode) owner.mode = input.mode;
+    if (input.gender) owner.gender = input.gender;
     if (input.locale) owner.locale = input.locale;
     if (input.timezone) owner.timezone = input.timezone;
     if (input.qualityProfile !== undefined) owner.qualityProfile = input.qualityProfile;
     return repo.save(owner);
   }
 
+  /**
+   * An account identity opens a memory (the person must be a memory); a participant identity names the memory's self or
+   * one of its contacts inside that memory only.
+   */
   async createIdentity(input: CreateIdentity): Promise<ExternalIdentity> {
+    const [person]: Array<{ owner_scope: string | null; owner: boolean }> = await this.db.query(
+      `SELECT p.owner_scope, EXISTS (SELECT 1 FROM owners o WHERE o.person_id = p.id) AS owner FROM persons p WHERE p.id = $1`, [input.personId]);
+    const fits = input.kind === 'account'
+      ? person?.owner
+      : person && (person.owner_scope === input.ownerScope || (person.owner && input.personId === input.ownerScope));
+    if (!fits) throw new BadRequestException({ code: 'cannot_link' });
     try {
-      return await this.db.getRepository(ExternalIdentity).save(input.kind === 'client_user'
-        ? { personId: input.personId, kind: 'client_user', clientId: input.clientId, externalId: input.externalId, verifiedAt: new Date() }
-        : { personId: input.personId, kind: 'channel', ownerScope: input.ownerScope, channel: input.channel, externalId: input.externalId,
-            verifiedAt: input.verified ? new Date() : null });
+      return await this.db.getRepository(ExternalIdentity).save(input.kind === 'account'
+        ? { personId: input.personId, kind: 'account', clientId: input.clientId, externalId: input.externalId, verifiedAt: new Date() }
+        : { personId: input.personId, kind: 'participant', ownerScope: input.ownerScope, clientId: input.clientId ?? null, channel: input.channel ?? null,
+            externalId: input.externalId, verifiedAt: input.verified ? new Date() : null });
     } catch (err) {
       // Already bound (possibly to another owner): generic answer, no hint that the id exists.
       if (err instanceof QueryFailedError) throw new BadRequestException({ code: 'cannot_link' });
@@ -94,11 +104,15 @@ export class AdminService {
        ORDER BY r.started_at DESC LIMIT $3`, [ownerId, conversationId ?? null, limit]);
   }
 
-  /** Owners with their settings, memory size, linked identities and personal tokens. */
+  /**
+   * Memories with their settings, size, contacts count, identities (the accounts that open it and the participant ids
+   * that name its self or contacts) and personal tokens.
+   */
   async listPersons(): Promise<unknown[]> {
     const owners: Array<Record<string, unknown> & { id: string }> = await this.db.query(
-      `SELECT p.id, p.display_name AS name, p.kind,
+      `SELECT p.id, p.display_name AS name, o.mode, o.gender,
               o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.created_at AS "createdAt",
+              (SELECT count(*)::int FROM persons c WHERE c.owner_scope = p.id) AS contacts,
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.owner_id = p.id) AS messages,
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id
                 WHERE c.owner_id = p.id AND m.extracted_run_id IS NULL) AS pending,
@@ -107,16 +121,17 @@ export class AdminService {
               (SELECT count(*)::int FROM notes n WHERE n.owner_id = p.id AND n.deleted_at IS NULL AND n.status = 'current') AS notes,
               (SELECT max(m.sent_at) FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.owner_id = p.id) AS "lastMessage"
        FROM owners o JOIN persons p ON p.id = o.person_id ORDER BY p.display_name`);
-    const identities: Array<{ personId: string }> = await this.db.query(
-      `SELECT i.id, i.person_id AS "personId", i.kind, i.external_id AS "externalId", i.channel, c.name AS client
-       FROM external_identities i LEFT JOIN clients c ON c.id = i.client_id ORDER BY i.created_at`);
+    const identities: Array<{ personId: string; ownerScope: string | null }> = await this.db.query(
+      `SELECT i.id, i.person_id AS "personId", i.owner_scope AS "ownerScope", i.kind, i.external_id AS "externalId", i.channel,
+              c.name AS client, p.display_name AS person, i.verified_at IS NOT NULL AS verified
+       FROM external_identities i LEFT JOIN clients c ON c.id = i.client_id JOIN persons p ON p.id = i.person_id ORDER BY i.created_at`);
     const tokens: Array<{ ownerId: string }> = await this.db.query(
       `SELECT t.id, t.owner_id AS "ownerId", t.prefix, t.scopes, c.name AS client, t.created_at AS "createdAt",
               t.expires_at AS "expiresAt", t.last_used_at AS "lastUsedAt"
        FROM access_tokens t JOIN clients c ON c.id = t.client_id WHERE t.revoked_at IS NULL ORDER BY t.created_at`);
     return owners.map((o) => ({
       ...o,
-      identities: identities.filter((i) => i.personId === o.id),
+      identities: identities.filter((i) => (i.ownerScope ?? i.personId) === o.id),
       tokens: tokens.filter((t) => t.ownerId === o.id),
     }));
   }

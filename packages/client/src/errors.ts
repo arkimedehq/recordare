@@ -34,10 +34,10 @@ export class RecordareUnavailableError extends Error {
   }
 }
 
-/** The memory kind can change only while the memory is empty (`PATCH /me {kind}` → 409). */
+/** The memory mode can change only while the memory is empty (`PATCH /me {mode}` → 409). */
 export class MemoryNotEmptyError extends Error {
   constructor() {
-    super('The memory kind can change only while the memory is empty');
+    super('The memory mode can change only while the memory is empty');
     this.name = 'MemoryNotEmptyError';
   }
 }

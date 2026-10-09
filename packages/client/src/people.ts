@@ -2,18 +2,18 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Who each of the platform's users is in Recordare, cached: the person (ownerId), the kind of memory and the Atlas
+ * Who each of the platform's users is in Recordare, cached: the memory (ownerId), its mode and the Atlas
  * address. Recordare has no consent flag (D50): the platform's own switch (`enabled`) decides whether it is contacted.
  * The synchronous readers never wait on Recordare: they answer from the cache (even if stale) and refresh in the
  * background. Each lookup also keeps the person's name in sync with the platform's profile.
  */
-import { type MemoryKind } from './contract.js';
+import { type MemoryMode } from './contract.js';
 import { type RecordareClient } from './client.js';
 
 export interface Person {
   /** null = not known yet (not opted in on the platform, or Recordare unreachable before the first lookup). */
   ownerId: string | null;
-  kind: MemoryKind | null;
+  mode: MemoryMode | null;
   atlasUrl: string | null;
 }
 
@@ -55,7 +55,7 @@ export class PersonDirectory {
 
   /** A person known from the host's own storage (e.g. after a restart), marked stale so it is refreshed on first use. */
   seed(user: string, ownerId: string): void {
-    if (!this.cache.has(user)) this.cache.set(user, { ownerId, kind: null, atlasUrl: null, until: 0 });
+    if (!this.cache.has(user)) this.cache.set(user, { ownerId, mode: null, atlasUrl: null, until: 0 });
   }
 
   /** Forgets a user (e.g. after their switch or name changed): the next read asks Recordare again. */
@@ -82,18 +82,18 @@ export class PersonDirectory {
     try {
       const platform = await this.options.user(user);
       // Not opted in on the platform: never contact Recordare; a person already known stays known (e.g. for tracing).
-      if (!platform?.enabled) return remember({ ownerId: last?.ownerId ?? null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
+      if (!platform?.enabled) return remember({ ownerId: last?.ownerId ?? null, mode: last?.mode ?? null, atlasUrl: last?.atlasUrl ?? null });
       const me = await this.client.me(user);
       const name = platform.name?.trim().slice(0, 100);
       if (name && me.displayName !== name) {
         await this.client.updateMe(user, { displayName: name }).catch((err) => this.options.onError?.(user, err));
       }
-      const person: Person = { ownerId: me.ownerId, kind: me.kind, atlasUrl: me.atlasUrl ?? null };
+      const person: Person = { ownerId: me.ownerId, mode: me.mode, atlasUrl: me.atlasUrl ?? null };
       await this.options.onResolved?.(user, person);
       return remember(person);
     } catch (err) {
       this.options.onError?.(user, err);
-      return remember({ ownerId: last?.ownerId ?? null, kind: last?.kind ?? null, atlasUrl: last?.atlasUrl ?? null });
+      return remember({ ownerId: last?.ownerId ?? null, mode: last?.mode ?? null, atlasUrl: last?.atlasUrl ?? null });
     }
   }
 }

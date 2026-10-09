@@ -653,6 +653,11 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   ha detti l'agente, ma ora li sa. I punti 4–10 del confronto (dimenticare un contatto, ambiti di privacy, schede di sé
   e dei contatti, modello delle fonti, cose da evitare, nuovo run di Mem0, un punto su LongMemEval) sono accettati in
   linea di principio — ognuno si discute con il proprietario prima di essere costruito (WORK_PLAN M8).
+- **Contatti e attribuzione (proprietario, 2026-10-09):** in una memoria personale esiste solo il titolare dell'account
+  come "io" (utente e agente insieme); la prima persona è maschile per default. I contatti appartengono a una memoria,
+  anche le persone solo nominate; nomi e soprannomi, nome completo, relazione; le persone con lo stesso nome si separano
+  con identificativi → nome e cognome → contesto, e se resta ambiguo Recordare **chiede** ("quale Marco?") tramite
+  l'agente — la sua prima iniziativa (L1). Progetto dei dati: DATA_MODEL "Memoria dell'agente".
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 ancora aperta, con WORK_PLAN 5.4). Il lavoro aperto è tracciato

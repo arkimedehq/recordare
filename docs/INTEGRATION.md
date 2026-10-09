@@ -29,15 +29,27 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   the person is created at first contact; `GET api/v1/me` returns `ownerId` — store it next to your user (it ties
   your telemetry to the person: OpenTelemetry attribute `recordare.owner_id`).
 - Name the person after your user and keep it in sync (client key only): `PATCH api/v1/me {displayName}` whenever the user renames their
-  profile (the name follows the platform). The user's choice of memory kind goes the same way: `PATCH api/v1/me
-  {kind: human | entity}` (D48 — `entity` for a shared account everyone uses), accepted only while the memory is empty
-  (409 `memory_not_empty`). `GET api/v1/me` returns `kind` (show a shared memory as such) and `atlasUrl` when Recordare
-  Atlas is installed (link it for your admins only: it shows every person's activity).
-- The same human on two platforms: the admin links the identities (`POST api/v1/admin/identities`).
+  profile (the name follows the platform). The user's choice of memory mode goes the same way: `PATCH api/v1/me
+  {mode: personal | entity}` (D50 — `entity` for a shared account everyone uses: a home device, a robot, a place),
+  accepted only while the memory is empty (409 `memory_not_empty`); and the first person's grammatical gender from the
+  user's profile, any time: `PATCH api/v1/me {gender: masculine | feminine | neutral}` (default masculine). `GET
+  api/v1/me` returns `mode` and `gender` (show a shared memory as such) and `atlasUrl` when Recordare Atlas is installed
+  (link it for your admins only: it shows every person's activity).
+- **Two kinds of identity** (D50, WORK_PLAN 8.3): `X-Recordare-User` is an **account** identity — it opens the memory of
+  that user's account. A participant's `identity` in an ingest (`{externalUserId}` for one of your users, `{channel,
+  externalId}` for a channel id) is a **participant** identity — it names a contact *inside the memory being written*
+  (created on first sight, named after its `displayName`) and never opens a memory. So the same user of yours can be
+  one memory's account and a contact in another (a person talking to a shared device's memory): send their id as the
+  participant's `identity` and their name as `displayName`. Binding by hand: `POST api/v1/admin/identities` (`API.md` §1).
 
 ## 3. Ingest — never block the chat
 - Send every persisted message (user, assistant, other participants, tool output) with `POST api/v1/ingest/messages`,
   with stable `externalId`s (idempotent: a retry never duplicates) and the conversation's participants.
+- Recordare records who said each message (D50): your user's turns are the memory's own in a personal memory and
+  "someone"'s in an entity memory unless the participant carries an identity; the assistant's are the agent's.
+  Content that is the **agent's own** — knowledge you give it, what a device perceives, a document — goes with
+  `own: true` on the message (`user` or `other` role), with `source: document | perception | ambient` when that is the
+  conversation's nature. (Until WORK_PLAN 8.4 the extraction reads own content like your user's turns.)
 - Use an **outbox**: write the message to your own table first, send asynchronously, retry with back-off; a Recordare
   outage must never fail or slow the chat. Edits and deletions follow (`API.md` §2).
 - When a conversation ends on your side (session closed, /new), say so: `POST api/v1/ingest/conversations/{id}/end`
@@ -91,9 +103,14 @@ and **Codex** (installer) with shared capture hooks, **OpenClaw** (native plugin
 and an **OpenAI-compatible memory proxy** (AnythingLLM, Open WebUI, LibreChat). Each one captures the turns, adds the
 memory context before each turn (`POST api/v1/context`, with `ingest` where the turn is stored in the same call), ends
 the conversation with `…/end` and, except the proxy, exposes the MCP tools (as `recordare_*` in OpenClaw and Hermes).
-Credentials: a **personal token** with `mcp`, `ingest`, `read` for one person (client of kind `mcp_client`), or a
-**client key** with the same scopes for a gateway serving several people (OpenClaw, Hermes, the proxy — which needs
-only `ingest` + `read` — each person named with `X-Recordare-User`).
+**One memory per agent** (D50): an agent platform's agent has one memory — a **personal token** with `mcp`, `ingest`,
+`read` (client of kind `mcp_client`), or a **client key** with the same scopes (the proxy needs only `ingest` + `read`)
+and the agent's account in its settings (`X-Recordare-User`). The people who talk to the agent (OpenClaw senders, Hermes
+gateway users, the proxy's platform users) are **participants** with an identity, recognised inside that memory as its
+contacts, and their turns are sent as role `other` with their author; the account holder (listed in each connector's
+settings) is the memory's "I". One memory per person stays a setting (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`,
+`MEMORY_PER=user`). Claude Code and Codex: the personal token's memory. Mode and gender of a memory are set by the
+admin or with `PATCH api/v1/me`, not by the connectors.
 
 ## 5. Observability (optional)
 Recordare Atlas shows Recordare's own work from its telemetry stream; your agents (LLM calls, tools) appear when you

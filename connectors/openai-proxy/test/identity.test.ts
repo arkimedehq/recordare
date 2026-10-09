@@ -4,7 +4,10 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { resolveIdentity, stripMarkers, verifyJwt } from '../src/identity.js';
-import { config } from './helpers.js';
+import { config as base } from './helpers.js';
+
+/** Memory per user (the behaviour before D50): the resolvers' ids are the Recordare users. */
+const config = (env: Record<string, string> = {}) => base({ MEMORY_PER: 'user', ...env });
 
 const now = new Date('2026-10-08T10:00:00Z');
 const msgs = (system: string) => [{ role: 'system', content: system }, { role: 'user', content: 'ciao' }];
@@ -99,5 +102,43 @@ describe('generic headers (LibreChat)', () => {
     const h = { 'x-recordare-user': 'alice', 'x-openwebui-user-id': 'u-1' };
     expect(resolveIdentity(config(), h, msgs('s'), now).identity?.platform).toBe('generic');
     expect(resolveIdentity(config({ RESOLVERS: 'openwebui' }), h, msgs('s'), now).identity?.platform).toBe('openwebui');
+  });
+});
+
+describe('memory per instance (default, D50) and per workspace', () => {
+  const agent = (env: Record<string, string> = {}) => base({ RECORDARE_API_KEY: 'rk_x', RECORDARE_USER: 'agent', ...env });
+
+  it('one memory for the proxy; the platform user is a participant with their name', () => {
+    const r = resolveIdentity(agent(), { 'x-openwebui-user-id': 'u-1', 'x-openwebui-user-name': 'Alice', 'x-openwebui-chat-id': 'c-9' }, msgs('s'), now);
+    expect(r.identity).toEqual({
+      platform: 'openwebui', user: 'agent', conversation: 'openwebui:c-9', messageId: undefined,
+      participant: { ref: 'openwebui:u-1', identity: { externalUserId: 'openwebui:u-1' }, displayName: 'Alice' },
+    });
+    const ll = resolveIdentity(agent(), {}, msgs('[[recordare user=7 name="Bruno Rossi" ws=3]]'), now);
+    expect(ll.identity?.participant).toEqual({ ref: 'anythingllm:7', identity: { externalUserId: 'anythingllm:7' }, displayName: 'Bruno Rossi' });
+    // USER_MAP gives one person one id across platforms
+    const mapped = resolveIdentity(agent({ USER_MAP: JSON.stringify({ 'anythingllm:7': 'bruno' }) }), {}, msgs('[[recordare user=7 ws=3]]'), now);
+    expect(mapped.identity?.participant?.identity).toEqual({ externalUserId: 'bruno' });
+  });
+
+  it('SELF_USERS are the account holder: no participant', () => {
+    const cfg = agent({ SELF_USERS: 'openwebui:u-1, andrea' });
+    const self = resolveIdentity(cfg, { 'x-openwebui-user-id': 'u-1' }, msgs('s'), now).identity;
+    expect(self?.user).toBe('agent');
+    expect(self?.participant).toBeUndefined();
+    expect(resolveIdentity(cfg, { 'x-recordare-user': 'andrea' }, msgs('s'), now).identity?.participant).toBeUndefined();
+  });
+
+  it('a client key without RECORDARE_USER remembers nothing; a personal token is the memory', () => {
+    expect(resolveIdentity(base({ RECORDARE_API_KEY: 'rk_x' }), { 'x-openwebui-user-id': 'u-1' }, msgs('s'), now).identity).toBeNull();
+    expect(resolveIdentity(base({ RECORDARE_API_KEY: 'rp_x' }), { 'x-openwebui-user-id': 'u-1' }, msgs('s'), now).identity?.participant?.ref).toBe('openwebui:u-1');
+  });
+
+  it('per workspace: each AnythingLLM workspace its own memory, other platforms the instance\'s', () => {
+    const cfg = agent({ MEMORY_PER: 'workspace', USER_MAP: JSON.stringify({ 'anythingllm:ws:3': 'kitchen' }) });
+    expect(resolveIdentity(cfg, {}, msgs('[[recordare user=7 ws=3]]'), now).identity?.user).toBe('kitchen');
+    expect(resolveIdentity(cfg, {}, msgs('[[recordare user=7 ws=4]]'), now).identity?.user).toBe('anythingllm:ws:4');
+    expect(resolveIdentity(cfg, { 'x-openwebui-user-id': 'u-1' }, msgs('s'), now).identity?.user).toBe('agent');
+    expect(() => base({ MEMORY_PER: 'team' })).toThrow(/MEMORY_PER/);
   });
 });

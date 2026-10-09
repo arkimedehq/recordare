@@ -28,7 +28,7 @@ describe('separate facts-and-notes pass (FACTS_PASS=separate)', () => {
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
     const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest'] } })).body.key;
     const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: ownerId, clientId: client.body.id, externalId: 'luca' } });
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: client.body.id, externalId: 'luca' } });
     const res = await call(url, 'POST', '/api/v1/ingest/messages', {
       token: key, headers: { 'x-recordare-user': 'luca' },
       body: { conversation: { externalId: 'fp' }, messages: [{ externalId: 'fp1', role: 'user', content: "Da oggi lavoro come infermiera all'ospedale Sant'Orsola.", sentAt: '2026-06-07T10:00:00+02:00' }] },

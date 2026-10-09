@@ -19,15 +19,21 @@ import { PersonDirectory, RecordareClient, afterFailure } from '@arkimedehq/reco
 const rc = new RecordareClient({ baseUrl: 'http://recordare:8080', apiKey: process.env.RECORDARE_API_KEY!,
   headers: () => traceHeaders() });                       // es. propagation.inject di OpenTelemetry
 
-// Chi è l'utente, il tipo di memoria e l'indirizzo di Atlas; il nome segue il profilo sulla piattaforma. `enabled` è
+// Quale memoria apre l'account dell'utente, il suo modo (personal | entity) e l'indirizzo di Atlas; il nome segue il profilo sulla piattaforma. `enabled` è
 // l'interruttore della memoria della piattaforma: finché è false Recordare non viene contattato (niente consenso, D50).
 const people = new PersonDirectory(rc, { user: async (id) => ({ enabled: true, name: 'Andrea' }) });
-const person = await people.refresh('user-42');           // { ownerId, kind, atlasUrl }; peek() legge la cache
+const person = await people.refresh('user-42');           // { ownerId, mode, atlasUrl }; peek() legge la cache
 
 // Ingest (diviso in richieste da 500, idempotente su ogni externalId): → { conversationId, accepted, duplicates, conflicts }.
 await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
   { externalId: 'm1', role: 'user', content: 'Domani vado a Bologna', sentAt: new Date().toISOString() },
 ] });
+// Il contenuto proprio dell'agente (conoscenza data, una percezione, un documento): `own: true` su un messaggio user / other.
+await rc.ingest('user-42', { conversation: { externalId: 'doc-1', source: 'document' }, messages: [
+  { externalId: 'd1', role: 'user', own: true, content: 'La caldaia va revisionata ogni due anni.', sentAt: new Date().toISOString() },
+] });
+// Modo (solo finché la memoria è vuota, altrimenti MemoryNotEmptyError) e genere della prima persona, dal profilo.
+await rc.updateMe('user-42', { gender: 'feminine' });
 
 // Richiamo: una sessione MCP per utente E conversazione (prove delle scritture, il turno corrente), entrambi fissati nel codice.
 const tools = await rc.mcp.listTools('user-42', 'chat-1'); // gli strumenti dell'agente nascono da questi schemi
@@ -56,7 +62,7 @@ ingest. Tutto il resto è qui, uguale per ogni client.
 
 ## Conformità
 `service/test/conformance` esegue questa libreria contro il servizio vero nella CI di Recordare: un turno salvato una
-volta sola, le cancellazioni si propagano, nome e tipo seguono la piattaforma, il
+volta sola, le cancellazioni si propagano, nome, modo e genere seguono la piattaforma, il contenuto proprio è marcato, il
 richiamo via MCP porta l'utente e la conversazione. I controlli di tipo lì fanno fallire la build se questo contratto si
 allontana dagli schemi del servizio.
 

@@ -34,6 +34,34 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `X-Recordare-Viewers` / `_meta.recordare.viewers` are ignored and the `"nothing to show here"` notice is gone.
   `audience` / `disclosure` are still recorded; one memory still never sees another's data. The conversation header is
   still resolved: MCP writes bind their evidence to it.
+- **Memory identity** (D50, WORK_PLAN 8.3) — **breaking**. A memory belongs to a client account; the people it knows
+  are contacts of that memory only. Migration `MemoryIdentity1791070000000`: `persons.kind` becomes `owners.mode`
+  (`personal | entity`) with `owners.gender` (`masculine | feminine | neutral`, default masculine); every person that is
+  not a memory is a contact of exactly one memory (`full_name`, `relation`, names in `person_aliases`), and the contacts
+  a memory was missing are created (e.g. a person with their own memory who also talks to a shared device);
+  `external_identities.kind` becomes `account` (was `client_user`: opens a memory) or `participant` (was `channel`, now
+  also a client's participant id: names a contact inside one memory, created by ingest on first sight); every message
+  records who said it (`author_kind` `self | contact | someone | agent | own | tool`, `attribution_method`,
+  `attribution_confidence`); episodes, facts and notes record whose they are (`subject_kind`, `subject_person_id`,
+  `subject_candidates`); a `clarifications` table is created for later. API: `GET / PATCH api/v1/me` and the admin
+  owner routes take `mode` and `gender` instead of `kind`; `POST api/v1/admin/identities` takes `kind: account |
+  participant`; ingest accepts `own: true` on a message (the agent's own content) and the sources `document`,
+  `perception`, `ambient`. The console shows mode, gender, contacts and identity kinds. Client library: `MemoryKind` →
+  `MemoryMode` + `MemoryGender`, `Me.kind` → `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` →
+  `mode`, `IngestMessage.own`, the new sources. The extraction prompts and their inputs are unchanged.
+- **Connectors: one memory per agent, people as participants** (D50) — **breaking for multi-person set-ups**. OpenClaw:
+  the Gateway's agent has one memory (a personal token, or a client key with `defaultUser`); every sender is a
+  participant with the channel identity `<channel>:<senderId>` and their channel name, the account holder is listed in
+  `selfSenders` (CLI and Control UI turns are theirs); the `users` map is now `memoryPer: "user"`. Hermes Agent: one
+  memory for the agent (a personal token, or a client key with a fixed `RECORDARE_USER`); gateway users and each turn's
+  author in shared sessions are participants (`<platform>:<user id>`, their name), the account holder in
+  `RECORDARE_SELF_IDS`; per-user memories with `RECORDARE_MEMORY_PER=user`, the alias map gives a person one id across
+  platforms. OpenAI-compatible proxy: one memory per proxy (`RECORDARE_USER` or the personal token), platform users as
+  participants with their names (Open WebUI user name, LibreChat `X-Recordare-User-Name`, AnythingLLM marker `name=`),
+  the account holder in `SELF_USERS`; `MEMORY_PER=workspace` (one memory per AnythingLLM workspace) or `user` (the
+  previous behaviour). Other people's turns are sent as role `other` with their author, so they are never read as the
+  account holder's words. Claude Code / Codex: unchanged (the personal token's memory), wording only. Upgrading with a
+  per-person mapping: set `memoryPer: "user"` / `RECORDARE_MEMORY_PER=user` / `MEMORY_PER=user`.
 
 ### Fixed
 - A short fact inside a long message of the person counts as their words; "il proprietario" is replaced by the name.

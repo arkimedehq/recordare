@@ -3,8 +3,11 @@
 
 /** Layer 0 — raw log (docs/DATA_MODEL.md). Verbatim, the ground truth every memory points to. */
 import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { ATTRIBUTION_METHODS, AUTHOR_KINDS, type AttributionMethod, type AuthorKind } from './attribution';
 
-export const CONVERSATION_SOURCES = ['chat', 'voice', 'mcp_tool', 'import_chat', 'import_social', 'import_email', 'import_notes', 'interview'] as const;
+/** `document`, `perception`, `ambient` (D50): a document given to the agent, what a device perceives, ambient listening. */
+export const CONVERSATION_SOURCES = ['chat', 'voice', 'mcp_tool', 'import_chat', 'import_social', 'import_email', 'import_notes', 'interview',
+  'document', 'perception', 'ambient'] as const;
 export type ConversationSource = (typeof CONVERSATION_SOURCES)[number];
 export type ParticipantRole = 'owner' | 'assistant' | 'other';
 export type MessageRole = 'user' | 'assistant' | 'tool' | 'other';
@@ -44,6 +47,9 @@ export class Message {
   @Column({ name: 'tool_name', type: 'text', nullable: true }) toolName!: string | null;
   @Column({ name: 'author_person_id', type: 'uuid', nullable: true }) authorPersonId!: string | null;
   @Column({ name: 'author_ref', type: 'text', nullable: true }) authorRef!: string | null;
+  @Column({ name: 'author_kind', type: 'enum', enumName: 'message_author_kind', enum: AUTHOR_KINDS }) authorKind!: AuthorKind;
+  @Column({ name: 'attribution_method', type: 'enum', enumName: 'attribution_method', enum: ATTRIBUTION_METHODS }) attributionMethod!: AttributionMethod;
+  @Column({ name: 'attribution_confidence', type: 'real', nullable: true }) attributionConfidence!: number | null;
   @Column({ type: 'text' }) content!: string;
   @Column({ name: 'content_hash', type: 'bytea' }) contentHash!: Buffer;
   @Column({ name: 'sent_at', type: 'timestamptz' }) sentAt!: Date;

@@ -15,10 +15,16 @@ kept by your own [Recordare](../../README.md) service — the **full** client le
 Recordare stores every turn the hooks send (it has no consent flag, D50): to stop, disable the plugin. The hooks never
 block Codex: if Recordare is down, the turn goes on without memory.
 
+**Whose memory** (D50): the personal token opens one memory — your agent's, where you are "I" (a `personal` memory:
+you are both its user and its agent). The same memory can serve your other agents (another
+token or client). Its mode and the gender of its first person are set by the admin
+(`PATCH api/v1/admin/owners/{id}` `{mode, gender}`; `gender` `masculine` by default, `feminine`, `neutral`); the plugin
+has no setting for them.
+
 ## Install
 
 1. Ask the Recordare admin for a **personal token** with the scopes `mcp`, `ingest` and `read` (admin console → your
-   person → tokens, client of kind `mcp_client`; or `POST api/v1/admin/owners/{id}/tokens`).
+   memory → tokens, client of kind `mcp_client`; or `POST api/v1/admin/owners/{id}/tokens`).
 2. Run the installer (Node.js ≥ 18 on the PATH; no sudo). From a checkout:
    ```sh
    connectors/codex/install.sh --url http://localhost:8090

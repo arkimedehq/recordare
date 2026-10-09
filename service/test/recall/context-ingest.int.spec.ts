@@ -24,7 +24,7 @@ describe('connector calls (WORK_PLAN 6.6b)', () => {
     // Without the ingest scope the turn is refused (a read-only key cannot write).
     const client = (await call(s.url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'R', kind: 'platform' } })).body;
     const readOnly = (await call(s.url, 'POST', `/api/v1/admin/clients/${client.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
-    await call(s.url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: s.ownerId, clientId: client.id, externalId: 'u1' } });
+    await call(s.url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: s.ownerId, clientId: client.id, externalId: 'u1' } });
     expect((await call(s.url, 'POST', '/api/v1/context', { token: readOnly, headers: { 'x-recordare-user': 'u1' }, body: { ingest: turn('x', 'x1', 'ciao') } })).status).toBe(403);
     expect((await call(s.url, 'POST', '/api/v1/context', { ...as(), body: {} })).status).toBe(400);
   });

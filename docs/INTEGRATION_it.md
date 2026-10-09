@@ -33,17 +33,31 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   `autoProvision` la persona viene creata al primo contatto; `GET api/v1/me` restituisce `ownerId` — conservarlo
   accanto al proprio utente (lega la propria telemetria alla persona: attributo OpenTelemetry `recordare.owner_id`).
 - Dare alla persona il nome del proprio utente e tenerlo sincronizzato (solo con una chiave client): `PATCH api/v1/me {displayName}` ogni volta che
-  l'utente rinomina il proprio profilo (il nome segue la piattaforma). La scelta dell'utente sul tipo di memoria segue
-  la stessa via: `PATCH api/v1/me {kind: human | entity}` (D48 — `entity` per un account condiviso che usano tutti),
-  accettato solo finché la memoria è vuota (409 `memory_not_empty`). `GET api/v1/me` restituisce `kind` (mostrare una
-  memoria condivisa come tale) e `atlasUrl` quando Recordare Atlas è installato (collegarlo solo per i propri
-  amministratori: mostra l'attività di ogni persona).
-- La stessa persona su due piattaforme: l'amministratore collega le identità (`POST api/v1/admin/identities`).
+  l'utente rinomina il proprio profilo (il nome segue la piattaforma). La scelta dell'utente sul modo della memoria
+  segue la stessa via: `PATCH api/v1/me {mode: personal | entity}` (D50 — `entity` per un account condiviso che usano
+  tutti: un dispositivo domestico, un robot, un luogo), accettato solo finché la memoria è vuota (409
+  `memory_not_empty`); e il genere grammaticale della prima persona dal profilo dell'utente, in qualsiasi momento:
+  `PATCH api/v1/me {gender: masculine | feminine | neutral}` (default maschile). `GET api/v1/me` restituisce `mode` e
+  `gender` (mostrare una memoria condivisa come tale) e `atlasUrl` quando Recordare Atlas è installato (collegarlo solo
+  per i propri amministratori: mostra l'attività di ogni persona).
+- **Due tipi di identità** (D50, WORK_PLAN 8.3): `X-Recordare-User` è un'identità di **account** — apre la memoria
+  dell'account di quell'utente. L'`identity` di un partecipante in un ingest (`{externalUserId}` per uno dei propri
+  utenti, `{channel, externalId}` per un id di canale) è un'identità di **partecipante** — nomina un contatto *dentro la
+  memoria in cui si scrive* (creato al primo incontro, con il nome del suo `displayName`) e non apre mai una memoria.
+  Così lo stesso utente può essere l'account di una memoria e un contatto in un'altra (una persona che parla alla
+  memoria di un dispositivo condiviso): inviare il suo id come `identity` del partecipante e il suo nome come
+  `displayName`. Collegamento a mano: `POST api/v1/admin/identities` (`API.md` §1).
 
 ## 3. Ingest — non bloccare mai la chat
 - Inviare ogni messaggio persistito (utente, assistente, altri partecipanti, output degli strumenti) con
   `POST api/v1/ingest/messages`, con `externalId` stabili (idempotente: un nuovo tentativo non duplica mai) e i
   partecipanti della conversazione.
+- Recordare registra chi ha detto ogni messaggio (D50): i turni del proprio utente sono della memoria stessa in una
+  memoria personale e di "qualcuno" in una memoria di entità, salvo che il partecipante porti un'identità; quelli
+  dell'assistente sono dell'agente. Il contenuto **proprio dell'agente** — conoscenza che gli si dà, ciò che un
+  dispositivo percepisce, un documento — va con `own: true` sul messaggio (ruolo `user` o `other`), con `source: document
+  | perception | ambient` quando è la natura della conversazione. (Fino al WORK_PLAN 8.4 l'estrazione legge il contenuto
+  proprio come i turni del proprio utente.)
 - Usare un **outbox**: scrivere prima il messaggio nella propria tabella, inviare in modo asincrono, ritentare con
   back-off; un'interruzione di Recordare non deve mai far fallire o rallentare la chat. Modifiche ed eliminazioni
   seguono (`API.md` §2).
@@ -101,10 +115,16 @@ claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --head
 Agent** (memory provider), e un **proxy di memoria compatibile OpenAI** (AnythingLLM, Open WebUI, LibreChat). Ognuno
 cattura i turni, aggiunge il contesto di memoria prima di ogni turno (`POST api/v1/context`, con `ingest` dove il turno
 viene salvato nella stessa chiamata), chiude la conversazione con `…/end` e, tranne il proxy, espone gli strumenti MCP
-(come `recordare_*` in OpenClaw e Hermes). Credenziali: un **token personale** con `mcp`, `ingest`, `read` per una sola
-persona (client di tipo `mcp_client`), oppure una **chiave client** con gli stessi scope per un gateway che serve più
-persone (OpenClaw, Hermes, il proxy — a cui bastano `ingest` + `read` — ogni persona indicata con
-`X-Recordare-User`).
+(come `recordare_*` in OpenClaw e Hermes). **Una memoria per agente** (D50): l'agente di una
+piattaforma ha una sola memoria — un **token personale** con `mcp`, `ingest`, `read` (client di tipo `mcp_client`),
+oppure una **chiave client** con gli stessi scope (al proxy bastano `ingest` + `read`) e l'account dell'agente nelle sue
+impostazioni (`X-Recordare-User`). Le persone che parlano con l'agente (i mittenti di OpenClaw, gli utenti del gateway
+di Hermes, gli utenti della piattaforma del proxy) sono **partecipanti** con un'identità, riconosciuti dentro quella
+memoria come suoi contatti, e i loro turni sono inviati con ruolo `other` e il loro autore; il titolare dell'account
+(indicato nelle impostazioni di ciascun connettore) è l'"io" della memoria. Una memoria per persona resta
+un'impostazione (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`, `MEMORY_PER=user`). Claude Code e Codex: la memoria
+del token personale. Modalità e genere di una memoria li imposta l'amministratore o `PATCH api/v1/me`, non i
+connettori.
 
 ## 5. Osservabilità (opzionale)
 Recordare Atlas mostra il lavoro di Recordare stesso dal suo flusso di telemetria; i propri agenti (chiamate LLM,

@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import { z } from 'zod';
-import { SCOPES } from '../identity/identity.entities';
+import { MEMORY_GENDERS, MEMORY_MODES, SCOPES } from '../identity/identity.entities';
 import { QUALITY_PROFILES } from '../engine/quality-profile';
 
 const scopes = z.array(z.enum(SCOPES)).min(1);
@@ -27,8 +27,10 @@ export const createKeySchema = z.object({
 
 export const createOwnerSchema = z.object({
   displayName: z.string().min(1).max(200),
-  /** `entity`: a memory everyone using the account reads and writes — a shared device, a robot, a place (D48). */
-  kind: z.enum(['human', 'entity']).default('human'),
+  /** `entity`: a memory everyone using the account reads and writes — a shared device, a robot, a place (D48, D50). */
+  mode: z.enum(MEMORY_MODES).default('personal'),
+  /** First person in gendered languages (D50). */
+  gender: z.enum(MEMORY_GENDERS).default('masculine'),
   locale: z.enum(['it', 'en']).default('it'),
   timezone: z.string().min(1).default('Europe/Rome'),
   /** D35; omitted = installation default. */
@@ -37,19 +39,24 @@ export const createOwnerSchema = z.object({
 
 export const updateOwnerSchema = z.object({
   displayName: z.string().trim().min(1).max(200).optional(),
-  kind: z.enum(['human', 'entity']).optional(),
+  mode: z.enum(MEMORY_MODES).optional(),
+  gender: z.enum(MEMORY_GENDERS).optional(),
   locale: z.enum(['it', 'en']).optional(),
   timezone: z.string().min(1).optional(),
   /** null = back to the installation default. */
   qualityProfile: z.enum(QUALITY_PROFILES).nullable().optional(),
 });
 
+/**
+ * `account`: a client's user opens the memory `personId`. `participant`: inside the memory `ownerScope`, a client's
+ * participant id (`clientId`) or a channel id (`channel`) names `personId` — a contact of that memory or its self (D50).
+ */
 export const createIdentitySchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('client_user'), personId: z.uuid(), clientId: z.uuid(), externalId: z.string().min(1) }),
+  z.object({ kind: z.literal('account'), personId: z.uuid(), clientId: z.uuid(), externalId: z.string().min(1) }),
   z.object({
-    kind: z.literal('channel'), personId: z.uuid(), ownerScope: z.uuid().nullable().default(null),
-    channel: z.string().min(1), externalId: z.string().min(1), verified: z.boolean().default(false),
-  }),
+    kind: z.literal('participant'), ownerScope: z.uuid(), personId: z.uuid(),
+    clientId: z.uuid().optional(), channel: z.string().min(1).optional(), externalId: z.string().min(1), verified: z.boolean().default(false),
+  }).refine((b) => (b.clientId === undefined) !== (b.channel === undefined), { message: 'exactly one of clientId or channel' }),
 ]);
 
 export const createTokenSchema = z.object({

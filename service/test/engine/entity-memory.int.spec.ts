@@ -29,9 +29,9 @@ describe('entity memory (D48)', () => {
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
-  async function owner(name: string, kind?: 'entity'): Promise<string> {
-    const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: name, ...(kind ? { kind } : {}) } })).body.personId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: id, clientId, externalId: name } });
+  async function owner(name: string, mode?: 'entity'): Promise<string> {
+    const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: name, ...(mode ? { mode } : {}) } })).body.personId;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: id, clientId, externalId: name } });
     return id;
   }
 
@@ -46,7 +46,7 @@ describe('entity memory (D48)', () => {
 
   it('writes facts about the people who talk to it, each with its own history, and says so in GET /me', async () => {
     const home = await owner('Casa', 'entity');
-    expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'Casa' } })).body.kind).toBe('entity');
+    expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'Casa' } })).body.mode).toBe('entity');
     await extract('Casa', 'e1', 'Sono Andrea: ho comprato una Panda. Le chiavi di scorta sono nel cassetto blu.', {
       facts: [
         { key: 'car', value: 'Fiat Panda', verdict: 'new', subject: 'Andrea', evidence: [1] },
@@ -92,7 +92,7 @@ describe('entity memory (D48)', () => {
 
   it("leaves a person's memory as it was: a subject from the model is ignored", async () => {
     const luca = await owner('Luca');
-    expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'Luca' } })).body.kind).toBe('human');
+    expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'Luca' } })).body.mode).toBe('personal');
     await extract('Luca', 'p1', 'Ho comprato una Golf.', { facts: [{ key: 'car', value: 'VW Golf', verdict: 'new', subject: 'Luca', evidence: [1] }] });
     const req = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1);
     expect(req?.messages[0]?.content).not.toContain('THIS MEMORY BELONGS TO AN ENTITY');
@@ -105,21 +105,23 @@ describe('entity memory (D48)', () => {
     await owner('tablet');
     const me = () => call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'tablet' } });
     const set = (body: object) => call(url, 'PATCH', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'tablet' }, body });
-    expect((await me()).body).toMatchObject({ kind: 'human', atlasUrl: 'http://atlas.test:5175' });
-    expect((await set({ kind: 'entity', displayName: 'Tablet cucina' })).status).toBe(204);
-    expect((await me()).body).toMatchObject({ kind: 'entity', displayName: 'Tablet cucina' });
+    expect((await me()).body).toMatchObject({ mode: 'personal', gender: 'masculine', atlasUrl: 'http://atlas.test:5175' });
+    expect((await set({ mode: 'entity', displayName: 'Tablet cucina' })).status).toBe(204);
+    expect((await me()).body).toMatchObject({ mode: 'entity', displayName: 'Tablet cucina' });
     await extract('tablet', 't1', 'Le chiavi di scorta sono nel cassetto blu.', {
       facts: [{ key: 'spare_keys_location', value: 'cassetto blu', verdict: 'new', subject: null, evidence: [1] }] });
-    expect((await set({ kind: 'human' })).status).toBe(409); // shared memories would mix with one person's
-    expect((await set({ kind: 'entity' })).status).toBe(204); // unchanged kind: fine
-    expect((await me()).body.kind).toBe('entity');
+    expect((await set({ mode: 'personal' })).status).toBe(409); // first-person memories would mix with someone's
+    expect((await set({ mode: 'entity' })).status).toBe(204); // unchanged mode: fine
+    expect((await set({ gender: 'feminine' })).status).toBe(204); // the gender changes any time
+    expect((await set({ gender: 'plural' })).status).toBe(400);
+    expect((await me()).body).toMatchObject({ mode: 'entity', gender: 'feminine' });
   });
 
   it('renames an owner and turns it into an entity from the admin API', async () => {
     const id = await owner('voice');
-    const res = await call(url, 'PATCH', `/api/v1/admin/owners/${id}`, { token: ADMIN_KEY, body: { displayName: 'Casa Genovese', kind: 'entity' } });
+    const res = await call(url, 'PATCH', `/api/v1/admin/owners/${id}`, { token: ADMIN_KEY, body: { displayName: 'Casa Genovese', mode: 'entity', gender: 'neutral' } });
     expect(res.status).toBe(200);
     expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'voice' } })).body)
-      .toMatchObject({ displayName: 'Casa Genovese', kind: 'entity' });
+      .toMatchObject({ displayName: 'Casa Genovese', mode: 'entity', gender: 'neutral' });
   });
 });

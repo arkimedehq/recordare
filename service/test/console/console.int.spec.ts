@@ -33,14 +33,14 @@ describe('admin console (WORK_PLAN 6.9)', () => {
     const client = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Arkimede', kind: 'platform' } })).body;
     const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
     expect((await call(url, 'GET', '/api/v1/admin/persons', { token: key })).status).toBe(403);
-    const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Casa', kind: 'entity' } })).body.personId;
+    const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Casa', mode: 'entity' } })).body.personId;
     const identity = (await call(url, 'POST', '/api/v1/admin/identities',
-      { token: ADMIN_KEY, body: { kind: 'client_user', personId: ownerId, clientId: client.id, externalId: 'voice' } })).body;
+      { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: client.id, externalId: 'voice' } })).body;
 
     const persons = (await call(url, 'GET', '/api/v1/admin/persons', { token: ADMIN_KEY })).body;
     expect(persons).toEqual([expect.objectContaining({
-      id: ownerId, name: 'Casa', kind: 'entity', messages: 0, episodes: 0, facts: 0, notes: 0,
-      identities: [expect.objectContaining({ id: identity.id, client: 'Arkimede', externalId: 'voice' })], tokens: [],
+      id: ownerId, name: 'Casa', mode: 'entity', gender: 'masculine', contacts: 0, messages: 0, episodes: 0, facts: 0, notes: 0,
+      identities: [expect.objectContaining({ id: identity.id, kind: 'account', client: 'Arkimede', externalId: 'voice' })], tokens: [],
     })]);
     const clients = (await call(url, 'GET', '/api/v1/admin/clients', { token: ADMIN_KEY })).body;
     expect(clients).toEqual([expect.objectContaining({ id: client.id, name: 'Arkimede', autoProvision: false, disabledAt: null,

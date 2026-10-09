@@ -13,6 +13,8 @@
  * - facts: verdicts with world + knowledge time, forward-only supersession (imports never
  *   overwrite newer values), single-value slots replaced, multi-value slots accumulate;
  * - corrections never rewrite: a new row `corrects` the old one, which is invalidated;
+ * - subject (D50): personal memories — every row is the self's; entity memories — a fact's subject contact (or the entity
+ *   itself), an episode the one known contact its people name (else someone), a note someone's; never undecided yet;
  * - recall echoes: what only an assistant reply answering from memory said — neither the owner nor another person nor
  *   a non-memory tool (web search, a calendar…) said it — is not recorded: a wrong or invented recall must not become
  *   a memory because the owner said "ok", while news a tool brought in the same turn stays news.
@@ -22,6 +24,7 @@ import { type ExtractionInput, isMemoryTool, type WindowMessage } from './extrac
 import { type ExtractionOutput } from './extraction.schema';
 import { nameOwner } from '../lang';
 import { localDate, toStored, type Precision } from './time';
+import { contact, episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 
 type AuthorRole = 'owner' | 'assistant' | 'other' | 'tool';
 
@@ -205,7 +208,7 @@ export class ExtractionWriter {
   }
 
   private authorRole(msgs: WindowMessage[]): AuthorRole {
-    if (msgs.some((m) => m.role === 'user' || m.authorPersonId === this.ctx.ownerId)) return 'owner';
+    if (msgs.some((m) => m.accountSpeaker)) return 'owner';
     if (msgs.some((m) => m.role === 'assistant')) return 'assistant';
     if (msgs.some((m) => m.role === 'tool')) return 'tool';
     return 'other';
@@ -240,16 +243,20 @@ export class ExtractionWriter {
       const origin = role === 'assistant' ? 'assistant_stated' : e.origin;
       const stance = role === 'other' || role === 'tool' ? 'inferred' : 'stated';
       const corrects = e.corrects ? (this.input.episodes.get(e.corrects) ?? null) : null;
+      const { subject, people } = this.ctx.entity ? await episodeSubject(this.tx, this.ctx.ownerId, e.people) : { subject: SELF_SUBJECT, people: new Map<string, string>() };
       const [row] = await this.tx.query(
         `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, time_expression, place,
            importance, valence, feelings, opinion, keywords, context, tags, plan_status, plan_status_at, corrects,
-           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, 'owner', $24, $25)
+           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified,
+           subject_kind, subject_person_id, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, 'owner', $24, $25,
+           $26, $27, $28)
          RETURNING id`,
         [this.ctx.ownerId, e.kind, e.content, at.at, until.at, at.precision, e.time_expression ?? null, e.place ?? null,
           e.importance, e.valence ?? null, e.feelings, e.opinion ?? null, e.keywords, e.context ?? null, e.tags,
           e.kind === 'plan' ? 'open' : null, e.kind === 'plan' ? new Date() : null, corrects,
-          origin, role, stance, stance === 'stated' ? 1 : 0.6, this.ctx.runId, this.audience, this.audienceUnverified],
+          origin, role, stance, stance === 'stated' ? 1 : 0.6, this.ctx.runId, this.audience, this.audienceUnverified,
+          subject.kind, subject.personId, subject.candidates],
       );
       const id = row.id as string;
       if (corrects) await this.tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1 AND owner_id = $2`, [corrects, this.ctx.ownerId]);
@@ -257,7 +264,7 @@ export class ExtractionWriter {
         await this.tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [id, m.id]);
       }
       for (const alias of e.people) {
-        await this.tx.query(`INSERT INTO episode_people (episode_id, alias) VALUES ($1, $2)`, [id, alias]);
+        await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [id, alias, people.get(alias) ?? null]);
       }
       this.written.push({ table: 'episodes', id, text: [e.content, e.place, e.people.join(', '), e.keywords.join(' '), e.context, e.opinion].filter(Boolean).join(' | ') });
       ids.push(id);
@@ -348,9 +355,9 @@ export class ExtractionWriter {
     const [row] = await this.tx.query(
       `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence,
          feelings, opinion, keywords, context, tags, origin, author_role, stance, confidence, extraction_run_id, disclosure,
-         audience, audience_unverified)
+         audience, audience_unverified, subject_kind, subject_person_id, subject_candidates)
        SELECT owner_id, 'event', content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
-         opinion, keywords, context, tags, origin, $3, stance, confidence, $4, 'owner', $5, $6
+         opinion, keywords, context, tags, origin, $3, stance, confidence, $4, 'owner', $5, $6, subject_kind, subject_person_id, subject_candidates
        FROM episodes WHERE id = $1 AND owner_id = $2 RETURNING id, content, place`,
       [planId, this.ctx.ownerId, this.authorRole(msgs), this.ctx.runId, this.audience, this.audienceUnverified]);
     await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, planId]);
@@ -369,12 +376,13 @@ export class ExtractionWriter {
     const [row] = await this.tx.query(
       `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence,
          feelings, opinion, keywords, context, tags, plan_status, plan_status_at, origin, author_role, stance, confidence,
-         extraction_run_id, disclosure, audience, audience_unverified)
-       VALUES ($1, 'plan', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open', now(), $14, $15, $16, $17, $18, 'owner', $19, $20)
+         extraction_run_id, disclosure, audience, audience_unverified, subject_kind, subject_person_id, subject_candidates)
+       VALUES ($1, 'plan', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open', now(), $14, $15, $16, $17, $18, 'owner', $19, $20,
+         $21, $22, $23)
        RETURNING id`,
       [this.ctx.ownerId, this.planText(old.content, p), at.at, until, at.precision, old.place, old.importance, old.valence,
         old.feelings, old.opinion, old.keywords, old.context, old.tags, old.origin, this.authorRole(msgs), old.stance, old.confidence,
-        this.ctx.runId, this.audience, this.audienceUnverified],
+        this.ctx.runId, this.audience, this.audienceUnverified, old.subject_kind, old.subject_person_id, old.subject_candidates],
     );
     for (const m of msgs) {
       await this.tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, m.id]);
@@ -462,14 +470,17 @@ export class ExtractionWriter {
         await this.tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1 AND owner_id = $2`, [target.id, this.ctx.ownerId]);
         correctsId = target.id;
       }
+      // A fact without a subject is the self's (personal) or the entity's own (entity, e.g. where the spare keys are).
+      const subject: Subject = subjectId ? contact(subjectId) : SELF_SUBJECT;
       const [row] = await this.tx.query(
         `INSERT INTO facts (owner_id, key, value, status, valid_from, valid_to, date_precision, supersedes, corrects, verdict, pending,
-           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_person_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'owner', $17, $18, $19)
+           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_person_id,
+           subject_kind, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'owner', $17, $18, $19, $20, $21)
          RETURNING id`,
         [this.ctx.ownerId, key, value, status, from.at, validTo, from.precision, supersedes, correctsId, verdict, inferred,
           role === 'assistant' ? 'assistant_stated' : 'owner_lived', role, inferred ? 'inferred' : 'stated', inferred ? 0.6 : 1,
-          this.ctx.runId, this.audience, this.audienceUnverified, subjectId],
+          this.ctx.runId, this.audience, this.audienceUnverified, subjectId, subject.kind, subject.candidates],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
       const about = subjectId ? `${f.subject?.trim()} — ` : '';
@@ -495,17 +506,22 @@ export class ExtractionWriter {
    * created; null (no subject) = the entity itself.
    */
   private async subject(raw: string | null | undefined): Promise<string | null> {
-    const name = raw?.replace(/\s*\(.*\)\s*$/, '').trim().slice(0, 200);
+    const name = raw ? withoutRelation(raw).slice(0, 200) : '';
     if (!name) return null;
     const lower = name.toLowerCase();
     const known = this.subjects.get(lower);
     if (known) return known;
     const [found] = await this.tx.query(
       `SELECT id FROM persons WHERE owner_scope = $1 AND lower(display_name) = $2 ORDER BY created_at LIMIT 1`, [this.ctx.ownerId, lower]);
-    const id = (found ?? (await this.tx.query(
-      `INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [this.ctx.ownerId, name]))[0]).id as string;
-    this.subjects.set(lower, id);
-    return id;
+    let id = found?.id as string | undefined;
+    if (!id) {
+      [{ id }] = await this.tx.query(`INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [this.ctx.ownerId, name]);
+      await this.tx.query(
+        `INSERT INTO person_aliases (owner_id, person_id, alias, alias_norm, source) VALUES ($1, $2, $3, lower(unaccent(btrim($3))), 'extracted')
+         ON CONFLICT DO NOTHING`, [this.ctx.ownerId, id, name]);
+    }
+    this.subjects.set(lower, id as string);
+    return id as string;
   }
 
   // ── notes ─────────────────────────────────────────────────────────────────────
@@ -531,14 +547,15 @@ export class ExtractionWriter {
         await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND owner_id = $2`, [target, this.ctx.ownerId]);
         correctsId = target;
       }
+      const subject = this.ctx.entity ? SOMEONE_SUBJECT : SELF_SUBJECT;
       const [row] = await this.tx.query(
         `INSERT INTO notes (owner_id, category, content, keywords, context, tags, supersedes, corrects, pending, valid_from,
-           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'owner', $16, $17)
+           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_kind, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'owner', $16, $17, $18, $19)
          RETURNING id`,
         [this.ctx.ownerId, n.category, n.content, n.keywords, n.context ?? null, n.tags, supersedes, correctsId, inferred,
           msgs[0]?.sentAt ?? null, role === 'assistant' ? 'assistant_stated' : 'owner_lived', role, inferred ? 'inferred' : 'stated',
-          inferred ? 0.6 : 1, this.ctx.runId, this.audience, this.audienceUnverified],
+          inferred ? 0.6 : 1, this.ctx.runId, this.audience, this.audienceUnverified, subject.kind, subject.candidates],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
       await this.tx.query(`INSERT INTO note_changes (owner_id, note_id, change) VALUES ($1, $2, $3)`,

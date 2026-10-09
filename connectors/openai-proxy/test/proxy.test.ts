@@ -46,7 +46,7 @@ const servers: Server[] = [];
 afterEach(() => { for (const s of servers.splice(0)) s.close(); });
 
 async function start(env: Record<string, string>, seen: Seen[], calls: RCall[], opts: { down?: boolean; block?: string | null } = {}) {
-  const cfg = config({ RECORDARE_URL: 'http://recordare:8080', RECORDARE_API_KEY: 'rk_test', UPSTREAM_API_KEY: 'sk-up', ...env });
+  const cfg = config({ RECORDARE_URL: 'http://recordare:8080', RECORDARE_API_KEY: 'rk_test', RECORDARE_USER: 'agent', UPSTREAM_API_KEY: 'sk-up', ...env });
   const memory = new Memory(cfg, silent, recordare(calls, opts));
   const server = createProxy(cfg, { log: silent, memory, fetch: upstream(seen) });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
@@ -82,10 +82,13 @@ describe('proxy', () => {
 
     await until(() => calls.length >= 2);
     expect(calls.map((c) => c.path)).toEqual(['/api/v1/context', '/api/v1/ingest/messages']); // message + context: one call
-    expect(calls[0]!.headers.get('x-recordare-user')).toBe('anythingllm:7');
-    const ingest = calls[0]!.body.ingest as { conversation: { externalId: string }; messages: Array<{ externalId: string; role: string }> };
+    expect(calls[0]!.headers.get('x-recordare-user')).toBe('agent'); // the proxy's one memory (D50)
+    const ingest = calls[0]!.body.ingest as {
+      conversation: { externalId: string; participants: unknown[] }; messages: Array<{ externalId: string; role: string; authorRef: string }>;
+    };
     expect(ingest.conversation.externalId).toMatch(/^anythingllm:3:7:\d{4}-\d{2}-\d{2}$/);
-    expect(ingest.messages[0]!.role).toBe('user');
+    expect(ingest.conversation.participants).toContainEqual({ ref: 'anythingllm:7', role: 'other', identity: { externalUserId: 'anythingllm:7' } });
+    expect(ingest.messages[0]).toMatchObject({ role: 'other', authorRef: 'anythingllm:7' });
     expect(calls[0]!.body.query).toBe('Come si chiama il mio gatto?');
     const answer = (calls[1]!.body.messages as Array<Record<string, unknown>>)[0]!;
     expect(answer).toMatchObject({ role: 'assistant', content: 'Hello', upsert: true });
@@ -166,8 +169,19 @@ describe('proxy', () => {
     const end = calls.find((c) => c.path.endsWith('/end'))!;
     const conversation = (calls[0]!.body.ingest as { conversation: { externalId: string } }).conversation.externalId;
     expect(end.path).toBe(`/api/v1/ingest/conversations/${encodeURIComponent(conversation)}/end`);
-    expect(end.headers.get('x-recordare-user')).toBe('anythingllm:7');
+    expect(end.headers.get('x-recordare-user')).toBe('agent');
     expect(calls.filter((c) => c.path.endsWith('/end'))).toHaveLength(1);
+  });
+
+  it('memory per user: the platform user is the memory and its "I"', async () => {
+    const seen: Seen[] = []; const calls: RCall[] = [];
+    const { base } = await start({ MEMORY_PER: 'user' }, seen, calls);
+    await (await chat(base, { ...anythingllm('ciao'), stream: false })).text();
+    await until(() => calls.length >= 1);
+    expect(calls[0]!.headers.get('x-recordare-user')).toBe('anythingllm:7');
+    const ingest = calls[0]!.body.ingest as { conversation: { participants: Array<{ ref: string }> }; messages: Array<{ role: string; authorRef: string }> };
+    expect(ingest.conversation.participants.map((p) => p.ref)).toEqual(['owner', 'assistant']);
+    expect(ingest.messages[0]).toMatchObject({ role: 'user', authorRef: 'owner' });
   });
 
   it('with recall off, stores the message with a plain ingest', async () => {

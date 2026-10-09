@@ -31,7 +31,7 @@ describe('REST ingest (Layer 0)', () => {
     clientId = client.body.id;
     key = (await call(url, 'POST', `/api/v1/admin/clients/${clientId}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } })).body.key;
     ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: ownerId, clientId, externalId: 'luca' } });
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId, externalId: 'luca' } });
   });
   afterAll(async () => { await app?.close(); emb?.close(); });
 
@@ -67,10 +67,10 @@ describe('REST ingest (Layer 0)', () => {
     expect(upsert.body).toMatchObject({ accepted: 1, conflicts: [] });
     expect(await db.query(`SELECT content FROM message_revisions`)).toEqual([{ content: 'Che bello!' }]);
 
-    const rows = await db.query(`SELECT external_id, role, author_person_id FROM messages ORDER BY external_id`);
+    const rows = await db.query(`SELECT external_id, role, author_person_id, author_kind, attribution_method FROM messages ORDER BY external_id`);
     expect(rows).toEqual([
-      { external_id: 'm1', role: 'user', author_person_id: ownerId },
-      { external_id: 'm2', role: 'assistant', author_person_id: null },
+      { external_id: 'm1', role: 'user', author_person_id: ownerId, author_kind: 'self', attribution_method: 'account' },
+      { external_id: 'm2', role: 'assistant', author_person_id: null, author_kind: 'agent', attribution_method: 'client_assertion' },
     ]);
     // Implicit owner participant.
     expect(await db.query(`SELECT ref, role, person_id FROM conversation_participants`)).toEqual([{ ref: 'owner', role: 'owner', person_id: ownerId }]);
@@ -82,17 +82,26 @@ describe('REST ingest (Layer 0)', () => {
     expect((await call(url, 'POST', '/api/v1/ingest/messages', { token: ADMIN_KEY, body: batch('c2', [msg('x', 'y')]) })).status).toBe(403);
   });
 
-  it('resolves only verified identities to persons (audience)', async () => {
-    const marco = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'tmp' } })).body.personId;
-    await db.query(`UPDATE persons SET owner_scope = $1 WHERE id = $2`, [ownerId, marco]);
-    await db.query(`DELETE FROM owners WHERE person_id = $1`, [marco]);
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'channel', personId: marco, ownerScope: ownerId, channel: 'telegram', externalId: '111', verified: true } });
+  it('resolves participants inside the memory only: known, unverified, first seen (D50)', async () => {
+    // Two contacts of Luca's memory, bound by the admin: Marco verified, Gino not.
+    const contact = async (name: string, verified: boolean) => {
+      const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: name } })).body.personId;
+      await db.query(`UPDATE persons SET owner_scope = $1 WHERE id = $2`, [ownerId, id]);
+      await db.query(`DELETE FROM owners WHERE person_id = $1`, [id]);
+      const res = await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY,
+        body: { kind: 'participant', ownerScope: ownerId, personId: id, channel: 'telegram', externalId: name, verified } });
+      expect(res.status).toBe(201);
+      return id;
+    };
+    const marco = await contact('Marco', true);
+    await contact('Gino', false);
 
     await call(url, 'POST', '/api/v1/ingest/messages', {
       ...as('luca'),
       body: batch('group', [msg('g1', 'Ciao a tutti')], {
         participants: [
-          { ref: 'marco', role: 'other', displayName: 'Marco', identity: { channel: 'telegram', externalId: '111' } },
+          { ref: 'marco', role: 'other', displayName: 'Marco', identity: { channel: 'telegram', externalId: 'Marco' } },
+          { ref: 'gino', role: 'other', displayName: 'Gino', identity: { channel: 'telegram', externalId: 'Gino' } },
           { ref: 'stranger', role: 'other', displayName: 'Tizio', identity: { channel: 'telegram', externalId: '999' } },
         ],
       }),
@@ -100,11 +109,17 @@ describe('REST ingest (Layer 0)', () => {
     const parts = await db.query(
       `SELECT p.ref, p.person_id FROM conversation_participants p JOIN conversations c ON c.id = p.conversation_id
        WHERE c.external_id = 'group' ORDER BY p.ref`);
+    const [tizio] = await db.query(`SELECT id, owner_scope, display_name FROM persons WHERE display_name = 'Tizio'`);
+    expect(tizio).toMatchObject({ owner_scope: ownerId });
     expect(parts).toEqual([
+      { ref: 'gino', person_id: null }, // an unverified binding identifies nobody
       { ref: 'marco', person_id: marco },
       { ref: 'owner', person_id: ownerId },
-      { ref: 'stranger', person_id: null },
+      { ref: 'stranger', person_id: tizio.id }, // first seen: a new contact of this memory, with its participant id and name
     ]);
+    expect(await db.query(`SELECT kind, channel, external_id FROM external_identities WHERE person_id = $1`, [tizio.id]))
+      .toEqual([{ kind: 'participant', channel: 'telegram', external_id: '999' }]);
+    expect(await db.query(`SELECT alias, source FROM person_aliases WHERE person_id = $1`, [tizio.id])).toEqual([{ alias: 'Tizio', source: 'client' }]);
   });
 
   it('schedules one idle extraction per conversation and reschedules it on new messages', async () => {

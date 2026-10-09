@@ -45,11 +45,11 @@ export class EngineExtractionRunner implements ExtractionRunner {
 
   async runForConversation(conversationId: string): Promise<void> {
     const [conv] = await this.db.query(
-      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.quality_profile, p.kind, p.display_name
+      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.quality_profile, o.mode, p.display_name
        FROM conversations c JOIN owners o ON o.person_id = c.owner_id JOIN persons p ON p.id = c.owner_id
        WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
     if (!conv) return;
-    const owner: Owner = { id: conv.owner_id, name: conv.display_name, locale: conv.locale, timezone: conv.timezone, entity: conv.kind === 'entity' };
+    const owner: Owner = { id: conv.owner_id, name: conv.display_name, locale: conv.locale, timezone: conv.timezone, entity: conv.mode === 'entity' };
     const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride, this.factsPassOverride);
 
     // One extraction per conversation at a time (session advisory lock); a concurrent job leaves
@@ -74,7 +74,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
 
   private async runWindow(owner: Owner, profile: QualityProfile, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
     const runId = await this.startRun(owner, conversationId, window);
-    if (!window.some((m) => m.role === 'user' || m.authorPersonId === owner.id)) {
+    if (!window.some((m) => m.accountSpeaker)) {
       // Gate: nothing the owner said → no LLM call (D5).
       await this.db.transaction(async (tx) => {
         await tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [runId, window.map((m) => m.id)]);

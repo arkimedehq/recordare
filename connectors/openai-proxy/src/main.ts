@@ -17,7 +17,12 @@ const memory = cfg.recordareUrl && cfg.recordareApiKey ? new Memory(cfg, log) : 
 const server = createProxy(cfg, { log, memory });
 server.listen(cfg.port, () => {
   log.info(`recordare-openai-proxy ${VERSION} on :${cfg.port} → ${cfg.upstreamBaseUrl}; Recordare ${memory
-    ? `${cfg.personal ? 'personal token' : 'client key'}, resolvers ${cfg.resolvers.join(',')}` : 'off (pass-through)'}`);
+    ? `${cfg.personal ? 'personal token' : 'client key'}, memory per ${cfg.memoryPer}, resolvers ${cfg.resolvers.join(',')}`
+    : 'off (pass-through)'}`);
+  if (memory && !cfg.personal && cfg.memoryPer !== 'user' && !cfg.recordareUser) {
+    log.warn(`MEMORY_PER=${cfg.memoryPer} with a client key needs RECORDARE_USER (the proxy's memory): nothing is remembered`
+      + (cfg.memoryPer === 'workspace' ? ' outside AnythingLLM workspaces' : ''));
+  }
 });
 
 let stopping = false;

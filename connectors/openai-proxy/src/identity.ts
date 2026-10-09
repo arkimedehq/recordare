@@ -3,11 +3,14 @@
 
 /**
  * Who a request belongs to, per request, by pluggable resolvers (README → Identity):
- * - generic: `X-Recordare-User` / `X-Recordare-Conversation` / `X-Recordare-Message` set by the platform (LibreChat
- *   fills them from its placeholders in librechat.yaml);
- * - openwebui: the forwarded user headers (`X-OpenWebUI-User-Id`, `-Chat-Id`), or its signed JWT;
- * - anythingllm: a marker in the workspace system prompt, `[[recordare user={user.id} ws={workspace.id}]]`, read from
- *   the first system message and removed from every system message before the request goes upstream.
+ * - generic: `X-Recordare-User` / `X-Recordare-Conversation` / `X-Recordare-Message` (and `X-Recordare-User-Name`)
+ *   set by the platform (LibreChat fills them from its placeholders in librechat.yaml);
+ * - openwebui: the forwarded user headers (`X-OpenWebUI-User-Id`, `-User-Name`, `-Chat-Id`), or its signed JWT;
+ * - anythingllm: a marker in the workspace system prompt, `[[recordare user={user.id} name="{user.name}"
+ *   ws={workspace.id}]]`, read from the first system message and removed from every system message before the request
+ *   goes upstream.
+ * Then the memory (D50, `MEMORY_PER`): by default the proxy's one memory, the platform user a participant recognised
+ * inside it (or the account holder, `SELF_USERS`); per workspace or per user on request.
  * The proxy trusts its caller (keep it on the platform's private network, or set PROXY_API_KEY): headers and markers
  * are set by the platform's admin configuration, never by what a person types (user messages are never read for them).
  */
@@ -16,11 +19,20 @@ import type { IncomingHttpHeaders } from 'node:http';
 import type { ProxyConfig } from './config.js';
 import { type ChatMessage, textOf } from './messages.js';
 
+/** A platform user as a participant of the memory: their client user id (after the alias map) and their name. */
+export interface Participant {
+  ref: string;
+  identity: { externalUserId: string };
+  displayName?: string;
+}
+
 export interface Identity {
   /** Which resolver found it: the Recordare channel is `proxy:<platform>`. */
   platform: 'generic' | 'openwebui' | 'anythingllm';
-  /** The Recordare user (`X-Recordare-User`), after the alias map. */
+  /** The memory's Recordare user (`X-Recordare-User`; ignored with a personal token). */
   user: string;
+  /** Who wrote the message: absent = the account holder ("I"); else a participant recognised inside the memory. */
+  participant?: Participant;
   /** The Recordare conversation's externalId. */
   conversation: string;
   /** The platform's own id of the person's message, when it sends one. */
@@ -124,13 +136,18 @@ export function verifyJwt(token: string, secret: string, now = Date.now()): Reco
 }
 
 // ── Resolution ─────────────────────────────────────────────────────────────────────────────────────────────────────
-interface Raw { platform: Identity['platform']; userId: string; conversation?: string; messageId?: string; scope?: string }
+interface Raw {
+  platform: Identity['platform']; userId: string; name?: string; conversation?: string; messageId?: string; scope?: string;
+  /** AnythingLLM's workspace id. */
+  ws?: string;
+}
 
 function generic(headers: IncomingHttpHeaders): Raw | null {
   const userId = headerValue(headers, 'x-recordare-user');
   if (!userId) return null;
   return {
     platform: 'generic', userId,
+    name: headerValue(headers, 'x-recordare-user-name'),
     conversation: headerValue(headers, 'x-recordare-conversation'),
     messageId: headerValue(headers, 'x-recordare-message'),
   };
@@ -138,16 +155,19 @@ function generic(headers: IncomingHttpHeaders): Raw | null {
 
 function openWebUi(headers: IncomingHttpHeaders, cfg: ProxyConfig, now: number): Raw | null {
   let userId: string | undefined;
+  let name: string | undefined;
   if (cfg.openWebUiJwtSecret) {
     const jwt = headerValue(headers, 'x-openwebui-user-jwt');
     const claims = jwt ? verifyJwt(jwt, cfg.openWebUiJwtSecret, now) : null;
     userId = typeof claims?.sub === 'string' ? claims.sub : undefined;
+    name = typeof claims?.name === 'string' && claims.name.trim() ? claims.name.trim() : undefined;
   } else {
     userId = headerValue(headers, 'x-openwebui-user-id');
+    name = headerValue(headers, 'x-openwebui-user-name');
   }
   if (!userId) return null;
   const chat = headerValue(headers, 'x-openwebui-chat-id');
-  return { platform: 'openwebui', userId, conversation: chat ? `openwebui:${chat}` : undefined };
+  return { platform: 'openwebui', userId, name, conversation: chat ? `openwebui:${chat}` : undefined };
 }
 
 function anythingLlm(attrs: Record<string, string> | null, cfg: ProxyConfig): Raw | null {
@@ -158,19 +178,39 @@ function anythingLlm(attrs: Record<string, string> | null, cfg: ProxyConfig): Ra
   return {
     platform: 'anythingllm',
     userId,
+    name: placeholder(attrs.name) ? undefined : attrs.name,
+    ws: placeholder(attrs.ws) ? undefined : attrs.ws,
     // An explicit `conv=` wins; otherwise one conversation per workspace, user and day (AnythingLLM sends no thread id).
     conversation: attrs.conv && !placeholder(attrs.conv) ? `anythingllm:${attrs.conv}` : undefined,
     scope: `anythingllm:${ws}:${userId}`,
   };
 }
 
-/** The Recordare user of a platform user: the alias map, else `<platform>:<id>` (the bare id for generic headers). */
-function recordareUser(raw: Raw, cfg: ProxyConfig): string | undefined {
+/** A platform user's id: the alias map, else `<platform>:<id>` (the bare id for generic headers). */
+function personId(raw: Raw, cfg: ProxyConfig): string | undefined {
   const key = `${raw.platform}:${raw.userId}`;
   const mapped = cfg.userMap[key] ?? (raw.platform === 'generic' ? cfg.userMap[raw.userId] : undefined);
   if (mapped) return mapped;
   if (cfg.mapOnly) return undefined;
   return raw.platform === 'generic' ? raw.userId : key;
+}
+
+/** The memory of a request (`MEMORY_PER`); undefined = not remembered (a client key without `RECORDARE_USER`). */
+function memoryOf(raw: Raw, person: string, cfg: ProxyConfig): string | undefined {
+  if (cfg.memoryPer === 'user') return person;
+  if (cfg.personal) return 'me'; // the token is the memory: no user header is sent
+  if (cfg.memoryPer === 'workspace' && raw.platform === 'anythingllm' && raw.ws) {
+    return cfg.userMap[`anythingllm:ws:${raw.ws}`] ?? `anythingllm:ws:${raw.ws}`;
+  }
+  return cfg.recordareUser;
+}
+
+/** The speaker as a participant of the memory, or undefined for the account holder (`SELF_USERS`; per user: always). */
+function participantOf(raw: Raw, person: string, cfg: ProxyConfig): Participant | undefined {
+  if (cfg.memoryPer === 'user') return undefined;
+  const key = `${raw.platform}:${raw.userId}`;
+  if ([key, person, ...(raw.platform === 'generic' ? [raw.userId] : [])].some((k) => cfg.selfUsers.includes(k))) return undefined;
+  return { ref: person, identity: { externalUserId: person }, ...(raw.name ? { displayName: raw.name } : {}) };
 }
 
 /**
@@ -184,10 +224,15 @@ export function resolveIdentity(cfg: ProxyConfig, headers: IncomingHttpHeaders, 
       : name === 'openwebui' ? openWebUi(headers, cfg, now.getTime())
         : anythingLlm(marker.attrs, cfg);
     if (!raw) continue;
-    const user = recordareUser(raw, cfg);
-    if (!user) return { identity: null, messages: marker.messages };
+    const person = personId(raw, cfg);
+    const user = person ? memoryOf(raw, person, cfg) : undefined;
+    if (!person || !user) return { identity: null, messages: marker.messages };
     const conversation = raw.conversation ?? `${raw.scope ?? `${raw.platform}:${raw.userId}`}:${dayOf(now, cfg.timeZone)}`;
-    return { identity: { platform: raw.platform, user, conversation, messageId: raw.messageId }, messages: marker.messages };
+    const participant = participantOf(raw, person, cfg);
+    return {
+      identity: { platform: raw.platform, user, conversation, messageId: raw.messageId, ...(participant ? { participant } : {}) },
+      messages: marker.messages,
+    };
   }
   return { identity: null, messages: marker.messages };
 }

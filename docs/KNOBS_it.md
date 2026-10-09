@@ -65,7 +65,8 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 
 | Impostazione | Chi la imposta | Predefinito | Cosa fa |
 |---|---|---|---|
-| `kind` | la persona sulla sua piattaforma (solo a memoria vuota), o l'admin | `human` | `entity` = memoria di entità, condivisa da chi usa l'account (D48) |
+| `mode` | la persona sulla sua piattaforma (solo a memoria vuota), o l'admin | `personal` | `entity` = memoria di entità, condivisa da chi usa l'account (D48, D50): ciò che arriva non dichiarato è di "qualcuno" |
+| `gender` | la piattaforma (dal profilo dell'account) o l'admin, in qualsiasi momento | `masculine` | `feminine`, `neutral`: la prima persona nelle lingue con genere (D50; letto dall'8.4 del WORK_PLAN) |
 | `displayName` | segue il profilo sulla piattaforma (sincronizzato) | l'id utente del client | Il nome della persona |
 | `qualityProfile` | admin | predefinito dell'installazione | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |
@@ -125,9 +126,9 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 |---|---|---|
 | Claude Code | opzioni del plugin (`url`, `token` nel portachiavi); oppure `RECORDARE_URL` / `RECORDARE_TOKEN`, o `~/.config/recordare/claude-code.json` (solo gli hook) | Un token personale con i permessi `mcp`, `ingest`, `read` |
 | Codex | `install.sh --url … [--trust]` → `~/.config/recordare/codex.json`, `$CODEX_HOME/hooks.json` e `config.toml` | `RECORDARE_URL`, `RECORDARE_TOKEN`, `RECORDARE_TRUST_HOOKS=1` (= `--trust`), `CODEX_HOME` (predefinito `~/.codex`) |
-| OpenClaw | opzioni del plugin | `url`, `apiKey` (predefiniti `RECORDARE_URL` / `RECORDARE_API_KEY`), `users`, `defaultUser`, `autoRecall` (on), `capture` (on), `tools` (on), `groups` (on), `timeoutMs` (3000) |
-| Hermes Agent | env o `memory.recordare.*` | `RECORDARE_URL`, `RECORDARE_API_KEY`, `RECORDARE_USER`, `RECORDARE_USER_ALIASES`, `RECORDARE_RECALL` / `_TOOLS` / `_CAPTURE` (on), `RECORDARE_TIMEOUT` (3 s) |
-| Proxy di memoria compatibile OpenAI | env | `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `PROXY_API_KEY`, `RECORDARE_URL`, `RECORDARE_API_KEY`, `RESOLVERS`, `USER_MAP`, `USER_MAP_ONLY`, `DEFAULT_USER`, `OPENWEBUI_JWT_SECRET`, `RECALL_TIMEOUT_MS` (1500), `END_IDLE_SECONDS` (0 = il ritardo di inattività di Recordare), `SKIP_PATTERNS`, `RECALL` / `CAPTURE` (on), `LOG_UPSTREAM` (off), `PORT` (8788), `MAX_BODY_BYTES` (25 MB), `TZ` |
+| OpenClaw | opzioni del plugin | `url`, `apiKey` (predefiniti `RECORDARE_URL` / `RECORDARE_API_KEY`), `memoryPer` (`agent` (D50) \| `user`), `defaultUser` (l'account dell'agente con una chiave client), `selfSenders` (i mittenti del titolare dell'account), `users` (`memoryPer: user`), `autoRecall` (on), `capture` (on), `tools` (on), `groups` (on), `timeoutMs` (3000) |
+| Hermes Agent | env o `memory.recordare.*` | `RECORDARE_URL`, `RECORDARE_API_KEY`, `RECORDARE_MEMORY_PER` (`agent` (D50) \| `user`), `RECORDARE_USER` (l'account dell'agente con una chiave client), `RECORDARE_SELF_IDS` (il titolare dell'account), `RECORDARE_USER_ALIASES`, `RECORDARE_RECALL` / `_TOOLS` / `_CAPTURE` (on), `RECORDARE_TIMEOUT` (3 s) |
+| Proxy di memoria compatibile OpenAI | env | `UPSTREAM_BASE_URL`, `UPSTREAM_API_KEY`, `PROXY_API_KEY`, `RECORDARE_URL`, `RECORDARE_API_KEY`, `MEMORY_PER` (`instance` (D50) \| `workspace` \| `user`), `RECORDARE_USER` (l'account del proxy con una chiave client), `SELF_USERS` (il titolare dell'account), `RESOLVERS`, `USER_MAP`, `USER_MAP_ONLY`, `DEFAULT_USER`, `OPENWEBUI_JWT_SECRET`, `RECALL_TIMEOUT_MS` (1500), `END_IDLE_SECONDS` (0 = il ritardo di inattività di Recordare), `SKIP_PATTERNS`, `RECALL` / `CAPTURE` (on), `LOG_UPSTREAM` (off), `PORT` (8788), `MAX_BODY_BYTES` (25 MB), `TZ` |
 
 ## 9. Spike di valutazione (`spikes/memory-eval/.env`)
 

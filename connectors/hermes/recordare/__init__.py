@@ -11,8 +11,12 @@
   `POST …/conversations/{id}/end` after the conversation's pending messages: Recordare extracts now instead of after its
   idle delay.
 - Recall: `prefetch` returns Recordare's pre-turn memory context (no LLM call; Hermes wraps it in its own
-  `<memory-context>` fence), and the `recordare_*` tools call Recordare's MCP tools bound in code to the person and the
+  `<memory-context>` fence), and the `recordare_*` tools call Recordare's MCP tools bound in code to the memory and the
   conversation.
+- Which memory (D50): by default the agent's one memory (a personal token, or a client key with a fixed
+  RECORDARE_USER); the gateway users who talk to it are participants recognised inside it (`<platform>:<user id>`
+  channel identities, their names), the account holder (RECORDARE_SELF_IDS, the CLI) is its "I". Optionally one memory
+  per gateway user (RECORDARE_MEMORY_PER=user, the alias map).
 - Never raises into Hermes: every failure is logged (without content) and swallowed.
 
 Config (env in `$HERMES_HOME/.env`, or `memory.recordare.*` in config.yaml for the non-secret ones): see README.md.
@@ -128,6 +132,23 @@ def _aliases() -> Dict[str, str]:
     return {str(k): str(v) for k, v in raw.items()} if isinstance(raw, dict) else {}
 
 
+def _memory_per() -> str:
+    """`agent` (default): one memory for the agent, people as participants; `user`: one memory per gateway user."""
+    return "user" if str(_setting("RECORDARE_MEMORY_PER", "memory_per", "agent")).strip().lower() == "user" else "agent"
+
+
+def _self_ids() -> set:
+    """The `<platform>:<user id>` ids of the account holder (JSON list or comma-separated)."""
+    raw = _setting("RECORDARE_SELF_IDS", "self_ids", [])
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw) if raw.strip().startswith("[") else raw.split(",")
+        except ValueError:
+            logger.warning("Recordare: RECORDARE_SELF_IDS is not valid JSON; ignored")
+            raw = []
+    return {str(v).strip() for v in raw if str(v).strip()} if isinstance(raw, (list, tuple, set)) else set()
+
+
 def _clip(text: str) -> str:
     data = text.encode("utf-8")
     return text if len(data) <= MAX_CONTENT_BYTES else data[:MAX_CONTENT_BYTES].decode("utf-8", "ignore") + " […]"
@@ -163,6 +184,11 @@ class RecordareMemoryProvider(MemoryProvider):
         self._client: Optional[RecordareClient] = None
         self._outbox: Optional[Outbox] = None
         self._user: Optional[str] = None        # X-Recordare-User (client key); None with a personal token
+        self._per_user = False                  # RECORDARE_MEMORY_PER=user: one memory per gateway user
+        self._platform = "cli"
+        self._session_user: Optional[tuple] = None  # (user ids, name) of the session's gateway user
+        self._participants: Dict[str, Dict[str, Any]] = {}  # ref → participant seen in this conversation
+        self._turn_speaker: Optional[Dict[str, Any]] = None  # the turn's participant; None = the account holder
         self._conv = ""                         # conversation externalId = X-Recordare-Conversation
         self._session_id = ""
         self._base = "cli"                      # gateway_session_key or platform
@@ -193,11 +219,17 @@ class RecordareMemoryProvider(MemoryProvider):
         return [
             {"key": "url", "description": "Recordare address, e.g. http://localhost:8080", "required": True,
              "env_var": "RECORDARE_URL"},
-            {"key": "api_key", "description": "Personal token (rp_…, one person) or client key (rk_…, several people)",
+            {"key": "api_key", "description": "Personal token (rp_…, the agent's memory) or client key (rk_…)",
              "secret": True, "required": True, "env_var": "RECORDARE_API_KEY"},
-            {"key": "user", "description": "Recordare user for turns without a gateway user (CLI) — client keys only",
+            {"key": "user", "description": "Client key: the agent's Recordare user (memory per agent), or the user of "
+                                           "turns without a gateway user (memory per user)",
              "env_var": "RECORDARE_USER"},
-            {"key": "user_aliases", "description": "JSON {\"<platform>:<user id>\": \"<Recordare user>\"}",
+            {"key": "memory_per", "description": "agent (default: one memory, people are participants) or user",
+             "env_var": "RECORDARE_MEMORY_PER"},
+            {"key": "self_ids", "description": "Your own <platform>:<user id> ids (the memory's \"I\"), comma-separated",
+             "env_var": "RECORDARE_SELF_IDS"},
+            {"key": "user_aliases", "description": "JSON {\"<platform>:<user id>\": \"<id>\"}: a person's one id across "
+                                                   "platforms (memory per agent) / their Recordare user (memory per user)",
              "env_var": "RECORDARE_USER_ALIASES"},
         ]
 
@@ -205,15 +237,22 @@ class RecordareMemoryProvider(MemoryProvider):
         """All fields carry `env_var`: Hermes writes them to $HERMES_HOME/.env."""
 
     def identity_signature(self) -> Dict[str, Any]:
-        return {"recordare.user": _setting("RECORDARE_USER", "user"), "recordare.aliases": _aliases()}
+        return {"recordare.user": _setting("RECORDARE_USER", "user"), "recordare.aliases": _aliases(),
+                "recordare.memory_per": _memory_per(), "recordare.self_ids": sorted(_self_ids())}
 
     def _resolve_user(self, platform: str, kwargs: Dict[str, Any], personal: bool) -> tuple:
-        """(active, X-Recordare-User). Gateways: `<platform>:<user_id_alt|user_id>` through the alias map; otherwise
-        RECORDARE_USER. With a personal token every turn is the token's person, unless an alias map is set: then only
-        the mapped ids are remembered (other people writing to the same bot are left out)."""
+        """(active, X-Recordare-User). Memory per agent: the token's memory, or RECORDARE_USER with a client key (none:
+        memory off). Memory per user: `<platform>:<user_id_alt|user_id>` through the alias map, otherwise RECORDARE_USER;
+        with a personal token every turn is the token's person, unless an alias map is set: then only the mapped ids are
+        remembered (other people writing to the same bot are left out)."""
         aliases = _aliases()
         ids = [f"{platform}:{v}" for v in (kwargs.get("user_id_alt"), kwargs.get("user_id")) if v]
         self._raw_user_ids = {str(v) for v in (kwargs.get("user_id_alt"), kwargs.get("user_id")) if v}
+        if not self._per_user:
+            if personal:
+                return True, None
+            user = _setting("RECORDARE_USER", "user") or None
+            return user is not None, user
         mapped = next((aliases[i] for i in ids if i in aliases), None)
         if personal:
             return (not ids or not aliases or mapped is not None), None
@@ -233,9 +272,12 @@ class RecordareMemoryProvider(MemoryProvider):
     def _initialize(self, session_id: str, kwargs: Dict[str, Any]) -> None:
         self._client = RecordareClient(str(_setting("RECORDARE_URL", "url")), _secret("RECORDARE_API_KEY"))
         platform = str(kwargs.get("platform") or "cli")
+        self._platform = platform
+        self._per_user = _memory_per() == "user"
         self._active, self._user = self._resolve_user(platform, kwargs, self._client.personal)
         if not self._active:
-            logger.info("Recordare: no Recordare user for this %s session; memory off", platform)
+            logger.info("Recordare: no Recordare user for this %s session (memory per agent with a client key needs "
+                        "RECORDARE_USER); memory off", platform)
             return
         self._capture = kwargs.get("agent_context", "primary") == "primary" and _flag("RECORDARE_CAPTURE", "capture", True)
         self._recall = _flag("RECORDARE_RECALL", "recall", True)
@@ -251,8 +293,13 @@ class RecordareMemoryProvider(MemoryProvider):
         # The conversation follows the session lineage: kept across compression, resumed with the session, new on /new.
         self._conv = self._outbox.lineage_get(session_id) or self._new_conv(session_id)
         assistant = str(kwargs.get("agent_identity") or "hermes")
-        participants = [{"ref": "owner", "role": "owner", **({"displayName": str(kwargs["user_name"])}
-                                                            if kwargs.get("user_name") else {})},
+        name = str(kwargs["user_name"]) if kwargs.get("user_name") else None
+        uids = [str(v) for v in (kwargs.get("user_id_alt"), kwargs.get("user_id")) if v]
+        self._session_user = (uids, name) if uids else None
+        self._participants = {}
+        # The `owner` participant is the account holder: the session's user only when it is them (memory per user: always).
+        owner_name = name if self._per_user or self._session_speaker() is None else None
+        participants = [{"ref": "owner", "role": "owner", **({"displayName": owner_name} if owner_name else {})},
                         {"ref": "assistant", "role": "assistant", "displayName": assistant}]
         title = kwargs.get("session_title") or kwargs.get("chat_name")
         self._meta = {"channel": f"hermes:{platform}", "participants": participants,
@@ -270,13 +317,51 @@ class RecordareMemoryProvider(MemoryProvider):
         return conv
 
     def _conversation(self) -> Dict[str, Any]:
-        return {"externalId": self._conv, **self._meta}
+        conv = {"externalId": self._conv, **self._meta}
+        if self._participants:
+            conv["participants"] = [*self._meta["participants"], *self._participants.values()]
+        return conv
+
+    # -- who said it (memory per agent) -----------------------------------------------------------------------------------
+
+    def _participant(self, uids: List[str], name: Optional[str]) -> Optional[Dict[str, Any]]:
+        """A gateway user as a participant of the agent's memory, or None for the account holder (RECORDARE_SELF_IDS).
+        The identity is their channel id `{channel: <platform>, externalId: <user id>}`, or `{externalUserId: <alias>}`
+        when the alias map gives them one id across platforms; Recordare links it to a contact of the memory."""
+        keys = [f"{self._platform}:{u}" for u in uids]
+        if not keys or _self_ids() & set(keys):
+            return None
+        aliases = _aliases()
+        alias = next((aliases[k] for k in keys if k in aliases), None)
+        identity = {"externalUserId": alias} if alias else {"channel": self._platform, "externalId": uids[0]}
+        return {"ref": keys[0], "role": "other", "identity": identity, **({"displayName": name} if name else {})}
+
+    def _session_speaker(self) -> Optional[Dict[str, Any]]:
+        return self._participant(*self._session_user) if self._session_user and not self._per_user else None
+
+    def _speaker(self, author_id: Any = None, author_name: Any = None) -> Optional[Dict[str, Any]]:
+        """Who wrote this turn: the turn's author (shared sessions carry several), else the session's user; None for
+        the account holder (and always with a memory per user)."""
+        if self._per_user:
+            return None
+        if author_id and not (self._session_user and str(author_id) in self._session_user[0]):
+            return self._participant([str(author_id)], str(author_name) if author_name else None)
+        return self._session_speaker()
+
+    def _user_message(self, ext_id: str, text: str, sent_at: str) -> Dict[str, Any]:
+        """The person's message: `user` for the account holder; `other` with its author for anyone else (kept as theirs,
+        never read as the account holder's words)."""
+        who = self._turn_speaker
+        if who is None:
+            return {"externalId": ext_id, "role": "user", "content": _clip(text), "sentAt": sent_at}
+        self._participants[who["ref"]] = who
+        return {"externalId": ext_id, "role": "other", "authorRef": who["ref"], "content": _clip(text), "sentAt": sent_at}
 
     def system_prompt_block(self) -> str:
         if not (self._active and self._tools):
             return ""
-        return ("# Recordare memory\nLong-term memory of the user's life is active. Use recordare_search_episodes for "
-                "what happened or was planned (with dates), recordare_search_memory for who the user is, "
+        return ("# Recordare memory\nYour long-term memory is active. Use recordare_search_episodes for "
+                "what happened or was planned (with dates), recordare_search_memory for who people are, "
                 "recordare_resolve_period to turn a period into dates, recordare_remember when the user asks you to "
                 "remember something.")
 
@@ -289,13 +374,15 @@ class RecordareMemoryProvider(MemoryProvider):
         try:
             author = kwargs.get("author_id")
             self._turn_author = str(author) if author else None
+            self._turn_speaker = self._speaker(author, kwargs.get("author_name"))
             self._pending_user, self._turn_row = None, None
             text = _user_instruction(message or "").strip()
             if not (self._active and self._capture and self._outbox and text) or self._other_author():
                 return
             ext_id = f"{self._session_id}:{uuid.uuid4().hex[:12]}:u"
-            row = self._outbox.add_batch(self._conv, self._user, {"conversation": self._conversation(), "messages": [
-                {"externalId": ext_id, "role": "user", "content": _clip(text), "sentAt": _now()}]}, wake=not self._recall)
+            message = self._user_message(ext_id, text, _now())
+            row = self._outbox.add_batch(self._conv, self._user, {"conversation": self._conversation(),
+                                                                  "messages": [message]}, wake=not self._recall)
             self._pending_user = (text, ext_id)
             if self._recall:
                 self._turn_row = row
@@ -305,8 +392,10 @@ class RecordareMemoryProvider(MemoryProvider):
             logger.warning("Recordare turn start: %s", exc)
 
     def _other_author(self) -> bool:
-        """In a shared room, a turn written by someone other than the session's person is not theirs to remember."""
-        return bool(self._turn_author and self._raw_user_ids and self._turn_author not in self._raw_user_ids)
+        """Memory per user, in a shared room: a turn written by someone other than the session's person is not theirs to
+        remember. (Memory per agent: every author is a participant of the agent's memory.)"""
+        return bool(self._per_user and self._turn_author and self._raw_user_ids
+                    and self._turn_author not in self._raw_user_ids)
 
     def sync_turn(self, user_content: str, assistant_content: str, *, session_id: str = "",
                   messages: Optional[List[Dict[str, Any]]] = None, turn_author: Optional[Dict[str, Any]] = None) -> None:
@@ -315,13 +404,13 @@ class RecordareMemoryProvider(MemoryProvider):
                 return
             if turn_author and turn_author.get("id"):
                 self._turn_author = str(turn_author["id"])
+                self._turn_speaker = self._speaker(turn_author["id"], turn_author.get("name"))
             now, turn = _now(), uuid.uuid4().hex[:12]
             out: List[Dict[str, Any]] = []
             text = (user_content or "").strip()
             pending, self._pending_user = self._pending_user, None
             if text and not self._other_author() and not (pending and pending[0] == text):
-                out.append({"externalId": f"{self._session_id}:{turn}:u", "role": "user", "content": _clip(text),
-                            "sentAt": now})
+                out.append(self._user_message(f"{self._session_id}:{turn}:u", text, now))
             answer = (assistant_content or "").strip()
             if answer and not self._other_author():
                 out.append({"externalId": f"{self._session_id}:{turn}:a", "role": "assistant", "content": _clip(answer),
@@ -342,6 +431,7 @@ class RecordareMemoryProvider(MemoryProvider):
             if reset:  # a genuinely new conversation (/new, /reset)
                 self._end_conversation()
                 self._conv = self._new_conv(new_session_id)
+                self._participants = {}
             else:      # same conversation under a new session id (compression, /branch, /resume of the same lineage)
                 self._conv = self._outbox.lineage_get(new_session_id) or self._conv
                 self._outbox.lineage_set(new_session_id, self._conv)

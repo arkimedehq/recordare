@@ -5,11 +5,21 @@
 export interface RecordareConfig {
   /** Recordare's address, e.g. `http://localhost:8080`. */
   url: string;
-  /** A client key (`rk_…`, several people) or a personal token (`rp_…`, one person). */
+  /** A personal token (`rp_…`, one memory) or a client key (`rk_…`, the account in `defaultUser`, or one per user). */
   apiKey: string;
-  /** `"<channel>:<senderId>"` → Recordare user (the client's user id; with a personal token any non-empty value). */
+  /**
+   * `agent` (default, D50): the Gateway's agent has one memory (the token's, or the client account `defaultUser`) and
+   * the people who talk to it are participants recognised inside it. `user`: one memory per person (`users`).
+   */
+  memoryPer: 'agent' | 'user';
+  /** `agent` mode: the senders (`"<channel>:<senderId>"`) who are the account holder — the memory's "I". */
+  selfSenders: string[];
+  /** `user` mode: `"<channel>:<senderId>"` → Recordare user (the client's user id; with a personal token any non-empty value). */
   users: Record<string, string>;
-  /** The user of turns without a channel sender (CLI, Control UI, the owner); empty = such turns are not remembered. */
+  /**
+   * `agent` mode: the agent's Recordare account (the client's user id; not needed with a personal token). `user` mode:
+   * the user of turns without a channel sender (CLI, Control UI). Empty = memory off (agent) / such turns not remembered.
+   */
   defaultUser?: string;
   /** Add the memories relevant to each message before the agent answers. */
   autoRecall: boolean;
@@ -21,7 +31,7 @@ export interface RecordareConfig {
   groups: boolean;
   /** Per call to Recordare before the agent answers (ingest of the message, then the context): default 3000 ms. */
   timeoutMs: number;
-  /** True for a personal token: one person, Recordare ignores the user header. */
+  /** True for a personal token: one memory, Recordare ignores the user header. */
   personal: boolean;
 }
 
@@ -41,12 +51,15 @@ export function parseConfig(raw: Record<string, unknown> | undefined, env: NodeJ
       if (user) users[k.trim()] = user;
     }
   }
+  const selfSenders = Array.isArray(c.selfSenders) ? c.selfSenders.map(str).filter((v): v is string => !!v) : [];
   const personal = apiKey.startsWith('rp_');
   return {
     url,
     apiKey,
+    memoryPer: c.memoryPer === 'user' ? 'user' : 'agent',
+    selfSenders,
     users,
-    // A personal token is one person: with no mapping at all, every turn is theirs (single-person install).
+    // A personal token is one memory (the user header is ignored): any non-empty value stands for it.
     defaultUser: str(c.defaultUser) ?? (personal ? 'me' : undefined),
     autoRecall: bool(c.autoRecall, true),
     capture: bool(c.capture, true),

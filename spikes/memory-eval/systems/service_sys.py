@@ -65,9 +65,9 @@ class ServiceSystem:
     def _owner(self, user: str) -> dict:
         if user not in self.owners:
             o = self._post("/api/v1/admin/owners", {"displayName": user.capitalize(),
-                                                    **({"kind": "entity"} if user in self.entities else {})})
+                                                    **({"mode": "entity"} if user in self.entities else {})})
             ext = f"{user}-{self.run}"
-            self._post("/api/v1/admin/identities", {"kind": "client_user", "personId": o["personId"], "clientId": self.client_id, "externalId": ext})
+            self._post("/api/v1/admin/identities", {"kind": "account", "personId": o["personId"], "clientId": self.client_id, "externalId": ext})
             tok = self._post(f"/api/v1/admin/owners/{o['personId']}/tokens", {"clientId": self.client_id, "scopes": ["mcp"]})["token"]
             self.owners[user] = {"id": o["personId"], "ext": ext, "token": tok}
         return self.owners[user]
