@@ -74,6 +74,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   in personal memories (a "which Marco?" question is offered only to an identified speaker); `speaker` is in every
   result (`someone` for an unidentified speaker of an entity memory); `claims` follow the personal rule. Blind8:
   82.1 % → 91.4 % (3 runs).
+- **The agent's diary** (WORK_PLAN 8.6, `digest.day.v2` / `digest.month.v2`, `facts_review.v2`): the nightly day and month
+  digests are written in the first person of the memory's self (personal: my day, with the news of the people I know;
+  entity: the shared agent's day), never from other people's claims; a new prompt version rewrites every day once. The
+  nightly facts review covers every subject (the self's and the contacts' facts). Both stay off in recall / by default
+  (no gain measured).
 - **Connectors: one memory per agent, people as participants** (D50) — **breaking for multi-person set-ups**. OpenClaw:
   the Gateway's agent has one memory (a personal token, or a client key with `defaultUser`); every sender is a
   participant with the channel identity `<channel>:<senderId>` and their channel name, the account holder is listed in

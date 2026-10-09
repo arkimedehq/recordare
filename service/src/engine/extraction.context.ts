@@ -234,7 +234,7 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
   };
 }
 
-interface PeopleContext {
+export interface PeopleContext {
   selfNames: string[];
   list: PromptContact[];
   contacts: Map<string, string>;
@@ -248,7 +248,7 @@ interface PeopleContext {
  * the subjects of listed facts, the candidates of open questions — numbered C1…) and the open questions (Q1…), after
  * expiring old ones (as of the window's first message).
  */
-async function peopleContext(tx: EntityManager, owner: Owner, window: WindowMessage[], factSubjects: string[]): Promise<PeopleContext> {
+export async function peopleContext(tx: EntityManager, owner: Owner, window: WindowMessage[], factSubjects: string[]): Promise<PeopleContext> {
   const selfRows: Array<{ alias: string }> = await tx.query(
     `SELECT alias FROM person_aliases WHERE person_id = $1 ORDER BY created_at`, [owner.id]);
   const selfNames = [...new Set([owner.name, ...selfRows.map((r) => r.alias)].filter((n): n is string => !!n?.trim()))];

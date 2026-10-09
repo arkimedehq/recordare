@@ -443,6 +443,25 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.6 — the agent's diary and facts review v2 (2026-10-09, DeepSeek direct, dev sets, 1 run each)
+
+`digest.day.v2` / `digest.month.v2` (first person, memory's language and gender; sources: own items, a person's news
+about themself, a tool's teaching — never others' inferred claims; items labelled by subject) and `facts_review.v2`
+(every subject, ME / PEOPLE I KNOW). One instance on :8088, queue `fp88`, started with `RECALL_DIGESTS=true
+FACTS_REVIEW=true` (the harness consolidates as of every question); compared with the knobs-off runs of the same
+extraction prompt (8.4b).
+
+| Set | Knobs on (8.6) | Knobs off |
+|---|---|---|
+| `dataset` (24 q) | 97.9 % (q14 partial: a trip idea read as a plan — as in v12b) | 100 % (v13) |
+| `dataset_dev_agent_personal` (19 q) | 94.7 % (a16: no lunch plan extracted — as with the knobs off) | 94.7 % (v13) |
+
+25 day + 10 month digests written, 0 leaks, 0 failures; they read in the first person with the contacts' news ("il 9
+Giulia ha vinto la gara regionale di nuoto…", "il 10 il collega Marco Bellini mi ha detto che…"), plan outcomes kept
+("Non so ancora se l'intervento sia avvenuto"); a few add a mild comment ("È stato un impegno nuovo"). The facts review
+made 9 calls (~2 k input tokens each) and proposed no change: the extraction already had the facts. No gain → both
+knobs stay off; the code is kept (zero cost when off; the diary is still written at night for the Diary / Atlas).
+
 ### WORK_PLAN 8.5 — entity agent: extract.v13+entity.v4 (2026-10-09, DeepSeek direct)
 
 Entity memories move to the D50 model: "I" is the shared agent (its replies and actions, own content, its place), the

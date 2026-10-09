@@ -401,7 +401,10 @@ semantic notes; exposed to clients as pending proposals (D26).
 ### digests
 `id, owner_id, level enum (day|month), period_start date, period_end date, content, version int,
 superseded_at null, embedding…, disclosure, audience, extraction_run_id, source_hash, created_at`; `source_hash` =
-fingerprint of the items the digest was written from (a day is rewritten only when it changes — M5); partial
+fingerprint of the prompt version and the items the digest was written from (a day is rewritten only when it or the
+prompt changes — M5, 8.6). Content: the agent's diary in the first person (8.6, `digest.day.v2` / `digest.month.v2`,
+`+entity` for entity memories): the memory's own items, a person's news about themself, what a tool taught — never
+other people's claims (author other, inferred); each item reaches the prompt with its subject. Partial
 unique `(owner_id, level, period_start) WHERE superseded_at IS NULL`. Phase 3 will need
 per-audience digests (the intersection rule makes mixed-audience days owner-only).
 

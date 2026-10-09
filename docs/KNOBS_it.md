@@ -22,8 +22,8 @@ provider (§3).
 | `recentEpisodes` / `relatedEpisodes` | 6 / 6 | 8 / 10 | 12 / 20 | Episodi mostrati all'estrattore (recenti + collegati alla finestra) |
 | `resolverWindowDays` / `resolverSimilarity` | 3 / 0.7 | 3 / 0.7 | 7 / 0.6 | Candidati quasi-duplicati (± giorni, somiglianza minima) |
 | `rawHitsAlongside` | 1 | 3 | 5 | Estratti di chat restituiti accanto agli episodi trovati |
-| `recallDigests` | off | off | off | Il diario notturno dato ai riepiloghi di periodo · blind5 3+3 run: −1,9 pt, nel rumore |
-| `factsReview` | off | off | off | Revisione notturna dei fatti sui nuovi episodi · nessun guadagno misurato |
+| `recallDigests` | off | off | off | Il diario notturno dato ai riepiloghi di periodo · blind5 3+3 run: −1,9 pt, nel rumore; diario v2 (8.6, prima persona) set di sviluppo 1 run: nessun guadagno |
+| `factsReview` | off | off | off | Revisione notturna dei fatti sui nuovi episodi · nessun guadagno misurato (5.6; v2 con soggetti, 8.6: nessun cambio proposto sui set di sviluppo) |
 
 Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
 `RECALL_DIGESTS`, `FACTS_REVIEW`.

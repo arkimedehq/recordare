@@ -422,7 +422,11 @@ note semantiche; esposti ai client come proposte in sospeso (D26).
 ### digests
 `id, owner_id, level enum (day|month), period_start date, period_end date, content, version int,
 superseded_at null, embedding…, disclosure, audience, extraction_run_id, source_hash, created_at`; `source_hash` =
-impronta degli elementi da cui il digest è stato scritto (un giorno viene riscritto solo quando cambia — M5); unique
+impronta della versione del prompt e degli elementi da cui il digest è stato scritto (un giorno viene riscritto solo
+quando cambiano gli elementi o il prompt — M5, 8.6). Contenuto: il diario dell'agente in prima persona (8.6,
+`digest.day.v2` / `digest.month.v2`, `+entity` per le memorie di entità): gli elementi propri della memoria, la notizia che
+una persona dà di sé, ciò che uno strumento ha insegnato — mai le affermazioni di altre persone (autore other, inferred);
+ogni elemento arriva al prompt con il suo soggetto. Unique
 parziale `(owner_id, level, period_start) WHERE superseded_at IS NULL`. La fase 3 richiederà
 digest per audience (la regola dell'intersezione rende i giorni a audience mista riservati all'owner).
 

@@ -5,15 +5,20 @@
  * Nightly consolidation (M5, D8): the "sleep" of the memory. For every past day whose visible episodes changed it
  * writes a day digest; for every month whose days (or month-dated episodes) changed, a month digest. Each digest
  * keeps the fingerprint of its sources, so an unchanged day costs nothing — zero LLM calls when nothing is new (D5).
- * Digests are summaries of episodes only: other people's claims (author other / tool) are left out, so a claim can
- * never be laundered into the owner's diary. Old versions are superseded, never edited (bi-temporal, D16).
+ * Digests are summaries of episodes only, in the agent's voice (v2, WORK_PLAN 8.6): the memory's own items, a person's
+ * news about themself, what a tool taught; other people's claims (author other, inferred) are left out, so a claim can
+ * never be laundered into the diary. Each item carries its subject. The prompt version is part of a digest's
+ * fingerprint: a new version rewrites every day once. Old versions are superseded, never edited (bi-temporal, D16).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
-import { DAY_DIGEST_SYSTEM, DAY_DIGEST_VERSION, digestSchema, MONTH_DIGEST_SYSTEM, MONTH_DIGEST_VERSION } from './consolidation.prompt';
+import { DAY_DIGEST_SYSTEM, DAY_DIGEST_VERSION, digestSchema, ENTITY_DAY_DIGEST_SYSTEM, ENTITY_DIGEST_SUFFIX, ENTITY_MONTH_DIGEST_SYSTEM,
+  MONTH_DIGEST_SYSTEM, MONTH_DIGEST_VERSION } from './consolidation.prompt';
+import { selfLeak } from '../lang';
+import { type SubjectKind } from '../identity/identity.entities';
 import { addDays, localDate, periodEnd, type Precision } from './time';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { ConfigService } from '@nestjs/config';
@@ -22,15 +27,19 @@ import { FactsReviewService } from './facts-review.service';
 import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
 import { qualityProfile, type QualityProfileName } from './quality-profile';
 import { expireClarifications } from './clarifications';
+import { subjectLabel } from './subjects';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
   date_precision: Precision; plan_status: string | null; rescheduled_to_day: string | null; people: string[] | null; feelings: string[];
+  subject_kind: SubjectKind; subject: string | null; candidates: string[] | null;
 }
 interface DigestRow { id: string; level: 'day' | 'month'; period_start: string; version: number; source_hash: string; content: string }
 
 /** `failed`: digests whose call failed — left as they were and retried at the next consolidation. */
-export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number; failed: number; facts: number }
+export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number; failed: number; facts: number;
+  /** Digests still naming the self in the third person (counts only, like the extraction's). */
+  leaks: number }
 
 /** Multi-day items are listed on each of their days, up to this many. */
 const MAX_SPAN_DAYS = 14;
@@ -50,7 +59,7 @@ export class ConsolidationService {
 
   /** Consolidate every complete day (in the owner's timezone) before `now`. Idempotent; one run per owner at a time. */
   async consolidateOwner(ownerId: string, now: Date): Promise<ConsolidationReport> {
-    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0 };
+    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
@@ -69,8 +78,16 @@ export class ConsolidationService {
 
   private async run(ownerId: string, now: Date, report: ConsolidationReport): Promise<void> {
     const [owner] = await this.db.query(
-      `SELECT o.timezone, o.locale, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+      `SELECT o.timezone, o.locale, o.quality_profile, o.mode, o.gender, p.display_name,
+         ARRAY(SELECT alias FROM person_aliases a WHERE a.person_id = o.person_id ORDER BY created_at) AS aliases
+       FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     if (!owner) return;
+    const entity = owner.mode === 'entity';
+    const selfNames: string[] = [...new Set([owner.display_name as string, ...(owner.aliases as string[])].filter(Boolean))];
+    const me = `ME: ${selfNames[0] ?? '(unnamed)'}${selfNames.length > 1 ? ` (also: ${selfNames.slice(1).join(', ')})` : ''} — gender ${owner.gender ?? 'masculine'}`
+      + `\nMEMORY LANGUAGE: ${owner.locale}`;
+    const dayVersion = entity ? `${DAY_DIGEST_VERSION}${ENTITY_DIGEST_SUFFIX}` : DAY_DIGEST_VERSION;
+    const monthVersion = entity ? `${MONTH_DIGEST_VERSION}${ENTITY_DIGEST_SUFFIX}` : MONTH_DIGEST_VERSION;
     // Open clarifications nobody answered expire (D50 / 8.4; also checked on read and at extraction).
     await expireClarifications(this.db, ownerId, now);
     const tz: string = owner.timezone;
@@ -78,10 +95,12 @@ export class ConsolidationService {
     const episodes: EpisodeRow[] = await this.db.query(
       `SELECT e.id, e.kind, e.content, e.occurred_at, e.occurred_until, e.date_precision, e.plan_status,
               (SELECT (r.occurred_at AT TIME ZONE $2)::date::text FROM episodes r WHERE r.id = e.rescheduled_to) AS rescheduled_to_day,
-              (SELECT array_agg(alias ORDER BY alias) FROM episode_people p WHERE p.episode_id = e.id) AS people, e.feelings
+              (SELECT array_agg(alias ORDER BY alias) FROM episode_people p WHERE p.episode_id = e.id) AS people, e.feelings,
+              e.subject_kind, (SELECT display_name FROM persons WHERE id = e.subject_person_id) AS subject,
+              (SELECT array_agg(COALESCE(full_name, display_name) ORDER BY created_at) FROM persons WHERE id = ANY(e.subject_candidates)) AS candidates
        FROM episodes e
        WHERE e.owner_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
-         AND e.author_role IN ('owner', 'assistant') AND e.occurred_at IS NOT NULL AND e.occurred_at < $3
+         AND NOT (e.author_role = 'other' AND e.stance = 'inferred') AND e.occurred_at IS NOT NULL AND e.occurred_at < $3
          AND e.date_precision IN ('day', 'approximate', 'month')
        ORDER BY e.occurred_at, e.id`, [ownerId, tz, now]);
 
@@ -102,20 +121,21 @@ export class ConsolidationService {
 
     const [run] = await this.db.query(
       `INSERT INTO extraction_runs (owner_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:digest', 'configured', $3) RETURNING id`,
-      [ownerId, now, DAY_DIGEST_VERSION]);
+      [ownerId, now, dayVersion]);
     const ctx = { ownerId, runId: run.id as string };
     try {
       // Days: rewrite only when the fingerprint of their items changed; drop digests of days that emptied.
       for (const [day, items] of byDay) {
         const lines = items.map((e) => this.line(e, tz, now));
-        const hash = fingerprint(lines);
+        const hash = fingerprint([dayVersion, ...lines]);
         if (currentDay.get(day)?.source_hash === hash) continue;
         report.llmCalls++;
         const out = await this.llm.completeJson({
-          promptId: DAY_DIGEST_VERSION, system: DAY_DIGEST_SYSTEM, task: 'digest', maxTokens: 600,
-          user: `OWNER: ${owner.display_name}\nOWNER LANGUAGE: ${owner.locale}\nDAY: ${day}\nITEMS:\n${lines.join('\n')}`, schema: digestSchema,
+          promptId: dayVersion, system: entity ? ENTITY_DAY_DIGEST_SYSTEM : DAY_DIGEST_SYSTEM, task: 'digest', maxTokens: 600,
+          user: `${me}\nDAY: ${day}\nITEMS:\n${lines.join('\n')}`, schema: digestSchema,
         }, ctx).catch((err: unknown) => this.skip(report, `day ${day}`, err));
         if (!out) continue;
+        if (selfLeak(out.summary, selfNames)) report.leaks++;
         await this.write(ownerId, 'day', day, day, out.summary, hash, currentDay.get(day), items.map((e) => e.id), [], ctx.runId);
         report.days++;
       }
@@ -130,14 +150,15 @@ export class ConsolidationService {
         const dayDigests = days.filter((d) => d.period_start.startsWith(month));
         const extra = (monthOnly.get(month) ?? []).map((e) => this.line(e, tz, now));
         const lines = [...dayDigests.map((d) => `${d.period_start}: ${d.content}`), ...extra.map((l) => `(${month}) ${l}`)];
-        const hash = fingerprint([...dayDigests.map((d) => `${d.id}`), ...extra]);
+        const hash = fingerprint([monthVersion, ...dayDigests.map((d) => `${d.id}`), ...extra]);
         if (currentMonth.get(month)?.source_hash === hash) continue;
         report.llmCalls++;
         const out = await this.llm.completeJson({
-          promptId: MONTH_DIGEST_VERSION, system: MONTH_DIGEST_SYSTEM, task: 'digest', maxTokens: 1200,
-          user: `OWNER: ${owner.display_name}\nOWNER LANGUAGE: ${owner.locale}\nMONTH: ${month}\nDAYS AND ITEMS:\n${lines.join('\n')}`, schema: digestSchema,
+          promptId: monthVersion, system: entity ? ENTITY_MONTH_DIGEST_SYSTEM : MONTH_DIGEST_SYSTEM, task: 'digest', maxTokens: 1200,
+          user: `${me}\nMONTH: ${month}\nDAYS AND ITEMS:\n${lines.join('\n')}`, schema: digestSchema,
         }, ctx).catch((err: unknown) => this.skip(report, `month ${month}`, err));
         if (!out) continue;
+        if (selfLeak(out.summary, selfNames)) report.leaks++;
         const last = addDays(`${nextMonth(month)}-01`, -1);
         await this.write(ownerId, 'month', `${month}-01`, last, out.summary, hash, currentMonth.get(month),
           (monthOnly.get(month) ?? []).map((e) => e.id), dayDigests.map((d) => d.id), ctx.runId);
@@ -150,7 +171,8 @@ export class ConsolidationService {
         const r = await this.factsReview.review(ownerId, now, ctx.runId);
         report.facts += r.changed; report.llmCalls += r.calls; report.failed += r.failed;
       }
-      await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [ctx.runId]);
+      await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), summary = $2 WHERE id = $1`, [ctx.runId,
+        { days: report.days, months: report.months, superseded: report.superseded, failed: report.failed, facts: report.facts, leaks: report.leaks }]);
       await this.db.query(`UPDATE owners SET consolidated_at = $2 WHERE person_id = $1`, [ownerId, now]);
       this.telemetry.emit({ type: 'consolidation.finished', ownerId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
     } catch (err) {
@@ -191,7 +213,7 @@ export class ConsolidationService {
     return null;
   }
 
-  /** One item of the diary input: kind / status, date, content, people, feelings. */
+  /** One item of the diary input: whose (when not mine), kind / status, content, people, feelings. */
   private line(e: EpisodeRow, tz: string, now: Date): string {
     let status = '';
     if (e.kind === 'plan') {
@@ -202,7 +224,7 @@ export class ConsolidationService {
     const kind = e.kind === 'plan' ? status : e.kind === 'state_change' ? 'change' : 'event';
     const extra = [e.people?.length ? `people: ${e.people.join(', ')}` : '', e.feelings.length ? `feelings: ${e.feelings.join(', ')}` : '']
       .filter(Boolean).join('; ');
-    return `- [${kind}] ${e.content}${extra ? ` (${extra})` : ''}`;
+    return `- ${subjectLabel(e.subject_kind, e.subject, e.candidates)}[${kind}] ${e.content}${extra ? ` (${extra})` : ''}`;
   }
 
   private async write(ownerId: string, level: 'day' | 'month', start: string, end: string, text: string, hash: string,
