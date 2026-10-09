@@ -8,16 +8,19 @@
  */
 import { DataSource } from 'typeorm';
 import { dataSourceOptions, MIGRATIONS } from '../../src/db/data-source-options';
+import { MemoryIdentity1791070000000 } from '../../src/db/migrations/1791070000000-MemoryIdentity';
 import { testEnv } from '../helpers/app';
 
 describe('migration MemoryIdentity (D50, WORK_PLAN 8.3)', () => {
   let db: DataSource;
   const ids: Record<string, string> = {};
+  /** MemoryIdentity and the migrations after it (undone together by the `down` test). */
+  const at = MIGRATIONS.indexOf(MemoryIdentity1791070000000);
 
   beforeAll(async () => {
     testEnv();
     const url = process.env['DATABASE_URL'] as string;
-    const before = new DataSource({ ...dataSourceOptions(url), migrations: MIGRATIONS.slice(0, -1) });
+    const before = new DataSource({ ...dataSourceOptions(url), migrations: MIGRATIONS.slice(0, at) });
     await before.initialize();
     await before.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public');
     await before.runMigrations();
@@ -176,7 +179,7 @@ describe('migration MemoryIdentity (D50, WORK_PLAN 8.3)', () => {
   });
 
   it('goes back to the previous shape (down)', async () => {
-    await db.undoLastMigration();
+    for (let i = MIGRATIONS.length; i > at; i--) await db.undoLastMigration();
     expect(await db.query(`SELECT p.display_name, p.kind FROM persons p JOIN owners o ON o.person_id = p.id ORDER BY 1`)).toEqual([
       { display_name: 'Andrea', kind: 'human' }, { display_name: 'Arkim3de', kind: 'entity' },
     ]);

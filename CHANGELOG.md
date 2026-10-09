@@ -54,7 +54,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   holder and the assistant are one "I". Every episode, fact and note gets a subject linked to the memory's contacts
   (created when a person is only mentioned, merged only when clear); an ambiguous person ("which Marco?") is stored as
   undecided with a clarification that a later conversation answers or that expires after 14 days; a participant identity
-  seen for the first time binds to the one contact known only by that name. `search_episodes` / `search_memory` return
+  seen for the first time binds to a known contact only when its full name matches exactly one contact without an
+  identity — on a first name alone it becomes a new contact with a "same person?" clarification, whose "yes" merges the
+  two contacts (migration `ContactClarification1791080000000`: `clarifications.contact_id`). `search_episodes` / `search_memory` return
   `memory {name, mode}` (was `owner {name}`), each item's `subject` (facts: `subject` replaces `about`), `speaker` (who is
   asking; an identified speaker gets their own items first) and `clarifications`; in a personal memory `claims` are
   others' statements about someone else (a person's own news is theirs, a tool's output is the agent's learning). The

@@ -11,7 +11,11 @@ Andrea's agent (personal mode, masculine): the person and the assistant are one 
 - **People only mentioned** → contacts with a relation: sister Giulia, cousin Marco (p01), girlfriend Sara (p07).
 - **Identified participants** (`participants: [{name, identity}]`: the client declares who they are) → the same contacts
   of the memory: Giulia and mother Rosa in the family group (p02), Marco Bellini in the office group (p09), Giulia alone
-  with the agent (p10). Giulia's identity binds to the Giulia already known by name.
+  with the agent (p10). Since the owner's decision of 2026-10-09 Giulia's identity no longer binds to the Giulia known
+  only by name (p01): it is a new contact with a "same person?" clarification (asked at p02's ingest, shown in p02's own
+  OPEN QUESTIONS); only an answer from a window merges the two. Nothing in the set states it outright (Rosa's "Brava amore
+  mio", "Ci sono mamma" only suggest it): a02 / a15 ("la sorella") now depend on the model answering it, a13 / a14
+  (Giulia's own items, all from her identity) do not; Marco Bellini (p09) still binds (full name, p03).
 - **Two Marcos**: the cousin (p01) and the colleague Marco Bellini (p03, full name); an ambiguous "Marco" (p06) →
   `undecided` + a clarification, answered by a later session (p08, "mio cugino Marco, quello dell'incidente").
 - **The assistant's actions** in the first person (p04: booking, calendar), a plan confirmed later (p07).

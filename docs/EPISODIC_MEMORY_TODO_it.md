@@ -668,6 +668,13 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   rilevatore di fughe (conteggi nel riepilogo dell'esecuzione). Memorie di entità invariate (input dei prompt identici
   byte per byte) fino alla 8.5. Dettagli: DATA_MODEL "Memoria dell'agente → Come costruito (8.4)", RESULTS.md (esecuzioni
   di sviluppo).
+- **Seguito D50 — partecipanti omonimi (titolare, 2026-10-09):** un nome di battesimo da solo non basta a dire che un
+  partecipante identificato è un contatto che la memoria conosce solo per nome ("mia sorella Giulia" contro una Giulia
+  che scrive in un gruppo). L'ingest lega automaticamente solo con un nome completo uguale a esattamente un contatto
+  senza identità; altrimenti un nuovo contatto e, quando esattamente un contatto del genere condivide il nome, una
+  chiarificazione "stessa persona?" (`clarifications.contact_id`, migrazione `ContactClarification1791080000000`); "sì"
+  fonde i due contatti (ogni riferimento si sposta, in un solo punto: `mergeContacts`), "no" li tiene separati. Più
+  omonimi: nessuna domanda. Sostituisce il legame per solo nome della 8.4.
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 ancora aperta, con WORK_PLAN 5.4). Il lavoro aperto è tracciato

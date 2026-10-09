@@ -3,7 +3,8 @@
 
 /**
  * Personal first person (WORK_PLAN 8.4, D50): subjects linked to contacts (created when only mentioned, merged only when
- * clear), undecided subjects with a clarification, answered by a later window or expired, the clarification offered by
+ * clear), undecided subjects with a clarification, answered by a later window or expired, identified participants bound
+ * to a known contact only by full name ("same person?" otherwise, merged on "yes"), the clarification offered by
  * the memory context, recall by subject (an identified speaker gets their own items first), a person's own news as
  * theirs and others' claims kept apart, the gate, gender in the prompt.
  */
@@ -12,6 +13,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
+import { mergeContacts } from '../../src/engine/contacts';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
@@ -184,14 +186,37 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
       { id: 'grp-3', content: 'Bella Giulia!', at: '2026-09-22T18:02:00+02:00' },
     ], {
       episodes: [
-        { content: 'Giulia andrà a Catania al concerto di Levante sabato 26 settembre 2026.', kind: 'plan', occurred_at: '2026-09-26', subject: 'C1', people: ['Giulia'], evidence: [1] },
+        { content: 'Giulia andrà a Catania al concerto di Levante sabato 26 settembre 2026.', kind: 'plan', occurred_at: '2026-09-26', subject: 'C2', people: ['Giulia'], evidence: [1] },
         { content: 'Paolo dice che mi sono comprato una Tesla.', subject: 'me', people: ['Paolo'], evidence: [2] },
       ],
       facts: [{ subject: 'me', key: 'car', value: 'Tesla', verdict: 'new', evidence: [2] }],
     }, [giulia, { ref: 'p', role: 'other', displayName: 'Paolo' }]);
-    // The identified participant Giulia is the Giulia the memory knew only by name (one contact, now with an identity).
-    expect((await contacts()).filter((c: { display_name: string }) => c.display_name === 'Giulia')).toHaveLength(1);
+    // A first name is not enough (owner's decision 2026-10-09): the identified Giulia is a new contact, and the memory
+    // asks whether she is the sister it knew only by name.
+    const sister = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Giulia' AND relation = 'sorella'`, [me]))[0].id as string;
+    const giulias = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Giulia' ORDER BY created_at`, [me]);
+    expect(giulias).toHaveLength(2);
+    const newcomer = giulias[1].id as string;
+    const [ask] = await db.query(`SELECT id, question, candidates, contact_id, status, episode_id FROM clarifications WHERE contact_id IS NOT NULL`);
+    expect(ask).toMatchObject({ question: 'Giulia, che ha scritto il 22 settembre, è la stessa persona di Giulia (sorella)?',
+      candidates: [sister], contact_id: newcomer, status: 'open', episode_id: null });
     expect(await episode('%Levante%')).toMatchObject({ subject_kind: 'contact', subject: 'Giulia', stance: 'stated', author_role: 'other' });
+    expect((await db.query(`SELECT subject_person_id FROM episodes WHERE content LIKE '%Levante%'`))[0].subject_person_id).toBe(newcomer);
+
+    // A later window answers it: the same person → the new contact is merged into the sister (every reference moves).
+    const answer = await ingest('grp-ans', [{ id: 'ga-1', content: 'La Giulia del gruppo è mia sorella.', at: '2026-09-22T19:00:00+02:00' }]);
+    llm.queue.push({ answers: [{ question: 'Q1', contact: 'C1', evidence: [1] }] });
+    await run(answer);
+    expect(lastUser()).toContain('Q1: Giulia, che ha scritto il 22 settembre, è la stessa persona di Giulia (sorella)? (about: C2 — the same person as C1?; answer C1 if yes, C2 if not)');
+    expect((await db.query(`SELECT status, resolved_person_id, resolution FROM clarifications WHERE id = $1`, [ask.id]))[0])
+      .toEqual({ status: 'resolved', resolved_person_id: sister, resolution: 'same person' });
+    expect(await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Giulia'`, [me])).toEqual([{ id: sister }]);
+    expect(await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'giulia-1'`)).toEqual([{ person_id: sister }]);
+    expect(await db.query(`SELECT author_person_id FROM messages WHERE external_id = 'grp-1'`)).toEqual([{ author_person_id: sister }]);
+    expect(await db.query(`SELECT person_id FROM conversation_participants WHERE ref = 'g'`)).toEqual([{ person_id: sister }]);
+    expect((await db.query(`SELECT subject_person_id FROM episodes WHERE content LIKE '%Levante%'`))[0].subject_person_id).toBe(sister);
+    expect(await db.query(`SELECT alias_norm FROM person_aliases WHERE person_id = $1`, [sister])).toEqual([{ alias_norm: 'giulia' }]);
+    expect(await episode('%Levante%')).toMatchObject({ content: 'Giulia andrà a Catania al concerto di Levante sabato 26 settembre 2026.' });
     expect(await episode('%Tesla%')).toMatchObject({ subject_kind: 'self', stance: 'inferred' });
     expect(await db.query(`SELECT pending FROM facts WHERE value = 'Tesla'`)).toEqual([{ pending: true }]);
 
@@ -238,6 +263,70 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
       episodes: [{ content: 'Marco Bellini è tornato dalle ferie.', subject: 'Marco Bellini', evidence: [1] }],
     });
     expect(await episode('%tornato dalle ferie%')).toBeUndefined();
+  });
+
+  it('identified participants: a unique full name binds; several namesakes ask nothing; a "no" keeps two contacts', async () => {
+    const before = await db.query(`SELECT count(*)::int AS n FROM clarifications WHERE contact_id IS NOT NULL`);
+    const bellini = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND full_name = 'Marco Bellini'`, [me]))[0].id as string;
+    // Full name equal to exactly one contact without an identity: the same person, bound directly.
+    await ingest('fn', [{ id: 'fn-1', role: 'other', authorRef: 'mb', content: 'Ciao!', at: '2026-09-28T10:00:00+02:00' }],
+      [{ ref: 'mb', role: 'other', displayName: 'Marco Bellini', identity: { externalUserId: 'mb-1' } }]);
+    expect(await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'mb-1'`)).toEqual([{ person_id: bellini }]);
+    expect(await db.query(`SELECT author_person_id FROM messages WHERE external_id = 'fn-1'`)).toEqual([{ author_person_id: bellini }]);
+    // Two unbound Lucas (brother, neighbour): a new contact, no question.
+    const lucas = (await contacts()).filter((c: { display_name: string }) => c.display_name === 'Luca').length;
+    await ingest('lu', [{ id: 'lu-1', role: 'other', authorRef: 'l', content: 'Ci sono anch\'io.', at: '2026-09-28T11:00:00+02:00' }],
+      [{ ref: 'l', role: 'other', displayName: 'Luca', identity: { externalUserId: 'luca-1' } }]);
+    expect((await contacts()).filter((c: { display_name: string }) => c.display_name === 'Luca')).toHaveLength(lucas + 1);
+    expect(await db.query(`SELECT count(*)::int AS n FROM clarifications WHERE contact_id IS NOT NULL`)).toEqual(before);
+    // One unbound Marco (the cousin; Bellini is now bound): a new contact and a question; answered "no", both stay.
+    const cousin = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Marco' AND relation = 'cugino'`, [me]))[0].id as string;
+    await ingest('mx', [{ id: 'mx-1', role: 'other', authorRef: 'm', content: 'Sono Marco del calcetto.', at: '2026-09-28T12:00:00+02:00' }],
+      [{ ref: 'm', role: 'other', displayName: 'Marco', identity: { externalUserId: 'marco-x' } }]);
+    const marco = (await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'marco-x'`))[0].person_id as string;
+    expect(marco).not.toBe(cousin);
+    const [q] = await db.query(`SELECT id, question, candidates FROM clarifications WHERE contact_id = $1`, [marco]);
+    expect(q).toMatchObject({ question: 'Marco, che ha scritto il 28 settembre, è la stessa persona di Marco (cugino)?', candidates: [cousin] });
+    const no = await ingest('mx-ans', [{ id: 'mxa-1', content: 'No, il Marco del calcetto non è mio cugino.', at: '2026-09-28T13:00:00+02:00' }]);
+    // Listed: C1 the cousin, C2 Bellini (also called Marco), C3 the new Marco.
+    llm.queue.push({ answers: [{ question: 'Q1', contact: 'C3', evidence: [1] }] });
+    await run(no);
+    expect(lastUser()).toContain('Q1: Marco, che ha scritto il 28 settembre, è la stessa persona di Marco (cugino)? (about: C3 — the same person as C1?; answer C1 if yes, C3 if not)');
+    expect((await db.query(`SELECT status, resolved_person_id, resolution FROM clarifications WHERE id = $1`, [q.id]))[0])
+      .toEqual({ status: 'resolved', resolved_person_id: marco, resolution: 'different person' });
+    expect(await db.query(`SELECT id FROM persons WHERE id = ANY($1::uuid[]) ORDER BY created_at`, [[cousin, marco]])).toEqual([{ id: cousin }, { id: marco }]);
+  });
+
+  it('mergeContacts moves every reference (arrays, facts, questions) and deletes the merged contact', async () => {
+    const [{ id: a }] = await db.query(`INSERT INTO persons (owner_scope, display_name, relation) VALUES ($1, 'Sara', 'amica') RETURNING id`, [me]);
+    const [{ id: b }] = await db.query(`INSERT INTO persons (owner_scope, display_name, full_name) VALUES ($1, 'Sara', 'Sara Neri') RETURNING id`, [me]);
+    await db.query(`INSERT INTO person_aliases (owner_id, person_id, alias, alias_norm, source) VALUES ($1, $2, 'Sara', 'sara', 'extracted'),
+      ($1, $3, 'Sara', 'sara', 'client'), ($1, $3, 'Sarina', 'sarina', 'client')`, [me, a, b]);
+    const ins = (sql: string, params: unknown[]) => db.query(sql, params).then((r) => r[0].id as string);
+    const ep = await ins(`INSERT INTO episodes (owner_id, kind, content, origin, author_role, stance, audience, subject_kind, subject_candidates)
+      VALUES ($1, 'event', 'Sara ha traslocato.', 'owner_told', 'owner', 'stated', $2, 'undecided', $3) RETURNING id`, [me, [me, b], [a, b]]);
+    await db.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, 'Sara', $2)`, [ep, b]);
+    const old = await ins(`INSERT INTO facts (owner_id, subject_person_id, key, value, origin, author_role, audience, subject_kind, recorded_at)
+      VALUES ($1, $2, 'city', 'Roma', 'owner_told', 'owner', $3, 'contact', '2026-09-01') RETURNING id`, [me, a, [me]]);
+    const recent = await ins(`INSERT INTO facts (owner_id, subject_person_id, key, value, origin, author_role, audience, subject_kind, recorded_at, confidence_of)
+      VALUES ($1, $2, 'city', 'Milano', 'owner_told', 'owner', $3, 'contact', '2026-09-20', $2) RETURNING id`, [me, b, [me, b]]);
+    const which = await ins(`INSERT INTO clarifications (owner_id, question, candidates, episode_id, created_at) VALUES ($1, 'Quale Sara?', $2, $3, '2026-09-29') RETURNING id`, [me, [a, b], ep]);
+    const same = await ins(`INSERT INTO clarifications (owner_id, question, candidates, contact_id, created_at) VALUES ($1, 'Stessa Sara?', $2, $3, '2026-09-29') RETURNING id`, [me, [a], b]);
+    expect(await db.transaction((tx) => mergeContacts(tx, me, b, a, new Date('2026-09-30T10:00:00Z')))).toBe(true);
+
+    expect(await db.query(`SELECT id, full_name, relation FROM persons WHERE id = ANY($1::uuid[])`, [[a, b]])).toEqual([{ id: a, full_name: 'Sara Neri', relation: 'amica' }]);
+    expect((await db.query(`SELECT alias_norm FROM person_aliases WHERE person_id = $1 ORDER BY alias_norm`, [a])).map((r: { alias_norm: string }) => r.alias_norm)).toEqual(['sara', 'sarina']);
+    expect((await db.query(`SELECT subject_kind, subject_person_id, subject_candidates, audience FROM episodes WHERE id = $1`, [ep]))[0])
+      .toEqual({ subject_kind: 'contact', subject_person_id: a, subject_candidates: [], audience: [me, a] });
+    expect(await db.query(`SELECT person_id FROM episode_people WHERE episode_id = $1`, [ep])).toEqual([{ person_id: a }]);
+    expect(await db.query(`SELECT id, subject_person_id, status, audience, confidence_of FROM facts WHERE id = ANY($1::uuid[]) ORDER BY recorded_at`, [[old, recent]])).toEqual([
+      { id: old, subject_person_id: a, status: 'superseded', audience: [me], confidence_of: null },
+      { id: recent, subject_person_id: a, status: 'current', audience: [me, a], confidence_of: a },
+    ]);
+    expect(await db.query(`SELECT id, status, candidates, resolved_person_id, contact_id FROM clarifications WHERE id = ANY($1::uuid[]) ORDER BY question`, [[which, same]])).toEqual([
+      { id: which, status: 'resolved', candidates: [a], resolved_person_id: a, contact_id: null },
+      { id: same, status: 'resolved', candidates: [], resolved_person_id: a, contact_id: a },
+    ]);
   });
 
   it('writes the gender of the first person in the prompt', async () => {

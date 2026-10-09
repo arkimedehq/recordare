@@ -254,8 +254,8 @@ async function personalContext(tx: EntityManager, owner: Owner, window: WindowMe
   const selfNames = [...new Set([owner.name, ...selfRows.map((r) => r.alias)].filter((n): n is string => !!n?.trim()))];
 
   await expireClarifications(tx, owner.id, (window[0] as WindowMessage).sentAt);
-  const open: Array<{ id: string; question: string; candidates: string[]; about: string | null }> = await tx.query(
-    `SELECT c.id, c.question, c.candidates, COALESCE(e.content, n.content, f.key || ' = ' || COALESCE(f.value, '?')) AS about
+  const open: Array<{ id: string; question: string; candidates: string[]; contact_id: string | null; about: string | null }> = await tx.query(
+    `SELECT c.id, c.question, c.candidates, c.contact_id, COALESCE(e.content, n.content, f.key || ' = ' || COALESCE(f.value, '?')) AS about
      FROM clarifications c LEFT JOIN episodes e ON e.id = c.episode_id LEFT JOIN notes n ON n.id = c.note_id LEFT JOIN facts f ON f.id = c.fact_id
      WHERE c.owner_id = $1 AND c.status = 'open' ORDER BY c.created_at DESC LIMIT $2`, [owner.id, MAX_QUESTIONS]);
 
@@ -269,7 +269,7 @@ async function personalContext(tx: EntityManager, owner: Owner, window: WindowMe
   const said = new Set(window.flatMap((m) => fold(m.content).split(/[^\p{L}\p{N}]+/u)).filter((w) => w.length >= 2));
   const named = (c: (typeof all)[number]) => [c.display_name, c.full_name ?? '', ...(c.aliases ?? [])]
     .some((n) => { const parts = fold(n).split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 2); return parts.length > 0 && parts.every((w) => said.has(w)); });
-  const wanted = new Set<string>([...participants.map((p) => p.person_id), ...open.flatMap((q) => q.candidates)]);
+  const wanted = new Set<string>([...participants.map((p) => p.person_id), ...open.flatMap((q) => [...q.candidates, ...(q.contact_id ? [q.contact_id] : [])])]);
   const chosen = all.filter((c) => wanted.has(c.id) || named(c));
   for (const c of all) if (chosen.length < MAX_CONTACTS && factSubjects.includes(c.id) && !chosen.includes(c)) chosen.push(c);
   const list = chosen.slice(0, MAX_CONTACTS);
@@ -286,6 +286,9 @@ async function personalContext(tx: EntityManager, owner: Owner, window: WindowMe
   const lines = open.map((q, i) => {
     questions.set(`Q${i + 1}`, { id: q.id, candidates: q.candidates });
     const cands = q.candidates.map((id) => refOf.get(id)).filter(Boolean).join(', ');
+    // "Same person?" (a new contact vs one known only by name): answered with the known one's C-number (yes) or its own (no).
+    const newcomer = q.contact_id ? refOf.get(q.contact_id) : undefined;
+    if (newcomer) return `Q${i + 1}: ${q.question} (about: ${newcomer} — the same person as ${cands}?; answer ${cands} if yes, ${newcomer} if not)`;
     const info = [q.about ? `about: "${q.about}"` : '', cands ? `candidates ${cands}` : ''].filter(Boolean).join('; ');
     return `Q${i + 1}: ${q.question}${info ? ` (${info})` : ''}`;
   });

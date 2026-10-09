@@ -221,7 +221,7 @@ trigger; `person_aliases.source` + `client`; `external_identities.kind` `account
   memory; personal `user` messages without an author get the self; entity conversations' `owner` participant loses the
   entity as its person. `down` restores the previous shape (participant ids of a client are dropped; contacts stay).
 
-**As built (8.4, personal first person — `extract.v12`, `facts.v2`; no migration).** Personal memories only; entity
+**As built (8.4, personal first person — `extract.v12`, `facts.v2`; migration `ContactClarification1791080000000`).** Personal memories only; entity
 memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
 - *Voice* — every episode, note and plan of a personal memory is written in the **first person**, in the conversation's
   language, with `owners.gender` for agreement; the account holder's undeclared turns and the assistant's turns are both
@@ -237,10 +237,20 @@ memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
   the self's names → self; a single match → that contact unless the relation or the full name says otherwise (then a
   new contact — no wrong merge); several matches → narrowed by relation, then full name, else `undecided` with all of
   them; no match → a new contact (`relation`, `full_name` for two or more capitalised words, the first name as an alias).
-  Episode people are linked the same way (only names create contacts: "amiche del nuoto" does not). A participant
-  identity seen for the first time binds to the one contact of that name that has no identity yet (a person mentioned
-  first, then identified); otherwise a new contact. Facts of `someone` or of an undecided person are dropped; notes of
-  `someone` too.
+  Episode people are linked the same way (only names create contacts: "amiche del nuoto" does not). Facts of `someone`
+  or of an undecided person are dropped; notes of `someone` too.
+- *Identified participants* (owner's decision 2026-10-09: a first name alone does not say that a participant is a
+  contact known only by name — "mia sorella Giulia" and a Giulia writing in a group may be two people) — a participant
+  identity seen for the first time **binds** to an existing contact only on strong evidence: its display name is a full
+  name (two or more words) equal (case- and accent-insensitive) to the display name, full name or an alias of exactly one
+  contact that has no identity yet. Otherwise a **new contact**; when exactly one contact without an identity shares the
+  name (the participant's first name is one of its names, or — for a single-name participant — the first word of one;
+  never a contact whose known full name differs from the participant's full name), a personal memory opens a **"same
+  person?" clarification** (`clarifications.contact_id` = the new contact, `candidates` = the known one, no item; the
+  question in Italian when the memory's locale is Italian, else English: "Giulia, che ha scritto il 22 settembre, è la
+  stessa persona di Giulia (sorella)?", `created_at` = the batch's first message time). Several such contacts: a new
+  contact and no question (no spam; the Diary can merge by hand). Entity memories never ask (until 8.5). Relation
+  self-introductions ("sono Giulia, la sorella di Andrea") and recognised identifiers are other paths (not at ingest).
 - *Provenance* — what others say about the self stays a claim (`stance = inferred`, facts pending); a person's own
   statement about themself is `stated` for that subject (Giulia's news, Giulia's facts); tool-only items stay
   `inferred`. The named-in-window guard applies to subjects (a contact must be named in the window or speak in it); the
@@ -252,7 +262,19 @@ memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
   the same text and candidates: the item's subject becomes that contact, unlinked episode people with that name are
   linked, `resolved_person_id` / `resolution` (the contact's name) / `resolved_at` are set; the memory's text is never
   rewritten. Open questions expire after 14 days (`CLARIFICATION_TTL_DAYS`, a constant): checked at extraction (as of
-  the window), on read (as of the request) and by the nightly consolidation.
+  the window), on read (as of the request) and by the nightly consolidation. A "same person?" question is listed as
+  `Q1: <question> (about: C2 — the same person as C1?; answer C1 if yes, C2 if not)` (both contacts are in PEOPLE I
+  KNOW) and answered the same way: the known contact → the two are **merged** (`resolution` `same person`); the new
+  contact itself → they stay apart (`different person`). The Diary / admin will resolve through the same function
+  (`resolveClarification`).
+- *Merge* (`service/src/engine/contacts.ts` → `mergeContacts`, one place) — the new contact is merged into the known one:
+  every reference moves (participant identities, aliases — duplicates dropped —, `conversation_participants`,
+  `messages.author_person_id`, `episode_people`, `subject_person_id` / `confidence_of` / `subject_candidates` /
+  `audience` on episodes, facts, notes (and `audience` on digests), clarification candidates / `resolved_person_id` /
+  `contact_id`), `full_name` and `relation` are kept from the known contact or taken from the merged one; a single-value
+  fact current for both keeps the more recent one (the older becomes `superseded`); an item undecided between the two
+  becomes the merged contact's and an open question left with one candidate is resolved; then the merged row is
+  deleted. The memory's text is never rewritten.
 - *Gate* — a personal window costs a call when anyone but the assistant or a tool speaks (the self, a contact,
   someone, own content); an identified contact sent as `user` with its `authorRef` is that contact, not the self (SQL
   `memorySpeaker`, also used by the raw-log search and MCP writes).
@@ -460,13 +482,15 @@ message_ids uuid[] (the forgotten evidence messages, hidden from chat search), p
 conversation_id null, created_at` — checked **before inserting any
 episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
 
-### clarifications (D50, vision L1) — created, unused yet (WORK_PLAN 8.4 / 8.5)
+### clarifications (D50, vision L1; behaviour WORK_PLAN 8.4)
 `id, owner_id → owners (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null
-(CASCADE; at most one), status enum (open|resolved|expired) default open, resolution text null (the answer as given),
-resolved_person_id null → persons (SET NULL), created_at, resolved_at null (set exactly when not open)`; partial index
-`(owner_id, created_at) WHERE status = 'open'`. A question Recordare wants answered ("which Marco — the colleague or the
-cousin?"); the memory context will offer at most one relevant open question, the answer adds the attribution at the next
-extraction, unanswered ones expire, the Diary resolves them by hand.
+(CASCADE; at most one), contact_id null → persons (CASCADE; migration `ContactClarification1791080000000`: the new
+contact of a "same person?" question — then no item), status enum (open|resolved|expired) default open, resolution text
+null (the answer as given: the chosen contact's name, or `same person` / `different person`), resolved_person_id null →
+persons (SET NULL), created_at, resolved_at null (set exactly when not open)`; partial index `(owner_id, created_at)
+WHERE status = 'open'`. A question Recordare wants answered ("which Marco — the colleague or the cousin?", "is this
+Giulia my sister?"); the memory context offers at most one relevant open question, the answer adds the attribution (or
+merges two contacts) at the next extraction, unanswered ones expire, the Diary resolves them by hand.
 
 ### read_audit (public profile)
 `id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], viewer_source enum

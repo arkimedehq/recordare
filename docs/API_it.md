@@ -318,8 +318,10 @@ identificato (un partecipante con un'identità), altrimenti il sé — chi è id
 cui ha preso parte), e `notes` dice al modello che risponde che "io" nella domanda è quella persona, non il sé della memoria. I `claims`
 di una memoria personale sono affermazioni di altre persone su qualcun altro (il sé o una terza persona, `inferred`); la notizia che una
 persona dà di sé è un episodio con quella persona come soggetto, e ciò che uno strumento o un documento ha insegnato all'agente è un suo
-apprendimento (non un claim). `clarifications`: fino a 2 domande aperte ("Marco chi — il collega o il cugino?") i cui candidati sono
-nominati dalla query o il cui elemento è restituito — da porre se viene naturale. Le memorie di entità mantengono la regola precedente
+apprendimento (non un claim). `clarifications`: fino a 2 domande aperte i cui candidati sono nominati dalla query o il cui elemento è
+restituito — da porre se viene naturale. Due tipi: "quale?" su un elemento ("Marco chi — il collega o il cugino?") e "stessa persona?" su
+un partecipante appena identificato e un contatto noto solo per nome ("Giulia, che ha scritto il 22 settembre, è la stessa persona di
+Giulia (sorella)?" — la risposta fonde i due o li tiene separati; DATA_MODEL "Memoria dell'agente"). Le memorie di entità mantengono la regola precedente
 sui claims fino alla 8.5. `digests` (M5): per le richieste `list` con un periodo, il diario di quel periodo — voci giornaliere per intervalli fino a 45 giorni, riepiloghi mensili per quelli più lunghi; riassumono solo gli episodi propri dell'owner (mai le affermazioni di altre persone). Come costruito sono restituiti solo quando `RECALL_DIGESTS` è attivo (spento per default in ogni profilo di qualità — `KNOBS.md`); altrimenti `digests` è vuoto. `fromChats` (log grezzo, D13) riporta sempre fino a 2 estratti non già dietro gli
 episodi restituiti — il log risponde a ciò che gli episodi non contengono mai, ad es. le richieste di aiuto ("quando ti ho chiesto…") — e fino a 3 quando meno di
 3 episodi corrispondono o la migliore corrispondenza è sotto la soglia di rilevanza; limitato alle

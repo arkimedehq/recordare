@@ -17,8 +17,10 @@ import { type IngestRequest, type IngestResult } from './ingest.schemas';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { type MemoryMode } from '../identity/identity.entities';
 import { type Attribution, SOMEONE } from './attribution';
+import { askSameContact, matchUnboundContacts, sameContactQuestion } from '../engine/contacts';
 
 type Participant = IngestRequest['conversation']['participants'][number];
+interface MemoryInfo { mode: MemoryMode; locale: string; timezone: string }
 type IngestMessage = IngestRequest['messages'][number];
 
 const self = (ownerId: string): Attribution => ({ kind: 'self', personId: ownerId, method: 'account', confidence: 1 });
@@ -75,8 +77,9 @@ export class IngestService {
       if (conv.deleted_at) throw new NotFoundException();
       const conversationId: string = conv.id;
 
-      const [{ mode }] = await tx.query(`SELECT mode FROM owners WHERE person_id = $1`, [ownerId]);
-      const participants = await this.upsertParticipants(tx, conversationId, ownerId, mode, clientId, req.conversation.participants);
+      const [memory]: Array<MemoryInfo> = await tx.query(`SELECT mode, locale, timezone FROM owners WHERE person_id = $1`, [ownerId]);
+      const { mode } = memory as MemoryInfo;
+      const participants = await this.upsertParticipants(tx, conversationId, ownerId, memory as MemoryInfo, clientId, req.conversation.participants, first);
       let accepted = 0;
       let duplicates = 0;
       const conflicts: string[] = [];
@@ -192,13 +195,16 @@ export class IngestService {
   /**
    * Participants → the memory's self or its contacts (D50). Personal mode: the `owner` participant is the self (implied
    * when missing). A participant with an identity is resolved inside this memory only: its participant identity, or
-   * the account's own user id (the self); an identity seen for the first time binds to the one contact known only by
-   * that name, or creates the contact (the client is trusted). An unverified channel binding identifies nobody. Everyone else is kept by display name ("someone").
+   * the account's own user id (the self); an identity seen for the first time binds to a contact only on strong evidence
+   * (its full name equals exactly one contact without an identity), else creates a contact (the client is trusted) — with
+   * a "same person?" question when one contact known only by name shares its name (personal memories). An unverified
+   * channel binding identifies nobody. Everyone else is kept by display name ("someone").
    * Returns ref → attribution.
    */
   private async upsertParticipants(
-    tx: EntityManager, conversationId: string, ownerId: string, mode: MemoryMode, clientId: string, participants: Participant[],
+    tx: EntityManager, conversationId: string, ownerId: string, memory: MemoryInfo, clientId: string, participants: Participant[], at: Date,
   ): Promise<Map<string, Attribution>> {
+    const { mode } = memory;
     const implied = mode === 'personal' && !participants.some((p) => p.role === 'owner');
     const list: Participant[] = implied ? [{ ref: 'owner', role: 'owner' }, ...participants] : participants;
     const out = new Map<string, Attribution>();
@@ -206,7 +212,7 @@ export class IngestService {
       let who: Attribution = SOMEONE;
       if (p.role === 'assistant') who = { kind: 'agent', personId: null, method: 'client_assertion', confidence: 1 };
       else if (p.role === 'owner' && mode === 'personal') who = self(ownerId);
-      else if (p.identity) who = await this.resolveIdentity(tx, ownerId, mode, clientId, p);
+      else if (p.identity) who = await this.resolveIdentity(tx, ownerId, memory, clientId, p, at);
       out.set(p.ref, who);
       await tx.query(
         `INSERT INTO conversation_participants (conversation_id, ref, person_id, role, display_name)
@@ -221,7 +227,8 @@ export class IngestService {
   }
 
   /** A participant's identity inside this memory: the self, a known contact, or a new contact. */
-  private async resolveIdentity(tx: EntityManager, ownerId: string, mode: MemoryMode, clientId: string, p: Participant): Promise<Attribution> {
+  private async resolveIdentity(tx: EntityManager, ownerId: string, memory: MemoryInfo, clientId: string, p: Participant, at: Date): Promise<Attribution> {
+    const { mode } = memory;
     const id = p.identity as NonNullable<Participant['identity']>;
     const byClient = 'externalUserId' in id;
     const method = byClient ? 'client_assertion' : 'declared';
@@ -244,16 +251,17 @@ export class IngestService {
       return hit.person_id === ownerId ? self(ownerId) : { kind: 'contact', personId: hit.person_id, method, confidence: 1 };
     }
     const name = (p.displayName?.trim() || (byClient ? id.externalUserId : id.externalId)).slice(0, 200);
-    // A person the memory knows only by name (mentioned, no identity of their own) and the only one with this name: the
-    // same person, now identified (8.4). Several, or one already bound to another identity: a new contact (no wrong merge).
-    const named: Array<{ id: string }> = p.displayName?.trim() ? await tx.query(
-      `SELECT p.id FROM persons p WHERE p.owner_scope = $1
-         AND (lower(unaccent(btrim(p.display_name))) = lower(unaccent(btrim($2)))
-              OR EXISTS (SELECT 1 FROM person_aliases a WHERE a.person_id = p.id AND a.alias_norm = lower(unaccent(btrim($2)))))`,
-      [ownerId, name]) : [];
-    const [only] = named;
-    const unbound = named.length === 1 && only && !(await tx.query(`SELECT 1 FROM external_identities WHERE person_id = $1 LIMIT 1`, [only.id])).length;
-    const [contact] = unbound ? [only] : await tx.query(`INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [ownerId, name]);
+    // A person the memory knows without an identity is this participant only on strong evidence: the full name, equal to
+    // exactly one such contact (8.4). A first name alone is not (owner's decision 2026-10-09): a new contact, and — when
+    // exactly one contact known only by name shares it — a "same person?" question (personal memories; several: none).
+    const match = p.displayName?.trim() ? await matchUnboundContacts(tx, ownerId, name) : { bind: null, similar: [] };
+    const contact: { id: string } = match.bind ? { id: match.bind }
+      : (await tx.query(`INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [ownerId, name]))[0];
+    const [known] = match.similar;
+    if (!match.bind && mode === 'personal' && match.similar.length === 1 && known) {
+      const question = await sameContactQuestion(tx, name, known, at, memory.locale, memory.timezone);
+      await askSameContact(tx, ownerId, contact.id, known, question, at);
+    }
     await tx.query(
       `INSERT INTO person_aliases (owner_id, person_id, alias, alias_norm, source) VALUES ($1, $2, $3, lower(unaccent(btrim($3))), 'client')
        ON CONFLICT DO NOTHING`, [ownerId, contact.id, name]);

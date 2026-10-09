@@ -8,8 +8,12 @@
  * QUESTIONS), which may answer it from the conversation; the memory context offers one relevant question to the agent
  * ("if natural, ask: …"). An answer adds the attribution (subject, person link) and never rewrites the memory's text.
  * Open questions expire after CLARIFICATION_TTL_DAYS (on read, at extraction and in the nightly consolidation).
+ * A second kind (owner's decision 2026-10-09) asks whether a newly identified participant is a contact the memory knew
+ * only by name ("Giulia, che ha scritto il 9 ottobre, è la stessa persona di Giulia (sorella)?"): `contact_id` is the new
+ * contact, the candidates hold the known one; "yes" merges the two (contacts.ts), "no" keeps them apart.
  */
 import { type EntityManager } from 'typeorm';
+import { DIFFERENT_PERSON, mergeContacts, SAME_PERSON } from './contacts';
 import { fold } from './subjects';
 
 export const CLARIFICATION_TTL_DAYS = 14;
@@ -40,8 +44,9 @@ export async function askClarification(db: Queryable, ownerId: string, item: Ite
  * and any other open one with the same text and candidates — is resolved. The memory's text is never rewritten.
  */
 export async function resolveClarification(db: Queryable, ownerId: string, clarificationId: string, personId: string, at: Date): Promise<boolean> {
-  const [c]: Array<{ question: string; candidates: string[] }> = await db.query(
-    `SELECT question, candidates FROM clarifications WHERE id = $1 AND owner_id = $2 AND status = 'open'`, [clarificationId, ownerId]);
+  const [c]: Array<{ question: string; candidates: string[]; contact_id: string | null }> = await db.query(
+    `SELECT question, candidates, contact_id FROM clarifications WHERE id = $1 AND owner_id = $2 AND status = 'open'`, [clarificationId, ownerId]);
+  if (c?.contact_id) return resolveSameContact(db, ownerId, clarificationId, c.contact_id, c.candidates, personId, at);
   if (!c || !c.candidates.includes(personId)) return false;
   const [person]: Array<{ display_name: string; names: string[] }> = await db.query(
     `SELECT p.display_name, array_remove(array_agg(a.alias_norm), NULL) || ARRAY[lower(unaccent(p.display_name))] AS names
@@ -74,6 +79,20 @@ export async function resolveClarification(db: Queryable, ownerId: string, clari
     }
   }
   return resolved.length > 0;
+}
+
+/**
+ * A "same person?" answer: a candidate → the new contact is merged into it (every reference moves, `mergeContacts`); the
+ * new contact itself → a different person, both stay. Either way the question is resolved.
+ */
+async function resolveSameContact(db: Queryable, ownerId: string, id: string, contactId: string, candidates: string[], personId: string, at: Date): Promise<boolean> {
+  const same = candidates.includes(personId);
+  if (!same && personId !== contactId) return false;
+  await db.query(
+    `UPDATE clarifications SET status = 'resolved', resolved_at = $3, resolved_person_id = $4, resolution = $5 WHERE id = $1 AND owner_id = $2`,
+    [id, ownerId, at, personId, same ? SAME_PERSON : DIFFERENT_PERSON]);
+  if (same) await mergeContacts(db, ownerId, contactId, personId, at);
+  return true;
 }
 
 export interface OpenClarification { id: string; question: string; episodeId: string | null; candidates: string[] }

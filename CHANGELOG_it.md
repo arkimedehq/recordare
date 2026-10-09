@@ -57,8 +57,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   della memoria: il titolare dell'account e l'assistente sono un solo "io". Ogni episodio, fatto e nota riceve un
   soggetto collegato ai contatti della memoria (creati quando una persona è solo nominata, fusi solo quando è chiaro);
   una persona ambigua ("quale Marco?") è salvata come indecisa con una chiarificazione a cui risponde una conversazione
-  successiva o che scade dopo 14 giorni; un'identità di partecipante vista per la prima volta si lega all'unico contatto
-  noto solo con quel nome. `search_episodes` / `search_memory` restituiscono `memory {name, mode}` (era `owner {name}`),
+  successiva o che scade dopo 14 giorni; un'identità di partecipante vista per la prima volta si lega a un contatto noto
+  solo quando il suo nome completo corrisponde a esattamente un contatto senza identità — con il solo nome di battesimo
+  diventa un nuovo contatto con una chiarificazione "stessa persona?", il cui "sì" fonde i due contatti (migrazione
+  `ContactClarification1791080000000`: `clarifications.contact_id`). `search_episodes` / `search_memory` restituiscono `memory {name, mode}` (era `owner {name}`),
   il `subject` di ogni elemento (fatti: `subject` sostituisce `about`), `speaker` (chi sta chiedendo; chi è identificato
   riceve per primi i propri elementi) e `clarifications`; in una memoria personale i `claims` sono affermazioni di altri
   su qualcun altro (la notizia che una persona dà di sé è sua, l'output di uno strumento è un apprendimento dell'agente).

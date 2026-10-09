@@ -308,8 +308,11 @@ with an identity), otherwise the self — an identified speaker gets their own i
 in), and `notes` tells the answering model that "I" in the question is that person, not the memory's self. `claims`
 in a personal memory are other people's statements about someone else (the self or a third person, `inferred`); a
 person's news about themself is an episode with that person as subject, and what a tool or a document taught the
-agent is its own learning (not a claim). `clarifications`: up to 2 open questions ("Marco chi — il collega o il
-cugino?") whose candidates the query names or whose item is returned — to ask if natural. Entity memories keep the
+agent is its own learning (not a claim). `clarifications`: up to 2 open questions whose candidates the query names or
+whose item is returned — to ask if natural. Two kinds: "which one?" about an item ("Marco chi — il collega o il
+cugino?") and "same person?" about a newly identified participant and a contact known only by name ("Giulia, che ha
+scritto il 22 settembre, è la stessa persona di Giulia (sorella)?" — the answer merges the two or keeps them apart;
+DATA_MODEL "Agent memory"). Entity memories keep the
 earlier claims rule until 8.5. `digests` (M5): for `list` requests with a period, the diary of that period — day entries for spans up to 45 days, month summaries for longer ones; they summarise the owner's own episodes only (never other people's claims). As built they are returned only when `RECALL_DIGESTS` is on (off in every quality profile by default — `KNOBS.md`); otherwise `digests` is empty. `fromChats` (raw log, D13) always carries up to 2 excerpts not already behind the returned
 episodes — the log answers what episodes never hold, e.g. help requests ("when did I ask you…") — and up to 3 when fewer
 than 3 episodes match or the best match is below the relevance threshold; limited to the client's own
