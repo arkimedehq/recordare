@@ -214,8 +214,8 @@ export class EpisodeSearchService {
     }
     if (result.claims.length) {
       result.notes.push(personal
-        ? (it ? `"claims" sono affermazioni di chi è in claimedBy su altri, non confermate: ciò che dicono di me (${name}) non è un mio ricordo`
-          : `"claims" are statements of the people in claimedBy about others, unconfirmed: what they say about me (${name}) is not my memory`)
+        ? (it ? `"claims" sono affermazioni di chi è in claimedBy, non confermate: ciò che dicono di me (${name}) non è un mio ricordo né qualcosa che ho detto`
+          : `"claims" are statements of the people in claimedBy, unconfirmed: what they say about me (${name}) is not my memory nor something I said`)
         : it
           ? '"claims" sono affermazioni di chi è in claimedBy, non ricordi del proprietario: ciò che dicono di lui/lei non è confermato'
           : '"claims" are statements of the people in claimedBy, not the owner\'s memories: what they say about the owner is unconfirmed');
@@ -349,7 +349,7 @@ function isEntityClaim(v: EpisodeView): boolean {
 }
 
 /**
- * Personal memories: a claim is what other people said about someone else (inferred) — not a person's own news (stated
+ * Personal memories: a claim is what other people said about me or someone else (inferred) — not a person's own news (stated
  * for them), not what a tool or a document taught me (my learning, still inferred).
  */
 function isPersonalClaim(v: EpisodeView): boolean {

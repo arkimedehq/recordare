@@ -298,7 +298,7 @@ def format_context(args: dict, episodes: dict, memory: dict) -> str:
     lines.append("EPISODI:")
     lines += [_episode_line(e, personal, owner) for e in episodes.get("episodes", [])] or ["- (nessuno)"]
     if episodes.get("claims"):
-        lines.append(f"AFFERMAZIONI DI ALTRE PERSONE SU ALTRI (non confermate; ciò che dicono di {owner} non è un suo ricordo):" if personal
+        lines.append(f"AFFERMAZIONI DI ALTRE PERSONE (non confermate; ciò che dicono di {owner} non è un suo ricordo né qualcosa che ha detto):" if personal
                      else "AFFERMAZIONI DI ALTRE PERSONE (non sono ricordi del proprietario; su di lui/lei non confermate):")
         lines += [_episode_line(e, personal, owner) for e in episodes["claims"]]
     if episodes.get("outsidePeriod"):
