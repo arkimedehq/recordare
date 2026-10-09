@@ -443,6 +443,29 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.4b — provenance after the first person: extract.v13 (2026-10-09, DeepSeek direct)
+
+Cause (dev set `dataset_dev_poison`, not blind, read on the v12 dumps): others' claims about me lost the date they were
+made and sometimes the self ("Ho saputo da Paolo che Elena ha detto…", subject `someone`, the self named in the third
+person); one claim (Marco's 80 euro) wrote no episode at all. Fix, personal memories only (entity prompt byte-identical):
+`extract.v13` — a claim about me is ONE episode, subject "me", origin "told", on the date it was said, first person,
+with that absolute date, the claimant and where ("Il 7 marzo 2026 Paolo ha scritto nella chat di famiglia che io lascio
+l'ospedale…"); "X says I told them…" stays X's claim. Recall note and harness header no longer say claims are "about
+others" (they include claims about me). One instance on :8086, queue `fp86`, migrations applied.
+
+| Set | Run | v13 | Previous |
+|---|---|---|---|
+| `dataset_dev_poison` (10 q) | 1 | **100 %** | 90 % / 95 % (v12b / v12c) |
+| `dataset` (24 q) | 1 | **100 %** | 97.9 % (v12b) |
+| `dataset_dev_agent_personal` (19 q) | 1 | 94.7 % | 100 % / 94.7 % (v12a / v12c) — a16 wrong: the family-chat window wrote no lunch plan (extraction variance; v12c missed a04 instead) |
+
+Claims now stored as wanted: "Il 12 marzo 2026 Marco ha scritto in chat che io gli devo 80 euro per il regalo di Chiara e
+che sono allergica alle noci" (subject self, inferred). **Blind confirmation** (`b7_v13_runs.sh`, 3 runs): 90.2 / 89.1 /
+93.5 = **90.9 %** (bar 91.7 %): paired vs v12 −0.007 [−0.054, +0.054], vs v11 −0.007 [−0.062, +0.047], both within
+noise; **provenance 0.6 / 0.6 / 0.6** (v12 0.3 / 0.4 / 0.5: +0.2; vs v11 −0.03, recovered); changed questions vs v12:
+g26 (provenance) +1.0, g18 (state-change, "where do I live now") −0.5 — the answer was right in substance in every run,
+judged wrong once for adding the planned move date.
+
 ### WORK_PLAN 4.10 — news received as a memory: extract.v11 (2026-10-08, DeepSeek direct)
 
 Rule added to the extraction prompt: news the owner received (assistant, tool result, someone else) is a low-importance
