@@ -4,7 +4,8 @@
 /**
  * `search_memory` (D34 + D29): semantic notes plus state facts, facts as of a date with their
  * value chain (initial → revisions → current). `unknown_current` is reported as "not known";
- * pending (inferred) items only on request.
+ * pending (inferred) items only on request. Every item carries its subject (D50, 8.4): the self's and the contacts' facts
+ * and notes, in both modes; personal memories add who is asking and the open clarifications about the people involved.
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -13,6 +14,10 @@ import { addDays, localDate, zonedMidnight } from '../engine/time';
 import { toOrTsQuery } from '../rawlog/rawlog-search.service';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { logRecall } from './recall-log';
+import { contactNames, speakerOf, subjectView, type SubjectRow, type SubjectView } from './subjects';
+import { relevantClarifications } from '../engine/clarifications';
+import { type MemoryView } from './episode-search.service';
+import { type SubjectKind } from '../identity/identity.entities';
 
 export interface MemorySearchArgs {
   /** The conversation the recall is served in (see EpisodeSearchArgs). */
@@ -24,8 +29,8 @@ export interface MemorySearchArgs {
 }
 
 export interface FactView {
-  /** Entity memories (D48): the person the fact is about; absent = the owner (or the entity itself). */
-  about?: string;
+  /** Whose fact it is: the self (an entity memory: the entity itself) or a contact (D48, D50). */
+  subject: SubjectView;
   key: string;
   value: string | null;
   status: string;
@@ -35,11 +40,14 @@ export interface FactView {
 }
 
 export interface MemorySearchResult {
-  /** Whose memory this is (items name the owner in the third person). */
-  owner: { name: string };
-  notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; authorRole: string }>;
+  memory: MemoryView;
+  /** Personal memories: who is asking (see search_episodes). */
+  speaker?: { kind: 'self' } | { kind: 'contact'; name: string };
+  notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; authorRole: string; subject: SubjectView }>;
   facts: FactView[];
   notes_info: string[];
+  /** Personal memories: open questions about the people involved, to ask if natural. */
+  clarifications?: string[];
 }
 
 const MIN_VECTOR_SIMILARITY = 0.35;
@@ -73,31 +81,31 @@ export class MemorySearchService {
     }
     const tsq = toOrTsQuery(args.query);
 
-    const noteRows: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; author_role: string; sim: number | null; fts: boolean }> =
+    const noteRows: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; author_role: string; sim: number | null; fts: boolean }
+      & SubjectRow> =
       await this.db.query(
-        `SELECT id, category, content, pinned, pending, author_role,
+        `SELECT id, category, content, pinned, pending, author_role, subject_kind, subject_person_id, subject_candidates,
                 CASE WHEN $2::text IS NULL OR embedding IS NULL THEN NULL ELSE 1 - (embedding <=> $2::vector) END AS sim,
                 ($3::text <> '' AND to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')) @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
          FROM notes WHERE owner_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)`,
         [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
     const notes = noteRows.filter((n) => n.pinned || n.fts || (n.sim ?? 0) >= MIN_VECTOR_SIMILARITY)
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || (b.sim ?? 0) + (b.fts ? 0.1 : 0) - ((a.sim ?? 0) + (a.fts ? 0.1 : 0)))
-      .slice(0, limit)
-      .map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, authorRole: n.author_role }));
+      .slice(0, limit);
 
     // Facts: rank slots by relevance, then report the value valid at `asOf` plus the chain.
-    // A person's memory: facts about the owner. An entity memory (D48): also those about the people who talk to it.
+    // The self's facts and those of the people the memory knows (both modes since 8.4).
     const factRows: Array<{ id: string; key: string; value: string | null; status: string; valid_from: Date | null; valid_to: Date | null;
-      pending: boolean; sim: number | null; fts: boolean; about: string | null }> = await this.db.query(
-      `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, s.display_name AS about,
+      pending: boolean; sim: number | null; fts: boolean; about: string | null; subject_kind: SubjectKind; subject_person_id: string | null }> = await this.db.query(
+      `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, s.display_name AS about, f.subject_kind, f.subject_person_id,
               CASE WHEN $2::text IS NULL OR f.embedding IS NULL THEN NULL ELSE 1 - (f.embedding <=> $2::vector) END AS sim,
               ($3::text <> '' AND to_tsvector('simple', COALESCE(s.display_name, '') || ' ' || f.key || ' ' || COALESCE(f.value, ''))
                 @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
        FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
-       WHERE f.owner_id = $1 AND ($5::boolean OR f.subject_person_id IS NULL) AND f.deleted_at IS NULL AND f.status <> 'corrected'
+       WHERE f.owner_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected'
          AND ($4::boolean OR NOT f.pending)
        ORDER BY f.key, f.valid_from NULLS FIRST, f.recorded_at`,
-      [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false, owner.mode === 'entity']);
+      [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
     // One slot per (person, key): Andrea's car and Marta's car are two histories.
     const byKey = new Map<string, typeof factRows>();
     for (const f of factRows) {
@@ -111,12 +119,12 @@ export class MemorySearchService {
       .sort((a, b) => keyScore(b[1]) - keyScore(a[1]))
       .slice(0, limit)
       .flatMap(([, rows]) => {
-        const { key, about } = rows[0] as (typeof factRows)[number];
+        const { key, about, subject_person_id } = rows[0] as (typeof factRows)[number];
         const valid = rows.filter((r) => (!r.valid_from || r.valid_from < asOf) && (!r.valid_to || r.valid_to >= asOf));
         const at = valid.at(-1) ?? rows.filter((r) => !r.valid_from || r.valid_from < asOf).at(-1);
         if (!at) return [];
         return [{
-          ...(about ? { about } : {}), key, value: at.value, status: at.status === 'unknown_current' ? 'unknown' : at.status,
+          subject: subject_person_id ? { kind: 'contact' as const, name: about ?? '?' } : { kind: 'self' as const }, key, value: at.value, status: at.status === 'unknown_current' ? 'unknown' : at.status,
           validFrom: day(at.valid_from), validTo: day(at.valid_to),
           history: rows.map((r) => ({ value: r.value, from: day(r.valid_from), to: day(r.valid_to), status: r.status })),
         }];
@@ -128,6 +136,19 @@ export class MemorySearchService {
     this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
       facts: facts.length, notes: notes.length });
     await logRecall(this.db, ownerId, 'search_memory', null, facts.length + notes.length, args.conversationId, now);
-    return { owner: { name: owner.display_name }, notes, facts, notes_info: info };
+    const names = await contactNames(this.db, notes);
+    const result: MemorySearchResult = {
+      memory: { name: owner.display_name, mode: owner.mode },
+      notes: notes.map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, authorRole: n.author_role,
+        subject: subjectView(n, names) })),
+      facts, notes_info: info,
+    };
+    if (owner.mode === 'personal') {
+      const speaker = await speakerOf(this.db, args.conversationId, now);
+      result.speaker = speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : { kind: 'self' };
+      const asks = await relevantClarifications(this.db, ownerId, args.query, notes.map((n) => n.id), now, 2);
+      if (asks.length) result.clarifications = asks.map((c) => c.question);
+    }
+    return result;
   }
 }

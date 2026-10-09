@@ -221,6 +221,46 @@ trigger; `person_aliases.source` + `client`; `external_identities.kind` `account
   memory; personal `user` messages without an author get the self; entity conversations' `owner` participant loses the
   entity as its person. `down` restores the previous shape (participant ids of a client are dropped; contacts stay).
 
+**As built (8.4, personal first person — `extract.v12`, `facts.v2`; no migration).** Personal memories only; entity
+memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
+- *Voice* — every episode, note and plan of a personal memory is written in the **first person**, in the conversation's
+  language, with `owners.gender` for agreement; the account holder's undeclared turns and the assistant's turns are both
+  "I" with no distinction in the text (who said it stays in `messages.author_kind` / `author_role` / `origin`, as data).
+  External content (web, tools, files) is something "I" learned (extract.v11's news rule and its exclusion of others'
+  claims about the self are kept). The prompt gets the self's names (`ME`: display name + aliases, with the gender),
+  `MEMORY LANGUAGE`, the contacts the window concerns (`PEOPLE I KNOW`, numbered C1…: named in the window, its
+  participants, the subjects of listed facts, the candidates of open questions; at most 30) and the open questions (`OPEN
+  QUESTIONS`, Q1…, at most 5). Speakers: `me`, `me (assistant)`, `me (own)`, `Name [C3]` (an identified contact),
+  `other:Name` (a display name only), `someone`, `tool:x`. Current facts are listed for all subjects (`[me]` / `[Name]`).
+- *Subjects* — the model names the subject of each episode, fact and note: `me`, a C-number, `Name (relation)` or
+  `someone`, or `undecided` with candidate C-numbers and a question. The writer links names to contacts (`ContactBook`):
+  the self's names → self; a single match → that contact unless the relation or the full name says otherwise (then a
+  new contact — no wrong merge); several matches → narrowed by relation, then full name, else `undecided` with all of
+  them; no match → a new contact (`relation`, `full_name` for two or more capitalised words, the first name as an alias).
+  Episode people are linked the same way (only names create contacts: "amiche del nuoto" does not). A participant
+  identity seen for the first time binds to the one contact of that name that has no identity yet (a person mentioned
+  first, then identified); otherwise a new contact. Facts of `someone` or of an undecided person are dropped; notes of
+  `someone` too.
+- *Provenance* — what others say about the self stays a claim (`stance = inferred`, facts pending); a person's own
+  statement about themself is `stated` for that subject (Giulia's news, Giulia's facts); tool-only items stay
+  `inferred`. The named-in-window guard applies to subjects (a contact must be named in the window or speak in it); the
+  recall-echo guard and evidence rules are unchanged.
+- *Clarifications* — an `undecided` episode or note gets a `clarifications` row (the model's question, or
+  "Marco? Marco (cugino) / Marco Bellini (collega)" when it gave none; `created_at` = the window's last message time).
+  Later windows see it under OPEN QUESTIONS; an answer (`answers: [{question, contact, evidence}]`) backed by a person's
+  message (never an assistant reply or a tool) and naming one of the candidates resolves it — and any open question with
+  the same text and candidates: the item's subject becomes that contact, unlinked episode people with that name are
+  linked, `resolved_person_id` / `resolution` (the contact's name) / `resolved_at` are set; the memory's text is never
+  rewritten. Open questions expire after 14 days (`CLARIFICATION_TTL_DAYS`, a constant): checked at extraction (as of
+  the window), on read (as of the request) and by the nightly consolidation.
+- *Gate* — a personal window costs a call when anyone but the assistant or a tool speaks (the self, a contact,
+  someone, own content); an identified contact sent as `user` with its `authorRef` is that contact, not the self (SQL
+  `memorySpeaker`, also used by the raw-log search and MCP writes).
+- *Leak detector* (replaces 4.11's `nameOwner`, removed) — `extraction_runs.summary.leaks` counts the written episodes
+  and notes that still speak of the self in the third person (one of its names, or a stand-in such as "the user",
+  "l'utente", "the owner", "the assistant", in the most used languages: `service/src/lang/self.ts`); counts only, with
+  `summary.clarifications` (`asked`, `resolved`) and `returned.answers`.
+
 ## Layer 0 — raw log
 
 ### conversations

@@ -3,6 +3,7 @@
  "users": {
   "elena": "Primary user under test"
  },
+ "genders": {"elena": "feminine"},
  "sessions": [
   {
    "id": "d01",

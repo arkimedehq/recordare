@@ -13,8 +13,12 @@
  * - facts: verdicts with world + knowledge time, forward-only supersession (imports never
  *   overwrite newer values), single-value slots replaced, multi-value slots accumulate;
  * - corrections never rewrite: a new row `corrects` the old one, which is invalidated;
- * - subject (D50): personal memories — every row is the self's; entity memories — a fact's subject contact (or the entity
- *   itself), an episode the one known contact its people name (else someone), a note someone's; never undecided yet;
+ * - subject (D50): personal memories (8.4) — the model names it (me, a listed contact, a new person, someone, undecided);
+ *   names are linked to the memory's contacts (created when only mentioned; merged only when clear), an ambiguous one
+ *   is stored `undecided` with its candidates and a clarification question, answered by a later window; a person's
+ *   statement about themself is `stated` for them; entity memories (unchanged until 8.5) — a fact's subject contact
+ *   (or the entity itself), an episode the one known contact its people name (else someone), a note someone's;
+ * - leaks (personal): items still speaking of the self in the third person are counted in the run summary;
  * - recall echoes: what only an assistant reply answering from memory said — neither the owner nor another person nor
  *   a non-memory tool (web search, a calendar…) said it — is not recorded: a wrong or invented recall must not become
  *   a memory because the owner said "ok", while news a tool brought in the same turn stays news.
@@ -22,9 +26,11 @@
 import { type EntityManager } from 'typeorm';
 import { type ExtractionInput, isMemoryTool, type WindowMessage } from './extraction.context';
 import { type ExtractionOutput } from './extraction.schema';
-import { nameOwner } from '../lang';
+import { selfLeak } from '../lang';
 import { localDate, toStored, type Precision } from './time';
-import { contact, episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
+import { ContactBook, contact, episodeSubject, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
+import { askClarification, resolveClarification } from './clarifications';
+import { type PersonalPromptContext } from './extraction.prompt';
 
 type AuthorRole = 'owner' | 'assistant' | 'other' | 'tool';
 
@@ -41,10 +47,8 @@ export interface WriteContext {
   timezone: string;
   runId: string;
   conversationId: string;
-  /** An entity memory (D48): facts name the person they are about. */
+  /** An entity memory (D48): facts name the person they are about. Otherwise a personal memory (first person, 8.4). */
   entity?: boolean;
-  /** A person's memory: their name, written in place of "l'owner" / "the owner" in what is stored. */
-  ownerName?: string;
 }
 
 export interface WrittenRow {
@@ -73,11 +77,17 @@ export class ExtractionWriter {
   private readonly subjects = new Map<string, string>();
   /** What the model returned but the code-side rules did not write, by kind and reason (WORK_PLAN 4.12; no content). */
   private readonly dropped: Record<string, Record<string, number>> = {};
+  /** Personal memories: items still naming the self in the third person, and clarifications asked / answered. */
+  private readonly leaks = { episodes: 0, notes: 0, name: 0, stand_in: 0 };
+  private readonly clarified = { asked: 0, resolved: 0 };
+  private readonly book: ContactBook | null;
+  private readonly contactNames = new Map<string, Set<string>>();
 
-  constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {}
+  constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {
+    this.book = ctx.entity ? null : new ContactBook(tx, ctx.ownerId, input.selfNames ?? [], input.contacts ?? new Map());
+  }
 
-  async apply(raw: ExtractionOutput): Promise<WrittenRow[]> {
-    const out = this.named(raw);
+  async apply(out: ExtractionOutput): Promise<WrittenRow[]> {
     // Concurrency guard: lock the window's messages; if another run already extracted any of them,
     // this run writes nothing (no duplicates, no double processing).
     const pending: Array<{ id: string }> = await this.tx.query(
@@ -89,6 +99,7 @@ export class ExtractionWriter {
     await this.applyPlanPatches(out, episodeIds);
     await this.writeFacts(out);
     await this.writeNotes(out);
+    if (this.book) await this.applyAnswers(out);
     await this.tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [this.ctx.runId, this.input.messages.map((m) => m.id)]);
     for (const w of this.written) {
       await this.tx.query(`INSERT INTO run_outputs (run_id, table_name, row_id) VALUES ($1, $2, $3)`, [this.ctx.runId, w.table, w.id]);
@@ -115,12 +126,14 @@ export class ExtractionWriter {
     const written: Record<string, number> = {};
     for (const w of this.written) written[w.table] = (written[w.table] ?? 0) + 1;
     return {
-      returned: { episodes: raw.episodes.length, plan_patches: raw.plan_patches.length, facts: raw.facts.length, notes: raw.notes.length },
+      returned: { episodes: raw.episodes.length, plan_patches: raw.plan_patches.length, facts: raw.facts.length, notes: raw.notes.length,
+        ...(this.book ? { answers: raw.answers.length } : {}) },
       written, dropped: this.dropped,
+      ...(this.book ? { leaks: this.leaks, clarifications: this.clarified } : {}),
     };
   }
 
-  private drop(kind: 'episode' | 'plan_patch' | 'fact' | 'note', reason: string): void {
+  private drop(kind: 'episode' | 'plan_patch' | 'fact' | 'note' | 'answer', reason: string): void {
     const k = (this.dropped[kind] ??= {});
     k[reason] = (k[reason] ?? 0) + 1;
   }
@@ -135,16 +148,12 @@ export class ExtractionWriter {
 
   // ── shared ────────────────────────────────────────────────────────────────────
 
-  /** The person reads their own memories (the Diary): the prompt's word "owner" never reaches what is stored. */
-  private named(out: ExtractionOutput): ExtractionOutput {
-    const name = this.ctx.ownerName;
-    if (!name) return out;
-    return {
-      ...out,
-      episodes: out.episodes.map((e) => ({ ...e, content: nameOwner(e.content, name) })),
-      plan_patches: out.plan_patches.map((p) => (p.new_content ? { ...p, new_content: nameOwner(p.new_content, name) } : p)),
-      notes: out.notes.map((n) => ({ ...n, content: nameOwner(n.content, name) })),
-    };
+  /** Personal memories: counts an item still speaking of the self in the third person (never its text). */
+  private countLeak(table: 'episodes' | 'notes', text: string): void {
+    const leak = selfLeak(text, this.input.selfNames ?? []);
+    if (!leak) return;
+    this.leaks[table]++;
+    this.leaks[leak]++;
   }
 
   private async loadAudience(): Promise<void> {
@@ -233,17 +242,22 @@ export class ExtractionWriter {
       const at = toStored(e.occurred_at, e.date_precision as Precision | undefined, this.ctx.timezone);
       const until = toStored(e.occurred_until, 'day', this.ctx.timezone);
       const problem = this.evidenceProblem(msgs, at.at, e.content)
-        ?? (this.ctx.entity && !e.people.every((p) => this.namedInWindow(p)) ? 'person_not_named' : null);
+        ?? (this.ctx.entity && !e.people.every((p) => this.namedInWindow(p)) ? 'person_not_named' : null)
+        ?? (this.book && !this.subjectNamed(e.subject, e.candidates) ? 'person_not_named' : null);
       if (problem) {
         this.drop('episode', problem);
         ids.push(null);
         continue;
       }
+      const personal = this.book ? await this.personalSubject(e.subject, e.candidates, e.question) : null;
+      if (this.book && !personal) { this.drop('episode', 'unknown_contact'); ids.push(null); continue; }
       const role = this.authorRole(msgs);
-      const origin = role === 'assistant' ? 'assistant_stated' : e.origin;
-      const stance = role === 'other' || role === 'tool' ? 'inferred' : 'stated';
+      const origin = role === 'assistant' ? 'assistant_stated' : e.origin === 'lived' ? 'owner_lived' : e.origin === 'told' ? 'owner_told' : e.origin;
       const corrects = e.corrects ? (this.input.episodes.get(e.corrects) ?? null) : null;
-      const { subject, people } = this.ctx.entity ? await episodeSubject(this.tx, this.ctx.ownerId, e.people) : { subject: SELF_SUBJECT, people: new Map<string, string>() };
+      const { subject, people } = personal
+        ? { subject: personal.subject, people: await this.linkPeople(e.people) }
+        : await episodeSubject(this.tx, this.ctx.ownerId, e.people);
+      const stance = (await this.inferred(role, msgs, subject)) ? 'inferred' : 'stated';
       const [row] = await this.tx.query(
         `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, time_expression, place,
            importance, valence, feelings, opinion, keywords, context, tags, plan_status, plan_status_at, corrects,
@@ -267,6 +281,10 @@ export class ExtractionWriter {
         await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [id, alias, people.get(alias) ?? null]);
       }
       this.written.push({ table: 'episodes', id, text: [e.content, e.place, e.people.join(', '), e.keywords.join(' '), e.context, e.opinion].filter(Boolean).join(' | ') });
+      if (personal) {
+        this.countLeak('episodes', e.content);
+        await this.askIfUndecided({ table: 'episodes', id }, personal);
+      }
       ids.push(id);
     }
     return ids;
@@ -414,10 +432,20 @@ export class ExtractionWriter {
       await this.tx.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ($1, $1, $2) ON CONFLICT (key) DO NOTHING`, [key, f.cardinality ?? 'single']);
       const [{ cardinality }] = await this.tx.query(`SELECT cardinality FROM fact_slots WHERE key = $1`, [key]);
       const role = this.authorRole(msgs);
-      const inferred = role === 'other' || role === 'tool';
       const from = toStored(f.valid_from ?? this.messageDay(msgs), f.date_precision as Precision | undefined, this.ctx.timezone);
       if (this.ctx.entity && f.subject && !this.namedInWindow(f.subject)) { this.drop('fact', 'person_not_named'); continue; }
-      const subjectId = this.ctx.entity ? await this.subject(f.subject) : null;
+      if (this.book && !this.subjectNamed(f.subject, [])) { this.drop('fact', 'person_not_named'); continue; }
+      let subjectId: string | null;
+      if (this.book) {
+        const r = await this.book.resolve(f.subject);
+        if (!r) { this.drop('fact', 'unknown_contact'); continue; }
+        // A slot of "someone" means nothing; an undecided person's fact waits for nobody (only items ask).
+        if (r.subject.kind === 'someone' || r.subject.kind === 'undecided') { this.drop('fact', `${r.subject.kind}_subject`); continue; }
+        subjectId = r.subject.personId;
+      } else {
+        subjectId = await this.subject(f.subject);
+      }
+      const inferred = await this.inferred(role, msgs, subjectId ? contact(subjectId) : SELF_SUBJECT);
       let target = f.target ? this.input.facts.get(f.target) : undefined;
       if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
 
@@ -537,7 +565,12 @@ export class ExtractionWriter {
         continue;
       }
       const role = this.authorRole(msgs);
-      const inferred = n.stance === 'inferred' || role === 'other' || role === 'tool';
+      if (this.book && !this.subjectNamed(n.subject, [])) { this.drop('note', 'person_not_named'); continue; }
+      const personal = this.book ? await this.personalSubject(n.subject, [], null) : null;
+      if (this.book && !personal) { this.drop('note', 'unknown_contact'); continue; }
+      if (personal?.subject.kind === 'someone') { this.drop('note', 'someone_subject'); continue; }
+      const subject = personal?.subject ?? SOMEONE_SUBJECT;
+      const inferred = n.stance === 'inferred' || (await this.inferred(role, msgs, subject));
       let supersedes: string | null = null;
       let correctsId: string | null = null;
       if (target && n.verdict === 'replace') {
@@ -547,20 +580,127 @@ export class ExtractionWriter {
         await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND owner_id = $2`, [target, this.ctx.ownerId]);
         correctsId = target;
       }
-      const subject = this.ctx.entity ? SOMEONE_SUBJECT : SELF_SUBJECT;
       const [row] = await this.tx.query(
         `INSERT INTO notes (owner_id, category, content, keywords, context, tags, supersedes, corrects, pending, valid_from,
-           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_kind, subject_candidates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'owner', $16, $17, $18, $19)
+           origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_kind, subject_candidates,
+           subject_person_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'owner', $16, $17, $18, $19, $20)
          RETURNING id`,
         [this.ctx.ownerId, n.category, n.content, n.keywords, n.context ?? null, n.tags, supersedes, correctsId, inferred,
           msgs[0]?.sentAt ?? null, role === 'assistant' ? 'assistant_stated' : 'owner_lived', role, inferred ? 'inferred' : 'stated',
-          inferred ? 0.6 : 1, this.ctx.runId, this.audience, this.audienceUnverified, subject.kind, subject.candidates],
+          inferred ? 0.6 : 1, this.ctx.runId, this.audience, this.audienceUnverified, subject.kind, subject.candidates, subject.personId],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
       await this.tx.query(`INSERT INTO note_changes (owner_id, note_id, change) VALUES ($1, $2, $3)`,
         [this.ctx.ownerId, row.id, correctsId ? 'corrected' : supersedes ? 'updated' : 'created']);
       this.written.push({ table: 'notes', id: row.id, text: [n.content, n.keywords.join(' '), n.context].filter(Boolean).join(' | ') });
+      if (personal) {
+        this.countLeak('notes', n.content);
+        await this.askIfUndecided({ table: 'notes', id: row.id }, personal);
+      }
+    }
+  }
+
+  // ── personal memories: subjects, contacts, clarifications (WORK_PLAN 8.4) ──────
+
+  /**
+   * Whose an item is, from the model's subject: me, a listed contact (C-number), a person by name (linked or created), or
+   * undecided between listed contacts (at least two; one is that contact). Null for a C-number not in the list.
+   */
+  private async personalSubject(raw: string | null | undefined, candidates: string[], question: string | null | undefined): Promise<{ subject: Subject; question?: string } | null> {
+    const book = this.book as ContactBook;
+    if (raw?.trim().toLowerCase() === 'undecided') {
+      const ids = [...new Set(candidates.map((c) => book.byRef(c)).filter((id): id is string => !!id))];
+      if (ids.length === 0) return { subject: SOMEONE_SUBJECT };
+      if (ids.length === 1) return { subject: contact(ids[0] as string) };
+      return { subject: { kind: 'undecided', personId: null, candidates: ids }, question: question?.trim() || await this.fallbackQuestion(ids) };
+    }
+    const r = await book.resolve(raw);
+    if (!r) return null;
+    return r.subject.kind === 'undecided' ? { subject: r.subject, question: question?.trim() || r.fallbackQuestion } : { subject: r.subject };
+  }
+
+  /** "Marco? Marco Bellini (collega) / Marco (cugino)" — when the model asked nothing. */
+  private async fallbackQuestion(ids: string[]): Promise<string> {
+    const rows: Array<{ display_name: string; full_name: string | null; relation: string | null }> = await this.tx.query(
+      `SELECT display_name, full_name, relation FROM persons WHERE id = ANY($1) ORDER BY created_at`, [ids]);
+    return `${rows[0]?.display_name ?? ''}? ${rows.map((r) => `${r.full_name ?? r.display_name}${r.relation ? ` (${r.relation})` : ''}`).join(' / ')}`;
+  }
+
+  private async askIfUndecided(item: { table: 'episodes' | 'notes'; id: string }, personal: { subject: Subject; question?: string }): Promise<void> {
+    if (personal.subject.kind !== 'undecided' || !personal.question) return;
+    const last = this.input.messages[this.input.messages.length - 1] as WindowMessage;
+    await askClarification(this.tx, this.ctx.ownerId, item, personal.question, personal.subject.candidates, last.sentAt);
+    this.clarified.asked++;
+  }
+
+  /** Episode people → contacts (one each when unambiguous; created when only mentioned); the self is never a person. */
+  private async linkPeople(people: string[]): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    for (const alias of people) {
+      const r = /^C\d+$/i.test(alias.trim()) ? { subject: contact((this.book as ContactBook).byRef(alias) ?? '') } : await (this.book as ContactBook).byName(alias, true);
+      if (r.subject.kind === 'contact' && r.subject.personId) out.set(alias, r.subject.personId);
+    }
+    return out;
+  }
+
+  /**
+   * An item is `inferred` (pending for facts / notes) when only other people or tools back it — except a person speaking
+   * about themself: what Giulia says of Giulia is hers. Entity memories keep the plain rule (unchanged until 8.5).
+   */
+  private async inferred(role: AuthorRole, msgs: WindowMessage[], subject: Subject): Promise<boolean> {
+    if (role === 'tool') return true;
+    if (role !== 'other') return false;
+    if (!this.book || subject.kind !== 'contact' || !subject.personId) return true;
+    const names = await this.namesOf(subject.personId);
+    return !msgs.some((m) => m.authorPersonId === subject.personId
+      || (!!m.authorName && (names.has(fold(m.authorName)) || names.has(fold(m.authorName).split(' ')[0] ?? ''))));
+  }
+
+  /** A contact's names (display name, full name, aliases), folded. */
+  private async namesOf(personId: string): Promise<Set<string>> {
+    const known = this.contactNames.get(personId);
+    if (known) return known;
+    const [row]: Array<{ names: string[] }> = await this.tx.query(
+      `SELECT array_remove(array_agg(a.alias_norm), NULL) || ARRAY[p.display_name, COALESCE(p.full_name, '')] AS names
+       FROM persons p LEFT JOIN person_aliases a ON a.person_id = p.id WHERE p.id = $1 GROUP BY p.id`, [personId]);
+    const names = new Set((row?.names ?? []).filter(Boolean).map(fold));
+    this.contactNames.set(personId, names);
+    return names;
+  }
+
+  /**
+   * Personal memories: a person an item is about must be named in the window or take part in it (a speaker) — never
+   * carried over from another conversation. C-numbers are checked by the contact's names; me / someone always pass.
+   */
+  private subjectNamed(raw: string | null | undefined, candidates: string[]): boolean {
+    const text = raw?.trim() ?? '';
+    const lower = text.toLowerCase();
+    if (!text || lower === 'someone' || (this.book as ContactBook).isSelf(text)) return true;
+    if (lower === 'undecided') return candidates.length === 0 || candidates.some((c) => this.subjectNamed(c, []));
+    const ref = /^C\d+$/i.test(text) ? (this.book as ContactBook).byRef(text) : null;
+    if (ref) {
+      if (this.input.messages.some((m) => m.authorPersonId === ref)) return true;
+      const c = (this.input.prompt as PersonalPromptContext).contacts?.find((x) => x.ref === text.toUpperCase());
+      return !!c && [c.name, c.fullName ?? '', ...c.aliases].some((n) => n && this.namedInWindow(n));
+    }
+    if (/^C\d+$/i.test(text)) return true; // unknown reference: dropped as such
+    return this.namedInWindow(text) || this.input.messages.some((m) => m.authorName && fold(m.authorName) === fold(withoutRelation(text)));
+  }
+
+  /** Answers to OPEN QUESTIONS: the chosen contact becomes the item's subject (the text is not rewritten). */
+  private async applyAnswers(out: ExtractionOutput): Promise<void> {
+    for (const a of out.answers) {
+      const q = this.input.questions?.get(a.question.trim().toUpperCase());
+      if (!q) { this.drop('answer', 'unknown_question'); continue; }
+      const personId = (this.book as ContactBook).byRef(a.contact);
+      if (!personId) { this.drop('answer', 'unknown_contact'); continue; }
+      // The answer comes from a person in the conversation, never from an assistant reply or a tool.
+      const msgs = this.evidence(a.evidence).filter((m) => m.role !== 'assistant' && m.role !== 'tool');
+      const problem = this.evidenceProblem(msgs, null, null);
+      if (problem) { this.drop('answer', problem); continue; }
+      if (await resolveClarification(this.tx, this.ctx.ownerId, q.id, personId, (msgs[0] as WindowMessage).sentAt)) this.clarified.resolved++;
+      else this.drop('answer', 'not_a_candidate');
     }
   }
 }

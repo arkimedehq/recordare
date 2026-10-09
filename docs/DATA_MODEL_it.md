@@ -234,6 +234,49 @@ sull'ambito; `person_aliases.source` + `client`; `external_identities.kind` `acc
   partecipante `owner` delle conversazioni di entità perde l'entità come persona. `down` ripristina la forma precedente
   (gli id di partecipante di un client vengono eliminati; i contatti restano).
 
+**Come costruito (8.4, prima persona personale — `extract.v12`, `facts.v2`; nessuna migrazione).** Solo memorie
+personali; le memorie di entità mantengono le regole della 8.3 e input dei prompt identici byte per byte fino alla 8.5.
+- *Voce* — ogni episodio, nota e piano di una memoria personale è scritto in **prima persona**, nella lingua della
+  conversazione, con `owners.gender` per l'accordo; i turni non dichiarati del titolare dell'account e quelli
+  dell'assistente sono entrambi "io", senza distinzione nel testo (chi l'ha detto resta in `messages.author_kind` /
+  `author_role` / `origin`, come dato). Il contenuto esterno (web, strumenti, file) è qualcosa che "io" ho imparato (la
+  regola delle notizie di extract.v11 e l'esclusione di ciò che altri affermano sul sé restano). Il prompt riceve i nomi
+  del sé (`ME`: nome visualizzato + alias, con il genere), `MEMORY LANGUAGE`, i contatti che riguardano la finestra
+  (`PEOPLE I KNOW`, numerati C1…: nominati nella finestra, i suoi partecipanti, i soggetti dei fatti elencati, i
+  candidati delle domande aperte; al massimo 30) e le domande aperte (`OPEN QUESTIONS`, Q1…, al massimo 5). Interlocutori:
+  `me`, `me (assistant)`, `me (own)`, `Nome [C3]` (un contatto identificato), `other:Nome` (solo un nome visualizzato),
+  `someone`, `tool:x`. I fatti attuali sono elencati per tutti i soggetti (`[me]` / `[Nome]`).
+- *Soggetti* — il modello indica il soggetto di ogni episodio, fatto e nota: `me`, un numero C, `Nome (relazione)` o
+  `someone`, oppure `undecided` con i numeri C candidati e una domanda. Lo scrittore collega i nomi ai contatti
+  (`ContactBook`): i nomi del sé → sé; una sola corrispondenza → quel contatto, salvo che la relazione o il nome completo
+  dicano altro (allora un nuovo contatto — nessuna fusione sbagliata); più corrispondenze → ristrette per relazione, poi
+  per nome completo, altrimenti `undecided` con tutte; nessuna corrispondenza → un nuovo contatto (`relation`,
+  `full_name` per due o più parole con la maiuscola, il nome di battesimo come alias). Le persone degli episodi sono
+  collegate allo stesso modo (solo i nomi creano contatti: "amiche del nuoto" no). Un'identità di partecipante vista per
+  la prima volta si lega all'unico contatto con quel nome che non ha ancora un'identità (una persona prima nominata, poi
+  identificata); altrimenti un nuovo contatto. I fatti di `someone` o di una persona indecisa vengono scartati; anche le
+  note di `someone`.
+- *Provenienza* — ciò che altri dicono del sé resta un'affermazione (`stance = inferred`, fatti in sospeso); ciò che una
+  persona dice di sé è `stated` per quel soggetto (la notizia di Giulia, i fatti di Giulia); gli elementi solo da
+  strumenti restano `inferred`. La guardia del nome nella finestra si applica ai soggetti (un contatto deve essere
+  nominato nella finestra o parlarvi); la guardia anti-eco e le regole sulle evidenze non cambiano.
+- *Chiarificazioni* — un episodio o una nota `undecided` riceve una riga `clarifications` (la domanda del modello, oppure
+  "Marco? Marco (cugino) / Marco Bellini (collega)" quando non ne ha data una; `created_at` = l'ora dell'ultimo messaggio
+  della finestra). Le finestre successive la vedono in OPEN QUESTIONS; una risposta (`answers: [{question, contact,
+  evidence}]`) sostenuta dal messaggio di una persona (mai una risposta dell'assistente o uno strumento) e che indica uno
+  dei candidati la risolve — insieme a ogni domanda aperta con lo stesso testo e gli stessi candidati: il soggetto
+  dell'elemento diventa quel contatto, le persone dell'episodio non collegate con quel nome vengono collegate,
+  `resolved_person_id` / `resolution` (il nome del contatto) / `resolved_at` vengono impostati; il testo della memoria
+  non viene mai riscritto. Le domande aperte scadono dopo 14 giorni (`CLARIFICATION_TTL_DAYS`, una costante): verificato
+  all'estrazione (alla data della finestra), in lettura (alla data della richiesta) e dalla consolidazione notturna.
+- *Gate* — una finestra personale costa una chiamata quando parla chiunque tranne l'assistente o uno strumento (il sé,
+  un contatto, qualcuno, contenuto proprio); un contatto identificato inviato come `user` con il suo `authorRef` è quel
+  contatto, non il sé (SQL `memorySpeaker`, usato anche dalla ricerca nel log grezzo e dalle scritture MCP).
+- *Rilevatore di fughe* (sostituisce `nameOwner` della 4.11, rimosso) — `extraction_runs.summary.leaks` conta gli episodi
+  e le note scritti che parlano ancora del sé in terza persona (uno dei suoi nomi, o un sostituto come "the user",
+  "l'utente", "the owner", "the assistant", nelle lingue più usate: `service/src/lang/self.ts`); solo conteggi, con
+  `summary.clarifications` (`asked`, `resolved`) e `returned.answers`.
+
 ## Layer 0 — log grezzo
 
 ### conversations

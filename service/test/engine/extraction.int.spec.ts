@@ -149,17 +149,18 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     ]);
   });
 
-  it('writes the person\'s name where the model wrote "l\'owner" / "the owner"', async () => {
+  it('stores what the model wrote and counts third-person leaks in the run summary (leak detector, WORK_PLAN 8.4)', async () => {
     const c = await ingest('ow1', [{ id: 'ow1', role: 'user', content: 'Oggi ho portato la Panda dal meccanico.', at: '2026-10-02T18:00:00+02:00' }]);
     llm.queue.push({
-      episodes: [{ content: "Il 2 ottobre 2026 l'owner ha portato la Panda dal meccanico; la macchina dell'owner era rumorosa.", evidence: [1] }],
-      notes: [{ category: 'habit', content: 'The owner takes the car to the same garage; the owner\'s mechanic is trusted.', evidence: [1] }],
+      episodes: [{ content: "Il 2 ottobre 2026 l'owner ha portato la Panda dal meccanico.", evidence: [1] },
+        { content: 'Il 2 ottobre 2026 ho lavato la Panda.', evidence: [1] }],
+      notes: [{ category: 'habit', content: 'Luca porta la macchina sempre dallo stesso meccanico.', evidence: [1] }],
     });
     await runner.runForConversation(c);
     expect(await db.query(`SELECT content FROM episodes WHERE content LIKE '%meccanico%'`))
-      .toEqual([{ content: 'Il 2 ottobre 2026 Luca ha portato la Panda dal meccanico; la macchina di Luca era rumorosa.' }]);
-    expect(await db.query(`SELECT content FROM notes WHERE content LIKE '%garage%'`))
-      .toEqual([{ content: "Luca takes the car to the same garage; Luca's mechanic is trusted." }]);
+      .toEqual([{ content: "Il 2 ottobre 2026 l'owner ha portato la Panda dal meccanico." }]); // no substitution any more
+    const [run] = await db.query(`SELECT r.summary FROM extraction_runs r JOIN conversations c ON c.id = r.conversation_id WHERE c.external_id = 'ow1'`);
+    expect(run.summary.leaks).toEqual({ episodes: 1, notes: 1, name: 1, stand_in: 1 });
   });
 
   it('keeps a summary of each run: returned, written, dropped and why — counts only (WORK_PLAN 4.12)', async () => {
@@ -176,9 +177,11 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       `SELECT r.id, r.owner_id, r.conversation_id, r.summary FROM extraction_runs r JOIN conversations c ON c.id = r.conversation_id
        WHERE c.external_id = 'sum1'`);
     expect(run.summary).toEqual({
-      returned: { episodes: 2, plan_patches: 0, facts: 0, notes: 1 },
+      returned: { episodes: 2, plan_patches: 0, facts: 0, notes: 1, answers: 0 },
       written: { episodes: 1 },
       dropped: { episode: { no_evidence: 1 }, note: { no_evidence: 1 } },
+      leaks: { episodes: 1, notes: 0, name: 1, stand_in: 0 }, // "Luca ha comprato…" names the self
+      clarifications: { asked: 0, resolved: 0 },
     });
     expect(JSON.stringify(run.summary)).not.toContain('ombrello'); // never text
     const runs = (await call(url, 'GET', `/api/v1/admin/owners/${run.owner_id}/runs?conversation=${run.conversation_id}`, { token: ADMIN_KEY })).body;

@@ -4,6 +4,7 @@
     "luca": "Primary user under test",
     "elena": "Second user, isolation check: her data must never surface in Luca's answers"
   },
+  "genders": {"elena": "feminine"},
   "sessions": [
     { "id": "s01", "user": "luca", "ts": "2026-01-12T20:10:00+01:00", "messages": [
       { "role": "user", "content": "Ciao! Giornata pesante al lavoro oggi. Ah, novità: mi sono appena preso una Golf usata, grigia, del 2019." },

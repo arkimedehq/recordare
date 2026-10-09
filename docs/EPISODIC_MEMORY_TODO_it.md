@@ -658,6 +658,16 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   anche le persone solo nominate; nomi e soprannomi, nome completo, relazione; le persone con lo stesso nome si separano
   con identificativi → nome e cognome → contesto, e se resta ambiguo Recordare **chiede** ("quale Marco?") tramite
   l'agente — la sua prima iniziativa (L1). Progetto dei dati: DATA_MODEL "Memoria dell'agente".
+- **8.4 costruita (2026-10-09, branch `personal-first-person`; conferma blind7 × 3 in attesa):** le memorie personali
+  sono scritte in prima persona (`extract.v12`, `facts.v2`) nella lingua della conversazione con il genere della memoria;
+  la persona e l'assistente sono un solo "io" (chi l'ha detto resta come dato); ogni episodio, fatto e nota riceve un
+  soggetto collegato ai contatti della memoria (creati anche quando solo nominati, fusi solo quando è chiaro); una
+  persona ambigua è salvata `undecided` con una chiarificazione, a cui risponde una conversazione successiva o che scade
+  dopo 14 giorni, offerta una volta dal contesto di memoria ("if natural, ask: …"); il richiamo restituisce il soggetto di
+  ogni elemento e chi sta chiedendo (chi è identificato riceve per primi i propri ricordi); `nameOwner` sostituito da un
+  rilevatore di fughe (conteggi nel riepilogo dell'esecuzione). Memorie di entità invariate (input dei prompt identici
+  byte per byte) fino alla 8.5. Dettagli: DATA_MODEL "Memoria dell'agente → Come costruito (8.4)", RESULTS.md (esecuzioni
+  di sviluppo).
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 ancora aperta, con WORK_PLAN 5.4). Il lavoro aperto è tracciato

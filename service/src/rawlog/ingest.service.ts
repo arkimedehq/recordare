@@ -192,8 +192,8 @@ export class IngestService {
   /**
    * Participants → the memory's self or its contacts (D50). Personal mode: the `owner` participant is the self (implied
    * when missing). A participant with an identity is resolved inside this memory only: its participant identity, or
-   * the account's own user id (the self); an identity seen for the first time creates the contact (the client is
-   * trusted). An unverified channel binding identifies nobody. Everyone else is kept by display name ("someone").
+   * the account's own user id (the self); an identity seen for the first time binds to the one contact known only by
+   * that name, or creates the contact (the client is trusted). An unverified channel binding identifies nobody. Everyone else is kept by display name ("someone").
    * Returns ref → attribution.
    */
   private async upsertParticipants(
@@ -244,7 +244,16 @@ export class IngestService {
       return hit.person_id === ownerId ? self(ownerId) : { kind: 'contact', personId: hit.person_id, method, confidence: 1 };
     }
     const name = (p.displayName?.trim() || (byClient ? id.externalUserId : id.externalId)).slice(0, 200);
-    const [contact] = await tx.query(`INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [ownerId, name]);
+    // A person the memory knows only by name (mentioned, no identity of their own) and the only one with this name: the
+    // same person, now identified (8.4). Several, or one already bound to another identity: a new contact (no wrong merge).
+    const named: Array<{ id: string }> = p.displayName?.trim() ? await tx.query(
+      `SELECT p.id FROM persons p WHERE p.owner_scope = $1
+         AND (lower(unaccent(btrim(p.display_name))) = lower(unaccent(btrim($2)))
+              OR EXISTS (SELECT 1 FROM person_aliases a WHERE a.person_id = p.id AND a.alias_norm = lower(unaccent(btrim($2)))))`,
+      [ownerId, name]) : [];
+    const [only] = named;
+    const unbound = named.length === 1 && only && !(await tx.query(`SELECT 1 FROM external_identities WHERE person_id = $1 LIMIT 1`, [only.id])).length;
+    const [contact] = unbound ? [only] : await tx.query(`INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [ownerId, name]);
     await tx.query(
       `INSERT INTO person_aliases (owner_id, person_id, alias, alias_norm, source) VALUES ($1, $2, $3, lower(unaccent(btrim($3))), 'client')
        ON CONFLICT DO NOTHING`, [ownerId, contact.id, name]);

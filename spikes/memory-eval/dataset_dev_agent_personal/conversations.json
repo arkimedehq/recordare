@@ -1,0 +1,75 @@
+{
+ "_note": "Personal agent memory dev set (WORK_PLAN 8.4, D50; NOT blind, written by the engine developer to iterate — never report it as a blind result). Andrea's agent: chats with the assistant, group chats with identified family members and colleagues (participants with an identity = contacts of the memory) and with people known only by name, people only mentioned, two Marcos (one told apart by full name, one ambiguous and answered in a later session), the assistant's own actions, external content (a web search), a rumour about Andrea, an English session.",
+ "users": {
+  "andrea": "Primary user under test: the memory's self (personal mode, masculine)"
+ },
+ "genders": {"andrea": "masculine"},
+ "sessions": [
+  {"id": "p01", "user": "andrea", "ts": "2026-09-07T20:30:00+02:00", "messages": [
+   {"role": "user", "content": "Ieri sono stato al mare a Marina di Ragusa con mia sorella Giulia, giornata perfetta. Ah, e mio cugino Marco si è trasferito a Torino per lavoro."},
+   {"role": "assistant", "content": "Che bello! Marina di Ragusa a settembre è il massimo. E in bocca al lupo a Marco per Torino."}
+  ]},
+  {"id": "p02", "user": "andrea", "ts": "2026-09-09T19:00:00+02:00",
+   "participants": [{"name": "Giulia", "identity": "giulia-r"}, {"name": "Rosa", "identity": "rosa-m"}],
+   "messages": [
+   {"role": "other", "author": "Giulia", "content": "Ragazzi, ho vinto la gara regionale di nuoto! 200 stile libero, primo posto 🏊‍♀️"},
+   {"role": "other", "author": "Rosa", "content": "Brava amore mio! Domenica 20 pranzo da me alle 13 per festeggiare, venite tutti."},
+   {"role": "user", "content": "Grande Giulia!! Ci sono mamma, porto io il dolce."},
+   {"role": "other", "author": "Rosa", "content": "Comunque zia Carmela mi ha detto che Andrea vuole lasciare la Lumia e trasferirsi a Milano."}
+  ]},
+  {"id": "p03", "user": "andrea", "ts": "2026-09-10T13:30:00+02:00", "messages": [
+   {"role": "user", "content": "Pranzo con il mio collega Marco Bellini: mi ha detto che da novembre diventa responsabile del team mobile qui in Lumia."},
+   {"role": "assistant", "content": "Ottima notizia per lui, fagli i complimenti!"}
+  ]},
+  {"id": "p04", "user": "andrea", "ts": "2026-09-15T12:00:00+02:00", "messages": [
+   {"role": "user", "content": "Prenotami un tavolo per due da Aldina venerdì alle 20."},
+   {"role": "assistant", "content": "Fatto: ho prenotato da Aldina per venerdì 18 settembre alle 20, due persone. Vuoi che lo segni anche in calendario?"},
+   {"role": "user", "content": "Sì, e segnami anche il dentista, lunedì alle 9 dal dottor Ferri."},
+   {"role": "assistant", "content": "Fatto: ho messo in calendario la cena da Aldina e il dentista lunedì 21 settembre alle 9 dal dottor Ferri."}
+  ]},
+  {"id": "p05", "user": "andrea", "ts": "2026-09-17T18:00:00+02:00", "messages": [
+   {"role": "user", "content": "Che tempo farà domenica a Ragusa?"},
+   {"role": "tool", "tool": "web_search", "content": "Meteo Ragusa — domenica 20 settembre 2026: temporali nel pomeriggio, probabilità di pioggia 90%, max 24°C."},
+   {"role": "assistant", "content": "Domenica 20 a Ragusa sono previsti temporali nel pomeriggio, con il 90% di probabilità di pioggia."},
+   {"role": "user", "content": "Allora il pranzo da mamma lo facciamo dentro, glielo dico io. Ultima cosa: qual è la capitale dell'Australia?"},
+   {"role": "assistant", "content": "La capitale dell'Australia è Canberra."}
+  ]},
+  {"id": "p06", "user": "andrea", "ts": "2026-09-18T21:00:00+02:00", "messages": [
+   {"role": "user", "content": "Brutta notizia: Marco ha avuto un incidente in moto, niente di grave ma si è rotto il polso."},
+   {"role": "assistant", "content": "Mi dispiace molto! Spero si riprenda presto."}
+  ]},
+  {"id": "p07", "user": "andrea", "ts": "2026-09-19T11:00:00+02:00", "messages": [
+   {"role": "user", "content": "Ieri sera cena da Aldina con la mia ragazza Sara: ottima, il polpo era incredibile."},
+   {"role": "assistant", "content": "Che bello, il polpo di Aldina è famoso!"}
+  ]},
+  {"id": "p08", "user": "andrea", "ts": "2026-09-21T19:30:00+02:00", "messages": [
+   {"role": "user", "content": "Sono passato a trovare mio cugino Marco, quello dell'incidente in moto: lo operano al polso giovedì."},
+   {"role": "assistant", "content": "Fagli tanti auguri per l'operazione."}
+  ]},
+  {"id": "p09", "user": "andrea", "ts": "2026-09-22T09:00:00+02:00",
+   "participants": [{"name": "Marco Bellini", "identity": "mbellini"}],
+   "messages": [
+   {"role": "other", "author": "Marco Bellini", "content": "Ufficiale: da novembre guido il team mobile. Grazie a tutti per il supporto!"},
+   {"role": "user", "content": "Te lo meriti Marco, complimenti!"}
+  ]},
+  {"id": "p10", "user": "andrea", "ts": "2026-09-22T20:00:00+02:00",
+   "participants": [{"name": "Giulia", "identity": "giulia-r"}],
+   "messages": [
+   {"role": "other", "author": "Giulia", "content": "Ciao, sono Giulia. Segnati che sabato 26 vado a Catania al concerto di Levante con le amiche del nuoto."},
+   {"role": "assistant", "content": "Segnato, Giulia: sabato 26 settembre concerto di Levante a Catania."}
+  ]},
+  {"id": "p11", "user": "andrea", "ts": "2026-09-23T18:00:00+02:00", "messages": [
+   {"role": "other", "author": "Luca", "content": "Andrea, ho sentito che ti sei comprato una Tesla! Ce la fai vedere sabato?"},
+   {"role": "user", "content": "Macché Tesla, ho sempre la mia Golf grigia 😂"}
+  ]},
+  {"id": "p12", "user": "andrea", "ts": "2026-09-24T08:30:00+02:00", "messages": [
+   {"role": "user", "content": "Da questa settimana lavoro da casa il mercoledì e il venerdì, l'ha deciso il capo."},
+   {"role": "assistant", "content": "Ottimo, meno traffico!"}
+  ]},
+  {"id": "p13", "user": "andrea", "ts": "2026-09-25T19:00:00+02:00", "messages": [
+   {"role": "user", "content": "My friend Tom from Dublin is coming to visit me on Saturday 3 October, he stays until the 6th."},
+   {"role": "assistant", "content": "Great! Want me to suggest some places to take him?"},
+   {"role": "user", "content": "Later. Also, I've started learning Spanish on Duolingo, fifteen minutes a day."}
+  ]}
+ ]
+}

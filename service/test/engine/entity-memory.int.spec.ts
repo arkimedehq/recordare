@@ -74,7 +74,7 @@ describe('entity memory (D48)', () => {
       .toEqual([{ prompt_version: 'extract.v11+entity.v3' }]);
 
     const found = await app.get(MemorySearchService).search(home, { query: 'macchina auto car' }, new Date('2026-06-08T10:00:00Z'));
-    expect(found.facts.filter((f) => f.key === 'car').map((f) => [f.about, f.value]).sort())
+    expect(found.facts.filter((f) => f.key === 'car').map((f) => [f.subject.kind === 'contact' ? f.subject.name : null, f.value]).sort())
       .toEqual([['Andrea', 'Fiat Panda'], ['Marta', 'Renault Clio']]);
   });
 
@@ -90,13 +90,14 @@ describe('entity memory (D48)', () => {
     expect(await db.query(`SELECT id FROM facts WHERE owner_id = $1`, [home])).toEqual([]);
   });
 
-  it("leaves a person's memory as it was: a subject from the model is ignored", async () => {
+  it("a personal memory speaks as \"me\": the self's own name as a subject is the self (WORK_PLAN 8.4)", async () => {
     const luca = await owner('Luca');
     expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'Luca' } })).body.mode).toBe('personal');
     await extract('Luca', 'p1', 'Ho comprato una Golf.', { facts: [{ key: 'car', value: 'VW Golf', verdict: 'new', subject: 'Luca', evidence: [1] }] });
     const req = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1);
     expect(req?.messages[0]?.content).not.toContain('THIS MEMORY BELONGS TO AN ENTITY');
-    expect(req?.messages[1]?.content).toContain(' owner: Ho comprato');
+    expect(req?.messages[1]?.content).toContain(' me: Ho comprato');
+    expect(req?.messages[1]?.content).toMatch(/^ME: Luca — gender masculine/);
     expect(await app.get(DataSource).query(`SELECT subject_person_id, value FROM facts WHERE owner_id = $1`, [luca]))
       .toEqual([{ subject_person_id: null, value: 'VW Golf' }]);
   });

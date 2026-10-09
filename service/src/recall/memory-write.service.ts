@@ -13,7 +13,7 @@ import { DataSource, type EntityManager } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { toStored, type Precision } from '../engine/time';
 import { TelemetryService } from '../telemetry/telemetry.service';
-import { accountSpeaker } from '../rawlog/attribution';
+import { memorySpeaker } from '../rawlog/attribution';
 import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
 
 /**
@@ -165,7 +165,7 @@ export class MemoryWriteService {
       // an agent cannot turn "ciao" into "the owner decided X" (poisoning guard).
       const [m] = await tx.query(
         `SELECT m.id FROM messages m
-         WHERE m.conversation_id = $1 AND m.owner_id = $2 AND ${accountSpeaker('m')}
+         WHERE m.conversation_id = $1 AND m.owner_id = $2 AND ${memorySpeaker('m')}
            AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
          ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
         [ev.conversationId, ownerId, text]);
@@ -175,7 +175,7 @@ export class MemoryWriteService {
       // on MCP calls: the person's own recent words from the same client are the evidence, same overlap rule.
       const [m] = await tx.query(
         `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
-         WHERE c.client_id = $1 AND m.owner_id = $2 AND ${accountSpeaker('m')}
+         WHERE c.client_id = $1 AND m.owner_id = $2 AND ${memorySpeaker('m')}
            AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
          ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
         [ev.clientId, ownerId, text]);
