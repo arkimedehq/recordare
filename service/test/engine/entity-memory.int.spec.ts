@@ -6,9 +6,10 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
 import { MemorySearchService } from '../../src/recall/memory-search.service';
+import { EpisodeSearchService } from '../../src/recall/episode-search.service';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
-describe('entity memory (D48)', () => {
+describe('entity memory (D48, D50 8.5)', () => {
   let app: INestApplication;
   let url: string;
   let llm: Awaited<ReturnType<typeof startFakeLlm>>;
@@ -54,8 +55,8 @@ describe('entity memory (D48)', () => {
       ],
     });
     const req = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1);
-    expect(req?.messages[0]?.content).toContain('THIS MEMORY BELONGS TO AN ENTITY');
-    expect(req?.messages[1]?.content).toContain(' person: Sono Andrea');
+    expect(req?.messages[0]?.content).toContain('a shared agent — a device, a place, a robot or a service');
+    expect(req?.messages[1]?.content).toContain(' someone: Sono Andrea');
 
     await extract('Casa', 'e2', 'Sono Marta, anche io ho una macchina nuova: una Clio.', {
       facts: [{ key: 'car', value: 'Renault Clio', verdict: 'new', subject: 'Marta (figlia)', evidence: [1] }],
@@ -71,7 +72,7 @@ describe('entity memory (D48)', () => {
       { about: null, key: 'spare_keys_location', value: 'cassetto blu', status: 'current' },
     ]);
     expect((await db.query(`SELECT DISTINCT prompt_version FROM extraction_runs WHERE owner_id = $1`, [home])))
-      .toEqual([{ prompt_version: 'extract.v11+entity.v3' }]);
+      .toEqual([{ prompt_version: 'extract.v13+entity.v4' }]);
 
     const found = await app.get(MemorySearchService).search(home, { query: 'macchina auto car' }, new Date('2026-06-08T10:00:00Z'));
     expect(found.facts.filter((f) => f.key === 'car').map((f) => [f.subject.kind === 'contact' ? f.subject.name : null, f.value]).sort())
@@ -95,11 +96,42 @@ describe('entity memory (D48)', () => {
     expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'Luca' } })).body.mode).toBe('personal');
     await extract('Luca', 'p1', 'Ho comprato una Golf.', { facts: [{ key: 'car', value: 'VW Golf', verdict: 'new', subject: 'Luca', evidence: [1] }] });
     const req = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1);
-    expect(req?.messages[0]?.content).not.toContain('THIS MEMORY BELONGS TO AN ENTITY');
+    expect(req?.messages[0]?.content).not.toContain('a shared agent');
     expect(req?.messages[1]?.content).toContain(' me: Ho comprato');
     expect(req?.messages[1]?.content).toMatch(/^ME: Luca — gender masculine/);
     expect(await app.get(DataSource).query(`SELECT subject_person_id, value FROM facts WHERE owner_id = $1`, [luca]))
       .toEqual([{ subject_person_id: null, value: 'VW Golf' }]);
+  });
+
+  it('asks "which Marco?" only an identified speaker, and tells the agent who is asking (8.5)', async () => {
+    const home = await owner('Cucina', 'entity');
+    const db = app.get(DataSource);
+    for (const [name, full, relation] of [['Marco', 'Marco Rossi', 'idraulico'], ['Marco', null, 'nipote']] as const) {
+      const [{ id }] = await db.query(`INSERT INTO persons (owner_scope, display_name, full_name, relation) VALUES ($1, $2, $3, $4) RETURNING id`, [home, name, full, relation]);
+      await db.query(`INSERT INTO person_aliases (owner_id, person_id, alias, alias_norm, source) VALUES ($1, $2, 'Marco', 'marco', 'extracted')`, [home, id]);
+    }
+    await extract('Cucina', 'k1', 'Marco ha lasciato le chiavi sul tavolo.', {
+      episodes: [{ content: 'Marco ha lasciato le chiavi sul tavolo.', subject: 'undecided', candidates: ['C1', 'C2'],
+        question: 'Marco chi — Marco Rossi l\'idraulico o il nipote?', evidence: [1] }],
+    });
+    expect(await db.query(`SELECT subject_kind, cardinality(subject_candidates)::int AS n FROM episodes WHERE owner_id = $1`, [home]))
+      .toEqual([{ subject_kind: 'undecided', n: 2 }]);
+    const search = (conversationId?: string) => app.get(EpisodeSearchService).search(home, clientId, { query: 'Marco chiavi', ...(conversationId ? { conversationId } : {}) },
+      new Date('2026-06-08T10:00:00Z'));
+    // Nobody identified: the agent is told the speaker is not "me", and no question goes to someone who cannot answer it.
+    const anonymous = await search();
+    expect(anonymous.speaker).toEqual({ kind: 'someone' });
+    expect(anonymous.notes.join(' ')).toContain('non si è identificato');
+    expect(anonymous.clarifications).toBeUndefined();
+    // An identified speaker (declared by the platform) gets the question.
+    const res = await call(url, 'POST', '/api/v1/ingest/messages', {
+      token: key, headers: { 'x-recordare-user': 'Cucina' },
+      body: { conversation: { externalId: 'k2', participants: [{ ref: 'p', role: 'other', displayName: 'Paolo', identity: { externalUserId: 'paolo' } }] },
+        messages: [{ externalId: 'k2-1', role: 'other', authorRef: 'p', content: 'Chi ha lasciato le chiavi?', sentAt: '2026-06-08T09:00:00+02:00' }] },
+    });
+    const paolo = await search(res.body.conversationId as string);
+    expect(paolo.speaker).toEqual({ kind: 'contact', name: 'Paolo' });
+    expect(paolo.clarifications).toEqual(['Marco chi — Marco Rossi l\'idraulico o il nipote?']);
   });
 
   it('lets the person choose the kind on their platform while the memory is empty, and tells the atlas address', async () => {

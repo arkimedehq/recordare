@@ -1,0 +1,140 @@
+{
+ "_note": "Entity-memory dev set for WORK_PLAN 8.5 (NOT blind). Asked after all sessions, by someone not identified.",
+ "user": "ciclofficina",
+ "questions": [
+  {
+   "id": "o01",
+   "category": "own-content",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Quanto costa il copertone Schwalbe Marathon dal fornitore?",
+   "expected": "35 euro secondo quanto riferito da Luca il 10 ottobre (gli ha detto Gianni che Ferri ha aumentato i prezzi); nel listino Ferri di ottobre costava 32 euro.",
+   "must_not": [
+    "dire solo 32 euro senza l'aumento"
+   ]
+  },
+  {
+   "id": "o02",
+   "category": "own-content",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Quanto costa una catena Shimano 11 velocità dal fornitore?",
+   "expected": "28 euro (listino Ferri, ottobre 2026).",
+   "must_not": []
+  },
+  {
+   "id": "o03",
+   "category": "place-fact",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "A che ora apre il negozio dal 12 ottobre?",
+   "expected": "Alle 8:30 invece che alle 9 (lo ha detto Gianni il 5 ottobre).",
+   "must_not": []
+  },
+  {
+   "id": "o04",
+   "category": "unknown-speaker",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Chi ha fatto la revisione della Bianchi rossa del signor Pozzi?",
+   "expected": "Non si sa: qualcuno non identificato il 5 ottobre ha detto di averla finita; la bici è pronta per il ritiro.",
+   "must_not": [
+    "attribuirla a Gianni, Sara o Luca"
+   ]
+  },
+  {
+   "id": "o05",
+   "category": "speaker-switch",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Perché Sara non c'era il pomeriggio del 6 ottobre?",
+   "expected": "Alle 15 aveva la visita dal fisioterapista per il polso.",
+   "must_not": []
+  },
+  {
+   "id": "o06",
+   "category": "speaker-switch",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Cosa doveva fare Luca venerdì 9 ottobre?",
+   "expected": "Consegnare le ruote a Marco del gruppo gravel alle 18 (e le ha consegnate).",
+   "must_not": [
+    "attribuirlo a Sara"
+   ]
+  },
+  {
+   "id": "o07",
+   "category": "own-action",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Che promemoria hai impostato per venerdì 9 ottobre, e per chi?",
+   "expected": "Un promemoria alle 17:30 per Luca, per la consegna delle ruote a Marco del gruppo gravel alle 18.",
+   "must_not": []
+  },
+  {
+   "id": "o08",
+   "category": "homonym",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Quando arrivano le catene Shimano?",
+   "expected": "Giovedì 15 ottobre invece che lunedì 12: lo ha detto Marco Ferri, il fornitore, a Gianni il 7 ottobre.",
+   "must_not": [
+    "attribuirlo a Marco del gruppo gravel"
+   ]
+  },
+  {
+   "id": "o09",
+   "category": "homonym",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Chi è Marco Ferri?",
+   "expected": "Il fornitore di ricambi della ciclofficina, di Bologna.",
+   "must_not": [
+    "confonderlo con Marco del gruppo gravel"
+   ]
+  },
+  {
+   "id": "o10",
+   "category": "unknown-speaker",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Chi farà anche il sabato pomeriggio da novembre?",
+   "expected": "Non si sa: qualcuno non identificato il 7 ottobre ha detto che il suo capo glielo ha chiesto.",
+   "must_not": [
+    "attribuirlo a Luca, Sara o Gianni"
+   ]
+  },
+  {
+   "id": "o11",
+   "category": "own-content",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Quando va in revisione il furgone, e dove?",
+   "expected": "Martedì 20 ottobre all'officina Casali, in via Emilia 40 (nota del titolare).",
+   "must_not": []
+  },
+  {
+   "id": "o12",
+   "category": "place-fact",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Dove sono le chiavi del furgone?",
+   "expected": "Le tiene Sara, nell'armadietto 3.",
+   "must_not": []
+  },
+  {
+   "id": "o13",
+   "category": "own-action",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Fino a quando ha l'e-bike Emma, e quando la riporta?",
+   "expected": "Il noleggio è esteso a domenica 11 ottobre; la riporta lunedì 12 alle 8:30 (domenica il negozio è chiuso).",
+   "must_not": []
+  },
+  {
+   "id": "o14",
+   "category": "plan-confirmed",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Luca ha consegnato le ruote a Marco del gruppo gravel?",
+   "expected": "Sì, venerdì 9 ottobre; Marco era contentissimo.",
+   "must_not": []
+  },
+  {
+   "id": "o15",
+   "category": "negative",
+   "asked_at": "2026-10-10T12:00:00+02:00",
+   "q": "Sara ha un'allergia?",
+   "expected": "Non risulta.",
+   "must_not": [
+    "inventare un'allergia"
+   ]
+  }
+ ]
+}

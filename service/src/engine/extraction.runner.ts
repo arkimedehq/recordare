@@ -13,8 +13,7 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { type ExtractionRunner } from '../queue/queue.port';
 import { buildInput, pendingWindows, type Owner, type WindowMessage } from './extraction.context';
-import { buildExtractionUser, buildPersonalUser, ENTITY_BASE_PROMPT_VERSION, ENTITY_BASE_SYSTEM, ENTITY_PROMPT_VERSION, ENTITY_RULES,
-  EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM, type PersonalPromptContext } from './extraction.prompt';
+import { buildExtractionUser, ENTITY_PROMPT_VERSION, ENTITY_SYSTEM, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
 import { extractionSchema } from './extraction.schema';
 import { ConcurrentExtractionError, ExtractionWriter, type WrittenRow } from './extraction.writer';
 import { resolveNearDuplicates } from './episode-resolver';
@@ -22,7 +21,7 @@ import { SEED_SLOTS } from '../db/migrations/1790960000000-Notes';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
-import { EPISODES_ONLY_NOTE, ENTITY_FACTS_PROMPT_VERSION, ENTITY_FACTS_SYSTEM, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
+import { EPISODES_ONLY_NOTE, ENTITY_FACTS_SYSTEM, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
 import { TelemetryService } from '../telemetry/telemetry.service';
 
 @Injectable()
@@ -76,9 +75,8 @@ export class EngineExtractionRunner implements ExtractionRunner {
 
   private async runWindow(owner: Owner, profile: QualityProfile, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
     const runId = await this.startRun(owner, conversationId, window);
-    // Gate (D5): no LLM call without input from a person. Entity memories (unchanged until 8.5): the account's speaker.
-    // Personal memories (8.4): anything a person said — the self, a contact, someone in a group, own content.
-    const worth = owner.entity ? window.some((m) => m.accountSpeaker) : window.some((m) => m.role === 'user' || m.role === 'other');
+    // Gate (D5): no LLM call without input from a person — the self, a contact, someone, own content (both modes).
+    const worth = window.some((m) => m.role === 'user' || m.role === 'other');
     if (!worth) {
       await this.db.transaction(async (tx) => {
         await tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [runId, window.map((m) => m.id)]);
@@ -96,14 +94,14 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const input = await this.telemetry.track('context', owner.id, async () =>
         buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window), profile));
       const ctx = { ownerId: owner.id, clientId, runId };
-      const user = owner.entity ? buildExtractionUser(input.prompt) : buildPersonalUser(input.prompt as PersonalPromptContext);
+      const user = buildExtractionUser(input.prompt);
       const separate = profile.factsPass === 'separate';
       // With a separate facts pass the two calls run side by side on their own task models; one writer
       // transaction applies both (same numbered lists, so references stay valid).
       const [episodesOut, factsOut] = await Promise.all([
         this.llm.completeJson({
           promptId: extractionVersion(owner),
-          system: owner.entity ? ENTITY_BASE_SYSTEM + ENTITY_RULES : EXTRACTION_SYSTEM,
+          system: owner.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
           user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
           schema: extractionSchema,
           maxTokens: 6000,
@@ -111,8 +109,8 @@ export class EngineExtractionRunner implements ExtractionRunner {
           reasoning: profile.reasoning,
         }, ctx),
         separate
-          ? this.llm.completeJson({ promptId: owner.entity ? `${ENTITY_FACTS_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : FACTS_PROMPT_VERSION,
-            system: owner.entity ? ENTITY_FACTS_SYSTEM + ENTITY_RULES : FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
+          ? this.llm.completeJson({ promptId: owner.entity ? `${FACTS_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : FACTS_PROMPT_VERSION,
+            system: owner.entity ? ENTITY_FACTS_SYSTEM : FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
           : Promise.resolve(null),
       ]);
       const output = factsOut ? { ...episodesOut, facts: factsOut.facts, notes: factsOut.notes } : episodesOut;
@@ -201,6 +199,6 @@ export class EngineExtractionRunner implements ExtractionRunner {
 
 /**
  * The prompt version as recorded and traced (rule 9 compares these): personal memories `extract.v13`; entity memories
- * the v11 base plus their rules' version.
+ * the same base plus their sections' version (`extract.v13+entity.v4`).
  */
-const extractionVersion = (owner: Owner): string => owner.entity ? `${ENTITY_BASE_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : EXTRACTION_PROMPT_VERSION;
+const extractionVersion = (owner: Owner): string => owner.entity ? `${EXTRACTION_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : EXTRACTION_PROMPT_VERSION;

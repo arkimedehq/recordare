@@ -206,9 +206,8 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   metodo `account`), `contact` (un partecipante con un'identità; metodo `client_assertion` per un id utente del client,
   `declared` per un id di canale), `someone` (chiunque non identificato, e in una memoria di entità chi parla
   dall'account; metodo `none`), `agent` (`assistant`), `tool`, `own` (`own: true`) — con una confidenza (1, o nessuna
-  quando nulla è stato stabilito). Solo registrata: non ancora esposta dall'API di lettura, e i prompt di estrazione non
-  cambiano (la prima persona arriva con WORK_PLAN 8.4). Fino ad allora il contenuto `own` è letto come i turni di chi
-  parla dall'account.
+  quando nulla è stato stabilito). Non ancora esposta dall'API di lettura. I prompt di estrazione la mostrano (8.4, 8.5):
+  il contenuto `own` e i turni dell'assistente sono dell'agente stesso ("io") in entrambe le modalità.
 
 ### Modifiche e cancellazioni
 - `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` se
@@ -279,17 +278,16 @@ Restituisce (come costruito):
 ```ts
 {
   memory: { name: string; mode: "personal" | "entity" };   // whose memory: personal — "I" is `name` (first person)
-  speaker?: { kind: "self" } | { kind: "contact"; name: string };  // personal: who is asking (8.4)
+  speaker: { kind: "self" } | { kind: "someone" } | { kind: "contact"; name: string };  // who is asking (8.4, 8.5)
   period?: { from: string | null; to: string | null };
   digests: Array<{ level: "day" | "month"; from: string; to: string; text: string }>;  // list mode with a period (knob, below)
   episodes: Episode[];                                // in period / matching; lived, done, planned or learned (each with its subject)
-  claims: Episode[];                                  // personal: others' statements about someone else (other, inferred);
-                                                      // entity (until 8.5): every other / tool statement — kept apart
+  claims: Episode[];                                  // others' statements about the self or someone else (other, inferred) — kept apart
   outsidePeriod: Episode[];                           // same shape; filled only when the period has no match (max 5)
   fromChats: Array<{ conversationId: string; conversation: string; messageId: string; at: string;
                      authorRole: "owner" | "other" | "tool"; author?: string; excerpt: string }>;
   notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice, who is asking
-  clarifications?: string[];                          // personal: open questions about the people involved (8.4)
+  clarifications?: string[];                          // open questions about the people involved (8.4; entity: identified speaker)
 }
 type Episode = {
   id: string; kind: "event" | "plan" | "state_change"; content: string;
@@ -312,17 +310,19 @@ scritto l'evidenza), gli estratti di chat riportano il proprio `author` quando n
 elementi vengono restituiti, `notes` lo dice esplicitamente (M4b: i modelli di risposta ignoravano il semplice campo). **Memoria
 dell'agente (D50, WORK_PLAN 8.4)**: ogni risultato nomina la sua `memory` (`name`, `mode`); ogni elemento riporta il suo `subject` —
 `self` (in una memoria personale l'elemento è scritto in prima persona: "io" è `memory.name`, perché la persona e l'agente sono uno),
-un `contact` per nome, `someone`, oppure `undecided` tra contatti candidati (è stata posta una domanda, vedi sotto). In una memoria
-personale il risultato dice anche chi sta chiedendo (`speaker`): l'autore dell'ultimo turno della conversazione quando è un contatto
-identificato (un partecipante con un'identità), altrimenti il sé — chi è identificato riceve per primi i propri elementi (poi quelli a
-cui ha preso parte), e `notes` dice al modello che risponde che "io" nella domanda è quella persona, non il sé della memoria. I `claims`
-di una memoria personale sono affermazioni di altre persone su qualcun altro (il sé o una terza persona, `inferred`); la notizia che una
-persona dà di sé è un episodio con quella persona come soggetto, e ciò che uno strumento o un documento ha insegnato all'agente è un suo
-apprendimento (non un claim). `clarifications`: fino a 2 domande aperte i cui candidati sono nominati dalla query o il cui elemento è
+un `contact` per nome, `someone`, oppure `undecided` tra contatti candidati (è stata posta una domanda, vedi sotto). In una memoria di
+entità (8.5) "io" è l'agente condiviso: le sue risposte e azioni, il contenuto che gli è stato dato da tenere (`own`), il suo luogo; le
+persone che gli parlano sono contatti o `someone`. Il risultato dice anche chi sta chiedendo (`speaker`): l'autore dell'ultimo turno
+della conversazione quando è un contatto identificato (un partecipante con un'identità), altrimenti il sé (personale) o `someone`
+(entità: chi parla con l'agente senza essere identificato) — chi è identificato riceve per primi i propri elementi (poi quelli a cui ha
+preso parte), e `notes` dice al modello che risponde che "io" nella domanda è quella persona, non il sé della memoria (entità, non
+identificato: chi parla, non l'agente). I `claims` sono affermazioni di altre persone nella conversazione (non chi parla dall'account)
+sul sé o su una terza persona (`inferred`); la notizia che una persona dà di sé è un episodio con quella persona come soggetto, e ciò
+che uno strumento o un documento ha insegnato all'agente è un suo apprendimento (non un claim). `clarifications`: fino a 2 domande aperte i cui candidati sono nominati dalla query o il cui elemento è
 restituito — da porre se viene naturale. Due tipi: "quale?" su un elemento ("Marco chi — il collega o il cugino?") e "stessa persona?" su
 un partecipante appena identificato e un contatto noto solo per nome ("Giulia, che ha scritto il 22 settembre, è la stessa persona di
-Giulia (sorella)?" — la risposta fonde i due o li tiene separati; DATA_MODEL "Memoria dell'agente"). Le memorie di entità mantengono la regola precedente
-sui claims fino alla 8.5. `digests` (M5): per le richieste `list` con un periodo, il diario di quel periodo — voci giornaliere per intervalli fino a 45 giorni, riepiloghi mensili per quelli più lunghi; riassumono solo gli episodi propri dell'owner (mai le affermazioni di altre persone). Come costruito sono restituiti solo quando `RECALL_DIGESTS` è attivo (spento per default in ogni profilo di qualità — `KNOBS.md`); altrimenti `digests` è vuoto. `fromChats` (log grezzo, D13) riporta sempre fino a 2 estratti non già dietro gli
+Giulia (sorella)?" — la risposta fonde i due o li tiene separati; DATA_MODEL "Memoria dell'agente"). In una memoria di entità le domande vanno solo a chi si è
+identificato (chi non è identificato non può confermare chi è chi). `digests` (M5): per le richieste `list` con un periodo, il diario di quel periodo — voci giornaliere per intervalli fino a 45 giorni, riepiloghi mensili per quelli più lunghi; riassumono solo gli episodi propri dell'owner (mai le affermazioni di altre persone). Come costruito sono restituiti solo quando `RECALL_DIGESTS` è attivo (spento per default in ogni profilo di qualità — `KNOBS.md`); altrimenti `digests` è vuoto. `fromChats` (log grezzo, D13) riporta sempre fino a 2 estratti non già dietro gli
 episodi restituiti — il log risponde a ciò che gli episodi non contengono mai, ad es. le richieste di aiuto ("quando ti ho chiesto…") — e fino a 3 quando meno di
 3 episodi corrispondono o la migliore corrispondenza è sotto la soglia di rilevanza; limitato alle
 conversazioni del client stesso (`raw_log_scope`). Gli stati sono sempre espliciti; gli elementi annullati, irrisolti e superati
@@ -348,10 +348,10 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   `knowledge`. Restituisce `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferenze, abitudini, valori, conoscenze, più i
   fatti di stato rilevanti validi a `as_of` (data ISO, default oggi) con la loro cronologia; integra `search_episodes`
-  (cosa è successo / quando). Restituisce `{memory, speaker?, notes, facts, notes_info, clarifications?}` (`notes_info`:
-  avvisi sul risultato; `speaker` e `clarifications` come in `search_episodes`, memorie personali). Fatti e note del sé e
-  delle persone che la memoria conosce, in entrambe le modalità; ognuno riporta il suo `subject` (`self` — in una memoria
-  di entità l'entità stessa — oppure `{kind: "contact", name}`; le note possono essere anche `undecided`).
+  (cosa è successo / quando). Restituisce `{memory, speaker, notes, facts, notes_info, clarifications?}` (`notes_info`:
+  avvisi sul risultato; `speaker` e `clarifications` come in `search_episodes`). Fatti e note del sé e delle persone che la
+  memoria conosce, in entrambe le modalità; ognuno riporta il suo `subject` (`self` — in una memoria di entità l'agente e il
+  suo luogo — oppure `{kind: "contact", name}`; le note possono essere anche `undecided`).
 
 ### `resolve_period` (D12, deterministico)
 Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'espressione sconosciuta); espressioni nelle

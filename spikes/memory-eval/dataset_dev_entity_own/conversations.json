@@ -1,0 +1,189 @@
+{
+ "_note": "Entity-memory dev set for WORK_PLAN 8.5 (NOT blind, written by the engine developer): a bike shop's shared assistant; own content (a price list, an owner's note), the assistant's own actions, speakers identified only in the conversation, a hand-over, two people named Marco, an English customer.",
+ "users": {
+  "ciclofficina": "Shared assistant of a bike shop (entity memory)"
+ },
+ "entities": [
+  "ciclofficina"
+ ],
+ "sessions": [
+  {
+   "id": "c01",
+   "user": "ciclofficina",
+   "ts": "2026-10-05T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "own": true,
+     "content": "Listino ricambi del fornitore Ferri (ottobre 2026): camera d'aria 28 pollici 6 euro; copertone Schwalbe Marathon 32 euro; catena Shimano 11 velocità 28 euro."
+    },
+    {
+     "role": "user",
+     "content": "Sono Gianni. Ti ho caricato il listino di Marco Ferri, il nostro fornitore di ricambi di Bologna. E da lunedì 12 ottobre il negozio apre alle 8:30 invece che alle 9."
+    },
+    {
+     "role": "assistant",
+     "content": "Ricevuto, Gianni: dal 12 ottobre apertura alle 8:30. Ho salvato il listino Ferri di ottobre."
+    }
+   ]
+  },
+  {
+   "id": "c02",
+   "user": "ciclofficina",
+   "ts": "2026-10-05T10:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho appena finito la revisione della Bianchi rossa del signor Pozzi, è pronta per il ritiro."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto. Mi dici chi sei?"
+    },
+    {
+     "role": "user",
+     "content": "Lascia stare, segnati solo che è pronta."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: la Bianchi rossa del signor Pozzi è pronta per il ritiro."
+    }
+   ]
+  },
+  {
+   "id": "c03",
+   "user": "ciclofficina",
+   "ts": "2026-10-06T09:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Sara. Oggi pomeriggio non ci sono: alle 15 ho la visita dal fisioterapista per il polso."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene Sara, buona visita."
+    },
+    {
+     "role": "user",
+     "content": "Ti passo Luca."
+    },
+    {
+     "role": "user",
+     "content": "Ciao, sono Luca! Ricordami che venerdì devo consegnare le ruote a Marco, quello del gruppo gravel, alle 18."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Luca: venerdì 9 ottobre alle 18 consegni le ruote a Marco del gruppo gravel. Ti ho messo un promemoria alle 17:30."
+    }
+   ]
+  },
+  {
+   "id": "c04",
+   "user": "ciclofficina",
+   "ts": "2026-10-07T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni. Ha chiamato Marco: le catene Shimano arrivano giovedì 15 invece che lunedì 12."
+    },
+    {
+     "role": "assistant",
+     "content": "Quale Marco: Marco Ferri il fornitore o Marco del gruppo gravel?"
+    },
+    {
+     "role": "user",
+     "content": "Ferri, il fornitore."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok: le catene Shimano del fornitore Marco Ferri arrivano giovedì 15 ottobre invece che lunedì 12."
+    }
+   ]
+  },
+  {
+   "id": "c05",
+   "user": "ciclofficina",
+   "ts": "2026-10-07T17:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che stanchezza. Il mio capo mi ha detto che da novembre faccio anche il sabato pomeriggio."
+    },
+    {
+     "role": "assistant",
+     "content": "Capisco, è un bell'impegno. Vuoi che lo segni a nome di qualcuno?"
+    },
+    {
+     "role": "user",
+     "content": "No, era solo uno sfogo."
+    }
+   ]
+  },
+  {
+   "id": "c06",
+   "user": "ciclofficina",
+   "ts": "2026-10-08T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "own": true,
+     "content": "Nota del titolare: il furgone aziendale (Fiat Doblò bianco) va in revisione martedì 20 ottobre all'officina Casali, in via Emilia 40."
+    },
+    {
+     "role": "user",
+     "content": "Chi ha le chiavi del furgone?"
+    },
+    {
+     "role": "assistant",
+     "content": "Non lo so ancora: me lo può dire chi le tiene?"
+    },
+    {
+     "role": "user",
+     "content": "Sono Sara: le chiavi del furgone le tengo io, nell'armadietto 3."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie Sara, me lo ricordo."
+    }
+   ]
+  },
+  {
+   "id": "c07",
+   "user": "ciclofficina",
+   "ts": "2026-10-09T18:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hi, I'm Emma, I rented the e-bike yesterday. I'd like to keep it until Sunday."
+    },
+    {
+     "role": "assistant",
+     "content": "Sure Emma: I've extended your rental to Sunday 11 October. The shop is closed on Sunday, so please bring it back on Monday 12 at 8:30."
+    },
+    {
+     "role": "user",
+     "content": "Perfect, I'll bring it back Monday morning then."
+    }
+   ]
+  },
+  {
+   "id": "c08",
+   "user": "ciclofficina",
+   "ts": "2026-10-10T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Luca. Ieri ho consegnato le ruote a Marco del gravel, era contentissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, Luca!"
+    },
+    {
+     "role": "user",
+     "content": "Ah, e Gianni mi ha detto che Ferri ha aumentato i prezzi: il copertone Marathon adesso costa 35 euro."
+    }
+   ]
+  }
+ ]
+}

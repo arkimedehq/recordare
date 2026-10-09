@@ -7,8 +7,9 @@
  * in-range items only when a period is given; `list` is chronological, `latest` most recent first.
  * Plan statuses are always explicit — a past plan never confirmed is shown as unresolved.
  * Relevant episodes first, free places filled; a few raw-log hits always come along (more when episodes are few or weak).
- * Every item carries its subject (D50, 8.4); in a personal memory an identified speaker asking gets their own items first,
- * and open clarifications about the people involved come along.
+ * Every item carries its subject (D50, 8.4); an identified speaker asking gets their own items first (both modes since
+ * 8.5), and open clarifications about the people involved come along — in an entity memory only for an identified
+ * speaker (someone unidentified cannot confirm who is who).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -61,18 +62,18 @@ export interface MemoryView { name: string; mode: MemoryMode }
 
 export interface EpisodeSearchResult {
   memory: MemoryView;
-  /** Personal memories: who is asking — the self, or an identified contact ("I" in the question is that contact). */
-  speaker?: { kind: 'self' } | { kind: 'contact'; name: string };
+  /** Who is asking: the self (personal), someone not identified (entity), or an identified contact ("I" in the question). */
+  speaker: { kind: 'self' } | { kind: 'someone' } | { kind: 'contact'; name: string };
   period?: { from: string | null; to: string | null };
   /** The diary of the period (M5), for `list` requests: day entries for spans up to ~6 weeks, months for longer. */
   digests: Array<{ level: 'day' | 'month'; from: string; to: string; text: string }>;
   /** What the memory holds as lived, done, planned or learned (each with its subject). */
   episodes: EpisodeView[];
-  /** Other people's statements kept apart so an answer never mixes them with the memory's own: personal memories —
-   * what someone said about another person (about the self, or a third person); a person's news about themself is an
-   * episode of theirs. Entity memories (until 8.5): everything others or tools said. */
+  /** Other people's statements kept apart so an answer never mixes them with the memory's own: what someone in the
+   * conversation (not the account's speaker) said about another person — about the self, or a third person; a person's
+   * news about themself is an episode of theirs, what a tool taught is the memory's learning. */
   claims: EpisodeView[];
-  /** Personal memories: open questions about people involved ("Marco chi — il collega o il cugino?"), to ask if natural. */
+  /** Open questions about people involved ("Marco chi — il collega o il cugino?"), to ask if natural. */
   clarifications?: string[];
   outsidePeriod: EpisodeView[];
   fromChats: Array<Omit<RawHit, 'score'>>;
@@ -123,8 +124,7 @@ export class EpisodeSearchService {
   private async searchNow(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
     const [owner] = await this.db.query(
       `SELECT o.locale, o.timezone, o.quality_profile, o.mode, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    const personal = owner.mode === 'personal';
-    const speaker: Speaker = personal ? await speakerOf(this.db, args.conversationId, now) : { kind: 'self' };
+    const speaker: Speaker = await speakerOf(this.db, args.conversationId, now, owner.mode);
     const theirs = speaker.kind === 'contact' ? new Set<string>((await this.db.query(
       `SELECT DISTINCT ep.episode_id FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id WHERE e.owner_id = $1 AND ep.person_id = $2`,
       [ownerId, speaker.id])).map((r: { episode_id: string }) => r.episode_id)) : new Set<string>();
@@ -187,12 +187,11 @@ export class EpisodeSearchService {
       : [];
 
     const views = await this.views([...chosen, ...outside], tz, locale, now);
-    const isClaim = personal ? isPersonalClaim : isEntityClaim;
     const it = locale === 'it';
     const name: string = owner.display_name;
     const result: EpisodeSearchResult = {
       memory: { name, mode: owner.mode },
-      ...(personal ? { speaker: speaker.kind === 'contact' ? { kind: 'contact' as const, name: speaker.name } : { kind: 'self' as const } } : {}),
+      speaker: speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : speaker,
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
       // The diary serves overviews of a period (mode list); point questions get the episodes themselves.
       digests: hasPeriod && mode === 'list' && profile.recallDigests ? await this.digests(ownerId, from, to) : [],
@@ -207,18 +206,19 @@ export class EpisodeSearchService {
         ? 'alcuni piani hanno la data passata senza conferma: non è noto se siano avvenuti'
         : 'some plans are past their date without confirmation: whether they happened is unknown');
     }
-    if (personal && speaker.kind === 'contact') {
+    if (speaker.kind === 'contact') {
       result.notes.push(it
         ? `chi chiede è ${speaker.name}, una persona che conosco: "io" nella domanda è ${speaker.name}; i ricordi in prima persona sono miei (${name}), non di ${speaker.name}`
         : `the person asking is ${speaker.name}, someone I know: "I" in the question is ${speaker.name}; first-person memories are mine (${name}), not ${speaker.name}'s`);
+    } else if (speaker.kind === 'someone') {
+      result.notes.push(it
+        ? `chi chiede non si è identificato: "io" nella domanda è chi parla, non io (${name}); i ricordi in prima persona sono miei`
+        : `the person asking has not said who they are: "I" in the question is the speaker, not me (${name}); first-person memories are mine`);
     }
     if (result.claims.length) {
-      result.notes.push(personal
-        ? (it ? `"claims" sono affermazioni di chi è in claimedBy, non confermate: ciò che dicono di me (${name}) non è un mio ricordo né qualcosa che ho detto`
-          : `"claims" are statements of the people in claimedBy, unconfirmed: what they say about me (${name}) is not my memory nor something I said`)
-        : it
-          ? '"claims" sono affermazioni di chi è in claimedBy, non ricordi del proprietario: ciò che dicono di lui/lei non è confermato'
-          : '"claims" are statements of the people in claimedBy, not the owner\'s memories: what they say about the owner is unconfirmed');
+      result.notes.push(it
+        ? `"claims" sono affermazioni di chi è in claimedBy, non confermate: ciò che dicono di me (${name}) non è un mio ricordo né qualcosa che ho detto`
+        : `"claims" are statements of the people in claimedBy, unconfirmed: what they say about me (${name}) is not my memory nor something I said`);
     }
     // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…") and keeps the
     // owner's own words next to the summaries, so a few raw hits always come along — also when they are behind a
@@ -236,15 +236,12 @@ export class EpisodeSearchService {
       const seen = new Set(hits.map((h) => h.messageId));
       result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId))].map(({ score: _s, ...h }) => h);
       if (result.fromChats.some((h) => h.authorRole !== 'owner')) {
-        result.notes.push(personal
-          ? (it ? `gli estratti scritti da altri (author) sono parole loro: ciò che dicono di me (${name}) non è confermato`
-            : `excerpts written by others (author) are their words: what they say about me (${name}) is unconfirmed`)
-          : it
-            ? 'gli estratti scritti da altri (author) sono parole loro: ciò che dicono del proprietario non è confermato'
-            : 'excerpts written by others (author) are their words: what they say about the owner is unconfirmed');
+        result.notes.push(it
+          ? `gli estratti scritti da altri (author) sono parole loro: ciò che dicono di me (${name}) non è confermato`
+          : `excerpts written by others (author) are their words: what they say about me (${name}) is unconfirmed`);
       }
     }
-    if (personal) {
+    if (owner.mode === 'personal' || speaker.kind === 'contact') {
       const asks = await relevantClarifications(this.db, ownerId, args.query ?? '', views.map((v) => v.id), now, MAX_CLARIFICATIONS);
       if (asks.length) result.clarifications = asks.map((c) => c.question);
     }
@@ -343,16 +340,11 @@ export class EpisodeSearchService {
   }
 }
 
-/** Entity memories (unchanged until 8.5): everything other people or tools said is a claim. */
-function isEntityClaim(v: EpisodeView): boolean {
-  return v.authorRole === 'other' || v.authorRole === 'tool';
-}
-
 /**
- * Personal memories: a claim is what other people said about me or someone else (inferred) — not a person's own news (stated
- * for them), not what a tool or a document taught me (my learning, still inferred).
+ * A claim is what other people said about me or someone else (inferred) — not a person's own news (stated for them), not
+ * what a tool or a document taught me (my learning, still inferred), not what the account's speaker said.
  */
-function isPersonalClaim(v: EpisodeView): boolean {
+function isClaim(v: EpisodeView): boolean {
   return v.authorRole === 'other' && v.inferred;
 }
 

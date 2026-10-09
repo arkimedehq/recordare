@@ -71,7 +71,9 @@ class ServiceSystem:
 
     def _owner(self, user: str) -> dict:
         if user not in self.owners:
-            o = self._post("/api/v1/admin/owners", {"displayName": user.capitalize(),
+            # An entity's name reads as a name ("casa_bellandi" → "Casa Bellandi"): it is "I" in its memory (8.5).
+            name = user.replace("_", " ").title() if user in self.entities else user.capitalize()
+            o = self._post("/api/v1/admin/owners", {"displayName": name,
                                                     **({"mode": "entity"} if user in self.entities else {}),
                                                     **({"gender": self.genders[user]} if user in self.genders else {})})
             ext = f"{user}-{self.run}"
@@ -97,6 +99,8 @@ class ServiceSystem:
                 "role": m["role"] if m["role"] in ("user", "assistant", "other", "tool") else "assistant",
                 **({"authorRef": m["author"]} if m["role"] == "other" and m.get("author") else {}),
                 **({"toolName": m["tool"]} if m["role"] == "tool" and m.get("tool") else {}),
+                # Content given to the agent to keep (a manual, a note): the agent's own (D50).
+                **({"own": True} if m.get("own") else {}),
                 "content": m["content"],
                 "sentAt": (base + timedelta(seconds=i)).isoformat(),
             } for i, m in enumerate(s["messages"])]
@@ -280,8 +284,20 @@ def format_context(args: dict, episodes: dict, memory: dict) -> str:
     lines = []
     mem = episodes.get("memory") or memory.get("memory") or {}
     owner = mem.get("name") or (episodes.get("owner") or memory.get("owner") or {}).get("name")
-    personal = mem.get("mode") == "personal"
-    if personal:
+    entity = mem.get("mode") == "entity"
+    # Agent memory (D50): both modes are written in the first person of the memory's self (8.4 personal, 8.5 entity).
+    personal = mem.get("mode") == "personal" or entity
+    if entity:
+        lines.append(f"MEMORIA: la memoria di {owner}, un agente condiviso che più persone usano — i ricordi in prima persona "
+                     f"(«ho impostato…», «le chiavi di scorta sono…») sono di {owner}: le sue azioni, ciò che gli è stato dato da "
+                     "tenere, il suo luogo; quelli delle persone hanno il loro soggetto; «qualcuno» è chi non si è identificato.")
+        speaker = episodes.get("speaker") or memory.get("speaker") or {}
+        if speaker.get("kind") == "contact":
+            lines.append(f"CHI FA LA DOMANDA: {speaker['name']} — «io» nella domanda è {speaker['name']}, non {owner}.")
+        else:
+            lines.append(f"CHI FA LA DOMANDA: una persona che usa {owner}, non identificata — «io» nella domanda è chi parla "
+                         f"(se nella domanda dice chi è, vale quel nome), non {owner}.")
+    elif personal:
         # Agent memory (D50, 8.4): first person = the memory's self; the asker may be someone it knows.
         lines.append(f"MEMORIA: la memoria di {owner} — i ricordi in prima persona («sono andato…», «ho prenotato…») sono di {owner}; "
                      "quelli di altre persone hanno il loro soggetto.")
@@ -324,7 +340,7 @@ def format_context(args: dict, episodes: dict, memory: dict) -> str:
     if episodes.get("fromChats"):
         lines.append("DALLE CHAT (testo originale):")
         for h in episodes["fromChats"]:
-            mine = f" · scritto da {owner}" if personal else " · scritto dal proprietario"
+            mine = f" · scritto da qualcuno che usa {owner}" if entity else f" · scritto da {owner}" if personal else " · scritto dal proprietario"
             who = f" · scritto da {h['author']}" if h.get("author") else (mine if h.get("authorRole") == "owner" else "")
             lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}{who}] {h['excerpt']}")
     return "\n".join(lines)

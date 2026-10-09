@@ -301,6 +301,31 @@ personali; le memorie di entità mantengono le regole della 8.3 e input dei prom
   "l'utente", "the owner", "the assistant", nelle lingue più usate: `service/src/lang/self.ts`); solo conteggi, con
   `summary.clarifications` (`asked`, `resolved`) e `returned.answers`.
 
+**Come costruito (8.5, agente entità — `extract.v13+entity.v4`, `facts.v2+entity.v4`; nessuna migrazione).** Le memorie di
+entità seguono ora lo stesso modello di quelle personali; i prompt personali restano identici byte per byte (`extract.v13`,
+`facts.v2`, fissati da un test).
+- *Voce* — "io" è l'agente condiviso (un dispositivo, un luogo, un robot, un servizio): le sue risposte e azioni
+  (`me (assistant)`), il contenuto che gli è stato dato da tenere (`me (own)`), il suo luogo e ciò che gli appartiene, in
+  prima persona con `owners.gender`. Le persone che gli parlano non sono mai "io": chi parla dall'account è `someone`
+  finché la conversazione non lo identifica (una presentazione o essere chiamato per nome, per i suoi messaggi successivi,
+  mai riportato da un'altra conversazione, mai indovinato); un partecipante con un'identità è `Nome [C3]`. L'"io" di una
+  persona si scrive con il suo nome ("Nunzia ha comprato…"), quello di chi non è identificato come "qualcuno…".
+- *Prompt* — costruito con le sezioni del prompt personale valide per entrambi (schema di uscita, date, piani, note,
+  correzioni) più le proprie sezioni di introduzione, voce, identificazione, episodi, fatti e sicurezza; il messaggio utente
+  è quello personale (`ME`, `PEOPLE I KNOW`, `OPEN QUESTIONS`; fatti elencati `[me]` / `[Nome]`).
+- *Soggetti* — il `ContactBook` dell'8.4 in entrambe le modalità (la ricerca per nome solo-entità non c'è più); in una
+  memoria di entità un episodio o una nota senza soggetto è di `someone`, un fatto senza soggetto è dell'agente (il suo
+  luogo: dove sono le chiavi, l'operatore internet). Resta il controllo che ogni persona nominata da un episodio compaia
+  nella finestra. Un fatto o una nota di `someone` non viene salvato.
+- *Stance e claims* — i turni di chi parla dall'account restano scritti da `owner` (stated); i `claims` nel richiamo sono
+  le affermazioni inferred degli altri partecipanti alla conversazione (la regola personale); la notizia di uno strumento è
+  un apprendimento dell'agente.
+- *Richiamo* — `speaker` in ogni risultato: un contatto identificato, altrimenti `self` (personale) o `someone` (entità,
+  con una nota che "io" nella domanda è chi parla, non l'agente); le domande di chiarimento ("quale Marco?", "stessa
+  persona?") nascono anche nelle memorie di entità — all'ingest e all'estrazione — ma sono offerte solo a chi si è
+  identificato.
+- *Gate* — una regola per entrambe le modalità: una chiamata quando parla chiunque non sia l'assistente o uno strumento.
+
 ## Layer 0 — log grezzo
 
 ### conversations

@@ -69,6 +69,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   sostituito da un rilevatore di fughe (conteggi nel riepilogo dell'esecuzione). Una finestra personale in cui parlano
   solo altre persone ora costa una chiamata di estrazione. Le memorie di entità non cambiano fino alla 8.5. Libreria
   client: `TOOLS` rigenerato.
+- **Affermazioni altrui sul sé, datate** (WORK_PLAN 8.4b, `extract.v13`): in una memoria personale ciò che qualcun altro
+  dice del sé è un episodio in prima persona con la data in cui è stato detto, chi l'ha detto e dove; il richiamo non
+  descrive più i claims come affermazioni solo su altri.
+- **Agente entità** (D50, WORK_PLAN 8.5) — **incompatibile per i risultati MCP delle memorie di entità**. Una memoria di
+  entità (un dispositivo, un luogo, un robot o un servizio condiviso) è la memoria dell'agente in prima persona
+  (`extract.v13+entity.v4`, `facts.v2+entity.v4`): le sue risposte e azioni e il contenuto che gli viene dato (`own`) sono
+  "io"; le persone che gli parlano sono contatti per nome, `someone` finché la conversazione non le identifica. Soggetti,
+  contatti e domande di chiarimento funzionano come nelle memorie personali (una domanda "quale Marco?" è offerta solo a chi
+  si è identificato); `speaker` è in ogni risultato (`someone` per chi non è identificato in una memoria di entità); i
+  `claims` seguono la regola personale. Blind8: 82,1 % → 91,4 % (3 run).
 - **Connettori: una memoria per agente, le persone come partecipanti** (D50) — **incompatibile per le installazioni con
   più persone**. OpenClaw: l'agente del Gateway ha una sola memoria (un token personale, o una chiave client con
   `defaultUser`); ogni mittente è un partecipante con l'identità di canale `<canale>:<senderId>` e il nome che ha sul

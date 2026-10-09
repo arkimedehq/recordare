@@ -174,15 +174,15 @@ What is new is narrower:
 
 ## Entity memory (D48)
 
-An owner can also be an **entity**: a shared device, a home robot, a place. Everyone who uses the entity reads and
-writes its memory. Identification ("sono Andrea"; later a voiceprint) only says **whose** a memory is. Within the
-entity's memory, facts carry the person they are about, and a fact from an unidentified speaker is not stored as
-anyone's fact. Identification never grants access: a person's *own* memory is reached only through a secure client
-identity bound by the admin. A code guard records a fact about a person, or an episode naming one, only if the
-conversation names that person (no identity carried over from other chats). The person chooses the mode (`entity`) on their
-platform (Arkimede: memory settings) while the memory is empty. **Experimental**: 95.5 % on its dev set, but **82.1 %** on a
-fresh blind set (3 runs; speakers who never identify themselves still get attributed to a named person —
-[RESULTS.md](spikes/memory-eval/RESULTS.md)).
+A memory can also belong to an **entity**: a shared device, a home robot, a place, a service that several people talk
+to through one account. It is the agent's own memory, in the first person (WORK_PLAN 8.5): its replies and actions and
+the content given to it to keep are "I"; the people talking to it are contacts by name, "someone" until the
+conversation identifies them ("sono Andrea"; later a voiceprint). Identification only says **whose** a memory is, never
+carried over from another chat and never guessed; a fact of an unidentified speaker is not stored as anyone's.
+Identification never grants access: a person's *own* memory is reached only through a secure client identity bound by
+the admin. The person chooses the mode (`entity`) on their platform (Arkimede: memory settings) while the memory is
+empty. Measured: **91.4 %** on a fresh blind set (3 runs; 82.1 % before 8.5) and 100 % on its two dev sets
+([RESULTS.md](spikes/memory-eval/RESULTS.md)).
 
 ## Beyond phase 1
 

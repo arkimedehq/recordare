@@ -9,7 +9,7 @@
  */
 import { type EntityManager } from 'typeorm';
 import { calendar, describe, localDate, type Precision } from './time';
-import { type PersonalPromptContext, type PromptContact, type PromptContext, type PromptMessage } from './extraction.prompt';
+import { type PromptContact, type PromptContext, type PromptMessage } from './extraction.prompt';
 import { type QualityProfile } from './quality-profile';
 import { accountSpeaker, type AuthorKind } from '../rawlog/attribution';
 import { type MemoryGender } from '../identity/identity.entities';
@@ -23,7 +23,7 @@ const MAX_NOTES = 30;
  * under noise the recent ones crowd out the episode a correction refers to (M4b: "it was 210, not 180"
  * left the wrong value visible). */
 const MIN_RELATED_SIMILARITY = 0.45;
-/** Contacts listed for a personal window (those it names, its participants, the candidates of open questions). */
+/** Contacts listed for a window (those it names, its participants, the candidates of open questions). */
 const MAX_CONTACTS = 30;
 const MAX_QUESTIONS = 5;
 
@@ -32,9 +32,9 @@ export interface WindowMessage {
   role: 'user' | 'assistant' | 'tool' | 'other';
   toolName: string | null;
   /**
-   * The memory's own turn. Personal memories: the self or own content (author kind `self` / `own`), labelled `me`.
-   * Entity memories (unchanged until 8.5): role `user`, the memory's self or own content, the `owner` participant —
-   * labelled `person`.
+   * The account speaker's turn (author role `owner`: what they say is stated, not a claim). Personal memories: the self
+   * or own content (author kind `self` / `own`). Entity memories: whoever talks to the agent through its account (role
+   * `user`, own content, the `owner` participant) — a person, never the agent itself (labelled `someone` until named).
    */
   accountSpeaker: boolean;
   /** Who wrote it, as recorded at ingest (D50). */
@@ -50,13 +50,13 @@ export interface WindowMessage {
 
 export interface Owner {
   id: string;
-  /** The memory's name (display name of its own person row): in a personal memory, the name of "I". */
+  /** The memory's name (display name of its own person row): the name of "I" (the account holder, or the shared agent). */
   name?: string;
   locale: string;
   timezone: string;
-  /** An entity memory (D48): everyone using the account writes into it; facts carry the person they are about. */
+  /** An entity memory (D50, 8.5): a shared agent several people talk to; otherwise a personal memory. */
   entity?: boolean;
-  /** First person in gendered languages (personal memories). */
+  /** First person in gendered languages. */
   gender?: MemoryGender;
 }
 
@@ -64,24 +64,24 @@ export interface FactRef {
   id: string;
   key: string;
   validFrom: Date | null;
-  /** Entity memories: the person the fact is about (null = the entity itself). */
+  /** The contact the fact is about (null = the memory's self). */
   subjectId?: string | null;
 }
 
 export interface ExtractionInput {
-  prompt: PromptContext | PersonalPromptContext;
+  prompt: PromptContext;
   /** message number (1-based) → messages[n - 1] */
   messages: WindowMessage[];
   plans: Map<string, string>;     // "P1" → episode id
   facts: Map<string, FactRef>;    // "F1" → fact
   notes: Map<string, string>;     // "N1" → note id
   episodes: Map<string, string>;  // "E1" → episode id
-  /** Personal memories: "C1" → contact (person id). */
-  contacts?: Map<string, string>;
-  /** Personal memories: "Q1" → open clarification. */
-  questions?: Map<string, { id: string; candidates: string[] }>;
-  /** Personal memories: the self's names (display name first, then aliases). */
-  selfNames?: string[];
+  /** "C1" → contact (person id). */
+  contacts: Map<string, string>;
+  /** "Q1" → open clarification. */
+  questions: Map<string, { id: string; candidates: string[] }>;
+  /** The self's names (display name first, then aliases). */
+  selfNames: string[];
 }
 
 /** Recordare's own read tools, as a client names them (possibly prefixed, e.g. `recordare_search_episodes`). */
@@ -129,8 +129,12 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
   return windows;
 }
 
-/** Personal memories (extract.v12): the self and the assistant are both me; people by name, with their C-number. */
-function personalSpeaker(m: WindowMessage, contactRef: Map<string, string>): string {
+/**
+ * Who said a message, as the prompts show it: the assistant and own content are me in both modes; the account's speaker
+ * is me in a personal memory; people by name with their C-number; the rest `other:<Name>` or `someone` (in an entity
+ * memory, whoever talks to the agent through its account until the conversation names them).
+ */
+function speaker(m: WindowMessage, contactRef: Map<string, string>): string {
   if (m.role === 'tool') return `tool${m.toolName ? `:${m.toolName}` : ''}`;
   if (m.role === 'assistant') return 'me (assistant)';
   if (m.authorKind === 'own') return 'me (own)';
@@ -138,14 +142,6 @@ function personalSpeaker(m: WindowMessage, contactRef: Map<string, string>): str
   const ref = m.authorPersonId ? contactRef.get(m.authorPersonId) : undefined;
   if (m.authorKind === 'contact' && m.authorName) return `${m.authorName}${ref ? ` [${ref}]` : ''}`;
   return m.authorName ? `other:${m.authorName}` : 'someone';
-}
-
-function speaker(m: WindowMessage, owner: Owner): string {
-  // In an entity memory the account's user is whoever is talking to it: the window tells who, if anyone.
-  if (m.accountSpeaker) return owner.entity ? 'person' : 'owner';
-  if (m.role === 'assistant') return 'assistant';
-  if (m.role === 'tool') return `tool${m.toolName ? `:${m.toolName}` : ''}`;
-  return `other${m.authorName ? `:${m.authorName}` : ''}`;
 }
 
 export async function buildInput(tx: EntityManager, owner: Owner, window: WindowMessage[], knownSlots: string[],
@@ -190,10 +186,10 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
   const when = (at: Date | null, p: Precision) => describe(at, p, tz, owner.locale);
   const clock = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
 
-  const personal = owner.entity ? null : await personalContext(tx, owner, window, facts.map((f) => f.subject_id).filter((x): x is string => !!x));
+  const people = await peopleContext(tx, owner, window, facts.map((f) => f.subject_id).filter((x): x is string => !!x));
   const messages: PromptMessage[] = window.map((m, i) => ({
     n: i + 1,
-    speaker: personal ? personalSpeaker(m, personal.refOf) : speaker(m, owner),
+    speaker: speaker(m, people.refOf),
     sentAt: `${describe(m.sentAt, 'day', tz, owner.locale)} ${clock.format(m.sentAt)}`,
     content: m.content,
   }));
@@ -204,9 +200,14 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
     facts: factMap,
     notes: noteMap,
     episodes: episodeMap,
-    ...(personal ? { contacts: personal.contacts, questions: personal.questions, selfNames: personal.selfNames } : {}),
+    contacts: people.contacts,
+    questions: people.questions,
+    selfNames: people.selfNames,
     prompt: {
-      ...(personal ? { selfNames: personal.selfNames, gender: owner.gender ?? 'masculine', contacts: personal.list, openQuestions: personal.lines } : {}),
+      selfNames: people.selfNames,
+      gender: owner.gender ?? 'masculine',
+      contacts: people.list,
+      openQuestions: people.lines,
       locale: owner.locale,
       messageDay,
       calendar: calendar(messageDay, 14, 21, owner.locale),
@@ -217,8 +218,7 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
       }),
       currentFacts: facts.map((f, i) => {
         factMap.set(`F${i + 1}`, { id: f.id, key: f.key, validFrom: f.valid_from, subjectId: f.subject_id });
-        const about = owner.entity ? `[${f.subject ?? '-'}] ` : `[${f.subject ?? 'me'}] `;
-        return `F${i + 1}: ${about}${f.key} = ${f.value ?? '(unknown)'}${f.valid_from ? ` (since ${localDate(f.valid_from, tz)})` : ''}`;
+        return `F${i + 1}: [${f.subject ?? 'me'}] ${f.key} = ${f.value ?? '(unknown)'}${f.valid_from ? ` (since ${localDate(f.valid_from, tz)})` : ''}`;
       }),
       currentNotes: notes.map((n, i) => {
         noteMap.set(`N${i + 1}`, n.id);
@@ -234,7 +234,7 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
   };
 }
 
-interface PersonalContext {
+interface PeopleContext {
   selfNames: string[];
   list: PromptContact[];
   contacts: Map<string, string>;
@@ -244,11 +244,11 @@ interface PersonalContext {
 }
 
 /**
- * Personal memories (extract.v12): the self's names, the contacts the window concerns (named in it, its participants,
+ * The self's names, the contacts the window concerns (named in it, its participants,
  * the subjects of listed facts, the candidates of open questions — numbered C1…) and the open questions (Q1…), after
  * expiring old ones (as of the window's first message).
  */
-async function personalContext(tx: EntityManager, owner: Owner, window: WindowMessage[], factSubjects: string[]): Promise<PersonalContext> {
+async function peopleContext(tx: EntityManager, owner: Owner, window: WindowMessage[], factSubjects: string[]): Promise<PeopleContext> {
   const selfRows: Array<{ alias: string }> = await tx.query(
     `SELECT alias FROM person_aliases WHERE person_id = $1 ORDER BY created_at`, [owner.id]);
   const selfNames = [...new Set([owner.name, ...selfRows.map((r) => r.alias)].filter((n): n is string => !!n?.trim()))];

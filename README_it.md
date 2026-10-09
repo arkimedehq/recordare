@@ -184,16 +184,16 @@ Ciò che è nuovo è più circoscritto:
 
 ## Memoria di entità (D48)
 
-Un proprietario può anche essere un'**entità**: un dispositivo condiviso, un robot domestico, un luogo. Chiunque usi
-l'entità legge e scrive la sua memoria. L'identificazione ("sono Andrea"; in seguito un'impronta vocale) dice solo
-**di chi** è un ricordo. Dentro la memoria dell'entità, i fatti portano la persona a cui si riferiscono, e un fatto di
-un parlante non identificato non viene memorizzato come fatto di nessuno. L'identificazione non concede mai
-l'accesso: la memoria *propria* di una persona si raggiunge solo tramite un'identità client sicura vincolata
-dall'amministratore. Una protezione nel codice registra un fatto su una persona, o un episodio che la nomina, solo se
-la conversazione nomina quella persona (nessuna identità riportata da altre chat). La persona sceglie il modo (`entity`) sulla
-propria piattaforma (Arkimede: impostazioni della memoria) finché la memoria è vuota. **Sperimentale**: 95,5 % sul suo dev
-set, ma **82,1 %** su un nuovo set cieco (3 esecuzioni; chi non si presenta viene ancora attribuito a una persona con
-nome — [RESULTS.md](spikes/memory-eval/RESULTS.md)).
+Una memoria può anche appartenere a un'**entità**: un dispositivo condiviso, un robot domestico, un luogo, un servizio a
+cui più persone parlano tramite un solo account. È la memoria dell'agente stesso, in prima persona (WORK_PLAN 8.5): le
+sue risposte e azioni e il contenuto che gli viene dato da tenere sono "io"; le persone che gli parlano sono contatti
+per nome, "qualcuno" finché la conversazione non le identifica ("sono Andrea"; in seguito un'impronta vocale).
+L'identificazione dice solo **di chi** è un ricordo, mai riportata da un'altra chat e mai indovinata; un fatto di un
+parlante non identificato non viene memorizzato come fatto di nessuno. L'identificazione non concede mai l'accesso: la
+memoria *propria* di una persona si raggiunge solo tramite un'identità client sicura vincolata dall'amministratore. La
+persona sceglie il modo (`entity`) sulla propria piattaforma (Arkimede: impostazioni della memoria) finché la memoria è
+vuota. Misurato: **91,4 %** su un nuovo set cieco (3 esecuzioni; 82,1 % prima dell'8.5) e 100 % sui suoi due set di
+sviluppo ([RESULTS.md](spikes/memory-eval/RESULTS.md)).
 
 ## Oltre la fase 1
 

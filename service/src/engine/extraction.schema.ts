@@ -8,8 +8,8 @@ const evidence = z.array(z.number().int().positive()).default([]);
 const date = z.string().nullable().optional();
 const precision = z.enum(['day', 'month', 'year', 'approximate', 'unknown']).optional();
 /**
- * Whose an item is (personal memories, extract.v12): "me", a C-number of the listed contacts, "Name (relation)",
- * "someone" or "undecided" (with candidates and a question). Entity memories use it on facts only (D48).
+ * Whose an item is (both modes): "me", a C-number of the listed contacts, "Name (relation)", "someone" or "undecided"
+ * (with candidates and a question).
  */
 const subject = z.string().max(200).nullable().optional();
 const candidates = z.array(z.string().max(20)).max(10).default([]);
@@ -25,7 +25,7 @@ export const extractionSchema = z.object({
     occurred_until: date,
     date_precision: precision,
     time_expression: z.string().nullable().optional(),
-    // extract.v11 (entity): owner_*; extract.v12 (personal): lived / told.
+    // The prompts ask lived / told; the stored values (owner_*, assistant_stated) are accepted as given.
     origin: z.enum(['owner_lived', 'owner_told', 'assistant_stated', 'lived', 'told']).default('owner_lived'),
     people: z.array(z.string()).default([]),
     place: z.string().nullable().optional(),
@@ -55,7 +55,6 @@ export const extractionSchema = z.object({
     value: z.string().nullable().optional(),
     verdict: z.enum(['new', 'keep', 'replace', 'corrects', 'stale', 'unknown']),
     target: z.string().nullable().optional(),
-    /** Entity memories (D48): the person the fact is about; null = the entity itself. Personal memories: see `subject`. */
     subject,
     cardinality: z.enum(['single', 'multi']).optional(),
     valid_from: date,
@@ -74,7 +73,7 @@ export const extractionSchema = z.object({
     stance: z.enum(['stated', 'inferred']).default('stated'),
     evidence,
   })).default([]),
-  /** Personal memories: OPEN QUESTIONS the window answers (Q-number → the chosen C-number). */
+  /** OPEN QUESTIONS the window answers (Q-number → the chosen C-number). */
   answers: z.array(z.object({
     question: z.string().max(20),
     contact: z.string().max(20),
