@@ -51,6 +51,17 @@ export async function episodeSubject(tx: EntityManager, ownerId: string, people:
   return { subject: all.size === 1 && only ? contact(only) : SOMEONE_SUBJECT, people: byAlias };
 }
 
+/**
+ * How a nightly prompt (diary, facts review) labels whose an item is: nothing for the self's, "[Name] ", "[someone] ",
+ * "[undecided: A / B] ".
+ */
+export function subjectLabel(kind: SubjectKind, name: string | null, candidates: string[] | null): string {
+  if (kind === 'contact') return `[${name ?? '?'}] `;
+  if (kind === 'someone') return '[someone] ';
+  if (kind === 'undecided') return `[undecided: ${(candidates ?? []).join(' / ')}] `;
+  return '';
+}
+
 /** Lower case without accents: the form names are compared in. */
 export const fold = (s: string): string => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
 

@@ -20,8 +20,8 @@ API or console). A profile only groups knobs; models stay provider configuration
 | `recentEpisodes` / `relatedEpisodes` | 6 / 6 | 8 / 10 | 12 / 20 | Episodes shown to the extractor (recent + related to the window) |
 | `resolverWindowDays` / `resolverSimilarity` | 3 / 0.7 | 3 / 0.7 | 7 / 0.6 | Near-duplicate candidates (± days, min similarity) |
 | `rawHitsAlongside` | 1 | 3 | 5 | Chat excerpts returned next to matching episodes |
-| `recallDigests` | off | off | off | Nightly diary given to period overviews · blind5 3+3 runs: −1.9 pt, within noise |
-| `factsReview` | off | off | off | Nightly facts review against new episodes · no gain measured |
+| `recallDigests` | off | off | off | Nightly diary given to period overviews · blind5 3+3 runs: −1.9 pt, within noise; diary v2 (8.6, first person) dev sets 1 run: no gain |
+| `factsReview` | off | off | off | Nightly facts review against new episodes · no gain measured (5.6; v2 with subjects, 8.6: proposed no change on the dev sets) |
 
 Installation overrides of single knobs (they win over every profile): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
 `RECALL_DIGESTS`, `FACTS_REVIEW`.

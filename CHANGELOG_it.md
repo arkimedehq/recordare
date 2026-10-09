@@ -79,6 +79,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   contatti e domande di chiarimento funzionano come nelle memorie personali (una domanda "quale Marco?" è offerta solo a chi
   si è identificato); `speaker` è in ogni risultato (`someone` per chi non è identificato in una memoria di entità); i
   `claims` seguono la regola personale. Blind8: 82,1 % → 91,4 % (3 run).
+- **Il diario dell'agente** (WORK_PLAN 8.6, `digest.day.v2` / `digest.month.v2`, `facts_review.v2`): i riassunti notturni del
+  giorno e del mese sono scritti in prima persona dal sé della memoria (personale: la mia giornata, con le notizie delle
+  persone che conosco; entità: la giornata dell'agente condiviso), mai dalle affermazioni altrui; una nuova versione del
+  prompt riscrive ogni giorno una volta. La revisione notturna dei fatti copre ogni soggetto (i fatti del sé e dei
+  contatti). Entrambi restano spenti nel richiamo / per default (nessun guadagno misurato).
 - **Connettori: una memoria per agente, le persone come partecipanti** (D50) — **incompatibile per le installazioni con
   più persone**. OpenClaw: l'agente del Gateway ha una sola memoria (un token personale, o una chiave client con
   `defaultUser`); ogni mittente è un partecipante con l'identità di canale `<canale>:<senderId>` e il nome che ha sul
