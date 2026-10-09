@@ -1,6 +1,7 @@
 {
   "_note": "Pre-turn memory context dev set (WORK_PLAN 5.7, NOT blind, written by the engine developer). One user, a few weeks of chats; questions where memory helps but is not asked for (ctx-*), explicit recall controls (rec-*) and questions that have nothing to do with memory (gen-*).",
   "users": {"giulia": "Primary user under test"},
+  "genders": {"giulia": "feminine"},
   "sessions": [
     {"id": "c01", "user": "giulia", "ts": "2026-09-14T20:10:00+02:00", "messages": [
       {"role": "user", "content": "Oggi pranzo da mia sorella Elena: ha l'orto più bello del quartiere, passa ogni weekend tra pomodori e rose antiche. Dice che le manca solo una serra piccola."},

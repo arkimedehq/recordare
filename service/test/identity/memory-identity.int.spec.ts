@@ -116,7 +116,7 @@ describe('memory identity (D50)', () => {
     expect(await db.query(`SELECT count(*)::int AS n FROM persons WHERE owner_scope = $1`, [entity])).toEqual([{ n: 1 }]);
   });
 
-  it('keeps today\'s prompt labels: the account speaker is "owner" (personal) or "person" (entity), contacts by name', async () => {
+  it('labels speakers: personal "me" and contacts by name with their C-number (8.4); entity "person" (unchanged)', async () => {
     const run = async (user: string, conversation: string, messages: object[], participants: object[] = []) => {
       const res = await ingest(user, { conversation: { externalId: conversation, participants }, messages });
       llm.queue.push({});
@@ -127,8 +127,14 @@ describe('memory identity (D50)', () => {
       { externalId: 'a', role: 'user', content: 'Oggi corsa al parco.', sentAt: at(1) },
       { externalId: 'b', role: 'other', authorRef: 'g', content: 'Brava!', sentAt: at(2) },
     ], [{ ref: 'g', role: 'other', displayName: 'Giulia', identity: { externalUserId: 'giulia' } }]);
-    expect(personalPrompt).toContain(' owner: Oggi corsa al parco.');
-    expect(personalPrompt).toContain(' other:Giulia: Brava!');
+    expect(personalPrompt).toContain(' me: Oggi corsa al parco.');
+    expect(personalPrompt).toMatch(/ Giulia \[C\d+\]: Brava!/);
+    expect(personalPrompt).toMatch(/PEOPLE I KNOW:\nC\d+: Giulia/);
+    // An identified contact sent as `user` with its authorRef (connectors after 8.4) is that contact, not "me".
+    const asUser = await run('andrea', 'l1b', [
+      { externalId: 'a', role: 'user', authorRef: 'g', content: 'Sono arrivata.', sentAt: at(3) },
+    ], [{ ref: 'g', role: 'other', displayName: 'Giulia', identity: { externalUserId: 'giulia' } }]);
+    expect(asUser).toMatch(/ Giulia \[C\d+\]: Sono arrivata\./);
     const entityPrompt = await run('casa', 'l2', [
       { externalId: 'a', role: 'user', authorRef: 'owner', content: 'Ho comprato il pane.', sentAt: at(1) },
     ], [{ ref: 'owner', role: 'owner' }]);

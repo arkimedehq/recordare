@@ -54,18 +54,21 @@ _PRECISION = _p("How precise the date is", enum=["day", "month", "year", "approx
 # already captured. Extra arguments are tolerated (dropped before the call).
 TOOLS: List[Dict[str, Any]] = [
     {"name": "recordare_search_episodes",
-     "description": "Search what the user lived, did or planned (events, plans, changes), with dates and status. Use "
-                    "from/to for questions about a period. mode: \"search\" = most relevant, \"list\" = chronological in "
-                    "the period (overviews, counting), \"latest\" = most recent first (\"when did I last…\").",
+     "description": "Search your memory of what happened: what you lived, did, planned or learned, and what happened "
+                    "to the people you know, with dates and status. Each item has a subject: you (first person), a person "
+                    "by name, someone, or undecided. Use from/to for questions about a period. mode: \"search\" = most "
+                    "relevant, \"list\" = chronological in the period (overviews, counting), \"latest\" = most recent "
+                    "first (\"when did I last…\").",
      "parameters": {"type": "object", "properties": {
-         "query": _p("What to look for — pass the user's question also when listing a period"),
+         "query": _p("What to look for — pass the question also when listing a period"),
          "from": _p(f"Start date, {_ISO}"), "to": _p(f"End date (inclusive), {_ISO}"),
          "mode": _p("search | list | latest", enum=["search", "list", "latest"]),
          "include_plans": _p("Include plans (default true)", "boolean"),
          "limit": _p("Max items (1-50)", "integer")}, "required": []}},
     {"name": "recordare_search_memory",
-     "description": "Search who the user is: preferences, habits, values, relationships, knowledge and current state "
-                    "(car, home, job…). Use as_of for \"what was it on that date\"; each fact comes with its history.",
+     "description": "Search your memory of preferences, habits, values, relationships, knowledge and current state "
+                    "(car, home, job…) — yours and of the people you know; each item has its subject. Use as_of for "
+                    "\"what was it on that date\"; each fact comes with its history.",
      "parameters": {"type": "object", "properties": {
          "query": _p("Topic"), "as_of": _p("ISO date YYYY-MM-DD; default today"),
          "include_pending": _p("Include facts awaiting confirmation", "boolean")}, "required": ["query"]}},
@@ -81,12 +84,12 @@ TOOLS: List[Dict[str, Any]] = [
          "category": _p("Kind of note", enum=["preference", "habit", "value", "relationship", "knowledge", "profile",
                                                "constraint"])}, "required": ["content"]}},
     {"name": "recordare_correct_episode",
-     "description": "The user corrects a remembered episode (wrong date or detail). The old version is kept as history.",
+     "description": "Correct a remembered episode (wrong date or detail). The old version is kept as history.",
      "parameters": {"type": "object", "properties": {
          "id": _p("Episode id (from recordare_search_episodes)"), "content": _p("Corrected text"),
          "occurred_at": _p(f"Corrected date, {_ISO}"), "date_precision": _PRECISION}, "required": ["id"]}},
     {"name": "recordare_forget_episode",
-     "description": "The user asks to forget an episode. It is deleted with its corrections and never recreated.",
+     "description": "Forget an episode, when asked to. It is deleted with its corrections and never recreated.",
      "parameters": {"type": "object", "properties": {"id": _p("Episode id (from recordare_search_episodes)")},
                     "required": ["id"]}},
 ]

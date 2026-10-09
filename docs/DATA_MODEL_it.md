@@ -234,6 +234,73 @@ sull'ambito; `person_aliases.source` + `client`; `external_identities.kind` `acc
   partecipante `owner` delle conversazioni di entità perde l'entità come persona. `down` ripristina la forma precedente
   (gli id di partecipante di un client vengono eliminati; i contatti restano).
 
+**Come costruito (8.4, prima persona personale — `extract.v12`, `facts.v2`; migrazione `ContactClarification1791080000000`).** Solo memorie
+personali; le memorie di entità mantengono le regole della 8.3 e input dei prompt identici byte per byte fino alla 8.5.
+- *Voce* — ogni episodio, nota e piano di una memoria personale è scritto in **prima persona**, nella lingua della
+  conversazione, con `owners.gender` per l'accordo; i turni non dichiarati del titolare dell'account e quelli
+  dell'assistente sono entrambi "io", senza distinzione nel testo (chi l'ha detto resta in `messages.author_kind` /
+  `author_role` / `origin`, come dato). Il contenuto esterno (web, strumenti, file) è qualcosa che "io" ho imparato (la
+  regola delle notizie di extract.v11 e l'esclusione di ciò che altri affermano sul sé restano). Il prompt riceve i nomi
+  del sé (`ME`: nome visualizzato + alias, con il genere), `MEMORY LANGUAGE`, i contatti che riguardano la finestra
+  (`PEOPLE I KNOW`, numerati C1…: nominati nella finestra, i suoi partecipanti, i soggetti dei fatti elencati, i
+  candidati delle domande aperte; al massimo 30) e le domande aperte (`OPEN QUESTIONS`, Q1…, al massimo 5). Interlocutori:
+  `me`, `me (assistant)`, `me (own)`, `Nome [C3]` (un contatto identificato), `other:Nome` (solo un nome visualizzato),
+  `someone`, `tool:x`. I fatti attuali sono elencati per tutti i soggetti (`[me]` / `[Nome]`).
+- *Soggetti* — il modello indica il soggetto di ogni episodio, fatto e nota: `me`, un numero C, `Nome (relazione)` o
+  `someone`, oppure `undecided` con i numeri C candidati e una domanda. Lo scrittore collega i nomi ai contatti
+  (`ContactBook`): i nomi del sé → sé; una sola corrispondenza → quel contatto, salvo che la relazione o il nome completo
+  dicano altro (allora un nuovo contatto — nessuna fusione sbagliata); più corrispondenze → ristrette per relazione, poi
+  per nome completo, altrimenti `undecided` con tutte; nessuna corrispondenza → un nuovo contatto (`relation`,
+  `full_name` per due o più parole con la maiuscola, il nome di battesimo come alias). Le persone degli episodi sono
+  collegate allo stesso modo (solo i nomi creano contatti: "amiche del nuoto" no). I fatti di `someone` o di una persona
+  indecisa vengono scartati; anche le note di `someone`.
+- *Partecipanti identificati* (decisione del titolare 2026-10-09: un nome di battesimo da solo non dice che un
+  partecipante è un contatto noto solo per nome — "mia sorella Giulia" e una Giulia che scrive in un gruppo possono essere
+  due persone) — un'identità di partecipante vista per la prima volta si **lega** a un contatto esistente solo con una
+  prova forte: il suo nome visualizzato è un nome completo (due o più parole) uguale (senza distinzione di maiuscole e
+  accenti) al nome visualizzato, al nome completo o a un alias di esattamente un contatto che non ha ancora un'identità.
+  Altrimenti un **nuovo contatto**; quando esattamente un contatto senza identità condivide il nome (il nome di battesimo
+  del partecipante è uno dei suoi nomi, oppure — per un partecipante con un solo nome — la prima parola di uno di essi;
+  mai un contatto il cui nome completo noto differisce da quello del partecipante), una memoria personale apre una
+  **chiarificazione "stessa persona?"** (`clarifications.contact_id` = il nuovo contatto, `candidates` = quello noto,
+  nessun elemento; la domanda in italiano quando la lingua della memoria è l'italiano, altrimenti in inglese: "Giulia, che
+  ha scritto il 22 settembre, è la stessa persona di Giulia (sorella)?", `created_at` = l'ora del primo messaggio del
+  lotto). Più contatti di questo tipo: un nuovo contatto e nessuna domanda (niente spam; il Diario può fonderli a mano).
+  Le memorie di entità non chiedono mai (fino alla 8.5). Le auto-presentazioni con relazione ("sono Giulia, la sorella di
+  Andrea") e gli identificatori riconosciuti sono altre strade (non all'ingest).
+- *Provenienza* — ciò che altri dicono del sé resta un'affermazione (`stance = inferred`, fatti in sospeso); ciò che una
+  persona dice di sé è `stated` per quel soggetto (la notizia di Giulia, i fatti di Giulia); gli elementi solo da
+  strumenti restano `inferred`. La guardia del nome nella finestra si applica ai soggetti (un contatto deve essere
+  nominato nella finestra o parlarvi); la guardia anti-eco e le regole sulle evidenze non cambiano.
+- *Chiarificazioni* — un episodio o una nota `undecided` riceve una riga `clarifications` (la domanda del modello, oppure
+  "Marco? Marco (cugino) / Marco Bellini (collega)" quando non ne ha data una; `created_at` = l'ora dell'ultimo messaggio
+  della finestra). Le finestre successive la vedono in OPEN QUESTIONS; una risposta (`answers: [{question, contact,
+  evidence}]`) sostenuta dal messaggio di una persona (mai una risposta dell'assistente o uno strumento) e che indica uno
+  dei candidati la risolve — insieme a ogni domanda aperta con lo stesso testo e gli stessi candidati: il soggetto
+  dell'elemento diventa quel contatto, le persone dell'episodio non collegate con quel nome vengono collegate,
+  `resolved_person_id` / `resolution` (il nome del contatto) / `resolved_at` vengono impostati; il testo della memoria
+  non viene mai riscritto. Le domande aperte scadono dopo 14 giorni (`CLARIFICATION_TTL_DAYS`, una costante): verificato
+  all'estrazione (alla data della finestra), in lettura (alla data della richiesta) e dalla consolidazione notturna. Una
+  domanda "stessa persona?" è elencata come `Q1: <domanda> (about: C2 — the same person as C1?; answer C1 if yes, C2 if
+  not)` (entrambi i contatti sono in PEOPLE I KNOW) e ha risposta allo stesso modo: il contatto noto → i due vengono
+  **fusi** (`resolution` `same person`); il nuovo contatto stesso → restano separati (`different person`). Il Diario /
+  l'admin la risolveranno con la stessa funzione (`resolveClarification`).
+- *Fusione* (`service/src/engine/contacts.ts` → `mergeContacts`, un solo punto) — il nuovo contatto viene fuso in quello
+  noto: ogni riferimento si sposta (identità di partecipante, alias — i duplicati eliminati —,
+  `conversation_participants`, `messages.author_person_id`, `episode_people`, `subject_person_id` / `confidence_of` /
+  `subject_candidates` / `audience` su episodi, fatti, note (e `audience` sui digest), candidati / `resolved_person_id` /
+  `contact_id` delle chiarificazioni), `full_name` e `relation` restano quelli del contatto noto o vengono presi da quello
+  fuso; un fatto a valore singolo attuale per entrambi tiene il più recente (il più vecchio diventa `superseded`); un
+  elemento indeciso tra i due diventa del contatto fuso e una domanda aperta rimasta con un solo candidato viene risolta;
+  poi la riga fusa viene eliminata. Il testo della memoria non viene mai riscritto.
+- *Gate* — una finestra personale costa una chiamata quando parla chiunque tranne l'assistente o uno strumento (il sé,
+  un contatto, qualcuno, contenuto proprio); un contatto identificato inviato come `user` con il suo `authorRef` è quel
+  contatto, non il sé (SQL `memorySpeaker`, usato anche dalla ricerca nel log grezzo e dalle scritture MCP).
+- *Rilevatore di fughe* (sostituisce `nameOwner` della 4.11, rimosso) — `extraction_runs.summary.leaks` conta gli episodi
+  e le note scritti che parlano ancora del sé in terza persona (uno dei suoi nomi, o un sostituto come "the user",
+  "l'utente", "the owner", "the assistant", nelle lingue più usate: `service/src/lang/self.ts`); solo conteggi, con
+  `summary.clarifications` (`asked`, `resolved`) e `returned.answers`.
+
 ## Layer 0 — log grezzo
 
 ### conversations
@@ -433,13 +500,16 @@ message_ids uuid[] (i messaggi di evidenza dimenticati, nascosti dalla ricerca n
 conversation_id null, created_at` — controllato **prima di inserire qualsiasi
 episodio o fatto** (sweep notturno, ri-estrazione, dedup), così il contenuto dimenticato non ritorna mai.
 
-### clarifications (D50, visione L1) — created, unused yet (WORK_PLAN 8.4 / 8.5)
+### clarifications (D50, visione L1; comportamento WORK_PLAN 8.4)
 `id, owner_id → owners (CASCADE), question text, candidates uuid[] (contatti), episode_id / fact_id / note_id null
-(CASCADE; al più uno), status enum (open|resolved|expired) default open, resolution text null (la risposta così come
-data), resolved_person_id null → persons (SET NULL), created_at, resolved_at null (impostato esattamente quando non è
+(CASCADE; al più uno), contact_id null → persons (CASCADE; migrazione `ContactClarification1791080000000`: il nuovo
+contatto di una domanda "stessa persona?" — allora nessun elemento), status enum (open|resolved|expired) default open,
+resolution text null (la risposta così come data: il nome del contatto scelto, oppure `same person` / `different
+person`), resolved_person_id null → persons (SET NULL), created_at, resolved_at null (impostato esattamente quando non è
 open)`; indice parziale `(owner_id, created_at) WHERE status = 'open'`. Una domanda a cui Recordare vuole una risposta
-("quale Marco — il collega o il cugino?"); il contesto di memoria offrirà al più una domanda aperta pertinente, la
-risposta aggiunge l'attribuzione alla successiva estrazione, quelle senza risposta scadono, il Diario le risolve a mano.
+("quale Marco — il collega o il cugino?", "questa Giulia è mia sorella?"); il contesto di memoria offre al più una
+domanda aperta pertinente, la risposta aggiunge l'attribuzione (o fonde due contatti) alla successiva estrazione, quelle
+senza risposta scadono, il Diario le risolve a mano.
 
 ### read_audit (public profile)
 `id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], viewer_source enum

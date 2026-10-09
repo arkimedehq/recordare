@@ -17,7 +17,7 @@ import { type ExtractionInput, type FactRef, type WindowMessage } from './extrac
 import { ExtractionWriter, type WrittenRow } from './extraction.writer';
 import { FACTS_REVIEW_SYSTEM, FACTS_REVIEW_VERSION, factsReviewSchema } from './facts-review.prompt';
 import { localDate } from './time';
-import { accountSpeaker } from '../rawlog/attribution';
+import { accountSpeaker, type AuthorKind } from '../rawlog/attribution';
 
 /** Episodes per review: the oldest new ones first; the rest wait for the next night. */
 const MAX_EPISODES = 300;
@@ -53,15 +53,17 @@ export class FactsReviewService {
 
     // One message behind each episode stands for its evidence (number n ↔ episode n).
     const evidence: Array<{ episode_id: string; id: string; role: WindowMessage['role']; tool_name: string | null;
-      account_speaker: boolean; content: string; sent_at: Date }> = await this.db.query(
-      `SELECT DISTINCT ON (v.episode_id) v.episode_id, m.id, m.role, m.tool_name, ${accountSpeaker('m')} AS account_speaker, m.content, m.sent_at
+      account_speaker: boolean; author_kind: AuthorKind; author_person_id: string | null; content: string; sent_at: Date }> = await this.db.query(
+      `SELECT DISTINCT ON (v.episode_id) v.episode_id, m.id, m.role, m.tool_name, ${accountSpeaker('m')} AS account_speaker, m.author_kind,
+         m.author_person_id, m.content, m.sent_at
        FROM episode_evidence v JOIN messages m ON m.id = v.message_id WHERE v.episode_id = ANY($1) ORDER BY v.episode_id, m.sent_at`,
       [episodes.map((e) => e.id)]);
     const byEpisode = new Map(evidence.map((m) => [m.episode_id, m]));
     const listed = episodes.filter((e) => byEpisode.has(e.id));
     const messages: WindowMessage[] = listed.map((e) => {
       const m = byEpisode.get(e.id)!;
-      return { id: m.id, role: m.role, toolName: m.tool_name, accountSpeaker: m.account_speaker, authorName: null, content: m.content, sentAt: m.sent_at };
+      return { id: m.id, role: m.role, toolName: m.tool_name, accountSpeaker: m.account_speaker, authorKind: m.author_kind,
+        authorPersonId: m.author_person_id, authorName: null, content: m.content, sentAt: m.sent_at };
     });
 
     const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null }> = await this.db.query(

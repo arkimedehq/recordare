@@ -14,7 +14,7 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   (in qualsiasi lingua supportata, giorni della settimana compresi) aggiunge gli episodi di quel periodo; soglie
   configurabili (`CONTEXT_MIN_*_SIMILARITY`).
 - **Lingue**: `service/src/lang` — espressioni di periodo e nomi di mesi / giorni da Intl per 25 delle lingue più usate;
-  tabelle di parentele e del nome della persona per molte lingue.
+  tabelle di parentele e dei sostituti in terza persona del sé (rilevatore di fughe, 8.4) per molte lingue.
 - **Chiamate per i connettori**: `POST api/v1/ingest/conversations/{id}/end`; `POST api/v1/context {ingest}` (salva il
   turno e restituisce il contesto in una chiamata); i token personali leggono prima che la conversazione sia salvata;
   `TOOLS` (schemi degli strumenti MCP) nella libreria client; i connettori li usano.
@@ -52,6 +52,23 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   modo, genere, contatti e tipi di identità. Libreria client: `MemoryKind` → `MemoryMode` + `MemoryGender`, `Me.kind` →
   `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` → `mode`, `IngestMessage.own`, le nuove
   sorgenti. I prompt di estrazione e i loro input non cambiano.
+- **Prima persona nella memoria personale** (D50, WORK_PLAN 8.4) — **incompatibile per i risultati MCP**. Una memoria
+  personale è scritta in prima persona (`extract.v12`, `facts.v2`), nella lingua della conversazione e con il genere
+  della memoria: il titolare dell'account e l'assistente sono un solo "io". Ogni episodio, fatto e nota riceve un
+  soggetto collegato ai contatti della memoria (creati quando una persona è solo nominata, fusi solo quando è chiaro);
+  una persona ambigua ("quale Marco?") è salvata come indecisa con una chiarificazione a cui risponde una conversazione
+  successiva o che scade dopo 14 giorni; un'identità di partecipante vista per la prima volta si lega a un contatto noto
+  solo quando il suo nome completo corrisponde a esattamente un contatto senza identità — con il solo nome di battesimo
+  diventa un nuovo contatto con una chiarificazione "stessa persona?", il cui "sì" fonde i due contatti (migrazione
+  `ContactClarification1791080000000`: `clarifications.contact_id`). `search_episodes` / `search_memory` restituiscono `memory {name, mode}` (era `owner {name}`),
+  il `subject` di ogni elemento (fatti: `subject` sostituisce `about`), `speaker` (chi sta chiedendo; chi è identificato
+  riceve per primi i propri elementi) e `clarifications`; in una memoria personale i `claims` sono affermazioni di altri
+  su qualcun altro (la notizia che una persona dà di sé è sua, l'output di uno strumento è un apprendimento dell'agente).
+  Il contesto di memoria parla all'agente come al sé della memoria, nomina gli elementi delle altre persone e può offrire
+  una domanda ("if natural, ask: …"). Le descrizioni degli strumenti parlano della "tua memoria". `nameOwner` è
+  sostituito da un rilevatore di fughe (conteggi nel riepilogo dell'esecuzione). Una finestra personale in cui parlano
+  solo altre persone ora costa una chiamata di estrazione. Le memorie di entità non cambiano fino alla 8.5. Libreria
+  client: `TOOLS` rigenerato.
 - **Connettori: una memoria per agente, le persone come partecipanti** (D50) — **incompatibile per le installazioni con
   più persone**. OpenClaw: l'agente del Gateway ha una sola memoria (un token personale, o una chiave client con
   `defaultUser`); ogni mittente è un partecipante con l'identità di canale `<canale>:<senderId>` e il nome che ha sul

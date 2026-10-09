@@ -16,6 +16,7 @@ import { ConsentWaiting1791040000000 } from './migrations/1791040000000-ConsentW
 import { RunSummary1791050000000 } from './migrations/1791050000000-RunSummary';
 import { NoConsent1791060000000 } from './migrations/1791060000000-NoConsent';
 import { MemoryIdentity1791070000000 } from './migrations/1791070000000-MemoryIdentity';
+import { ContactClarification1791080000000 } from './migrations/1791080000000-ContactClarification';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -26,7 +27,7 @@ import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog
 export const ENTITIES = [Person, Owner, Client, ApiKey, AccessToken, ExternalIdentity, Clarification, Conversation, ConversationParticipant, Message];
 export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, MessageAuthorRef1790970000000, OwnerQualityProfile1790980000000, Consolidation1790990000000, RecallLog1791000000000, RecallLogConversation1791010000000, FactsReview1791020000000,
   EntityMemory1791030000000, ConsentWaiting1791040000000, RunSummary1791050000000, NoConsent1791060000000,
-  MemoryIdentity1791070000000];
+  MemoryIdentity1791070000000, ContactClarification1791080000000];
 
 export function dataSourceOptions(url: string): DataSourceOptions {
   return { type: 'postgres', url, entities: ENTITIES, migrations: MIGRATIONS, migrationsRun: false, synchronize: false };

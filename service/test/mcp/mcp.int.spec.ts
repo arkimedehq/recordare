@@ -249,8 +249,9 @@ describe('MCP endpoint', () => {
     const rows: Array<{ id: string }> = [];
     for (const [content, role] of [['Backup del NAS su disco USB fatto', 'owner'], ['Backup del NAS spostato al cloud', 'owner'], ['Backup del NAS rotto, dice Guest', 'other']]) {
       const [r] = await db.query(
-        `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, occurred_at, date_precision)
-         VALUES ($1, 'event', $2, 'owner_lived', $3, $4, '2026-01-22T20:00:00Z', 'day') RETURNING id`, [ownerId, content, role, [ownerId]]);
+        `INSERT INTO episodes (owner_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision)
+         VALUES ($1, 'event', $2, 'owner_lived', $3, $5, $4, '2026-01-22T20:00:00Z', 'day') RETURNING id`,
+        [ownerId, content, role, [ownerId], role === 'other' ? 'inferred' : 'stated']);
       rows.push(r);
     }
     const { client } = await connect(url, { authorization: `Bearer ${token}` });
@@ -260,7 +261,9 @@ describe('MCP endpoint', () => {
     expect((out['claims'] as Array<{ authorRole: string; claimedBy?: string[] }>)).toEqual([expect.objectContaining({ authorRole: 'other', claimedBy: [] })]);
     expect((out['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).toContain(msg.id);
     expect((out['notes'] as string[]).some((n) => n.includes('"claims"'))).toBe(true);
-    expect(out['owner']).toEqual({ name: 'Luca' }); // items speak of the owner in the third person
+    expect(out['memory']).toEqual({ name: 'Luca', mode: 'personal' }); // the memory's self: items in the first person
+    expect(out['speaker']).toEqual({ kind: 'self' }); // a personal token, no conversation: the self asks
+    expect((out['episodes'] as Array<{ subject: unknown }>)[0]?.subject).toEqual({ kind: 'self' });
     // The owner's own words stay even when an episode stands on that message ("I asked you" is not in the episode).
     await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2)`, [rows[0]?.id, msg.id]);
     const again = await search(client, { query: 'backup del NAS' });

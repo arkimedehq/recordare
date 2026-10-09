@@ -103,7 +103,7 @@ export class ExternalIdentity {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
 }
 
-/** A question Recordare wants answered ("which Marco?"), D50 / vision L1. Created in 8.3; no behaviour yet (8.4 / 8.5). */
+/** A question Recordare wants answered ("which Marco?", "is this Giulia my sister?"), D50 / vision L1 (8.4). */
 @Entity('clarifications')
 export class Clarification {
   @PrimaryGeneratedColumn('uuid') id!: string;
@@ -114,6 +114,8 @@ export class Clarification {
   @Column({ name: 'episode_id', type: 'uuid', nullable: true }) episodeId!: string | null;
   @Column({ name: 'fact_id', type: 'uuid', nullable: true }) factId!: string | null;
   @Column({ name: 'note_id', type: 'uuid', nullable: true }) noteId!: string | null;
+  /** A "same person?" question (8.4): the new contact that may be one of the candidates (no item then). */
+  @Column({ name: 'contact_id', type: 'uuid', nullable: true }) contactId!: string | null;
   @Column({ type: 'enum', enumName: 'clarification_status', enum: ['open', 'resolved', 'expired'], default: 'open' }) status!: 'open' | 'resolved' | 'expired';
   /** The answer as given. */
   @Column({ type: 'text', nullable: true }) resolution!: string | null;

@@ -10,7 +10,7 @@ export const TOOLS = [
   {
     "name": "correct_episode",
     "title": "Correct a memory",
-    "description": "The user corrects a remembered episode (wrong date or detail). The old version is kept as history, never shown as current.",
+    "description": "Correct a remembered episode (wrong date or detail). The old version is kept as history, never shown as current.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -45,7 +45,7 @@ export const TOOLS = [
   {
     "name": "forget_episode",
     "title": "Forget a memory",
-    "description": "The user asks to forget an episode. It is deleted with its corrections and never recreated.",
+    "description": "Forget an episode, when asked to. It is deleted with its corrections and never recreated.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -113,7 +113,7 @@ export const TOOLS = [
   },
   {
     "name": "remember",
-    "title": "Remember something about the user",
+    "title": "Remember something",
     "description": "Explicit \"remember that…\" about preferences, habits, values, knowledge.",
     "inputSchema": {
       "type": "object",
@@ -160,12 +160,12 @@ export const TOOLS = [
   {
     "name": "search_episodes",
     "title": "Search what happened",
-    "description": "Search what the user lived, did or planned (events, plans, changes), with dates and status. Use `from`/`to` (ISO dates, inclusive; see resolve_period) for questions about a period. mode: \"search\" = most relevant, \"list\" = chronological in the period (overviews, counting), \"latest\" = most recent first (\"when did I last…\").",
+    "description": "Search your memory of what happened: what you lived, did, planned or learned, and what happened to the people you know (events, plans, changes), with dates and status. Each item has a subject: you (written in the first person), a person by name, someone, or undecided. Use `from`/`to` (ISO dates, inclusive; see resolve_period) for questions about a period. mode: \"search\" = most relevant, \"list\" = chronological in the period (overviews, counting), \"latest\" = most recent first (\"when did I last…\").",
     "inputSchema": {
       "type": "object",
       "properties": {
         "query": {
-          "description": "What to look for — pass the user's question also when listing a period: it ranks the items and finds the matching chat excerpts",
+          "description": "What to look for — pass the question also when listing a period: it ranks the items and finds the matching chat excerpts",
           "type": "string"
         },
         "from": {
@@ -200,8 +200,8 @@ export const TOOLS = [
   },
   {
     "name": "search_memory",
-    "title": "Search who the user is",
-    "description": "Search preferences, habits, values, relationships, knowledge and current state (car, home, job…). Use `as_of` (ISO date) for \"what was it on that date\" questions; each fact comes with its history.",
+    "title": "Search what you know about yourself and others",
+    "description": "Search your memory of preferences, habits, values, relationships, knowledge and current state (car, home, job…) — yours and of the people you know; each item has its subject. Use `as_of` (ISO date) for \"what was it on that date\" questions; each fact comes with its history.",
     "inputSchema": {
       "type": "object",
       "properties": {

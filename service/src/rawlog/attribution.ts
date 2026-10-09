@@ -40,3 +40,12 @@ export const SOMEONE: Attribution = { kind: 'someone', personId: null, method: '
 export const accountSpeaker = (m: string): string =>
   `(${m}.role = 'user' OR ${m}.author_kind IN ('self', 'own') OR EXISTS (SELECT 1 FROM conversation_participants asp
      WHERE asp.conversation_id = ${m}.conversation_id AND asp.ref = ${m}.author_ref AND asp.role = 'owner'))`;
+
+/**
+ * SQL predicate: the message is the memory's own turn in either mode — personal memories (8.4): the self or own content
+ * (`author_kind`), so an identified contact's `user` turn is theirs; entity memories: `accountSpeaker` (unchanged until
+ * 8.5). `m` is the alias of `messages`.
+ */
+export const memorySpeaker = (m: string): string =>
+  `(CASE WHEN (SELECT o.mode FROM owners o WHERE o.person_id = ${m}.owner_id) = 'personal'
+     THEN ${m}.author_kind IN ('self', 'own') ELSE ${accountSpeaker(m)} END)`;

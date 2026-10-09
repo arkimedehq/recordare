@@ -21,6 +21,7 @@ import { type Env } from '../config/env';
 import { FactsReviewService } from './facts-review.service';
 import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
 import { qualityProfile, type QualityProfileName } from './quality-profile';
+import { expireClarifications } from './clarifications';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
@@ -70,6 +71,8 @@ export class ConsolidationService {
     const [owner] = await this.db.query(
       `SELECT o.timezone, o.locale, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
     if (!owner) return;
+    // Open clarifications nobody answered expire (D50 / 8.4; also checked on read and at extraction).
+    await expireClarifications(this.db, ownerId, now);
     const tz: string = owner.timezone;
     const today = localDate(now, tz);
     const episodes: EpisodeRow[] = await this.db.query(

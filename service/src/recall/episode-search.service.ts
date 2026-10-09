@@ -7,6 +7,8 @@
  * in-range items only when a period is given; `list` is chronological, `latest` most recent first.
  * Plan statuses are always explicit — a past plan never confirmed is shown as unresolved.
  * Relevant episodes first, free places filled; a few raw-log hits always come along (more when episodes are few or weak).
+ * Every item carries its subject (D50, 8.4); in a personal memory an identified speaker asking gets their own items first,
+ * and open clarifications about the people involved come along.
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -19,6 +21,9 @@ import { qualityProfile, type QualityProfileName } from '../engine/quality-profi
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { logRecall } from './recall-log';
 import { peopleInQuestion } from './people';
+import { contactNames, speakerOf, subjectView, type Speaker, type SubjectRow, type SubjectView } from './subjects';
+import { relevantClarifications } from '../engine/clarifications';
+import { type MemoryMode, type SubjectKind } from '../identity/identity.entities';
 
 export interface EpisodeSearchArgs {
   /** The conversation the recall is served in (recall log: lets the extractor recognise answers from memory). */
@@ -40,7 +45,9 @@ export interface EpisodeView {
   rescheduledTo?: string;
   origin: 'owner_lived' | 'owner_told' | 'assistant_stated';
   authorRole: 'owner' | 'assistant' | 'other' | 'tool';
-  /** Who wrote the evidence when it is someone else's claim (authorRole other / tool): names, never the owner. */
+  /** Whose memory it is: the self (first person), a contact, someone, or undecided between candidates (D50). */
+  subject: SubjectView;
+  /** Who wrote the evidence when it is someone else's claim (authorRole other / tool): names, never the self. */
   claimedBy?: string[];
   inferred: boolean;
   people: string[];
@@ -49,17 +56,24 @@ export interface EpisodeView {
   source: { conversation: string; messageIds: string[]; at: string };
 }
 
+/** Whose memory this is: personal — written in the first person, "I" is `name`; entity — the shared memory `name`. */
+export interface MemoryView { name: string; mode: MemoryMode }
+
 export interface EpisodeSearchResult {
-  /** Whose memory this is: items name the owner in the third person ("Elena ha…") — that is the user asking. */
-  owner: { name: string };
+  memory: MemoryView;
+  /** Personal memories: who is asking — the self, or an identified contact ("I" in the question is that contact). */
+  speaker?: { kind: 'self' } | { kind: 'contact'; name: string };
   period?: { from: string | null; to: string | null };
   /** The diary of the period (M5), for `list` requests: day entries for spans up to ~6 weeks, months for longer. */
   digests: Array<{ level: 'day' | 'month'; from: string; to: string; text: string }>;
-  /** What the owner lived, said or planned (authorRole owner / assistant). */
+  /** What the memory holds as lived, done, planned or learned (each with its subject). */
   episodes: EpisodeView[];
-  /** Other people's and tools' statements (authorRole other / tool), kept apart so that an answer never mixes them
-   * with the owner's memories: claims about the owner are unconfirmed; news about themselves is theirs. */
+  /** Other people's statements kept apart so an answer never mixes them with the memory's own: personal memories —
+   * what someone said about another person (about the self, or a third person); a person's news about themself is an
+   * episode of theirs. Entity memories (until 8.5): everything others or tools said. */
   claims: EpisodeView[];
+  /** Personal memories: open questions about people involved ("Marco chi — il collega o il cugino?"), to ask if natural. */
+  clarifications?: string[];
   outsidePeriod: EpisodeView[];
   fromChats: Array<Omit<RawHit, 'score'>>;
   notes: string[];
@@ -69,7 +83,7 @@ interface Row {
   id: string; kind: EpisodeView['kind']; content: string; occurred_at: Date | null; occurred_until: Date | null;
   date_precision: Precision; plan_status: EpisodeView['planStatus'] | null; rescheduled_to: string | null; origin: EpisodeView['origin'];
   author_role: EpisodeView['authorRole']; stance: 'stated' | 'inferred'; importance: number; feelings: string[]; opinion: string | null;
-  recorded_at: Date;
+  recorded_at: Date; subject_kind: SubjectKind; subject_person_id: string | null; subject_candidates: string[] | null;
 }
 
 const RRF_K = 60;
@@ -81,6 +95,9 @@ const RAW_HITS = 3;
 const PEOPLE_HITS = 3;
 /** Periods up to this many days get the day diary; longer ones the month summaries. */
 const DIGEST_DAY_SPAN = 45;
+/** Ranking bonus of an identified speaker's own items (and, half of it, of items they took part in). */
+const SPEAKER_BONUS = 0.02;
+const MAX_CLARIFICATIONS = 2;
 
 @Injectable()
 export class EpisodeSearchService {
@@ -105,7 +122,12 @@ export class EpisodeSearchService {
 
   private async searchNow(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
     const [owner] = await this.db.query(
-      `SELECT o.locale, o.timezone, o.quality_profile, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+      `SELECT o.locale, o.timezone, o.quality_profile, o.mode, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
+    const personal = owner.mode === 'personal';
+    const speaker: Speaker = personal ? await speakerOf(this.db, args.conversationId, now) : { kind: 'self' };
+    const theirs = speaker.kind === 'contact' ? new Set<string>((await this.db.query(
+      `SELECT DISTINCT ep.episode_id FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id WHERE e.owner_id = $1 AND ep.person_id = $2`,
+      [ownerId, speaker.id])).map((r: { episode_id: string }) => r.episode_id)) : new Set<string>();
     const profile = qualityProfile(owner.quality_profile, this.defaultProfile, undefined, undefined, this.recallDigests);
     const tz: string = owner.timezone;
     const locale: string = owner.locale;
@@ -117,7 +139,7 @@ export class EpisodeSearchService {
 
     const rows: Row[] = await this.db.query(
       `SELECT id, kind, content, occurred_at, occurred_until, date_precision, plan_status, rescheduled_to, origin, author_role, stance,
-              importance, feelings, opinion, recorded_at
+              importance, feelings, opinion, recorded_at, subject_kind, subject_person_id, subject_candidates
        FROM episodes
        WHERE owner_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL
          AND ($2::boolean OR kind <> 'plan')`,
@@ -134,7 +156,9 @@ export class EpisodeSearchService {
     const relevant = (r: Row) => !args.query || relevance.has(r.id);
     const score = (r: Row) => {
       const ageDays = Math.max(0, (now.getTime() - (r.occurred_at ?? r.recorded_at).getTime()) / 86_400_000);
-      return (relevance.get(r.id) ?? 0) + 0.01 * r.importance + 0.03 * Math.exp(-ageDays / 90);
+      // An identified speaker asking about themself: their own items first, then those they took part in.
+      const own = speaker.kind === 'contact' ? (r.subject_person_id === speaker.id ? SPEAKER_BONUS : theirs.has(r.id) ? SPEAKER_BONUS / 2 : 0) : 0;
+      return (relevance.get(r.id) ?? 0) + 0.01 * r.importance + 0.03 * Math.exp(-ageDays / 90) + own;
     };
     const limit = args.limit ?? (mode === 'list' ? 30 : mode === 'latest' ? 5 : 10);
     const candidates = rows.filter(inRange);
@@ -153,13 +177,22 @@ export class EpisodeSearchService {
     } else {
       chosen = [...ranked, ...rest((r) => similarity.get(r.id) ?? -1).filter((r) => similarity.has(r.id))].slice(0, limit);
     }
+    if (speaker.kind === 'contact' && mode !== 'list') {
+      // An identified speaker: their own items first, then those they took part in, then the rest (each in rank order).
+      const rank = (r: Row) => (r.subject_person_id === speaker.id ? 0 : theirs.has(r.id) ? 1 : 2);
+      chosen = chosen.map((r, i) => ({ r, i })).sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i).map((x) => x.r);
+    }
     const outside = chosen.length === 0 && hasPeriod && args.query
       ? rows.filter((r) => !inRange(r) && relevant(r)).sort((a, b) => score(b) - score(a)).slice(0, 5)
       : [];
 
     const views = await this.views([...chosen, ...outside], tz, locale, now);
+    const isClaim = personal ? isPersonalClaim : isEntityClaim;
+    const it = locale === 'it';
+    const name: string = owner.display_name;
     const result: EpisodeSearchResult = {
-      owner: { name: owner.display_name },
+      memory: { name, mode: owner.mode },
+      ...(personal ? { speaker: speaker.kind === 'contact' ? { kind: 'contact' as const, name: speaker.name } : { kind: 'self' as const } } : {}),
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
       // The diary serves overviews of a period (mode list); point questions get the episodes themselves.
       digests: hasPeriod && mode === 'list' && profile.recallDigests ? await this.digests(ownerId, from, to) : [],
@@ -174,10 +207,18 @@ export class EpisodeSearchService {
         ? 'alcuni piani hanno la data passata senza conferma: non è noto se siano avvenuti'
         : 'some plans are past their date without confirmation: whether they happened is unknown');
     }
+    if (personal && speaker.kind === 'contact') {
+      result.notes.push(it
+        ? `chi chiede è ${speaker.name}, una persona che conosco: "io" nella domanda è ${speaker.name}; i ricordi in prima persona sono miei (${name}), non di ${speaker.name}`
+        : `the person asking is ${speaker.name}, someone I know: "I" in the question is ${speaker.name}; first-person memories are mine (${name}), not ${speaker.name}'s`);
+    }
     if (result.claims.length) {
-      result.notes.push(locale === 'it'
-        ? '"claims" sono affermazioni di chi è in claimedBy, non ricordi del proprietario: ciò che dicono di lui/lei non è confermato'
-        : '"claims" are statements of the people in claimedBy, not the owner\'s memories: what they say about the owner is unconfirmed');
+      result.notes.push(personal
+        ? (it ? `"claims" sono affermazioni di chi è in claimedBy su altri, non confermate: ciò che dicono di me (${name}) non è un mio ricordo`
+          : `"claims" are statements of the people in claimedBy about others, unconfirmed: what they say about me (${name}) is not my memory`)
+        : it
+          ? '"claims" sono affermazioni di chi è in claimedBy, non ricordi del proprietario: ciò che dicono di lui/lei non è confermato'
+          : '"claims" are statements of the people in claimedBy, not the owner\'s memories: what they say about the owner is unconfirmed');
     }
     // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…") and keeps the
     // owner's own words next to the summaries, so a few raw hits always come along — also when they are behind a
@@ -195,10 +236,17 @@ export class EpisodeSearchService {
       const seen = new Set(hits.map((h) => h.messageId));
       result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId))].map(({ score: _s, ...h }) => h);
       if (result.fromChats.some((h) => h.authorRole !== 'owner')) {
-        result.notes.push(locale === 'it'
-          ? 'gli estratti scritti da altri (author) sono parole loro: ciò che dicono del proprietario non è confermato'
-          : 'excerpts written by others (author) are their words: what they say about the owner is unconfirmed');
+        result.notes.push(personal
+          ? (it ? `gli estratti scritti da altri (author) sono parole loro: ciò che dicono di me (${name}) non è confermato`
+            : `excerpts written by others (author) are their words: what they say about me (${name}) is unconfirmed`)
+          : it
+            ? 'gli estratti scritti da altri (author) sono parole loro: ciò che dicono del proprietario non è confermato'
+            : 'excerpts written by others (author) are their words: what they say about the owner is unconfirmed');
       }
+    }
+    if (personal) {
+      const asks = await relevantClarifications(this.db, ownerId, args.query ?? '', views.map((v) => v.id), now, MAX_CLARIFICATIONS);
+      if (asks.length) result.clarifications = asks.map((c) => c.question);
     }
     this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_episodes', mode,
       episodeIds: result.episodes.map((e) => e.id), claimIds: result.claims.map((e) => e.id), chats: result.fromChats.length, digests: result.digests.length });
@@ -266,6 +314,7 @@ export class EpisodeSearchService {
        LEFT JOIN persons p ON p.id = m.author_person_id
        LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
        WHERE ev.episode_id = ANY($1) ORDER BY m.sent_at`, [ids]);
+    const names = await contactNames(this.db, rows as SubjectRow[]);
     const rescheduled = rows.filter((r) => r.rescheduled_to).map((r) => r.rescheduled_to as string);
     const targets: Array<{ id: string; occurred_at: Date | null; date_precision: Precision }> = rescheduled.length
       ? await this.db.query(`SELECT id, occurred_at, date_precision FROM episodes WHERE id = ANY($1)`, [rescheduled]) : [];
@@ -282,7 +331,7 @@ export class EpisodeSearchService {
         when: describe(r.occurred_at, r.date_precision, tz, locale) + (r.occurred_until ? ` → ${describe(r.occurred_until, 'day', tz, locale)}` : ''),
         ...(planStatus ? { planStatus } : {}),
         ...(target ? { rescheduledTo: describe(target.occurred_at, target.date_precision, tz, locale) } : {}),
-        origin: r.origin, authorRole: r.author_role,
+        origin: r.origin, authorRole: r.author_role, subject: subjectView(r, names),
         ...(r.author_role === 'other' || r.author_role === 'tool'
           ? { claimedBy: [...new Set(ev.filter((e) => e.role === 'other' || e.role === 'tool').map((e) => e.author ?? '?'))] } : {}),
         inferred: r.stance === 'inferred',
@@ -294,8 +343,17 @@ export class EpisodeSearchService {
   }
 }
 
-function isClaim(v: EpisodeView): boolean {
+/** Entity memories (unchanged until 8.5): everything other people or tools said is a claim. */
+function isEntityClaim(v: EpisodeView): boolean {
   return v.authorRole === 'other' || v.authorRole === 'tool';
+}
+
+/**
+ * Personal memories: a claim is what other people said about someone else (inferred) — not a person's own news (stated
+ * for them), not what a tool or a document taught me (my learning, still inferred).
+ */
+function isPersonalClaim(v: EpisodeView): boolean {
+  return v.authorRole === 'other' && v.inferred;
 }
 
 function firstOfNextMonth(yyyyMm: string): string {

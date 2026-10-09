@@ -12,7 +12,7 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - **Memory context**: each sentence of a message is matched on its own, and a period the message names (any supported
   language, weekdays included) adds that period's episodes; floors are knobs (`CONTEXT_MIN_*_SIMILARITY`).
 - **Languages**: `service/src/lang` — period expressions and month / weekday names from Intl for 25 of the most used
-  languages; relations and owner-naming tables for many.
+  languages; relation tables and third-person stand-ins for the self (leak detector, 8.4) for many.
 - **Connector calls**: `POST api/v1/ingest/conversations/{id}/end`; `POST api/v1/context {ingest}` (store the turn and get
   its context in one call); personal tokens read before their conversation is stored; `TOOLS` (MCP tool schemas) in the
   client library; the connectors use them.
@@ -49,6 +49,21 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `perception`, `ambient`. The console shows mode, gender, contacts and identity kinds. Client library: `MemoryKind` →
   `MemoryMode` + `MemoryGender`, `Me.kind` → `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` →
   `mode`, `IngestMessage.own`, the new sources. The extraction prompts and their inputs are unchanged.
+- **Personal first person** (D50, WORK_PLAN 8.4) — **breaking for MCP results**. A personal memory is written in the
+  first person (`extract.v12`, `facts.v2`), in the conversation's language and with the memory's gender: the account
+  holder and the assistant are one "I". Every episode, fact and note gets a subject linked to the memory's contacts
+  (created when a person is only mentioned, merged only when clear); an ambiguous person ("which Marco?") is stored as
+  undecided with a clarification that a later conversation answers or that expires after 14 days; a participant identity
+  seen for the first time binds to a known contact only when its full name matches exactly one contact without an
+  identity — on a first name alone it becomes a new contact with a "same person?" clarification, whose "yes" merges the
+  two contacts (migration `ContactClarification1791080000000`: `clarifications.contact_id`). `search_episodes` / `search_memory` return
+  `memory {name, mode}` (was `owner {name}`), each item's `subject` (facts: `subject` replaces `about`), `speaker` (who is
+  asking; an identified speaker gets their own items first) and `clarifications`; in a personal memory `claims` are
+  others' statements about someone else (a person's own news is theirs, a tool's output is the agent's learning). The
+  memory context speaks to the agent as the memory's self, names other people's items and may offer one question
+  ("if natural, ask: …"). Tool descriptions speak of "your memory". `nameOwner` is replaced by a leak detector (counts in
+  the run summary). A personal window with only other people speaking now costs an extraction call. Entity memories are
+  unchanged until 8.5. Client library: `TOOLS` regenerated.
 - **Connectors: one memory per agent, people as participants** (D50) — **breaking for multi-person set-ups**. OpenClaw:
   the Gateway's agent has one memory (a personal token, or a client key with `defaultUser`); every sender is a
   participant with the channel identity `<channel>:<senderId>` and their channel name, the account holder is listed in

@@ -647,6 +647,20 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   and nicknames, full name, relation; same-name people separated by identifiers → full name → context, and when still
   ambiguous Recordare **asks** ("which Marco?") through the agent — its first initiative (L1). Data design: DATA_MODEL
   "Agent memory".
+- **8.4 built (2026-10-09, branch `personal-first-person`; blind7 × 3 confirmation pending):** personal memories are
+  written in the first person (`extract.v12`, `facts.v2`) in the conversation's language with the memory's gender; the
+  person and the assistant are one "I" (who said it stays as data); every episode, fact and note gets a subject linked to
+  the memory's contacts (created when only mentioned, merged only when clear); an ambiguous person is stored `undecided`
+  with a clarification, answered by a later conversation or expired after 14 days, offered once by the memory context
+  ("if natural, ask: …"); recall returns each item's subject and who is asking (an identified speaker gets their own
+  memories first); `nameOwner` replaced by a leak detector (counts in the run summary). Entity memories unchanged
+  (byte-identical prompt inputs) until 8.5. Details: DATA_MODEL "Agent memory → As built (8.4)", RESULTS.md (dev runs).
+- **D50 follow-up — same-name participants (owner, 2026-10-09):** a first name alone is not enough to say that an
+  identified participant is a contact the memory knows only by name ("mia sorella Giulia" vs a Giulia writing in a
+  group). Ingest binds automatically only on a full name equal to exactly one contact without an identity; otherwise a
+  new contact and, when exactly one such contact shares the name, a "same person?" clarification (`clarifications.contact_id`,
+  migration `ContactClarification1791080000000`); "yes" merges the two contacts (every reference moves, one place:
+  `mergeContacts`), "no" keeps them apart. Several namesakes: no question. Replaces 8.4's name-only binding.
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked

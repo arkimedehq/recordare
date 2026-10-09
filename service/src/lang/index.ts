@@ -5,10 +5,11 @@
  * Language data for the deterministic helpers (owner's rule 2026-10-08: all languages, at least the most used). Every
  * language applies at once — a person may write in several, and their words do not collide; the owner's locale only
  * formats dates. To add a language: add it to LOCALES (months and relative periods come from Intl), then its relation
- * words and, if it has articles, its "the owner" forms.
+ * words and its third-person stand-ins for the self ("the user", "l'utente") in self.ts.
  */
 export { containsPhrase, LOCALES, normalize } from './locales';
-export { nameOwner } from './owner';
+export { selfLeak, type SelfLeak } from './self';
+export { isFullName, isProperName } from './names';
 export { MONTH_NAMES, periodPhrases, WEEKDAY_NAMES } from './periods';
 export { PERIOD_KEYS, type PeriodKey, type RelationKey } from './types';
 import { RELATIONS } from './relations';

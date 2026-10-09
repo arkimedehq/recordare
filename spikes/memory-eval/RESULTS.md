@@ -401,6 +401,48 @@ more than 3 people ignored — recall adds up to 3 of that person's own chat mes
 
 Kept.
 
+### WORK_PLAN 8.4 — personal first person: extract.v12 (2026-10-09, dev runs only, DeepSeek direct)
+
+Personal memories are now written in the first person (`extract.v12`, `facts.v2`): the account holder and the assistant
+are one "I", in the conversation's language and with the memory's gender; every episode / fact / note has a subject
+linked to the memory's contacts; an ambiguous person becomes `undecided` + a clarification answered by a later window;
+recall returns subjects and the speaker. Entity memories keep `extract.v11+entity.v3` (byte-identical inputs, test).
+**Harness change (new baseline for every personal set):** answer framing "MEMORIA: la memoria di X — i ricordi in prima
+persona sono di X" + "CHI FA LA DOMANDA" (the self, or an identified contact), subject per item, "detto dall'assistente"
+no longer shown, claims only for others' statements about someone else; `genders` in the dev sets' conversations.json
+(feminine users); sessions may declare identified `participants`, questions an `asker`. New dev set
+`dataset_dev_agent_personal` (NOT blind, 13 sessions / 19 q: contacts only mentioned, identified family / colleagues,
+two Marcos + a clarification, the assistant's actions, a web result, rumours about the self, English, questions asked
+by an identified contact). Service on :8084, queue `fp84`, one prompt version per run (checked: only `extract.v12`);
+`EMBED_MODEL=st:BAAI/bge-m3`; 1 run each (8 runs, ≈ 0.11 USD).
+
+| Set | Run | Accuracy | Last measured | Leaks (episodes / notes) | Notes |
+|---|---|---|---|---|---|
+| `dataset_dev_agent_personal` (new, 19 q) | v12a | **100 %** | — | 0/20, 0/1 | clarification asked ("Marco chi — mio cugino o il collega Marco Bellini?") and resolved by p08 |
+| `dataset` (general, 24 q) | v12b | **97.9 %** | 100 % (service v1) | 0/18, 0/8 | q14 partial (Japan trip not said to be only an idea); Elena's memory (isolation user) written in the feminine |
+| `dataset_dev_news` (4 q) | v12b | **75 %** | 75 % (v11) | 0/4, 0/1 | same miss as v11 (w02: strike not tied to the trip — recall) |
+| `dataset_dev_poison` (10 q) | v12b | 90 % | 100 % (claims split, 2026-10-05) | 1/9, 0/3 | p01 / p03 partial: claims' dates missing; one claim written "…che Elena ha detto…" (subject someone) |
+| `dataset_dev_echo` (9 q) | v12b | **100 %** | 100 % (guard v3) | 0/9, 0/1 | dentist Bianchi kept, bus plan kept |
+| `dataset_dev_context` (15 q, `agent_eval.py` tools+context) | v12b | 96.7 % | 100 % (5.7, A) | — | ctx06 partial (also partial in the voice run); context served 7 / 15, no harm (gen 1.0) |
+| `dataset_dev_agent_personal` | v12c | 94.7 % | 100 % (v12a) | 0/20, 0/2 | a04 wrong: the planner asked for November **2025** (recall planning, not extraction) |
+| `dataset_dev_poison` | v12c | **95 %** | 90 % (v12b) | 0/8, 0/3 | p03 partial (Marco's claim date omitted) |
+
+Changes between runs: v12a → v12b, contacts are created for episode people only when they are names ("amiche del
+nuoto" no), full names need capitalised words ("zia Carmela" is not a full name); v12b → v12c, one prompt phrase (a
+claim about me has subject "me") and the harness shows "affermazione di …" only for claims (a person's own news no
+longer looked like an unconfirmed claim). The v12b rows of `dataset`, news, echo and context ran the text before that
+phrase. **Leak rate** over the 7 dumped runs (agent_eval writes no dump): 1 / 88 episodes (1.1 %), 0 / 19 notes — vs ≈ 5 % "l'owner" before `nameOwner`
+(4.11); no substitution is applied any more. Gender agreement: masculine (Andrea, Luca) and feminine (Elena, Sara,
+Marta, Giulia) memories read right on the dumps (`results/*-v12?-memory.json`). Reading: the dev sets hold within noise
+of their last values with a different answer framing; poisoning lost the claims' dates on one question (judge strict on
+dates), to watch on blind7's provenance category. **Not confirmed yet:** blind7 × 3 (bar 91.7 %, extract.v11) — the
+developer runs them.
+
+
+**Blind confirmation (2026-10-09, `b7_v12_runs.sh`, 3 runs, DeepSeek direct):** blind7 with `extract.v12` 91.3 / 91.3 / 92.4
+= **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
+−0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
+
 ### WORK_PLAN 4.10 — news received as a memory: extract.v11 (2026-10-08, DeepSeek direct)
 
 Rule added to the extraction prompt: news the owner received (assistant, tool result, someone else) is a low-importance

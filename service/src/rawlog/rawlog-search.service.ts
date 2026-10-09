@@ -10,7 +10,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
-import { accountSpeaker } from './attribution';
+import { memorySpeaker } from './attribution';
 
 export interface RawHit {
   conversationId: string;
@@ -19,7 +19,7 @@ export interface RawHit {
   messageId: string;
   at: string;
   authorRole: 'owner' | 'other' | 'tool';
-  /** Who wrote it, when not the owner (group members by their display name; tools by name). */
+  /** Who wrote it, when not the memory's own turn (people by their display name; tools by name). */
   author?: string;
   excerpt: string;
   score: number;
@@ -58,7 +58,7 @@ export class RawLogSearchService {
       AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}
       ${opts.conversationId ? `AND NOT (m.conversation_id = $${params.push(opts.conversationId)} AND m.sent_at > COALESCE(
         (SELECT max(a.sent_at) FROM messages a WHERE a.conversation_id = $${params.length} AND a.role = 'assistant'), '-infinity'::timestamptz))` : ''}
-      ${opts.authors?.length ? `AND m.role = 'other' AND EXISTS (SELECT 1 FROM conversation_participants ap
+      ${opts.authors?.length ? `AND m.role IN ('other', 'user') AND EXISTS (SELECT 1 FROM conversation_participants ap
         WHERE ap.conversation_id = m.conversation_id AND ap.ref = m.author_ref
           AND lower(split_part(ap.display_name, ' ', 1)) = ANY($${params.push(opts.authors)}))` : ''}`;
 
@@ -95,7 +95,7 @@ export class RawLogSearchService {
     const rows: { id: string; conversation_id: string; external_id: string; sent_at: Date; role: string; account_speaker: boolean;
       author_name: string | null; tool_name: string | null; content: string }[] =
       await this.db.query(
-        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, ${accountSpeaker('m')} AS account_speaker, m.tool_name, m.content,
+        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, ${memorySpeaker('m')} AS account_speaker, m.tool_name, m.content,
                 COALESCE(p.display_name, cp.display_name) AS author_name
          FROM messages m JOIN conversations c ON c.id = m.conversation_id
            LEFT JOIN persons p ON p.id = m.author_person_id

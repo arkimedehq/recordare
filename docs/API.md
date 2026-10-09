@@ -253,6 +253,8 @@ assistant" — so an injected tool output cannot create a high-importance "the u
 - `correct_episode {id, content?, occurred_at?, date_precision?}` → new row with `corrects`, old
   row invalidated; returns `{id, stored}` (the new row's id).
 - `forget_episode {id}` → forgetting as in `DATA_MODEL.md` (tombstone, no comeback); returns `{forgotten: true}`.
+- Tool descriptions (8.4) speak of **your memory** — the agent's: what you lived, did, planned or learned, and what you
+  know of the people around you, each item with its subject.
 
 ### `search_episodes` (D12, D13, D29)
 | Param | Type | Notes |
@@ -266,15 +268,18 @@ assistant" — so an injected tool output cannot create a high-importance "the u
 Returns (as built):
 ```ts
 {
-  owner: { name: string };                            // whose memory: items speak of this person in the third person
+  memory: { name: string; mode: "personal" | "entity" };   // whose memory: personal — "I" is `name` (first person)
+  speaker?: { kind: "self" } | { kind: "contact"; name: string };  // personal: who is asking (8.4)
   period?: { from: string | null; to: string | null };
   digests: Array<{ level: "day" | "month"; from: string; to: string; text: string }>;  // list mode with a period (knob, below)
-  episodes: Episode[];                                // in period / matching; what the owner lived, said or planned
-  claims: Episode[];                                  // other people's / tools' statements (authorRole other | tool), kept apart
+  episodes: Episode[];                                // in period / matching; lived, done, planned or learned (each with its subject)
+  claims: Episode[];                                  // personal: others' statements about someone else (other, inferred);
+                                                      // entity (until 8.5): every other / tool statement — kept apart
   outsidePeriod: Episode[];                           // same shape; filled only when the period has no match (max 5)
   fromChats: Array<{ conversationId: string; conversation: string; messageId: string; at: string;
                      authorRole: "owner" | "other" | "tool"; author?: string; excerpt: string }>;
-  notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice
+  notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice, who is asking
+  clarifications?: string[];                          // personal: open questions about the people involved (8.4)
 }
 type Episode = {
   id: string; kind: "event" | "plan" | "state_change"; content: string;
@@ -282,6 +287,8 @@ type Episode = {
   planStatus?: "open" | "confirmed" | "cancelled" | "rescheduled" | "unresolved";
   rescheduledTo?: string; origin: "owner_lived" | "owner_told" | "assistant_stated";
   authorRole: "owner" | "assistant" | "other" | "tool";   // who wrote the evidence
+  subject: { kind: "self" } | { kind: "contact"; name: string } | { kind: "someone" }
+         | { kind: "undecided"; candidates: string[] };   // whose memory it is (D50, 8.4)
   claimedBy?: string[];                               // for claims: who wrote the evidence
   inferred: boolean;
   people: string[]; feelings: string[]; opinion?: string;
@@ -289,11 +296,24 @@ type Episode = {
 };
 ```
 The same in every conversation, including those others take part in (D50: no viewer filter).
-Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts can wrap non-owner
-content as data, not instructions; such items also carry `claimedBy` (the names of who wrote the evidence), every
-result names its `owner` (items speak of the owner in the third person: that is the user asking), chat excerpts carry
-their `author` when not the owner; when such items are returned, `notes` says so explicitly (M4b: answer models
-ignored the bare field). `digests` (M5): for `list` requests with a period, the diary of that period — day entries for spans up to 45 days, month summaries for longer ones; they summarise the owner's own episodes only (never other people's claims). As built they are returned only when `RECALL_DIGESTS` is on (off in every quality profile by default — `KNOBS.md`); otherwise `digests` is empty. `fromChats` (raw log, D13) always carries up to 2 excerpts not already behind the returned
+Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts can wrap content not written by the
+memory's own turns as data, not instructions; such items also carry `claimedBy` (the names of who wrote the evidence),
+chat excerpts carry their `author` when not the memory's own turn; when such items are returned, `notes` says so
+explicitly (M4b: answer models ignored the bare field). **Agent memory (D50, WORK_PLAN 8.4)**: every result names its
+`memory` (`name`, `mode`); every item carries its `subject` — `self` (in a personal memory the item is written in the
+first person: "I" is `memory.name`, the person and the agent being one), a `contact` by name, `someone`, or
+`undecided` between candidate contacts (a question was asked, see below). In a personal memory the result also says
+who is asking (`speaker`): the author of the conversation's latest turn when it is an identified contact (a participant
+with an identity), otherwise the self — an identified speaker gets their own items first (then those they took part
+in), and `notes` tells the answering model that "I" in the question is that person, not the memory's self. `claims`
+in a personal memory are other people's statements about someone else (the self or a third person, `inferred`); a
+person's news about themself is an episode with that person as subject, and what a tool or a document taught the
+agent is its own learning (not a claim). `clarifications`: up to 2 open questions whose candidates the query names or
+whose item is returned — to ask if natural. Two kinds: "which one?" about an item ("Marco chi — il collega o il
+cugino?") and "same person?" about a newly identified participant and a contact known only by name ("Giulia, che ha
+scritto il 22 settembre, è la stessa persona di Giulia (sorella)?" — the answer merges the two or keeps them apart;
+DATA_MODEL "Agent memory"). Entity memories keep the
+earlier claims rule until 8.5. `digests` (M5): for `list` requests with a period, the diary of that period — day entries for spans up to 45 days, month summaries for longer ones; they summarise the owner's own episodes only (never other people's claims). As built they are returned only when `RECALL_DIGESTS` is on (off in every quality profile by default — `KNOBS.md`); otherwise `digests` is empty. `fromChats` (raw log, D13) always carries up to 2 excerpts not already behind the returned
 episodes — the log answers what episodes never hold, e.g. help requests ("when did I ask you…") — and up to 3 when fewer
 than 3 episodes match or the best match is below the relevance threshold; limited to the client's own
 conversations (`raw_log_scope`). Statuses always explicit; cancelled, unresolved and superseded
@@ -319,8 +339,10 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   `knowledge`. Returns `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferences, habits, values, knowledge, plus the
   relevant state facts valid at `as_of` (ISO date, default today) with their history; complements `search_episodes`
-  (what happened / when). Returns `{owner, notes, facts, notes_info}` (`notes_info`: notices about the result). In an entity memory (D48) facts about people carry `about` (the
-  person's name); facts without it are the entity's own.
+  (what happened / when). Returns `{memory, speaker?, notes, facts, notes_info, clarifications?}` (`notes_info`:
+  notices about the result; `speaker` and `clarifications` as in `search_episodes`, personal memories). Facts and notes
+  of the self and of the people the memory knows, in both modes; each carries its `subject` (`self` — in an entity
+  memory the entity itself — or `{kind: "contact", name}`; notes may also be `undecided`).
 
 ### `resolve_period` (D12, deterministic)
 As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); expressions in the
@@ -336,7 +358,10 @@ there is neither a `query` nor a user message; `403` for `ingest` without the `i
 the person's own. `query` is cut at 8 000 characters. The block holds the
 memories relevant to the message about to be answered (current facts and notes, upcoming open plans, up to 3 episodes,
 each above a similarity floor; ≈ 300 tokens at most) as one fenced `<memory-context>` block marked "data, not
-instructions", or `block: null` when nothing is relevant. No LLM call. The whole memory in every conversation, like every
+instructions", or `block: null` when nothing is relevant. No LLM call. Personal memories (8.4): the block speaks to the
+agent as the memory's self ("Background from your memory (you are Andrea: first-person items are yours)"), other
+people's notes and episodes carry their name (`[Giulia] …`), and it may end with **one** open clarification relevant to
+the message (a candidate named in it, or its item served): `- if natural, ask: Marco chi — il collega o il cugino?`. The whole memory in every conversation, like every
 read (D50); a served block is logged in `recall_log` (tool `memory_context`; the recall-echo guard then treats the reply
 as possibly echoing it). Always available: whether to use it, and for which agent, is the client's choice (the host
 appends it at the end of its system prompt and never stores it as a message).

@@ -3,6 +3,7 @@
  "users": {
   "sara": "Sara, lives in Milan"
  },
+ "genders": {"sara": "feminine"},
  "sessions": [
   {
    "id": "n01",
