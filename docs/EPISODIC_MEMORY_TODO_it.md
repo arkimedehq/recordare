@@ -623,8 +623,10 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
 - **Nessun filtro su chi ascolta, per ora**: le risposte usano sempre tutta la memoria, in ogni conversazione; chi può
   sapere cosa (riservatezza, livelli di divulgazione) è una decisione successiva. `audience` / `disclosure` restano
   registrati per allora.
-- **Resta**: il Diario (strumento di correzione per chi mantiene la memoria); la protezione contro l'eco del richiamo
-  (D38: un ricordo sbagliato ripetuto e accolto con "ok" non è una nuova prova — l'agente non impara dalle proprie eco);
+- **Resta**: il Diario (strumento di correzione per chi mantiene la memoria); la protezione contro l'eco del richiamo (D38),
+  nelle parole del proprietario: quando l'agente risponde con un ricordo che ha già ("ieri dove sono stato?" → "al
+  mare"), la risposta non rientra, giusta o sbagliata che sia; quando dice qualcosa di nuovo ("che tempo fa a Ispica?" →
+  le previsioni), è una cosa che l'agente ha appreso e può diventare memoria, scelta per importanza come ogni altro input;
   storia solo in aggiunta, consolidamento a inattività e notturno, oblio per scelta.
 - **Prima persona nelle lingue con il genere**: un'impostazione per memoria (maschile / femminile / neutro), con default
   dal profilo dell'account.

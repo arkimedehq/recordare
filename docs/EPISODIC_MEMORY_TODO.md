@@ -613,8 +613,10 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   Whoever deploys the agent is responsible for telling the people around it (GDPR) — stated in the docs.
 - **No viewer filter for now**: answers always use the whole memory, in every conversation; who-may-be-told-what
   (privacy, disclosure tiers) is a later decision. `audience` / `disclosure` stay recorded for it.
-- **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38: a repeated wrong
-  recall acknowledged with "ok" is not new evidence — the agent does not learn from its own echoes); append-only
+- **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38), in the owner's words:
+  when the agent answers from a memory it already has ("where was I yesterday?" → "at the sea"), the answer does not
+  go back in, right or wrong; when it says something new ("what's the weather in Ispica?" → the forecast), that is
+  something the agent learned and may become its memory, selected by importance like any other input; append-only
   history, idle + nightly consolidation, forgetting by choice.
 - **First person in a gendered language**: a per-memory setting (masculine / feminine / neutral), defaulting from the
   account's profile.
