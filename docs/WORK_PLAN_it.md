@@ -356,6 +356,20 @@ itera) + 3 run ciechi per confermare; prima dichiarare il budget (regole 1–9).
 | 8.12 | Più avanti: riflessione (pensieri propri dell'agente), modello di sé, memoria procedurale, intenzioni dell'agente, livello percettivo (foto / audio / video / sensori), riservatezza e divulgazione |
 | 8.13 | Da `docs/COMPETITORS_it.md` §6, **ognuno discusso con il proprietario prima di essere costruito**: dimenticare tutto di un contatto (tombstone; lo strumento GDPR di chi installa); privacy come ambiti controllati alla lettura (più avanti); una scheda di sé e schede dei contatti come viste deterministiche nel Diario; le fonti di D49 sul modello documenti / memorie di Supermemory; evitare LLM in lettura, cancellare i dati vecchi, la recenza come verità, "nel dubbio, estrai"; rifare Mem0 OSS sui nuovi set dell'agente (3 run, prima il budget); un punto su LongMemEval-S (~100 domande, 1 run, ≈ 10 run ciechi di costo; LoCoMo escluso) |
 
+### M9 — Modelli locali (dopo il completamento del progetto; decisione del proprietario 2026-10-09)
+
+Ogni compito LLM di Recordare (estrazione, passo separato dei fatti, risolutore dei quasi-duplicati, riassunti del
+giorno / mese, revisione dei fatti) potrebbe girare su un piccolo modello locale che fa solo quel compito — un cervello
+che funziona anche senza rete (un robot). Fase dopo M8, quando i prompt sono stabili; ogni modello tenuto solo se arriva
+al 95 % sulla valutazione (regola del proprietario).
+
+| # | Attività |
+|---|---|
+| 9.1 | **Modello decisionale o modello distillato, per compito** (con la 5.8): un modello decisionale (tipo Jev: risposte tipizzate e probabilistiche, niente testo, millisecondi) va bene per le *scelte* — risolutore (corregge / ripete / diverso), attribuzione ("quale Marco"), importanza, "questa notizia tocca la vita della persona"; un piccolo modello distillato dall'LLM (maestro → studente, LoRA su una base aperta come Qwen / Gemma) va bene per i *testi* — estrazione, riassunti. Probabilmente ibrido; confronto su ogni compito |
+| 9.2 | **Dati di addestramento**: conversazioni sintetiche scritte dal maestro (molte lingue, i casi difficili: piani, correzioni, persone, notizie), elaborate dal maestro; mai i set ciechi; Recordare non conserva le risposte del modello (oblio), quindi i dati si generano, non si raccolgono. Prima verificare i termini del maestro (alcuni provider vietano di addestrare altri modelli sulle loro risposte) |
+| 9.3 | **Pilota: il risolutore dei quasi-duplicati** (il più piccolo, non toccato da D50), poi i **riassunti**, poi l'**estrazione** quando il prompt di M8 è definitivo; decodifica JSON vincolata (llama.cpp / Ollama) per le uscite strutturate |
+| 9.4 | **Hardware**: valutare l'acquisto di un PC con una GPU adeguata, per eseguire (ed eventualmente addestrare) i modelli locali invece di noleggiare GPU — dimensionato sui requisiti misurati (dimensione del modello, VRAM, velocità) dei modelli che superano il 95 % |
+
 ## Decisioni aperte da prendere lungo il percorso
 
 | Id | Domanda | Proposta | Quando |

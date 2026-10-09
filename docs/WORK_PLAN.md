@@ -349,6 +349,19 @@ Each prompt step: dev sets (1 run while iterating) + 3 blind runs to confirm; st
 | 8.12 | Later: reflection (the agent's own thoughts), self-model, procedural memory, the agent's own intents, perceptual layer (photos / audio / video / sensors), privacy and disclosure |
 | 8.13 | From `docs/COMPETITORS.md` §6, **each discussed with the owner before it is built**: forget everything about a contact (tombstones; the deployer's GDPR tool); privacy as scopes checked at read time (later); a self card and contact cards as deterministic views in the Diary; D49 sources on Supermemory's documents / memories split; avoid LLM at read time, deleting outdated items, recency as truth, "when in doubt, extract"; re-run Mem0 OSS on the new agent sets (3 runs, budget first); one LongMemEval-S point (~100 questions, 1 run, ≈ 10 blind runs of cost; LoCoMo skipped) |
 
+### M9 — Local models (after the project is complete; owner's decision 2026-10-09)
+
+Every LLM task of Recordare (extraction, separate facts pass, near-duplicate resolver, day / month digests, facts
+review) could run on a small local model doing only that task — a brain that also works offline (a robot). Phase after
+M8, when the prompts are stable; every model kept only at ≥ 95 % on the suite (owner's rule).
+
+| # | Task |
+|---|---|
+| 9.1 | **Decision model or distilled model, per task** (with 5.8): a decision model (Jev-like: typed probabilistic answers, no text, milliseconds) fits the *choices* — resolver (corrects / repeats / different), attribution ("which Marco"), importance, "does this news touch the person's life"; a small model distilled from the LLM (teacher → student, LoRA on an open base such as Qwen / Gemma) fits the *texts* — extraction, digests. Likely hybrid; compare on each task |
+| 9.2 | **Training data**: synthetic conversations written by the teacher (many languages, the hard cases: plans, corrections, people, news), processed by the teacher; never the blind sets; Recordare keeps no model outputs (forgetting), so data is generated, not harvested. Check the teacher's terms first (some providers forbid training other models on their outputs) |
+| 9.3 | **Pilot: the near-duplicate resolver** (smallest, unchanged by D50), then **digests**, then **extraction** once M8's prompt is final; constrained JSON decoding (llama.cpp / Ollama) for structured outputs |
+| 9.4 | **Hardware**: evaluate buying a PC with an adequate GPU, to run (and possibly train) the local models instead of renting GPUs — sized on the measured needs (model size, VRAM, speed) of the models that pass 95 % |
+
 ## Open decisions to take along the way
 
 | Id | Question | Proposal | When |
