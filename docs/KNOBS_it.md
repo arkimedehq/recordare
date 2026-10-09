@@ -65,7 +65,8 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 
 | Impostazione | Chi la imposta | Predefinito | Cosa fa |
 |---|---|---|---|
-| `kind` | la persona sulla sua piattaforma (solo a memoria vuota), o l'admin | `human` | `entity` = memoria di entità, condivisa da chi usa l'account (D48) |
+| `mode` | la persona sulla sua piattaforma (solo a memoria vuota), o l'admin | `personal` | `entity` = memoria di entità, condivisa da chi usa l'account (D48, D50): ciò che arriva non dichiarato è di "qualcuno" |
+| `gender` | la piattaforma (dal profilo dell'account) o l'admin, in qualsiasi momento | `masculine` | `feminine`, `neutral`: la prima persona nelle lingue con genere (D50; letto dall'8.4 del WORK_PLAN) |
 | `displayName` | segue il profilo sulla piattaforma (sincronizzato) | l'id utente del client | Il nome della persona |
 | `qualityProfile` | admin | predefinito dell'installazione | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |

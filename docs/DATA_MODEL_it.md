@@ -4,7 +4,7 @@
 
 Stato: **contratti M1, revisione 3** (2026-10-03): applicate le revisioni di coerenza e di sicurezza; le tabelle
 del profilo di deployment **public** (`API.md` §0, D33) sono contrassegnate e non costruite nella v1.
-Costruito (2026-10-08): le migrazioni in `service/src/db/migrations` (dallo schema iniziale a `NoConsent`) corrispondono a questo documento; le tabelle del profilo public
+Costruito (2026-10-09): le migrazioni in `service/src/db/migrations` (dallo schema iniziale a `MemoryIdentity`) corrispondono a questo documento; le tabelle del profilo public
 non sono create, le tabelle contrassegnate **created, unused yet** esistono senza codice che le usi.
 Postgres 16 + pgvector ≥ 0.8. Implementa D6–D32 (`EPISODIC_MEMORY_TODO.md`), il modello di identità di
 `API.md` e le regole di provenienza / disclosure della visione.
@@ -22,7 +22,7 @@ per esso; comportamento `ON DELETE` delle FK indicato per tabella.
 
 ```
 Identity      persons ─ person_aliases       clients ─ api_keys ─ access_tokens ─ oauth_clients
-              external_identities ─ link_codes   owners ─ owner_sessions   idempotency_keys
+              external_identities ─ link_codes   owners ─ owner_sessions   idempotency_keys   clarifications
 Layer 0       conversations ─ conversation_participants ─ messages ─ message_revisions
 Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
@@ -84,18 +84,24 @@ non è impostato da nessuna parte in service/src (main) — non ancora costruito
 | Colonna | Tipo | Note |
 |---|---|---|
 | `id` | uuid | |
-| `owner_scope` | uuid null → owners | **null per gli owner stessi; impostato per i contatti** — un contatto appartiene alla memoria di un solo owner, mai condiviso tra owner |
-| `display_name` | text | Un owner auto-provisionato da un client prende all'inizio il nome dell'id utente del client; poi il client lo tiene allineato (`PATCH api/v1/me`) |
-| `kind` | enum `human \| entity` | `entity` (D48): un owner che è un dispositivo condiviso, un robot o un luogo — una **memoria di entità** che tutti coloro che usano l'account leggono e scrivono. `synthetic` (simulatore di ricerca) aggiunto con il track R |
+| `owner_scope` | uuid null → owners | **null per la riga propria di una memoria; obbligatorio per ogni altra persona (un contatto)** — un contatto appartiene a una sola memoria, mai condiviso tra memorie (constraint trigger differito `persons_scope_required`, controllato al commit) |
+| `display_name` | text | Una memoria auto-provisionata da un client prende all'inizio il nome dell'id utente del client; poi il client lo tiene allineato (`PATCH api/v1/me`). Un contatto: il nome con cui è stato visto o nominato la prima volta |
+| `full_name` | text null | Contatti: il nome completo quando noto (8.3: solo la colonna, ancora nulla la riempie) |
+| `relation` | text null | Contatti: la relazione con il sé della memoria — sorella, collega, capo… (8.3: solo la colonna) |
 | `created_at` | timestamptz | |
+
+Il tipo della memoria è passato a `owners.mode` (migrazione `MemoryIdentity`, D50); `persons.kind` non esiste più.
 
 L'unione di persone **non è supportata nella v1** (un tentativo di collegare un'identità già legata a un altro
 owner viene rifiutato); una futura unione dovrà rimappare gli array `audience` e le FK in un'unica transazione.
 
-### person_aliases — created, unused yet
+### person_aliases
 `id, owner_id, person_id, alias text, alias_norm text (pg_trgm GIN), source enum
-(extracted|manual), created_at` — risoluzione delle menzioni, LLM solo quando ambigua. Oggi le persone sono tenute come
-stringhe "Nome (relazione)" sugli episodi (`episode_people.alias`), che il recall consapevole delle persone legge (D39).
+(extracted|manual|client), created_at`, unique `(person_id, alias_norm)` — i nomi di un contatto (nome, soprannomi,
+"mia sorella"…). `alias_norm` = `lower(unaccent(btrim(alias)))`. Come costruito (8.3) ogni contatto ha il suo nome
+visualizzato come alias (`client` quando creato da un partecipante identificato dal client, `extracted` quando lo
+scrittore lo ha creato per nome); la regola del soggetto degli episodi li legge. Gli episodi tengono ancora le persone
+come stringhe "Nome (relazione)" (`episode_people.alias`), che il recall consapevole delle persone legge (D39).
 
 ### owners
 | Colonna | Tipo | Note |
@@ -106,6 +112,8 @@ stringhe "Nome (relazione)" sugli episodi (`episode_people.alias`), che il recal
 | `consolidated_at` | timestamptz null | Ultimo consolidamento notturno (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark della revisione notturna dei fatti (WORK_PLAN 5.6, sull'orologio di registrazione) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = default dell'installazione (`QUALITY_PROFILE`) |
+| `mode` | enum `personal \| entity`, default `personal` | D50: `personal` — ciò che arriva senza identità dichiarata è del sé della memoria (il titolare dell'account è l'"io"); `entity` (D48) — un dispositivo condiviso, un robot o un luogo: ciò che arriva non dichiarato è di "qualcuno". Il client lo cambia solo finché la memoria è vuota (`PATCH api/v1/me`), l'admin in qualsiasi momento |
+| `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | La prima persona nelle lingue con genere (D50; usato dall'8.4 del WORK_PLAN) |
 | `created_at` | timestamptz | |
 
 Il ritardo idle è un'impostazione globale (D5), non per owner. Nessuna colonna di consenso (D50): la migrazione
@@ -133,13 +141,18 @@ hash, scopes text[], created_at, expires_at, last_used_at, revoked_at)` — come
 `oauth_clients(id, client_id, redirect_uris text[], registered_at)` (registrazione dinamica MCP).
 
 ### external_identities
-`id, owner_scope null, person_id, kind enum (client_user|channel), client_id null, channel text
-null, external_id, verified_at null, created_at`; unique `(kind, client_id, external_id)` e
-`(owner_scope, kind, channel, external_id)` (come costruito: indici unique parziali `(client_id, external_id) WHERE kind =
-'client_user'` e `(owner_scope, channel, external_id) WHERE kind = 'channel'`, con un `owner_scope` null contato come un
-solo valore) — i collegamenti di canale dei contatti hanno ambito limitato alla memoria di un solo owner
-(il client A non può associare l'id Telegram dell'owner B alle memorie di A). Solo i collegamenti verificati
-identificano gli interlocutori ed entrano in `audience`.
+`id, owner_scope null, person_id, kind enum (account|participant), client_id null, channel text
+null, external_id, verified_at null, created_at` (migrazione `MemoryIdentity`, D50):
+- **`account`** — l'id utente di un client apre una memoria: `client_id` impostato, `channel` e `owner_scope` null, la
+  persona è la riga propria di una memoria; unique `(client_id, external_id)`. L'unico tipo che `OwnerResolver` legge
+  (`X-Recordare-User`).
+- **`participant`** — dentro la memoria `owner_scope` (obbligatoria), l'id di un partecipante del client (`client_id`)
+  o un id di canale (`channel`, esattamente uno dei due) nomina il sé della memoria o uno dei suoi contatti; unique
+  `(owner_scope, client_id, external_id)` e `(owner_scope, channel, external_id)`. Non apre mai una memoria: lo stesso
+  id utente del client può essere l'account di una memoria e un partecipante (un contatto) in un'altra. L'ingest ne
+  crea uno (verificato) quando vede per la prima volta l'identità di un partecipante; un collegamento non verificato
+  (admin, `verified: false`) non identifica nessuno.
+Solo i collegamenti verificati identificano gli interlocutori ed entrano in `audience`.
 
 ### link_codes (public profile)
 `id, owner_id, client_id (l'unico client autorizzato a riscattarlo), code_hash, expires_at, used_at,
@@ -149,7 +162,7 @@ created_at`.
 `credential_id, owner_id, method_path, key, response_hash, response_body, created_at` — unique sulle
 prime quattro; conservazione di 24 h.
 
-### Memoria dell'agente (D50, WORK_PLAN 8.3) — progetto approvato 2026-10-09
+### Memoria dell'agente (D50, WORK_PLAN 8.3) — progetto approvato 2026-10-09, costruito 2026-10-09 (migrazione `MemoryIdentity1791070000000`)
 Una memoria appartiene a un agente: un account del client = una memoria (oggi la riga `owners`; rinominata `memories`
 nell'8.10).
 - **`owners.mode`** `personal | entity` (da `persons.kind`: human → personal, entity → entity; modificabile solo
@@ -191,6 +204,36 @@ nell'8.10).
   vengono creati (per esempio Andrea dentro la memoria Arkim3de). Prompt e valori di `origin` non cambiano nell'8.3 (la
   prima persona arriva nell'8.4).
 
+**Come costruito (8.3).** Tabelle e colonne: `owners.mode` / `gender`; `persons.full_name` / `relation` e il trigger
+sull'ambito; `person_aliases.source` + `client`; `external_identities.kind` `account | participant`;
+`messages.author_kind` / `attribution_method` / `attribution_confidence`; sorgenti `document`, `perception`, `ambient`;
+`subject_kind`, `subject_person_id`, `subject_candidates` su episodi, fatti, note; `clarifications`. Regole:
+- *Attribuzione all'ingest* — `own: true` (solo su messaggi `user` / `other`) → `own`; `tool` → `tool`; `assistant` →
+  `agent` (metodo `client_assertion`, confidenza 1); un messaggio il cui `authorRef` nomina un partecipante prende
+  l'attribuzione del partecipante; altrimenti un messaggio `user` è `self` in una memoria personale (metodo `account`) e
+  `someone` in una memoria di entità (metodo `none`), ogni altro `someone`. Partecipanti: `assistant` → agent; `owner` →
+  `self` in una memoria personale (implicito quando manca; una memoria di entità non ne implica nessuno); con
+  un'identità → risolto in questa memoria (l'id utente dell'account stesso → `self`; un'identità di partecipante → la sua
+  persona; vista per la prima volta → un nuovo contatto + alias + identità di partecipante verificata; metodo
+  `client_assertion` per un id utente del client, `declared` per un id di canale; un collegamento non verificato →
+  `someone`).
+- *Soggetti* — personale: ogni episodio, fatto, nota è `self`. Entità: un fatto con un soggetto → quel `contact`
+  (trovato per nome visualizzato o creato, come prima), senza → `self` (dell'entità stessa); un episodio → il `contact`
+  quando le sue persone nominano esattamente un contatto noto (nome visualizzato o alias, tolta la "(relazione)";
+  `episode_people.person_id` impostato per un nome non ambiguo), altrimenti `someone`; una nota → `someone`. Mai
+  `undecided` per ora. Le scritture esplicite (`log_episode`, `remember`) seguono le stesse regole; correzioni e copie di
+  piani mantengono il soggetto della riga da cui derivano.
+- *Prompt invariati* — gli input di estrazione / fatti / revisione etichettano ancora chi parla dall'account `owner`
+  (personale) / `person` (entità): un messaggio è di chi parla dall'account quando il suo ruolo è `user`, il suo tipo di
+  autore è `self` o `own`, o il suo `authorRef` è il partecipante `owner` della conversazione (SQL `accountSpeaker`); il
+  gate, `author_role` e l'`authorRole` del log grezzo usano lo stesso test.
+- *Backfill* — come il progetto sopra; in più: le persone di nessuna memoria (owner_scope null, non una memoria)
+  referenziate in una memoria diventano contatti lì, poi vengono eliminate con le loro identità (anche quelle mai
+  referenziate); un id di account legato a un contatto diventa un id di partecipante della sua memoria; un id di canale
+  senza ambito prende la memoria della sua persona; i messaggi `user` personali senza autore prendono il sé; il
+  partecipante `owner` delle conversazioni di entità perde l'entità come persona. `down` ripristina la forma precedente
+  (gli id di partecipante di un client vengono eliminati; i contatti restano).
+
 ## Layer 0 — log grezzo
 
 ### conversations
@@ -198,7 +241,7 @@ nell'8.10).
 |---|---|---|
 | `id`, `owner_id`, `client_id` | uuid | Unique `(client_id, owner_id, external_id)` |
 | `external_id` | text | |
-| `source` | enum `chat \| voice \| mcp_tool \| import_chat \| import_social \| import_email \| import_notes \| interview` | `mcp_tool` = conversazione sintetica che contiene le chiamate di strumento del livello basic |
+| `source` | enum `chat \| voice \| mcp_tool \| import_chat \| import_social \| import_email \| import_notes \| interview \| document \| perception \| ambient` | `mcp_tool` = conversazione sintetica che contiene le chiamate di strumento del livello basic; `document` / `perception` / `ambient` (D50): un documento dato all'agente, ciò che un dispositivo percepisce, l'ascolto continuo |
 | `channel`, `title` | text null | |
 | `started_at`, `last_message_at` | timestamptz | |
 | `idle_job_at` | timestamptz null | Quando è dovuta l'estrazione idle |
@@ -215,8 +258,11 @@ joined_at` — fonte dell'`audience` di ogni riga (registrata; dal D50 nessuna l
 | `external_id` | text | |
 | `role` | enum `user \| assistant \| tool \| other` | I messaggi `system` **non sono ingeriti** (possono contenere segreti); `tool` = chiamate / risultati di strumenti dei client agentici (D30) |
 | `tool_name` | text null | Per `role = tool` |
-| `author_person_id` | uuid null | |
+| `author_person_id` | uuid null | Il sé della memoria (`self`) o il contatto (`contact`); per `own` il partecipante che l'ha fornito, se c'è |
 | `author_ref` | text null | Il ref del partecipante del client; nomina i membri di gruppo non verificati per l'estrazione |
+| `author_kind` | enum `self \| contact \| someone \| agent \| own \| tool` | Chi l'ha detto, come conoscenza (D50): il sé della memoria, un contatto identificato, un qualcuno non identificato, l'assistente, il contenuto proprio dell'agente (`own: true`), uno strumento |
+| `attribution_method` | enum `account \| declared \| self_introduction \| addressed_by_name \| voiceprint \| face \| client_assertion \| none` | Come è stata stabilita; come costruito si scrivono solo `account`, `declared`, `client_assertion`, `none` |
+| `attribution_confidence` | real 0–1 null | null quando nulla è stato stabilito (`none`) |
 | `content` | text | Verbatim |
 | `content_hash` | bytea | Rileva i re-invii con contenuto modificato (`API.md` §2) |
 | `sent_at` | timestamptz | Tempo di riferimento per la risoluzione delle date |
@@ -248,6 +294,7 @@ joined_at` — fonte dell'`audience` di ogni riga (registrata; dal D50 nessuna l
 | `invalidated_at` | timestamptz null | **Solo per le correzioni**: impostato sulla riga che era sbagliata |
 | `duplicate_of` | uuid null → episodes (`SET NULL`) | Collegamento di dedup del consolidamento (stesso evento in più chat); i duplicati sono nascosti dal recall |
 | `linked_notes` | text[] | Riferimenti esterni a note semantiche (id A-MEM finché vive nel client — D19, D31) |
+| *soggetto* | | `subject_kind` enum `self \| contact \| someone \| undecided` (default `self`), `subject_person_id` uuid null → persons (`SET NULL`), `subject_candidates` uuid[] (i contatti candidati di una riga `undecided`) — di chi è il ricordo (D50, regole in "Memoria dell'agente"); le stesse tre colonne su fatti e note |
 | `access_count`, `last_accessed_at` | int, timestamptz | Solo ranking |
 | *provenance*, *disclosure*, *embedding* | | |
 | `deleted_at` | timestamptz null | Oblio in corso (eliminato da un job). Come costruito l'oblio cancella subito le righe e la colonna non viene mai impostata (le letture la filtrano comunque) |
@@ -309,7 +356,8 @@ dichiarazione esplicita.
 | Colonna | Tipo | Note |
 |---|---|---|
 | `id`, `owner_id` | uuid | |
-| `subject_person_id` | uuid null | null = l'owner. **Memorie di entità (D48)**: la persona a cui il fatto si riferisce (un contatto di quella memoria, trovato per nome o creato dallo scrittore); null = l'entità stessa. Mai impostato nella memoria di una persona |
+| `subject_person_id` | uuid null | null = il sé della memoria. **Memorie di entità (D48)**: la persona a cui il fatto si riferisce (un contatto di quella memoria, trovato per nome o creato dallo scrittore); null = l'entità stessa. Mai impostato in una memoria personale |
+| `subject_kind`, `subject_candidates` | | Come sugli episodi (D50): `contact` con un soggetto, altrimenti `self` |
 | `key` | text → fact_slots | |
 | `value` | text **null** | null solo per `unknown_current` |
 | `status` | enum `current \| superseded \| corrected \| unknown_current` | `unknown_current` è una **nuova riga** (value null) che supera quella obsoleta: "il valore attuale non è noto" (D29, STALE) |
@@ -338,6 +386,7 @@ Note semantiche: chi è l'owner, oltre gli slot di stato.
 | `content` | text | Frase breve e autosufficiente |
 | `keywords`, `context`, `tags` | text[], text, text[] | Chiavi di recupero (stessa chiamata di estrazione) |
 | `pinned` | bool | Sempre parte del blocco di contesto stabile (scelta dell'owner) |
+| *soggetto* | | `subject_kind`, `subject_person_id`, `subject_candidates` come sugli episodi (D50): `self` in una memoria personale, `someone` in una memoria di entità |
 | `status` | enum `current \| superseded \| corrected` | Cronologia conservata, mai riscritta |
 | `supersedes`, `corrects` | uuid null → notes (`SET NULL`) | |
 | `support_count` | int | Riaffermazioni contate |
@@ -384,6 +433,14 @@ message_ids uuid[] (i messaggi di evidenza dimenticati, nascosti dalla ricerca n
 conversation_id null, created_at` — controllato **prima di inserire qualsiasi
 episodio o fatto** (sweep notturno, ri-estrazione, dedup), così il contenuto dimenticato non ritorna mai.
 
+### clarifications (D50, visione L1) — created, unused yet (WORK_PLAN 8.4 / 8.5)
+`id, owner_id → owners (CASCADE), question text, candidates uuid[] (contatti), episode_id / fact_id / note_id null
+(CASCADE; al più uno), status enum (open|resolved|expired) default open, resolution text null (la risposta così come
+data), resolved_person_id null → persons (SET NULL), created_at, resolved_at null (impostato esattamente quando non è
+open)`; indice parziale `(owner_id, created_at) WHERE status = 'open'`. Una domanda a cui Recordare vuole una risposta
+("quale Marco — il collega o il cugino?"); il contesto di memoria offrirà al più una domanda aperta pertinente, la
+risposta aggiunge l'attribuzione alla successiva estrazione, quelle senza risposta scadono, il Diario le risolve a mano.
+
 ### read_audit (public profile)
 `id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], viewer_source enum
 (conversation|owner_direct|added_viewers), endpoint, row_ids uuid[], created_at` — quali ricordi
@@ -424,6 +481,6 @@ senza evidenza.
 
 Tabelle: `relationships` e `grants` (fase 3), `autonomy_settings` e `snapshots` (track R),
 `fact_derivations` + `needs_recheck` (quando esistono fatti derivati). Valori di enum: `origin =
-twin_experienced`, `kind = thought | goal`, `persons.kind = synthetic`, `conversations.source =
+twin_experienced`, `kind = thought | goal`, `owners.mode = synthetic`, `conversations.source =
 simulation`, ruolo di partecipante `twin`. Il loro design è registrato in `DIGITAL_TWIN_VISION.md`
 (research mode, money knob) e `literature/README.md`.

@@ -9,8 +9,9 @@ import { type Principal } from './principal';
 export const USER_HEADER = 'x-recordare-user';
 
 /**
- * Which owner a request acts for. Personal tokens are bound to one owner; client keys name the
- * owner with `X-Recordare-User` (the client's own user id), auto-provisioned if the client allows it.
+ * Which memory a request acts for. Personal tokens are bound to one memory; client keys name the account with
+ * `X-Recordare-User` (the client's own user id), resolved through `account` identities only (participant identities
+ * name contacts inside a memory, never open one — D50) and auto-provisioned if the client allows it.
  */
 @Injectable()
 export class OwnerResolver {
@@ -36,10 +37,10 @@ export class OwnerResolver {
     }
   }
 
-  /** Owner id for a client user id; undefined when unknown; 404 when bound to a non-owner. */
+  /** Memory id for a client user id; undefined when unknown; 404 when bound to a non-owner. */
   private async lookup(clientId: string, externalUserId: string): Promise<string | undefined> {
     const identity = await this.db.getRepository(ExternalIdentity).findOne({
-      where: { kind: 'client_user', clientId, externalId: externalUserId },
+      where: { kind: 'account', clientId, externalId: externalUserId },
     });
     if (!identity) return undefined;
     const owner = await this.db.getRepository(Owner).findOne({ where: { personId: identity.personId } });
@@ -52,7 +53,7 @@ export class OwnerResolver {
       const person = await tx.getRepository(Person).save({ displayName: externalUserId, ownerScope: null });
       await tx.getRepository(Owner).save({ personId: person.id });
       await tx.getRepository(ExternalIdentity).save({
-        personId: person.id, kind: 'client_user', clientId, externalId: externalUserId, verifiedAt: new Date(),
+        personId: person.id, kind: 'account', clientId, externalId: externalUserId, verifiedAt: new Date(),
       });
       return person.id;
     });

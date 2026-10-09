@@ -27,7 +27,7 @@ describe('read / write API for host UIs — the diary (API.md §4, WORK_PLAN 4.7
     const other = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Other', kind: 'platform' } })).body;
     otherKey = (await call(url, 'POST', `/api/v1/admin/clients/${other.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
     ownerId = (await call(url, 'GET', '/api/v1/me', as(key))).body.ownerId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: ownerId, clientId: other.id, externalId: 'u1' } });
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: other.id, externalId: 'u1' } });
     await call(url, 'POST', '/api/v1/ingest/messages', { ...as(key), body: { conversation: { externalId: 'chat-1' }, messages: [
       { externalId: 'm1', role: 'user', content: 'Sabato sono andata a Bologna con Marco', sentAt: '2026-10-05T10:00:00+02:00' },
     ] } });

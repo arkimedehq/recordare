@@ -17,14 +17,20 @@ export const MAX_CONTENT_BYTES = 64 * 1024;
 /** Largest number of messages in one ingest request. */
 export const MAX_MESSAGES_PER_REQUEST = 500;
 
-/** A personal memory, or one shared by everyone using the account (an entity: a home device, a robot, a place). */
-export type MemoryKind = 'human' | 'entity';
+/**
+ * A personal memory (the account holder is "I": what arrives without a declared identity is the memory's own), or an
+ * entity's (a home device, a robot, a place: what arrives undeclared is "someone"'s) — D50.
+ */
+export type MemoryMode = 'personal' | 'entity';
+/** The grammatical gender of the memory's first person in gendered languages (default masculine). */
+export type MemoryGender = 'masculine' | 'feminine' | 'neutral';
 
 /** `GET api/v1/me`: who a request acts for. */
 export interface Me {
   ownerId: string;
   displayName: string | null;
-  kind: MemoryKind;
+  mode: MemoryMode;
+  gender: MemoryGender;
   /** Recordare Atlas, when installed: link it for the platform's admins only (it shows every person's activity). */
   atlasUrl?: string;
   via: string;
@@ -36,7 +42,9 @@ export interface MeSettings {
   /** Follows the platform's profile: send it again whenever the user renames themselves. */
   displayName?: string;
   /** Accepted only while the memory is empty (else MemoryNotEmptyError). */
-  kind?: MemoryKind;
+  mode?: MemoryMode;
+  /** From the account's profile; changes any time. */
+  gender?: MemoryGender;
 }
 
 export type ParticipantIdentity = { externalUserId: string } | { channel: string; externalId: string };
@@ -46,12 +54,19 @@ export interface IngestParticipant {
   ref: string;
   role: 'owner' | 'assistant' | 'other';
   displayName?: string;
-  /** A verified identity on the platform: lets Recordare link the participant to a known person. */
+  /**
+   * The participant's id on the platform (its user id) or on a channel: Recordare links it to a contact of this memory
+   * (created on first sight) — never to another memory.
+   */
   identity?: ParticipantIdentity;
 }
 
-/** Where a conversation comes from (`mcp_tool` is the service's own, never sent by a client). */
-export type ConversationSource = 'chat' | 'voice' | 'import_chat' | 'import_social' | 'import_email' | 'import_notes' | 'interview';
+/**
+ * Where a conversation comes from (`mcp_tool` is the service's own, never sent by a client). `document`: a document
+ * given to the agent; `perception`: what a device perceives; `ambient`: continuous listening.
+ */
+export type ConversationSource = 'chat' | 'voice' | 'import_chat' | 'import_social' | 'import_email' | 'import_notes' | 'interview'
+  | 'document' | 'perception' | 'ambient';
 
 export interface IngestConversation {
   /** The platform's own stable id of the conversation. */
@@ -75,6 +90,8 @@ export interface IngestMessage {
   sentAt: string;
   /** Replace the stored content of an existing message (an edit). */
   upsert?: boolean;
+  /** The agent's own content (knowledge given to it, its perceptions, a document); `user` or `other` messages only. */
+  own?: boolean;
 }
 
 export interface IngestRequest {

@@ -63,7 +63,8 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 
 | Setting | Who sets it | Default | What it does |
 |---|---|---|---|
-| `kind` | the person on their platform (only while the memory is empty), or the admin | `human` | `entity` = a memory shared by everyone using the account (D48) |
+| `mode` | the person on their platform (only while the memory is empty), or the admin | `personal` | `entity` = a memory shared by everyone using the account (D48, D50): undeclared input is "someone"'s |
+| `gender` | the platform (from the account's profile) or the admin, any time | `masculine` | `feminine`, `neutral`: the first person in gendered languages (D50; read from WORK_PLAN 8.4) |
 | `displayName` | follows the platform's profile (synced) | the client's user id | The person's name |
 | `qualityProfile` | admin | installation default | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Language of the memories, local dates and the night |

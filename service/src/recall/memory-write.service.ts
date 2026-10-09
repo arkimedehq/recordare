@@ -13,6 +13,8 @@ import { DataSource, type EntityManager } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { toStored, type Precision } from '../engine/time';
 import { TelemetryService } from '../telemetry/telemetry.service';
+import { accountSpeaker } from '../rawlog/attribution';
+import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
 
 /**
  * The agent's text is backed by a message of the owner when the two overlap as a whole (trigram similarity ≥ 0.2) or
@@ -42,23 +44,28 @@ export class MemoryWriteService {
     content: string; kind?: 'event' | 'plan'; occurredAt?: string; occurredUntil?: string; datePrecision?: Precision; people?: string[]; place?: string;
   }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
-      const [owner] = await tx.query(`SELECT timezone FROM owners WHERE person_id = $1`, [ownerId]);
+      const [owner] = await tx.query(`SELECT timezone, mode FROM owners WHERE person_id = $1`, [ownerId]);
       const { messageId, byOwner } = await this.bindEvidence(tx, ownerId, ev, input.content);
       const at = toStored(input.occurredAt, input.datePrecision, owner.timezone);
       const until = toStored(input.occurredUntil, 'day', owner.timezone);
       const kind = input.kind ?? 'event';
+      // Whose it is (D50): the self's in a personal memory; in an entity memory the one known contact it names, else someone's.
+      const { subject, people } = owner.mode === 'entity'
+        ? await episodeSubject(tx, ownerId, input.people ?? []) : { subject: SELF_SUBJECT, people: new Map<string, string>() };
       const [row] = await tx.query(
         `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, plan_status, plan_status_at,
-           origin, author_role, stance, confidence, disclosure, audience)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'owner', $15) RETURNING id`,
+           origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_person_id, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'owner', $15, $16, $17, $18) RETURNING id`,
         [ownerId, kind, input.content, at.at, until.at, at.precision, input.place ?? null, byOwner ? 10 : 5,
           kind === 'plan' ? 'open' : null, kind === 'plan' ? new Date() : null,
           byOwner ? 'owner_lived' : 'assistant_stated', byOwner ? 'owner' : 'assistant',
           // "stated" only with the owner's own words behind it (API.md §3), as for notes.
-          byOwner ? 'stated' : 'inferred', byOwner ? 1 : 0.6, [ownerId]]);
+          byOwner ? 'stated' : 'inferred', byOwner ? 1 : 0.6, [ownerId], subject.kind, subject.personId, subject.candidates]);
       await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, $3)`,
         [row.id, messageId, byOwner ? 'message' : 'agent_paraphrase']);
-      for (const p of input.people ?? []) await tx.query(`INSERT INTO episode_people (episode_id, alias) VALUES ($1, $2)`, [row.id, p]);
+      for (const p of input.people ?? []) {
+        await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [row.id, p, people.get(p) ?? null]);
+      }
       return row.id as string;
     });
     await this.embed('episodes', id, input.content);
@@ -68,11 +75,13 @@ export class MemoryWriteService {
   async remember(ownerId: string, ev: Evidence, input: { content: string; category?: string }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
       const { messageId, byOwner } = await this.bindEvidence(tx, ownerId, ev, input.content);
+      const [owner] = await tx.query(`SELECT mode FROM owners WHERE person_id = $1`, [ownerId]);
+      const subject = owner.mode === 'entity' ? SOMEONE_SUBJECT : SELF_SUBJECT;
       const [row] = await tx.query(
-        `INSERT INTO notes (owner_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'owner', $9) RETURNING id`,
+        `INSERT INTO notes (owner_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'owner', $9, $10, $11) RETURNING id`,
         [ownerId, input.category ?? 'knowledge', input.content, !byOwner, byOwner ? 'owner_lived' : 'assistant_stated',
-          byOwner ? 'owner' : 'assistant', byOwner ? 'stated' : 'inferred', byOwner ? 1 : 0.6, [ownerId]]);
+          byOwner ? 'owner' : 'assistant', byOwner ? 'stated' : 'inferred', byOwner ? 1 : 0.6, [ownerId], subject.kind, subject.candidates]);
       await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, messageId]);
       await tx.query(`INSERT INTO note_changes (owner_id, note_id, change) VALUES ($1, $2, 'created')`, [ownerId, row.id]);
       return row.id as string;
@@ -90,9 +99,11 @@ export class MemoryWriteService {
       const at = input.occurredAt ? toStored(input.occurredAt, input.datePrecision, owner.timezone) : { at: old.occurred_at, precision: old.date_precision };
       const [row] = await tx.query(
         `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
-           opinion, keywords, context, tags, plan_status, plan_status_at, corrects, origin, author_role, stance, confidence, disclosure, audience)
+           opinion, keywords, context, tags, plan_status, plan_status_at, corrects, origin, author_role, stance, confidence, disclosure, audience,
+           subject_kind, subject_person_id, subject_candidates)
          SELECT owner_id, kind, $3, $4, occurred_until, $5, place, importance, valence, feelings, opinion, keywords, context, tags,
-           plan_status, plan_status_at, id, origin, author_role, stance, confidence, disclosure, audience
+           plan_status, plan_status_at, id, origin, author_role, stance, confidence, disclosure, audience,
+           subject_kind, subject_person_id, subject_candidates
          FROM episodes WHERE id = $1 AND owner_id = $2 RETURNING id`,
         [input.id, ownerId, input.content ?? old.content, at.at, at.precision]);
       await tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1`, [input.id]);
@@ -153,10 +164,10 @@ export class MemoryWriteService {
       // Owner-stated only when a recent message of the owner actually says it (text overlap):
       // an agent cannot turn "ciao" into "the owner decided X" (poisoning guard).
       const [m] = await tx.query(
-        `SELECT id FROM messages
-         WHERE conversation_id = $1 AND owner_id = $2 AND (role = 'user' OR author_person_id = $2)
-           AND received_at > now() - interval '30 minutes' AND ${OVERLAP('content')}
-         ORDER BY ${SCORE('content')} DESC, sent_at DESC LIMIT 1`,
+        `SELECT m.id FROM messages m
+         WHERE m.conversation_id = $1 AND m.owner_id = $2 AND ${accountSpeaker('m')}
+           AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
+         ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
         [ev.conversationId, ownerId, text]);
       if (m) return { messageId: m.id, byOwner: true };
     } else if (ev.ownerDirect) {
@@ -164,7 +175,7 @@ export class MemoryWriteService {
       // on MCP calls: the person's own recent words from the same client are the evidence, same overlap rule.
       const [m] = await tx.query(
         `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
-         WHERE c.client_id = $1 AND m.owner_id = $2 AND (m.role = 'user' OR m.author_person_id = $2)
+         WHERE c.client_id = $1 AND m.owner_id = $2 AND ${accountSpeaker('m')}
            AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
          ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
         [ev.clientId, ownerId, text]);
@@ -177,8 +188,8 @@ export class MemoryWriteService {
        ON CONFLICT (client_id, owner_id, external_id) DO UPDATE SET last_message_at = now() RETURNING id`,
       [ownerId, ev.clientId, `mcp-tool-${day}`]);
     const [msg] = await tx.query(
-      `INSERT INTO messages (conversation_id, owner_id, external_id, role, content, content_hash, sent_at)
-       VALUES ($1, $2, $3, 'assistant', $4, $5, now()) RETURNING id`,
+      `INSERT INTO messages (conversation_id, owner_id, external_id, role, author_kind, attribution_method, attribution_confidence, content, content_hash, sent_at)
+       VALUES ($1, $2, $3, 'assistant', 'agent', 'client_assertion', 1, $4, $5, now()) RETURNING id`,
       [conv.id, ownerId, `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text, createHash('sha256').update(text).digest()]);
     return { messageId: msg.id, byOwner: false };
   }

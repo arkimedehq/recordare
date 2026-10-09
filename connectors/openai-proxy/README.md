@@ -47,7 +47,7 @@ curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/jso
 ```
 Recordare has no consent flag (D50): an auto-provisioned person's turns are stored from the first request; to stop,
 turn `CAPTURE` / `RECALL` off or remove the proxy. To attach the platform's user to an existing person instead, bind the identity:
-`POST api/v1/admin/identities {kind: "client_user", personId, clientId, externalId: "anythingllm:2"}` (the external id
+`POST api/v1/admin/identities {kind: "account", personId, clientId, externalId: "anythingllm:2"}` (the external id
 is the Recordare user the proxy resolves, see Identity). A single-person install can use a **personal token** (`rp_…`)
 instead of a client key: every resolved request is then that person.
 

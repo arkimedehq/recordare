@@ -36,6 +36,22 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   privacy e riservatezza verranno dopo. `X-Recordare-Viewers` / `_meta.recordare.viewers` sono ignorati e l'avviso
   `"nothing to show here"` non c'è più. `audience` / `disclosure` continuano a essere registrati; una memoria non vede
   comunque mai i dati di un'altra. L'header della conversazione è ancora risolto: le scritture MCP vi legano le loro prove.
+- **Identità della memoria** (D50, WORK_PLAN 8.3) — **incompatibile**. Una memoria appartiene a un account di un client;
+  le persone che conosce sono contatti di quella sola memoria. Migrazione `MemoryIdentity1791070000000`: `persons.kind`
+  diventa `owners.mode` (`personal | entity`) con `owners.gender` (`masculine | feminine | neutral`, default maschile);
+  ogni persona che non è una memoria è un contatto di esattamente una memoria (`full_name`, `relation`, nomi in
+  `person_aliases`), e i contatti che mancavano a una memoria vengono creati (per esempio una persona con una propria
+  memoria che parla anche a un dispositivo condiviso); `external_identities.kind` diventa `account` (era `client_user`:
+  apre una memoria) o `participant` (era `channel`, ora anche l'id di partecipante di un client: nomina un contatto
+  dentro una sola memoria, creato dall'ingest al primo incontro); ogni messaggio registra chi l'ha detto (`author_kind`
+  `self | contact | someone | agent | own | tool`, `attribution_method`, `attribution_confidence`); episodi, fatti e
+  note registrano di chi sono (`subject_kind`, `subject_person_id`, `subject_candidates`); viene creata una tabella
+  `clarifications` per dopo. API: `GET / PATCH api/v1/me` e le rotte admin degli owner accettano `mode` e `gender` al
+  posto di `kind`; `POST api/v1/admin/identities` accetta `kind: account | participant`; l'ingest accetta `own: true`
+  su un messaggio (contenuto proprio dell'agente) e le sorgenti `document`, `perception`, `ambient`. La console mostra
+  modo, genere, contatti e tipi di identità. Libreria client: `MemoryKind` → `MemoryMode` + `MemoryGender`, `Me.kind` →
+  `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` → `mode`, `IngestMessage.own`, le nuove
+  sorgenti. I prompt di estrazione e i loro input non cambiano.
 
 ### Corretto
 - Un fatto breve dentro un messaggio lungo della persona conta come sue parole; "il proprietario" viene sostituito dal

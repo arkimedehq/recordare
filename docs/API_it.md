@@ -38,11 +38,15 @@ dei dati.
 ## 1. Identità, autenticazione, contesto di conversazione (task 1.1, 1.5 → D24)
 
 ### Modello
-- **Person**: un essere umano noto all'installazione. **Owner**: una persona con una memoria (una per
-  persona, qualunque sia la piattaforma). I contatti sono persone con ambito limitato alla memoria di un solo owner.
+- **Memoria** (oggi la riga `owners`, D50): la memoria di un account di un client — quella di un agente. La sua riga
+  persona porta il nome dell'account (in una memoria personale, il nome dell'"io"). **Contatti**: le persone che una
+  memoria conosce, persone con ambito limitato a quella sola memoria (lo stesso essere umano in due memorie è due
+  contatti senza legame).
 - **Client**: un'integrazione di piattaforma (installazione di Arkimede, configurazione di Claude Desktop, strumento di import).
-- **External identity**: `client_user` (`clientId + externalUserId`) oppure `channel`
-  (`telegram:…`, `phone:+39…`, `email:…`); solo i collegamenti verificati identificano gli interlocutori.
+- **External identity** (WORK_PLAN 8.3): `account` (`clientId + externalUserId` → la memoria che apre quell'account del
+  client) oppure `participant` (l'id di un partecipante del client `clientId + externalId`, o un id di canale
+  `telegram:…`, `phone:+39…`, `email:…` → il sé o un contatto **di una sola memoria**); solo i collegamenti di
+  partecipante verificati identificano gli interlocutori, e un'identità di partecipante non apre mai una memoria.
 
 ### Autenticazione dell'owner (public profile)
 **v1**: gli owner sono creati dall'admin (`POST api/v1/admin/owners`), oppure auto-provisionati alla prima richiesta
@@ -51,8 +55,10 @@ i token personali e i collegamenti di identità sono gestiti tramite l'API admin
 sua console, §6) — come costruito nessuna rotta permette a un personal token dell'owner di cambiarli; non esistono pagine
 dell'owner. Il consolidamento notturno si avvia da solo (`CONSOLIDATION_HOUR`, fuso orario dell'owner); `POST api/v1/admin/owners/:id/consolidate` lo esegue subito (rispetta `X-Recordare-Now` dove consentito); `POST api/v1/admin/owners/:id/review-facts` esegue subito la sola revisione dei fatti (WORK_PLAN 5.6, stesso lock del consolidamento). Profilo di qualità (D35): `qualityProfile` `economy | balanced | full` alla creazione dell'owner /
 `PATCH api/v1/admin/owners/:id` (`null` = il default dell'installazione `QUALITY_PROFILE`, `balanced` se non impostato). Le stesse
-route accettano `kind` `human | entity` (D48: una **memoria di entità**, condivisa da tutti coloro che usano l'account — un dispositivo domestico,
-un robot, un luogo) e `PATCH` accetta `displayName` (una successiva sincronizzazione del nome del suo utente da parte di un client lo sovrascrive: il nome segue la piattaforma).
+route accettano `mode` `personal | entity` (D50: `personal` — il titolare dell'account è l'"io", ciò che arriva senza
+identità dichiarata è della memoria stessa; `entity` — una memoria condivisa da tutti coloro che usano l'account, un
+dispositivo domestico, un robot, un luogo: ciò che arriva non dichiarato è di "qualcuno") e `gender` `masculine |
+feminine | neutral` (la prima persona nelle lingue con genere, default `masculine`), e `PATCH` accetta `displayName` (una successiva sincronizzazione del nome del suo utente da parte di un client lo sovrascrive: il nome segue la piattaforma).
 
 **Public profile**: gli owner accedono alle pagine di Recordare con un **magic link via email** (niente password; passkey e
 OIDC in seguito). La sessione dell'owner serve per: creare link
@@ -122,9 +128,10 @@ risposta vuota con `"nothing to show here"`. Resta qui come punto di partenza de
 (`RESEARCH_NOTES_it.md` H2).
 
 ### Collegare la stessa persona tra client
-**v1**: l'admin collega le identità (`POST api/v1/admin/identities {personId, kind, clientId |
-channel, externalId}`); collegare un id già legato a un altro owner fallisce con un generico
-`400 cannot_link`.
+**v1**: l'admin collega le identità (`POST api/v1/admin/identities`, rotte admin del §1): un `account` a una memoria, un
+`participant` al sé o a un contatto di una memoria; collegare un id già legato, un account a una persona che non è una
+memoria, o un partecipante a una persona fuori da quella memoria fallisce con un generico `400 cannot_link`. Anche
+l'ingest crea identità di partecipante (§2).
 
 **Public profile**:
 1. In una **sessione dell'owner**, l'owner sceglie il client di destinazione e crea un link code
@@ -140,9 +147,11 @@ channel, externalId}`); collegare un id già legato a un altro owner fallisce co
 
 Admin (`api/v1/admin/…`), costruito: `POST clients {name, kind: platform | mcp_client | import, autoProvision?,
 rawLogScope?}`, `GET clients`, `PATCH clients/:id`, `POST clients/:id/keys {scopes}` (→ `{id, key, prefix}`, la chiave
-mostrata una sola volta), `DELETE keys/:id`, `POST owners {displayName, kind?, locale? (it | en), timezone?,
-qualityProfile?}`, `PATCH owners/:id`, `GET persons`, `POST identities {kind: client_user, personId,
-clientId, externalId} | {kind: channel, personId, ownerScope?, channel, externalId, verified?}`, `DELETE identities/:id`,
+mostrata una sola volta), `DELETE keys/:id`, `POST owners {displayName, mode? (personal | entity), gender? (masculine |
+feminine | neutral), locale? (it | en), timezone?, qualityProfile?}`, `PATCH owners/:id` (stessi campi; l'admin può
+cambiare il modo di una memoria non vuota), `GET persons`, `POST identities {kind: account, personId (una memoria),
+clientId, externalId} | {kind: participant, ownerScope (la memoria), personId (il suo sé o uno dei suoi contatti), clientId |
+channel (esattamente uno), externalId, verified?}`, `DELETE identities/:id`,
 `POST owners/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST owners/:id/consolidate`,
 `POST owners/:id/review-facts`, `GET owners` (owner con dimensione della memoria, per l'atlas), `GET owners/:id/atlas`,
 `GET telemetry/stream` (§6; le rotte della console sono descritte lì). Le revoche hanno effetto subito (la cache delle
@@ -158,13 +167,15 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
   conversation: {
     externalId: string;
     source?: "chat" | "voice" | "import_chat" | "import_social" | "import_email"
-           | "import_notes" | "interview";                // default "chat"
+           | "import_notes" | "interview"
+           | "document" | "perception" | "ambient";       // default "chat"
     channel?: string; title?: string;
     participants?: Array<{
       ref: string; role: "owner" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
-      // resolved to a person only if the identity is verified for this owner;
-      // otherwise stored by display name (never enters `audience`)
+      // resolved inside this memory only: its participant identity, or the account's own
+      // user id (the self); seen for the first time → a new contact of this memory
+      // (named after displayName); an unverified binding identifies nobody
     }>;
   };
   messages: Array<{                       // max 500, any order
@@ -175,6 +186,8 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
     content: string;                      // verbatim, ≤ 64 KB
     sentAt: string;                       // reference time for date resolution
     upsert?: boolean;                     // true: same externalId with new content = edit
+    own?: boolean;                        // the agent's own content (knowledge given to it, its
+                                          // perceptions, a document); role user | other only
   }>;
   hints?: { conversationEnded?: boolean };
 }
@@ -188,6 +201,14 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   restano finché non vengono cancellati.
 - Ogni batch accettato (ri)pianifica il job idle della conversazione (D1, D5, ritardo globale); i messaggi
   sono estratti quando in attesa, per `sentAt`, così i messaggi in ritardo o fuori ordine non vengono mai saltati.
+- **Attribuzione** (D50, WORK_PLAN 8.3): ogni messaggio registra chi l'ha detto, come conoscenza — `author_kind` `self`
+  (memoria personale: un turno `user` senza un altro autore, il partecipante `owner`, l'id utente dell'account stesso;
+  metodo `account`), `contact` (un partecipante con un'identità; metodo `client_assertion` per un id utente del client,
+  `declared` per un id di canale), `someone` (chiunque non identificato, e in una memoria di entità chi parla
+  dall'account; metodo `none`), `agent` (`assistant`), `tool`, `own` (`own: true`) — con una confidenza (1, o nessuna
+  quando nulla è stato stabilito). Solo registrata: non ancora esposta dall'API di lettura, e i prompt di estrazione non
+  cambiano (la prima persona arriva con WORK_PLAN 8.4). Fino ad allora il contenuto `own` è letto come i turni di chi
+  parla dall'account.
 
 ### Modifiche e cancellazioni
 - `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` se
@@ -374,8 +395,8 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | lingua, fuso orario, profilo di qualità |
 | `GET api/v1/usage?from&to` | read | Chiamate LLM e token per questo owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Export completo asincrono (archivio JSON) |
-| `GET api/v1/me` | read | Per chi agisce la richiesta: `{ownerId, displayName, kind, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`kind` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (con una chiave client: la persona dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| owner_token`) |
-| `PATCH api/v1/me {displayName?, kind?}` | ingest (chiave client; un token personale riceve 403) | Le impostazioni della persona provenienti dalla sua piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `kind` `human \| entity` (D48) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo) |
+| `GET api/v1/me` | read | Per chi agisce la richiesta: `{ownerId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`mode` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (con una chiave client: la memoria dell'account dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| owner_token`) |
+| `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (chiave client; un token personale riceve 403) | Le impostazioni della memoria provenienti dalla piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `mode` `personal \| entity` (D50) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo); `gender` `masculine \| feminine \| neutral` (la prima persona, dal profilo dell'account) in qualsiasi momento |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | sessione dell'owner (public profile) | Client / identità connessi, revoca |
 
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
@@ -385,7 +406,7 @@ diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memor
 `endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, i wrapper della §4 `episodes`,
 `episode`, `correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`,
 `mcp.listTools` / `mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `TOOLS` (gli schemi
-pubblicati degli strumenti MCP), `PersonDirectory` (persona in cache, tipo e indirizzo di Atlas; l'opt-in della
+pubblicati degli strumenti MCP), `PersonDirectory` (memoria in cache, modo e indirizzo di Atlas; l'opt-in della
 piattaforma; sincronizzazione del nome), `afterFailure` (politica di consegna dell'outbox: back-off con jitter,
 `Retry-After`, parcheggio su 400 / 413 / 422), errori tipizzati (RFC 9457). All'host restano solo la memorizzazione
 dell'outbox e la trasformazione delle sue chat. Una suite di conformità la esegue contro il servizio nella CI
@@ -403,13 +424,13 @@ direttamente le stesse rotte.
 `GET /admin` serve una pagina statica (pubblica: non contiene dati) sopra la API admin; l'operatore digita la chiave
 admin, che resta solo in quella scheda del browser (CSP restrittiva, `no-store`). Rotte usate oltre a quelle sopra, tutte
 solo admin e solo metadati: `GET api/v1/admin/owners/{id}/runs?conversation=&limit=` (le esecuzioni di estrazione recenti di una persona con il
-loro riassunto — restituito, scritto, scartato e perché, solo conteggi; WORK_PLAN 4.12), `GET api/v1/admin/persons` (owner con impostazioni, conteggi di messaggi / episodi / fatti /
-note, estrazione in attesa, ultimo messaggio, identità collegate,
-token personali attivi per prefisso), `GET api/v1/admin/clients` (client
+loro riassunto — restituito, scritto, scartato e perché, solo conteggi; WORK_PLAN 4.12), `GET api/v1/admin/persons` (memorie con impostazioni — modo, genere, lingua, profilo —, conteggi di messaggi / episodi /
+fatti / note / contatti, estrazione in attesa, ultimo messaggio, identità — gli account che aprono la memoria e gli id di
+partecipante del suo sé e dei suoi contatti —, token personali attivi per prefisso), `GET api/v1/admin/clients` (client
 con chiavi attive per prefisso), `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = tutte le chiavi
 e i token del client smettono subito di funzionare), `DELETE api/v1/admin/identities/:id` (scollega l'utente di un client
-da una persona; i ricordi restano). Per il resto la console usa le altre rotte admin della §1 (tipo di
-memoria, profilo di qualità, nome, identità, token personali, chiavi dei client, consolidamento); è in italiano e in
+da una persona; i ricordi restano). Per il resto la console usa le altre rotte admin della §1 (modo e
+genere della memoria, profilo di qualità, nome, identità, token personali, chiavi dei client, consolidamento); è in italiano e in
 inglese.
 
 ### Telemetria live (M5b, solo admin)

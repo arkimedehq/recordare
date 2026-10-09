@@ -11,6 +11,7 @@ import { type EntityManager } from 'typeorm';
 import { calendar, describe, localDate, type Precision } from './time';
 import { type PromptContext, type PromptMessage } from './extraction.prompt';
 import { type QualityProfile } from './quality-profile';
+import { accountSpeaker } from '../rawlog/attribution';
 
 const MAX_OPEN_PLANS = 15;
 const MAX_FACTS = 40;
@@ -24,7 +25,11 @@ export interface WindowMessage {
   id: string;
   role: 'user' | 'assistant' | 'tool' | 'other';
   toolName: string | null;
-  authorPersonId: string | null;
+  /**
+   * The account's speaker's own turn (role `user`, the memory's self or own content, the `owner` participant): labelled
+   * `owner` (personal) or `person` (entity) in the prompt until first person arrives (WORK_PLAN 8.4).
+   */
+  accountSpeaker: boolean;
   authorName: string | null;
   content: string;
   sentAt: Date;
@@ -66,13 +71,14 @@ export const isMemoryTool = (name: string | null): boolean => !!name && new RegE
 
 /** Pending messages of a conversation, oldest first, split into windows of bounded size. */
 export async function pendingWindows(tx: EntityManager, conversationId: string, maxChars: number): Promise<WindowMessage[][]> {
-  const rows: Array<{ id: string; role: WindowMessage['role']; tool_name: string | null; author_person_id: string | null;
+  const rows: Array<{ id: string; role: WindowMessage['role']; tool_name: string | null; account_speaker: boolean;
     author_name: string | null; content: string; sent_at: Date; from_memory: boolean }> = await tx.query(
     // Unverified group members are not persons: their name comes from the conversation's participants.
     // from_memory: an assistant reply whose turn (since the previous non-assistant, non-tool message) contains a
     // recall — one of Recordare's read tools called by the client (its tool message), or a recall Recordare served
     // in this conversation.
-    `SELECT m.id, m.role, m.tool_name, m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at,
+    `SELECT m.id, m.role, m.tool_name, ${accountSpeaker('m')} AS account_speaker,
+       COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at,
        (m.role = 'assistant' AND (
           EXISTS (SELECT 1 FROM messages t WHERE t.conversation_id = m.conversation_id AND t.role = 'tool'
                     AND t.tool_name ~ $2 AND t.sent_at <= m.sent_at + interval '5 seconds' AND t.sent_at >= turn.start)
@@ -90,7 +96,7 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
   let current: WindowMessage[] = [];
   let size = 0;
   for (const r of rows) {
-    const msg: WindowMessage = { id: r.id, role: r.role, toolName: r.tool_name, authorPersonId: r.author_person_id,
+    const msg: WindowMessage = { id: r.id, role: r.role, toolName: r.tool_name, accountSpeaker: r.account_speaker,
       authorName: r.author_name, content: r.content, sentAt: r.sent_at, ...(r.from_memory ? { fromMemory: true } : {}) };
     if (current.length > 0 && size + r.content.length > maxChars) {
       windows.push(current);
@@ -106,7 +112,7 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
 
 function speaker(m: WindowMessage, owner: Owner): string {
   // In an entity memory the account's user is whoever is talking to it: the window tells who, if anyone.
-  if (m.role === 'user' || m.authorPersonId === owner.id) return owner.entity ? 'person' : 'owner';
+  if (m.accountSpeaker) return owner.entity ? 'person' : 'owner';
   if (m.role === 'assistant') return 'assistant';
   if (m.role === 'tool') return `tool${m.toolName ? `:${m.toolName}` : ''}`;
   return `other${m.authorName ? `:${m.authorName}` : ''}`;

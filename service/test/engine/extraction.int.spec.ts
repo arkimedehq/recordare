@@ -30,7 +30,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
     key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest'] } })).body.key;
     ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: ownerId, clientId: client.body.id, externalId: 'luca' } });
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: client.body.id, externalId: 'luca' } });
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
@@ -244,7 +244,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   it("extracts the owner's messages ingested with role other (group chats, imports)", async () => {
     const c = await ingest('grp', [{ id: 'g1', role: 'other', content: 'Sono io, Luca: domani vado a Torino.', at: '2026-06-03T10:00:00+02:00' }],
       [{ ref: 'luca', role: 'owner' }]);
-    await db.query(`UPDATE messages SET author_person_id = $1 WHERE conversation_id = $2`, [ownerId, c]);
+    await db.query(`UPDATE messages SET author_person_id = $1, author_kind = 'self' WHERE conversation_id = $2`, [ownerId, c]);
     const before = llm.requests.length;
     llm.queue.push({ episodes: [] });
     await runner.runForConversation(c);

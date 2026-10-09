@@ -40,7 +40,7 @@ describe('auth and admin (v1 home / research profile)', () => {
     expect(owner.body).not.toHaveProperty('episodicEnabled'); // no consent flag (D50)
     const ownerId: string = owner.body.personId;
 
-    const ident = { kind: 'client_user', personId: ownerId, clientId: client.body.id, externalId: 'user-42' };
+    const ident = { kind: 'account', personId: ownerId, clientId: client.body.id, externalId: 'user-42' };
     expect((await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: ident })).status).toBe(201);
     expect(await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: ident }))
       .toMatchObject({ status: 400, body: { code: 'cannot_link' } });

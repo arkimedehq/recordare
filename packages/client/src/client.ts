@@ -33,12 +33,12 @@ export class RecordareClient {
     this.mcp = new RecordareMcp(this.http, options.mcp);
   }
 
-  /** The person behind `user` (auto-provisioned when the client allows it) and their kind of memory. */
+  /** The memory behind `user` (auto-provisioned when the client allows it), its mode and gender. */
   me(user: string): Promise<Me> {
     return this.http.request<Me>('GET', 'api/v1/me', { user });
   }
 
-  /** The person's settings from the platform: the name (keep it in sync on every rename) and the kind of memory. */
+  /** The memory's settings from the platform: the name (keep it in sync on every rename), the mode and the gender. */
   async updateMe(user: string, settings: MeSettings): Promise<void> {
     try {
       await this.http.request('PATCH', 'api/v1/me', { user, body: settings });

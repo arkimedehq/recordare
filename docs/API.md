@@ -35,11 +35,14 @@ migration.
 ## 1. Identity, authentication, conversation context (tasks 1.1, 1.5 → D24)
 
 ### Model
-- **Person**: a human known to the installation. **Owner**: a person with a memory (one per
-  person, whatever platform). Contacts are persons scoped to one owner's memory.
+- **Memory** (today the `owners` row, D50): the memory of one client account — an agent's. Its own person row carries
+  the account's name (in a personal memory, the name of "I"). **Contacts**: the people a memory knows, persons scoped to
+  that memory only (the same human in two memories is two unrelated contacts).
 - **Client**: a platform integration (Arkimede installation, Claude Desktop setup, import tool).
-- **External identity**: `client_user` (`clientId + externalUserId`) or `channel`
-  (`telegram:…`, `phone:+39…`, `email:…`); only verified bindings identify interlocutors.
+- **External identity** (WORK_PLAN 8.3): `account` (`clientId + externalUserId` → the memory that client account opens)
+  or `participant` (a client's participant id `clientId + externalId`, or a channel id `telegram:…`, `phone:+39…`,
+  `email:…` → the self or a contact **of one memory**); only verified participant bindings identify interlocutors, and
+  a participant identity never opens a memory.
 
 ### Owner authentication (public profile)
 **v1**: owners are created by the admin (`POST api/v1/admin/owners`), or auto-provisioned at a client's first
@@ -47,8 +50,10 @@ request when that client allows it (`autoProvision`, named after the client's us
 personal tokens and identity bindings are managed through the admin API (and its console,
 §6) — as built no route lets an owner personal token change them; there are no owner pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, owner's timezone); `POST api/v1/admin/owners/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/owners/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation). Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
 `PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set). The same
-routes take `kind` `human | entity` (D48: an **entity memory**, shared by everyone using the account — a home device,
-a robot, a place) and `PATCH` takes `displayName` (a client's later sync of its user's name overwrites it: the name follows the platform).
+routes take `mode` `personal | entity` (D50: `personal` — the account holder is "I", undeclared input is the memory's
+own; `entity` — a memory shared by everyone using the account, a home device, a robot, a place: undeclared input is
+"someone"'s) and `gender` `masculine | feminine | neutral` (the first person in gendered languages, default
+`masculine`), and `PATCH` takes `displayName` (a client's later sync of its user's name overwrites it: the name follows the platform).
 
 **Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
 OIDC later). The owner session is needed for: creating link
@@ -116,9 +121,10 @@ extra viewers could only narrow); otherwise an empty answer with `"nothing to sh
 point of the later privacy work (`RESEARCH_NOTES.md` H2).
 
 ### Linking the same person across clients
-**v1**: the admin binds identities (`POST api/v1/admin/identities {personId, kind, clientId |
-channel, externalId}`); binding an id already bound to another owner fails with a generic
-`400 cannot_link`.
+**v1**: the admin binds identities (`POST api/v1/admin/identities`, §1 admin routes): an `account` to a memory, a
+`participant` to the self or a contact of one memory; binding an id already bound, an account to a person that is not a
+memory, or a participant to a person outside that memory fails with a generic `400 cannot_link`. Ingest also creates
+participant identities (§2).
 
 **Public profile**:
 1. In an **owner session**, the owner picks the target client and creates a link code
@@ -134,9 +140,11 @@ channel, externalId}`); binding an id already bound to another owner fails with 
 
 Admin (`api/v1/admin/…`), built: `POST clients {name, kind: platform | mcp_client | import, autoProvision?,
 rawLogScope?}`, `GET clients`, `PATCH clients/:id`, `POST clients/:id/keys {scopes}` (→ `{id, key, prefix}`, the key
-shown once), `DELETE keys/:id`, `POST owners {displayName, kind?, locale? (it | en), timezone?,
-qualityProfile?}`, `PATCH owners/:id`, `GET persons`, `POST identities {kind: client_user, personId, clientId,
-externalId} | {kind: channel, personId, ownerScope?, channel, externalId, verified?}`, `DELETE identities/:id`,
+shown once), `DELETE keys/:id`, `POST owners {displayName, mode? (personal | entity), gender? (masculine | feminine |
+neutral), locale? (it | en), timezone?, qualityProfile?}`, `PATCH owners/:id` (same fields; the admin may change the
+mode of a memory that is not empty), `GET persons`, `POST identities {kind: account, personId (a memory), clientId,
+externalId} | {kind: participant, ownerScope (the memory), personId (its self or one of its contacts), clientId |
+channel (exactly one), externalId, verified?}`, `DELETE identities/:id`,
 `POST owners/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST owners/:id/consolidate`,
 `POST owners/:id/review-facts`, `GET owners` (owners with memory size, for the atlas), `GET owners/:id/atlas`,
 `GET telemetry/stream` (§6; the console routes are described there). Revocations take effect at once (the credential
@@ -152,13 +160,15 @@ connectors for one person). The admin credential cannot ingest (403).
   conversation: {
     externalId: string;
     source?: "chat" | "voice" | "import_chat" | "import_social" | "import_email"
-           | "import_notes" | "interview";                // default "chat"
+           | "import_notes" | "interview"
+           | "document" | "perception" | "ambient";       // default "chat"
     channel?: string; title?: string;
     participants?: Array<{
       ref: string; role: "owner" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
-      // resolved to a person only if the identity is verified for this owner;
-      // otherwise stored by display name (never enters `audience`)
+      // resolved inside this memory only: its participant identity, or the account's own
+      // user id (the self); seen for the first time → a new contact of this memory
+      // (named after displayName); an unverified binding identifies nobody
     }>;
   };
   messages: Array<{                       // max 500, any order
@@ -169,6 +179,8 @@ connectors for one person). The admin credential cannot ingest (403).
     content: string;                      // verbatim, ≤ 64 KB
     sentAt: string;                       // reference time for date resolution
     upsert?: boolean;                     // true: same externalId with new content = edit
+    own?: boolean;                        // the agent's own content (knowledge given to it, its
+                                          // perceptions, a document); role user | other only
   }>;
   hints?: { conversationEnded?: boolean };
 }
@@ -182,6 +194,13 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   deleted.
 - Each accepted batch (re)schedules the conversation's idle job (D1, D5, global delay); messages
   are extracted when pending, by `sentAt`, so late or out-of-order messages are never skipped.
+- **Attribution** (D50, WORK_PLAN 8.3): every message records who said it, as knowledge — `author_kind` `self` (personal
+  memory: a `user` turn without another author, the `owner` participant, the account's own user id; method `account`),
+  `contact` (a participant with an identity; method `client_assertion` for a client's user id, `declared` for a channel
+  id), `someone` (anyone unidentified, and in an entity memory the account's speaker; method `none`), `agent`
+  (`assistant`), `tool`, `own` (`own: true`) — with a confidence (1, or none when nothing was established). Recorded
+  only: not exposed by the read API yet, and the extraction prompts are unchanged (first person comes in WORK_PLAN 8.4).
+  Until then `own` content is read like the account's speaker's turns.
 
 ### Edits and deletions
 - `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` when
@@ -366,8 +385,8 @@ account sees all of it (D48).
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | locale, timezone, quality profile |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
-| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, kind, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`kind` `entity` = a shared memory: the client tells its users so) (with a client key: the person behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| owner_token`) |
-| `PATCH api/v1/me {displayName?, kind?}` | ingest (client key; a personal token gets 403) | The person's settings from their platform: the name follows the client's user (sync on every rename); `kind` `human \| entity` (D48) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it) |
+| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`mode` `entity` = a shared memory: the client tells its users so) (with a client key: the memory of the account behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| owner_token`) |
+| `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (client key; a personal token gets 403) | The memory's settings from the platform: the name follows the client's user (sync on every rename); `mode` `personal \| entity` (D50) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it); `gender` `masculine \| feminine \| neutral` (first person, from the account's profile) any time |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
@@ -377,7 +396,7 @@ into requests of 500, `context` / `contextWithTurn` (§3 pre-turn memory context
 `editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, the §4 wrappers `episodes`, `episode`,
 `correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`, `mcp.listTools` /
 `mcp.callTool` over the official MCP SDK with one session per user + conversation), `TOOLS` (the published MCP tool
-schemas), `PersonDirectory` (cached person, kind and Atlas address; the platform's opt-in; name sync),
+schemas), `PersonDirectory` (cached memory, mode and Atlas address; the platform's opt-in; name sync),
 `afterFailure` (outbox delivery policy: back-off with jitter, `Retry-After`, park on 400 / 413 / 422), typed errors
 (RFC 9457). A host keeps only its outbox storage and its chat mapping. A conformance suite runs it against the service
 in CI (`service/test/conformance`). Built on it: the OpenClaw connector and the OpenAI-compatible memory proxy
@@ -394,11 +413,12 @@ routes directly.
 `GET /admin` serves a static page (public: it holds no data) over the admin API; the operator types the admin key, kept
 in that browser tab only (strict CSP, `no-store`). Routes it uses besides those above, all admin only and metadata only:
 `GET api/v1/admin/owners/{id}/runs?conversation=&limit=` (a person's recent extraction runs with their summary — returned,
-written, dropped and why, counts only; WORK_PLAN 4.12), `GET api/v1/admin/persons` (owners with settings, message / episode / fact / note counts, pending extraction, last
-message, linked identities, active personal tokens by prefix), `GET api/v1/admin/clients` (clients with active keys by prefix),
+written, dropped and why, counts only; WORK_PLAN 4.12), `GET api/v1/admin/persons` (memories with settings — mode, gender, locale, profile —, message / episode / fact / note /
+contact counts, pending extraction, last message, identities — the accounts that open the memory and the participant
+ids of its self and contacts —, active personal tokens by prefix), `GET api/v1/admin/clients` (clients with active keys by prefix),
 `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = every key and token of the client stops at
 once), `DELETE api/v1/admin/identities/:id` (unlinks a client's user from a person; memories stay). The console uses
-the other admin routes of §1 for the rest (memory kind, quality profile, name, identities, personal tokens,
+the other admin routes of §1 for the rest (memory mode and gender, quality profile, name, identities, personal tokens,
 client keys, consolidate); it is in Italian and English.
 
 ### Live telemetry (M5b, admin only)

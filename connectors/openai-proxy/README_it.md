@@ -48,7 +48,7 @@ curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/jso
 ```
 Recordare non ha un flag di consenso (D50): i turni di una persona creata automaticamente sono salvati dalla prima
 richiesta; per smettere, spegnere `CAPTURE` / `RECALL` o togliere il proxy. Per legare l'utente della piattaforma a una persona esistente,
-collega l'identità: `POST api/v1/admin/identities {kind: "client_user", personId, clientId, externalId:
+collega l'identità: `POST api/v1/admin/identities {kind: "account", personId, clientId, externalId:
 "anythingllm:2"}` (l'external id è l'utente Recordare che il proxy risolve, vedi Identità). Un'installazione con una
 sola persona può usare un **token personale** (`rp_…`) al posto della chiave client: ogni richiesta risolta è di quella
 persona.

@@ -34,6 +34,21 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `X-Recordare-Viewers` / `_meta.recordare.viewers` are ignored and the `"nothing to show here"` notice is gone.
   `audience` / `disclosure` are still recorded; one memory still never sees another's data. The conversation header is
   still resolved: MCP writes bind their evidence to it.
+- **Memory identity** (D50, WORK_PLAN 8.3) — **breaking**. A memory belongs to a client account; the people it knows
+  are contacts of that memory only. Migration `MemoryIdentity1791070000000`: `persons.kind` becomes `owners.mode`
+  (`personal | entity`) with `owners.gender` (`masculine | feminine | neutral`, default masculine); every person that is
+  not a memory is a contact of exactly one memory (`full_name`, `relation`, names in `person_aliases`), and the contacts
+  a memory was missing are created (e.g. a person with their own memory who also talks to a shared device);
+  `external_identities.kind` becomes `account` (was `client_user`: opens a memory) or `participant` (was `channel`, now
+  also a client's participant id: names a contact inside one memory, created by ingest on first sight); every message
+  records who said it (`author_kind` `self | contact | someone | agent | own | tool`, `attribution_method`,
+  `attribution_confidence`); episodes, facts and notes record whose they are (`subject_kind`, `subject_person_id`,
+  `subject_candidates`); a `clarifications` table is created for later. API: `GET / PATCH api/v1/me` and the admin
+  owner routes take `mode` and `gender` instead of `kind`; `POST api/v1/admin/identities` takes `kind: account |
+  participant`; ingest accepts `own: true` on a message (the agent's own content) and the sources `document`,
+  `perception`, `ambient`. The console shows mode, gender, contacts and identity kinds. Client library: `MemoryKind` →
+  `MemoryMode` + `MemoryGender`, `Me.kind` → `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` →
+  `mode`, `IngestMessage.own`, the new sources. The extraction prompts and their inputs are unchanged.
 
 ### Fixed
 - A short fact inside a long message of the person counts as their words; "il proprietario" is replaced by the name.

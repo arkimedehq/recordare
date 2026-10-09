@@ -179,7 +179,7 @@ writes its memory. Identification ("sono Andrea"; later a voiceprint) only says 
 entity's memory, facts carry the person they are about, and a fact from an unidentified speaker is not stored as
 anyone's fact. Identification never grants access: a person's *own* memory is reached only through a secure client
 identity bound by the admin. A code guard records a fact about a person, or an episode naming one, only if the
-conversation names that person (no identity carried over from other chats). The person chooses the kind on their
+conversation names that person (no identity carried over from other chats). The person chooses the mode (`entity`) on their
 platform (Arkimede: memory settings) while the memory is empty. **Experimental**: 95.5 % on its dev set, but **82.1 %** on a
 fresh blind set (3 runs; speakers who never identify themselves still get attributed to a named person —
 [RESULTS.md](spikes/memory-eval/RESULTS.md)).

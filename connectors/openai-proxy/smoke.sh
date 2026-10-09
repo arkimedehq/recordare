@@ -54,7 +54,7 @@ echo "== Recordare: client key + person bound to anythingllm:2"
 CLIENT="$(admin clients '{"name":"openai-proxy-smoke","kind":"platform","autoProvision":true}' | json "['id']")"
 admin "clients/$CLIENT/keys" '{"scopes":["ingest","mcp","read"]}' | json "['key']" > "$S/rk"
 PERSON="$(admin owners '{"displayName":"Proxy Smoke"}' | json "['personId']")"
-admin identities "{\"kind\":\"client_user\",\"personId\":\"$PERSON\",\"clientId\":\"$CLIENT\",\"externalId\":\"anythingllm:2\"}" >/dev/null
+admin identities "{\"kind\":\"account\",\"personId\":\"$PERSON\",\"clientId\":\"$CLIENT\",\"externalId\":\"anythingllm:2\"}" >/dev/null
 { echo "UPSTREAM_BASE_URL=${LLM_BASE_URL:-https://api.deepseek.com/v1}"; echo "UPSTREAM_API_KEY=$(envval LLM_API_KEY)"
   echo "PROXY_API_KEY=$(openssl rand -hex 16)"; echo "RECORDARE_URL=$URL"; echo "RECORDARE_API_KEY=$(cat "$S/rk")"; } > "$S/proxy.env"
 echo "GENERIC_OPEN_AI_API_KEY=$(grep PROXY_API_KEY "$S/proxy.env" | cut -d= -f2)" > "$S/allm.env"

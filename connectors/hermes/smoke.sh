@@ -106,7 +106,7 @@ fi
 echo "== gateway path (client key, X-Recordare-User; no LLM)"
 GCLIENT="$(admin clients '{"name":"hermes-gateway-smoke","kind":"platform"}' | json "['id']")"
 GPERSON="$(admin owners '{"displayName":"Hermes Gateway Smoke"}' | json "['personId']")"
-admin identities "{\"personId\":\"$GPERSON\",\"kind\":\"client_user\",\"clientId\":\"$GCLIENT\",\"externalId\":\"alice\"}" >/dev/null
+admin identities "{\"personId\":\"$GPERSON\",\"kind\":\"account\",\"clientId\":\"$GCLIENT\",\"externalId\":\"alice\"}" >/dev/null
 KEY="$(admin "clients/$GCLIENT/keys" '{"scopes":["mcp","ingest","read"]}' | json "['key']")"
 printf 'RECORDARE_URL=%s\nRECORDARE_API_KEY=%s\nRECORDARE_USER_ALIASES={"telegram:4242":"alice"}\n' "$URL" "$KEY" > "$HH/.env"
 unset KEY

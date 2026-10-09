@@ -19,15 +19,21 @@ import { PersonDirectory, RecordareClient, afterFailure } from '@arkimedehq/reco
 const rc = new RecordareClient({ baseUrl: 'http://recordare:8080', apiKey: process.env.RECORDARE_API_KEY!,
   headers: () => traceHeaders() });                       // e.g. OpenTelemetry propagation.inject
 
-// Who the user is, kind of memory and Atlas address; the name follows the platform's profile. `enabled` is the
+// Which memory the user's account opens, its mode (personal | entity) and Atlas address; the name follows the platform's profile. `enabled` is the
 // platform's own memory switch: while false, Recordare is not contacted (no consent flag in Recordare, D50).
 const people = new PersonDirectory(rc, { user: async (id) => ({ enabled: true, name: 'Andrea' }) });
-const person = await people.refresh('user-42');           // { ownerId, kind, atlasUrl }; peek() reads the cache
+const person = await people.refresh('user-42');           // { ownerId, mode, atlasUrl }; peek() reads the cache
 
 // Ingest (split into requests of 500, idempotent on each externalId): → { conversationId, accepted, duplicates, conflicts }.
 await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
   { externalId: 'm1', role: 'user', content: 'Domani vado a Bologna', sentAt: new Date().toISOString() },
 ] });
+// The agent's own content (knowledge given to it, a perception, a document): `own: true` on a user / other message.
+await rc.ingest('user-42', { conversation: { externalId: 'doc-1', source: 'document' }, messages: [
+  { externalId: 'd1', role: 'user', own: true, content: 'La caldaia va revisionata ogni due anni.', sentAt: new Date().toISOString() },
+] });
+// Mode (only while the memory is empty, else MemoryNotEmptyError) and the first person's gender, from the profile.
+await rc.updateMe('user-42', { gender: 'feminine' });
 
 // Recall: one MCP session per user AND conversation (evidence of writes, the current turn), both bound in code.
 const tools = await rc.mcp.listTools('user-42', 'chat-1'); // build the agent's tools from these schemas
@@ -54,7 +60,7 @@ Everything else is here, the same for every client.
 
 ## Conformance
 `service/test/conformance` runs this library against the real service in Recordare's CI: a turn ingested once,
-deletions propagate, the name and kind follow the platform, recall over MCP carries the
+deletions propagate, the name, mode and gender follow the platform, own content is marked, recall over MCP carries the
 user and the conversation. Type checks there fail the build when this contract drifts from the service's schemas.
 
 ## Synced copy (Arkimede)

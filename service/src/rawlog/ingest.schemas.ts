@@ -32,7 +32,10 @@ export const ingestSchema = z.object({
     content: z.string().min(1).max(64 * 1024),
     sentAt: z.iso.datetime({ offset: true }),
     upsert: z.boolean().default(false),
-  })).min(1).max(500),
+    /** The agent's own content (knowledge given to it, its perceptions, a document) — D50; only on `user` / `other` turns. */
+    own: z.boolean().optional(),
+  }).refine((m) => !m.own || m.role === 'user' || m.role === 'other', { message: 'own applies to user or other messages', path: ['own'] }))
+    .min(1).max(500),
   hints: z.object({ conversationEnded: z.boolean().optional() }).default({}),
 });
 
