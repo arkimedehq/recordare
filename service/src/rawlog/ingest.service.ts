@@ -253,12 +253,12 @@ export class IngestService {
     const name = (p.displayName?.trim() || (byClient ? id.externalUserId : id.externalId)).slice(0, 200);
     // A person the memory knows without an identity is this participant only on strong evidence: the full name, equal to
     // exactly one such contact (8.4). A first name alone is not (owner's decision 2026-10-09): a new contact, and — when
-    // exactly one contact known only by name shares it — a "same person?" question (personal memories; several: none).
+    // exactly one contact known only by name shares it — a "same person?" question (both modes since 8.5; several: none).
     const match = p.displayName?.trim() ? await matchUnboundContacts(tx, ownerId, name) : { bind: null, similar: [] };
     const contact: { id: string } = match.bind ? { id: match.bind }
       : (await tx.query(`INSERT INTO persons (owner_scope, display_name) VALUES ($1, $2) RETURNING id`, [ownerId, name]))[0];
     const [known] = match.similar;
-    if (!match.bind && mode === 'personal' && match.similar.length === 1 && known) {
+    if (!match.bind && match.similar.length === 1 && known) {
       const question = await sameContactQuestion(tx, name, known, at, memory.locale, memory.timezone);
       await askSameContact(tx, ownerId, contact.id, known, question, at);
     }

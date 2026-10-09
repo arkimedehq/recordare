@@ -5,7 +5,8 @@
  * `search_memory` (D34 + D29): semantic notes plus state facts, facts as of a date with their
  * value chain (initial → revisions → current). `unknown_current` is reported as "not known";
  * pending (inferred) items only on request. Every item carries its subject (D50, 8.4): the self's and the contacts' facts
- * and notes, in both modes; personal memories add who is asking and the open clarifications about the people involved.
+ * and notes, in both modes, with who is asking and the open clarifications about the people involved (entity memories:
+ * only for an identified speaker).
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -29,7 +30,7 @@ export interface MemorySearchArgs {
 }
 
 export interface FactView {
-  /** Whose fact it is: the self (an entity memory: the entity itself) or a contact (D48, D50). */
+  /** Whose fact it is: the self (an entity memory: the agent and its place) or a contact (D48, D50). */
   subject: SubjectView;
   key: string;
   value: string | null;
@@ -41,12 +42,12 @@ export interface FactView {
 
 export interface MemorySearchResult {
   memory: MemoryView;
-  /** Personal memories: who is asking (see search_episodes). */
-  speaker?: { kind: 'self' } | { kind: 'contact'; name: string };
+  /** Who is asking (see search_episodes). */
+  speaker: { kind: 'self' } | { kind: 'someone' } | { kind: 'contact'; name: string };
   notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; authorRole: string; subject: SubjectView }>;
   facts: FactView[];
   notes_info: string[];
-  /** Personal memories: open questions about the people involved, to ask if natural. */
+  /** Open questions about the people involved, to ask if natural (entity memories: only to an identified speaker). */
   clarifications?: string[];
 }
 
@@ -137,15 +138,15 @@ export class MemorySearchService {
       facts: facts.length, notes: notes.length });
     await logRecall(this.db, ownerId, 'search_memory', null, facts.length + notes.length, args.conversationId, now);
     const names = await contactNames(this.db, notes);
+    const speaker = await speakerOf(this.db, args.conversationId, now, owner.mode);
     const result: MemorySearchResult = {
       memory: { name: owner.display_name, mode: owner.mode },
+      speaker: speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : speaker,
       notes: notes.map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, authorRole: n.author_role,
         subject: subjectView(n, names) })),
       facts, notes_info: info,
     };
-    if (owner.mode === 'personal') {
-      const speaker = await speakerOf(this.db, args.conversationId, now);
-      result.speaker = speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : { kind: 'self' };
+    if (owner.mode === 'personal' || speaker.kind === 'contact') {
       const asks = await relevantClarifications(this.db, ownerId, args.query, notes.map((n) => n.id), now, 2);
       if (asks.length) result.clarifications = asks.map((c) => c.question);
     }

@@ -283,6 +283,28 @@ memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
   "l'utente", "the owner", "the assistant", in the most used languages: `service/src/lang/self.ts`); counts only, with
   `summary.clarifications` (`asked`, `resolved`) and `returned.answers`.
 
+**As built (8.5, entity agent — `extract.v13+entity.v4`, `facts.v2+entity.v4`; no migration).** Entity memories now follow
+the same model as personal ones; the personal prompts stay byte-identical (`extract.v13`, `facts.v2`, pinned by a test).
+- *Voice* — "I" is the shared agent (a device, a place, a robot, a service): its replies and actions (`me (assistant)`),
+  the content given to it to keep (`me (own)`), its place and what belongs to it, in the first person with
+  `owners.gender`. The people talking to it are never "I": whoever speaks through the account is `someone` until the
+  conversation identifies them (a self-introduction or being addressed by name, for their following messages, never
+  carried over from another conversation, never guessed); a participant with an identity is `Name [C3]`. A person's
+  "I" is written with their name ("Nunzia ha comprato…"), an unidentified speaker's as "qualcuno…".
+- *Prompt* — built from the personal prompt's sections where they hold for both (output schema, dates, plans, notes,
+  corrections) plus its own intro, voice, identification, episode, fact and safety sections; the user message is the
+  personal one (`ME`, `PEOPLE I KNOW`, `OPEN QUESTIONS`; facts listed `[me]` / `[Name]`).
+- *Subjects* — the `ContactBook` of 8.4 in both modes (the entity-only name lookup is gone); in an entity memory an
+  episode or note without a subject is `someone`'s, a fact without one the agent's (its place: where the keys are, the
+  internet provider). The guard that every person an episode names occurs in the window stays. A fact or note of
+  `someone` is not stored.
+- *Stance and claims* — the account's speaker's turns stay `owner`-authored (stated); `claims` in recall are other
+  conversation participants' inferred statements (the personal rule); a tool's news is the agent's learning.
+- *Recall* — `speaker` in every result: an identified contact, else `self` (personal) or `someone` (entity, with a
+  note that "I" in the question is the speaker, not the agent); clarifications ("which Marco?", "same person?") are
+  asked in entity memories too — at ingest and extraction — but offered only to an identified speaker.
+- *Gate* — one rule for both modes: a call when anyone but the assistant or a tool speaks.
+
 ## Layer 0 — raw log
 
 ### conversations

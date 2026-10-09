@@ -64,6 +64,16 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   ("if natural, ask: …"). Tool descriptions speak of "your memory". `nameOwner` is replaced by a leak detector (counts in
   the run summary). A personal window with only other people speaking now costs an extraction call. Entity memories are
   unchanged until 8.5. Client library: `TOOLS` regenerated.
+- **Others' claims about the self, dated** (WORK_PLAN 8.4b, `extract.v13`): in a personal memory what someone else says
+  about the self is one first-person episode with the date it was said, who said it and where; recall no longer
+  describes claims as being about others only.
+- **Entity agent** (D50, WORK_PLAN 8.5) — **breaking for MCP results of entity memories**. An entity memory (a shared
+  device, place, robot or service) is the agent's own memory in the first person (`extract.v13+entity.v4`,
+  `facts.v2+entity.v4`): its replies and actions and the content given to it (`own`) are "I"; the people talking to it
+  are contacts by name, `someone` until the conversation identifies them. Subjects, contacts and clarifications work as
+  in personal memories (a "which Marco?" question is offered only to an identified speaker); `speaker` is in every
+  result (`someone` for an unidentified speaker of an entity memory); `claims` follow the personal rule. Blind8:
+  82.1 % → 91.4 % (3 runs).
 - **Connectors: one memory per agent, people as participants** (D50) — **breaking for multi-person set-ups**. OpenClaw:
   the Gateway's agent has one memory (a personal token, or a client key with `defaultUser`); every sender is a
   participant with the channel identity `<channel>:<senderId>` and their channel name, the account holder is listed in

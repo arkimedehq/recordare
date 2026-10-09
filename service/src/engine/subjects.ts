@@ -3,9 +3,8 @@
 
 /**
  * Whose a memory row is (D50, docs/DATA_MODEL.md → Agent memory): the memory's self, a contact, an unidentified someone,
- * or undecided between candidate contacts. As built (WORK_PLAN 8.3) the subject follows today's rules — personal
- * memories: the self; entity memories: a fact's subject, an episode's one known contact, else someone — and is never
- * `undecided` yet (asking "which Marco?" comes with 8.4 / 8.5).
+ * or undecided between candidate contacts. Extractions name it and the ContactBook links the names (both modes since
+ * WORK_PLAN 8.5); MCP writes in an entity memory use `episodeSubject`.
  */
 import { type EntityManager } from 'typeorm';
 import { type SubjectKind } from '../identity/identity.entities';
@@ -36,7 +35,8 @@ export async function contactsNamed(tx: EntityManager, ownerId: string, raw: str
 }
 
 /**
- * Entity memories: an episode is the contact's when its people name exactly one known contact; otherwise someone's.
+ * Entity memories, MCP writes (`log_episode`): an episode is the contact's when its people name exactly one known contact;
+ * otherwise someone's.
  * Also returns, per alias, the contact it designates unambiguously (for `episode_people.person_id`).
  */
 export async function episodeSubject(tx: EntityManager, ownerId: string, people: string[]): Promise<{ subject: Subject; people: Map<string, string> }> {
@@ -74,7 +74,7 @@ export interface Resolved {
 }
 
 /**
- * Personal memories (WORK_PLAN 8.4): links the names an extraction writes to the contacts of the memory. A C-number
+ * Links the names an extraction writes to the contacts of the memory (WORK_PLAN 8.4; entity memories since 8.5). A C-number
  * names a listed contact; a name is matched against the self's names (→ self) and the contacts' display names, full
  * names and aliases. No match → a new contact (with its relation and, for a full name, its first name as an alias;
  * episode people only when they are names).

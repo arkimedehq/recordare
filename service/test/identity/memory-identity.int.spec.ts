@@ -116,7 +116,7 @@ describe('memory identity (D50)', () => {
     expect(await db.query(`SELECT count(*)::int AS n FROM persons WHERE owner_scope = $1`, [entity])).toEqual([{ n: 1 }]);
   });
 
-  it('labels speakers: personal "me" and contacts by name with their C-number (8.4); entity "person" (unchanged)', async () => {
+  it('labels speakers: "me" for the self (personal) and the agent\'s own turns, contacts by name with their C-number, "someone" for whoever talks to an entity', async () => {
     const run = async (user: string, conversation: string, messages: object[], participants: object[] = []) => {
       const res = await ingest(user, { conversation: { externalId: conversation, participants }, messages });
       llm.queue.push({});
@@ -138,7 +138,8 @@ describe('memory identity (D50)', () => {
     const entityPrompt = await run('casa', 'l2', [
       { externalId: 'a', role: 'user', authorRef: 'owner', content: 'Ho comprato il pane.', sentAt: at(1) },
     ], [{ ref: 'owner', role: 'owner' }]);
-    expect(entityPrompt).toContain(' person: Ho comprato il pane.');
+    expect(entityPrompt).toContain(' someone: Ho comprato il pane.');
+    expect(entityPrompt).toMatch(/^ME: Casa — gender masculine/);
   });
 
   it('opens a memory only through an account identity; a participant identity names a contact of one memory', async () => {
@@ -166,7 +167,7 @@ describe('memory identity (D50)', () => {
     expect(casa?.identities.map((i) => i.kind).sort()).toEqual(['account', 'participant', 'participant']);
   });
 
-  it('stores whose each memory is: the self in a personal memory; a contact, someone or the entity in an entity memory', async () => {
+  it('stores whose each memory is: the self in a personal memory; a contact, someone or the agent itself in an entity memory (8.5)', async () => {
     const extract = async (user: string, conversation: string, content: string, out: object) => {
       const res = await ingest(user, { conversation: { externalId: conversation }, messages: [{ externalId: `${conversation}-1`, role: 'user', content, sentAt: at(1) }] });
       llm.queue.push(out);
@@ -188,31 +189,32 @@ describe('memory identity (D50)', () => {
     ]);
 
     const [andrea] = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Andrea'`, [entity]);
-    await extract('casa', 's2', 'Sono Andrea: oggi ho visto Luca, ho una Panda e le chiavi sono nel cassetto.', {
-      episodes: [{ content: 'Andrea ha visto Luca.', people: ['Andrea', 'Luca'], evidence: [1] },
-        { content: 'Andrea è passato in casa.', people: ['Andrea (papà)'], evidence: [1] }],
+    await extract('casa', 's2', 'Sono Andrea: oggi ho visto Luca, ho una Panda e le chiavi sono nel cassetto. Qualcuno ha rotto un bicchiere.', {
+      episodes: [{ content: 'Andrea ha visto Luca.', subject: 'Andrea', people: ['Luca'], evidence: [1] },
+        { content: 'Andrea è passato in casa.', subject: 'Andrea (papà)', evidence: [1] },
+        { content: 'Qualcuno in casa ha rotto un bicchiere.', evidence: [1] }],
       facts: [{ key: 'car', value: 'Fiat Panda', verdict: 'new', subject: 'Andrea', evidence: [1] },
         { key: 'spare_keys_location', value: 'cassetto', verdict: 'new', subject: null, evidence: [1] }],
-      notes: [{ category: 'knowledge', content: 'In casa si tengono le chiavi nel cassetto.', verdict: 'new', evidence: [1] }],
+      notes: [{ subject: 'me', category: 'knowledge', content: 'Le chiavi di scorta le tengo nel cassetto.', verdict: 'new', evidence: [1] },
+        { category: 'preference', content: 'Ama il jazz.', verdict: 'new', evidence: [1] }],
     });
     const rows: Array<{ content: string }> = await db.query(
       `SELECT content, subject_kind, subject_person_id FROM episodes WHERE owner_id = $1`, [entity]);
     expect(rows.sort((x, y) => x.content.length - y.content.length)).toEqual([
-      // Andrea is a known contact (by name), Luca is not: exactly one known contact → Andrea's.
       { content: 'Andrea ha visto Luca.', subject_kind: 'contact', subject_person_id: andrea.id },
       { content: 'Andrea è passato in casa.', subject_kind: 'contact', subject_person_id: andrea.id },
+      // No subject in an entity memory: someone's — the people talking to the agent are never "me".
+      { content: 'Qualcuno in casa ha rotto un bicchiere.', subject_kind: 'someone', subject_person_id: null },
     ]);
+    const [luca] = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Luca'`, [entity]);
     expect(await db.query(`SELECT alias, person_id FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id
-      WHERE e.owner_id = $1 ORDER BY alias`, [entity])).toEqual([
-      { alias: 'Andrea', person_id: andrea.id }, { alias: 'Andrea (papà)', person_id: andrea.id }, { alias: 'Luca', person_id: null },
-    ]);
+      WHERE e.owner_id = $1 ORDER BY alias`, [entity])).toEqual([{ alias: 'Luca', person_id: luca.id }]);
     expect(await db.query(`SELECT key, subject_kind, subject_person_id FROM facts WHERE owner_id = $1 ORDER BY key`, [entity])).toEqual([
       { key: 'car', subject_kind: 'contact', subject_person_id: andrea.id },
-      { key: 'spare_keys_location', subject_kind: 'self', subject_person_id: null }, // the entity's own
+      { key: 'spare_keys_location', subject_kind: 'self', subject_person_id: null }, // the agent's own (its place)
     ]);
-    expect(await db.query(`SELECT subject_kind FROM notes WHERE owner_id = $1`, [entity])).toEqual([{ subject_kind: 'someone' }]);
-    // Nothing is undecided yet (asking "which Marco?" comes with WORK_PLAN 8.4 / 8.5).
-    expect(await db.query(`SELECT count(*)::int AS n FROM episodes WHERE subject_kind = 'undecided'`)).toEqual([{ n: 0 }]);
+    // The agent's own note is kept; someone's note is not (whose it is is unknown).
+    expect(await db.query(`SELECT subject_kind FROM notes WHERE owner_id = $1`, [entity])).toEqual([{ subject_kind: 'self' }]);
   });
 
   it('creates a memory with its mode and gender, and changes them through the admin API and PATCH /me', async () => {

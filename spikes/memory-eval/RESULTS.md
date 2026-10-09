@@ -443,6 +443,29 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.5 — entity agent: extract.v13+entity.v4 (2026-10-09, DeepSeek direct)
+
+Entity memories move to the D50 model: "I" is the shared agent (its replies and actions, own content, its place), the
+people talking to it are contacts by name or "someone" until the conversation identifies them; the prompt is built from
+the personal v13 sections (personal prompts byte-identical) plus entity intro / voice / identification / episode / fact /
+safety sections; one ContactBook for both modes; recall returns the speaker (`someone` for an unidentified entity
+speaker), clarifications only to an identified speaker, claims by the personal rule. One instance on :8087, queue `fp87`.
+Harness: entity names read as names ("Casa Bellandi"), `own: true` messages, entity framing in the first person.
+
+| Set | Run | 8.5 | Previous |
+|---|---|---|---|
+| `dataset_dev_entity_own` (new, NOT blind: a bike shop's shared assistant, 15 q — own price list and owner's note, the assistant's reminder and rental extension, unidentified speakers, a hand-over, two Marcos, an English customer) | 1 | **100 %** | — |
+| `dataset_dev_entity` (11 q) | 1 | **100 %** | 95.5 % |
+| `dataset_dev_poison` (personal control, prompt byte-identical) | 1 | 90 % | 100 % (v13) — p01 / p03 partial: the answers omit the claims' dates; the stored claims are the same dated ones |
+
+Memory read on the dev dump: first person for the agent ("Gianni mi ha caricato il listino…", "gli ho messo un
+promemoria alle 17:30", "le ho prolungato il noleggio"), "qualcuno in ciclofficina…" for unidentified speakers (repair,
+Saturday shifts), the two Marcos kept apart (Marco Ferri the supplier, Marco of the gravel group); one inferred note
+wrong ("Luca fa parte del gruppo gravel"). **Blind confirmation** (`b8_v4_runs.sh`, 3 runs): 90.3 / 93.5 / 90.3 =
+**91.4 %** (bar 82.1 %), paired vs the entity.v3 runs +0.091 [−0.011, +0.204], p(better) 0.95; by category
+unidentified +0.89, carry-over +0.22, hand-over +0.08, attribution −0.22, correction −0.11; changed questions e04 +1.0,
+e06 +1.0, e05 +0.67, e01 −0.67 (two runs answered that no appointment was found: recall, not extraction).
+
 ### WORK_PLAN 8.4b — provenance after the first person: extract.v13 (2026-10-09, DeepSeek direct)
 
 Cause (dev set `dataset_dev_poison`, not blind, read on the v12 dumps): others' claims about me lost the date they were

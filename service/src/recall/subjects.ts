@@ -4,10 +4,11 @@
 /**
  * Subjects in recall results (D50, WORK_PLAN 8.4): whose each item is — the memory's self ("I"), a contact by name,
  * someone, or undecided between candidates — and who is asking: the author of the conversation's latest turn when it is
- * an identified contact, otherwise the self (an undeclared speaker gets "I"'s memories).
+ * an identified contact; otherwise the self in a personal memory (an undeclared speaker gets "I"'s memories), someone
+ * in an entity memory (whoever talks to the agent without saying who they are).
  */
 import { type DataSource } from 'typeorm';
-import { type SubjectKind } from '../identity/identity.entities';
+import { type MemoryMode, type SubjectKind } from '../identity/identity.entities';
 
 export type SubjectView =
   | { kind: 'self' }
@@ -33,13 +34,14 @@ export function subjectView(r: SubjectRow, names: Map<string, string>): SubjectV
   return { kind: 'self' };
 }
 
-export type Speaker = { kind: 'self' } | { kind: 'contact'; id: string; name: string };
+export type Speaker = { kind: 'self' } | { kind: 'someone' } | { kind: 'contact'; id: string; name: string };
 
 /** Who is asking: the latest person's turn of the conversation (as of `now`) when an identified contact wrote it. */
-export async function speakerOf(db: DataSource, conversationId: string | undefined, now: Date): Promise<Speaker> {
-  if (!conversationId) return { kind: 'self' };
+export async function speakerOf(db: DataSource, conversationId: string | undefined, now: Date, mode: MemoryMode): Promise<Speaker> {
+  const unknown: Speaker = mode === 'entity' ? { kind: 'someone' } : { kind: 'self' };
+  if (!conversationId) return unknown;
   const [m]: Array<{ author_kind: string; author_person_id: string | null; display_name: string | null }> = await db.query(
     `SELECT m.author_kind, m.author_person_id, p.display_name FROM messages m LEFT JOIN persons p ON p.id = m.author_person_id
      WHERE m.conversation_id = $1 AND m.role IN ('user', 'other') AND m.sent_at <= $2 ORDER BY m.sent_at DESC LIMIT 1`, [conversationId, now]);
-  return m?.author_kind === 'contact' && m.author_person_id ? { kind: 'contact', id: m.author_person_id, name: m.display_name ?? '?' } : { kind: 'self' };
+  return m?.author_kind === 'contact' && m.author_person_id ? { kind: 'contact', id: m.author_person_id, name: m.display_name ?? '?' } : unknown;
 }
