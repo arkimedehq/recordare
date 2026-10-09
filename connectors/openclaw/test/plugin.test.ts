@@ -72,7 +72,7 @@ describe('hooks and tools', () => {
       calls.push({ url: String(url), headers: new Headers(init.headers), body: JSON.parse(String(init.body ?? '{}')) });
       if (String(url).endsWith('/end')) return new Response(null, { status: 202 });
       const body = String(url).endsWith('/context') ? { block: '<memory-context>x</memory-context>', items: 1 }
-        : { conversationId: 'c', accepted: 1, duplicates: 0, conflicts: [], stored: true };
+        : { conversationId: 'c', accepted: 1, duplicates: 0, conflicts: [] };
       return new Response(JSON.stringify(body), { status: 200 });
     }));
   });

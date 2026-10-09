@@ -18,7 +18,6 @@ export async function setup(env: Record<string, string>) {
   const client = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'P', kind: 'platform', autoProvision: true } })).body;
   const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } })).body.key;
   const ownerId = (await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'u1' } })).body.ownerId;
-  await call(url, 'PATCH', `/api/v1/admin/owners/${ownerId}`, { token: ADMIN_KEY, body: { episodicEnabled: true } });
   const send = (conversation: string, participants: object[] = []) => call(url, 'POST', '/api/v1/ingest/messages', {
     token: key, headers: { 'x-recordare-user': 'u1' },
     body: { conversation: { externalId: conversation, participants }, messages: [{ externalId: `${conversation}-1`, role: 'user', content: 'ciao', sentAt: '2026-10-01T10:00:00+02:00' }] },

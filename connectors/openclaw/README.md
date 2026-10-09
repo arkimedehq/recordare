@@ -15,10 +15,10 @@ own [Recordare](../../README.md) service — the **full** client level:
 - **Group chats**: the turns of known people are captured, with the other members' messages as context (role `other`).
   Recordare shows memories only when the viewers are exactly the owner, so recall stays empty in groups.
 
-It does not take OpenClaw's memory slot: `memory-core` (`MEMORY.md`, `memory_search`) keeps working beside it. Nothing
-is stored until the Recordare admin switched the person's consent on. The plugin never blocks or breaks a turn: every
-call is time-boxed (3 s before the turn), failures are logged without content, captured messages that could not be sent
-are retried in the background for about ten minutes (in memory: a Gateway restart drops them).
+It does not take OpenClaw's memory slot: `memory-core` (`MEMORY.md`, `memory_search`) keeps working beside it. Recordare
+stores every turn the plugin sends (it has no consent flag, D50). The plugin never blocks or breaks a turn: every call
+is time-boxed (3 s before the turn), failures are logged without content, captured messages that could not be sent are
+retried in the background for about ten minutes (in memory: a Gateway restart drops them).
 
 Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 

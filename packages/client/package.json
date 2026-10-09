@@ -1,7 +1,7 @@
 {
   "name": "@arkimedehq/recordare-client",
   "version": "0.1.0",
-  "description": "Client library for Recordare, the memory service for agent platforms: identity, consent, ingest, deletions, MCP recall.",
+  "description": "Client library for Recordare, the memory service for agent platforms: identity, ingest, deletions, MCP recall.",
   "license": "AGPL-3.0-or-later",
   "author": "Andrea Genovese",
   "homepage": "https://github.com/arkimedehq/recordare/tree/main/packages/client#readme",

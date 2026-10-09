@@ -4,7 +4,7 @@
 
 Stato: **contratti M1, revisione 3** (2026-10-03): applicate le revisioni di coerenza e di sicurezza; le tabelle
 del profilo di deployment **public** (`API.md` §0, D33) sono contrassegnate e non costruite nella v1.
-Costruito (2026-10-08): le migrazioni in `service/src/db/migrations` (dallo schema iniziale a `ConsentWaiting`) corrispondono a questo documento; le tabelle del profilo public
+Costruito (2026-10-08): le migrazioni in `service/src/db/migrations` (dallo schema iniziale a `NoConsent`) corrispondono a questo documento; le tabelle del profilo public
 non sono create, le tabelle contrassegnate **created, unused yet** esistono senza codice che le usi.
 Postgres 16 + pgvector ≥ 0.8. Implementa D6–D32 (`EPISODIC_MEMORY_TODO.md`), il modello di identità di
 `API.md` e le regole di provenienza / disclosure della visione.
@@ -104,19 +104,18 @@ stringhe "Nome (relazione)" sugli episodi (`episode_people.alias`), che il recal
 | `person_id` | uuid PK → persons | |
 | `email` | text unique null | Login dell'owner (magic link, `API.md` §1) — usato solo dal profilo public |
 | `locale`, `timezone` | text | Default `it`, `Europe/Rome`; l'API admin accetta `it` / `en`. La lingua formatta solo le date e gli avvisi del recall: gli aiuti linguistici deterministici (periodi, mesi, parentele, nome dell'owner — `service/src/lang`, le 25 lingue più usate) applicano tutte le lingue insieme |
-| `episodic_enabled` | bool, default false | D4 — modificato solo dall'owner (sessione dell'owner o token con scope owner); v1 come costruito: dall'admin (`episodic_enabled_by = 'admin'`), mai da una chiave client |
-| `episodic_enabled_at`, `episodic_enabled_by` | timestamptz, text | Registro del consenso (chi / quale UI del client) |
-| `ingest_refused_at` | timestamptz null | Ultima volta in cui un client ha inviato messaggi con il consenso spento (nulla salvato); la console admin mostra "chiede il consenso" (`waitingForConsentSince`) finché il consenso resta spento (WORK_PLAN 6.6b) |
 | `consolidated_at` | timestamptz null | Ultimo consolidamento notturno (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark della revisione notturna dei fatti (WORK_PLAN 5.6, sull'orologio di registrazione) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = default dell'installazione (`QUALITY_PROFILE`) |
 | `created_at` | timestamptz | |
 
-Il ritardo idle è un'impostazione globale (D5), non per owner.
+Il ritardo idle è un'impostazione globale (D5), non per owner. Nessuna colonna di consenso (D50): la migrazione
+`NoConsent` ha eliminato `episodic_enabled`, `episodic_enabled_at`, `episodic_enabled_by` e `ingest_refused_at` — ogni
+memoria conserva ciò che il suo client invia; l'interruttore acceso / spento appartiene alla piattaforma client.
 
 ### owner_sessions (public profile)
 `id, owner_id, created_at, expires_at, revoked_at, user_agent` — la sessione di login propria dell'owner sulle
-pagine di Recordare (consenso, link code, autorizzazione OAuth, diario self-service).
+pagine di Recordare (link code, autorizzazione OAuth, diario self-service).
 
 ### clients
 `id, name, kind enum (platform|mcp_client|import), auto_provision bool, raw_log_scope enum

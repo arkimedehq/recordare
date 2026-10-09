@@ -46,8 +46,8 @@ curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/jso
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"scopes":["ingest","read"]}' $RECORDARE_URL/api/v1/admin/clients/<id client>/keys
 ```
-Il consenso resta all'admin: una persona creata automaticamente non salva nulla finché `PATCH
-api/v1/admin/owners/{id} {episodicEnabled: true}`. Per legare l'utente della piattaforma a una persona esistente,
+Recordare non ha un flag di consenso (D50): i turni di una persona creata automaticamente sono salvati dalla prima
+richiesta; per smettere, spegnere `CAPTURE` / `RECALL` o togliere il proxy. Per legare l'utente della piattaforma a una persona esistente,
 collega l'identità: `POST api/v1/admin/identities {kind: "client_user", personId, clientId, externalId:
 "anythingllm:2"}` (l'external id è l'utente Recordare che il proxy risolve, vedi Identità). Un'installazione con una
 sola persona può usare un **token personale** (`rp_…`) al posto della chiave client: ogni richiesta risolta è di quella
@@ -157,14 +157,12 @@ Le richieste di titolo (`… title for the conversation …`) sono saltate da un
 - **Coda di ritentativi in memoria** (v0.1): fino a 1000 lotti, ~8 tentativi con back-off in ≈ 10 minuti
   (`Retry-After` rispettato), errori permanenti (400 / 413 / 422) scartati e registrati; un ultimo tentativo al
   SIGTERM; **persa al riavvio**.
-- Una persona senza consenso: un ingest risponde `stored: false`; per un minuto il proxy si limita a salvare i
-  messaggi di quella persona (senza chiedere il contesto di memoria).
 - I log non contengono testo dei messaggi (salvo con `LOG_UPSTREAM`).
 
 ## Sicurezza
 Il proxy si fida dell'identità dichiarata dal chiamante: chi può raggiungerlo può dichiararsi qualunque utente. Tienilo
 sulla rete privata della piattaforma, oppure imposta `PROXY_API_KEY` così che solo la piattaforma possa chiamarlo; con
-Open WebUI usa la modalità JWT. La chiave Recordare è una chiave client: non tocca mai le impostazioni di consenso
+Open WebUI usa la modalità JWT. La chiave Recordare è una chiave client: non cambia mai le impostazioni di una persona
 (`owner_settings` non è uno scope dei client).
 
 ## Limiti (v0.1)

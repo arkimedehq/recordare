@@ -31,12 +31,13 @@ describe('auth and admin (v1 home / research profile)', () => {
     const key = await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } });
     expect(key.body.key).toMatch(/^rk_[0-9a-f]{12}_/);
 
-    // Client keys can never carry admin / consent scopes.
+    // Client keys can never carry admin scopes.
     const adminScope = await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['admin'] } });
     expect(adminScope).toMatchObject({ status: 400, body: { code: 'invalid_request' } });
 
-    const owner = await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca', episodicEnabled: true } });
-    expect(owner.body).toMatchObject({ episodicEnabled: true, episodicEnabledBy: 'admin', locale: 'it' });
+    const owner = await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } });
+    expect(owner.body).toMatchObject({ locale: 'it' });
+    expect(owner.body).not.toHaveProperty('episodicEnabled'); // no consent flag (D50)
     const ownerId: string = owner.body.personId;
 
     const ident = { kind: 'client_user', personId: ownerId, clientId: client.body.id, externalId: 'user-42' };
@@ -71,7 +72,7 @@ describe('auth and admin (v1 home / research profile)', () => {
     const again = await call(url, 'GET', '/api/v1/me', { token: key.body.key, headers: { 'x-recordare-user': 'new-user' } });
     expect(again.body.ownerId).toBe(first.body.ownerId);
     expect(first.body.displayName).toBe('new-user'); // named after the client's id until named
-    expect(first.body.episodicEnabled).toBe(false); // consent belongs to the admin / the owner, never to the client
+    expect(first.body).not.toHaveProperty('episodicEnabled'); // no consent flag (D50): the client's switch decides
 
     // The client names a person it created and keeps the name in sync with its user's profile.
     const ingestKey = await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } });

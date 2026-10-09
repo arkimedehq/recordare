@@ -30,7 +30,7 @@ describe('entity memory (D48)', () => {
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
   async function owner(name: string, kind?: 'entity'): Promise<string> {
-    const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: name, episodicEnabled: true, ...(kind ? { kind } : {}) } })).body.personId;
+    const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: name, ...(kind ? { kind } : {}) } })).body.personId;
     await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'client_user', personId: id, clientId, externalId: name } });
     return id;
   }

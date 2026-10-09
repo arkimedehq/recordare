@@ -2,6 +2,9 @@
 
 *Traduzione italiana di [INTEGRATION.md](INTEGRATION.md) — la versione inglese è quella di riferimento.*
 
+> Da D50 (2026-10-09) Recordare non ha un flag di consenso: ogni memoria conserva ciò che il suo client invia;
+> l'interruttore acceso / spento appartiene alla piattaforma client (WORK_PLAN 8.1).
+
 Come una piattaforma di agenti (prima Arkimede, poi qualsiasi altra) usa Recordare come memoria dei suoi utenti, al
 **livello completo** (chiave API del client, ingest REST + MCP). Contratti: `API.md`; eventi per la vista in tempo
 reale opzionale: `ATLAS_EVENTS.md`.
@@ -9,7 +12,7 @@ reale opzionale: `ATLAS_EVENTS.md`.
 Infrastruttura (standalone, o co-ospitato con Arkimede su un piccolo server): `DEPLOYMENT.md`.
 
 **Usa la libreria client** (`packages/client`, WORK_PLAN 6.7): fa le sezioni 2–4 qui sotto allo stesso modo per ogni
-piattaforma — persona, consenso e sincronizzazione del nome, ingest, cancellazioni, richiamo MCP con le intestazioni
+piattaforma — persona e sincronizzazione del nome, ingest, cancellazioni, richiamo MCP con le intestazioni
 giuste, la politica di consegna dell'outbox — e passa la suite di conformità. Alla piattaforma restano solo la
 memorizzazione dell'outbox e la trasformazione delle sue chat.
 
@@ -20,12 +23,10 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
 1. Creare il client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
 2. Creare la sua chiave: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read", "write"]}` (`write` per le modifiche della persona in un diario) — mostrata una sola
    volta; conservarla come segreto della piattaforma.
-3. **Il consenso resta all'amministratore / al proprietario** (D4): la chiave di un client non può mai attivare la
-   memoria episodica di una persona. Profilo privato: l'amministratore la attiva per persona
-   (`PATCH api/v1/admin/owners/{ownerId} {episodicEnabled: true}`). Profilo public: l'interruttore dell'host apre la
-   pagina del proprietario di Recordare. La console admin (`/admin`) elenca le persone il cui client ha inviato
-   messaggi mentre il consenso era spento ("chiede il consenso", `API.md` §6) — di quei messaggi non viene salvato
-   nulla.
+3. **L'interruttore acceso / spento è della piattaforma** (D50): Recordare non ha un flag di consenso e conserva tutto
+   ciò che la piattaforma invia. Dare ai propri utenti (o ai propri amministratori) un interruttore della memoria per
+   utente e non inviare nulla mentre è spento. Informare le persone attorno all'agente — e l'eventuale base giuridica, per esempio
+   secondo il GDPR — è compito di chi installa la piattaforma, non un'impostazione di Recordare.
 
 ## 2. Persone
 - Ogni richiesta nomina l'utente della piattaforma: `X-Recordare-User: <the platform's own user id>`. Con
@@ -37,9 +38,6 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   accettato solo finché la memoria è vuota (409 `memory_not_empty`). `GET api/v1/me` restituisce `kind` (mostrare una
   memoria condivisa come tale) e `atlasUrl` quando Recordare Atlas è installato (collegarlo solo per i propri
   amministratori: mostra l'attività di ogni persona).
-- `GET api/v1/me` indica anche `episodicEnabled`: finché il consenso non è dato, l'ingest non memorizza nulla —
-  mostrare all'utente "in attesa di attivazione" invece di accumulare i suoi messaggi (trattenerli aggirerebbe il
-  consenso).
 - La stessa persona su due piattaforme: l'amministratore collega le identità (`POST api/v1/admin/identities`).
 
 ## 3. Ingest — non bloccare mai la chat

@@ -15,7 +15,7 @@ memory kept by your own [Recordare](../../README.md) service — the **full** cl
   the conversation is already captured.
 
 It is Hermes' one external memory provider (`memory.provider: recordare`); the built-in `MEMORY.md` / `USER.md` store
-keeps working beside it. Nothing is stored until the Recordare admin switched the person's consent on. The provider
+keeps working beside it. Recordare stores every turn the provider sends (it has no consent flag, D50). The provider
 never breaks a turn: every call is time-boxed, failures are logged without content, and captured messages wait in a
 small SQLite outbox (`$HERMES_HOME/recordare_outbox.db`) that retries with back-off, honours `Retry-After` and survives
 restarts (messages keep their ids, so a re-send is stored once).

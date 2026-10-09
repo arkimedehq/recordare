@@ -11,8 +11,8 @@ A Claude Code plugin that gives Claude a long-term episodic memory kept by your 
   `correct_episode`, `forget_episode`. What the agent writes counts as yours only when your own recent words say it
   (otherwise it waits for your confirmation in the diary).
 
-Nothing is processed until the Recordare admin switched your consent on. The hooks never block Claude Code: if
-Recordare is down, the turn goes on without memory.
+Recordare stores every turn the hooks send (it has no consent flag, D50): to stop, disable the plugin. The hooks never
+block Claude Code: if Recordare is down, the turn goes on without memory.
 
 ## Install
 

@@ -33,8 +33,7 @@ export class AdminService {
     return this.db.transaction(async (tx) => {
       const person = await tx.getRepository(Person).save({ displayName: input.displayName, kind: input.kind, ownerScope: null });
       return tx.getRepository(Owner).save({
-        personId: person.id, locale: input.locale, timezone: input.timezone, episodicEnabled: input.episodicEnabled, qualityProfile: input.qualityProfile,
-        episodicEnabledAt: input.episodicEnabled ? new Date() : null, episodicEnabledBy: input.episodicEnabled ? 'admin' : null,
+        personId: person.id, locale: input.locale, timezone: input.timezone, qualityProfile: input.qualityProfile,
       });
     });
   }
@@ -43,11 +42,6 @@ export class AdminService {
     const repo = this.db.getRepository(Owner);
     const owner = await repo.findOneBy({ personId });
     if (!owner) throw new NotFoundException();
-    if (input.episodicEnabled !== undefined && input.episodicEnabled !== owner.episodicEnabled) {
-      owner.episodicEnabled = input.episodicEnabled;
-      owner.episodicEnabledAt = new Date();
-      owner.episodicEnabledBy = 'admin';
-    }
     if (input.displayName || input.kind) {
       await this.db.getRepository(Person).update(personId, {
         ...(input.displayName ? { displayName: input.displayName } : {}), ...(input.kind ? { kind: input.kind } : {}) });
@@ -103,8 +97,7 @@ export class AdminService {
   /** Owners with their settings, memory size, linked identities and personal tokens. */
   async listPersons(): Promise<unknown[]> {
     const owners: Array<Record<string, unknown> & { id: string }> = await this.db.query(
-      `SELECT p.id, p.display_name AS name, p.kind, o.episodic_enabled AS "episodicEnabled", o.episodic_enabled_at AS "episodicEnabledAt",
-              CASE WHEN o.episodic_enabled THEN NULL ELSE o.ingest_refused_at END AS "waitingForConsentSince",
+      `SELECT p.id, p.display_name AS name, p.kind,
               o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.created_at AS "createdAt",
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.owner_id = p.id) AS messages,
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id

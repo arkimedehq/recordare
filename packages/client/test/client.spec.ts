@@ -37,7 +37,7 @@ const client = (extra: Record<string, string> = {}) => new RecordareClient({ bas
 
 describe('RecordareClient', () => {
   it('sends the credential, the user and the host\'s trace context on every request', async () => {
-    reply = () => ({ status: 200, body: { ownerId: 'o1', displayName: 'Andrea', kind: 'human', episodicEnabled: true, via: 'client', scopes: ['read'] } });
+    reply = () => ({ status: 200, body: { ownerId: 'o1', displayName: 'Andrea', kind: 'human', via: 'client', scopes: ['read'] } });
     const me = await client({ traceparent: '00-abc-def-01' }).me('u1');
     expect(me.ownerId).toBe('o1');
     expect(seen[0]).toMatchObject({ method: 'GET', path: '/api/v1/me' });
@@ -55,12 +55,12 @@ describe('RecordareClient', () => {
   });
 
   it('splits a large ingest into requests of 500 messages, the end hint only on the last one', async () => {
-    reply = (s) => ({ status: 200, body: { conversationId: 'c1', accepted: s.body.messages.length, duplicates: 0, conflicts: [], stored: true } });
+    reply = (s) => ({ status: 200, body: { conversationId: 'c1', accepted: s.body.messages.length, duplicates: 0, conflicts: [] } });
     const messages = Array.from({ length: 1200 }, (_, i) => ({ externalId: `m${i}`, role: 'user' as const, content: 'x', sentAt: '2026-10-07T10:00:00+02:00' }));
     const res = await client().ingest('u1', { conversation: { externalId: 'chat-1' }, messages, hints: { conversationEnded: true } });
     expect(seen.map((s) => s.body.messages.length)).toEqual([500, 500, 200]);
     expect(seen.map((s) => s.body.hints)).toEqual([undefined, undefined, { conversationEnded: true }]);
-    expect(res).toEqual({ conversationId: 'c1', accepted: 1200, duplicates: 0, conflicts: [], stored: true });
+    expect(res).toEqual({ conversationId: 'c1', accepted: 1200, duplicates: 0, conflicts: [] });
   });
 
   it('asks for the memory context of a message in its conversation', async () => {
@@ -122,10 +122,10 @@ describe('clipUtf8', () => {
 });
 
 describe('PersonDirectory', () => {
-  it('keeps the name in sync with the profile, caches consent, kind and Atlas, and survives an outage', async () => {
+  it('keeps the name in sync with the profile, caches the person, kind and Atlas, and survives an outage', async () => {
     let shown = 'Andrea';
     reply = (s) => (s.method === 'GET'
-      ? { status: 200, body: { ownerId: 'o1', displayName: shown, kind: 'entity', episodicEnabled: false, atlasUrl: 'http://atlas', via: 'client', scopes: [] } }
+      ? { status: 200, body: { ownerId: 'o1', displayName: shown, kind: 'entity', atlasUrl: 'http://atlas', via: 'client', scopes: [] } }
       : { status: 204 });
     let profile = 'Andrea';
     const resolved: string[] = [];
@@ -134,9 +134,8 @@ describe('PersonDirectory', () => {
       onResolved: (u, p) => { resolved.push(`${u}:${p.ownerId}`); },
     });
     expect(people.peek('u1')).toBeUndefined(); // never waits; looks up in the background
-    expect(await people.status('u1')).toBe('waiting_activation');
-    expect(people.peek('u1')).toEqual({ ownerId: 'o1', consent: false, kind: 'entity', atlasUrl: 'http://atlas' });
-    expect(people.knownOff()).toEqual(['u1']);
+    expect(await people.refresh('u1')).toEqual({ ownerId: 'o1', kind: 'entity', atlasUrl: 'http://atlas' });
+    expect(people.peek('u1')).toEqual({ ownerId: 'o1', kind: 'entity', atlasUrl: 'http://atlas' });
     expect(seen.filter((s) => s.method === 'PATCH')).toHaveLength(0); // same name: no rename
 
     profile = 'Andrea G.';
@@ -145,14 +144,14 @@ describe('PersonDirectory', () => {
     shown = 'Andrea G.';
 
     reply = () => ({ status: 503 });
-    expect(await people.status('u1')).toBe('unknown');
+    expect((await people.refresh('u1')).ownerId).toBe('o1');
     expect(people.peek('u1')?.ownerId).toBe('o1'); // the last known person stays
     expect(resolved).toEqual(['u1:o1', 'u1:o1']);
 
     // Not opted in on the platform: Recordare is never contacted; a stored person stays known.
     seen.length = 0;
     people.seed('off', 'o-stored');
-    expect(await people.status('off')).toBe('unknown');
+    expect(await people.refresh('off')).toEqual({ ownerId: 'o-stored', kind: null, atlasUrl: null });
     expect(people.peek('off')?.ownerId).toBe('o-stored');
     expect(seen).toHaveLength(0);
   });

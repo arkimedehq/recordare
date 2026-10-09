@@ -74,7 +74,7 @@ OpenTelemetry verso di esso (README di `recordare-atlas`). Impostare `ATLAS_URL`
 che le persone aprono, ad es. `http://<server>:5175`): `GET /me` lo consegna ai client, e Arkimede lo collega per i suoi
 amministratori.
 
-**Console admin**: `http://<host>:<RECORDARE_PORT>/admin` (persone, consenso, tipo di memoria, client, chiavi, token).
+**Console admin**: `http://<host>:<RECORDARE_PORT>/admin` (persone, tipo di memoria, client, chiavi, token).
 Recordare ascolta su `127.0.0.1` per impostazione predefinita: aprila sulla LAN di casa con `RECORDARE_BIND=0.0.0.0` in
 `deploy/.env` (ogni rotta della API richiede comunque una chiave), oppure raggiungila con un tunnel SSH
 (`ssh -L 8090:127.0.0.1:8090 <server>`). In HTTP semplice la chiave admin attraversa la rete in chiaro: solo su una rete di

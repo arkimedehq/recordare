@@ -33,7 +33,7 @@ Controlli — eseguili tutti e tre prima di ogni commit (la CI li esegue): `npm 
 | `src/auth`, `src/admin`, `src/me` | Chiavi API dei client, token personali, API di amministrazione, risoluzione del proprietario, contesto dello spettatore; `GET / PATCH api/v1/me` |
 | `src/console` | Console di amministrazione, una pagina statica servita su `/admin` sopra l'API di amministrazione |
 | `src/identity` | Entità di identità |
-| `src/rawlog` | Layer 0: ingest REST (idempotente, vincolato al consenso), modifiche ed eliminazioni, ricerca nel log grezzo (full-text + vettoriale) |
+| `src/rawlog` | Layer 0: ingest REST (idempotente, conserva sempre — l'interruttore acceso / spento è del client, D50), modifiche ed eliminazioni, ricerca nel log grezzo (full-text + vettoriale) |
 | `src/queue` | BullMQ: job di estrazione a inattività con debounce, embedding dei messaggi, sweep orario di consolidamento |
 | `src/engine` | Estrazione (una chiamata per finestra, writer con regole del ciclo di vita e protezione dall'eco del richiamo), resolver di quasi-duplicati / correzioni, profili di qualità, consolidamento notturno (digest), revisione dei fatti |
 | `src/recall` | `search_episodes`, `search_memory`, risolutore di periodi, richiamo consapevole delle persone, scritture esplicite e oblio, il contesto di memoria prima del turno (`POST api/v1/context`), log dei richiami |

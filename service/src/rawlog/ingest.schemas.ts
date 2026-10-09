@@ -39,11 +39,10 @@ export const ingestSchema = z.object({
 export type IngestRequest = z.infer<typeof ingestSchema>;
 
 export interface IngestResult {
-  conversationId: string | null;
+  conversationId: string;
   accepted: number;
   duplicates: number;
   conflicts: string[];
-  stored: boolean;
 }
 
 export const editMessageSchema = z.object({ content: z.string().min(1).max(64 * 1024) });

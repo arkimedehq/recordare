@@ -69,7 +69,7 @@ change it for one side only.
 (`recordare-atlas` README). Set `ATLAS_URL` in Recordare's `.env` (the address people open, e.g. `http://<server>:5175`):
 `GET /me` hands it to clients, and Arkimede links it for its admins.
 
-**Admin console**: `http://<host>:<RECORDARE_PORT>/admin` (people, consent, memory kind, clients, keys, tokens). Recordare
+**Admin console**: `http://<host>:<RECORDARE_PORT>/admin` (people, memory kind, clients, keys, tokens). Recordare
 listens on `127.0.0.1` by default: open it on the home LAN with `RECORDARE_BIND=0.0.0.0` in `deploy/.env` (every API route
 still needs a key), or reach it through an SSH tunnel (`ssh -L 8090:127.0.0.1:8090 <server>`). Over plain HTTP the admin
 key crosses the network unencrypted: a trusted home network only, or put HTTPS in front.

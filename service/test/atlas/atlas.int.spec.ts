@@ -32,7 +32,7 @@ describe('atlas snapshot (M5b.2)', () => {
     afterAll(async () => { await app?.close(); emb?.close(); });
 
     it('returns the network of one owner: real relations, metadata only, admin only', async () => {
-      const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca', episodicEnabled: true } })).body.personId;
+      const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
       const db = app.get(DataSource);
       const ins = async (content: string, corrects: string | null = null) => {
         const [r] = await db.query(

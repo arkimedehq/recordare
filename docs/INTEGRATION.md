@@ -1,12 +1,15 @@
 # Integrating a client platform (M6)
 
+> Since D50 (2026-10-09) Recordare has no consent flag: every memory stores what its client sends; the on/off switch
+> belongs to the client platform (WORK_PLAN 8.1).
+
 How an agent platform (Arkimede first, any other after) uses Recordare as its users' memory, at the **full level**
 (client API key, REST ingest + MCP). Contracts: `API.md`; events for the optional live view: `ATLAS_EVENTS.md`.
 
 Infrastructure (standalone, or co-hosted with Arkimede on a small server): `DEPLOYMENT.md`.
 
 **Use the client library** (`packages/client`, WORK_PLAN 6.7): it does sections 2–4 below the same way for every
-platform — person, consent and name sync, ingest, deletions, MCP recall with the right headers, the outbox delivery
+platform — person and name sync, ingest, deletions, MCP recall with the right headers, the outbox delivery
 policy — and passes the conformance suite. A platform keeps only its outbox storage and its chat mapping.
 
 **Ready-made connectors** (`connectors/`, full level, §4c): Claude Code, Codex, OpenClaw, Hermes Agent, and an
@@ -16,11 +19,10 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
 1. Create the client: `POST api/v1/admin/clients {name, kind: "platform", autoProvision: true}`.
 2. Create its key: `POST api/v1/admin/clients/{id}/keys {scopes: ["ingest", "mcp", "read", "write"]}` (`write` for the person's own edits in a diary UI) — shown once; store it
    as a secret of the platform.
-3. **Consent stays with the admin / the owner** (D4): a client key can never turn a person's episodic memory on.
-   Home profile: the admin enables it per person (`PATCH api/v1/admin/owners/{ownerId} {episodicEnabled: true}`).
-   Public profile: the host's toggle opens Recordare's owner page. The admin console (`/admin`) lists the people
-   whose client sent messages while their consent was off ("waiting for consent", `API.md` §6) — nothing of those
-   messages is stored.
+3. **The on/off switch is yours** (D50): Recordare has no consent flag and stores whatever your platform sends. Give
+   your users (or your admins) a per-user memory switch and send nothing while it is off. Informing the people around
+   the agent — and any legal basis, e.g. under the GDPR — is the duty of whoever deploys the platform, not a Recordare
+   setting.
 
 ## 2. People
 - Every request names the platform's user: `X-Recordare-User: <the platform's own user id>`. With `autoProvision`
@@ -31,8 +33,6 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   {kind: human | entity}` (D48 — `entity` for a shared account everyone uses), accepted only while the memory is empty
   (409 `memory_not_empty`). `GET api/v1/me` returns `kind` (show a shared memory as such) and `atlasUrl` when Recordare
   Atlas is installed (link it for your admins only: it shows every person's activity).
-- `GET api/v1/me` also says `episodicEnabled`: until the consent is given, ingest stores nothing — show the user
-  "waiting for activation" instead of buffering their messages (holding them would bypass the consent).
 - The same human on two platforms: the admin links the identities (`POST api/v1/admin/identities`).
 
 ## 3. Ingest — never block the chat

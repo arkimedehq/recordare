@@ -59,9 +59,10 @@ Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
 
 ## 4. Per person (admin API, console, or the person's platform)
 
+No consent setting (D50): every memory stores what its client sends; the on/off switch is the client's (§8).
+
 | Setting | Who sets it | Default | What it does |
 |---|---|---|---|
-| `episodicEnabled` (consent) | Recordare admin | off | Until on, ingest stores nothing |
 | `kind` | the person on their platform (only while the memory is empty), or the admin | `human` | `entity` = a memory shared by everyone using the account (D48) |
 | `displayName` | follows the platform's profile (synced) | the client's user id | The person's name |
 | `qualityProfile` | admin | installation default | §1 |
@@ -75,7 +76,7 @@ Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
 | `autoProvision` | off | Create a person at the first contact of a new user |
 | `rawLogScope` | `own` | Raw-log excerpts from this client's conversations only, or all |
 | `disabled` | off | Every key and token of the client stops at once |
-| Key scopes | — | `ingest`, `mcp`, `read`, `write` (never admin, consent or export) |
+| Key scopes | — | `ingest`, `mcp`, `read`, `write` (never admin, owner settings or export) |
 
 ## 6. Installation scripts (`deploy/`)
 
@@ -110,9 +111,9 @@ Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
 |---|---|---|---|
 | `RECORDARE_URL`, `RECORDARE_API_KEY` | Arkimede `.env` | — | Off unless both are set |
 | `RECORDARE_OUTBOX_POLL_MS` | Arkimede `.env` | 3000 | How often the outbox worker sends |
-| `episodicMemoryEnabled` | Settings → Memory, per user | off | The platform's own opt-in (no person is created before it) |
+| `episodicMemoryEnabled` | Settings → Memory, per user | off | The platform's own opt-in, the only on/off switch (D50): while off nothing is sent and no person is created |
 | Memory type | Settings → Memory, per user | personal | Personal / shared (`PATCH /me {kind}`, only while empty) |
-| Memory context | Agents → agent, per agent | off | Before each answer, Recordare's relevant memories (`POST api/v1/context`) at the end of the prompt (WORK_PLAN 5.7) · dev set: no harm, +3–7 pt; with the voice agent's prompt tool calls 9 → 5 of 15. A client choice: Recordare serves the block whenever asked (consent and viewer rule apply) |
+| Memory context | Agents → agent, per agent | off | Before each answer, Recordare's relevant memories (`POST api/v1/context`) at the end of the prompt (WORK_PLAN 5.7) · dev set: no harm, +3–7 pt; with the voice agent's prompt tool calls 9 → 5 of 15. A client choice: Recordare serves the block whenever asked (the viewer rule applies) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | Arkimede `.env` | off | OpenTelemetry GenAI traces to the atlas (metadata only) |
 | Library delivery policy | `packages/client` (`DEFAULT_DELIVERY`) | 12 attempts, 5 s → 1 h | Outbox retries (jitter, `Retry-After`), then parked |
 

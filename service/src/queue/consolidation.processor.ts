@@ -43,8 +43,7 @@ export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
     const hour = this.config.get('CONSOLIDATION_HOUR', { infer: true });
     const due: Array<{ person_id: string }> = await this.db.query(
       `SELECT o.person_id FROM owners o
-       WHERE o.episodic_enabled
-         AND extract(hour FROM ($1::timestamptz AT TIME ZONE o.timezone)) >= $2
+       WHERE extract(hour FROM ($1::timestamptz AT TIME ZONE o.timezone)) >= $2
          AND (o.consolidated_at IS NULL OR (o.consolidated_at AT TIME ZONE o.timezone)::date < ($1::timestamptz AT TIME ZONE o.timezone)::date)
          AND EXISTS (SELECT 1 FROM episodes e WHERE e.owner_id = o.person_id)`, [now, hour]);
     for (const { person_id } of due) {

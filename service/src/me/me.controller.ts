@@ -27,12 +27,11 @@ export class MeController {
   async me(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user?: string) {
     const ownerId = await this.owners.resolve(principal, user);
     const [person] = await this.db.query(
-      `SELECT p.display_name, p.kind, o.episodic_enabled FROM persons p JOIN owners o ON o.person_id = p.id WHERE p.id = $1`, [ownerId]);
-    // episodicEnabled: whether the owner's consent is given (a client shows "waiting for activation" until then).
+      `SELECT display_name, kind FROM persons WHERE id = $1`, [ownerId]);
     // kind `entity`: a memory shared by everyone using the account (D48) — a client tells its users so.
     // atlasUrl: the live view, when installed — a client links it for its admins (it shows every person's activity).
     const atlasUrl = this.config.get('ATLAS_URL', { infer: true });
-    return { ownerId, displayName: person?.display_name ?? null, kind: person?.kind ?? 'human', episodicEnabled: person?.episodic_enabled ?? false,
+    return { ownerId, displayName: person?.display_name ?? null, kind: person?.kind ?? 'human',
       ...(atlasUrl ? { atlasUrl } : {}), via: principal.kind, scopes: principal.kind === 'admin' ? ['admin'] : principal.scopes };
   }
 
@@ -40,7 +39,7 @@ export class MeController {
    * Settings the person makes on their platform. The name follows the client's user and stays in sync when they rename
    * their profile (auto-provisioning first names them after the client's user id). The kind of memory (person or
    * entity, D48) changes only while the memory is empty: memories written as one person's would otherwise mix with
-   * shared ones (409 `memory_not_empty`; the admin can still change it). Consent stays with the admin.
+   * shared ones (409 `memory_not_empty`; the admin can still change it).
    */
   @Patch()
   @HttpCode(204)

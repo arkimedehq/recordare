@@ -5,6 +5,9 @@
 
 *Recordare*: in latino "ricorda!" (*re-* + *cor*, "riporta al cuore").
 
+> Da D50 (2026-10-09) Recordare non ha un flag di consenso: ogni memoria conserva ciò che il suo client invia;
+> l'interruttore acceso / spento appartiene alla piattaforma client (WORK_PLAN 8.1).
+
 Recordare è un **servizio di memoria a lungo termine per agenti IA**, indipendente dalle piattaforme. Conserva una memoria per
 persona: ciò che ha vissuto, pianificato, detto e ciò che le è stato detto, con date, fonti e storia. È il fondamento
 di un **gemello digitale** dichiarato di quella persona. Qualsiasi piattaforma di agenti può usarlo tramite **MCP**
@@ -36,8 +39,8 @@ rispondere a "che cosa ho fatto la settimana scorsa?" o "quando ho cambiato auto
 Fa attenzione a **chi ha detto che cosa**: ciò che dici tu conta come tua memoria, ciò che ti dice un altro resta suo,
 e ciò che l'assistente ha solo ipotizzato non diventa mai un fatto. Puoi correggere un ricordo, e ciò che chiedi di
 dimenticare non ritorna. Ogni persona ha la **propria memoria privata**; un dispositivo usato da tutta la famiglia (l'assistente
-vocale di casa) può avere una **memoria di entità**, condivisa, dove chi si presenta firma i propri ricordi. Nulla parte senza
-**consenso**. Recordare funziona con qualsiasi assistente e qualsiasi modello di IA; Arkimede è il primo a usarlo.
+vocale di casa) può avere una **memoria di entità**, condivisa, dove chi si presenta firma i propri ricordi. L'**interruttore acceso /
+spento** è dell'assistente: Recordare ricorda ciò che gli viene inviato. Recordare funziona con qualsiasi assistente e qualsiasi modello di IA; Arkimede è il primo a usarlo.
 
 ## Che tipo di memoria è
 
@@ -70,8 +73,9 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
   alla conversazione; né il client né l'LLM possono dichiararlo. Nella fase 1 i ricordi vengono restituiti solo quando
   lo spettatore è il proprietario. Gli elementi mancanti e quelli vietati appaiono uguali. Ogni ricordo memorizza già
   il proprio pubblico e un'etichetta di divulgazione, quindi la divulgazione graduata (fase 3) non richiede migrazioni.
-- **Consenso per persona.** La chiave API di un client non può mai attivare la memoria di una persona. Il consenso
-  viene dall'amministratore (profilo privato) o dal proprietario, e i client non inviano nulla prima del consenso.
+- **L'interruttore è del client** (D50). Recordare non ha un flag di consenso: ogni memoria conserva ciò che il suo
+  client invia, e la piattaforma client decide se inviare (un interruttore della memoria per utente). Informare le
+  persone attorno all'agente — e l'eventuale base giuridica, per esempio secondo il GDPR — è compito di chi lo installa.
 - **Dimenticare in modo definitivo.** Dimenticare un episodio lascia una lapide (tombstone). L'estrazione, la
   ri-estrazione e il consolidamento controllano le lapidi prima di scrivere, così il contenuto dimenticato non ritorna.
   I digest che avevano usato l'episodio vengono riscritti. (Dimenticare un intero periodo è progettato ma non ancora
@@ -203,7 +207,7 @@ La [visione](docs/DIGITAL_TWIN_VISION_it.md) aggiunge le fasi successive:
 - la modalità legacy;
 - una modalità di ricerca sui gemelli autonomi.
 
-Vengono modellate solo le persone che acconsentono.
+Chi installa l'agente informa le persone attorno a lui (GDPR); Recordare non ha un flag di consenso (D50).
 
 Attorno alla memoria:
 - **Recordare Atlas** ([`arkimedehq/recordare-atlas`](https://github.com/arkimedehq/recordare-atlas), opzionale, repo
@@ -234,7 +238,7 @@ tiene la chiave fuori dalla riga di comando).
 > (≈ 100 MB). Disco ≈ 5 GB per immagini e modello. Solo CPU.
 
 Dopo l'installazione, aprire la **console admin** su `http://<host>:<porta>/admin` con `ADMIN_API_KEY` di
-`deploy/.env`: creare le persone, attivarne il consenso e dare una chiave a ogni piattaforma client
+`deploy/.env`: creare le persone (o lasciare che le crei un client) e dare una chiave a ogni piattaforma client
 ([INTEGRATION_it.md](docs/INTEGRATION_it.md); Claude Code: §4b). Poi collegare le piattaforme di agenti (sezione
 seguente) e tenere aggiornata l'installazione:
 

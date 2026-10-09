@@ -11,8 +11,8 @@ Un plugin di Claude Code che dà a Claude una memoria episodica a lungo termine 
   `correct_episode`, `forget_episode`. Ciò che l'agente scrive vale come tuo solo se lo dicono le tue parole recenti
   (altrimenti attende la tua conferma nel diario).
 
-Nulla viene elaborato finché l'amministratore di Recordare non ha attivato il tuo consenso. Gli hook non bloccano mai
-Claude Code: se Recordare non risponde, il turno prosegue senza memoria.
+Recordare conserva ogni turno che gli hook inviano (non ha un flag di consenso, D50): per smettere, disattivare il
+plugin. Gli hook non bloccano mai Claude Code: se Recordare non risponde, il turno prosegue senza memoria.
 
 ## Installazione
 

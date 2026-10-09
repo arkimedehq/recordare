@@ -61,9 +61,10 @@ Modelli supportati: solo quelli che raggiungono il 95 % nella valutazione (`RESU
 
 ## 4. Per persona (API admin, console, o la piattaforma della persona)
 
+Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo client invia; l'interruttore acceso / spento è del client (§8).
+
 | Impostazione | Chi la imposta | Predefinito | Cosa fa |
 |---|---|---|---|
-| `episodicEnabled` (consenso) | admin di Recordare | off | Finché è spento l'ingest non conserva nulla |
 | `kind` | la persona sulla sua piattaforma (solo a memoria vuota), o l'admin | `human` | `entity` = memoria di entità, condivisa da chi usa l'account (D48) |
 | `displayName` | segue il profilo sulla piattaforma (sincronizzato) | l'id utente del client | Il nome della persona |
 | `qualityProfile` | admin | predefinito dell'installazione | §1 |
@@ -77,7 +78,7 @@ Modelli supportati: solo quelli che raggiungono il 95 % nella valutazione (`RESU
 | `autoProvision` | off | Crea una persona al primo contatto di un nuovo utente |
 | `rawLogScope` | `own` | Estratti del registro grezzo solo dalle conversazioni di questo client, o da tutte |
 | `disabled` | off | Tutte le chiavi e i token del client smettono subito di funzionare |
-| Permessi delle chiavi | — | `ingest`, `mcp`, `read`, `write` (mai admin, consenso o export) |
+| Permessi delle chiavi | — | `ingest`, `mcp`, `read`, `write` (mai admin, impostazioni dell'owner o export) |
 
 ## 6. Script di installazione (`deploy/`)
 
@@ -112,9 +113,9 @@ Modelli supportati: solo quelli che raggiungono il 95 % nella valutazione (`RESU
 |---|---|---|---|
 | `RECORDARE_URL`, `RECORDARE_API_KEY` | `.env` di Arkimede | — | Spento finché non sono impostati entrambi |
 | `RECORDARE_OUTBOX_POLL_MS` | `.env` di Arkimede | 3000 | Ogni quanto il worker dell'outbox invia |
-| `episodicMemoryEnabled` | Impostazioni → Memoria, per utente | off | L'opt-in della piattaforma (nessuna persona viene creata prima) |
+| `episodicMemoryEnabled` | Impostazioni → Memoria, per utente | off | L'opt-in della piattaforma, l'unico interruttore acceso / spento (D50): finché è spento non si invia nulla e non viene creata nessuna persona |
 | Tipo di memoria | Impostazioni → Memoria, per utente | personale | Personale / condivisa (`PATCH /me {kind}`, solo a memoria vuota) |
-| Contesto di memoria | Agenti → agente, per agente | off | Prima di ogni risposta, i ricordi pertinenti di Recordare (`POST api/v1/context`) in fondo al prompt (WORK_PLAN 5.7) · dev set: nessun danno, +3–7 pt; con il prompt dell'agente vocale chiamate ai tool da 9 a 5 su 15. Scelta del client: Recordare serve il blocco quando glielo si chiede (valgono consenso e regola del lettore) |
+| Contesto di memoria | Agenti → agente, per agente | off | Prima di ogni risposta, i ricordi pertinenti di Recordare (`POST api/v1/context`) in fondo al prompt (WORK_PLAN 5.7) · dev set: nessun danno, +3–7 pt; con il prompt dell'agente vocale chiamate ai tool da 9 a 5 su 15. Scelta del client: Recordare serve il blocco quando glielo si chiede (vale la regola del lettore) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | `.env` di Arkimede | off | Tracce OpenTelemetry GenAI verso l'atlas (solo metadati) |
 | Politica di consegna della libreria | `packages/client` (`DEFAULT_DELIVERY`) | 12 tentativi, 5 s → 1 h | Tentativi dell'outbox (jitter, `Retry-After`), poi parcheggio |
 

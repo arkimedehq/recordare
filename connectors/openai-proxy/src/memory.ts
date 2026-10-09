@@ -35,8 +35,6 @@ const MAX_TRACKED = 2000;
 const TURN_TTL_MS = 15 * 60_000;
 /** After Recordare is unreachable, the calls before the answer are skipped for this long. */
 const DOWN_FOR_MS = 30_000;
-/** A person without consent is not asked for memories again for this long. */
-const NO_CONSENT_FOR_MS = 60_000;
 
 const hash = (s: string): string => createHash('sha256').update(s).digest('hex').slice(0, 24);
 const errName = (err: unknown): string => (err instanceof Error ? err.message : 'error');
@@ -64,7 +62,6 @@ export class Memory {
   private readonly slow: RecordareClient;
   private readonly turns = new Map<string, TurnState>();
   private readonly open = new Map<string, Open>();
-  private readonly noConsent = new Map<string, number>();
   private readonly queue: Pending[] = [];
   private timer: NodeJS.Timeout | undefined;
   private downUntil = 0;
@@ -103,14 +100,12 @@ export class Memory {
       if (req) this.enqueue({ user: identity.user, req, attempts: 0 });
       return null;
     }
-    const refused = this.noConsent.get(identity.user);
-    const recall = this.cfg.recall && !(refused !== undefined && now - refused < NO_CONSENT_FOR_MS);
+    const recall = this.cfg.recall;
     const user = this.headerUser(identity.user);
     const query = turn.text.slice(0, 4000);
     if (req && !recall) {
       try {
-        const res = await this.fast.ingest(user, req);
-        if (!res.stored) put(this.noConsent, identity.user, now);
+        await this.fast.ingest(user, req);
       } catch (err) {
         this.failed(err, 'ingest before the answer');
         this.enqueue({ user: identity.user, req, attempts: 1 }, err);
@@ -204,7 +199,6 @@ export class Memory {
   private async deliver(p: Pending): Promise<void> {
     try {
       const res = await this.slow.ingest(this.headerUser(p.user), p.req);
-      if (!res.stored) put(this.noConsent, p.user, this.now());
       if (res.conflicts.length) this.log.warn(`recordare: ${res.conflicts.length} message id(s) conflicted (kept the stored version)`);
     } catch (err) {
       p.attempts++;

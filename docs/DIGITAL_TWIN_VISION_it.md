@@ -5,6 +5,10 @@
 Stato: **visione / roadmap**. La fase 1 (memoria episodica) è realizzata e rilasciata come v0.1.0 (pubblica dal
 2026-10-08); il suo design si trova in `EPISODIC_MEMORY_TODO.md`, il suo stato in `WORK_PLAN.md`.
 
+> Da D50 (2026-10-09) Recordare non ha un flag di consenso: ogni memoria conserva ciò che il suo client invia;
+> l'interruttore acceso / spento appartiene alla piattaforma client. Il testo sul consenso più sotto è segnato come
+> superato.
+
 ## Obiettivo
 
 Ricreare la memoria e la persona di un utente in modo che un agente guidato da LLM possa agire come suo
@@ -51,7 +55,7 @@ prende anche l'iniziativa.
 5. **Trattare il gemello come un segreto di alto valore.** Memoria completa + voce clonata =
    kit perfetto per l'impersonificazione. Il modello vocale e la memoria sono protetti come credenziali; la
    voce clonata non è mai un fattore di autenticazione; si può clonare solo la voce del titolare
-   dell'account (consenso).
+   dell'account, per sua scelta.
 6. **Valutare, non presumere.** Harness in stile Park: porre al proprietario e al gemello le stesse
    domande, misurare l'accordo nel tempo.
 
@@ -59,10 +63,13 @@ prende anche l'iniziativa.
    proprietario e a rafforzarne i pregiudizi. In modalità compagno può — e deve — dissentire, usando i
    ricordi del proprietario stesso come prova ("tre mesi fa dicevi il contrario"), segnalare gli
    schemi ricorrenti e confrontare le decisioni con i valori dichiarati dal proprietario.
-8. **Si modellano solo persone che acconsentono.** Il gemello è costruito dai dati del proprietario, con
-   il suo consenso. Clonare una terza parte (da contenuti web o altro) senza il suo consenso
-   è fuori perimetro e bloccato per design; la modalità legacy usa solo ciò che il proprietario ha autorizzato
-   in vita.
+8. **Chi installa l'agente informa le persone che gli stanno attorno.** Recordare non ha un flag di consenso (D50,
+   2026-10-09): ogni memoria conserva ciò che il suo client invia, e l'interruttore acceso / spento appartiene alla
+   piattaforma client. Chi installa l'agente avvisa le persone attorno che l'agente ricorda, e ne ha la base giuridica
+   (per esempio secondo il GDPR); particolare cura per i minori. Clonare una terza parte (da contenuti web o altro) a
+   sua insaputa resta fuori perimetro; la modalità legacy usa solo ciò che il proprietario ha autorizzato in vita.
+   *(Formulazione superata, prima di D50: "Si modellano solo persone che acconsentono" — il gemello costruito dai dati
+   del proprietario con il suo consenso, un flag di consenso in Recordare.)*
 
 ## Modalità di interazione (decise il 2026-10-03)
 
@@ -269,7 +276,8 @@ affermazioni altrui tenute separate. Che cosa cambia:
    accanto a quello privato; digest per pubblico (già anticipati in DATA_MODEL). Le stesse regole servono per il gemello
    che parla con terzi (fase 3), quindi il lavoro è condiviso.
 3. **Note dell'automodello** descrivono l'agente, non una persona; mai dichiarate, sempre inferite e in sospeso.
-4. **Consenso** di ogni familiare che l'agente ricorda; particolare cura per i minori.
+4. **Informare** ogni familiare che l'agente ricorda — compito di chi lo installa, non un flag di consenso di Recordare
+   (D50 supera "consenso di ogni familiare"); particolare cura per i minori.
 
 ### Attorno alla memoria: portata, voce in casa, osservabilità (annotato il 2026-10-07)
 

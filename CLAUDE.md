@@ -27,8 +27,8 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   home / research profile; public-profile hardening is specified but deferred (stay on the twin).
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 with done / partial / TODO per row, watch list, open D26,
   evaluation budget rules 1–9.
-- `docs/INTEGRATION.md` — the client-platform guide (set-up, consent with the admin, people, outbox ingest, MCP with
-  the conversation header, telemetry).
+- `docs/INTEGRATION.md` — the client-platform guide (set-up, the client's on/off switch — no consent in Recordare,
+  D50 —, people, outbox ingest, MCP with the conversation header, telemetry).
 - `connectors/*/README.md` — the full-level connectors (Claude Code, Codex, OpenClaw, Hermes Agent, OpenAI-compatible
   memory proxy); `docs/connectors/` — research notes on the target platforms; WORK_PLAN 6.6 / 6.6b.
 - `CHANGELOG.md` — release notes (Keep a Changelog, SemVer 0.x).
@@ -130,7 +130,8 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   **D34**: A-MEM stays in Arkimede unchanged; Recordare is complete (notes too); users copy notes
   Recordare → A-MEM by choice; the Arkimede toggle is split in M6 (TODO).
 - Integration (M6.2, done): outbox ingest, identity + naming, Recordare MCP tools as `recordare_*` (no `log_episode`),
-  consent state from `GET api/v1/me`; voice spans from its Wyoming server act for the Wyoming user (D47).
+  its per-user memory switch is the only on/off (D50, no consent state); voice spans from its Wyoming server act for
+  the Wyoming user (D47).
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps

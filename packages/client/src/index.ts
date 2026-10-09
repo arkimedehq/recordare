@@ -7,6 +7,6 @@ export * from './errors.js';
 export { type ClientOptions, type FetchLike, parseRetryAfter } from './http.js';
 export { RecordareClient } from './client.js';
 export { RecordareMcp, type McpOptions, type Tool, type ToolResult } from './mcp.js';
-export { PersonDirectory, type ConsentState, type Person, type PersonDirectoryOptions } from './people.js';
+export { PersonDirectory, type Person, type PersonDirectoryOptions } from './people.js';
 export { TOOLS } from './tools.js';
 export { afterFailure, backoffMs, DEFAULT_DELIVERY, type DeliveryPolicy, type Next } from './delivery.js';

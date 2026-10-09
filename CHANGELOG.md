@@ -17,10 +17,19 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   its context in one call); personal tokens read before their conversation is stored; `TOOLS` (MCP tool schemas) in the
   client library; the connectors use them.
 - **Diagnostics**: every extraction run keeps a summary (returned, written, dropped and why — counts only);
-  `GET api/v1/admin/owners/{id}/runs`. The console shows people waiting for consent.
+  `GET api/v1/admin/owners/{id}/runs`.
+
+### Changed
+- **No consent flag any more** (D50, WORK_PLAN 8.1) — **breaking**. Recordare always stores, extracts and consolidates
+  what a client sends (still zero LLM calls when there is nothing to do); the on/off switch belongs to the client
+  platform, and informing the people around the agent is the deployer's duty. Migration `NoConsent1791060000000` drops
+  `owners.episodic_enabled`, `episodic_enabled_at`, `episodic_enabled_by` and `ingest_refused_at`; `stored` is removed
+  from the ingest result; `episodicEnabled` is removed from `GET api/v1/me` and from the admin API (with
+  `episodicEnabledAt` and `waitingForConsentSince`); the console's consent switch and "waiting for consent" chip are
+  gone; MCP writes no longer answer "memory is off". Client library: `ConsentState`, `PersonDirectory.knownOff()` and
+  `status()`, `MeResponse.episodicEnabled` and `IngestResult.stored` removed.
 
 ### Fixed
-- MCP writes (`log_episode`, `remember`, `correct_episode`) respect consent.
 - A short fact inside a long message of the person counts as their words; "il proprietario" is replaced by the name.
 
 ## [0.1.0] — 2026-10-08

@@ -14,12 +14,12 @@ episodica a lungo termine custodita dal tuo servizio [Recordare](../../README_it
   nel codice alla persona e alla conversazione — né il modello né l'utente possono puntarli altrove). `log_episode` è
   escluso: la conversazione è già catturata.
 
-È l'unico memory provider esterno di Hermes (`memory.provider: recordare`); la memoria integrata `MEMORY.md` /
-`USER.md` continua a funzionare accanto. Nulla viene conservato finché l'admin di Recordare non ha attivato il consenso
-della persona. Il provider non rompe mai un turno: ogni chiamata ha un tempo massimo, gli errori sono registrati senza
-contenuto, e i messaggi catturati attendono in una piccola outbox SQLite (`$HERMES_HOME/recordare_outbox.db`) che
-riprova con back-off, rispetta `Retry-After` e sopravvive ai riavvii (i messaggi mantengono i loro id, quindi un nuovo
-invio viene conservato una volta sola).
+È l'unico memory provider esterno di Hermes (`memory.provider: recordare`); la memoria integrata `MEMORY.md` / `USER.md`
+continua a funzionare accanto. Recordare conserva ogni turno che il provider invia (non ha un flag di consenso, D50). Il
+provider non rompe mai un turno: ogni chiamata ha un tempo massimo, gli errori sono registrati senza contenuto, e i
+messaggi catturati attendono in una piccola outbox SQLite (`$HERMES_HOME/recordare_outbox.db`) che riprova con back-off,
+rispetta `Retry-After` e sopravvive ai riavvii (i messaggi mantengono i loro id, quindi un nuovo invio viene conservato
+una volta sola).
 
 Provato con Hermes Agent v0.21.6. Python puro, solo `requests` (una dipendenza di Hermes).
 

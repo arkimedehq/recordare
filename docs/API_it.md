@@ -2,6 +2,9 @@
 
 *Traduzione italiana di [API.md](API.md) — la versione inglese è quella di riferimento.*
 
+> Da D50 (2026-10-09) Recordare non ha un flag di consenso: ogni memoria conserva ciò che il suo client invia;
+> l'interruttore acceso / spento appartiene alla piattaforma client (WORK_PLAN 8.1).
+
 Stato: **contratti M1, revisione 3** (2026-10-03): applicate le revisioni di coerenza e di sicurezza, poi suddiviso
 in profili di deployment (§0) così che la v1 resti focalizzata sul twin.
 **Costruito (2026-10-08)**: §2 ingest (con `…/end`), §3 strumenti MCP (come indicato per ciascuno) e il contesto di
@@ -25,7 +28,7 @@ restituiscono semplici array); ogni POST non idempotente accetta un header `Idem
 
 | Profilo | Per chi | Contenuto |
 |---|---|---|
-| **v1 — privato / di ricerca** (`home`) (costruito ora) | Un'installazione gestita dai suoi proprietari e dai loro client (Arkimede, Claude Code, il simulatore di ricerca) | Proprietari e identità creati dall'**API admin**; chiavi API dei client; **personal access token** per i client solo MCP (creati via API admin); credenziali con hash e scope semplici; isolamento per proprietario; **contesto del visualizzatore risolto da Recordare** (la disclosure fa parte del twin, non è un'aggiunta di sicurezza); provenienza `author_role`; flag di consenso; oblio che resta |
+| **v1 — privato / di ricerca** (`home`) (costruito ora) | Un'installazione gestita dai suoi proprietari e dai loro client (Arkimede, Claude Code, il simulatore di ricerca) | Proprietari e identità creati dall'**API admin**; chiavi API dei client; **personal access token** per i client solo MCP (creati via API admin); credenziali con hash e scope semplici; isolamento per proprietario; **contesto del visualizzatore risolto da Recordare** (la disclosure fa parte del twin, non è un'aggiunta di sicurezza); provenienza `author_role`; oblio che resta |
 | **Public** (rinviato — M7 / rilascio pubblico) | Recordare come servizio per persone che l'operatore non conosce | Login del proprietario (magic link via email, email verificata, pagine del proprietario), OAuth 2.1 per i connettori MCP, link code guidati dal proprietario + UI di revoca, `read_audit`, tabella di idempotenza persistente, policy di conservazione dei backup e avviso sulla conservazione presso il provider, export limitato alle sessioni del proprietario; protezione a livello di rete (firewall / WAF / rate limit) davanti |
 
 Gli elementi contrassegnati **(public profile)** qui sotto sono specificati perché il design resti coerente, ma non sono
@@ -44,7 +47,7 @@ dei dati.
 ### Autenticazione dell'owner (public profile)
 **v1**: gli owner sono creati dall'admin (`POST api/v1/admin/owners`), oppure auto-provisionati alla prima richiesta
 di un client che lo consente (`autoProvision`, con il nome dell'id utente del client finché il client non li rinomina);
-il consenso (`episodicEnabled`), i token personali e i collegamenti di identità sono gestiti tramite l'API admin (e la
+i token personali e i collegamenti di identità sono gestiti tramite l'API admin (e la
 sua console, §6) — come costruito nessuna rotta permette a un personal token dell'owner di cambiarli; non esistono pagine
 dell'owner. Il consolidamento notturno si avvia da solo (`CONSOLIDATION_HOUR`, fuso orario dell'owner); `POST api/v1/admin/owners/:id/consolidate` lo esegue subito (rispetta `X-Recordare-Now` dove consentito); `POST api/v1/admin/owners/:id/review-facts` esegue subito la sola revisione dei fatti (WORK_PLAN 5.6, stesso lock del consolidamento). Profilo di qualità (D35): `qualityProfile` `economy | balanced | full` alla creazione dell'owner /
 `PATCH api/v1/admin/owners/:id` (`null` = il default dell'installazione `QUALITY_PROFILE`, `balanced` se non impostato). Le stesse
@@ -52,7 +55,7 @@ route accettano `kind` `human | entity` (D48: una **memoria di entità**, condiv
 un robot, un luogo) e `PATCH` accetta `displayName` (una successiva sincronizzazione del nome del suo utente da parte di un client lo sovrascrive: il nome segue la piattaforma).
 
 **Public profile**: gli owner accedono alle pagine di Recordare con un **magic link via email** (niente password; passkey e
-OIDC in seguito). La sessione dell'owner serve per: dare il consenso (`episodicEnabled`), creare link
+OIDC in seguito). La sessione dell'owner serve per: creare link
 code, revocare client, autorizzare client MCP OAuth, creare token personali, export, il
 diario self-service.
 - L'email dell'owner viene impostata **solo** tramite una mail di verifica che l'owner apre (claim flow); non
@@ -62,8 +65,8 @@ diario self-service.
   li ha richiesti; notifiche di nuovo accesso via email.
 - Un owner auto-provisionato (creato da un client) non ha email finché non viene rivendicato: fino ad allora la sua
   memoria è protetta esattamente quanto la chiave di quel client, e non ha pagine dell'owner. I toggle dell'host
-  (ad es. "abilita diario" di Arkimede) **aprono la pagina dell'owner di Recordare**; non modificano mai il consenso
-  con la chiave del client.
+  (ad es. "abilita diario" di Arkimede) **aprono la pagina dell'owner di Recordare**; non modificano mai le impostazioni
+  dell'owner con la chiave del client.
 
 ### Credenziali (D24)
 | Livello | Credenziale | Agisce come |
@@ -80,7 +83,7 @@ diario self-service.
 | `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `correct_episode`, `forget_episode`) |
 | `read` | §4 endpoint GET, `GET api/v1/me`, `POST api/v1/context` |
 | `write` | §4 inserimenti manuali, correzioni, oblio, modifiche di fatti / note |
-| `owner_settings` | `PATCH settings` incluso `episodicEnabled` — mai le chiavi API dei client (consenso, D4). v1: chiave admin o token personale dell'owner; public profile: sessioni dell'owner / token creati dall'owner. Come costruito nessuna rotta lo usa ancora: il consenso lo imposta l'admin (`PATCH api/v1/admin/owners/:id`) |
+| `owner_settings` | `PATCH settings` (lingua, fuso orario, profilo di qualità) — mai le chiavi API dei client. v1: chiave admin o token personale dell'owner; public profile: sessioni dell'owner / token creati dall'owner. Come costruito nessuna rotta lo usa ancora: queste impostazioni le imposta l'admin (`PATCH api/v1/admin/owners/:id`) |
 | `export` | §4 job di export — v1: chiave admin o token personale dell'owner; public profile: solo sessioni dell'owner, download con scadenza. Non ancora costruito |
 | `admin` | `api/v1/admin/…` (come costruito: solo la credenziale `ADMIN_API_KEY`; una chiave o un token che elenca `admin` non ottiene alcuna rotta admin) |
 
@@ -129,7 +132,7 @@ channel, externalId}`); collegare un id già legato a un altro owner fallisce co
 Admin (`api/v1/admin/…`), costruito: `POST clients {name, kind: platform | mcp_client | import, autoProvision?,
 rawLogScope?}`, `GET clients`, `PATCH clients/:id`, `POST clients/:id/keys {scopes}` (→ `{id, key, prefix}`, la chiave
 mostrata una sola volta), `DELETE keys/:id`, `POST owners {displayName, kind?, locale? (it | en), timezone?,
-episodicEnabled?, qualityProfile?}`, `PATCH owners/:id`, `GET persons`, `POST identities {kind: client_user, personId,
+qualityProfile?}`, `PATCH owners/:id`, `GET persons`, `POST identities {kind: client_user, personId,
 clientId, externalId} | {kind: channel, personId, ownerScope?, channel, externalId, verified?}`, `DELETE identities/:id`,
 `POST owners/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST owners/:id/consolidate`,
 `POST owners/:id/review-facts`, `GET owners` (owner con dimensione della memoria, per l'atlas), `GET owners/:id/atlas`,
@@ -168,14 +171,12 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
 }
 ```
 Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono (l'estrazione è sempre asincrona):
-`{conversationId, accepted, duplicates, conflicts: [externalId…], stored: boolean}`.
+`{conversationId, accepted, duplicates, conflicts: [externalId…]}`.
 - Stesso `externalId` e stesso contenuto → duplicato (ignorato). Stesso `externalId`, contenuto diverso →
   elencato in `conflicts` (stile `409` per elemento) a meno che `upsert: true`, che registra una modifica.
-- **Owner senza `episodicEnabled`** → non viene memorizzato nulla, `stored: false`, `conversationId: null` (nessun log
-  grezzo senza consenso); Recordare annota solo quando ha rifiutato l'ultima volta (`owners.ingest_refused_at`), così la
-  console admin mostra la persona in attesa del consenso (WORK_PLAN 6.6b). Disabilitarlo in seguito interrompe ingest ed
-  estrazione; i ricordi esistenti restano finché l'owner non li cancella ("disabilita e cancella" è offerto nella pagina
-  dell'owner — public profile).
+- **Nessun flag di consenso** (D50): ogni messaggio accettato viene memorizzato, estratto e consolidato. Se una memoria
+  è attiva lo decide l'interruttore della piattaforma client: quando è spento, il client non invia. I ricordi esistenti
+  restano finché non vengono cancellati.
 - Ogni batch accettato (ri)pianifica il job idle della conversazione (D1, D5, ritardo globale); i messaggi
   sono estratti quando in attesa, per `sentAt`, così i messaggi in ritardo o fuori ordine non vengono mai saltati.
 
@@ -186,8 +187,7 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   purge (`DATA_MODEL.md` → Forgetting and deletion). Come costruito: la purge viene eseguita in modo sincrono e restituisce `202` senza
   corpo (piano: `202` + id del job); `404` se sconosciuto (la libreria client lo tratta come fatto).
 - `POST api/v1/ingest/conversations/{externalId}/end` → `202`: la conversazione è finita sul client (sessione chiusa,
-  /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta
-  (quindi anche quando non è stato salvato nulla per mancanza di consenso). Stesso effetto di `hints.conversationEnded`
+  /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta. Stesso effetto di `hints.conversationEnded`
   (rispettato anche in un batch i cui messaggi sono tutti duplicati), senza reinviare un messaggio.
 
 ### Import
@@ -201,9 +201,7 @@ a `initialize` (owner del token, oppure `X-Recordare-User` per le chiavi client)
 `X-Recordare-User` rispetto all'owner della sessione — una discrepanza restituisce 403 e termina la sessione
 (gli host che riutilizzano una sessione per più utenti non possono incrociare le memorie). Il contesto del visualizzatore segue il §1
 (header di conversazione; `_meta` può solo aggiungere visualizzatori). Gli schemi degli strumenti usano il sottoinsieme neutrale rispetto al provider
-(D27). Gli strumenti sono sempre elencati (nessun indizio sull'esistenza di un diario); con `episodicEnabled` disattivato, le letture
-non restituiscono nulla e le scritture (`log_episode`, `remember`, `correct_episode`) sono rifiutate con `{error: "memory is off for
-this person"}`; `forget_episode` resta consentito. Come costruito: una
+(D27). Gli strumenti sono sempre elencati (nessun indizio sull'esistenza di un diario). Come costruito: una
 sessione si apre solo con una richiesta `initialize` (`404` per un id di sessione sconosciuto); la credenziale admin
 riceve `403`; una richiesta da una credenziale diversa da quella che ha aperto la sessione è rifiutata come una
 discrepanza di owner. Le scritture richiedono un contesto risolvibile — un token personale, o una conversazione che
@@ -315,8 +313,7 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 `ingest` (il corpo di `POST api/v1/ingest/messages`, serve anche lo scope `ingest`) salva prima il turno e risponde per
 quella conversazione, con `query` che per default è il suo ultimo messaggio dell'utente — una sola andata e ritorno prima
 di ogni turno invece di due (`400` quando non ci sono né una `query` né un messaggio dell'utente; `403` per `ingest`
-senza lo scope `ingest`; senza consenso il turno non viene salvato, quindi con una chiave client la conversazione è
-sconosciuta e la risposta è `block: null`). Con un token personale, una conversazione non ancora salvata conta come
+senza lo scope `ingest`). Con un token personale, una conversazione non ancora salvata conta come
 della persona. `query` viene tagliata a 8 000 caratteri. Il blocco contiene i
 ricordi pertinenti al messaggio a cui si sta per rispondere (fatti e note attuali, piani aperti imminenti, fino a 3
 episodi, ognuno sopra una soglia di somiglianza; al massimo circa 300 token) come un unico blocco recintato
@@ -367,11 +364,11 @@ risposte dentro le conversazioni). In una memoria di entità chiunque usi l'acco
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Gestire le note |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed per i client che tengono copie (Arkimede → A-MEM, D34) |
-| `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | `episodicEnabled`, locale, timezone |
+| `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | lingua, fuso orario, profilo di qualità |
 | `GET api/v1/usage?from&to` | read | Chiamate LLM e token per questo owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Export completo asincrono (archivio JSON) |
-| `GET api/v1/me` | read | Per chi agisce la richiesta: `{ownerId, displayName, kind, episodicEnabled, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`kind` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (`episodicEnabled` = il consenso dell'owner: finché non è dato, l'ingest non memorizza nulla) (con una chiave client: la persona dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| owner_token`) |
-| `PATCH api/v1/me {displayName?, kind?}` | ingest (chiave client; un token personale riceve 403) | Le impostazioni della persona provenienti dalla sua piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `kind` `human \| entity` (D48) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo). Il consenso non si imposta mai qui |
+| `GET api/v1/me` | read | Per chi agisce la richiesta: `{ownerId, displayName, kind, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`kind` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (con una chiave client: la persona dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| owner_token`) |
+| `PATCH api/v1/me {displayName?, kind?}` | ingest (chiave client; un token personale riceve 403) | Le impostazioni della persona provenienti dalla sua piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `kind` `human \| entity` (D48) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo) |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | sessione dell'owner (public profile) | Client / identità connessi, revoca |
 
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
@@ -381,7 +378,7 @@ diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memor
 `endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, i wrapper della §4 `episodes`,
 `episode`, `correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`,
 `mcp.listTools` / `mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `TOOLS` (gli schemi
-pubblicati degli strumenti MCP), `PersonDirectory` (persona in cache, consenso, tipo e indirizzo di Atlas; l'opt-in della
+pubblicati degli strumenti MCP), `PersonDirectory` (persona in cache, tipo e indirizzo di Atlas; l'opt-in della
 piattaforma; sincronizzazione del nome), `afterFailure` (politica di consegna dell'outbox: back-off con jitter,
 `Retry-After`, parcheggio su 400 / 413 / 422), errori tipizzati (RFC 9457). All'host restano solo la memorizzazione
 dell'outbox e la trasformazione delle sue chat. Una suite di conformità la esegue contro il servizio nella CI
@@ -400,12 +397,11 @@ direttamente le stesse rotte.
 admin, che resta solo in quella scheda del browser (CSP restrittiva, `no-store`). Rotte usate oltre a quelle sopra, tutte
 solo admin e solo metadati: `GET api/v1/admin/owners/{id}/runs?conversation=&limit=` (le esecuzioni di estrazione recenti di una persona con il
 loro riassunto — restituito, scritto, scartato e perché, solo conteggi; WORK_PLAN 4.12), `GET api/v1/admin/persons` (owner con impostazioni, conteggi di messaggi / episodi / fatti /
-note, estrazione in attesa, ultimo messaggio, `waitingForConsentSince` — quando un client ha inviato messaggi l'ultima
-volta mentre il consenso era spento, `owners.ingest_refused_at`, null una volta dato il consenso — identità collegate,
+note, estrazione in attesa, ultimo messaggio, identità collegate,
 token personali attivi per prefisso), `GET api/v1/admin/clients` (client
 con chiavi attive per prefisso), `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = tutte le chiavi
 e i token del client smettono subito di funzionare), `DELETE api/v1/admin/identities/:id` (scollega l'utente di un client
-da una persona; i ricordi restano). Per il resto la console usa le altre rotte admin della §1 (consenso, tipo di
+da una persona; i ricordi restano). Per il resto la console usa le altre rotte admin della §1 (tipo di
 memoria, profilo di qualità, nome, identità, token personali, chiavi dei client, consolidamento); è in italiano e in
 inglese.
 

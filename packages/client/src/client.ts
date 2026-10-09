@@ -20,7 +20,7 @@ function qs(query: object): string {
 }
 
 /**
- * Recordare for one platform (docs/INTEGRATION.md): who a user is and their consent, their settings, the conversations
+ * Recordare for one platform (docs/INTEGRATION.md): who a user is, their settings, the conversations
  * the platform sends, deletions, and recall over MCP. Stateless apart from MCP sessions; a host keeps its own outbox and
  * cache (see `delivery` and `PersonDirectory`).
  */
@@ -33,7 +33,7 @@ export class RecordareClient {
     this.mcp = new RecordareMcp(this.http, options.mcp);
   }
 
-  /** The person behind `user` (auto-provisioned when the client allows it), their consent and kind of memory. */
+  /** The person behind `user` (auto-provisioned when the client allows it) and their kind of memory. */
   me(user: string): Promise<Me> {
     return this.http.request<Me>('GET', 'api/v1/me', { user });
   }
@@ -50,10 +50,10 @@ export class RecordareClient {
 
   /**
    * Sends messages of one conversation, split into requests of at most MAX_MESSAGES_PER_REQUEST. Idempotent: Recordare
-   * deduplicates on each message's externalId. Before consent nothing is stored (`stored: false`).
+   * deduplicates on each message's externalId. Recordare always stores (D50): the on/off switch is the platform's.
    */
   async ingest(user: string, req: IngestRequest): Promise<IngestResult> {
-    const total: IngestResult = { conversationId: null, accepted: 0, duplicates: 0, conflicts: [], stored: true };
+    const total: IngestResult = { conversationId: null, accepted: 0, duplicates: 0, conflicts: [] };
     for (let i = 0; i < req.messages.length; i += MAX_MESSAGES_PER_REQUEST) {
       const last = i + MAX_MESSAGES_PER_REQUEST >= req.messages.length;
       const part = await this.http.request<IngestResult>('POST', 'api/v1/ingest/messages', {
@@ -69,7 +69,6 @@ export class RecordareClient {
       total.accepted += part.accepted;
       total.duplicates += part.duplicates;
       total.conflicts.push(...part.conflicts);
-      total.stored &&= part.stored;
     }
     return total;
   }
