@@ -438,6 +438,11 @@ of their last values with a different answer framing; poisoning lost the claims'
 dates), to watch on blind7's provenance category. **Not confirmed yet:** blind7 × 3 (bar 91.7 %, extract.v11) — the
 developer runs them.
 
+
+**Blind confirmation (2026-10-09, `b7_v12_runs.sh`, 3 runs, DeepSeek direct):** blind7 with `extract.v12` 91.3 / 91.3 / 92.4
+= **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
+−0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
+
 ### WORK_PLAN 4.10 — news received as a memory: extract.v11 (2026-10-08, DeepSeek direct)
 
 Rule added to the extraction prompt: news the owner received (assistant, tool result, someone else) is a low-importance
