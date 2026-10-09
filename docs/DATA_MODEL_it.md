@@ -149,6 +149,48 @@ created_at`.
 `credential_id, owner_id, method_path, key, response_hash, response_body, created_at` — unique sulle
 prime quattro; conservazione di 24 h.
 
+### Memoria dell'agente (D50, WORK_PLAN 8.3) — progetto approvato 2026-10-09
+Una memoria appartiene a un agente: un account del client = una memoria (oggi la riga `owners`; rinominata `memories`
+nell'8.10).
+- **`owners.mode`** `personal | entity` (da `persons.kind`: human → personal, entity → entity; modificabile solo
+  finché la memoria è vuota); **`owners.gender`** `masculine | feminine | neutral`, default **maschile**, per la prima
+  persona nelle lingue con il genere (impostato dal client con `PATCH /me`). La riga persona della memoria stessa
+  (`persons`, `owner_scope` nullo) porta il nome: in una memoria personale è il nome di "io" — il titolare
+  dell'account, che è insieme l'utente e l'agente.
+- **Contatti** = le persone che una memoria conosce: righe di `persons` con `owner_scope` = quella memoria
+  (obbligatorio per ogni umano che non sia la memoria stessa). Lo stesso umano in due memorie è due contatti non
+  collegati (le memorie sono isolate). Un contatto nasce quando un client identifica un partecipante, quando qualcuno
+  si presenta o viene riconosciuto (voce, volto), e anche quando una persona è solo **nominata** con un nome ("mia
+  sorella Giulia"). Campi del contatto: nomi (`person_aliases`: nome, soprannomi, "mia sorella"…), `full_name` quando
+  noto, `relation` rispetto all'io della memoria (sorella, collega, capo…), e i suoi identificativi (identità di
+  partecipante, sotto).
+- **Stesso nome, due persone** ("Marco"): si decide in quest'ordine — identificativi certi (id del client, impronta
+  vocale, volto) → nome e cognome → contesto (relazione, luogo, persone presenti). Le fusioni avvengono solo quando sono
+  chiare (stesso nome e stessa relazione); altrimenti due contatti, unibili a mano nel Diario — una fusione sbagliata è
+  peggio di un doppione.
+- **`external_identities`** ha due tipi: **account** (l'utente di un client apre una memoria — gli attuali
+  `client_user`) e **partecipante** (l'id di un partecipante del client, un'impronta vocale, un volto, un canale → un
+  contatto di una memoria).
+- **I messaggi** registrano chi li ha detti, come conoscenza: `author_kind` `self | contact | someone | agent | own |
+  tool`, `author_person_id` (il contatto), `attribution_method` `account | declared | self_introduction |
+  addressed_by_name | voiceprint | face | client_assertion | none`, `attribution_confidence` 0–1. Nella modalità
+  personale la distinzione persona / assistente è solo conoscenza: nessuna logica la usa (D50).
+- **Ingest**: un messaggio può avere `own: true` (dell'agente: conoscenza che gli viene data, sue percezioni, un
+  documento) → `author_kind = own`; le fonti di conversazione aggiungono `document`, `perception`, `ambient`.
+- **Soggetto di ogni ricordo** (episodi, fatti, note): `subject_kind` `self | contact | someone | undecided` +
+  `subject_person_id`; `undecided` conserva i **contatti candidati** — un'attribuzione ambigua non viene mai indovinata.
+- **`clarifications`** (la prima iniziativa di Recordare, livello L1 della visione): `id, memoria, domanda, candidati
+  (contatti), episodio / fatto / nota interessato, stato open | resolved | expired, created_at, resolved_at`. Il
+  contesto di memoria offre all'agente al massimo una domanda aperta pertinente ("se è naturale, chiedi: quale Marco —
+  il collega o il cugino?"); la risposta la chiude alla prossima estrazione aggiungendo l'attribuzione (il ricordo non
+  viene riscritto); le domande senza risposta scadono; il Diario può risolverle a mano. Il comportamento è nell'8.4 /
+  8.5 (cambio di prompt, misurato).
+- Migrazione dei dati esistenti (prima un backup): personale — i messaggi della persona `self`, quelli dell'assistente
+  `agent`, episodi / note / fatti `self`; entità — i messaggi `someone` salvo un autore già noto, gli episodi il contatto
+  quando nominano una sola persona nota, altrimenti `someone`, i fatti mantengono il loro soggetto; i contatti mancanti
+  vengono creati (per esempio Andrea dentro la memoria Arkim3de). Prompt e valori di `origin` non cambiano nell'8.3 (la
+  prima persona arriva nell'8.4).
+
 ## Layer 0 — log grezzo
 
 ### conversations

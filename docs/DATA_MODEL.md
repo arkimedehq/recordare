@@ -147,6 +147,42 @@ created_at`.
 `credential_id, owner_id, method_path, key, response_hash, response_body, created_at` — unique on
 the first four; 24 h retention.
 
+### Agent memory (D50, WORK_PLAN 8.3) — design approved 2026-10-09
+A memory belongs to an agent: one client account = one memory (today the `owners` row; renamed `memories` in 8.10).
+- **`owners.mode`** `personal | entity` (from `persons.kind`: human → personal, entity → entity; changeable only while
+  the memory is empty); **`owners.gender`** `masculine | feminine | neutral`, default **masculine**, for the first
+  person in gendered languages (set by the client with `PATCH /me`). The memory's own person row (`persons`,
+  `owner_scope` null) carries the name: in a personal memory it is the name of "I" — the account holder, who is both
+  the user and the agent.
+- **Contacts** = the people a memory knows: `persons` rows with `owner_scope` = that memory (required for every human
+  that is not the memory itself). The same human in two memories is two unrelated contacts (memories are isolated). A
+  contact is created when a client identifies a participant, when someone introduces themselves or is recognised (voice,
+  face), and also when a person is only **mentioned** with a name ("my sister Giulia"). Contact fields: names
+  (`person_aliases`: first name, nicknames, "my sister"…), `full_name` when known, `relation` to the memory's self
+  (sister, colleague, boss…), and its identifiers (participant identities below).
+- **Same name, two people** ("Marco"): resolved in this order — certain identifiers (client id, voiceprint, face) →
+  full name → context (relation, place, people present). Merges happen only when clear (same name and relation);
+  otherwise two contacts, mergeable by hand in the Diary — a wrong merge is worse than a duplicate.
+- **`external_identities`** has two kinds: **account** (a client's user opens a memory — today's `client_user`) and
+  **participant** (a client's participant id, a voiceprint id, a face id, a channel → a contact of one memory).
+- **Messages** record who said them, as knowledge: `author_kind` `self | contact | someone | agent | own | tool`,
+  `author_person_id` (the contact), `attribution_method` `account | declared | self_introduction | addressed_by_name |
+  voiceprint | face | client_assertion | none`, `attribution_confidence` 0–1. In personal mode the person / assistant
+  distinction is knowledge only: no logic uses it (D50).
+- **Ingest**: a message may carry `own: true` (the agent's own: knowledge given to it, its perceptions, a document) →
+  `author_kind = own`; conversation sources add `document`, `perception`, `ambient`.
+- **Subject of every memory** (episodes, facts, notes): `subject_kind` `self | contact | someone | undecided` +
+  `subject_person_id`; `undecided` keeps the **candidate contacts** — an ambiguous attribution is never guessed.
+- **`clarifications`** (Recordare's first initiative, vision L1): `id, memory, question, candidates (contacts),
+  episode / fact / note it concerns, status open | resolved | expired, created_at, resolved_at`. The memory context
+  offers at most one relevant open question to the agent ("if natural, ask: which Marco — the colleague or the
+  cousin?"); the answer resolves it at the next extraction by adding the attribution (the memory is not rewritten);
+  unanswered questions expire; the Diary can resolve them by hand. Behaviour in 8.4 / 8.5 (prompt change, measured).
+- Migration of existing data (backup first): personal — person messages `self`, assistant messages `agent`, episodes /
+  notes / facts `self`; entity — messages `someone` unless an author is already known, episodes the contact when they
+  name one known person, else `someone`, facts keep their subject; missing contacts created (e.g. Andrea inside the
+  Arkim3de memory). The prompt and `origin` values do not change in 8.3 (first person arrives in 8.4).
+
 ## Layer 0 — raw log
 
 ### conversations

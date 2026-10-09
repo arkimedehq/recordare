@@ -642,6 +642,11 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   results, files) is the agent's memory too: the agent did not say it, but now it knows it. Points 4–10 of the
   comparison (forget a contact, privacy scopes, self / contact cards, sources model, things to avoid, Mem0 re-run,
   LongMemEval point) are accepted in principle — each is discussed with the owner before it is built (WORK_PLAN M8).
+- **Contacts and attribution (owner, 2026-10-09):** in a personal memory only the account holder exists as "I" (user and
+  agent at once); first person defaults to masculine. Contacts belong to one memory, also people only mentioned; names
+  and nicknames, full name, relation; same-name people separated by identifiers → full name → context, and when still
+  ambiguous Recordare **asks** ("which Marco?") through the agent — its first initiative (L1). Data design: DATA_MODEL
+  "Agent memory".
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked
