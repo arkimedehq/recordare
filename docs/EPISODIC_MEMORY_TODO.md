@@ -635,6 +635,13 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
 - Plan: WORK_PLAN M8 (steps 0–11 of the audit), each prompt step measured on dev sets + 3 blind runs; existing
   memories on Kinox migrated after the voice is final (backup first).
 
+- **Owner's follow-up (2026-10-09, after `docs/COMPETITORS.md`):** (a) attribution is stored as data — who said it,
+  how it was established, how sure, re-attributable later; (b) in personal mode everything is written in the first
+  person, and **who said it** (the person or the assistant) is recorded **only as knowledge**: it must not influence the
+  memory in any way and stays out of the reasoning (extraction, recall, answers); (c) **external content** (web, tool
+  results, files) is the agent's memory too: the agent did not say it, but now it knows it. Points 4–10 of the
+  comparison (forget a contact, privacy scopes, self / contact cards, sources model, things to avoid, Mem0 re-run,
+  LongMemEval point) are accepted in principle — each is discussed with the owner before it is built (WORK_PLAN M8).
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked

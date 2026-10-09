@@ -645,6 +645,14 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
 - Piano: WORK_PLAN M8 (passi 0–11 dell'audit), ogni passo sui prompt misurato su set di sviluppo + 3 run ciechi; le
   memorie esistenti su Kinox migrate quando la voce è definitiva (prima un backup).
 
+- **Seguito del proprietario (2026-10-09, dopo `docs/COMPETITORS_it.md`):** (a) l'attribuzione è salvata come dato —
+  chi l'ha detto, come è stato stabilito, con quale certezza, riattribuibile in seguito; (b) nella modalità personale
+  tutto è scritto in prima persona, e **chi l'ha detto** (la persona o l'assistente) è registrato **solo come
+  conoscenza**: non deve influenzare in alcun modo la memoria e resta fuori dal ragionamento (estrazione, richiamo,
+  risposte); (c) i **contenuti esterni** (web, risultati di strumenti, file) sono anch'essi memoria dell'agente: non li
+  ha detti l'agente, ma ora li sa. I punti 4–10 del confronto (dimenticare un contatto, ambiti di privacy, schede di sé
+  e dei contatti, modello delle fonti, cose da evitare, nuovo run di Mem0, un punto su LongMemEval) sono accettati in
+  linea di principio — ognuno si discute con il proprietario prima di essere costruito (WORK_PLAN M8).
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 ancora aperta, con WORK_PLAN 5.4). Il lavoro aperto è tracciato

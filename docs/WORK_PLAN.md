@@ -347,6 +347,7 @@ Each prompt step: dev sets (1 run while iterating) + 3 blind runs to confirm; st
 | 8.10 | **Rename** `owners → memories`, `owner_id → memory_id`, tokens and headers, Atlas contract version; tests only |
 | 8.11 | **Fresh blind sets** for the agent memory (personal with declared speakers; entity with own input), written by separate agents and re-read; 3 runs each for the reported numbers |
 | 8.12 | Later: reflection (the agent's own thoughts), self-model, procedural memory, the agent's own intents, perceptual layer (photos / audio / video / sensors), privacy and disclosure |
+| 8.13 | From `docs/COMPETITORS.md` §6, **each discussed with the owner before it is built**: forget everything about a contact (tombstones; the deployer's GDPR tool); privacy as scopes checked at read time (later); a self card and contact cards as deterministic views in the Diary; D49 sources on Supermemory's documents / memories split; avoid LLM at read time, deleting outdated items, recency as truth, "when in doubt, extract"; re-run Mem0 OSS on the new agent sets (3 runs, budget first); one LongMemEval-S point (~100 questions, 1 run, ≈ 10 blind runs of cost; LoCoMo skipped) |
 
 ## Open decisions to take along the way
 

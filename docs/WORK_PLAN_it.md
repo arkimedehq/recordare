@@ -354,6 +354,7 @@ itera) + 3 run ciechi per confermare; prima dichiarare il budget (regole 1–9).
 | 8.10 | **Rinomina** `owners → memories`, `owner_id → memory_id`, token e intestazioni, versione del contratto di Atlas; solo test |
 | 8.11 | **Nuovi set ciechi** per la memoria dell'agente (personale con persone dichiarate; entità con input proprio), scritti da agenti separati e riletti; 3 run ciascuno per i numeri ufficiali |
 | 8.12 | Più avanti: riflessione (pensieri propri dell'agente), modello di sé, memoria procedurale, intenzioni dell'agente, livello percettivo (foto / audio / video / sensori), riservatezza e divulgazione |
+| 8.13 | Da `docs/COMPETITORS_it.md` §6, **ognuno discusso con il proprietario prima di essere costruito**: dimenticare tutto di un contatto (tombstone; lo strumento GDPR di chi installa); privacy come ambiti controllati alla lettura (più avanti); una scheda di sé e schede dei contatti come viste deterministiche nel Diario; le fonti di D49 sul modello documenti / memorie di Supermemory; evitare LLM in lettura, cancellare i dati vecchi, la recenza come verità, "nel dubbio, estrai"; rifare Mem0 OSS sui nuovi set dell'agente (3 run, prima il budget); un punto su LongMemEval-S (~100 domande, 1 run, ≈ 10 run ciechi di costo; LoCoMo escluso) |
 
 ## Decisioni aperte da prendere lungo il percorso
 
