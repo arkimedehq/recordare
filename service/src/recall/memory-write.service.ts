@@ -23,7 +23,7 @@ const OVERLAP = (col: string) => `(similarity(${col}, $3) >= 0.2 OR word_similar
 const SCORE = (col: string) => `GREATEST(similarity(${col}, $3), word_similarity($3, ${col}))`;
 
 export interface Evidence {
-  /** Conversation the tool was called from (resolved viewer context), if any. */
+  /** Conversation the tool was called from (resolved by Recordare), if any. */
   conversationId?: string;
   clientId: string;
   /** A personal token (owner-direct): without a conversation, the owner's recent messages from this client count. */

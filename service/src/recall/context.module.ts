@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
 import { OwnerResolver, USER_HEADER } from '../auth/owner-resolver.service';
 import { hasScope, type Principal } from '../auth/principal';
-import { CONVERSATION_HEADER, VIEWERS_HEADER, ViewerContextService } from '../auth/viewer-context.service';
+import { CONVERSATION_HEADER, ConversationResolver } from '../auth/conversation-resolver.service';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { ZodBody } from '../common/zod-body.pipe';
 import { type Env } from '../config/env';
@@ -33,7 +33,7 @@ export class ContextController {
   constructor(
     private readonly context: ContextService,
     private readonly owners: OwnerResolver,
-    private readonly viewers: ViewerContextService,
+    private readonly conversations: ConversationResolver,
     private readonly ingestion: IngestService,
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
@@ -46,7 +46,6 @@ export class ContextController {
     @CurrentPrincipal() principal: Principal,
     @Headers(USER_HEADER) user: string | undefined,
     @Headers(CONVERSATION_HEADER) conversation: string | undefined,
-    @Headers(VIEWERS_HEADER) extraViewers: string | undefined,
     @Headers(NOW_HEADER) at: string | undefined,
     @Body(new ZodBody(contextSchema)) body: z.infer<typeof contextSchema>,
   ): Promise<MemoryContext> {
@@ -59,14 +58,13 @@ export class ContextController {
       query ??= [...body.ingest.messages].reverse().find((m) => m.role === 'user')?.content;
     }
     if (!query?.trim()) throw new BadRequestException('query required');
-    // Same viewer rule as every read: nothing unless only the owner will see the answer.
-    const ctx = await this.viewers.resolve(principal, ownerId, conversation, extraViewers);
-    if (!ctx.ownerOnly) return { block: null, items: 0 };
+    // The whole memory in every conversation (D50); the conversation only scopes the recall log and the current turn.
+    const ctx = await this.conversations.resolve(principal, ownerId, conversation);
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
     const now = override && !Number.isNaN(override.getTime()) ? override : this.clock.now();
     return this.context.build(ownerId, query.trim().slice(0, 8_000), ctx.conversationId, now);
   }
 }
 
-@Module({ imports: [RawLogModule], controllers: [ContextController], providers: [ContextService, ViewerContextService] })
+@Module({ imports: [RawLogModule], controllers: [ContextController], providers: [ContextService, ConversationResolver] })
 export class ContextModule {}

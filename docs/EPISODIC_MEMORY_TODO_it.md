@@ -387,7 +387,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - **Insieme del pubblico (audience)**: ogni episodio, fatto, digest e voce di profilo memorizza gli id delle persone risolte
   presenti al momento della registrazione (immutabile), accanto al livello `disclosure`; i permessi sono
   valutati al momento della lettura rispetto alla policy corrente; i grant sono dati con intervalli di validità;
-  gli elementi mancanti e quelli vietati restituiscono lo stesso "non trovato".
+  gli elementi mancanti e quelli vietati restituiscono lo stesso "non trovato". *La valutazione in lettura è superata dal
+  D50 per le risposte (2026-10-09, WORK_PLAN 8.2): per ora nessuna lettura filtra su audience / disclosure; entrambi
+  continuano a essere registrati.*
 - **Gli artefatti derivati portano gli id delle fonti**; audience derivata = intersezione di quelle delle fonti;
   un artefatto senza id di fonte fallisce in modo chiuso.
 - **Fatti**: stato `current | superseded | corrected | unknown_current`; per ogni fatto toccato
@@ -434,7 +436,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   hardening davanti. v1 = **profilo privato / di ricerca**: proprietari creati dall'admin, chiavi client, token
   personali, scope semplici, isolamento per proprietario.
 - Mantenuti nella v1 perché fanno parte del twin, non sono aggiunte di sicurezza: contesto del visualizzatore risolto da
-  Recordare (sapere cosa dire a chi — pilastro della disclosure), provenienza `author_role` (principio 3,
+  Recordare (sapere cosa dire a chi — pilastro della disclosure — *superato dal D50 per le risposte, 2026-10-09 /
+  WORK_PLAN 8.2: nessun filtro su chi legge; si risolve solo la conversazione, per le prove delle scritture MCP*), provenienza `author_role` (principio 3,
   qualità della memoria), flag di consenso (D4 — *superato da D50, 2026-10-09: niente flag di consenso*), oblio che resta (D16).
 - Rinviati al **profilo pubblico** (M7 / rilascio pubblico): login e pagine del proprietario, OAuth per MCP,
   UI di collegamento e revoca guidata dal proprietario, audit di lettura, idempotenza persistente, politica di backup / retention
@@ -627,7 +630,8 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   Realizzato in WORK_PLAN 8.1 (2026-10-09): la migrazione `NoConsent1791060000000` elimina le colonne del consenso.
 - **Nessun filtro su chi ascolta, per ora**: le risposte usano sempre tutta la memoria, in ogni conversazione; chi può
   sapere cosa (riservatezza, livelli di divulgazione) è una decisione successiva. `audience` / `disclosure` restano
-  registrati per allora.
+  registrati per allora. Realizzato nella WORK_PLAN 8.2 (2026-10-09): nessun percorso di lettura filtra per chi legge;
+  `X-Recordare-Viewers` non esiste più; la conversazione è ancora risolta (le scritture MCP vi legano le loro prove).
 - **Resta**: il Diario (strumento di correzione per chi mantiene la memoria); la protezione contro l'eco del richiamo (D38),
   nelle parole del proprietario: quando l'agente risponde con un ricordo che ha già ("ieri dove sono stato?" → "al
   mare"), la risposta non rientra, giusta o sbagliata che sia; quando dice qualcosa di nuovo ("che tempo fa a Ispica?" →

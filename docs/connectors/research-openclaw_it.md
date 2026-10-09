@@ -105,7 +105,9 @@ di Honcho in un file JSON locale (`~/.honcho/openclaw-peers.json`). Documentazio
   Limiti che contano per Recordare: il resolver **non riceve sessione/conversazione**, quindi non può impostare
   `X-Recordare-Conversation`; le esecuzioni senza un mittente attendibile (cron, owner della Control UI, CLI) non ottengono mai il server; il
   trasporto risolto viene messo in cache e riconvalidato al più ogni 5 min. → L'MCP statico/per richiedente da solo non può soddisfare
-  la regola del viewer di Recordare (INTEGRATION.md §4). Usare invece i tool registrati dal plugin (§5).
+  la regola del viewer di Recordare (INTEGRATION.md §4). Usare invece i tool registrati dal plugin (§5). *(Dal D50 / WORK_PLAN
+  8.2 la regola non c'è più: il richiamo funziona senza conversazione; le scritture MCP con una chiave client ne hanno
+  ancora bisogno, quindi i tool del plugin restano la strada migliore.)*
 
 ## 3. Identità: persona, sessione, canale, gruppi
 `PluginHookAgentContext` (hook dell'agente) contiene: `agentId`, `sessionKey`, `sessionId`, `runId`, `channel` /

@@ -45,9 +45,11 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
 
 ## 4. Recall — MCP
 - Register Recordare's MCP endpoint (`/mcp`) in your MCP client with the key and `X-Recordare-User`.
-- **Always send `X-Recordare-Conversation: <externalConversationId>`**: Recordare resolves who will see the answer from
-  the participants it ingested; without a resolvable conversation a read returns nothing (viewer rule, `API.md` §1) — with a client key; a personal
-  token reads as the person even before its conversation is stored.
+- **Always send `X-Recordare-Conversation: <externalConversationId>`**: no longer for visibility — answers use the
+  whole memory in every conversation, shared ones included (D50; privacy comes later) — but MCP writes need it as their
+  evidence (with a client key a write without a resolvable conversation gets `"cannot write here"`; a personal token
+  writes as the person), and recall leaves the current turn out of the chat excerpts (`API.md` §1).
+  `X-Recordare-Viewers` is gone: Recordare ignores it.
 - Optional, per agent: `POST api/v1/context {query}` before an answer returns the relevant memories as a fenced
   block for the end of the system prompt (`API.md` §3, WORK_PLAN 5.7) — the agent may answer without a tool call.
   `POST api/v1/context {ingest}` (scopes `read` + `ingest`; client library `contextWithTurn`) stores the user's turn

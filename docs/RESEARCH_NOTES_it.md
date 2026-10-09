@@ -82,6 +82,10 @@ bi-temporali).
 
 ## H2 — Memoria consapevole della disclosure per un twin personale
 
+**Stato: rinviata (D50, owner 2026-10-09).** Per ora le risposte usano tutta la memoria in ogni conversazione
+(WORK_PLAN 8.2); privacy e riservatezza verranno dopo (8.12). La ricerca qui sotto resta come punto di partenza di quel
+lavoro.
+
 **Affermazione (ristretta).** Il filtraggio pre-contesto per pubblico autenticato è pubblicato; ciò che è aperto
 è la **combinazione** per un twin personale: livelli sociali graduati + concessioni per persona, provenienza
 delle confidenze di terzi ("Marco mi ha detto X" → rivelabile solo al proprietario e a Marco), propagazione
@@ -123,8 +127,9 @@ Punto debole da misurare: **accuratezza dell'etichettatura in fase di scrittura*
 `source` di ogni ricordo (chi l'ha raccontato, in quale conversazione, con quale pubblico presente);
 una colonna etichetta `disclosure` (default `owner`) su episodi, fatti e digest; gli artefatti derivati
 conservano gli id delle loro fonti così le etichette possono propagarsi. — Realizzato nella fase 1: colonne
-`disclosure` (default `owner`) e `audience`; le letture seguono una regola sul lettore (ciò che si dice in una
-conversazione con altri partecipanti non trapela verso di loro). I tier non sono ancora usati (fase 3).
+`disclosure` (default `owner`) e `audience`; le letture hanno seguito una regola sul lettore (ciò che si dice in una
+conversazione con altri partecipanti non trapelava verso di loro) finché il D50 non l'ha tolta (8.2) — le colonne
+continuano a essere scritte. I tier non sono ancora usati (fase 3).
 
 ## H3 — Source monitoring: vissuto dal proprietario vs vissuto dal twin
 

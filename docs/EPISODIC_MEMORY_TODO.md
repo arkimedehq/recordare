@@ -383,7 +383,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - **Audience set**: every episode, fact, digest and profile entry stores the resolved person ids
   present when it was recorded (immutable), next to the `disclosure` tier; permissions are
   evaluated at read time against current policy; grants are data with validity intervals;
-  missing and forbidden items return the same "not found".
+  missing and forbidden items return the same "not found". *The read-time evaluation is superseded by D50 for answers
+  (2026-10-09, WORK_PLAN 8.2): no read filters on audience / disclosure for now; both are still recorded.*
 - **Derived artefacts carry source ids**; derived audience = intersection of the sources';
   an artefact without source ids fails closed.
 - **Facts**: status `current | superseded | corrected | unknown_current`; per touched fact the
@@ -430,7 +431,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   hardening in front. v1 = **home / research profile**: admin-created owners, client keys, personal
   tokens, simple scopes, per-owner isolation.
 - Kept in v1 because they are part of the twin, not security add-ons: viewer context resolved by
-  Recordare (knowing what to tell whom — disclosure pillar), `author_role` provenance (principle 3,
+  Recordare (knowing what to tell whom — disclosure pillar — *superseded by D50 for answers, 2026-10-09 / WORK_PLAN 8.2:
+  no viewer filter; only the conversation is resolved, for the evidence of MCP writes*), `author_role` provenance (principle 3,
   memory quality), consent flag (D4 — *superseded by D50, 2026-10-09: no consent flag*), forgetting that sticks (D16).
 - Deferred to the **public profile** (M7 / public release): owner login and pages, OAuth for MCP,
   owner-driven linking and revocation UI, read audit, persistent idempotency, backup / provider
@@ -618,6 +620,8 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   Implemented in WORK_PLAN 8.1 (2026-10-09): migration `NoConsent1791060000000` drops the consent columns.
 - **No viewer filter for now**: answers always use the whole memory, in every conversation; who-may-be-told-what
   (privacy, disclosure tiers) is a later decision. `audience` / `disclosure` stay recorded for it.
+  Implemented in WORK_PLAN 8.2 (2026-10-09): no read path filters by viewers; `X-Recordare-Viewers` is gone; the
+  conversation is still resolved (MCP writes bind their evidence to it).
 - **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38), in the owner's words:
   when the agent answers from a memory it already has ("where was I yesterday?" → "at the sea"), the answer does not
   go back in, right or wrong; when it says something new ("what's the weather in Ispica?" → the forecast), that is

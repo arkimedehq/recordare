@@ -45,12 +45,12 @@ describe('connector calls (WORK_PLAN 6.6b)', () => {
     expect((await call(s.url, 'POST', '/api/v1/ingest/conversations/never-seen/end', as())).status).toBe(404);
   });
 
-  it('lets a personal token read before its conversation is stored; a client key still gets nothing', async () => {
+  it('lets a personal token and a client key read before their conversation is stored', async () => {
     const client = (await call(s.url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'T', kind: 'mcp_client' } })).body;
     const token = (await call(s.url, 'POST', `/api/v1/admin/owners/${s.ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: client.id, scopes: ['read'] } })).body.token;
     const ask = (t: string, user?: string) => call(s.url, 'POST', '/api/v1/context', {
       token: t, headers: { 'x-recordare-conversation': 'not-stored-yet', 'x-recordare-now': '2026-10-07T10:00:00+02:00', ...(user ? { 'x-recordare-user': user } : {}) }, body: { query: s.query } });
     expect((await ask(token)).body.items).toBe(3);
-    expect((await ask(s.key, 'u1')).body).toEqual({ block: null, items: 0 });
+    expect((await ask(s.key, 'u1')).body.items).toBe(3);
   });
 });

@@ -116,7 +116,7 @@ owner naming; prompts stay English with an owner-language line; the admin consol
 **Done 2026-10-03** (branch `m3-raw-log`): REST ingest (idempotent, consent-gated until 8.1, conflicts / upsert
 edits, verified-only participants), edits and purges, BullMQ (debounced idle extraction jobs —
 runner is a placeholder until M4 — and background message embeddings), raw-log search (full-text +
-vector), MCP endpoint with server-resolved viewer context and `search_episodes` (raw only), eval
+vector), MCP endpoint with server-resolved viewer context (removed by 8.2, D50) and `search_episodes` (raw only), eval
 system S through REST + MCP: **90 % / 71 %** on the base sets (spike baseline 83 % / 66 %).
 
 | # | Task |
@@ -336,7 +336,7 @@ Each prompt step: dev sets (1 run while iterating) + 3 blind runs to confirm; st
 |---|---|
 | 8.0 | **D50** written (EPISODIC_MEMORY_TODO), M8 planned — **done 2026-10-09** |
 | 8.1 | **No consent**: remove the consent gate everywhere (ingest, extraction, consolidation, MCP writes, `/me`, admin, console, client library, connectors, Arkimede); migration drops `episodic_enabled*`, `ingest_refused_at`; docs state the deployer's duty to inform (GDPR). Tests only — **done 2026-10-09**: ingest always stores (`stored` gone from the result), extraction / consolidation / MCP writes ungated, `episodicEnabled` gone from `/me` and admin, console switch and "waiting" chip gone, client library without `ConsentState` / `knownOff` / `status`, openai-proxy without `noConsent`, Arkimede badge off / active / unknown; migration `NoConsent1791060000000` |
-| 8.2 | **No viewer filter**: answers use the whole memory in every conversation; keep a conversation resolver (MCP writes need it for evidence); `audience` / `disclosure` stay recorded. Tests only |
+| 8.2 | **No viewer filter**: answers use the whole memory in every conversation; keep a conversation resolver (MCP writes need it for evidence); `audience` / `disclosure` stay recorded. Tests only — **done 2026-10-09**: `ViewerContextService` → `ConversationResolver` (no `ownerOnly`), MCP recall and `POST api/v1/context` answer in every conversation (shared, unknown, none, extra viewers), `"nothing to show here"` and `X-Recordare-Viewers` / `_meta.recordare.viewers` gone; MCP writes still need a resolvable conversation or a personal token; `raw_log_scope` kept |
 | 8.3 | **Memory identity**: memory = account with `mode` personal / entity (migration from `persons.kind`), contacts per memory, account vs participant identities, attribution method + confidence on participants and messages, `own` marker on ingest, the account holder as "self", undeclared author = self (personal) / someone (entity). Prompt input unchanged: 1 run blind7 + 1 run dev_entity as a no-change check |
 | 8.4 | **Personal first person** (`extract.v12` and facts / resolver prompts): the agent's voice, subject on episodes / notes / facts, gender setting, recall returns the subject (an identified speaker gets their own memories), a leak detector instead of `nameOwner`. New dev set `dataset_dev_agent_personal`; dev sets 1 run each; confirm blind7 × 3 (bar 91.7 %) |
 | 8.5 | **Entity agent**: own-marked input in first person, "someone" otherwise, subjects everywhere; new dev set `dataset_dev_entity_own`; confirm blind8 × 3 (bar 82.1 %) |

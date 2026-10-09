@@ -113,7 +113,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `RECORDARE_OUTBOX_POLL_MS` | Arkimede `.env` | 3000 | How often the outbox worker sends |
 | `episodicMemoryEnabled` | Settings → Memory, per user | off | The platform's own opt-in, the only on/off switch (D50): while off nothing is sent and no person is created |
 | Memory type | Settings → Memory, per user | personal | Personal / shared (`PATCH /me {kind}`, only while empty) |
-| Memory context | Agents → agent, per agent | off | Before each answer, Recordare's relevant memories (`POST api/v1/context`) at the end of the prompt (WORK_PLAN 5.7) · dev set: no harm, +3–7 pt; with the voice agent's prompt tool calls 9 → 5 of 15. A client choice: Recordare serves the block whenever asked (the viewer rule applies) |
+| Memory context | Agents → agent, per agent | off | Before each answer, Recordare's relevant memories (`POST api/v1/context`) at the end of the prompt (WORK_PLAN 5.7) · dev set: no harm, +3–7 pt; with the voice agent's prompt tool calls 9 → 5 of 15. A client choice: Recordare serves the block whenever asked, from the whole memory in every conversation (D50) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | Arkimede `.env` | off | OpenTelemetry GenAI traces to the atlas (metadata only) |
 | Library delivery policy | `packages/client` (`DEFAULT_DELIVERY`) | 12 attempts, 5 s → 1 h | Outbox retries (jitter, `Retry-After`), then parked |
 

@@ -14,8 +14,9 @@ tenuta dal tuo servizio [Recordare](../../README_it.md) — il livello client **
   nel codice alla persona e alla conversazione — né il modello né l'utente possono puntarli altrove), con gli schemi
   pubblicati dal servizio (`TOOLS` della libreria client). `log_episode` è escluso: la conversazione è già catturata.
 - **Chat di gruppo**: si catturano i turni delle persone note, con i messaggi degli altri membri come contesto (ruolo
-  `other`). Recordare mostra i ricordi solo quando chi li vede è esattamente il proprietario, quindi nei gruppi il
-  richiamo resta vuoto.
+  `other`). Il richiamo funziona anche nei gruppi: Recordare risponde con tutta la memoria in ogni conversazione (D50:
+  per ora nessun filtro su chi legge — privacy e riservatezza verranno dopo), quindi ciò che l'agente ricorda può
+  emergere davanti al gruppo.
 
 Non occupa lo slot memoria di OpenClaw: `memory-core` (`MEMORY.md`, `memory_search`) continua a funzionare accanto.
 Recordare conserva ogni turno che il plugin invia (non ha un flag di consenso, D50). Il plugin non blocca né rompe mai

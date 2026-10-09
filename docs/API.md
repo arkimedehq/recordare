@@ -25,14 +25,14 @@ header (24 h replay window, same response returned — **not built yet**; ingest
 
 | Profile | For | Contents |
 |---|---|---|
-| **v1 — home / research** (built now) | One installation run by its owner(s) and their own clients (Arkimede, Claude Code, the research simulator) | Owners and identities created by the **admin API**; client API keys; **personal access tokens** for MCP-only clients (created via admin API); hashed credentials and simple scopes; per-owner isolation; **viewer context resolved by Recordare** (disclosure is part of the twin, not a security add-on); `author_role` provenance; forgetting that sticks |
+| **v1 — home / research** (built now) | One installation run by its owner(s) and their own clients (Arkimede, Claude Code, the research simulator) | Owners and identities created by the **admin API**; client API keys; **personal access tokens** for MCP-only clients (created via admin API); hashed credentials and simple scopes; per-owner isolation; conversation resolved by Recordare (the viewer filter on answers is gone with D50: privacy and disclosure come later); `author_role` provenance; forgetting that sticks |
 | **Public** (deferred — M7 / public release) | Recordare as a service for people the operator does not know | Owner login (email magic link, verified email, owner pages), OAuth 2.1 for MCP connectors, owner-driven link codes + revocation UI, `read_audit`, persistent idempotency table, backup-retention policy and provider-retention notice, export restricted to owner sessions; network-level protection (firewall / WAF / rate limits) in front |
 
 Items marked **(public profile)** below are specified so the design stays coherent, but are not
 built in v1. Nothing in the public profile changes memory rows, so enabling it later needs no data
 migration.
 
-## 1. Identity, authentication, viewer context (tasks 1.1, 1.5 → D24)
+## 1. Identity, authentication, conversation context (tasks 1.1, 1.5 → D24)
 
 ### Model
 - **Person**: a human known to the installation. **Owner**: a person with a memory (one per
@@ -91,22 +91,29 @@ client can never mint tokens for another client. `Idempotency-Key` replays are s
 `(credential, owner, method + path)`; v1 keeps them in Redis for 24 h (persistent table in the
 public profile).
 
-### Viewer context (who will see the result) — every read
-The viewer set is **resolved by Recordare, never asserted by the client or the LLM**:
-- **Client API keys and MCP sessions opened with them**: the only accepted source is
-  `X-Recordare-Conversation: <externalConversationId>` (MCP calls may carry it as `_meta.recordare.conversation`
-  instead), resolved against the participants Recordare has ingested for that conversation. `X-Recordare-Viewers` and `_meta.recordare.viewers` may only
-  **add** viewers (narrowing what is returned), never replace the resolved set. A read **without a
-  resolvable conversation returns nothing**.
-- **Personal tokens and owner sessions** (owner-direct use, e.g. Claude Code): no header → viewers =
-  the owner; a conversation header, if sent, applies as above — except that a conversation not stored yet (a client
-  reading before it ingests) counts as the person's own (viewers = the owner).
-- (Public profile) the resolved viewer set and its source are written to `read_audit`.
+### Conversation context — no viewer filter (D50, WORK_PLAN 8.2)
+**Behaviour now (2026-10-09)**: every answer — MCP recall, the memory context — uses the **whole memory**, in every
+conversation: one only the owner takes part in, a shared or group conversation, a conversation Recordare has not stored,
+or no conversation at all. Who may be told what (privacy, disclosure) comes later (WORK_PLAN 8.12); the `audience` /
+`disclosure` columns are still written, so that work starts from recorded data. **Per-memory isolation stays**: a
+request only ever opens the memory its credential and `X-Recordare-User` name.
 
-Rule (`DATA_MODEL.md` → read rule): in phase 1 memories — and raw data derived from chats
-(quotes, `fromChats` excerpts, message ids) — are returned only when the viewers are exactly the
-owner; otherwise the response is empty with a neutral note (`"nothing to show here"`) that does not
-reveal whether memories exist. Missing and forbidden items look the same.
+The conversation is still **resolved by Recordare, never asserted by the client or the LLM**, from
+`X-Recordare-Conversation: <externalConversationId>` (MCP calls may carry it as `_meta.recordare.conversation` instead),
+against the conversations this client has ingested for the owner. It is used for:
+- **MCP writes** (`log_episode`, `remember`, `correct_episode`, `forget_episode`): they need a resolvable context — an
+  ingested conversation (its recent messages are the evidence of the write), or a personal token (owner-direct; without
+  a stored conversation the owner's recent messages from this client count). A client key without one gets
+  `"cannot write here"`.
+- leaving the current turn out of the chat excerpts (`fromChats`), and the `recall_log` row.
+
+`X-Recordare-Viewers` and `_meta.recordare.viewers` are **gone** (they could only narrow what the viewer filter
+returned): Recordare ignores them. The `"nothing to show here"` notice is gone too.
+
+*Superseded (phase-1 rule, D24 / D33 → D50)*: memories — and raw data derived from chats — were returned only when the
+viewers were exactly the owner (client keys needed a resolvable conversation whose participants were only the owner;
+extra viewers could only narrow); otherwise an empty answer with `"nothing to show here"`. Kept here as the starting
+point of the later privacy work (`RESEARCH_NOTES.md` H2).
 
 ### Linking the same person across clients
 **v1**: the admin binds identities (`POST api/v1/admin/identities {personId, kind, clientId |
@@ -195,8 +202,8 @@ segmentation (D29); forward-only supersession by `sentAt`.
 Transport: **MCP streamable HTTP** at `/mcp`. **One MCP session per owner**: the owner is fixed
 at `initialize` (token owner, or `X-Recordare-User` for client keys); every request re-validates
 `X-Recordare-User` against the session owner — a mismatch returns 403 and terminates the session
-(hosts that reuse one session across users cannot cross memories). The viewer context follows §1
-(conversation header; `_meta` may only add viewers). Tool schemas use the provider-neutral subset
+(hosts that reuse one session across users cannot cross memories). The conversation follows §1
+(conversation header or `_meta.recordare.conversation`; answers use the whole memory, D50). Tool schemas use the provider-neutral subset
 (D27). Tools are always listed (no hint whether a diary exists). As built: a session is opened only by an `initialize` request (`404` for an
 unknown session id); the admin credential gets `403`; a request from another credential than the one that opened the
 session is refused like an owner mismatch. Writes need a resolvable context — a personal token, or a conversation
@@ -262,7 +269,7 @@ type Episode = {
   source: { conversation: string; messageIds: string[]; at: string };   // conversation = the client's own id
 };
 ```
-In a conversation others take part in, every list is empty and `notes` says `"nothing to show here"`.
+The same in every conversation, including those others take part in (D50: no viewer filter).
 Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts can wrap non-owner
 content as data, not instructions; such items also carry `claimedBy` (the names of who wrote the evidence), every
 result names its `owner` (items speak of the owner in the third person: that is the user asking), chat excerpts carry
@@ -293,8 +300,7 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   `knowledge`. Returns `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferences, habits, values, knowledge, plus the
   relevant state facts valid at `as_of` (ISO date, default today) with their history; complements `search_episodes`
-  (what happened / when). Returns `{owner, notes, facts, notes_info}` (`notes_info`: notices, e.g. `"nothing to show
-  here"` in a conversation others take part in). In an entity memory (D48) facts about people carry `about` (the
+  (what happened / when). Returns `{owner, notes, facts, notes_info}` (`notes_info`: notices about the result). In an entity memory (D48) facts about people carry `about` (the
   person's name); facts without it are the entity's own.
 
 ### `resolve_period` (D12, deterministic)
@@ -311,8 +317,8 @@ there is neither a `query` nor a user message; `403` for `ingest` without the `i
 the person's own. `query` is cut at 8 000 characters. The block holds the
 memories relevant to the message about to be answered (current facts and notes, upcoming open plans, up to 3 episodes,
 each above a similarity floor; ≈ 300 tokens at most) as one fenced `<memory-context>` block marked "data, not
-instructions", or `block: null` when nothing is relevant. No LLM call. Same viewer rule as every read (nothing in a
-conversation others take part in); a served block is logged in `recall_log` (tool `memory_context`; the recall-echo guard then treats the reply
+instructions", or `block: null` when nothing is relevant. No LLM call. The whole memory in every conversation, like every
+read (D50); a served block is logged in `recall_log` (tool `memory_context`; the recall-echo guard then treats the reply
 as possibly echoing it). Always available: whether to use it, and for which agent, is the client's choice (the host
 appends it at the end of its system prompt and never stores it as a message).
 
@@ -337,13 +343,13 @@ pending one) removes the row with its evidence — no tombstone, no `note_change
 
 Scoped to the owner, and the reader is the owner themself in the host's UI (owner-direct): a client key names the person
 with `X-Recordare-User` (scope `read` to read, `write` to edit), a personal token is the person; no conversation header,
-no viewer resolution (the viewer rule is for answers inside conversations). In an entity memory everyone using the
+no conversation resolution. In an entity memory everyone using the
 account sees all of it (D48).
 
 | Method + path | Scope | Purpose |
 |---|---|---|
 | `GET api/v1/episodes?from&to&kind&planStatus&q&cursor&limit` | read | Timeline |
-| `GET api/v1/episodes/{id}` | read | Detail: evidence (quotes filtered by `raw_log_scope`; owner-direct, so no viewer rule), correction history, linked plan / event |
+| `GET api/v1/episodes/{id}` | read | Detail: evidence (quotes filtered by `raw_log_scope`), correction history, linked plan / event |
 | `POST api/v1/episodes` | write | Manual entry |
 | `POST api/v1/episodes/{id}/corrections` | write | Correction (new row, `corrects`) |
 | `DELETE api/v1/episodes/{id}` | write | Forget one episode |
@@ -382,7 +388,7 @@ routes directly.
 - Breaking changes only under `api/v2/…`; additive changes within v1; MCP tool names stable, new
   parameters optional.
 - Contract tests (M3) run the same scenarios through REST + MCP, both levels, including the
-  viewer-context rule (shared conversations get nothing).
+  whole memory in shared conversations (D50; until 8.2 they got nothing).
 
 ### Admin console (WORK_PLAN 6.9)
 `GET /admin` serves a static page (public: it holds no data) over the admin API; the operator types the admin key, kept

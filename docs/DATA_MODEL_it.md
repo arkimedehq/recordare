@@ -51,14 +51,13 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 | `audience_unverified` | text[] | Nomi visualizzati dei partecipanti presenti senza identità verificata (mai usati per divulgare) |
 | `confidence_of` | uuid null (id di persona) | La confidenza di una terza parte ("Marco mi ha detto…"): al massimo owner + quella persona, salvo concessione (fase 3) |
 
-**Regola di lettura, applicata nel codice in ogni percorso di lettura dalla v1** (`API.md` §1 contesto del visualizzatore): le righe sono
-restituite solo se l'insieme dei visualizzatori `V` ⊆ `audience` e il livello di ogni visualizzatore ≥ `disclosure`. Nella fase 1
-non ci sono ancora livelli, quindi di fatto: **le righe sono restituite solo quando i visualizzatori sono esattamente
-l'owner**; qualsiasi altro insieme di visualizzatori non ottiene nulla (le conversazioni condivise non vedono il diario). Le righe derivate prendono
-`audience = ∩ sources`, `disclosure = la fonte più restrittiva`; una riga derivata senza fonti fallisce
-in modo chiuso. Righe mancanti e vietate restituiscono lo stesso "not found". Le rotte del diario (`API.md` §4) sono
-owner-direct: chi legge è l'owner nell'interfaccia dell'host, quindi restituiscono le righe dell'owner senza un insieme di
-visualizzatori.
+**Regola di lettura: per ora nessuna (D50, WORK_PLAN 8.2, 2026-10-09).** Ogni risposta usa tutta la memoria, in ogni
+conversazione; `disclosure`, `audience` e `audience_unverified` **continuano a essere scritte** (dati registrati per il
+futuro lavoro su privacy e riservatezza, WORK_PLAN 8.12) ma **nessun percorso di lettura filtra su di esse**.
+L'isolamento tra memorie resta (ogni lettura è limitata a un solo `owner_id`). *Superata (regola della fase 1)*: le
+righe erano restituite solo se l'insieme di chi legge `V` ⊆ `audience` e il livello di ognuno ≥ `disclosure` — senza
+livelli, solo quando chi leggeva era esattamente l'owner (le conversazioni condivise non vedevano il diario); le righe
+derivate prendevano `audience = ∩ sources`, `disclosure = la fonte più restrittiva` (è ancora così che vengono scritte).
 
 **Tempo.** Le date con precisione grossolana sono memorizzate come **inizio del periodo nel fuso orario dell'owner**
 più `date_precision` (day → mezzanotte locale, month → primo giorno, year → 1 gennaio);
@@ -165,7 +164,7 @@ prime quattro; conservazione di 24 h.
 
 ### conversation_participants
 `conversation_id, person_id null, role enum (owner|assistant|other), display_name, ref text,
-joined_at` — fonte dell'`audience` di ogni riga e dell'insieme dei visualizzatori per le letture in questa conversazione.
+joined_at` — fonte dell'`audience` di ogni riga (registrata; dal D50 nessuna lettura filtra su di essa).
 
 ### messages
 | Colonna | Tipo | Note |

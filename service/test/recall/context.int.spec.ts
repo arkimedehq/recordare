@@ -7,7 +7,7 @@ describe('pre-turn memory context (WORK_PLAN 5.7)', () => {
   let s: Awaited<ReturnType<typeof setup>>;
   afterEach(async () => { await s?.app.close(); s?.fake.server.close(); });
 
-  it('only memories relevant to the message, upcoming plans only, fenced, owner-only conversations', async () => {
+  it('only memories relevant to the message, upcoming plans only, fenced, in every conversation', async () => {
     s = await setup({});
     const res = (await s.context('chat-1')).body;
     expect(res.items).toBe(3);
@@ -25,9 +25,9 @@ describe('pre-turn memory context (WORK_PLAN 5.7)', () => {
       `SELECT r.tool, r.items, c.external_id FROM recall_log r JOIN conversations c ON c.id = r.conversation_id`);
     expect(log).toEqual({ tool: 'memory_context', items: 3, external_id: 'chat-1' });
 
-    // A conversation others take part in, or an unknown one: nothing (viewer rule).
-    expect((await s.context('group')).body).toEqual({ block: null, items: 0 });
-    expect((await s.context('never-seen')).body).toEqual({ block: null, items: 0 });
+    // A conversation others take part in, or an unknown one: the same memories (D50: no viewer filter).
+    expect((await s.context('group')).body).toEqual(res);
+    expect((await s.context('never-seen')).body).toEqual(res);
   });
 
   it('serves nothing, and logs nothing, when no memory is relevant', async () => {

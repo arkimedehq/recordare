@@ -28,14 +28,14 @@ restituiscono semplici array); ogni POST non idempotente accetta un header `Idem
 
 | Profilo | Per chi | Contenuto |
 |---|---|---|
-| **v1 — privato / di ricerca** (`home`) (costruito ora) | Un'installazione gestita dai suoi proprietari e dai loro client (Arkimede, Claude Code, il simulatore di ricerca) | Proprietari e identità creati dall'**API admin**; chiavi API dei client; **personal access token** per i client solo MCP (creati via API admin); credenziali con hash e scope semplici; isolamento per proprietario; **contesto del visualizzatore risolto da Recordare** (la disclosure fa parte del twin, non è un'aggiunta di sicurezza); provenienza `author_role`; oblio che resta |
+| **v1 — privato / di ricerca** (`home`) (costruito ora) | Un'installazione gestita dai suoi proprietari e dai loro client (Arkimede, Claude Code, il simulatore di ricerca) | Proprietari e identità creati dall'**API admin**; chiavi API dei client; **personal access token** per i client solo MCP (creati via API admin); credenziali con hash e scope semplici; isolamento per proprietario; conversazione risolta da Recordare (il filtro su chi legge le risposte è caduto con D50: privacy e riservatezza verranno dopo); provenienza `author_role`; oblio che resta |
 | **Public** (rinviato — M7 / rilascio pubblico) | Recordare come servizio per persone che l'operatore non conosce | Login del proprietario (magic link via email, email verificata, pagine del proprietario), OAuth 2.1 per i connettori MCP, link code guidati dal proprietario + UI di revoca, `read_audit`, tabella di idempotenza persistente, policy di conservazione dei backup e avviso sulla conservazione presso il provider, export limitato alle sessioni del proprietario; protezione a livello di rete (firewall / WAF / rate limit) davanti |
 
 Gli elementi contrassegnati **(public profile)** qui sotto sono specificati perché il design resti coerente, ma non sono
 costruiti nella v1. Nulla nel profilo public modifica le righe di memoria, quindi abilitarlo in seguito non richiede alcuna migrazione
 dei dati.
 
-## 1. Identità, autenticazione, contesto del visualizzatore (task 1.1, 1.5 → D24)
+## 1. Identità, autenticazione, contesto di conversazione (task 1.1, 1.5 → D24)
 
 ### Modello
 - **Person**: un essere umano noto all'installazione. **Owner**: una persona con una memoria (una per
@@ -95,22 +95,31 @@ client non può mai emettere token per un altro client. I replay di `Idempotency
 `(credential, owner, method + path)`; la v1 li tiene in Redis per 24 h (tabella persistente nel
 public profile).
 
-### Contesto del visualizzatore (chi vedrà il risultato) — ogni lettura
-L'insieme dei visualizzatori è **risolto da Recordare, mai dichiarato dal client o dall'LLM**:
-- **Chiavi API dei client e sessioni MCP aperte con esse**: l'unica fonte accettata è
-  `X-Recordare-Conversation: <externalConversationId>` (le chiamate MCP possono portarlo invece come
-  `_meta.recordare.conversation`), risolto rispetto ai partecipanti che Recordare ha ingerito per quella conversazione. `X-Recordare-Viewers` e `_meta.recordare.viewers` possono solo
-  **aggiungere** visualizzatori (restringendo ciò che viene restituito), mai sostituire l'insieme risolto. Una lettura **senza
-  una conversazione risolvibile non restituisce nulla**.
-- **Token personali e sessioni dell'owner** (uso diretto dell'owner, ad es. Claude Code): nessun header → visualizzatori =
-  l'owner; un header di conversazione, se inviato, si applica come sopra — salvo che una conversazione non ancora salvata
-  (un client che legge prima di inviarla) conta come della persona (visualizzatori = l'owner).
-- (Public profile) l'insieme dei visualizzatori risolto e la sua fonte sono scritti in `read_audit`.
+### Contesto di conversazione — nessun filtro su chi legge (D50, WORK_PLAN 8.2)
+**Comportamento attuale (2026-10-09)**: ogni risposta — richiamo via MCP, contesto di memoria — usa **tutta la
+memoria**, in ogni conversazione: quella in cui c'è solo l'owner, una conversazione condivisa o di gruppo, una che
+Recordare non ha ancora salvato, o nessuna conversazione. Chi può sapere cosa (privacy, riservatezza) verrà dopo
+(WORK_PLAN 8.12); le colonne `audience` / `disclosure` continuano a essere scritte, così quel lavoro partirà da dati
+registrati. **L'isolamento tra memorie resta**: una richiesta apre solo la memoria indicata dalla sua credenziale e da
+`X-Recordare-User`.
 
-Regola (`DATA_MODEL.md` → regola di lettura): nella fase 1 i ricordi — e i dati grezzi derivati dalle chat
-(citazioni, estratti `fromChats`, id dei messaggi) — sono restituiti solo quando i visualizzatori sono esattamente
-l'owner; altrimenti la risposta è vuota con una nota neutra (`"nothing to show here"`) che non
-rivela se esistano ricordi. Elementi mancanti e vietati appaiono uguali.
+La conversazione è ancora **risolta da Recordare, mai dichiarata dal client o dall'LLM**, da
+`X-Recordare-Conversation: <externalConversationId>` (le chiamate MCP possono portarla invece come
+`_meta.recordare.conversation`), rispetto alle conversazioni che questo client ha inviato per l'owner. Serve per:
+- **le scritture MCP** (`log_episode`, `remember`, `correct_episode`, `forget_episode`): richiedono un contesto
+  risolvibile — una conversazione inviata (i suoi messaggi recenti sono la prova della scrittura), oppure un token
+  personale (uso diretto dell'owner; senza una conversazione salvata contano i messaggi recenti dell'owner da questo
+  client). Una chiave client senza conversazione riceve `"cannot write here"`;
+- escludere il turno corrente dagli estratti di chat (`fromChats`), e la riga di `recall_log`.
+
+`X-Recordare-Viewers` e `_meta.recordare.viewers` **non esistono più** (potevano solo restringere ciò che il filtro su
+chi legge restituiva): Recordare li ignora. Sparisce anche l'avviso `"nothing to show here"`.
+
+*Superata (regola della fase 1, D24 / D33 → D50)*: i ricordi — e i dati grezzi derivati dalle chat — venivano
+restituiti solo quando chi leggeva era esattamente l'owner (le chiavi client dovevano indicare una conversazione
+risolvibile con il solo owner tra i partecipanti; altri lettori dichiarati potevano solo restringere); altrimenti una
+risposta vuota con `"nothing to show here"`. Resta qui come punto di partenza del lavoro sulla privacy
+(`RESEARCH_NOTES_it.md` H2).
 
 ### Collegare la stessa persona tra client
 **v1**: l'admin collega le identità (`POST api/v1/admin/identities {personId, kind, clientId |
@@ -199,8 +208,8 @@ argomento (D29); supersessione solo in avanti per `sentAt`.
 Trasporto: **MCP streamable HTTP** su `/mcp`. **Una sessione MCP per owner**: l'owner è fissato
 a `initialize` (owner del token, oppure `X-Recordare-User` per le chiavi client); ogni richiesta riconvalida
 `X-Recordare-User` rispetto all'owner della sessione — una discrepanza restituisce 403 e termina la sessione
-(gli host che riutilizzano una sessione per più utenti non possono incrociare le memorie). Il contesto del visualizzatore segue il §1
-(header di conversazione; `_meta` può solo aggiungere visualizzatori). Gli schemi degli strumenti usano il sottoinsieme neutrale rispetto al provider
+(gli host che riutilizzano una sessione per più utenti non possono incrociare le memorie). La conversazione segue il §1
+(header di conversazione o `_meta.recordare.conversation`; le risposte usano tutta la memoria, D50). Gli schemi degli strumenti usano il sottoinsieme neutrale rispetto al provider
 (D27). Gli strumenti sono sempre elencati (nessun indizio sull'esistenza di un diario). Come costruito: una
 sessione si apre solo con una richiesta `initialize` (`404` per un id di sessione sconosciuto); la credenziale admin
 riceve `403`; una richiesta da una credenziale diversa da quella che ha aperto la sessione è rifiutata come una
@@ -268,7 +277,7 @@ type Episode = {
   source: { conversation: string; messageIds: string[]; at: string };   // conversation = the client's own id
 };
 ```
-In una conversazione a cui partecipano altri, ogni lista è vuota e `notes` dice `"nothing to show here"`.
+Lo stesso in ogni conversazione, anche in quelle a cui partecipano altri (D50: nessun filtro su chi legge).
 Ogni elemento riporta `authorRole` (`owner | assistant | other | tool`) così che gli host possano racchiudere i contenuti
 non dell'owner come dati, non come istruzioni; tali elementi riportano anche `claimedBy` (i nomi di chi ha scritto l'evidenza), ogni
 risultato nomina il proprio `owner` (gli elementi parlano dell'owner in terza persona: è l'utente a chiedere), gli estratti di chat riportano
@@ -299,8 +308,7 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   `knowledge`. Restituisce `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferenze, abitudini, valori, conoscenze, più i
   fatti di stato rilevanti validi a `as_of` (data ISO, default oggi) con la loro cronologia; integra `search_episodes`
-  (cosa è successo / quando). Restituisce `{owner, notes, facts, notes_info}` (`notes_info`: avvisi, ad es.
-  `"nothing to show here"` in una conversazione a cui partecipano altri). In una memoria di entità (D48) i fatti sulle persone
+  (cosa è successo / quando). Restituisce `{owner, notes, facts, notes_info}` (`notes_info`: avvisi sul risultato). In una memoria di entità (D48) i fatti sulle persone
   riportano `about` (il nome della persona); quelli senza `about` sono dell'entità stessa.
 
 ### `resolve_period` (D12, deterministico)
@@ -318,7 +326,7 @@ della persona. `query` viene tagliata a 8 000 caratteri. Il blocco contiene i
 ricordi pertinenti al messaggio a cui si sta per rispondere (fatti e note attuali, piani aperti imminenti, fino a 3
 episodi, ognuno sopra una soglia di somiglianza; al massimo circa 300 token) come un unico blocco recintato
 `<memory-context>` marcato "dati, non istruzioni", oppure `block: null` quando non c'è niente di pertinente. Nessuna
-chiamata LLM. Stessa regola del lettore di ogni lettura (niente in una conversazione a cui partecipano altri); un blocco
+chiamata LLM. Tutta la memoria in ogni conversazione, come ogni lettura (D50); un blocco
 servito è registrato in `recall_log` (strumento `memory_context`; la guardia anti-eco tratta allora la risposta come possibile eco). Sempre
 disponibile: se usarlo, e per quale agente, è scelta del client (l'host lo aggiunge in fondo al suo prompt di sistema e
 non lo salva mai come messaggio).
@@ -344,13 +352,12 @@ oblio di un periodo (5.5), impostazioni, uso, export, il feed delle modifiche de
 
 Con ambito limitato all'owner, e chi legge è l'owner stesso nell'interfaccia dell'host (owner-direct): una chiave
 client indica la persona con `X-Recordare-User` (scope `read` per leggere, `write` per modificare), un token personale è
-la persona; nessuna intestazione di conversazione, nessuna risoluzione del lettore (la regola del lettore vale per le
-risposte dentro le conversazioni). In una memoria di entità chiunque usi l'account la vede tutta (D48).
+la persona; nessuna intestazione di conversazione, nessuna risoluzione della conversazione. In una memoria di entità chiunque usi l'account la vede tutta (D48).
 
 | Metodo + percorso | Scope | Scopo |
 |---|---|---|
 | `GET api/v1/episodes?from&to&kind&planStatus&q&cursor&limit` | read | Timeline |
-| `GET api/v1/episodes/{id}` | read | Dettaglio: evidenza (citazioni filtrate da `raw_log_scope`; owner-direct, quindi senza regola del visualizzatore), cronologia delle correzioni, piano / evento collegato |
+| `GET api/v1/episodes/{id}` | read | Dettaglio: evidenza (citazioni filtrate da `raw_log_scope`), cronologia delle correzioni, piano / evento collegato |
 | `POST api/v1/episodes` | write | Inserimento manuale |
 | `POST api/v1/episodes/{id}/corrections` | write | Correzione (nuova riga, `corrects`) |
 | `DELETE api/v1/episodes/{id}` | write | Dimenticare un episodio |
@@ -390,7 +397,7 @@ direttamente le stesse rotte.
 - Modifiche incompatibili solo sotto `api/v2/…`; modifiche additive all'interno della v1; nomi degli strumenti MCP stabili, nuovi
   parametri facoltativi.
 - I contract test (M3) eseguono gli stessi scenari attraverso REST + MCP, a entrambi i livelli, inclusa la
-  regola del contesto del visualizzatore (le conversazioni condivise non ottengono nulla).
+  memoria intera nelle conversazioni condivise (D50; fino all'8.2 non ottenevano nulla).
 
 ### Console admin (WORK_PLAN 6.9)
 `GET /admin` serve una pagina statica (pubblica: non contiene dati) sopra la API admin; l'operatore digita la chiave

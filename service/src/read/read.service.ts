@@ -5,7 +5,7 @@
  * Read / write API for host UIs (API.md §4, WORK_PLAN 4.7) — the diary a platform shows the person: the timeline of
  * episodes, an episode's detail, the day / month diary, facts with their history, notes and plans; plus the person's
  * own edits (correct or forget an episode, pin or delete a note, confirm or reject what is pending). The reader is the
- * person themself in the platform's UI (owner-direct), never a conversation: no viewer resolution here. Quotes of
+ * person themself in the platform's UI (owner-direct), never a conversation: no conversation resolution here. Quotes of
  * messages are limited to the client's own conversations unless its raw-log scope is `all`.
  */
 import { Injectable, NotFoundException } from '@nestjs/common';

@@ -62,7 +62,7 @@ DeepSeek `deepseek-flash`, con ragionamento disattivato, ha eguagliato `deepseek
    asks, do not actively mention these memories". → fatti fissati (pinned) dell'integrazione *full*.
    *Miglioramento*: `only_topics` diventa il **filtro per livello di disclosure**, applicato prima del ranking.
    Realizzato: il contesto di memoria (`POST api/v1/context`, nessuna chiamata LLM) — soglie di pertinenza, limiti per
-   tipo, un budget di caratteri, una riga "non citarlo altrimenti", letture secondo la regola sul lettore; nessuna
+   tipo, un budget di caratteri, una riga "non citarlo altrimenti", tutta la memoria in ogni conversazione (D50: per ora niente regola sul lettore); nessuna
    scheda fissa del profilo, per scelta; il filtro per livello di disclosure attende la fase 3.
 8. *[open]* **Re-pick LLM opzionale** (`prompts/pick_related_profiles.py`): lista numerata compatta →
    `{reason, ids}`, max 10, "don't select duplicates". Solo opt-in (+ latenza, + costo).

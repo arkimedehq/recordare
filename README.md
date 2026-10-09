@@ -68,10 +68,9 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
   tool (`author_role`). It also records its origin (`owner_lived`, `owner_told`, `assistant_stated`) and cites
   evidence message ids. Another person's claim ("Giorgio says Sofia is moving to London") is stored as that person's
   claim, never as the owner's fact.
-- **Viewer context on every read.** Recordare resolves who will see a result from the conversation's participants;
-  neither the client nor the LLM can assert it. In phase 1, memories are returned only when the viewer is the owner.
-  Missing and forbidden items look the same. Each memory already stores its audience and a disclosure label, so
-  graded disclosure (phase 3) needs no migration.
+- **The whole memory in every conversation, for now** (D50). Answers use all of the memory, also in group chats and
+  conversations other people take part in: privacy and disclosure come later. Each memory already stores its audience
+  and a disclosure label, so that work needs no migration. One memory never sees another's data.
 - **The client holds the switch** (D50). Recordare has no consent flag: every memory stores what its client sends,
   and the client platform decides whether to send (a per-user memory switch). Informing the people around the agent —
   and any legal basis, e.g. under the GDPR — is the duty of whoever deploys it.

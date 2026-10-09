@@ -29,7 +29,7 @@ await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
   { externalId: 'm1', role: 'user', content: 'Domani vado a Bologna', sentAt: new Date().toISOString() },
 ] });
 
-// Richiamo: una sessione MCP per utente E conversazione (il contesto di chi vede), entrambi fissati nel codice.
+// Richiamo: una sessione MCP per utente E conversazione (prove delle scritture, il turno corrente), entrambi fissati nel codice.
 const tools = await rc.mcp.listTools('user-42', 'chat-1'); // gli strumenti dell'agente nascono da questi schemi
 const res = await rc.mcp.callTool('user-42', 'chat-1', 'search_episodes', { query: 'Bologna' });
 

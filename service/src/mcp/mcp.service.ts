@@ -16,7 +16,7 @@ import { randomUUID } from 'node:crypto';
 import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { OwnerResolver } from '../auth/owner-resolver.service';
 import { type Principal } from '../auth/principal';
-import { ViewerContextService } from '../auth/viewer-context.service';
+import { ConversationResolver } from '../auth/conversation-resolver.service';
 import { DataSource } from 'typeorm';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { EpisodeSearchService } from '../recall/episode-search.service';
@@ -44,7 +44,7 @@ export class McpService implements OnModuleDestroy {
 
   constructor(
     private readonly owners: OwnerResolver,
-    private readonly viewers: ViewerContextService,
+    private readonly conversations: ConversationResolver,
     private readonly episodes: EpisodeSearchService,
     private readonly memory: MemorySearchService,
     private readonly writes: MemoryWriteService,
@@ -73,7 +73,7 @@ export class McpService implements OnModuleDestroy {
     const server = new McpServer({ name: 'recordare', version: '0.1.0' });
     const [owner] = await this.db.query(`SELECT timezone, locale FROM owners WHERE person_id = $1`, [ownerId]);
     registerTools(server, {
-      principal, ownerId, viewers: this.viewers, episodes: this.episodes, memory: this.memory, writes: this.writes,
+      principal, ownerId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,
       clock: this.clock, owner: { timezone: owner.timezone, locale: owner.locale },
       allowClockOverride: this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }),
     });
