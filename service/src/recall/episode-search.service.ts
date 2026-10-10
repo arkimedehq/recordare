@@ -78,7 +78,8 @@ export interface EpisodeSearchResult {
   /** Open questions about people involved ("Marco chi — il collega o il cugino?"), to ask if natural. */
   clarifications?: string[];
   outsidePeriod: EpisodeView[];
-  fromChats: Array<Omit<RawHit, 'score'>>;
+  /** Chat excerpts; `correctedBy` = the episode that corrected a memory drawn from that message (its words are outdated). */
+  fromChats: Array<Omit<RawHit, 'score'> & { correctedBy?: string }>;
   notes: string[];
 }
 
@@ -94,6 +95,8 @@ const CANDIDATES = 60;
 const MIN_VECTOR_SIMILARITY = 0.35;
 const FALLBACK_BELOW = 3;
 const RAW_HITS = 3;
+/** Relevant episodes outside the asked period that come along with a period search. */
+const OUTSIDE_HITS = 3;
 /** Extra chat excerpts written by the people a question names (by name or relation). */
 const PEOPLE_HITS = 3;
 /** Periods up to this many days get the day diary; longer ones the month summaries. */
@@ -184,8 +187,14 @@ export class EpisodeSearchService {
       const rank = (r: Row) => (r.subject_person_id === speaker.id ? 0 : theirs.has(r.id) ? 1 : 2);
       chosen = chosen.map((r, i) => ({ r, i })).sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i).map((x) => x.r);
     }
-    const outside = chosen.length === 0 && hasPeriod && args.query
-      ? rows.filter((r) => !inRange(r) && relevant(r)).sort((a, b) => score(b) - score(a)).slice(0, 5)
+    // Relevant items outside the period come along, marked: a period names when something happens, while what was done
+    // about it may lie before it ("do I have a table booked for Thursday?" — booked on Monday; blind9, 8.11). They are
+    // ranked by relevance alone: importance and recency would let any big recent event push out the one the question
+    // names (a dinner asked on the wrong date lost to more important dinners; blind9, 8.11).
+    const outside = hasPeriod && args.query && (mode === 'search' || chosen.length === 0)
+      ? rows.filter((r) => !inRange(r) && relevant(r))
+        .sort((a, b) => (relevance.get(b.id) ?? 0) - (relevance.get(a.id) ?? 0))
+        .slice(0, chosen.length ? OUTSIDE_HITS : 5)
       : [];
 
     const views = await this.views([...chosen, ...outside], tz, locale, now);
@@ -237,6 +246,17 @@ export class EpisodeSearchService {
         to: to ?? undefined, limit: PEOPLE_HITS, conversationId: args.conversationId, authors: people }) : [];
       const seen = new Set(hits.map((h) => h.messageId));
       result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId))].map(({ score: _s, ...h }) => h);
+      // An excerpt whose episode was later corrected still says the old version (blind10, 8.11): it carries the correction.
+      const corrected = await correctionsOf(this.db, memoryId, result.fromChats.map((h) => h.messageId));
+      for (const h of result.fromChats) {
+        const by = corrected.get(h.messageId);
+        if (by) h.correctedBy = by;
+      }
+      if (corrected.size) {
+        result.notes.push(it
+          ? 'gli estratti con correctedBy dicono una versione poi corretta: vale la correzione'
+          : 'excerpts with correctedBy state a version that was later corrected: the correction holds');
+      }
       if (result.fromChats.some((h) => h.authorRole !== 'holder')) {
         result.notes.push(it
           ? `gli estratti scritti da altri (author) sono parole loro: ciò che dicono di me (${name}) non è confermato`
@@ -359,4 +379,17 @@ function isClaim(v: EpisodeView): boolean {
 function firstOfNextMonth(yyyyMm: string): string {
   const [y, m] = yyyyMm.split('-').map(Number) as [number, number];
   return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+}
+
+/** For chat messages behind an invalidated episode, the content of the episode that corrected it (the latest current one). */
+async function correctionsOf(db: DataSource, memoryId: string, messageIds: string[]): Promise<Map<string, string>> {
+  if (!messageIds.length) return new Map();
+  const rows: Array<{ message_id: string; content: string }> = await db.query(
+    `SELECT DISTINCT ON (ev.message_id) ev.message_id, c.content
+     FROM episode_evidence ev
+     JOIN episodes old ON old.id = ev.episode_id AND old.memory_id = $1 AND old.invalidated_at IS NOT NULL
+     JOIN episodes c ON c.corrects = old.id AND c.memory_id = $1 AND c.deleted_at IS NULL AND c.invalidated_at IS NULL
+     WHERE ev.message_id = ANY($2)
+     ORDER BY ev.message_id, c.recorded_at DESC`, [memoryId, messageIds]);
+  return new Map(rows.map((r) => [r.message_id, r.content]));
 }

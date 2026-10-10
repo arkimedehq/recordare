@@ -1,0 +1,248 @@
+{
+ "_note": "Dev set for the 8.11 gaps (NOT blind, written by the engine developer): a plan's step done before its date, the agent's own slip, options compared, a raw message behind a correction.",
+ "users": {
+  "marco": "Marco, Bologna"
+ },
+ "genders": {
+  "marco": "masculine"
+ },
+ "sessions": [
+  {
+   "id": "g01",
+   "user": "marco",
+   "ts": "2026-11-02T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giovedì 5 ceniamo da Gigina con Luca e Sara, prenoto io. Ricordati anche che martedì 17 novembre alle 10 ho la visita dal cardiologo, il dottor Bertoni."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: cena da Gigina giovedì 5 novembre con Luca e Sara, e la visita dal dottor Bertoni martedì 17 novembre alle 10."
+    }
+   ]
+  },
+  {
+   "id": "g02",
+   "user": "marco",
+   "ts": "2026-11-02T21:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prenotami un tavolo da Gigina per giovedì 5 alle 20:30, quattro persone, a nome mio."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: tavolo per quattro da Gigina giovedì 5 novembre alle 20:30, a nome Rossi. Mi hanno confermato via SMS."
+    }
+   ]
+  },
+  {
+   "id": "g03",
+   "user": "marco",
+   "ts": "2026-11-03T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi confronti le offerte delle palestre vicino a casa? Voglio anche i corsi."
+    },
+    {
+     "role": "assistant",
+     "content": "Ho confrontato tre offerte: FitOne 39 euro al mese con i corsi inclusi, Virgin 55 euro al mese con piscina, Palestra Moline 32 euro al mese ma senza corsi. Con i corsi la più conveniente è FitOne."
+    },
+    {
+     "role": "user",
+     "content": "Va bene, prendo FitOne dal 1° dicembre."
+    }
+   ]
+  },
+  {
+   "id": "g04",
+   "user": "marco",
+   "ts": "2026-11-04T08:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Quando ho la visita dal cardiologo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Venerdì 13 novembre alle 10, dal dottor Bertoni."
+    },
+    {
+     "role": "user",
+     "content": "No, sbagli: è martedì 17 novembre alle 10. Il 13 è il compleanno di Sara."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, scusa: martedì 17 novembre alle 10 dal dottor Bertoni."
+    }
+   ]
+  },
+  {
+   "id": "g05",
+   "user": "marco",
+   "ts": "2026-11-05T12:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina ho cambiato le gomme della Golf: quattro Michelin invernali, 380 euro montaggio compreso, dal gommista Vecchi."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, gomme invernali montate sulla Golf."
+    }
+   ]
+  },
+  {
+   "id": "g06",
+   "user": "marco",
+   "ts": "2026-11-06T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera da Gigina è stato bellissimo, tortellini in brodo e Luca ci ha raccontato del suo nuovo lavoro a Modena."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella serata!"
+    }
+   ]
+  },
+  {
+   "id": "g07",
+   "user": "marco",
+   "ts": "2026-11-07T10:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Correzione sulle gomme della Golf: erano Pirelli, non Michelin, e ho pagato 360 euro, non 380."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: Pirelli invernali, 360 euro."
+    }
+   ]
+  },
+  {
+   "id": "g08",
+   "user": "marco",
+   "ts": "2026-11-14T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prenotami all'Osteria dei Poeti per venerdì 20 novembre alle 20, due persone: io e Giulia."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: tavolo per due all'Osteria dei Poeti venerdì 20 novembre alle 20, a nome Marco."
+    }
+   ]
+  },
+  {
+   "id": "g09",
+   "user": "marco",
+   "ts": "2026-11-19T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Disdici l'Osteria dei Poeti di domani sera, Giulia ha l'influenza."
+    },
+    {
+     "role": "assistant",
+     "content": "Disdetta fatta: niente cena all'Osteria dei Poeti venerdì 20. Auguri di pronta guarigione a Giulia."
+    }
+   ]
+  },
+  {
+   "id": "g10",
+   "user": "marco",
+   "ts": "2026-11-22T23:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera c'è stata la cena di fidanzamento di mia sorella Chiara con Paolo al ristorante Il Cerchio. Ho fatto il discorso e mi sono commosso, mamma ha pianto. Serata indimenticabile."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello, Marco! Congratulazioni a Chiara e Paolo, e complimenti per il discorso."
+    }
+   ]
+  },
+  {
+   "id": "g11",
+   "user": "marco",
+   "ts": "2026-11-25T22:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi hanno nominato responsabile del reparto acquisti! Stasera cena da Diana con tutto il team per festeggiare, il direttore ha offerto lo champagne."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti per la promozione! Una serata meritata."
+    }
+   ]
+  },
+  {
+   "id": "g12",
+   "user": "marco",
+   "ts": "2026-11-28T23:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cena a sorpresa per i 60 anni di papà al Battibecco: c'erano tutti i parenti, papà non se l'aspettava e si è commosso. Il regalo, la bici elettrica, gli è piaciuto tantissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sorpresa riuscita! Auguri a tuo papà per i 60 anni."
+    }
+   ]
+  },
+  {
+   "id": "g13",
+   "user": "marco",
+   "ts": "2026-11-29T23:50:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera cena per i vent'anni dalla maturità con i compagni del liceo all'Antica Osteria del Ponte: c'erano quasi tutti, anche il professor Masi. Abbiamo riso fino all'una."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella rimpatriata! Vent'anni sono tanti, bello ritrovarsi quasi tutti."
+    }
+   ]
+  },
+  {
+   "id": "g14",
+   "user": "marco",
+   "ts": "2026-11-30T22:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cena di beneficenza per il reparto di pediatria al Savoia: ho vinto all'asta un quadro di un pittore bolognese per 450 euro, tutto va all'ospedale."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima causa, e un bel quadro per casa. Complimenti!"
+    }
+   ]
+  },
+  {
+   "id": "g15",
+   "user": "marco",
+   "ts": "2026-12-01T23:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Non ci credo: stasera a cena al Pappagallo ho chiesto a Giulia di sposarmi e ha detto sì! Matrimonio a giugno."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulazioni, Marco! Che notizia meravigliosa, auguri a te e Giulia!"
+    }
+   ]
+  }
+ ]
+}

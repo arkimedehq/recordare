@@ -5,8 +5,9 @@
  * Extraction prompts. The system prompt is constant (provider prefix caching); everything variable goes in the user
  * message. Rules come from the prototype that passed the blind held-out check (spikes/memory-eval/systems/d_sys.py)
  * plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
- * - Personal memories (D50, WORK_PLAN 8.4): `extract.v13` — the agent's own memory in the first person (v13, 8.4b: others' claims about me dated and attributed).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v13+entity.v4` — the shared agent's memory in the first person, people by
+ * - Personal memories (D50, WORK_PLAN 8.4): `extract.v14` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
+ *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date).
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v14+entity.v4` — the shared agent's memory in the first person, people by
  *   name or "someone"; the personal prompt's sections where they hold for both.
  */
 export interface PromptMessage {
@@ -45,7 +46,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v13';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v14';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -160,7 +161,9 @@ questions stay in the chat log. What others say ABOUT ME (rumours, claims, gossi
 learned": the rules on others' claims below apply. In the content keep both dates: when I learned it and when the news \
 itself happens or happened ("l'8 ottobre ho saputo che sabato 10 ottobre c'è sciopero dei treni"); occurred_at is the \
 learning date.
-- Keep specifics: never generalise names, numbers, places or objects; every concrete detail survives.
+- Keep specifics: never generalise names, numbers, places or objects; every concrete detail survives. The options \
+compared or proposed (offers, quotes, alternatives, with their prices) stay next to the choice: "ho confrontato tre \
+preventivi: A 420 €, B 385 €, C 510 €; ho scelto B".
 - A change of state I lived (bought / sold something, moved, changed job) is BOTH an episode (kind "state_change") on \
 its date AND a fact.
 - origin: "lived" for my own experience and actions; "told" for what I report or learned about others.
@@ -180,6 +183,9 @@ with bad news) is "confirm", with the event saying how it went.
 - The evidence of a patch is the message that speaks of THAT plan. A plan whose date passed without news stays open: \
 never close it with a message about something else.
 - For "reschedule", write new_content with the new date, so the plan never keeps its old date in the text.
+- A step of an OPEN PLAN carried out before its date (the table booked, the tickets bought, the room reserved) is an \
+"amend" whose new_content keeps the plan and adds what was done and when ("…: il 5 ottobre ho prenotato il tavolo a \
+nome Sartori, confermato via mail"), besides the episode of the step itself.
 - The news of a change ("the recital was moved to 15 January") is also a low-importance event episode on the message date.`;
 
 const P_FACTS = `
@@ -216,7 +222,11 @@ CORRECTIONS (check before adding anything)
 "corrects" set to that E-number — otherwise the wrong version stays in memory as true. If it corrects an OPEN PLAN's \
 date, emit a "reschedule" patch for that P-number instead. Facts and notes use verdict "corrects" with a target.
 - Example: E4 says "sono andato dall'ortopedico lunedì 2 novembre"; I now say it was Tuesday 3 → one episode \
-"…martedì 3 novembre…" with "corrects": "E4". Never silently overwrite, never leave two contradicting versions.`;
+"…martedì 3 novembre…" with "corrects": "E4". Never silently overwrite, never leave two contradicting versions.
+- My own slips: when the conversation shows that something I said was wrong (a date, a name, an amount I gave), emit an \
+"event" episode on that day in the first person with what I got wrong and the right version ("L'11 ottobre 2034 ho \
+sbagliato le date del corso di Verona: avevo detto 21 e 22 ottobre, invece sono sabato 14 e domenica 15 ottobre"), \
+naming who corrected me when it was someone else. Never "I corrected the assistant": the assistant is me.`;
 
 const P_SAFETY = `
 
@@ -306,7 +316,9 @@ it touches the life of the people I know or my place: an open plan, a person, so
 someone reacts to it (say what they decided). Unrelated news, trivia and answers to general questions stay in the chat \
 log. In the content keep both dates: when it was learned and when the news itself happens or happened; occurred_at is \
 the learning date.
-- Keep specifics: never generalise names, numbers, places or objects; every concrete detail survives.
+- Keep specifics: never generalise names, numbers, places or objects; every concrete detail survives. The options \
+compared or proposed (offers, quotes, alternatives, with their prices) stay next to the choice: "ho confrontato tre \
+preventivi: A 420 €, B 385 €, C 510 €; ho scelto B".
 - A change of state (someone bought / sold something, moved, changed job; my place changed provider) is BOTH an episode \
 (kind "state_change") on its date AND a fact.
 - origin: "lived" for the subject's own experience and actions (mine or the person's); "told" for what someone reports \
@@ -360,7 +372,7 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v13`, entity `extract.v13+entity.v4`). */
+/** The extraction input of both modes (personal `extract.v14`, entity `extract.v14+entity.v4`). */
 export function buildExtractionUser(ctx: PromptContext): string {
   const [name, ...others] = ctx.selfNames;
   return [

@@ -329,9 +329,12 @@ Restituisce (come costruito):
   digests: Array<{ level: "day" | "month"; from: string; to: string; text: string }>;  // list mode with a period (knob, below)
   episodes: Episode[];                                // in period / matching; lived, done, planned or learned (each with its subject)
   claims: Episode[];                                  // others' statements about the self or someone else (other, inferred) — kept apart
-  outsidePeriod: Episode[];                           // same shape; filled only when the period has no match (max 5)
+  outsidePeriod: Episode[];                           // same shape; relevant items outside the period: up to 3 with a `search`
+                                                      // (what was done about the period may lie before it), 5 when the period has no match;
+                                                      // ranked by relevance alone (not importance or recency)
   fromChats: Array<{ conversationId: string; conversation: string; messageId: string; at: string;
-                     authorRole: "holder" | "other" | "tool"; author?: string; excerpt: string }>;
+                     authorRole: "holder" | "other" | "tool"; author?: string; excerpt: string;
+                     correctedBy?: string }>;                // the episode that corrected a memory drawn from this message
   notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice, who is asking
   clarifications?: string[];                          // open questions about the people involved (8.4; entity: identified speaker)
 }

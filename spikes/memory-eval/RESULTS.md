@@ -443,6 +443,64 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.11 gaps, step 2 — out-of-period items ranked by relevance (2026-10-10, DeepSeek direct, `fp812r_runs.sh`)
+
+The next fix of the section below (blind9 q40): the out-of-period items of a period `search` are ranked by relevance
+alone, no longer by the general score (relevance + importance + recency), where any big recent event pushed out the one
+the question names. Recall only; extraction unchanged (`extract.v14`).
+
+Dev case first: `dataset_dev_gaps` d07 (a cancelled booking at the Osteria dei Poeti asked on the wrong date, among
+eight bigger dinners, sessions g08–g15). With 5 distractor dinners the old ranking still let the booking in (5th of
+5, correct); with 8 it left it out (partial) — the mechanism of q40 reproduced. New ranking: d07 correct, the whole dev
+set 7/7. Control on the main set `dataset` (1 run, `fp812_dataset`, extract.v14 with the step-1 recall, before this
+change): **100 %** (fp84b 100, fp86 97.9, fp89 95.8): the out-of-period items do not hurt day questions.
+
+| Set | r1 / r2 / r3 | **Mean** | Step 1 | 8.11 (v0.2.0) | Bar |
+|---|---|---|---|---|---|
+| `dataset_dev_gaps` (dev, 7 q) | 100 | **100 %** | — | — | — |
+| `dataset_blind9` (personal, 42 q) | 89.3 / 91.7 / 89.3 | **90.1 %** | 88.8 % | 81.6 % | 90.9 % (blind7) |
+| `dataset_blind10` (entity, 35 q) | 94.3 / 91.4 / 94.3 | **93.3 %** | 91.4 % | 89.8 % | 91.4 % (blind8) |
+
+One prompt version per kind in every run. blind9 q40 fixed (0/3 → 3/3). The other changes against step 1 are not on
+period searches (no `PERIODO CERCATO` in their context), so they are run-to-run variance of extraction and answer:
+blind9 q05 (the second group of Michele's chats missing, pww → www), q35 (1 wrong of 3: "no actual use of the
+contract"); blind10 q09 (the Brandts' check-out payment not found in 1 run), q15 (the total paid not summed, 2
+partial), q24 (the aperitivo cancelled for rain not found, 2 partial); better: blind10 q12, q13, q25, q27, q33. Still
+failing as before: blind9 q20 (0/3), blind10 q04 (0/3, who acts when staff ask the entity agent).
+
+### WORK_PLAN 8.11 gaps — fixes measured (2026-10-10, DeepSeek direct, `fp812_dev.sh`, `fp812_runs.sh`)
+
+Fixes of the gaps found on blind9 / blind10 (section below), checked first on two new dev sets written by the engine
+developer (`dataset_dev_gaps`, personal, 6 q; `dataset_dev_gaps_entity`, entity, 5 q; NOT blind), then on the blind sets:
+- `extract.v14` (both modes): my own slips in the first person ("ho sbagliato…: avevo detto X, invece è Y", never "I
+  corrected the assistant"); the options compared stay next to the choice; a step of an open plan done before its date
+  is an `amend` of the plan.
+- Recall: a period `search` brings up to 3 relevant episodes from outside the period (`outsidePeriod`, marked); a chat
+  excerpt behind an invalidated episode carries the correction (`fromChats[].correctedBy`).
+
+One instance on :8092, queue `fp812`; every run one prompt version per kind (`extract.v14`, `extract.v14+entity.v4`).
+
+| Set | r1 / r2 / r3 | **Mean** | 8.11 (v0.2.0) | Bar |
+|---|---|---|---|---|
+| `dataset_dev_gaps` (dev, 6 q) | 100 | **100 %** | — | — |
+| `dataset_dev_gaps_entity` (dev, 5 q) | 100 | **100 %** | — | — |
+| `dataset_blind9` (personal, 42 q) | 86.9 / 90.5 / 89.0 | **88.8 %** | 81.6 % | 90.9 % (blind7) |
+| `dataset_blind10` (entity, 35 q) | 88.6 / 94.3 / 91.4 | **91.4 %** | 89.8 % | 91.4 % (blind8) |
+
+Fixed (3/3 correct now): blind9 q03 (the table booked before Thursday, was 0/3), q13 (Priya's send-by date, was 0/3),
+q17, q06; blind10 q26 (the corrected chat excerpt, was 3 partial), q08. Better: blind9 q02 (the three quotes, 2/3),
+q08; blind10 q27 (the agent's slip, 2/3). Still failing:
+- blind9 q40 (0/3, premise trap "the dinner of 19 October"): no episode in the period; the 5 out-of-period items are
+  ranked by the general score, where importance and recency outweigh relevance, so the Osteria del Grillo episodes
+  (stored and relevant) lose to more important dinners. Ranking the out-of-period items by relevance alone is the next
+  fix — found on a blind set, so it needs a dev case before it is measured again.
+- blind9 q23 (the agent's slip on the course dates, 1/3 correct): the stored text is now the agent's own slip, but
+  the answer still hedges on who was wrong.
+- blind9 q20 (0/3): the answer says "Beatrice ha inviato" in the third person and misses the confirmation number.
+- blind10 q04 (0/3, was 1/3): the booking the agent made at Benedetta's request is stored as "Benedetta ha registrato
+  la prenotazione" in 5 of 6 runs, old and new — who acts when a staff member asks the agent to do it (entity mode).
+- blind10 q13 (Katrin reporting the allergy in a call, speaker change): variance, as before.
+
 ### WORK_PLAN 8.11 — fresh blind sets for the agent memory (2026-10-10, DeepSeek direct, 3 runs each, `fp811_runs.sh`)
 
 Two sets written blind by separate agents from `DATASET_FORMAT.md` only, re-read by a second agent (`GOLD_AUDIT.md` in
