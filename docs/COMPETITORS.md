@@ -199,7 +199,7 @@ state of WORK_PLAN M8 (steps 8.3–8.12), not built yet beyond 8.1–8.2.
 
 | System | Whose memory | Speaker identity / source monitoring | Kinds | Time model | Provenance / poisoning guards | Consolidation |
 |---|---|---|---|---|---|---|
-| **Recordare (today)** | One memory per person; entity memory for shared devices (D48, experimental) | `author_role`, origin `owner_lived / owner_told / assistant_stated`, others' claims kept apart, named-in-window guard for entity speakers | Ep (event / plan / state change), Fact-h (value chains), Pref (notes), Prosp (owner's plans with lifecycle); raw log forever; no Proc, no Docs (D49 proposal) | Bi-temporal; event time + **precision** + original expression; facts **as of** a date; `corrects` vs `supersedes` | Evidence ids validated in code; LLM never deletes; recall-echo guard; plan patches need evidence; tombstones | Idle window + nightly day / month digests (fingerprinted, zero calls when nothing new) |
+| **Recordare (today)** | One memory per person; entity memory for shared devices (D48, experimental) | `author_role`, origin `owner_lived / owner_told / assistant_stated`, others' claims kept apart, named-in-window guard for entity speakers | Ep (event / plan / state change), Fact-h (value chains), Pref (notes), Prosp (owner's plans with lifecycle); raw log forever; no Proc, no Docs (D49 proposal; built since 2026-10-10 as text sources, WORK_PLAN 8.9) | Bi-temporal; event time + **precision** + original expression; facts **as of** a date; `corrects` vs `supersedes` | Evidence ids validated in code; LLM never deletes; recall-echo guard; plan patches need evidence; tombstones | Idle window + nightly day / month digests (fingerprinted, zero calls when nothing new) |
 | **Recordare (D50)** | **The agent's**: one per client account, personal or entity mode | Planned: subject on every item, attribution **method + confidence**, `own` marker, "someone" + re-attribution | + D49 sources (Docs), later reflection, Proc notes, the agent's own intents, perception | Unchanged | Unchanged + reality monitoring kept in data while text is first person | + digests in the agent's voice |
 | Mem0 | User-centric with `user_id` / `agent_id` / `run_id` scopes | Actor / role metadata; no third-party role (our adapter had to prefix names) | Flat fact strings + entity links; Pref | Observation date in text; platform: temporal ranking + `reference_date` (May 2026) | ADD-only (nothing deleted); currency only at retrieval | None (retrieval-time ranking, decay bias) |
 | Zep / Graphiti | User graph per user + shared graphs | Entities resolved; episodes as provenance; no speaker-trust model | Facts as graph edges, entities, episodes, summaries | **Bi-temporal** edges (`valid_at / invalid_at` + record time) | Invalidation not deletion; LLM decides contradictions (all facts treated as states) | Incremental; communities / summaries |
@@ -272,7 +272,8 @@ read time.
   lifecycle.
 - **Recordare lacks**:
   - procedural memory (Letta, Hermes, LangMem and MemOS have skills or prompt optimisation);
-  - documents / knowledge: Supermemory, Cognee and MemOS ingest files; D49 is only a proposal;
+  - documents / knowledge: Supermemory, Cognee and MemOS ingest files; D49 was only a proposal (since 2026-10-10
+    built for text sources, WORK_PLAN 8.9: the client converts files);
   - the agent's own intents (OpenClaw's standing intents);
   - reflection (Honcho induction, Hindsight's "mental models", Letta sleep-time).
 - **Plan lifecycle**: we found none with an outcome-unknown state for the user's own past plans (H1, "partially novel,
@@ -411,7 +412,7 @@ Caveats on the benchmarks themselves:
   sets are small (31–87 questions).
 - **Entity / multi-speaker memory is the weak spot**: 82.1 % on blind8, where unidentified speakers get attributed to
   named people. D50 makes this mode central.
-- **Missing kinds of memory**: no documents (D49 not built), no procedural memory, no reflection, no agent intents, no
+- **Missing kinds of memory**: no documents (D49 not built; since 2026-10-10 text sources are, WORK_PLAN 8.9), no procedural memory, no reflection, no agent intents, no
   multimodal input. Supermemory, MemOS and Cognee ingest files; Letta and Hermes keep skills.
 - **Not production-hardened for strangers**: private profile, trusted admin, no OAuth. Honcho has workspaces and
   scopes; Mem0, Zep and Supermemory have hosted multi-tenant platforms.

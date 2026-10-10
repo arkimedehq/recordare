@@ -62,6 +62,43 @@ export const TOOLS = [
     }
   },
   {
+    "name": "learn_source",
+    "title": "Learn a text",
+    "description": "Learn a text as knowledge (a manual, a page, a note — as plain text; send it again with the same title to replace it). It stays searchable with search_knowledge; the learning becomes a memory of this conversation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "document",
+            "page",
+            "note",
+            "book",
+            "own_text"
+          ]
+        },
+        "uri": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "text"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
     "name": "log_episode",
     "title": "Note something that happened or is planned",
     "description": "Explicit capture (\"note that today I serviced the car\"). Resolve the date yourself (ISO).",
@@ -195,6 +232,29 @@ export const TOOLS = [
           "maximum": 50
         }
       },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "search_knowledge",
+    "title": "Search what you learned",
+    "description": "Search the sources you learned (manuals, documents, pages, notes you were given or wrote): passages of their text, each with its source (title, author, who gave it, when) and the episodes that refer to it. For what happened, use search_episodes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "What to look up"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      },
+      "required": [
+        "query"
+      ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     }
   },

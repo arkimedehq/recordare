@@ -51,6 +51,22 @@ Recordare che una conversazione è finita (sessione chiusa, /new), così l'estra
 schemi degli strumenti MCP che il servizio offre (nome, titolo, descrizione, JSON Schema), per gli host che devono
 dichiarare gli strumenti prima di collegarsi; la suite di conformità li tiene allineati al servizio.
 
+## Fonti apprese
+`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?})`
+fa imparare un testo all'agente (D49, WORK_PLAN 8.9: un manuale, una pagina, una nota — **solo testo**, è l'host a
+convertire i file). Qualsiasi dimensione: un testo più grande di `SOURCE_PART_BYTES` (4 MB, o l'argomento `partBytes`)
+viene inviato a parti tagliate ai confini dei paragrafi (`POST api/v1/ingest/sources` + `…/parts`); → `{sourceId,
+status, parts, passages, duplicate}`. Lo stesso `externalId` sostituisce la fonte; `providedBy` è `'me'` (default),
+`'someone'` oppure `{name}`; `conversation: {externalId}` la collega alla conversazione in cui è stata imparata (è
+quell'estrazione a raccontare l'apprendimento). `forgetSource(user, externalId)` la dimentica (una mai inviata conta
+come fatto); `sources(user)` elenca ciò che l'agente ha imparato (`Source[]`). L'agente la cerca con lo strumento MCP
+`search_knowledge`. Inviare solo ciò che l'agente deve imparare, mai i risultati di ricerca di un RAG.
+
+```ts
+await rc.learnSource('user-42', { externalId: 'boiler-manual', title: 'Manuale della caldaia', text: manualText,
+  kind: 'document', providedBy: { name: 'Paolo' }, conversation: { externalId: 'chat-1' } });
+```
+
 ## Il diario
 `episodes`, `episode`, `digests`, `facts`, `notes`, `plans` leggono ciò che Recordare ricorda, per la vista della persona
 nell'interfaccia della piattaforma; `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide` sono le modifiche
@@ -62,8 +78,8 @@ ingest. Tutto il resto è qui, uguale per ogni client.
 
 ## Conformità
 `service/test/conformance` esegue questa libreria contro il servizio vero nella CI di Recordare: un turno salvato una
-volta sola, le cancellazioni si propagano, nome, modo e genere seguono la piattaforma, il contenuto proprio è marcato, il
-richiamo via MCP porta l'utente e la conversazione. I controlli di tipo lì fanno fallire la build se questo contratto si
+volta sola, le cancellazioni si propagano, nome, modo e genere seguono la piattaforma, il contenuto proprio è marcato, una
+fonte viene imparata a parti, elencata e dimenticata, il richiamo via MCP porta l'utente e la conversazione. I controlli di tipo lì fanno fallire la build se questo contratto si
 allontana dagli schemi del servizio.
 
 ## Copia sincronizzata (Arkimede)

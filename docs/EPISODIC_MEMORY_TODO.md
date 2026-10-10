@@ -568,7 +568,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   the entity memory stays **experimental** — speakers who never identify and attribution between people are the weak
   spots.
 
-### D49 — Semantic memory: learned sources (proposal, 2026-10-08)
+### D49 — Semantic memory: learned sources (proposal, 2026-10-08; built 2026-10-10, WORK_PLAN 8.9)
 - Owner's request: many clients have no RAG of their own (a robot with its own agent, a small assistant), so Recordare
   should be a **complete** memory — what the person lived **and what they learned**. Recordare stays a personal memory:
   documents are not mixed into episodes, facts or notes.
@@ -590,7 +590,18 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Open: how sources arrive (REST upload of text the client extracted; an MCP tool `learn_source`; formats beyond text);
   size limits and cost per quality profile (D35); third-party texts are kept for the person's own use only (never
   disclosed to others, D33 limits); whether takeaways in the person's words are extracted by an LLM (a later option).
-  WORK_PLAN 5.9.
+  WORK_PLAN 5.9 (now 8.9).
+- **As built (8.9, 2026-10-10)** — owner's decisions: sources arrive as **text only** (the client converts files:
+  `POST api/v1/ingest/sources`, or the MCP tool `learn_source`); **no size limit** per source or per memory — only the
+  request body limit (`MAX_REQUEST_BYTES`, 16 MB), a bigger text comes in parts (`…/parts`; the client library splits at
+  paragraph boundaries); the source belongs to the agent's memory (D50), provided by me, someone or a contact by name.
+  The **learning episode** is written by the extraction when the source comes with a conversation (a `SOURCES LEARNED IN
+  THIS CONVERSATION` section in the user message, only when there is one; episodes cite `"sources": ["S1"]`), otherwise —
+  or when the extraction leaves it out — in code from a per-language table (`service/src/lang/learned.ts`, no LLM).
+  Recall: `search_knowledge`, `sources` on episodes, one passage in the memory context. Forgetting as above
+  (`episode_sources.forgotten_at`). Arkimede gets a "Fai imparare" button later (separate item); the connectors
+  (OpenClaw, Hermes…) do not expose the new tools yet (follow-up). Data: `DATA_MODEL.md` → Learned sources; contract:
+  `API.md` §2, §3.
 
 ### D50 — Agent memory: every memory belongs to the agent (owner's decision, 2026-10-09)
 Supersedes "one memory per person" (D24 identity, D48's person / entity split as two kinds of owner), the consent

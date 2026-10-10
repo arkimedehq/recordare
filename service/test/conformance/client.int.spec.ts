@@ -14,11 +14,14 @@ import { type z } from 'zod';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  type Episode as ClientEpisode, type IngestRequest as ClientIngest, type IngestResult as ClientIngestResult, MemoryNotEmptyError,
+  type Episode as ClientEpisode, type IngestRequest as ClientIngest, type IngestResult as ClientIngestResult, type LearnSource as ClientLearnSource,
+  type LearnSourceResult as ClientLearnSourceResult, MemoryNotEmptyError, type Source as ClientSource,
   PersonDirectory, RecordareClient, TOOLS,
 } from '../../../packages/client/src/index.js';
 import { type EpisodeItem } from '../../src/read/read.service';
 import { type IngestResult, type ingestSchema } from '../../src/rawlog/ingest.schemas';
+import { type LearnSourceResult, type learnSourceSchema } from '../../src/knowledge/sources.schemas';
+import { type SourceView } from '../../src/knowledge/sources.service';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 // ── Contract drift (compile time) ──────────────────────────────────────────────
@@ -27,6 +30,9 @@ type Extends<A, B> = [A] extends [B] ? true : false;
 export type ClientIngestFitsService = Assert<Extends<ClientIngest, z.input<typeof ingestSchema>>>;
 export type ServiceResultFitsClient = Assert<Extends<IngestResult, ClientIngestResult>>;
 export type ServiceEpisodeFitsClient = Assert<Extends<EpisodeItem, ClientEpisode>>;
+export type ClientSourceFitsService = Assert<Extends<ClientLearnSource & { final?: boolean }, z.input<typeof learnSourceSchema>>>;
+export type ServiceSourceResultFitsClient = Assert<Extends<LearnSourceResult, ClientLearnSourceResult>>;
+export type ServiceSourceFitsClient = Assert<Extends<SourceView, ClientSource>>;
 
 describe('client conformance (packages/client against the service)', () => {
   let app: INestApplication;
@@ -116,6 +122,17 @@ describe('client conformance (packages/client against the service)', () => {
     expect(await rc.episodes('user-1')).toEqual({ items: [], nextCursor: null });
     await rc.delete('user-1', 'notes', notes[0]!.id);
     expect(await rc.notes('user-1')).toEqual([]);
+  });
+
+  it('learns a source in parts, lists it and forgets it (WORK_PLAN 8.9)', async () => {
+    const text = Array.from({ length: 6 }, (_, i) => `Paragrafo ${i + 1} del manuale della caldaia.`).join('\n\n');
+    const r = await rc.learnSource('user-1', { externalId: 'manual', title: 'Manuale della caldaia', text }, 100);
+    expect(r).toMatchObject({ status: expect.stringMatching(/indexing|ready/), duplicate: false });
+    expect(r.parts).toBeGreaterThan(1);
+    expect((await rc.sources('user-1')).map((s) => s.title)).toEqual(['Manuale della caldaia']);
+    await rc.forgetSource('user-1', 'manual');
+    await rc.forgetSource('user-1', 'never-sent');
+    expect(await rc.sources('user-1')).toEqual([]);
   });
 
   it('recalls over MCP with the user and the conversation bound to the session', async () => {

@@ -49,11 +49,31 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   "someone"'s in an entity memory unless the participant carries an identity; the assistant's are the agent's.
   Content that is the **agent's own** — knowledge you give it, what a device perceives, a document — goes with
   `own: true` on the message (`user` or `other` role), with `source: document | perception | ambient` when that is the
-  conversation's nature. (Until WORK_PLAN 8.4 the extraction reads own content like your user's turns.)
+  conversation's nature. (Until WORK_PLAN 8.4 the extraction reads own content like your user's turns.) A text the
+  agent should keep as knowledge to look things up in (a manual, a document) is a learned source instead (§3b).
 - Use an **outbox**: write the message to your own table first, send asynchronously, retry with back-off; a Recordare
   outage must never fail or slow the chat. Edits and deletions follow (`API.md` §2).
 - When a conversation ends on your side (session closed, /new), say so: `POST api/v1/ingest/conversations/{id}/end`
   (or `hints.conversationEnded` on the last batch) — extraction then runs at once instead of after the idle delay.
+
+## 3b. Learned sources (D49, WORK_PLAN 8.9)
+What the agent learns — a manual, a page, a note, a book, a text of the person — kept apart from what happened and
+searched with `search_knowledge` (`API.md` §2, §3).
+- **Text only**: your platform turns files (PDF, office documents, web pages, transcripts) into text before sending.
+- **No size limit** per source or per memory: `learnSource(user, {externalId, title, text, …})` in the client library
+  sends a big text in parts automatically (4 MB each, cut at paragraph boundaries; `POST api/v1/ingest/sources` +
+  `…/parts`). The same `externalId` again replaces the source (a new version); the same text again is a duplicate.
+- **Who gave it**: `providedBy` `"me"` (default: the memory's self — your user in a personal memory, the agent in an
+  entity one), `"someone"`, or `{name}` (a contact of the memory, created when new).
+- **Conversation link**: pass `conversation: {externalId}` when the source was given in a conversation you ingest —
+  that conversation's extraction then tells of the learning; without it Recordare writes the learning episode itself
+  ("On 10 October 2026 I learned “…”").
+- **Forgetting**: `forgetSource(user, externalId)` (`DELETE api/v1/ingest/sources/{externalId}`), or from the person's
+  diary `DELETE api/v1/sources/{id}`; the text and its passages are deleted, the episodes keep a "forgotten source"
+  marker. `sources(user)` (`GET api/v1/sources`) lists what the agent learned.
+- **Do not send your RAG's search results** (or a knowledge base the agent merely consults) as sources: Recordare is
+  what the agent *learned*. At most expose `learn_source` / call `learnSource` for what the person explicitly asks the
+  agent to learn.
 
 ## 4. Recall — MCP
 - Register Recordare's MCP endpoint (`/mcp`) in your MCP client with the key and `X-Recordare-User`.
@@ -66,8 +86,8 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   block for the end of the system prompt (`API.md` §3, WORK_PLAN 5.7) — the agent may answer without a tool call.
   `POST api/v1/context {ingest}` (scopes `read` + `ingest`; client library `contextWithTurn`) stores the user's turn
   and returns its context in one call — one round trip before each turn instead of two.
-- Tools: `search_episodes`, `search_memory` (facts and notes), `resolve_period`, `log_episode`, `correct_episode`,
-  `forget_episode`, `remember`. A platform that already ingests every turn may leave `log_episode` out (the
+- Tools: `search_episodes`, `search_memory` (facts and notes), `search_knowledge` (learned sources), `resolve_period`,
+  `log_episode`, `correct_episode`, `forget_episode`, `remember`, `learn_source` (§3b). A platform that already ingests every turn may leave `log_episode` out (the
   connectors do); tool schemas: `TOOLS` in the client library.
 - The person's own diary in your UI (`API.md` §4, e.g. the Arkimede Diary): timeline, episode detail, day / month
   diary, facts, notes, plans, and the person's edits (correct, forget, pin, confirm / reject what is pending) — scope
@@ -102,7 +122,8 @@ claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --head
 and **Codex** (installer) with shared capture hooks, **OpenClaw** (native plugin), **Hermes Agent** (memory provider),
 and an **OpenAI-compatible memory proxy** (AnythingLLM, Open WebUI, LibreChat). Each one captures the turns, adds the
 memory context before each turn (`POST api/v1/context`, with `ingest` where the turn is stored in the same call), ends
-the conversation with `…/end` and, except the proxy, exposes the MCP tools (as `recordare_*` in OpenClaw and Hermes).
+the conversation with `…/end` and, except the proxy, exposes the MCP tools (as `recordare_*` in OpenClaw and Hermes;
+`search_knowledge` and `learn_source` not yet — a follow-up).
 **One memory per agent** (D50): an agent platform's agent has one memory — a **personal token** with `mcp`, `ingest`,
 `read` (client of kind `mcp_client`), or a **client key** with the same scopes (the proxy needs only `ingest` + `read`)
 and the agent's account in its settings (`X-Recordare-User`). The people who talk to the agent (OpenClaw senders, Hermes

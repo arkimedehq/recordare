@@ -7,6 +7,8 @@ export interface QueuePort {
   scheduleIdleExtraction(conversationId: string, delayMs: number): Promise<void>;
   /** Compute embeddings for these messages (raw-log fallback search, D13). */
   enqueueMessageEmbeddings(messageIds: string[]): Promise<void>;
+  /** Embed the passages of a learned source still without one (WORK_PLAN 8.9); marks the source ready when done. */
+  enqueueSourcePassages(sourceId: string): Promise<void>;
 }
 
 export const QUEUE_PORT = Symbol('QUEUE_PORT');

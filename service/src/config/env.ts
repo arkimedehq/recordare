@@ -41,6 +41,8 @@ const baseSchema = z.object({
   ADMIN_API_KEY: z.string().min(32),
   /** Where people open Recordare Atlas, if installed (e.g. http://192.168.1.10:5175): told to clients in GET /me. */
   ATLAS_URL: z.string().url().optional(),
+  /** Largest JSON request body, bytes (a learned source bigger than this arrives in parts — WORK_PLAN 8.9). */
+  MAX_REQUEST_BYTES: z.coerce.number().int().min(100_000).default(16 * 1024 * 1024),
   /** Idle debounce before extracting a conversation (D1, D5): global, seconds. */
   IDLE_DELAY_SECONDS: z.coerce.number().int().positive().default(900),
   /** Max characters of messages per extraction call; set = overrides the quality profile's value. */
@@ -56,6 +58,8 @@ const baseSchema = z.object({
   CONTEXT_MIN_EPISODE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   CONTEXT_MIN_PLAN_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   CONTEXT_MIN_PERIOD_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
+  /** Memory context: minimum similarity for one passage of a learned source (WORK_PLAN 8.9). */
+  CONTEXT_MIN_PASSAGE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
   /** Local hour (owner's timezone) after which the nightly consolidation runs (M5). */

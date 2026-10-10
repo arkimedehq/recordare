@@ -156,3 +156,19 @@ describe('PersonDirectory', () => {
     expect(seen).toHaveLength(0);
   });
 });
+
+describe('learned sources (WORK_PLAN 8.9)', () => {
+  it('sends a big text in parts at paragraph boundaries, in order', async () => {
+    seen.length = 0;
+    reply = (s) => ({ status: 200, body: { sourceId: 's1', status: s.path.endsWith('/parts') && s.body.final ? 'indexing' : 'receiving', parts: 1, passages: 1, duplicate: false } });
+    const text = ['Primo paragrafo.', 'Secondo paragrafo, più lungo.', 'Terzo.'].join('\n\n');
+    const r = await client().learnSource('u1', { externalId: 'doc-1', title: 'Manuale', text }, 40);
+    expect(r.status).toBe('indexing');
+    expect(seen.map((s) => [s.method, s.path])).toEqual([
+      ['POST', '/api/v1/ingest/sources'], ['POST', '/api/v1/ingest/sources/doc-1/parts'],
+    ]);
+    expect(seen[0]?.body).toMatchObject({ externalId: 'doc-1', title: 'Manuale', text: 'Primo paragrafo.', final: false });
+    expect(seen[1]?.body).toEqual({ part: 1, text: 'Secondo paragrafo, più lungo.\n\nTerzo.', final: true });
+    expect(seen.every((s) => Buffer.byteLength(s.body.text, 'utf8') <= 40)).toBe(true);
+  });
+});

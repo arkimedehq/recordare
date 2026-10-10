@@ -3,7 +3,8 @@
 
 import {
   CONVERSATION_HEADER, type Digest, type Episode, type EpisodeDetail, type EpisodeQuery, type Fact, type IngestRequest, type IngestResult,
-  MAX_MESSAGES_PER_REQUEST, type Me, type MeSettings, type MemoryContext, type Note, type PlanStatus, type Precision,
+  type LearnSource, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MeSettings, type MemoryContext, type Note, type PlanStatus,
+  type Precision, type Source, SOURCE_PART_BYTES,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
@@ -110,6 +111,33 @@ export class RecordareClient {
     await this.gone(this.http.request('DELETE', `api/v1/ingest/conversations/${enc(conversation)}`, { user }));
   }
 
+  // ── Learned sources (WORK_PLAN 8.9, D49): text the agent learns — the client turns files into text ─────────────
+
+  /**
+   * The agent learns a text. A big one is sent in parts (at paragraph boundaries, `partBytes` each); any size works.
+   * Sending the same `externalId` again replaces the source; the same first part again is a duplicate.
+   */
+  async learnSource(user: string, source: LearnSource, partBytes = SOURCE_PART_BYTES): Promise<LearnSourceResult> {
+    const [first = '', ...rest] = splitParts(source.text, partBytes);
+    let result = await this.http.request<LearnSourceResult>('POST', 'api/v1/ingest/sources', { user, body: { ...source, text: first, final: rest.length === 0 } });
+    if (result.duplicate) return result;
+    for (const [i, text] of rest.entries()) {
+      result = await this.http.request<LearnSourceResult>('POST', `api/v1/ingest/sources/${enc(source.externalId)}/parts`,
+        { user, body: { part: i + 1, text, final: i === rest.length - 1 } });
+    }
+    return result;
+  }
+
+  /** The agent forgets a source (its text and passages; episodes keep a "forgotten source" marker). One it never had counts as done. */
+  async forgetSource(user: string, externalId: string): Promise<void> {
+    await this.http.request('DELETE', `api/v1/ingest/sources/${enc(externalId)}`, { user });
+  }
+
+  /** What the agent learned, newest first. */
+  sources(user: string): Promise<Source[]> {
+    return this.http.request('GET', 'api/v1/sources', { user });
+  }
+
   // ── The diary (API.md §4): what Recordare remembers, shown to the person in the platform's UI ──────────────────
 
   /** The timeline, newest first; pass `nextCursor` back as `cursor` for the next page. */
@@ -174,4 +202,33 @@ export class RecordareClient {
       if (!(err instanceof RecordareHttpError && err.status === 404)) throw err;
     }
   }
+}
+
+/** A text in parts of at most `maxBytes` UTF-8 bytes, cut at paragraph boundaries (inside a long paragraph: at a space, else between characters). */
+export function splitParts(text: string, maxBytes: number): string[] {
+  const size = (t: string) => Buffer.byteLength(t, 'utf8');
+  if (size(text) <= maxBytes) return [text];
+  const parts: string[] = [];
+  let current = '';
+  const push = (piece: string) => {
+    const joined = current ? `${current}\n\n${piece}` : piece;
+    if (size(joined) <= maxBytes) { current = joined; return; }
+    if (current) parts.push(current);
+    current = piece;
+  };
+  for (const paragraph of text.split(/\n\s*\n/)) {
+    let rest = paragraph;
+    while (size(rest) > maxBytes) {
+      let end = rest.length;
+      while (end > 0 && size(rest.slice(0, end)) > maxBytes) end = Math.floor(end * 0.9);
+      const space = rest.lastIndexOf(' ', end);
+      let cut = space > end / 2 ? space : end;
+      if (/[\uD800-\uDBFF]/.test(rest.charAt(cut - 1))) cut--; // never between the halves of a surrogate pair
+      push(rest.slice(0, cut));
+      rest = rest.slice(cut).trimStart();
+    }
+    if (rest) push(rest);
+  }
+  if (current) parts.push(current);
+  return parts;
 }

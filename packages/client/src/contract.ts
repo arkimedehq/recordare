@@ -187,6 +187,52 @@ export interface Note {
   recordedAt: string;
 }
 
+/** Size of the parts `learnSource` sends a big text in (UTF-8 bytes; the service's default request limit is 16 MB). */
+export const SOURCE_PART_BYTES = 4 * 1024 * 1024;
+
+export type SourceKind = 'document' | 'page' | 'note' | 'book' | 'own_text';
+
+/** `POST api/v1/ingest/sources` (WORK_PLAN 8.9, D49): a text the agent learns — the client turns files into text. */
+export interface LearnSource {
+  /** The client's own id for the source: sending it again replaces it (a new version). */
+  externalId: string;
+  title: string;
+  kind?: SourceKind;
+  author?: string;
+  uri?: string;
+  language?: string;
+  learnedAt?: string;
+  /** Who gave it: "me" (the memory's self), "someone", or a person by name. Default "me". */
+  providedBy?: 'me' | 'someone' | { name: string };
+  /** The conversation it was learned in: its extraction then tells of it. */
+  conversation?: { externalId: string };
+  text: string;
+}
+
+export interface LearnSourceResult {
+  sourceId: string;
+  status: 'receiving' | 'indexing' | 'ready';
+  parts: number;
+  passages: number;
+  duplicate: boolean;
+}
+
+/** `GET api/v1/sources`: a learned source (the Diary's "what I learned"). */
+export interface Source {
+  id: string;
+  externalId: string;
+  title: string;
+  kind: string;
+  author: string | null;
+  uri: string | null;
+  providedBy: { kind: 'self' } | { kind: 'someone' } | { kind: 'contact'; name: string };
+  learnedAt: string;
+  status: 'receiving' | 'indexing' | 'ready';
+  chars: number;
+  passages: number;
+  episodeIds: string[];
+}
+
 /** `POST api/v1/context`: the memories relevant to the message a host is about to answer (WORK_PLAN 5.7). */
 export interface MemoryContext {
   /** A fenced `<memory-context>` block to append to the prompt, or null (nothing relevant, not owner-only, or off). */

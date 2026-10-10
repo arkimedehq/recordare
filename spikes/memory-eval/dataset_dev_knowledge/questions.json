@@ -1,0 +1,138 @@
+{
+ "_note": "Learned-sources dev set for WORK_PLAN 8.9 (NOT blind). Asked after everything.",
+ "user": "chiara",
+ "questions": [
+  {
+   "id": "k01",
+   "category": "knowledge",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Ogni quanto va fatta la manutenzione della caldaia?",
+   "expected": "Ogni 2 anni, da un tecnico abilitato, con il controllo dei fumi (manuale della caldaia).",
+   "must_not": []
+  },
+  {
+   "id": "k02",
+   "category": "knowledge",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Cosa significa l'errore F.28 della caldaia?",
+   "expected": "Mancata accensione: controllare che il rubinetto del gas sia aperto e che arrivi gas, poi premere reset.",
+   "must_not": [
+    "confonderlo con la pressione bassa"
+   ]
+  },
+  {
+   "id": "k03",
+   "category": "provenance",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Chi mi ha dato il manuale della caldaia, e quando?",
+   "expected": "Paolo, il 3 ottobre 2026.",
+   "must_not": []
+  },
+  {
+   "id": "k04",
+   "category": "episode-source",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Cosa ho imparato o studiato il 7 ottobre?",
+   "expected": "Gli appunti della prima lezione del corso di fotografia (regola dei terzi, ISO basso con tanta luce, f/1.8 per lo sfocato, non sotto 1/60 a mano libera).",
+   "must_not": []
+  },
+  {
+   "id": "k05",
+   "category": "knowledge",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "A quanti gradi e per quanto tempo va cotta la parmigiana di nonna Rosa?",
+   "expected": "In forno a 180 gradi per 40 minuti (poi 15 minuti di riposo).",
+   "must_not": []
+  },
+  {
+   "id": "k06",
+   "category": "provenance",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Da chi ho avuto la ricetta della parmigiana?",
+   "expected": "Dalla mamma, il 4 ottobre 2026 (è la ricetta di nonna Rosa).",
+   "must_not": [
+    "dire che l'ha data nonna Rosa"
+   ]
+  },
+  {
+   "id": "k07",
+   "category": "episode",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Com'è andata la parmigiana?",
+   "expected": "Riuscita benissimo, sabato 10 ottobre a cena con Luca, che ha fatto il bis.",
+   "must_not": []
+  },
+  {
+   "id": "k08",
+   "category": "knowledge",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Che preavviso serve per disdire l'affitto?",
+   "expected": "6 mesi, con lettera raccomandata.",
+   "must_not": []
+  },
+  {
+   "id": "k09",
+   "category": "knowledge",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Posso tenere un gatto in casa?",
+   "expected": "Solo con il consenso scritto del proprietario (contratto d'affitto).",
+   "must_not": [
+    "rispondere semplicemente sì o no"
+   ]
+  },
+  {
+   "id": "k10",
+   "category": "episode",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Che problema ha avuto la caldaia e come l'ho risolto?",
+   "expected": "Il 6 ottobre l'errore F.22 (pressione bassa): ho riempito l'impianto e la pressione è tornata a 1,3 bar.",
+   "must_not": []
+  },
+  {
+   "id": "k11",
+   "category": "forgotten",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Cosa c'era scritto nella bozza della lettera di dimissioni?",
+   "expected": "Non lo so più: la bozza era stata imparata il 6 ottobre ma l'8 ottobre l'hai fatta dimenticare (hai deciso di non dimetterti).",
+   "must_not": [
+    "motivi personali",
+    "31 dicembre"
+   ]
+  },
+  {
+   "id": "k12",
+   "category": "knowledge",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Che tempo di scatto minimo devo usare a mano libera?",
+   "expected": "1/60 di secondo (appunti del corso di fotografia).",
+   "must_not": []
+  },
+  {
+   "id": "k13",
+   "category": "negative",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Quando scade la garanzia della lavatrice?",
+   "expected": "Non risulta: non ho niente sulla lavatrice.",
+   "must_not": [
+    "inventare una data",
+    "rispondere con la garanzia della caldaia come se fosse della lavatrice"
+   ]
+  },
+  {
+   "id": "k14",
+   "category": "knowledge",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Quanto pago di affitto?",
+   "expected": "850 euro al mese, entro il giorno 5.",
+   "must_not": []
+  },
+  {
+   "id": "k15",
+   "category": "plan",
+   "asked_at": "2026-10-11T10:00:00+02:00",
+   "q": "Quando ho la seconda lezione di fotografia?",
+   "expected": "Giovedì 8 ottobre 2026.",
+   "must_not": []
+  }
+ ]
+}

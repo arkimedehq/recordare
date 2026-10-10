@@ -33,4 +33,8 @@ export class BullMqQueueAdapter implements QueuePort {
     if (messageIds.length === 0) return;
     await this.embedding.add('messages', { messageIds }, { removeOnComplete: true, removeOnFail: 100, attempts: 3, backoff: { type: 'exponential', delay: 2000 } });
   }
+
+  async enqueueSourcePassages(sourceId: string): Promise<void> {
+    await this.embedding.add('passages', { sourceId }, { removeOnComplete: true, removeOnFail: 100, attempts: 5, backoff: { type: 'exponential', delay: 5000 } });
+  }
 }

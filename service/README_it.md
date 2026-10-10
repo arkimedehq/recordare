@@ -34,9 +34,10 @@ Controlli — eseguili tutti e tre prima di ogni commit (la CI li esegue): `npm 
 | `src/console` | Console di amministrazione, una pagina statica servita su `/admin` sopra l'API di amministrazione |
 | `src/identity` | Entità di identità |
 | `src/rawlog` | Layer 0: ingest REST (idempotente, conserva sempre — l'interruttore acceso / spento è del client, D50), modifiche ed eliminazioni, ricerca nel log grezzo (full-text + vettoriale) |
-| `src/queue` | BullMQ: job di estrazione a inattività con debounce, embedding dei messaggi, sweep orario di consolidamento |
+| `src/queue` | BullMQ: job di estrazione a inattività con debounce, embedding dei messaggi e dei passaggi delle fonti, sweep orario di consolidamento |
 | `src/engine` | Estrazione (una chiamata per finestra, writer con regole del ciclo di vita e protezione dall'eco del richiamo), resolver di quasi-duplicati / correzioni, profili di qualità, consolidamento notturno (digest), revisione dei fatti |
 | `src/recall` | `search_episodes`, `search_memory`, risolutore di periodi, richiamo consapevole delle persone, scritture esplicite e oblio, il contesto di memoria prima del turno (`POST api/v1/context`), log dei richiami |
+| `src/knowledge` | Fonti apprese (D49, WORK_PLAN 8.9): ingest delle fonti a parti, passaggi (divisi nel codice, embedding in background), `search_knowledge`, l'episodio dell'apprendimento scritto nel codice, rotte di lettura / oblio |
 | `src/read` | API di lettura / scrittura per le interfacce dei client — il diario della persona (`API.md` §4) |
 | `src/lang` | Dati linguistici per gli helper deterministici: periodi e mesi (da `Intl`, le 25 lingue più parlate), parole di parentela, come chiamare il proprietario |
 | `src/mcp` | Server MCP su `/mcp` (HTTP in streaming): gli strumenti di `docs/API.md` §3 |

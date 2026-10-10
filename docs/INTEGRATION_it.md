@@ -57,13 +57,35 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   dell'assistente sono dell'agente. Il contenuto **proprio dell'agente** — conoscenza che gli si dà, ciò che un
   dispositivo percepisce, un documento — va con `own: true` sul messaggio (ruolo `user` o `other`), con `source: document
   | perception | ambient` quando è la natura della conversazione. (Fino al WORK_PLAN 8.4 l'estrazione legge il contenuto
-  proprio come i turni del proprio utente.)
+  proprio come i turni del proprio utente.) Un testo che l'agente deve tenere come conoscenza da consultare (un
+  manuale, un documento) è invece una fonte appresa (§3b).
 - Usare un **outbox**: scrivere prima il messaggio nella propria tabella, inviare in modo asincrono, ritentare con
   back-off; un'interruzione di Recordare non deve mai far fallire o rallentare la chat. Modifiche ed eliminazioni
   seguono (`API.md` §2).
 - Quando una conversazione finisce dalla propria parte (sessione chiusa, /new), dirlo:
   `POST api/v1/ingest/conversations/{id}/end` (oppure `hints.conversationEnded` nell'ultimo batch) — l'estrazione
   parte subito invece che dopo il ritardo di inattività.
+
+## 3b. Fonti apprese (D49, WORK_PLAN 8.9)
+Ciò che l'agente impara — un manuale, una pagina, una nota, un libro, un testo della persona — tenuto separato da ciò
+che è successo e cercato con `search_knowledge` (`API_it.md` §2, §3).
+- **Solo testo**: è la piattaforma a convertire i file (PDF, documenti office, pagine web, trascrizioni) in testo prima
+  di inviarli.
+- **Nessun limite di dimensione** per fonte né per memoria: `learnSource(user, {externalId, title, text, …})` nella
+  libreria client invia da sé un testo grande a parti (4 MB ciascuna, tagliate ai confini dei paragrafi;
+  `POST api/v1/ingest/sources` + `…/parts`). Lo stesso `externalId` sostituisce la fonte (una nuova versione); lo stesso
+  testo reinviato è un duplicato.
+- **Chi l'ha data**: `providedBy` `"me"` (default: il sé della memoria — il proprio utente in una memoria personale,
+  l'agente in una di entità), `"someone"`, oppure `{name}` (un contatto della memoria, creato se nuovo).
+- **Collegamento alla conversazione**: passare `conversation: {externalId}` quando la fonte è stata data in una
+  conversazione che si invia — è allora l'estrazione di quella conversazione a raccontare l'apprendimento; senza,
+  Recordare scrive da sé l'episodio dell'apprendimento ("Il 10 ottobre 2026 ho imparato «…»").
+- **Oblio**: `forgetSource(user, externalId)` (`DELETE api/v1/ingest/sources/{externalId}`), oppure dal diario della
+  persona `DELETE api/v1/sources/{id}`; il testo e i suoi passaggi vengono cancellati, gli episodi conservano un segno di
+  "fonte dimenticata". `sources(user)` (`GET api/v1/sources`) elenca ciò che l'agente ha imparato.
+- **Non inviare i risultati di ricerca del proprio RAG** (né una base di conoscenza che l'agente si limita a
+  consultare) come fonti: Recordare è ciò che l'agente ha *imparato*. Al massimo esporre `learn_source` / chiamare
+  `learnSource` per ciò che la persona chiede esplicitamente all'agente di imparare.
 
 ## 4. Richiamo — MCP
 - Registrare l'endpoint MCP di Recordare (`/mcp`) nel proprio client MCP con la chiave e `X-Recordare-User`.
@@ -77,8 +99,8 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   senza chiamare uno strumento. `POST api/v1/context {ingest}` (scope `read` + `ingest`; nella libreria client
   `contextWithTurn`) salva il turno dell'utente e ne restituisce il contesto in una sola chiamata — una sola andata e
   ritorno prima di ogni turno invece di due.
-- Strumenti: `search_episodes`, `search_memory` (fatti e note), `resolve_period`, `log_episode`, `correct_episode`,
-  `forget_episode`, `remember`. Una piattaforma che invia già ogni turno può lasciare fuori `log_episode` (i connettori
+- Strumenti: `search_episodes`, `search_memory` (fatti e note), `search_knowledge` (fonti apprese), `resolve_period`,
+  `log_episode`, `correct_episode`, `forget_episode`, `remember`, `learn_source` (§3b). Una piattaforma che invia già ogni turno può lasciare fuori `log_episode` (i connettori
   lo fanno); schemi degli strumenti: `TOOLS` nella libreria client.
 - Il diario della persona nella propria interfaccia (`API.md` §4, per esempio il Diario di Arkimede): linea del tempo,
   dettaglio di un episodio, diario per giorno / mese, fatti, note, piani, e le modifiche della persona (correggere,
@@ -115,7 +137,7 @@ claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --head
 Agent** (memory provider), e un **proxy di memoria compatibile OpenAI** (AnythingLLM, Open WebUI, LibreChat). Ognuno
 cattura i turni, aggiunge il contesto di memoria prima di ogni turno (`POST api/v1/context`, con `ingest` dove il turno
 viene salvato nella stessa chiamata), chiude la conversazione con `…/end` e, tranne il proxy, espone gli strumenti MCP
-(come `recordare_*` in OpenClaw e Hermes). **Una memoria per agente** (D50): l'agente di una
+(come `recordare_*` in OpenClaw e Hermes; `search_knowledge` e `learn_source` non ancora — un passo successivo). **Una memoria per agente** (D50): l'agente di una
 piattaforma ha una sola memoria — un **token personale** con `mcp`, `ingest`, `read` (client di tipo `mcp_client`),
 oppure una **chiave client** con gli stessi scope (al proxy bastano `ingest` + `read`) e l'account dell'agente nelle sue
 impostazioni (`X-Recordare-User`). Le persone che parlano con l'agente (i mittenti di OpenClaw, gli utenti del gateway

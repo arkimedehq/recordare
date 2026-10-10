@@ -20,6 +20,7 @@ import { QueueModule } from './queue/queue.module';
 import { EngineModule } from './engine/engine.module';
 import { RawLogModule } from './rawlog/rawlog.module';
 import { McpModule } from './mcp/mcp.module';
+import { KnowledgeModule } from './knowledge/knowledge.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { McpModule } from './mcp/mcp.module';
     EngineModule,
     QueueModule,
     RawLogModule,
+    KnowledgeModule,
     McpModule,
   ],
   controllers: [HealthController, MeController],

@@ -77,6 +77,9 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 - **Forgetting that sticks.** Forgetting an episode leaves a tombstone. Extraction, re-extraction and consolidation
   check tombstones before writing, so forgotten content does not come back. The digests that used the episode are
   rewritten. (Forgetting a whole period is designed but not built yet.)
+- **What it learned, apart from what it lived** (D49, WORK_PLAN 8.9). Texts the agent learns — manuals, documents,
+  pages, notes, sent as text of any size — are kept as sources with their passages; learning one is an episode linked to
+  it both ways.
 - **Nightly consolidation.** A job per person writes the day and month diaries. It makes zero LLM calls when
   nothing is new.
 - **Quality / cost profiles** (D35): `economy | balanced | full`, per installation with a per-person override. Cost
@@ -89,7 +92,8 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 
 `search_episodes` (modes `search | list | latest`, date range, automatic fallback to the raw log, chat excerpts),
 `search_memory` (notes and facts, optionally as of a date), `resolve_period` (deterministic period parser for the
-25 most used languages: "last week", month names), `log_episode`, `remember`, `correct_episode`, `forget_episode`. No
+25 most used languages: "last week", month names), `log_episode`, `remember`, `correct_episode`, `forget_episode`,
+`search_knowledge` and `learn_source` (learned sources: passages of the texts the agent learned, with who gave them and when). No
 LLM runs at read time: the calling agent fills the parameters. Contracts: [API](docs/API.md), [data model](docs/DATA_MODEL.md).
 
 ## The most important points

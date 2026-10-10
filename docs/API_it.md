@@ -10,7 +10,9 @@ in profili di deployment (§0) così che la v1 resti focalizzata sul twin.
 **Costruito (2026-10-08)**: §2 ingest (con `…/end`), §3 strumenti MCP (come indicato per ciascuno) e il contesto di
 memoria prima del turno (`POST api/v1/context`, con `ingest`), le righe della §4 che servono al diario dell'host
 (WORK_PLAN 4.7), `GET / PATCH api/v1/me`, la §5 libreria client, l'API admin e la console, la telemetria live e lo
-snapshot dell'atlas; `GET api/v1/health` (senza autenticazione: il servizio è vivo e raggiunge il database). Le sezioni o
+snapshot dell'atlas; `GET api/v1/health` (senza autenticazione: il servizio è vivo e raggiunge il database).
+**Costruito (2026-10-10, WORK_PLAN 8.9, D49)**: le fonti apprese — §2 ingest delle fonti, §3 `search_knowledge` /
+`learn_source`, le righe delle fonti nella §4. Le sezioni o
 righe contrassegnate **not built yet (v1 plan)** sono il contratto ancora da costruire (le altre righe della §4, OpenAPI,
 `Idempotency-Key`).
 Neutrale rispetto al client: nulla qui è specifico di Arkimede. Modello dati: `DATA_MODEL.md`. Due livelli di
@@ -23,6 +25,9 @@ sono l'unica fonte di verità e generano `GET /api/v1/openapi.json` (**not built
 `?cursor&limit` → `{items, nextCursor}` (come costruito pagina solo `GET api/v1/episodes`; le altre liste della §4
 restituiscono semplici array); ogni POST non idempotente accetta un header `Idempotency-Key`
 (finestra di replay di 24 h, viene restituita la stessa risposta — **not built yet**; l'ingest è idempotente sugli id dei messaggi).
+Corpo delle richieste: JSON fino a `MAX_REQUEST_BYTES` (default 16 MB, `KNOBS.md`); un corpo più grande → `413`
+`payload_too_large`, JSON malformato → `400` `invalid_json` (entrambi problem details, mai un 500). Una fonte appresa più
+grande arriva a parti (§2).
 
 ## 0. Profili di deployment (D33)
 
@@ -85,10 +90,10 @@ diario self-service.
 ### Scope
 | Scope | Consente |
 |---|---|
-| `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me` (chiavi client) |
-| `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `correct_episode`, `forget_episode`) |
-| `read` | §4 endpoint GET, `GET api/v1/me`, `POST api/v1/context` |
-| `write` | §4 inserimenti manuali, correzioni, oblio, modifiche di fatti / note |
+| `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; §2 fonti apprese (`api/v1/ingest/sources…`); `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me` (chiavi client) |
+| `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
+| `read` | §4 endpoint GET (compreso `GET api/v1/sources`), `GET api/v1/me`, `POST api/v1/context` |
+| `write` | §4 inserimenti manuali, correzioni, oblio (anche di una fonte appresa), modifiche di fatti / note |
 | `owner_settings` | `PATCH settings` (lingua, fuso orario, profilo di qualità) — mai le chiavi API dei client. v1: chiave admin o token personale dell'owner; public profile: sessioni dell'owner / token creati dall'owner. Come costruito nessuna rotta lo usa ancora: queste impostazioni le imposta l'admin (`PATCH api/v1/admin/owners/:id`) |
 | `export` | §4 job di export — v1: chiave admin o token personale dell'owner; public profile: solo sessioni dell'owner, download con scadenza. Non ancora costruito |
 | `admin` | `api/v1/admin/…` (come costruito: solo la credenziale `ADMIN_API_KEY`; una chiave o un token che elenca `admin` non ottiene alcuna rotta admin) |
@@ -219,6 +224,47 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta. Stesso effetto di `hints.conversationEnded`
   (rispettato anche in un batch i cui messaggi sono tutti duplicati), senza reinviare un messaggio.
 
+### Fonti apprese (D49, WORK_PLAN 8.9)
+Ciò che l'agente ha imparato — un manuale, una pagina, una nota, un libro, un suo testo — tenuto separato da episodi,
+fatti e note e cercato con `search_knowledge` (§3). **Solo testo**: è il client a convertire i file (PDF, documenti
+office, pagine) in testo. **Nessun limite di dimensione** per fonte né per memoria: vale solo il limite del corpo della
+richiesta (`MAX_REQUEST_BYTES`), e un testo più grande arriva a parti (lo fa la libreria client, §5). Scope `ingest`;
+una chiave client indica la persona con `X-Recordare-User`, un token personale è il suo owner; la credenziale admin
+riceve 403.
+
+`POST api/v1/ingest/sources` → `200`:
+```ts
+{
+  externalId: string;                     // the client's own id; sending it again replaces the source (a new version)
+  title: string;                          // ≤ 500
+  kind?: "document" | "page" | "note" | "book" | "own_text";   // default "document"
+  author?: string; uri?: string; language?: string;
+  learnedAt?: string;                     // ISO with offset; default now
+  providedBy?: "me" | "someone" | { name: string };   // default "me" (the memory's self); a name = a contact of
+                                          // this memory, created when new (an ambiguous name stays "someone")
+  conversation?: { externalId: string };  // the conversation it was learned in (its extraction then tells of it)
+  text: string;                           // the text, or its first part
+  final?: boolean;                        // default true; false = more parts follow
+}
+// response
+{ sourceId: string; status: "receiving" | "indexing" | "ready"; parts: number; passages: number; duplicate: boolean }
+```
+- `POST api/v1/ingest/sources/{externalId}/parts` `{part, text, final?}` → `200`, stessa risposta: `part` vale 1, 2, 3…
+  in ordine (la prima richiesta è la parte 0); una parte reinviata è un duplicato, un salto → `409` `part_out_of_order`,
+  una parte dopo quella finale → `409` `source_complete`, una fonte sconosciuta → `404` `source_not_found`.
+- Lo stesso `externalId` con lo stesso primo testo e lo stesso titolo → `duplicate: true`, non cambia nulla; con un testo
+  nuovo → una nuova versione (i passaggi sostituiti; l'episodio dell'apprendimento e i suoi collegamenti restano).
+- Ogni parte viene divisa subito in passaggi (senza LLM: per titoli Markdown, paragrafi, frasi, circa 1 000 caratteri
+  ciascuno) e indicizzata con gli embedding in background: stato `receiving` (mancano parti) → `indexing` → `ready`; la
+  ricerca full-text trova i passaggi già prima dei loro embedding.
+- **Imparare è un episodio** collegato alla fonte: quando la fonte indica una conversazione che ha ancora messaggi da
+  estrarre, è quell'estrazione a raccontarlo (un episodio che cita la fonte); altrimenti — o quando l'estrazione la
+  tralascia — Recordare lo scrive nel codice, senza LLM, nella lingua della memoria ("Il 10 ottobre 2026 ho imparato
+  «Manuale della caldaia», da Paolo").
+- `DELETE api/v1/ingest/sources/{externalId}` → `204`: dimentica la fonte (testo e passaggi vengono cancellati; gli
+  episodi che la citavano conservano un segno di "fonte dimenticata"); una fonte che Recordare non ha mai avuto conta
+  come fatto.
+
 ### Import
 `source: import_*` con `sentAt` storico, in batch; estratti dal percorso notturno con segmentazione per
 argomento (D29); supersessione solo in avanti per `sentAt`.
@@ -233,7 +279,7 @@ a `initialize` (owner del token, oppure `X-Recordare-User` per le chiavi client)
 (D27). Gli strumenti sono sempre elencati (nessun indizio sull'esistenza di un diario). Come costruito: una
 sessione si apre solo con una richiesta `initialize` (`404` per un id di sessione sconosciuto); la credenziale admin
 riceve `403`; una richiesta da una credenziale diversa da quella che ha aperto la sessione è rifiutata come una
-discrepanza di owner. Le scritture richiedono un contesto risolvibile — un token personale, o una conversazione che
+discrepanza di owner. Le scritture (`log_episode`, `remember`, `learn_source`, correzioni, oblio) richiedono un contesto risolvibile — un token personale, o una conversazione che
 Recordare ha ricevuto — altrimenti restituiscono `{error: "cannot write here"}`. Gli schemi pubblicati degli strumenti
 sono in `packages/client` (`TOOLS`, tenuti allineati dalla suite di conformità) per i connettori che dichiarano gli
 strumenti in anticipo.
@@ -301,6 +347,7 @@ type Episode = {
   inferred: boolean;
   people: string[]; feelings: string[]; opinion?: string;
   source: { conversation: string; messageIds: string[]; at: string };   // conversation = the client's own id
+  sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
 Lo stesso in ogni conversazione, anche in quelle a cui partecipano altri (D50: nessun filtro su chi legge).
@@ -353,6 +400,32 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   memoria conosce, in entrambe le modalità; ognuno riporta il suo `subject` (`self` — in una memoria di entità l'agente e il
   suo luogo — oppure `{kind: "contact", name}`; le note possono essere anche `undecided`).
 
+### `search_knowledge` e `learn_source` (D49, WORK_PLAN 8.9 — fonti apprese)
+- `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passaggi delle fonti che l'agente ha imparato, ordinati
+  con RRF pesato dei ranghi vettoriale e full-text (come gli episodi). Restituisce:
+  ```ts
+  {
+    memory: { name: string; mode: "personal" | "entity" };
+    passages: Array<{
+      text: string; heading: string | null;
+      similarity: number | null;                 // null when found by words only
+      source: { id: string; title: string; kind: string; author: string | null; uri: string | null;
+                providedBy: { kind: "self" } | { kind: "someone" } | { kind: "contact"; name: string };
+                learnedAt: string };
+    }>;
+    episodes: Array<{ id: string; sourceId: string; content: string; when: string }>;  // that refer to the sources
+                                                 // returned (up to 5 each): when I learned them, what I did with them
+    notes: string[];                             // passages are knowledge, not memories of what happened
+  }
+  ```
+  Registrato in `recall_log` (strumento `search_knowledge`). Per ciò che è successo, `search_episodes`.
+- `learn_source {title, text, author?, kind?, uri?}` — l'agente impara un testo (testo semplice; `kind` come nella §2)
+  dato nella conversazione: fornito dal sé della memoria, collegato alla conversazione della chiamata (la sua estrazione
+  racconta l'apprendimento). Lo stesso titolo lo sostituisce (l'id della fonte è derivato dal titolo). È una scrittura:
+  richiede un contesto risolvibile. Restituisce `{sourceId, status, passages, stored}` (`stored: false` = lo stesso
+  testo c'era già). Per un testo grande, la rotta REST a parti (§2).
+- Richiamo: un episodio che cita una fonte riporta `sources` (`search_episodes`, sopra).
+
 ### `resolve_period` (D12, deterministico)
 Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'espressione sconosciuta); espressioni nelle
 lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl per 25 locale, più stagioni e sinonimi); settimane che iniziano di lunedì, fuso orario dell'owner; "adesso" è l'orologio del server (`X-Recordare-Now` lo sostituisce dove
@@ -371,7 +444,9 @@ episodi, ognuno sopra una soglia di somiglianza; al massimo circa 300 token) com
 chiamata LLM. Memorie personali (8.4): il blocco parla all'agente come al sé della memoria ("Background from your memory (you
 are Andrea: first-person items are yours)"), le note e gli episodi di altre persone riportano il loro nome (`[Giulia] …`), e può
 chiudersi con **una** chiarificazione aperta pertinente al messaggio (un candidato nominato, o il suo elemento servito):
-`- if natural, ask: Marco chi — il collega o il cugino?`. Tutta la memoria in ogni conversazione, come ogni lettura (D50); un blocco
+`- if natural, ask: Marco chi — il collega o il cugino?`. Può contenere anche **un** passaggio di una fonte appresa (8.9),
+quando riguarda chiaramente il messaggio (somiglianza ≥ `CONTEXT_MIN_PASSAGE_SIMILARITY`, default 0,6), tagliato a 300
+caratteri: `- learned (from «Manuale della caldaia»): …`. Tutta la memoria in ogni conversazione, come ogni lettura (D50); un blocco
 servito è registrato in `recall_log` (strumento `memory_context`; la guardia anti-eco tratta allora la risposta come possibile eco). Sempre
 disponibile: se usarlo, e per quale agente, è scelta del client (l'host lo aggiunge in fondo al suo prompt di sistema e
 non lo salva mai come messaggio).
@@ -419,6 +494,9 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | lingua, fuso orario, profilo di qualità |
 | `GET api/v1/usage?from&to` | read | Chiamate LLM e token per questo owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Export completo asincrono (archivio JSON) |
+| `GET api/v1/sources` | read | Ciò che l'agente ha imparato, dal più recente: `[{id, externalId, title, kind, author, uri, providedBy, learnedAt, status, chars, passages, episodeIds}]` (costruito, 8.9) |
+| `GET api/v1/sources/{id}` | read | Lo stesso con il testo, passaggio per passaggio: `text: [{ordinal, heading, content}]` (costruito) |
+| `DELETE api/v1/sources/{id}` | write | Dimenticare una fonte (come `DELETE api/v1/ingest/sources/{externalId}`; `404` per un id che non è dell'owner) (costruito) |
 | `GET api/v1/me` | read | Per chi agisce la richiesta: `{ownerId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`mode` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (con una chiave client: la memoria dell'account dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| owner_token`) |
 | `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (chiave client; un token personale riceve 403) | Le impostazioni della memoria provenienti dalla piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `mode` `personal \| entity` (D50) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo); `gender` `masculine \| feminine \| neutral` (la prima persona, dal profilo dell'account) in qualsiasi momento |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | sessione dell'owner (public profile) | Client / identità connessi, revoca |
@@ -427,7 +505,9 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 
 `@arkimedehq/recordare-client` in `packages/client/` (vedi il suo README): `RecordareClient` (`me`, `updateMe`, `ingest`
 diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memoria prima del turno, con `ingest`),
-`endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, i wrapper della §4 `episodes`,
+`endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, `learnSource` (§2 fonti apprese:
+un testo grande inviato a parti di `SOURCE_PART_BYTES` = 4 MB ai confini dei paragrafi) / `forgetSource` / `sources`,
+i wrapper della §4 `episodes`,
 `episode`, `correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`,
 `mcp.listTools` / `mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `TOOLS` (gli schemi
 pubblicati degli strumenti MCP), `PersonDirectory` (memoria in cache, modo e indirizzo di Atlas; l'opt-in della
@@ -465,7 +545,7 @@ inglese.
 `episode.forgotten`. Solo metadati — id, tipi, conteggi, token — mai il contenuto di messaggi o ricordi. Nulla è
 sintetizzato: la dashboard (WORK_PLAN 5b.6) si muove solo quando questi eventi arrivano. Contratto versionato: `ATLAS_EVENTS.md`.
 
-Recall log: ogni `search_episodes` / `search_memory` servito, e ogni blocco di contesto di memoria servito (strumento
+Recall log: ogni `search_episodes` / `search_memory` / `search_knowledge` servito, e ogni blocco di contesto di memoria servito (strumento
 `memory_context`), scrive una riga `recall_log` (strumento, modalità, numero di elementi,
 conversazione; mai la query né i ricordi) — la fonte dei totali dell'atlas e della protezione contro l'eco del recall (D38).
 

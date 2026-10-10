@@ -574,7 +574,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   set 95,5 %); la memoria di entità resta **sperimentale** — chi parla senza mai presentarsi e l'attribuzione tra persone
   sono i punti deboli.
 
-### D49 — Memoria semantica: fonti imparate (proposta, 2026-10-08)
+### D49 — Memoria semantica: fonti imparate (proposta, 2026-10-08; costruita il 2026-10-10, WORK_PLAN 8.9)
 - Richiesta del proprietario: molti client non hanno un RAG proprio (un robot con il suo agente, un piccolo
   assistente), quindi Recordare dovrebbe essere una memoria **completa** — ciò che la persona ha vissuto **e ciò che ha
   imparato**. Recordare resta una memoria personale: i documenti non si mescolano con episodi, fatti o note.
@@ -599,7 +599,19 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Aperto: come arrivano le fonti (upload REST del testo estratto dal client; uno strumento MCP `learn_source`; formati
   oltre al testo); limiti di dimensione e costo per profilo di qualità (D35); i testi di terzi sono conservati solo per
   l'uso della persona (mai divulgati ad altri, limiti D33); se estrarre con un LLM i punti chiave con le parole della
-  persona (un'opzione successiva). WORK_PLAN 5.9.
+  persona (un'opzione successiva). WORK_PLAN 5.9 (ora 8.9).
+- **Come costruito (8.9, 2026-10-10)** — decisioni del proprietario: le fonti arrivano **solo come testo** (è il client a
+  convertire i file: `POST api/v1/ingest/sources`, oppure lo strumento MCP `learn_source`); **nessun limite di
+  dimensione** per fonte né per memoria — solo il limite del corpo della richiesta (`MAX_REQUEST_BYTES`, 16 MB), un testo
+  più grande arriva a parti (`…/parts`; la libreria client divide ai confini dei paragrafi); la fonte appartiene alla
+  memoria dell'agente (D50), fornita da me, da qualcuno o da un contatto per nome. L'**episodio dell'apprendimento** lo
+  scrive l'estrazione quando la fonte arriva con una conversazione (una sezione `SOURCES LEARNED IN THIS CONVERSATION`
+  nel messaggio utente, solo quando ce n'è una; gli episodi citano `"sources": ["S1"]`), altrimenti — o quando
+  l'estrazione la tralascia — il codice, da una tabella per lingua (`service/src/lang/learned.ts`, senza LLM). Richiamo:
+  `search_knowledge`, `sources` sugli episodi, un passaggio nel contesto di memoria. Oblio come sopra
+  (`episode_sources.forgotten_at`). Arkimede avrà più avanti un pulsante "Fai imparare" (voce separata); i connettori
+  (OpenClaw, Hermes…) non espongono ancora i nuovi strumenti (passo successivo). Dati: `DATA_MODEL_it.md` → Fonti
+  apprese; contratto: `API_it.md` §2, §3.
 
 ### D50 — Memoria dell'agente: ogni memoria appartiene all'agente (decisione del proprietario, 2026-10-09)
 Sostituisce "una memoria per persona" (identità D24, la divisione persona / entità di D48 come due tipi di owner),

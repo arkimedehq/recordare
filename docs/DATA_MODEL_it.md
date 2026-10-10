@@ -4,7 +4,7 @@
 
 Stato: **contratti M1, revisione 3** (2026-10-03): applicate le revisioni di coerenza e di sicurezza; le tabelle
 del profilo di deployment **public** (`API.md` §0, D33) sono contrassegnate e non costruite nella v1.
-Costruito (2026-10-09): le migrazioni in `service/src/db/migrations` (dallo schema iniziale a `MemoryIdentity`) corrispondono a questo documento; le tabelle del profilo public
+Costruito (2026-10-10): le migrazioni in `service/src/db/migrations` (dallo schema iniziale a `Sources`) corrispondono a questo documento; le tabelle del profilo public
 non sono create, le tabelle contrassegnate **created, unused yet** esistono senza codice che le usi.
 Postgres 16 + pgvector ≥ 0.8. Implementa D6–D32 (`EPISODIC_MEMORY_TODO.md`), il modello di identità di
 `API.md` e le regole di provenienza / disclosure della visione.
@@ -27,6 +27,7 @@ Layer 0       conversations ─ conversation_participants ─ messages ─ messa
 Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
 Layer 3       fact_slots ─ facts ─ fact_evidence     notes ─ note_evidence ─ note_changes
+Sources       sources ─ source_passages ─ episode_sources   (D49, learned sources)
 Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_tombstones   read_audit
 ```
 
@@ -498,6 +499,72 @@ eliminate, il feed conserva solo il loro id). Come costruito l'estrazione scrive
 `remember` scrive `created`; cancellare, confermare o rifiutare una nota dall'API di lettura (`API.md` §4) non scrive
 alcuna voce, e la rotta del feed (`GET api/v1/notes/changes`) non è ancora costruita.
 
+## Fonti apprese (D49, WORK_PLAN 8.9) — costruite il 2026-10-10 (migrazione `Sources1791090000000`)
+
+Ciò che l'agente ha imparato — un manuale, una pagina, una nota, un libro, un suo testo — tenuto separato da ciò che ha
+vissuto (episodi), dai fatti e dalle note. Una fonte arriva come **testo** (è il client a convertire i file in testo), in
+una richiesta o a parti (`API.md` §2); non c'è limite di dimensione né per fonte né per memoria. La dimensione degli
+embedding di `source_passages` è quella dell'installazione (quella di `episodes.embedding`).
+
+### sources
+| Colonna | Tipo | Note |
+|---|---|---|
+| `id` | uuid | |
+| `owner_id` | uuid → owners (CASCADE) | |
+| `client_id` | uuid null → clients (`SET NULL`) | Il client che l'ha inviata (null: una chiamata MCP senza client) |
+| `external_id` | text | L'id del client (`learn_source`: `mcp:` + un hash del titolo); unico per `(owner_id, client_id, external_id)` |
+| `title` | text | |
+| `kind` | text check `document \| page \| note \| book \| own_text` | default `document` |
+| `author`, `origin_uri`, `language` | text null | |
+| `provided_by_kind` | text check `self \| contact \| someone` | Chi l'ha data (default `self`: il sé della memoria) |
+| `provided_by_person_id` | uuid null → persons (`SET NULL`) | Solo con `contact` (check) |
+| `learned_at` | timestamptz | |
+| `conversation_id` | uuid null → conversations (`SET NULL`) | La conversazione in cui è stata imparata |
+| `status` | text check `receiving \| indexing \| ready` | default `receiving` |
+| `parts`, `chars` | int, bigint | Parti e caratteri ricevuti |
+| `content_hash` | bytea null | sha256 della prima parte (riconoscimento dei duplicati) |
+| `learned_episode_id` | uuid null → episodes (`SET NULL`) | L'episodio che racconta l'apprendimento |
+| `created_at`, `updated_at` | timestamptz | |
+
+Indici: unico `(owner_id, COALESCE(client_id, uuid nullo), external_id)`; `(owner_id, learned_at DESC)`;
+`(conversation_id) WHERE conversation_id IS NOT NULL`.
+
+### source_passages
+`id, source_id → sources (CASCADE), owner_id → owners (CASCADE), ordinal int (unico per fonte), heading text null,
+content text, tsv tsvector (generato, 'simple', heading + content), embedding vector(dim) null, embedding_model text
+null` — indice GIN su `tsv`, HNSW (coseno) su `embedding`, indice parziale dei passaggi ancora senza embedding. Divisi nel
+codice (senza LLM): per titoli Markdown, poi paragrafi, poi frasi (qualsiasi scrittura), circa 1 000 caratteri, al
+massimo 1 600; ogni passaggio conserva il titolo sotto cui si trova.
+
+### episode_sources
+`id bigserial, episode_id → episodes (CASCADE), source_id null → sources (SET NULL), forgotten_at timestamptz null`
+(check: `source_id` oppure `forgotten_at` valorizzato) — gli episodi che citano una fonte (l'apprendimento, e ciò che se
+ne è fatto); unico `(episode_id, source_id)` finché la fonte esiste. Letto come `sources` sugli episodi nel richiamo.
+
+**Embedding in background.** Ogni parte viene divisa subito in passaggi, nella transazione della richiesta; un job
+`embed` calcola gli embedding dei passaggi che non ne hanno, a lotti di 64 (titolo + contenuto). Stato: `receiving`
+finché mancano parti (`final: false`) → `indexing` dopo la parte finale → `ready` quando non resta alcun passaggio senza
+embedding. La ricerca full-text trova i passaggi già prima dei loro embedding; un lotto fallito resta al retry del job.
+
+**Dimenticare una fonte** (`DELETE api/v1/ingest/sources/{externalId}`, `DELETE api/v1/sources/{id}`): la fonte e i suoi
+passaggi vengono cancellati (fisicamente); le sue righe di `episode_sources` conservano l'episodio con `source_id` null e
+`forgotten_at` valorizzato — un segno di "fonte dimenticata" (`{forgotten: true}` nel richiamo). Gli episodi restano
+(si dimenticano uno per uno). Una nuova versione (stesso `external_id`, testo nuovo) sostituisce i passaggi e conserva
+l'episodio dell'apprendimento e i suoi collegamenti.
+
+**Come costruito (8.9).** Ingest `POST api/v1/ingest/sources` (+ `…/parts`, `DELETE …`), lettura
+`GET api/v1/sources[/{id}]`, `DELETE api/v1/sources/{id}`; MCP `search_knowledge` (RRF pesato dei ranghi vettoriale e
+full-text, gli episodi che citano ogni fonte restituita) e `learn_source`; `sources` sugli episodi richiamati; un
+passaggio nel contesto di memoria (`CONTEXT_MIN_PASSAGE_SIMILARITY`, default 0,6, 300 caratteri). *Episodio
+dell'apprendimento* — una fonte che arriva con una conversazione ancora da estrarre è elencata nel messaggio utente di
+quell'estrazione (sezione `SOURCES LEARNED IN THIS CONVERSATION`, solo quando ce n'è una: ogni altro input resta identico
+byte per byte; prompt di sistema invariato), e un episodio può citarla (`"sources": ["S1"]`, collegamento nei due sensi;
+un numero S sconosciuto viene scartato, `unknown_source`); una fonte imparata da sola, o una che l'estrazione ha
+tralasciato, riceve un episodio scritto nel codice (senza LLM, `service/src/lang/learned.ts`: "Il 10 ottobre 2026 ho
+imparato «titolo», da Paolo" nella lingua e nel genere della memoria, data da Intl, inglese per una lingua non elencata;
+tag `learned`, autore `owner` quando l'ha data il sé, `other` altrimenti, chi l'ha data in `episode_people`).
+`providedBy` per nome si risolve con la `ContactBook` (un nuovo contatto se sconosciuto; ambiguo → `someone`).
+
 ## Contabilità del motore
 
 ### extraction_runs
@@ -518,7 +585,7 @@ memorizzato. Aggregato per owner / client / giorno per i budget e il cost gate d
 
 ### recall_log
 `id bigserial, owner_id → persons (CASCADE), tool, mode null, items, conversation_id null → conversations (SET NULL),
-served_at` — una riga per recall servito (`search_episodes`, `search_memory`, un blocco di contesto di memoria prima del
+served_at` — una riga per recall servito (`search_episodes`, `search_memory`, `search_knowledge`, un blocco di contesto di memoria prima del
 turno: `memory_context`), solo metadati: mai la query, mai i ricordi;
 `conversation_id` dice all'estrazione quali conversazioni hanno avuto un recall servito (protezione contro l'eco del recall, D38). Totali lungo tutta la vita per la dashboard degli operatori;
 `read_audit` del profilo public (sotto) lo estende con client, visualizzatori e id delle righe restituite.
@@ -574,6 +641,8 @@ senza evidenza.
 - (Public profile) **Backup**: le righe dimenticate scompaiono dai backup entro una finestra configurata (default 30 giorni,
   mostrata all'owner). I **log dei provider LLM** sono fuori dal controllo di Recordare: la pagina dell'owner indica
   quale provider elabora i suoi dati e la sua policy di conservazione (profilo provider D27).
+- **Dimenticare una fonte appresa** (8.9): la fonte e i suoi passaggi vengono cancellati; gli episodi che la citavano
+  conservano un segno in `episode_sources` (`source_id` null, `forgotten_at`), vedi Fonti apprese.
 - Correzioni e supersessioni conservano la cronologia; l'oblio è fisico.
 
 ## Rinviato (additivo in seguito, nessuna migrazione dei ricordi)

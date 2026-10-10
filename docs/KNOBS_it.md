@@ -37,8 +37,10 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `PORT` | 8080 | Porta HTTP dentro il container |
 | `ADMIN_API_KEY` | — | Credenziale admin (≥ 32 caratteri): API admin e console |
 | `ATLAS_URL` | — | Dove si apre Recordare Atlas; comunicato ai client in `GET /me` (in Arkimede lo vedono solo gli admin) |
+| `MAX_REQUEST_BYTES` | 16 MB (16 777 216) | Corpo JSON più grande accettato in una richiesta (≥ 100 000); oltre → `413` `payload_too_large`. Una fonte appresa più grande arriva a parti (`learnSource` invia parti da 4 MB, `SOURCE_PART_BYTES`); nessun limite per fonte né per memoria (WORK_PLAN 8.9) |
 | `IDLE_DELAY_SECONDS` | 900 | Silenzio prima che una conversazione venga estratta (un nuovo messaggio fa ripartire l'attesa) |
 | `CONTEXT_MIN_FACT_SIMILARITY`, `…_EPISODE_…`, `…_PLAN_…`, `…_PERIOD_…` | 0.50, 0.55, 0.45, 0.35 | Contesto di memoria (`POST api/v1/context`): similarità minima per fatti e note, episodi, piani imminenti, episodi di un periodo nominato. Soglie più basse (0.45 / 0.48 / 0.42) misurate: nessun guadagno (RESULTS 5.7) |
+| `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Contesto di memoria: similarità minima per l'unico passaggio di una fonte appresa che può contenere (tagliato a 300 caratteri, `- learned (from «titolo»): …`; WORK_PLAN 8.9). Primo valore, da misurare |
 | `CONSOLIDATION_SCHEDULE` | on | Consolidamento notturno automatico; off = solo su richiesta (valutazioni) |
 | `CONSOLIDATION_HOUR` | 3 | Ora locale (fuso della persona) dopo la quale gira la notte |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
@@ -119,6 +121,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | Contesto di memoria | Agenti → agente, per agente | off | Prima di ogni risposta, i ricordi pertinenti di Recordare (`POST api/v1/context`) in fondo al prompt (WORK_PLAN 5.7) · dev set: nessun danno, +3–7 pt; con il prompt dell'agente vocale chiamate ai tool da 9 a 5 su 15. Scelta del client: Recordare serve il blocco quando glielo si chiede, da tutta la memoria in ogni conversazione (D50) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | `.env` di Arkimede | off | Tracce OpenTelemetry GenAI verso l'atlas (solo metadati) |
 | Politica di consegna della libreria | `packages/client` (`DEFAULT_DELIVERY`) | 12 tentativi, 5 s → 1 h | Tentativi dell'outbox (jitter, `Retry-After`), poi parcheggio |
+| Dimensione delle parti di una fonte | `packages/client` (`SOURCE_PART_BYTES`, `partBytes` di `learnSource`) | 4 MB | Una fonte appresa più grande viene inviata a parti, tagliate ai confini dei paragrafi (da tenere sotto il `MAX_REQUEST_BYTES` del servizio) |
 
 ## 8b. Connettori (`connectors/`, l'elenco completo è nel README di ciascuno)
 

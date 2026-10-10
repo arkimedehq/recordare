@@ -80,6 +80,9 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
   ri-estrazione e il consolidamento controllano le lapidi prima di scrivere, così il contenuto dimenticato non ritorna.
   I digest che avevano usato l'episodio vengono riscritti. (Dimenticare un intero periodo è progettato ma non ancora
   realizzato.)
+- **Ciò che ha imparato, separato da ciò che ha vissuto** (D49, WORK_PLAN 8.9). I testi che l'agente impara — manuali,
+  documenti, pagine, appunti, inviati come testo di qualsiasi dimensione — sono tenuti come fonti con i loro brani;
+  impararne uno è un episodio collegato a essa nei due sensi.
 - **Consolidamento notturno.** Un job per persona scrive i diari del giorno e del mese. Non fa alcuna chiamata LLM
   quando non c'è nulla di nuovo.
 - **Profili di qualità / costo** (D35): `economy | balanced | full`, per installazione con un override per persona. Il
@@ -93,7 +96,8 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 
 `search_episodes` (modalità `search | list | latest`, intervallo di date, ripiego automatico sul log grezzo, estratti
 di chat), `search_memory` (note e fatti, opzionalmente as of una data), `resolve_period` (parser deterministico di
-periodi per le 25 lingue più parlate: "la settimana scorsa", nomi dei mesi), `log_episode`, `remember`, `correct_episode`, `forget_episode`.
+periodi per le 25 lingue più parlate: "la settimana scorsa", nomi dei mesi), `log_episode`, `remember`, `correct_episode`, `forget_episode`,
+`search_knowledge` e `learn_source` (fonti apprese: brani dei testi che l'agente ha imparato, con chi li ha dati e quando).
 Nessun LLM gira in lettura: l'agente chiamante compila i parametri. Contratti: [API](docs/API_it.md), [modello dei
 dati](docs/DATA_MODEL_it.md).
 

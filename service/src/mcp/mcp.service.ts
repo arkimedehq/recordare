@@ -23,6 +23,8 @@ import { EpisodeSearchService } from '../recall/episode-search.service';
 import { MemorySearchService } from '../recall/memory-search.service';
 import { MemoryWriteService } from '../recall/memory-write.service';
 import { registerTools } from './mcp-tools';
+import { KnowledgeSearchService } from '../knowledge/knowledge-search.service';
+import { SourcesService } from '../knowledge/sources.service';
 
 interface Session {
   transport: StreamableHTTPServerTransport;
@@ -48,6 +50,8 @@ export class McpService implements OnModuleDestroy {
     private readonly episodes: EpisodeSearchService,
     private readonly memory: MemorySearchService,
     private readonly writes: MemoryWriteService,
+    private readonly knowledge: KnowledgeSearchService,
+    private readonly sources: SourcesService,
     private readonly db: DataSource,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
     private readonly config: ConfigService<Env, true>,
@@ -74,6 +78,7 @@ export class McpService implements OnModuleDestroy {
     const [owner] = await this.db.query(`SELECT timezone, locale FROM owners WHERE person_id = $1`, [ownerId]);
     registerTools(server, {
       principal, ownerId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,
+      knowledge: this.knowledge, sources: this.sources,
       clock: this.clock, owner: { timezone: owner.timezone, locale: owner.locale },
       allowClockOverride: this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }),
     });

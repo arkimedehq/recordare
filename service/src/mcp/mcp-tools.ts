@@ -16,6 +16,10 @@ import { type EpisodeSearchService } from '../recall/episode-search.service';
 import { type MemorySearchService } from '../recall/memory-search.service';
 import { type MemoryWriteService } from '../recall/memory-write.service';
 import { resolvePeriod } from '../recall/period';
+import { createHash } from 'node:crypto';
+import { type KnowledgeSearchService } from '../knowledge/knowledge-search.service';
+import { type SourcesService } from '../knowledge/sources.service';
+import { SOURCE_KINDS } from '../knowledge/sources.schemas';
 
 export interface ToolDeps {
   principal: Principal;
@@ -24,6 +28,8 @@ export interface ToolDeps {
   episodes: EpisodeSearchService;
   memory: MemorySearchService;
   writes: MemoryWriteService;
+  knowledge: KnowledgeSearchService;
+  sources: SourcesService;
   clock: ClockPort;
   owner: { timezone: string; locale: string };
   allowClockOverride: boolean;
@@ -95,6 +101,38 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     return result(await deps.memory.search(deps.ownerId, { conversationId: ctx.conversationId, query: args.query, asOf: args.as_of, includePending: args.include_pending }, now(extra)) as unknown as Record<string, unknown>);
+  });
+
+  server.registerTool('search_knowledge', {
+    title: 'Search what you learned',
+    description: 'Search the sources you learned (manuals, documents, pages, notes you were given or wrote): passages of their '
+      + 'text, each with its source (title, author, who gave it, when) and the episodes that refer to it. For what happened, '
+      + 'use search_episodes.',
+    inputSchema: { query: z.string().describe('What to look up'), limit: z.number().int().min(1).max(20).optional() },
+  }, async (args, extra) => {
+    const ctx = await context(extra);
+    return result(await deps.knowledge.search(deps.ownerId, { query: args.query, limit: args.limit, conversationId: ctx.conversationId }, now(extra)) as unknown as Record<string, unknown>);
+  });
+
+  server.registerTool('learn_source', {
+    title: 'Learn a text',
+    description: 'Learn a text as knowledge (a manual, a page, a note — as plain text; send it again with the same title to replace '
+      + 'it). It stays searchable with search_knowledge; the learning becomes a memory of this conversation.',
+    inputSchema: {
+      title: z.string(),
+      text: z.string(),
+      author: z.string().optional(),
+      kind: z.enum(SOURCE_KINDS).optional(),
+      uri: z.string().optional(),
+    },
+  }, async (args, extra) => {
+    const ctx = await context(extra);
+    if (!writable(ctx)) return result({ error: 'cannot write here' });
+    const externalId = `mcp:${createHash('sha256').update(args.title.trim().toLowerCase()).digest('hex').slice(0, 32)}`;
+    const r = await deps.sources.learn(deps.ownerId, clientId, {
+      externalId, title: args.title, text: args.text, kind: args.kind ?? 'document', author: args.author, uri: args.uri, providedBy: 'me', final: true,
+    }, now(extra), ctx.conversationId);
+    return result({ sourceId: r.sourceId, status: r.status, passages: r.passages, stored: !r.duplicate });
   });
 
   server.registerTool('resolve_period', {

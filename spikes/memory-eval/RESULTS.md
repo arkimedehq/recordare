@@ -443,6 +443,26 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.9 — learned sources (2026-10-10, DeepSeek direct, 1 run each)
+
+New dev set `dataset_dev_knowledge` (NOT blind): Chiara learns five texts (a boiler manual from her brother, her
+grandmother's recipe from her mother, her lease, her photography notes, a resignation draft later forgotten) around six
+conversations; 15 questions. The harness learns `{"type": "source"}` entries through `POST api/v1/ingest/sources`,
+forgets `forget_source` ones, and adds `search_knowledge` to the recall when a dataset has sources. One instance on
+:8089, queue `fp89`, migrations applied.
+
+| Set | 8.9 | Previous |
+|---|---|---|
+| `dataset_dev_knowledge` (new, 15 q) | **96.7 %** (k04 partial: "what did I learn on 7 October" named the notes, not their content) | — |
+| `dataset` (control, no sources) | 95.8 % (q14 partial as in v12b; q18 partial: "con Sara" omitted — the stored episode has it) | 100 % / 97.9 % |
+
+All five sources ready (4 / 1 / 1 / 1 passages), each with its learning episode in Italian ("Il 3 ottobre 2026 ho
+imparato «Manuale della caldaia ecoTEC», da Paolo."); the forgotten draft left its episode with the marker and was not
+answered from ("non è più disponibile"). Provenance right (Paolo / the mother, with the date). The two sources that came
+with a conversation got code-written episodes: in the dataset they arrive after their conversation was already extracted
+(the harness ends each conversation), so the extraction-link path is covered only by the integration test — a dev case
+for it is a follow-up. The memory-context passage floor (0.6) is not measured yet (agent_eval with sources: later).
+
 ### WORK_PLAN 8.6 — the agent's diary and facts review v2 (2026-10-09, DeepSeek direct, dev sets, 1 run each)
 
 `digest.day.v2` / `digest.month.v2` (first person, memory's language and gender; sources: own items, a person's news

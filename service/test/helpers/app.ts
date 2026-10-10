@@ -7,6 +7,8 @@
  */
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { type NestExpressApplication } from '@nestjs/platform-express';
+import { configureHttp } from '../../src/http.js';
 import { DataSource } from 'typeorm';
 import { createServer, type Server } from 'node:http';
 import { createHash } from 'node:crypto';
@@ -93,7 +95,8 @@ export async function resetSchema(): Promise<void> {
 export async function startApp(): Promise<{ app: INestApplication; url: string }> {
   const { AppModule } = await import('../../src/app.module.js');
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = moduleRef.createNestApplication({ logger: process.env['TEST_LOG'] ? ['error', 'warn'] : false });
+  const app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false, logger: process.env['TEST_LOG'] ? ['error', 'warn'] : false });
+  configureHttp(app);
   await app.listen(0);
   const address = app.getHttpServer().address() as { port: number };
   return { app, url: `http://127.0.0.1:${address.port}` };

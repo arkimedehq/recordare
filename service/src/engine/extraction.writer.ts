@@ -277,6 +277,13 @@ export class ExtractionWriter {
       for (const alias of e.people) {
         await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [id, alias, people.get(alias) ?? null]);
       }
+      // The learned sources it tells of (WORK_PLAN 8.9): linked both ways; the first such episode is the source's learning.
+      for (const ref of e.sources) {
+        const sourceId = this.input.sources.get(ref.trim().toUpperCase());
+        if (!sourceId) { this.drop('episode', 'unknown_source'); continue; }
+        await this.tx.query(`INSERT INTO episode_sources (episode_id, source_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [id, sourceId]);
+        await this.tx.query(`UPDATE sources SET learned_episode_id = $1 WHERE id = $2 AND learned_episode_id IS NULL`, [id, sourceId]);
+      }
       this.written.push({ table: 'episodes', id, text: [e.content, e.place, e.people.join(', '), e.keywords.join(' '), e.context, e.opinion].filter(Boolean).join(' | ') });
       this.countLeak('episodes', e.content);
       await this.askIfUndecided({ table: 'episodes', id }, who);
