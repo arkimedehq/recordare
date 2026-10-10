@@ -79,6 +79,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   entity: the shared agent's day), never from other people's claims; a new prompt version rewrites every day once. The
   nightly facts review covers every subject (the self's and the contacts' facts). Both stay off in recall / by default
   (no gain measured).
+- **Learned sources** (D49, WORK_PLAN 8.9): the agent's semantic memory — texts it learns (manuals, documents, pages,
+  notes; text only, the client converts files) kept apart from what it lived, with no size limit (sent in parts),
+  passages embedded in the background, who gave them and when, and the learning as an episode linked both ways (written
+  by the extraction of its conversation, or in code in the memory's language). New REST routes (`api/v1/ingest/sources`,
+  `api/v1/sources`), MCP tools `search_knowledge` and `learn_source`, `sources` on episodes, one passage in the memory
+  context; forgetting a source leaves a marker on its episodes. Client library: `learnSource` (automatic parts),
+  `forgetSource`, `sources`; `TOOLS` regenerated. Requests bigger than `MAX_REQUEST_BYTES` (16 MB) get 413, malformed
+  JSON 400 (they were 500).
 - **Connectors: one memory per agent, people as participants** (D50) — **breaking for multi-person set-ups**. OpenClaw:
   the Gateway's agent has one memory (a personal token, or a client key with `defaultUser`); every sender is a
   participant with the channel identity `<channel>:<senderId>` and their channel name, the account holder is listed in

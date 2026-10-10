@@ -207,7 +207,7 @@ pianificato di WORK_PLAN M8 (passi 8.3–8.12), non ancora costruito oltre 8.1�
 
 | Sistema | Di chi è la memoria | Identità di chi parla / monitoraggio della fonte | Tipi | Modello del tempo | Provenienza / difese dall'avvelenamento | Consolidamento |
 |---|---|---|---|---|---|---|
-| **Recordare (oggi)** | Una memoria per persona; memoria di entità per i dispositivi condivisi (D48, sperimentale) | `author_role`, origine `owner_lived / owner_told / assistant_stated`, affermazioni altrui tenute separate, guardia "nome nella finestra" per chi parla in un'entità | Ep (evento / piano / cambio di stato), Fatti-s (catene di valori), Pref (note), Prosp (piani della persona con ciclo di vita); log grezzo per sempre; niente Proc, niente Doc (proposta D49) | Bitemporale; tempo dell'evento + **precisione** + espressione originale; fatti **alla data**; `corrects` vs `supersedes` | Id delle prove convalidati nel codice; l'LLM non cancella mai; guardia contro l'eco del richiamo; le modifiche ai piani richiedono prove; tombstone | Finestra di inattività + diari notturni di giorno / mese (con impronta, zero chiamate se non c'è niente di nuovo) |
+| **Recordare (oggi)** | Una memoria per persona; memoria di entità per i dispositivi condivisi (D48, sperimentale) | `author_role`, origine `owner_lived / owner_told / assistant_stated`, affermazioni altrui tenute separate, guardia "nome nella finestra" per chi parla in un'entità | Ep (evento / piano / cambio di stato), Fatti-s (catene di valori), Pref (note), Prosp (piani della persona con ciclo di vita); log grezzo per sempre; niente Proc, niente Doc (proposta D49; costruita dal 2026-10-10 come fonti di testo, WORK_PLAN 8.9) | Bitemporale; tempo dell'evento + **precisione** + espressione originale; fatti **alla data**; `corrects` vs `supersedes` | Id delle prove convalidati nel codice; l'LLM non cancella mai; guardia contro l'eco del richiamo; le modifiche ai piani richiedono prove; tombstone | Finestra di inattività + diari notturni di giorno / mese (con impronta, zero chiamate se non c'è niente di nuovo) |
 | **Recordare (D50)** | **Dell'agente**: una per account del client, modalità personale o entità | Pianificato: soggetto su ogni elemento, **metodo + confidenza** dell'attribuzione, marcatore `own`, "qualcuno" + riattribuzione | + fonti D49 (Doc), poi riflessione, note Proc, intenti propri dell'agente, percezione | Invariato | Invariato + monitoraggio della realtà mantenuto nei dati mentre il testo è in prima persona | + diari con la voce dell'agente |
 | Mem0 | Centrata sull'utente con ambiti `user_id` / `agent_id` / `run_id` | Metadati di attore / ruolo; nessun ruolo per i terzi (il nostro adattatore ha dovuto anteporre i nomi) | Fatti come stringhe piatte + collegamenti fra entità; Pref | Data di osservazione nel testo; piattaforma: ordinamento temporale + `reference_date` (maggio 2026) | Solo ADD (nulla cancellato); attualità solo al recupero | Nessuno (ordinamento al recupero, preferenza per il recente) |
 | Zep / Graphiti | Grafo per utente + grafi condivisi | Entità risolte; episodi come provenienza; nessun modello di fiducia per chi parla | Fatti come archi del grafo, entità, episodi, riassunti | Archi **bitemporali** (`valid_at / invalid_at` + tempo di registrazione) | Invalidazione, non cancellazione; l'LLM decide le contraddizioni (ogni fatto trattato come stato) | Incrementale; comunità / riassunti |
@@ -283,7 +283,8 @@ frammento (utente e agente di origine) e verifica i permessi al momento della le
   un ciclo di vita.
 - **A Recordare mancano**:
   - la memoria procedurale (Letta, Hermes, LangMem e MemOS hanno skill o ottimizzazione dei prompt);
-  - i documenti / la conoscenza: Supermemory, Cognee e MemOS acquisiscono file; D49 è solo una proposta;
+  - i documenti / la conoscenza: Supermemory, Cognee e MemOS acquisiscono file; D49 era solo una proposta (dal
+    2026-10-10 costruita per le fonti di testo, WORK_PLAN 8.9: è il client a convertire i file);
   - gli intenti propri dell'agente (gli intenti permanenti di OpenClaw);
   - la riflessione (l'induzione di Honcho, i "modelli mentali" di Hindsight, il tempo di inattività di Letta).
 - **Ciclo di vita dei piani**: non ne abbiamo trovato nessuno con uno stato "esito sconosciuto" per i piani passati
@@ -425,7 +426,7 @@ Avvertenze sui benchmark stessi:
   Zep, e i suoi set sono piccoli (31–87 domande).
 - **La memoria di entità / con più parlanti è il punto debole**: 82,1 % su blind8, dove chi non si identifica viene
   attribuito a persone con un nome. D50 rende centrale proprio questa modalità.
-- **Tipi di memoria mancanti**: niente documenti (D49 non costruito), niente memoria procedurale, niente riflessione,
+- **Tipi di memoria mancanti**: niente documenti (D49 non costruito; dal 2026-10-10 le fonti di testo sì, WORK_PLAN 8.9), niente memoria procedurale, niente riflessione,
   niente intenti dell'agente, niente input multimodale. Supermemory, MemOS e Cognee acquisiscono file; Letta e Hermes
   conservano skill.
 - **Non è pronto per servire estranei**: profilo privato, admin fidato, niente OAuth. Honcho ha workspace e scope;

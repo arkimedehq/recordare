@@ -37,6 +37,9 @@ const MAX_FACTS = 4;
 const MAX_NOTES = 3;
 const MAX_PLANS = 2;
 const MAX_EPISODES = 3;
+/** A passage of a learned source (WORK_PLAN 8.9) enters only when clearly about the message: at most one, shortened. */
+const MIN_PASSAGE_SIMILARITY = 0.6;
+const PASSAGE_CHARS = 300;
 /** Episodes of the period a message names ("what did I do last Saturday?") enter with this lower bar. */
 const MIN_PERIOD_SIMILARITY = 0.35;
 /** At most this many sentences of a message are matched on their own (besides the whole message). */
@@ -62,13 +65,15 @@ export class ContextService {
     private readonly telemetry: TelemetryService,
     config: ConfigService<Env, true>,
   ) {
-    const knob = (k: 'CONTEXT_MIN_FACT_SIMILARITY' | 'CONTEXT_MIN_EPISODE_SIMILARITY' | 'CONTEXT_MIN_PLAN_SIMILARITY' | 'CONTEXT_MIN_PERIOD_SIMILARITY', d: number) =>
+    const knob = (k: 'CONTEXT_MIN_FACT_SIMILARITY' | 'CONTEXT_MIN_EPISODE_SIMILARITY' | 'CONTEXT_MIN_PLAN_SIMILARITY' | 'CONTEXT_MIN_PERIOD_SIMILARITY'
+      | 'CONTEXT_MIN_PASSAGE_SIMILARITY', d: number) =>
       config.get(k, { infer: true }) ?? d;
     this.floors = { fact: knob('CONTEXT_MIN_FACT_SIMILARITY', MIN_FACT_SIMILARITY), episode: knob('CONTEXT_MIN_EPISODE_SIMILARITY', MIN_EPISODE_SIMILARITY),
-      plan: knob('CONTEXT_MIN_PLAN_SIMILARITY', MIN_PLAN_SIMILARITY), period: knob('CONTEXT_MIN_PERIOD_SIMILARITY', MIN_PERIOD_SIMILARITY) };
+      plan: knob('CONTEXT_MIN_PLAN_SIMILARITY', MIN_PLAN_SIMILARITY), period: knob('CONTEXT_MIN_PERIOD_SIMILARITY', MIN_PERIOD_SIMILARITY),
+      passage: knob('CONTEXT_MIN_PASSAGE_SIMILARITY', MIN_PASSAGE_SIMILARITY) };
   }
 
-  private readonly floors: { fact: number; episode: number; plan: number; period: number };
+  private readonly floors: { fact: number; episode: number; plan: number; period: number; passage: number };
 
   async build(ownerId: string, query: string, conversationId: string | undefined, now: Date): Promise<MemoryContext> {
     const [owner] = await this.db.query(
@@ -137,6 +142,15 @@ export class ContextService {
     for (const n of notes) lines.push(`- note: ${whose(n.about)}${n.content}`);
     for (const p of plans) lines.push(`- plan: ${p.content} (${when(p.occurred_at, p.date_precision, tz, owner.locale)})`);
     for (const e of episodes) lines.push(`- episode: ${whose(e.about)}${e.content} (${when(e.occurred_at, e.date_precision, tz, owner.locale)})`);
+    // One passage of what I learned, when clearly about the message (its text, not a memory of what happened).
+    const [passage]: Array<{ content: string; title: string }> = await this.db.query(
+      `SELECT x.content, s.title FROM source_passages x JOIN sources s ON s.id = x.source_id
+       WHERE x.owner_id = $1 AND x.embedding IS NOT NULL AND ${sim('x.embedding')} >= ${at(0)}
+       ORDER BY ${sim('x.embedding')} DESC LIMIT 1`, [ownerId, ...vectors, this.floors.passage]);
+    if (passage) {
+      const text = passage.content.length > PASSAGE_CHARS ? `${passage.content.slice(0, PASSAGE_CHARS).trimEnd()}…` : passage.content;
+      lines.push(`- learned (from «${passage.title}»): ${text.replace(/\s+/g, ' ')}`);
+    }
     // One open question about the people involved, as a suggestion (Recordare's first initiative, vision L1); in an
     // entity memory only to an identified speaker (someone unidentified cannot confirm who is who).
     const asking = owner.mode === 'personal' || (await speakerOf(this.db, conversationId, now, 'entity')).kind === 'contact';

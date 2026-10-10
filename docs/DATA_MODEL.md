@@ -2,7 +2,7 @@
 
 Status: **M1 contracts, revision 3** (2026-10-03): consistency + security reviews applied; tables
 of the **public** deployment profile (`API.md` §0, D33) are marked and not built in v1.
-Built (2026-10-09): migrations in `service/src/db/migrations` (initial schema to `MemoryIdentity`) match this document;
+Built (2026-10-10): migrations in `service/src/db/migrations` (initial schema to `Sources`) match this document;
 tables of the public profile are not created, tables marked **created, unused yet** exist without code using them.
 Postgres 16 + pgvector ≥ 0.8. Implements D6–D32 (`EPISODIC_MEMORY_TODO.md`), the identity model of
 `API.md` and the vision's provenance / disclosure rules.
@@ -25,6 +25,7 @@ Layer 0       conversations ─ conversation_participants ─ messages ─ messa
 Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
 Layer 3       fact_slots ─ facts ─ fact_evidence     notes ─ note_evidence ─ note_changes
+Sources       sources ─ source_passages ─ episode_sources   (D49, learned sources)
 Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_tombstones   read_audit
 ```
 
@@ -476,6 +477,71 @@ purged, the feed keeps only their id). As built the extraction writes `created` 
 `remember` writes `created`; deleting, confirming or rejecting a note through the read API (`API.md` §4) writes no entry,
 and the feed route (`GET api/v1/notes/changes`) is not built yet.
 
+## Learned sources (D49, WORK_PLAN 8.9) — built 2026-10-10 (migration `Sources1791090000000`)
+
+What the agent learned — a manual, a page, a note, a book, its own text — kept apart from what it lived (episodes),
+facts and notes. A source arrives as **text** (the client turns files into text), in one request or in parts
+(`API.md` §2); there is no size limit per source or per memory. The embedding dimension of `source_passages` is the
+installation's (that of `episodes.embedding`).
+
+### sources
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | |
+| `owner_id` | uuid → owners (CASCADE) | |
+| `client_id` | uuid null → clients (`SET NULL`) | The client that sent it (null: an MCP call without a client) |
+| `external_id` | text | The client's own id (`learn_source`: `mcp:` + a hash of the title); unique per `(owner_id, client_id, external_id)` |
+| `title` | text | |
+| `kind` | text check `document \| page \| note \| book \| own_text` | default `document` |
+| `author`, `origin_uri`, `language` | text null | |
+| `provided_by_kind` | text check `self \| contact \| someone` | Who gave it (default `self`: the memory's self) |
+| `provided_by_person_id` | uuid null → persons (`SET NULL`) | Only with `contact` (check) |
+| `learned_at` | timestamptz | |
+| `conversation_id` | uuid null → conversations (`SET NULL`) | The conversation it was learned in |
+| `status` | text check `receiving \| indexing \| ready` | default `receiving` |
+| `parts`, `chars` | int, bigint | Parts and characters received |
+| `content_hash` | bytea null | sha256 of the first part (duplicate detection) |
+| `learned_episode_id` | uuid null → episodes (`SET NULL`) | The episode that tells of the learning |
+| `created_at`, `updated_at` | timestamptz | |
+
+Indexes: unique `(owner_id, COALESCE(client_id, nil uuid), external_id)`; `(owner_id, learned_at DESC)`;
+`(conversation_id) WHERE conversation_id IS NOT NULL`.
+
+### source_passages
+`id, source_id → sources (CASCADE), owner_id → owners (CASCADE), ordinal int (unique per source), heading text null,
+content text, tsv tsvector (generated, 'simple', heading + content), embedding vector(dim) null, embedding_model text
+null` — GIN index on `tsv`, HNSW (cosine) on `embedding`, partial index of the passages still to embed. Split in code (no
+LLM): by Markdown headings, then paragraphs, then sentences (any script), ≈ 1 000 characters, at most 1 600; each
+passage keeps the heading it sits under.
+
+### episode_sources
+`id bigserial, episode_id → episodes (CASCADE), source_id null → sources (SET NULL), forgotten_at timestamptz null`
+(check: `source_id` or `forgotten_at` set) — the episodes that refer to a source (the learning, and what was done with
+it); unique `(episode_id, source_id)` while the source exists. Read as `sources` on episodes in recall.
+
+**Background embedding.** Each part is split into passages at once, in the request's transaction; an `embed` job embeds
+the passages without an embedding in batches of 64 (heading + content). Status: `receiving` while parts are still to come
+(`final: false`) → `indexing` after the final part → `ready` when no passage is left to embed. Full-text search finds
+passages before their embeddings; a failed batch is left to the job's retry.
+
+**Forgetting a source** (`DELETE api/v1/ingest/sources/{externalId}`, `DELETE api/v1/sources/{id}`): the source and its
+passages are deleted (physically); its `episode_sources` rows keep the episode with `source_id` null and `forgotten_at`
+set — a "forgotten source" marker (`{forgotten: true}` in recall). The episodes themselves stay (forget them one by one).
+A new version (same `external_id`, new text) replaces the passages and keeps the learning episode and its links.
+
+**As built (8.9).** Ingest `POST api/v1/ingest/sources` (+ `…/parts`, `DELETE …`), read `GET api/v1/sources[/{id}]`,
+`DELETE api/v1/sources/{id}`; MCP `search_knowledge` (weighted RRF of vector and full-text ranks, the episodes that refer
+to each source returned) and `learn_source`; `sources` on recalled episodes; one passage in the memory context
+(`CONTEXT_MIN_PASSAGE_SIMILARITY`, default 0.6, 300 characters). *Learning episode* — a source that comes with a
+conversation still to extract is listed in that extraction's user message (section `SOURCES LEARNED IN THIS
+CONVERSATION`, only when there is one: every other input stays byte-identical; system prompt unchanged), and an
+episode may cite it (`"sources": ["S1"]`, linked both ways; an unknown S-number is dropped, `unknown_source`); a source
+learned on its own, or one the extraction left out, gets a code-written episode (no LLM, `service/src/lang/learned.ts`:
+"On 10 October 2026 I learned “title” from Paolo" in the memory's language and gender, date from Intl, English for a
+locale not listed; tag `learned`, author `owner` when the self gave it, `other` otherwise, the provider in
+`episode_people`). `providedBy` by name resolves with the `ContactBook` (a new contact when unknown; ambiguous →
+`someone`).
+
 ## Engine bookkeeping
 
 ### extraction_runs
@@ -496,7 +562,7 @@ text stored. Aggregated per owner / client / day for budgets and the CI cost gat
 
 ### recall_log
 `id bigserial, owner_id → persons (CASCADE), tool, mode null, items, conversation_id null → conversations (SET NULL),
-served_at` — one row per recall served (`search_episodes`, `search_memory`, a pre-turn memory-context block:
+served_at` — one row per recall served (`search_episodes`, `search_memory`, `search_knowledge`, a pre-turn memory-context block:
 `memory_context`), metadata only: never the query, never the memories;
 `conversation_id` tells the extraction which conversations had a recall served (recall-echo guard, D38). Lifetime totals for the operators' dashboard;
 the public profile's `read_audit` (below) extends it with client, viewers and returned row ids.
@@ -550,6 +616,8 @@ facts on forgotten evidence, deletion of episodes left without evidence.
 - (Public profile) **Backups**: forgotten rows disappear from backups within a configured window (default 30 days,
   shown to the owner). **LLM provider logs** are outside Recordare's control: the owner page states
   which provider processes their data and its retention policy (D27 provider profile).
+- **Forget a learned source** (8.9): the source and its passages are deleted; episodes that referred to it keep an
+  `episode_sources` marker (`source_id` null, `forgotten_at`), see Learned sources.
 - Corrections and supersessions keep history; forgetting is physical.
 
 ## Deferred (additive later, no migration of memories)

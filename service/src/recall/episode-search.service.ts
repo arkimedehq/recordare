@@ -55,6 +55,8 @@ export interface EpisodeView {
   feelings: string[];
   opinion?: string;
   source: { conversation: string; messageIds: string[]; at: string };
+  /** The learned sources it refers to (WORK_PLAN 8.9): their title, or a marker when the source was forgotten. */
+  sources?: Array<{ id: string; title: string } | { forgotten: true }>;
 }
 
 /** Whose memory this is: personal — written in the first person, "I" is `name`; entity — the shared memory `name`. */
@@ -312,6 +314,9 @@ export class EpisodeSearchService {
        LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
        WHERE ev.episode_id = ANY($1) ORDER BY m.sent_at`, [ids]);
     const names = await contactNames(this.db, rows as SubjectRow[]);
+    const learned: Array<{ episode_id: string; source_id: string | null; title: string | null }> = await this.db.query(
+      `SELECT es.episode_id, es.source_id, s.title FROM episode_sources es LEFT JOIN sources s ON s.id = es.source_id
+       WHERE es.episode_id = ANY($1) ORDER BY es.id`, [ids]);
     const rescheduled = rows.filter((r) => r.rescheduled_to).map((r) => r.rescheduled_to as string);
     const targets: Array<{ id: string; occurred_at: Date | null; date_precision: Precision }> = rescheduled.length
       ? await this.db.query(`SELECT id, occurred_at, date_precision FROM episodes WHERE id = ANY($1)`, [rescheduled]) : [];
@@ -323,6 +328,8 @@ export class EpisodeSearchService {
         if (end <= now) planStatus = 'unresolved';
       }
       const target = targets.find((t) => t.id === r.rescheduled_to);
+      const sources = learned.filter((l) => l.episode_id === r.id)
+        .map((l) => (l.source_id && l.title ? { id: l.source_id, title: l.title } : { forgotten: true as const }));
       return {
         id: r.id, kind: r.kind, content: r.content,
         when: describe(r.occurred_at, r.date_precision, tz, locale) + (r.occurred_until ? ` → ${describe(r.occurred_until, 'day', tz, locale)}` : ''),
@@ -335,6 +342,7 @@ export class EpisodeSearchService {
         people: people.filter((p) => p.episode_id === r.id).map((p) => p.alias),
         feelings: r.feelings, ...(r.opinion ? { opinion: r.opinion } : {}),
         source: { conversation: ev[0]?.external_id ?? '', messageIds: ev.map((e) => e.message_id), at: ev[0]?.sent_at.toISOString() ?? '' },
+        ...(sources.length ? { sources } : {}),
       } satisfies EpisodeView;
     });
   }

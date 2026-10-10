@@ -82,6 +82,8 @@ export interface ExtractionInput {
   questions: Map<string, { id: string; candidates: string[] }>;
   /** The self's names (display name first, then aliases). */
   selfNames: string[];
+  /** "S1" → a source learned in this conversation with no episode yet (WORK_PLAN 8.9). */
+  sources: Map<string, string>;
 }
 
 /** Recordare's own read tools, as a client names them (possibly prefixed, e.g. `recordare_search_episodes`). */
@@ -187,6 +189,12 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
   const clock = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
 
   const people = await peopleContext(tx, owner, window, facts.map((f) => f.subject_id).filter((x): x is string => !!x));
+  // Sources learned in this conversation that no episode tells of yet (complete ones: all parts received).
+  const learned: Array<{ id: string; title: string; author: string | null; kind: string; provider: string | null; provided_by_kind: string }> = await tx.query(
+    `SELECT s.id, s.title, s.author, s.kind, p.display_name AS provider, s.provided_by_kind FROM sources s LEFT JOIN persons p ON p.id = s.provided_by_person_id
+     WHERE s.conversation_id = (SELECT conversation_id FROM messages WHERE id = $1) AND s.learned_episode_id IS NULL AND s.status <> 'receiving'
+     ORDER BY s.learned_at LIMIT 10`, [first.id]);
+  const sourceMap = new Map<string, string>();
   const messages: PromptMessage[] = window.map((m, i) => ({
     n: i + 1,
     speaker: speaker(m, people.refOf),
@@ -203,7 +211,13 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
     contacts: people.contacts,
     questions: people.questions,
     selfNames: people.selfNames,
+    sources: sourceMap,
     prompt: {
+      learnedSources: learned.map((l, i) => {
+        sourceMap.set(`S${i + 1}`, l.id);
+        const by = l.provided_by_kind === 'contact' && l.provider ? `given by ${l.provider}` : l.provided_by_kind === 'someone' ? 'given by someone' : 'mine';
+        return `S${i + 1}: «${l.title}»${l.author ? ` by ${l.author}` : ''} (${l.kind}; ${by})`;
+      }),
       selfNames: people.selfNames,
       gender: owner.gender ?? 'masculine',
       contacts: people.list,

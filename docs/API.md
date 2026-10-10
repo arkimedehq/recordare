@@ -8,7 +8,8 @@ into deployment profiles (§0) so v1 stays focused on the twin.
 **Built (2026-10-08)**: §2 ingest (with `…/end`), §3 MCP tools (as noted per tool) and the pre-turn memory context
 (`POST api/v1/context`, with `ingest`), the §4 rows the host diary needs (WORK_PLAN 4.7), `GET / PATCH api/v1/me`, §5
 client library, the admin API and console, live telemetry and the atlas snapshot; `GET api/v1/health` (no auth:
-liveness and database reachability). Sections or rows marked **not built yet (v1 plan)** are the contract still to
+liveness and database reachability). **Built (2026-10-10, WORK_PLAN 8.9, D49)**: learned sources — §2 source ingest,
+§3 `search_knowledge` / `learn_source`, the §4 source rows. Sections or rows marked **not built yet (v1 plan)** are the contract still to
 build (the other §4 rows, OpenAPI, `Idempotency-Key`).
 Client-neutral: nothing here is specific to Arkimede. Data model: `DATA_MODEL.md`. Two integration
 levels (vision → Architecture): **basic** = MCP tools only; **full** = REST ingest + MCP + read API
@@ -20,6 +21,9 @@ schemas are the single source of truth and generate `GET /api/v1/openapi.json` (
 `?cursor&limit` → `{items, nextCursor}` (as built only `GET api/v1/episodes` pages; the other §4 lists return plain
 arrays); every non-idempotent POST accepts an `Idempotency-Key`
 header (24 h replay window, same response returned — **not built yet**; ingest is idempotent on message ids).
+Request bodies: JSON up to `MAX_REQUEST_BYTES` (default 16 MB, `KNOBS.md`); a bigger body → `413` `payload_too_large`,
+malformed JSON → `400` `invalid_json` (both problem details, never a 500). A learned source bigger than that arrives in
+parts (§2).
 
 ## 0. Deployment profiles (D33)
 
@@ -80,10 +84,10 @@ self-service diary.
 ### Scopes
 | Scope | Allows |
 |---|---|
-| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; `ingest` inside `POST api/v1/context`; `PATCH api/v1/me` (client keys) |
-| `mcp` | §3 tools (reads + `log_episode`, `remember`, `correct_episode`, `forget_episode`) |
-| `read` | §4 GET endpoints, `GET api/v1/me`, `POST api/v1/context` |
-| `write` | §4 manual entries, corrections, forgetting, fact / note edits |
+| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; §2 learned sources (`api/v1/ingest/sources…`); `ingest` inside `POST api/v1/context`; `PATCH api/v1/me` (client keys) |
+| `mcp` | §3 tools (reads + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
+| `read` | §4 GET endpoints (`GET api/v1/sources` included), `GET api/v1/me`, `POST api/v1/context` |
+| `write` | §4 manual entries, corrections, forgetting (a learned source included), fact / note edits |
 | `owner_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: admin key or the owner's personal token; public profile: owner sessions / owner-created tokens. As built no route uses it yet: these settings are set by the admin (`PATCH api/v1/admin/owners/:id`) |
 | `export` | §4 export jobs — v1: admin key or the owner's personal token; public profile: owner sessions only, expiring download. Not built yet |
 | `admin` | `api/v1/admin/…` (as built: only the `ADMIN_API_KEY` credential; a key or token listing `admin` gets no admin route) |
@@ -212,6 +216,45 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   /new) — extraction runs now instead of after the idle delay; `404` for a conversation never ingested. Same effect as `hints.conversationEnded` (honoured also on a batch whose
   messages are all duplicates), without re-sending a message.
 
+### Learned sources (D49, WORK_PLAN 8.9)
+What the agent learned — a manual, a page, a note, a book, its own text — kept apart from episodes, facts and notes and
+searched with `search_knowledge` (§3). **Text only**: the client turns files (PDF, office documents, pages) into text.
+**No size limit** per source or per memory: only the request body limit applies (`MAX_REQUEST_BYTES`), and a bigger
+text arrives in parts (the client library does it, §5). Scope `ingest`; a client key names the person with
+`X-Recordare-User`, a personal token is its owner; the admin credential gets 403.
+
+`POST api/v1/ingest/sources` → `200`:
+```ts
+{
+  externalId: string;                     // the client's own id; sending it again replaces the source (a new version)
+  title: string;                          // ≤ 500
+  kind?: "document" | "page" | "note" | "book" | "own_text";   // default "document"
+  author?: string; uri?: string; language?: string;
+  learnedAt?: string;                     // ISO with offset; default now
+  providedBy?: "me" | "someone" | { name: string };   // default "me" (the memory's self); a name = a contact of
+                                          // this memory, created when new (an ambiguous name stays "someone")
+  conversation?: { externalId: string };  // the conversation it was learned in (its extraction then tells of it)
+  text: string;                           // the text, or its first part
+  final?: boolean;                        // default true; false = more parts follow
+}
+// response
+{ sourceId: string; status: "receiving" | "indexing" | "ready"; parts: number; passages: number; duplicate: boolean }
+```
+- `POST api/v1/ingest/sources/{externalId}/parts` `{part, text, final?}` → `200`, same response: `part` is 1, 2, 3… in
+  order (the first request is part 0); a part sent again is a duplicate, a gap → `409` `part_out_of_order`, a part after
+  the final one → `409` `source_complete`, an unknown source → `404` `source_not_found`.
+- The same `externalId` with the same first text and title → `duplicate: true`, nothing changes; with a new text → a new
+  version (its passages replaced; the learning episode and its links stay).
+- Each part is split into passages at once (no LLM: by Markdown headings, paragraphs, sentences, ≈ 1 000 characters
+  each) and embedded in the background: status `receiving` (parts still to come) → `indexing` → `ready`; full-text search
+  finds passages before their embeddings.
+- **Learning is an episode** linked to the source: when the source names a conversation that still has messages to
+  extract, that extraction tells of it (an episode citing the source); otherwise — or when the extraction leaves it out —
+  Recordare writes it in code, no LLM, in the memory's language ("Il 10 ottobre 2026 ho imparato «Manuale della
+  caldaia», da Paolo").
+- `DELETE api/v1/ingest/sources/{externalId}` → `204`: forgets the source (its text and passages are deleted; the
+  episodes that referred to it keep a "forgotten source" marker); one Recordare never had counts as done.
+
 ### Imports
 `source: import_*` with historical `sentAt`, batched; extracted by the nightly path with topic
 segmentation (D29); forward-only supersession by `sentAt`.
@@ -225,7 +268,7 @@ at `initialize` (token owner, or `X-Recordare-User` for client keys); every requ
 (conversation header or `_meta.recordare.conversation`; answers use the whole memory, D50). Tool schemas use the provider-neutral subset
 (D27). Tools are always listed (no hint whether a diary exists). As built: a session is opened only by an `initialize` request (`404` for an
 unknown session id); the admin credential gets `403`; a request from another credential than the one that opened the
-session is refused like an owner mismatch. Writes need a resolvable context — a personal token, or a conversation
+session is refused like an owner mismatch. Writes (`log_episode`, `remember`, `learn_source`, corrections, forgetting) need a resolvable context — a personal token, or a conversation
 Recordare has ingested — otherwise they return `{error: "cannot write here"}`. The published tool schemas are in
 `packages/client` (`TOOLS`, kept in sync by the conformance suite) for connectors that declare tools up front.
 
@@ -292,6 +335,7 @@ type Episode = {
   inferred: boolean;
   people: string[]; feelings: string[]; opinion?: string;
   source: { conversation: string; messageIds: string[]; at: string };   // conversation = the client's own id
+  sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
 The same in every conversation, including those others take part in (D50: no viewer filter).
@@ -345,6 +389,32 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   the people the memory knows, in both modes; each carries its `subject` (`self` — in an entity memory the agent and
   its place — or `{kind: "contact", name}`; notes may also be `undecided`).
 
+### `search_knowledge` and `learn_source` (D49, WORK_PLAN 8.9 — learned sources)
+- `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passages of the sources the agent learned, ranked by
+  weighted RRF of vector and full-text ranks (as episodes). Returns:
+  ```ts
+  {
+    memory: { name: string; mode: "personal" | "entity" };
+    passages: Array<{
+      text: string; heading: string | null;
+      similarity: number | null;                 // null when found by words only
+      source: { id: string; title: string; kind: string; author: string | null; uri: string | null;
+                providedBy: { kind: "self" } | { kind: "someone" } | { kind: "contact"; name: string };
+                learnedAt: string };
+    }>;
+    episodes: Array<{ id: string; sourceId: string; content: string; when: string }>;  // that refer to the sources
+                                                 // returned (up to 5 each): when I learned them, what I did with them
+    notes: string[];                             // passages are knowledge, not memories of what happened
+  }
+  ```
+  Logged in `recall_log` (tool `search_knowledge`). For what happened, `search_episodes`.
+- `learn_source {title, text, author?, kind?, uri?}` — the agent learns a text (plain text; `kind` as in §2) given in the
+  conversation: provided by the memory's self, linked to the conversation of the call (its extraction tells of the
+  learning). The same title again replaces it (the source id is derived from the title). A write: needs a resolvable
+  context. Returns `{sourceId, status, passages, stored}` (`stored: false` = the same text was already there). For a
+  big text, the REST route in parts (§2).
+- Recall: an episode that refers to a source carries `sources` (`search_episodes`, above).
+
 ### `resolve_period` (D12, deterministic)
 As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); expressions in the
 most used languages (`service/src/lang`: relative periods and month names from Intl for 25 locales, plus seasons and
@@ -362,7 +432,9 @@ each above a similarity floor; ≈ 300 tokens at most) as one fenced `<memory-co
 instructions", or `block: null` when nothing is relevant. No LLM call. Personal memories (8.4): the block speaks to the
 agent as the memory's self ("Background from your memory (you are Andrea: first-person items are yours)"), other
 people's notes and episodes carry their name (`[Giulia] …`), and it may end with **one** open clarification relevant to
-the message (a candidate named in it, or its item served): `- if natural, ask: Marco chi — il collega o il cugino?`. The whole memory in every conversation, like every
+the message (a candidate named in it, or its item served): `- if natural, ask: Marco chi — il collega o il cugino?`. It may
+also hold **one** passage of a learned source (8.9), when clearly about the message (similarity ≥
+`CONTEXT_MIN_PASSAGE_SIMILARITY`, default 0.6), cut at 300 characters: `- learned (from «Manuale della caldaia»): …`. The whole memory in every conversation, like every
 read (D50); a served block is logged in `recall_log` (tool `memory_context`; the recall-echo guard then treats the reply
 as possibly echoing it). Always available: whether to use it, and for which agent, is the client's choice (the host
 appends it at the end of its system prompt and never stores it as a message).
@@ -411,6 +483,9 @@ account sees all of it (D48).
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | locale, timezone, quality profile |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
+| `GET api/v1/sources` | read | What the agent learned, newest first: `[{id, externalId, title, kind, author, uri, providedBy, learnedAt, status, chars, passages, episodeIds}]` (built, 8.9) |
+| `GET api/v1/sources/{id}` | read | The same with its text, passage by passage: `text: [{ordinal, heading, content}]` (built) |
+| `DELETE api/v1/sources/{id}` | write | Forget a source (as `DELETE api/v1/ingest/sources/{externalId}`; `404` for an id that is not the owner's) (built) |
 | `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`mode` `entity` = a shared memory: the client tells its users so) (with a client key: the memory of the account behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| owner_token`) |
 | `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (client key; a personal token gets 403) | The memory's settings from the platform: the name follows the client's user (sync on every rename); `mode` `personal \| entity` (D50) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it); `gender` `masculine \| feminine \| neutral` (first person, from the account's profile) any time |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
@@ -419,7 +494,8 @@ account sees all of it (D48).
 
 `@arkimedehq/recordare-client` in `packages/client/` (its README): `RecordareClient` (`me`, `updateMe`, `ingest` split
 into requests of 500, `context` / `contextWithTurn` (§3 pre-turn memory context, with `ingest`), `endConversation`,
-`editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, the §4 wrappers `episodes`, `episode`,
+`editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, `learnSource` (§2 learned sources, a big text sent
+in parts of `SOURCE_PART_BYTES` = 4 MB at paragraph boundaries) / `forgetSource` / `sources`, the §4 wrappers `episodes`, `episode`,
 `correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`, `mcp.listTools` /
 `mcp.callTool` over the official MCP SDK with one session per user + conversation), `TOOLS` (the published MCP tool
 schemas), `PersonDirectory` (cached memory, mode and Atlas address; the platform's opt-in; name sync),
@@ -455,7 +531,7 @@ client keys, consolidate); it is in Italian and English.
 `episode.forgotten`. Metadata only — ids, kinds, counts, tokens — never message or memory content. Nothing is
 synthesised: the dashboard (WORK_PLAN 5b.6) moves only when these events arrive. Versioned contract: `ATLAS_EVENTS.md`.
 
-Recall log: every `search_episodes` / `search_memory` served, and every memory-context block served (tool
+Recall log: every `search_episodes` / `search_memory` / `search_knowledge` served, and every memory-context block served (tool
 `memory_context`), writes one `recall_log` row (tool, mode, item count,
 conversation; never the query or the memories) — the source of the atlas totals and of the recall-echo guard (D38).
 

@@ -24,6 +24,8 @@ export interface PromptContext {
   contacts: PromptContact[];
   /** "Q1: Marco chi — il collega o il cugino? (about: …; candidates C1, C2)". */
   openQuestions: string[];
+  /** Sources learned in this conversation with no episode yet (WORK_PLAN 8.9): "S1: «Manuale della caldaia» — …". */
+  learnedSources: string[];
   locale: string;
   messageDay: string;
   calendar: string;
@@ -367,6 +369,8 @@ export function buildExtractionUser(ctx: PromptContext): string {
     `CALENDAR (around ${ctx.messageDay}):\n${ctx.calendar}`,
     `PEOPLE I KNOW:\n${ctx.contacts.map(contactLine).join('\n') || NONE}`,
     `OPEN QUESTIONS:\n${ctx.openQuestions.join('\n') || NONE}`,
+    // Only when there are some: every other input stays byte-identical to the measured one.
+    ...(ctx.learnedSources.length ? [`SOURCES LEARNED IN THIS CONVERSATION (the episode that tells of learning or using one names it in "sources", e.g. ["S1"]):\n${ctx.learnedSources.join('\n')}`] : []),
     `OPEN PLANS:\n${ctx.openPlans.join('\n') || NONE}`,
     `CURRENT FACTS:\n${ctx.currentFacts.join('\n') || NONE}`,
     `KNOWN SLOTS: ${ctx.knownSlots.join(', ') || NONE}`,

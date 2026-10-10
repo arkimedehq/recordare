@@ -35,8 +35,10 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `PORT` | 8080 | HTTP port inside the container |
 | `ADMIN_API_KEY` | — | Admin credential (≥ 32 characters): admin API and console |
 | `ATLAS_URL` | — | Where people open Recordare Atlas; handed to clients in `GET /me` (admins only see it in Arkimede) |
+| `MAX_REQUEST_BYTES` | 16 MB (16 777 216) | Largest JSON request body (≥ 100 000); bigger → `413` `payload_too_large`. A learned source bigger than this arrives in parts (`learnSource` sends 4 MB parts, `SOURCE_PART_BYTES`); no limit per source or per memory (WORK_PLAN 8.9) |
 | `IDLE_DELAY_SECONDS` | 900 | Quiet time before a conversation is extracted (a new message restarts it) |
 | `CONTEXT_MIN_FACT_SIMILARITY`, `…_EPISODE_…`, `…_PLAN_…`, `…_PERIOD_…` | 0.50, 0.55, 0.45, 0.35 | Memory context (`POST api/v1/context`): minimum similarity for facts and notes, episodes, upcoming plans, episodes of a named period. Lower floors (0.45 / 0.48 / 0.42) measured: no gain (RESULTS 5.7) |
+| `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Memory context: minimum similarity for the one passage of a learned source it may hold (cut at 300 characters, `- learned (from «title»): …`; WORK_PLAN 8.9). First value, to measure |
 | `CONSOLIDATION_SCHEDULE` | on | Nightly consolidation on its own; off = only on demand (evaluations) |
 | `CONSOLIDATION_HOUR` | 3 | Local hour (person's timezone) after which the night runs |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
@@ -117,6 +119,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | Memory context | Agents → agent, per agent | off | Before each answer, Recordare's relevant memories (`POST api/v1/context`) at the end of the prompt (WORK_PLAN 5.7) · dev set: no harm, +3–7 pt; with the voice agent's prompt tool calls 9 → 5 of 15. A client choice: Recordare serves the block whenever asked, from the whole memory in every conversation (D50) |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, `_HEADERS`, `_PROTOCOL`, `OTEL_SERVICE_NAME` | Arkimede `.env` | off | OpenTelemetry GenAI traces to the atlas (metadata only) |
 | Library delivery policy | `packages/client` (`DEFAULT_DELIVERY`) | 12 attempts, 5 s → 1 h | Outbox retries (jitter, `Retry-After`), then parked |
+| Source part size | `packages/client` (`SOURCE_PART_BYTES`, `learnSource`'s `partBytes`) | 4 MB | A learned source bigger than this is sent in parts, cut at paragraph boundaries (keep it below the service's `MAX_REQUEST_BYTES`) |
 
 ## 8b. Connectors (`connectors/`, each README has the full list)
 

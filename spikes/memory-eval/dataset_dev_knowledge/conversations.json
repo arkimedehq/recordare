@@ -1,0 +1,159 @@
+{
+ "_note": "Learned-sources dev set for WORK_PLAN 8.9 (NOT blind, written by the engine developer): a personal memory (Chiara) learns five texts — a boiler manual from her brother Paolo, her grandmother's recipe from her mother (in a conversation), her lease, her photography notes (in a conversation), a resignation draft later forgotten. Entries with \"type\": \"source\" are learned, \"forget_source\" forgotten.",
+ "users": {
+  "chiara": "Chiara, Bologna"
+ },
+ "genders": {
+  "chiara": "feminine"
+ },
+ "sessions": [
+  {
+   "type": "source",
+   "id": "k-caldaia",
+   "user": "chiara",
+   "ts": "2026-10-03T10:00:00+02:00",
+   "title": "Manuale della caldaia ecoTEC",
+   "text": "# Caldaia ecoTEC — manuale d'uso\n\n## Manutenzione\nLa manutenzione ordinaria va fatta ogni 2 anni da un tecnico abilitato, insieme al controllo dei fumi. La garanzia di 5 anni vale solo se la caldaia è registrata entro 30 giorni dall'installazione.\n\n## Pressione\nLa pressione ottimale dell'impianto, a caldaia fredda, è tra 1,2 e 1,5 bar.\n\n## Codici di errore\nF.22 — pressione dell'acqua troppo bassa: riempire l'impianto con il rubinetto di carico fino a 1,2–1,5 bar.\nF.28 — mancata accensione: controllare che il rubinetto del gas sia aperto e che arrivi gas; poi premere reset.\n\n## Reset\nPer il reset tenere premuto il tasto reset per 3 secondi.",
+   "provided_by": "Paolo"
+  },
+  {
+   "id": "c01",
+   "user": "chiara",
+   "ts": "2026-10-03T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Paolo mi ha passato il manuale della caldaia, finalmente. Domani chiamo il tecnico per la revisione."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, così hai tutto sotto mano."
+    }
+   ]
+  },
+  {
+   "id": "c02",
+   "user": "chiara",
+   "ts": "2026-10-04T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mamma mi ha mandato la ricetta della parmigiana di nonna Rosa: sabato 10 la preparo per la cena con Luca."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella idea!"
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-parmigiana",
+   "user": "chiara",
+   "ts": "2026-10-04T12:01:00+02:00",
+   "title": "Ricetta della parmigiana di nonna Rosa",
+   "text": "Parmigiana di melanzane di nonna Rosa\n\nTagliare 4 melanzane a fette, salarle e lasciarle riposare 2 ore. Asciugarle e friggerle.\nIn una teglia alternare melanzane, sugo di pomodoro con basilico, mozzarella fior di latte e 100 g di parmigiano grattugiato.\nCuocere in forno a 180 gradi per 40 minuti. Lasciare riposare 15 minuti prima di servire.",
+   "provided_by": "Mamma",
+   "kind": "note",
+   "conversation": "c02"
+  },
+  {
+   "type": "source",
+   "id": "k-affitto",
+   "user": "chiara",
+   "ts": "2026-10-05T09:00:00+02:00",
+   "title": "Contratto d'affitto di via Saragozza 12",
+   "text": "Contratto di locazione — via Saragozza 12, Bologna\n\nCanone mensile: 850 euro, da pagare entro il giorno 5 di ogni mese.\nDurata: fino al 30 settembre 2030.\nDisdetta: preavviso di 6 mesi, con lettera raccomandata.\nDeposito cauzionale: 3 mensilità.\nAnimali domestici: ammessi solo con il consenso scritto del proprietario."
+  },
+  {
+   "type": "source",
+   "id": "k-dimissioni",
+   "user": "chiara",
+   "ts": "2026-10-06T08:00:00+02:00",
+   "title": "Bozza della lettera di dimissioni",
+   "text": "Bozza — lettera di dimissioni\n\nGentile direttrice, con la presente rassegno le mie dimissioni per motivi personali. Il mio ultimo giorno di lavoro sarà il 31 dicembre 2026.",
+   "kind": "own_text"
+  },
+  {
+   "id": "c03",
+   "user": "chiara",
+   "ts": "2026-10-06T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "La caldaia dà l'errore F.22, cosa faccio?"
+    },
+    {
+     "role": "assistant",
+     "content": "F.22 è pressione bassa: riempi l'impianto con il rubinetto di carico fino a 1,2–1,5 bar."
+    },
+    {
+     "role": "user",
+     "content": "Fatto, ora va. La pressione è a 1,3."
+    }
+   ]
+  },
+  {
+   "id": "c04",
+   "user": "chiara",
+   "ts": "2026-10-07T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho ripassato gli appunti della prima lezione del corso di fotografia. Giovedì c'è la seconda lezione."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, buona lezione!"
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-foto",
+   "user": "chiara",
+   "ts": "2026-10-07T18:01:00+02:00",
+   "title": "Appunti del corso di fotografia — lezione 1",
+   "text": "Corso di fotografia — lezione 1 (i miei appunti)\n\nComposizione: regola dei terzi, il soggetto su una delle linee.\nLuce: con tanta luce ISO basso (100–200).\nSfocato: apertura grande, f/1.8.\nMosso: a mano libera non scendere sotto 1/60 di secondo.",
+   "kind": "own_text",
+   "conversation": "c04"
+  },
+  {
+   "id": "c05",
+   "user": "chiara",
+   "ts": "2026-10-08T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho cambiato idea, non mi dimetto più: dimentica quella bozza di lettera."
+    },
+    {
+     "role": "assistant",
+     "content": "D'accordo, la dimentico."
+    }
+   ]
+  },
+  {
+   "type": "forget_source",
+   "source": "k-dimissioni",
+   "user": "chiara",
+   "ts": "2026-10-08T09:01:00+02:00",
+   "id": "forget-k-dimissioni"
+  },
+  {
+   "id": "c06",
+   "user": "chiara",
+   "ts": "2026-10-10T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "La parmigiana è riuscita benissimo, Luca ha fatto il bis!"
+    },
+    {
+     "role": "assistant",
+     "content": "Che soddisfazione!"
+    }
+   ]
+  }
+ ]
+}

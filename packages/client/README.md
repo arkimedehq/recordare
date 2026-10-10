@@ -50,6 +50,22 @@ block to append to the system prompt; `context(user, conversation, query)` when 
 description, JSON Schema), for hosts that must declare tools before connecting; the conformance suite keeps it in
 sync with the service.
 
+## Learned sources
+`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?})`
+makes the agent learn a text (D49, WORK_PLAN 8.9: a manual, a page, a note — **text only**, the host converts files).
+Any size: a text bigger than `SOURCE_PART_BYTES` (4 MB, or the `partBytes` argument) is sent in parts cut at paragraph
+boundaries (`POST api/v1/ingest/sources` + `…/parts`); → `{sourceId, status, parts, passages, duplicate}`. The same
+`externalId` again replaces the source; `providedBy` is `'me'` (default), `'someone'` or `{name}`; `conversation:
+{externalId}` links it to the conversation it was learned in (that extraction tells of the learning).
+`forgetSource(user, externalId)` forgets it (one never sent counts as done); `sources(user)` lists what the agent
+learned (`Source[]`). The agent searches it with the MCP tool `search_knowledge`. Send only what the agent should
+learn, never a RAG's search results.
+
+```ts
+await rc.learnSource('user-42', { externalId: 'boiler-manual', title: 'Manuale della caldaia', text: manualText,
+  kind: 'document', providedBy: { name: 'Paolo' }, conversation: { externalId: 'chat-1' } });
+```
+
 ## The diary
 `episodes`, `episode`, `digests`, `facts`, `notes`, `plans` read what Recordare remembers for the person's own view in
 the platform's UI; `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide` are the person's edits (API.md §4).
@@ -60,8 +76,8 @@ Everything else is here, the same for every client.
 
 ## Conformance
 `service/test/conformance` runs this library against the real service in Recordare's CI: a turn ingested once,
-deletions propagate, the name, mode and gender follow the platform, own content is marked, recall over MCP carries the
-user and the conversation. Type checks there fail the build when this contract drifts from the service's schemas.
+deletions propagate, the name, mode and gender follow the platform, own content is marked, a source is learned in
+parts, listed and forgotten, recall over MCP carries the user and the conversation. Type checks there fail the build when this contract drifts from the service's schemas.
 
 ## Synced copy (Arkimede)
 Arkimede still uses a copy of the sources instead of the npm package: `scripts/sync-to.sh <dir>` copies them into a

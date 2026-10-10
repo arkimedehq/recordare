@@ -84,6 +84,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   persone che conosco; entità: la giornata dell'agente condiviso), mai dalle affermazioni altrui; una nuova versione del
   prompt riscrive ogni giorno una volta. La revisione notturna dei fatti copre ogni soggetto (i fatti del sé e dei
   contatti). Entrambi restano spenti nel richiamo / per default (nessun guadagno misurato).
+- **Fonti apprese** (D49, WORK_PLAN 8.9): la memoria semantica dell'agente — testi che impara (manuali, documenti, pagine,
+  appunti; solo testo, il client converte i file) tenuti separati da ciò che ha vissuto, senza limiti di dimensione
+  (inviati a parti), brani con embedding in background, chi li ha dati e quando, e l'apprendimento come episodio collegato
+  nei due sensi (scritto dall'estrazione della sua conversazione, o dal codice nella lingua della memoria). Nuove route
+  REST (`api/v1/ingest/sources`, `api/v1/sources`), strumenti MCP `search_knowledge` e `learn_source`, `sources` sugli
+  episodi, un brano nel contesto di memoria; dimenticare una fonte lascia un segno sui suoi episodi. Libreria client:
+  `learnSource` (parti automatiche), `forgetSource`, `sources`; `TOOLS` rigenerato. Le richieste più grandi di
+  `MAX_REQUEST_BYTES` (16 MB) ricevono 413, il JSON malformato 400 (prima 500).
 - **Connettori: una memoria per agente, le persone come partecipanti** (D50) — **incompatibile per le installazioni con
   più persone**. OpenClaw: l'agente del Gateway ha una sola memoria (un token personale, o una chiave client con
   `defaultUser`); ogni mittente è un partecipante con l'identità di canale `<canale>:<senderId>` e il nome che ha sul

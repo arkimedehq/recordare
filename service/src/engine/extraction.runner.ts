@@ -23,6 +23,7 @@ import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
 import { EPISODES_ONLY_NOTE, ENTITY_FACTS_SYSTEM, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
 import { TelemetryService } from '../telemetry/telemetry.service';
+import { writeLearnedEpisode } from '../knowledge/learned-episode';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
@@ -117,6 +118,11 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const written = await this.db.transaction(async (tx) => {
         const writer = new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId, entity: !!owner.entity }, input);
         const rows = await writer.apply(output);
+        // Sources of this conversation the episodes did not tell of get their learning episode in code (D49).
+        for (const sourceId of input.sources.values()) {
+          const learned = await writeLearnedEpisode(tx, sourceId);
+          if (learned) rows.push({ table: 'episodes', id: learned.id, text: learned.text });
+        }
         await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), summary = $2 WHERE id = $1`, [runId, writer.summary(output)]);
         return rows;
       });
