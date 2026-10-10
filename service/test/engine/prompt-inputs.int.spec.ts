@@ -3,8 +3,8 @@
 
 /**
  * Prompt inputs are part of a measured version (evaluation rule 9): the personal prompts stay byte-identical to the ones
- * measured (`extract.v13`, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
- * `extract.v13+entity.v4`) — a change to any of them is a new version, measured before it ships.
+ * measured (`extract.v14`, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
+ * `extract.v14+entity.v4`) — a change to any of them is a new version, measured before it ships.
  */
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
@@ -47,8 +47,8 @@ describe('prompt inputs of the measured versions', () => {
     return { system: req?.messages[0]?.content ?? '', user: req?.messages[1]?.content ?? '' };
   }
 
-  it('personal prompts are the measured extract.v13 and facts.v2', () => {
-    expect(sha(EXTRACTION_SYSTEM)).toBe('579c3ed76efe7691884c658a959a98300915d787cebb9806353ffe7a2aed0c17');
+  it('personal prompts are the measured extract.v14 and facts.v2', () => {
+    expect(sha(EXTRACTION_SYSTEM)).toBe('d0742a4e7114ed4b66b4968c83010f8a88913c29735c25b01b5ad6b078618b53');
     expect(sha(FACTS_SYSTEM)).toBe('309707b0c33d7fb2b05cce9fe88d434185180cf5c195135070e6f37509924d7c');
   });
 
@@ -77,7 +77,7 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-5', role: 'tool', toolName: 'web_search', content: 'Meteo: sole.', sentAt: '2026-06-08T09:04:00+02:00' },
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
-    expect(sha(second.system)).toBe('a2f41a75effebc3419ddf458c1570352dd7fbcd7784ef953b90e6a66b7537516');
+    expect(sha(second.system)).toBe('d545171d9822306d9465d83814af019f949bd147a9b94cd7cfbfd1ace509e2dd');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

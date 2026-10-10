@@ -1,0 +1,71 @@
+{
+ "_note": "NOT blind.",
+ "user": "marco",
+ "questions": [
+  {
+   "id": "d01",
+   "category": "agent-action",
+   "asked_at": "2026-11-04T09:00:00+01:00",
+   "q": "Ho un tavolo prenotato per giovedì?",
+   "expected": "Sì: il 2 novembre ho prenotato un tavolo per quattro da Gigina per giovedì 5 novembre alle 20:30, a nome Rossi, confermato via SMS (con Luca e Sara).",
+   "must_not": [
+    "la prenotazione è ancora da fare",
+    "non hai prenotazioni"
+   ]
+  },
+  {
+   "id": "d02",
+   "category": "agent-action",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "Quali offerte della palestra avevo confrontato e quale ho scelto?",
+   "expected": "Il 3 novembre ho confrontato FitOne (39 euro al mese, corsi inclusi), Virgin (55 euro al mese con piscina) e Palestra Moline (32 euro al mese, senza corsi); hai scelto FitOne dal 1° dicembre.",
+   "must_not": [
+    "hai scelto Virgin",
+    "hai scelto Moline"
+   ]
+  },
+  {
+   "id": "d03",
+   "category": "correction",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "Ti sei mai sbagliato sulla visita dal cardiologo?",
+   "expected": "Sì: il 4 novembre ho detto venerdì 13 novembre e tu mi hai corretto: la visita dal dottor Bertoni è martedì 17 novembre alle 10 (il 13 è il compleanno di Sara).",
+   "must_not": [
+    "la visita è il 13 novembre",
+    "non mi sono mai sbagliato"
+   ]
+  },
+  {
+   "id": "d04",
+   "category": "correction",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "Che gomme ho montato sulla Golf e quanto le ho pagate?",
+   "expected": "Quattro gomme invernali Pirelli, 360 euro montaggio compreso, dal gommista Vecchi il 5 novembre (prima avevi detto Michelin e 380 euro, poi hai corretto il 7 novembre).",
+   "must_not": [
+    "sono Michelin",
+    "hai pagato 380 euro"
+   ]
+  },
+  {
+   "id": "d05",
+   "category": "temporal",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "Cosa ho fatto giovedì 5 novembre?",
+   "expected": "La mattina hai cambiato le gomme della Golf (Pirelli invernali, 360 euro, dal gommista Vecchi); la sera cena da Gigina con Luca e Sara (tortellini in brodo; Luca ha raccontato del nuovo lavoro a Modena).",
+   "must_not": [
+    "sei andato in palestra",
+    "visita dal cardiologo"
+   ]
+  },
+  {
+   "id": "d06",
+   "category": "premise-trap",
+   "asked_at": "2026-11-13T09:00:00+01:00",
+   "q": "Com'è andata la cena da Gigina di giovedì 12 novembre?",
+   "expected": "Non c'è stata una cena da Gigina il 12 novembre: la cena da Gigina con Luca e Sara è stata giovedì 5 novembre, ed è andata benissimo (tortellini in brodo).",
+   "must_not": [
+    "la cena del 12 è andata bene"
+   ]
+  }
+ ]
+}

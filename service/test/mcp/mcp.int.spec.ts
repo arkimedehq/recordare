@@ -272,6 +272,50 @@ describe('MCP endpoint', () => {
     await client.close();
   });
 
+  it('a period search brings relevant episodes from outside the period, marked (8.11: booked before the day)', async () => {
+    const db = app.get((await import('typeorm')).DataSource);
+    const ids: string[] = [];
+    for (const [kind, content, at] of [['plan', 'Giovedì 22 gennaio cena all\'Osteria del Grillo', '2026-01-22T19:00:00Z'],
+      ['event', 'Ho prenotato un tavolo all\'Osteria del Grillo per giovedì 22 gennaio', '2026-01-19T19:00:00Z']]) {
+      const [r] = await db.query(
+        `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision, plan_status)
+         VALUES ($1, $2::episode_kind, $3, 'holder_lived', 'holder', $4, $5, 'day', CASE WHEN $2 = 'plan' THEN 'open'::plan_status END) RETURNING id`,
+        [memoryId, kind, content, [memoryId], at]);
+      ids.push(r.id);
+    }
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const out = await search(client, { query: 'tavolo Osteria del Grillo', from: '2026-01-22', to: '2026-01-22' });
+    expect((out['episodes'] as Array<{ id: string }>).map((e) => e.id)).toEqual([ids[0]]);
+    expect((out['outsidePeriod'] as Array<{ id: string }>).map((e) => e.id)).toEqual([ids[1]]);
+    // A list of the period stays the period's own.
+    const listed = await search(client, { query: 'tavolo Osteria del Grillo', mode: 'list', from: '2026-01-22', to: '2026-01-22' });
+    expect(listed['outsidePeriod']).toEqual([]);
+    await db.query(`DELETE FROM episodes WHERE id = ANY($1)`, [ids]);
+    await client.close();
+  });
+
+  it('marks a chat excerpt whose episode was corrected with the correction (8.11)', async () => {
+    const db = app.get((await import('typeorm')).DataSource);
+    const [msg] = await db.query(`SELECT id FROM messages WHERE external_id = 'nas-chat-1'`);
+    const [old] = await db.query(
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision, invalidated_at)
+       VALUES ($1, 'event', 'Backup del NAS sul disco USB rosso', 'holder_lived', 'holder', $2, '2026-01-22T20:00:00Z', 'day', now()) RETURNING id`,
+      [memoryId, [memoryId]]);
+    const [fix] = await db.query(
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision, corrects)
+       VALUES ($1, 'event', 'Backup del NAS sul disco USB blu, non su quello rosso', 'holder_lived', 'holder', $2, '2026-01-22T20:00:00Z', 'day', $3) RETURNING id`,
+      [memoryId, [memoryId], old.id]);
+    await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2)`, [old.id, msg.id]);
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const out = await search(client, { query: 'backup del NAS' });
+    const chats = out['fromChats'] as Array<{ messageId: string; correctedBy?: string }>;
+    expect(chats.find((h) => h.messageId === msg.id)?.correctedBy).toBe('Backup del NAS sul disco USB blu, non su quello rosso');
+    expect(chats.filter((h) => h.messageId !== msg.id).every((h) => h.correctedBy === undefined)).toBe(true);
+    expect((out['notes'] as string[]).some((n) => n.includes('correctedBy'))).toBe(true);
+    await db.query(`DELETE FROM episodes WHERE id = ANY($1)`, [[old.id, fix.id]]);
+    await client.close();
+  });
+
   it('fills free places with the nearest episodes instead of returning half a page', async () => {
     const db = app.get((await import('typeorm')).DataSource);
     const ids: string[] = [];

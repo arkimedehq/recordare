@@ -1,0 +1,128 @@
+{
+ "_note": "Entity dev set for the 8.11 gaps (NOT blind, written by the engine developer): a mountain hut's shared agent.",
+ "users": {
+  "rifugio_cima": "Rifugio Cima, Val di Fassa"
+ },
+ "genders": {
+  "rifugio_cima": "masculine"
+ },
+ "entities": [
+  "rifugio_cima"
+ ],
+ "sessions": [
+  {
+   "id": "r01",
+   "user": "rifugio_cima",
+   "ts": "2026-11-01T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Listino dell'inverno 2026-27: mezza pensione 58 euro a persona, pensione completa 72 euro, pernottamento con colazione 45 euro. Bambini sotto i 10 anni metà prezzo.",
+     "own": true
+    }
+   ]
+  },
+  {
+   "id": "r02",
+   "user": "rifugio_cima",
+   "ts": "2026-11-03T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Paola. Quanto costa la mezza pensione quest'inverno?"
+    },
+    {
+     "role": "assistant",
+     "content": "65 euro a persona."
+    },
+    {
+     "role": "user",
+     "content": "Ma il listino dice 58!"
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, scusa: la mezza pensione è 58 euro a persona."
+    }
+   ]
+  },
+  {
+   "id": "r03",
+   "user": "rifugio_cima",
+   "ts": "2026-11-04T15:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni. Ho cambiato il filtro della caldaia della camera 2, era intasato."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: filtro della caldaia della camera 2 cambiato oggi."
+    }
+   ]
+  },
+  {
+   "id": "r04",
+   "user": "rifugio_cima",
+   "ts": "2026-11-05T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi confronti i fornitori di legna per la stufa?"
+    },
+    {
+     "role": "assistant",
+     "content": "Ho tre preventivi: Legnami Dolomiti 18 euro al quintale con consegna, Bosco Verde 15 euro al quintale senza consegna, Fratelli Zanon 17 euro al quintale con consegna gratuita oltre i 20 quintali."
+    },
+    {
+     "role": "user",
+     "content": "Sono Gianni: prendiamo Zanon, ordina 30 quintali."
+    }
+   ]
+  },
+  {
+   "id": "r05",
+   "user": "rifugio_cima",
+   "ts": "2026-11-06T10:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni, mi sono sbagliato ieri l'altro: il filtro della caldaia l'ho cambiato nella camera 4, non nella 2."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: filtro cambiato nella camera 4 il 4 novembre."
+    }
+   ]
+  },
+  {
+   "id": "r06",
+   "user": "rifugio_cima",
+   "ts": "2026-11-06T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola: sabato 14 novembre arriva il gruppo del CAI di Trento, 12 persone, due notti. Il pulmino dalla stazione lo prenoti tu."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: gruppo CAI di Trento, 12 persone, da sabato 14 a lunedì 16 novembre. Prenoto io il pulmino."
+    }
+   ]
+  },
+  {
+   "id": "r07",
+   "user": "rifugio_cima",
+   "ts": "2026-11-07T09:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola: prenota il pulmino per sabato 14 alle 9 dalla stazione di Canazei."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: pulmino Dolomitibus da 16 posti, sabato 14 novembre alle 9 dalla stazione di Canazei, prenotazione confermata."
+    }
+   ]
+  }
+ ]
+}

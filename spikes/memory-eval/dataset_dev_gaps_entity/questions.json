@@ -1,0 +1,55 @@
+{
+ "_note": "NOT blind.",
+ "user": "rifugio_cima",
+ "questions": [
+  {
+   "id": "e01",
+   "category": "agent-action",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "C'è un pulmino prenotato per sabato?",
+   "expected": "Sì: il 7 novembre, su richiesta di Paola, ho prenotato un pulmino Dolomitibus da 16 posti per sabato 14 novembre alle 9 dalla stazione di Canazei, confermato, per il gruppo del CAI di Trento (12 persone).",
+   "must_not": [
+    "il pulmino è ancora da prenotare"
+   ]
+  },
+  {
+   "id": "e02",
+   "category": "correction",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "Ti è mai capitato di sbagliare un prezzo?",
+   "expected": "Sì: il 3 novembre ho detto a Paola che la mezza pensione costa 65 euro a persona; lei mi ha corretto, il listino dice 58 euro.",
+   "must_not": [
+    "la mezza pensione costa 65 euro",
+    "non ho mai sbagliato"
+   ]
+  },
+  {
+   "id": "e03",
+   "category": "correction",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "In quale camera è stato cambiato il filtro della caldaia il 4 novembre?",
+   "expected": "Nella camera 4: Gianni il 4 novembre aveva detto camera 2, ma il 6 novembre ha corretto (camera 4, non 2).",
+   "must_not": [
+    "nella camera 2"
+   ]
+  },
+  {
+   "id": "e04",
+   "category": "agent-action",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "Quali fornitori di legna abbiamo confrontato e chi è stato scelto?",
+   "expected": "Il 5 novembre ho confrontato Legnami Dolomiti (18 euro al quintale con consegna), Bosco Verde (15 euro senza consegna) e Fratelli Zanon (17 euro, consegna gratuita oltre i 20 quintali); Gianni ha scelto Zanon e ha chiesto 30 quintali.",
+   "must_not": [
+    "è stato scelto Bosco Verde"
+   ]
+  },
+  {
+   "id": "e05",
+   "category": "own-content",
+   "asked_at": "2026-11-10T09:00:00+01:00",
+   "q": "Quanto costa la pensione completa per un bambino di 8 anni?",
+   "expected": "36 euro: la pensione completa è 72 euro a persona e i bambini sotto i 10 anni pagano metà prezzo.",
+   "must_not": []
+  }
+ ]
+}
