@@ -443,6 +443,48 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.11 — fresh blind sets for the agent memory (2026-10-10, DeepSeek direct, 3 runs each, `fp811_runs.sh`)
+
+Two sets written blind by separate agents from `DATASET_FORMAT.md` only, re-read by a second agent (`GOLD_AUDIT.md` in
+each), committed before any run: `dataset_blind9` (personal: Beatrice, a physiotherapist in Trento, 2034; group chats
+with declared participants, questions asked by identified contacts, learned sources; 42 questions) and
+`dataset_blind10` (entity: a campsite's front-desk agent, Umbria 2034; unidentified and self-introduced speakers, own
+content, learned sources; 35 questions). Engine of v0.2.0 (`extract.v13`, `+entity.v4` on the entity set), one instance
+on :8091, queue `fp811`; every run carries one prompt version per kind (checked).
+
+| Set | r1 / r2 / r3 | **Mean** | Bar (previous blind set) |
+|---|---|---|---|
+| `dataset_blind9` (personal, 42 q) | 82.9 / 83.3 / 78.6 | **81.6 %** | 90.9 % (blind7) |
+| `dataset_blind10` (entity, 35 q) | 85.3 / 92.9 / 91.2 | **89.8 %** | 91.4 % (blind8) |
+
+Judge errors (empty completion, excluded from the score): blind9 r1 q35, blind10 r1 / r3 q06 (both answers named the
+two messages from Marta Venturi). 1.0 in every run on both sets: knowledge, knowledge-provenance, negative; blind9 also
+temporal and state-now; blind10 own-content and same-name.
+
+The entity set is within noise of its bar; the personal set is ~9 pt below. Failures, read against the stored memory
+(not the gold: the audits marked none of these questions weak, except q05 as long):
+- **The period filter hides earlier actions about the asked day** (blind9 q03, 3/3 wrong; q40). "Ho un tavolo
+  prenotato per giovedì?" resolves to the period 12 Oct; the booking episode ("ho prenotato… ha confermato via mail",
+  5 Oct) is outside it, only the plan "ho detto che prenoto io" is inside, so the answer says the booking is still to
+  be made. The plan was not linked to the booking that fulfilled it (no `confirmed_by`).
+- **The agent's own mistakes** (blind9 q23, 2/3 wrong; blind10 q27, 2/3 wrong). Personal: stored as "ho corretto
+  l'assistente" — in a first-person memory where the agent is "I", the answer reads it as Beatrice correcting someone
+  else. Entity: the 8 April slip (Chiara's correction) is not stored at all.
+- **Detail of the agent's own turns collapses into the decision** (blind9 q02, 3/3 partial): the three quotes the
+  agent compared are gone, only "ho scelto Linea Studio" is kept.
+- **Raw chat passages outlive a correction** (blind10 q26, 3/3 partial): the B4 episode is invalidated and Ottavio's
+  correction (B3) is stored, but the recalled raw message of 16 March says B4 and the answer reports a discrepancy.
+- **Group chats** (blind9 q05, q07): Michele's message in the «Trasloco studio» group is attributed to the family chat
+  or missed; group names are not in the context; "posso usarlo" is kept unresolved (the Sonotherm 300).
+- **Asker framing** (blind9 q13, 3/3 wrong): Priya asks; the episode says "io scrivo le descrizioni dei casi" and the
+  answer mixes the two "I"; her own send-by date (25 Oct) is not recalled.
+- Variance on aggregation and claims (blind10 q08: one of two deposits in 2/3 runs; blind9 q08 r2 took Ennio's claim as
+  fact).
+
+Not tuned on these sets: they stay blind for later comparisons. The fixes are proposals for the maintainer (period
+filter vs actions done earlier; plan → fulfilling action link; the agent's own slips in the first person; raw passages
+behind invalidated episodes), each to be measured on a dev set first.
+
 ### WORK_PLAN 8.9 — learned sources (2026-10-10, DeepSeek direct, 1 run each)
 
 New dev set `dataset_dev_knowledge` (NOT blind): Chiara learns five texts (a boiler manual from her brother, her
