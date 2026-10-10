@@ -48,18 +48,18 @@ export class SourcesService {
   ) {}
 
   /** A new source, or a new version of one the client sent before (same external id); the same first request again is a duplicate. */
-  async learn(ownerId: string, clientId: string | null, req: LearnSourceRequest, now: Date, inConversation?: string): Promise<LearnSourceResult> {
+  async learn(memoryId: string, clientId: string | null, req: LearnSourceRequest, now: Date, inConversation?: string): Promise<LearnSourceResult> {
     const result = await this.db.transaction(async (tx) => {
       const [existing]: Array<{ id: string; content_hash: Buffer | null; title: string; status: LearnSourceResult['status']; parts: number }> = await tx.query(
         `SELECT id, content_hash, title, status, parts FROM sources
-         WHERE owner_id = $1 AND client_id IS NOT DISTINCT FROM $2 AND external_id = $3 FOR UPDATE`, [ownerId, clientId, req.externalId]);
+         WHERE memory_id = $1 AND client_id IS NOT DISTINCT FROM $2 AND external_id = $3 FOR UPDATE`, [memoryId, clientId, req.externalId]);
       const first = hash(req.text);
       if (existing && existing.content_hash?.equals(first) && existing.title === req.title) {
         return { ...(await this.counts(tx, existing.id)), duplicate: true };
       }
-      const provider = await this.provider(tx, ownerId, req.providedBy);
+      const provider = await this.provider(tx, memoryId, req.providedBy);
       const conversationId = inConversation
-        ?? (req.conversation && clientId ? await this.conversation(tx, ownerId, clientId, req.conversation.externalId) : null);
+        ?? (req.conversation && clientId ? await this.conversation(tx, memoryId, clientId, req.conversation.externalId) : null);
       const learnedAt = req.learnedAt ? new Date(req.learnedAt) : now;
       let id: string;
       if (existing) {
@@ -74,13 +74,13 @@ export class SourcesService {
         id = existing.id;
       } else {
         [{ id }] = await tx.query(
-          `INSERT INTO sources (owner_id, client_id, external_id, title, kind, author, origin_uri, language, provided_by_kind, provided_by_person_id,
+          `INSERT INTO sources (memory_id, client_id, external_id, title, kind, author, origin_uri, language, provided_by_kind, provided_by_person_id,
              learned_at, conversation_id, content_hash)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-          [ownerId, clientId, req.externalId, req.title, req.kind, req.author ?? null, req.uri ?? null, req.language ?? null, provider.kind,
+          [memoryId, clientId, req.externalId, req.title, req.kind, req.author ?? null, req.uri ?? null, req.language ?? null, provider.kind,
             provider.personId, learnedAt, conversationId, first]);
       }
-      await this.addPart(tx, id, ownerId, req.text, req.final);
+      await this.addPart(tx, id, memoryId, req.text, req.final);
       return { ...(await this.counts(tx, id)), duplicate: false };
     });
     if (!result.duplicate) await this.afterWrite(result.sourceId, result.status);
@@ -88,16 +88,16 @@ export class SourcesService {
   }
 
   /** The next part of a source still receiving (parts in order; a part sent again is a duplicate). */
-  async part(ownerId: string, clientId: string | null, externalId: string, req: SourcePartRequest): Promise<LearnSourceResult> {
+  async part(memoryId: string, clientId: string | null, externalId: string, req: SourcePartRequest): Promise<LearnSourceResult> {
     const result = await this.db.transaction(async (tx) => {
       const [s]: Array<{ id: string; parts: number; status: string }> = await tx.query(
-        `SELECT id, parts, status FROM sources WHERE owner_id = $1 AND client_id IS NOT DISTINCT FROM $2 AND external_id = $3 FOR UPDATE`,
-        [ownerId, clientId, externalId]);
+        `SELECT id, parts, status FROM sources WHERE memory_id = $1 AND client_id IS NOT DISTINCT FROM $2 AND external_id = $3 FOR UPDATE`,
+        [memoryId, clientId, externalId]);
       if (!s) throw new NotFoundException({ code: 'source_not_found' });
       if (req.part < s.parts) return { ...(await this.counts(tx, s.id)), duplicate: true };
       if (s.status !== 'receiving') throw new ConflictException({ code: 'source_complete', detail: 'the source already received its final part' });
       if (req.part > s.parts) throw new ConflictException({ code: 'part_out_of_order', detail: `expected part ${s.parts}` });
-      await this.addPart(tx, s.id, ownerId, req.text, req.final);
+      await this.addPart(tx, s.id, memoryId, req.text, req.final);
       return { ...(await this.counts(tx, s.id)), duplicate: false };
     });
     if (!result.duplicate) await this.afterWrite(result.sourceId, result.status);
@@ -105,12 +105,12 @@ export class SourcesService {
   }
 
   /** Forgets a source: it and its passages are deleted; the episodes that referred to it keep a marker. */
-  async forget(ownerId: string, where: { id: string } | { clientId: string | null; externalId: string }): Promise<void> {
+  async forget(memoryId: string, where: { id: string } | { clientId: string | null; externalId: string }): Promise<void> {
     await this.db.transaction(async (tx) => {
       const [s]: Array<{ id: string }> = 'id' in where
-        ? await tx.query(`SELECT id FROM sources WHERE id = $1 AND owner_id = $2 FOR UPDATE`, [where.id, ownerId])
-        : await tx.query(`SELECT id FROM sources WHERE owner_id = $1 AND client_id IS NOT DISTINCT FROM $2 AND external_id = $3 FOR UPDATE`,
-          [ownerId, where.clientId, where.externalId]);
+        ? await tx.query(`SELECT id FROM sources WHERE id = $1 AND memory_id = $2 FOR UPDATE`, [where.id, memoryId])
+        : await tx.query(`SELECT id FROM sources WHERE memory_id = $1 AND client_id IS NOT DISTINCT FROM $2 AND external_id = $3 FOR UPDATE`,
+          [memoryId, where.clientId, where.externalId]);
       if (!s) {
         if ('id' in where) throw new NotFoundException({ code: 'source_not_found' });
         return; // forgetting what Recordare never had is done
@@ -120,14 +120,14 @@ export class SourcesService {
     });
   }
 
-  async list(ownerId: string): Promise<SourceView[]> {
-    const rows: Array<SourceRow> = await this.db.query(`${SOURCE_SELECT} WHERE s.owner_id = $1 ORDER BY s.learned_at DESC, s.id`, [ownerId]);
+  async list(memoryId: string): Promise<SourceView[]> {
+    const rows: Array<SourceRow> = await this.db.query(`${SOURCE_SELECT} WHERE s.memory_id = $1 ORDER BY s.learned_at DESC, s.id`, [memoryId]);
     return rows.map(view);
   }
 
   /** A source with its text, passage by passage. */
-  async get(ownerId: string, id: string): Promise<SourceView & { text: Array<{ ordinal: number; heading: string | null; content: string }> }> {
-    const [row]: Array<SourceRow> = await this.db.query(`${SOURCE_SELECT} WHERE s.owner_id = $1 AND s.id = $2`, [ownerId, id]);
+  async get(memoryId: string, id: string): Promise<SourceView & { text: Array<{ ordinal: number; heading: string | null; content: string }> }> {
+    const [row]: Array<SourceRow> = await this.db.query(`${SOURCE_SELECT} WHERE s.memory_id = $1 AND s.id = $2`, [memoryId, id]);
     if (!row) throw new NotFoundException({ code: 'source_not_found' });
     const passages = await this.db.query(`SELECT ordinal, heading, content FROM source_passages WHERE source_id = $1 ORDER BY ordinal`, [id]);
     return { ...view(row), text: passages as Array<{ ordinal: number; heading: string | null; content: string }> };
@@ -135,12 +135,12 @@ export class SourcesService {
 
   // ── internals ─────────────────────────────────────────────────────────────────
 
-  private async addPart(tx: EntityManager, sourceId: string, ownerId: string, text: string, final: boolean): Promise<void> {
+  private async addPart(tx: EntityManager, sourceId: string, memoryId: string, text: string, final: boolean): Promise<void> {
     const [{ next }] = await tx.query(`SELECT COALESCE(max(ordinal) + 1, 0) AS next FROM source_passages WHERE source_id = $1`, [sourceId]);
     const passages = splitPassages(text);
     for (const [i, p] of passages.entries()) {
-      await tx.query(`INSERT INTO source_passages (source_id, owner_id, ordinal, heading, content) VALUES ($1, $2, $3, $4, $5)`,
-        [sourceId, ownerId, Number(next) + i, p.heading, p.content]);
+      await tx.query(`INSERT INTO source_passages (source_id, memory_id, ordinal, heading, content) VALUES ($1, $2, $3, $4, $5)`,
+        [sourceId, memoryId, Number(next) + i, p.heading, p.content]);
     }
     await tx.query(`UPDATE sources SET parts = parts + 1, chars = chars + $2, status = $3, updated_at = now() WHERE id = $1`,
       [sourceId, text.length, final ? 'indexing' : 'receiving']);
@@ -177,19 +177,19 @@ export class SourcesService {
   }
 
   /** Who gave it: me, someone, or a person by name (a contact, created when new; an ambiguous name stays someone). */
-  private async provider(tx: EntityManager, ownerId: string, by: LearnSourceRequest['providedBy']): Promise<{ kind: 'self' | 'contact' | 'someone'; personId: string | null }> {
+  private async provider(tx: EntityManager, memoryId: string, by: LearnSourceRequest['providedBy']): Promise<{ kind: 'self' | 'contact' | 'someone'; personId: string | null }> {
     if (by === 'me') return { kind: 'self', personId: null };
     if (by === 'someone') return { kind: 'someone', personId: null };
     const names: Array<{ alias: string }> = await tx.query(
-      `SELECT p.display_name AS alias FROM persons p WHERE p.id = $1 UNION ALL SELECT alias FROM person_aliases WHERE person_id = $1`, [ownerId]);
-    const r = await new ContactBook(tx, ownerId, names.map((n) => n.alias), new Map()).byName(by.name);
+      `SELECT p.display_name AS alias FROM persons p WHERE p.id = $1 UNION ALL SELECT alias FROM person_aliases WHERE person_id = $1`, [memoryId]);
+    const r = await new ContactBook(tx, memoryId, names.map((n) => n.alias), new Map()).byName(by.name);
     if (r.subject.kind === 'self') return { kind: 'self', personId: null };
     return r.subject.kind === 'contact' && r.subject.personId ? { kind: 'contact', personId: r.subject.personId } : { kind: 'someone', personId: null };
   }
 
-  private async conversation(tx: EntityManager, ownerId: string, clientId: string, externalId: string): Promise<string | null> {
-    const [c] = await tx.query(`SELECT id FROM conversations WHERE owner_id = $1 AND client_id = $2 AND external_id = $3 AND deleted_at IS NULL`,
-      [ownerId, clientId, externalId]);
+  private async conversation(tx: EntityManager, memoryId: string, clientId: string, externalId: string): Promise<string | null> {
+    const [c] = await tx.query(`SELECT id FROM conversations WHERE memory_id = $1 AND client_id = $2 AND external_id = $3 AND deleted_at IS NULL`,
+      [memoryId, clientId, externalId]);
     return (c?.id as string | undefined) ?? null;
   }
 }

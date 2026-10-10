@@ -58,7 +58,7 @@ Recordare non ha un flag di consenso (D50): i turni sono salvati dalla prima ric
 `POST api/v1/admin/identities {kind: "account", personId, clientId, externalId: "<RECORDARE_USER>"}`, oppure usa un
 **token personale** (`rp_…`) al posto della chiave client: ogni richiesta risolta va allora nella memoria del token.
 
-**Modalità** e **genere** della memoria li imposta l'admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`) oppure,
+**Modalità** e **genere** della memoria li imposta l'admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`) oppure,
 con la chiave client, `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`): `personal` (l'assistente di una
 persona: è lei l'"io", ciò che arriva senza identità dichiarata è suo) o `entity` (un assistente di famiglia, di team o
 di ufficio: ciò che arriva senza identità è di "qualcuno"); `gender` `masculine` (predefinito) | `feminine` | `neutral`
@@ -103,7 +103,7 @@ vengono dalla **configurazione admin della piattaforma**; il testo scritto dall'
 
 L'id della persona passa per `USER_MAP`. Poi la memoria (`MEMORY_PER`):
 - **`instance`** (predefinito): la memoria è `RECORDARE_USER` (o quella del token personale). Una persona in
-  `SELF_USERS` è il titolare dell'account: messaggio `user`, partecipante `owner`. Chiunque altro è un partecipante con
+  `SELF_USERS` è il titolare dell'account: messaggio `user`, partecipante `holder`. Chiunque altro è un partecipante con
   l'identità `{externalUserId: <id della persona>}` e il suo nome, messaggio `other` con quell'autore: Recordare lo
   lega a un contatto della memoria (creato alla prima occasione), così ciò che dice di sé resta suo. Recordare risponde
   con tutta la memoria in ogni conversazione (D50): ciò che una persona ha detto all'assistente può emergere con
@@ -192,7 +192,7 @@ Le richieste di titolo (`… title for the conversation …`) sono saltate da un
 Il proxy si fida dell'identità dichiarata dal chiamante: chi può raggiungerlo può dichiararsi qualunque utente. Tienilo
 sulla rete privata della piattaforma, oppure imposta `PROXY_API_KEY` così che solo la piattaforma possa chiamarlo; con
 Open WebUI usa la modalità JWT. La chiave Recordare è una chiave client: non cambia mai le impostazioni di una persona
-(`owner_settings` non è uno scope dei client).
+(`memory_settings` non è uno scope dei client).
 
 ## Limiti (v0.1)
 - Nessuna iniezione di strumenti MCP (il modello riceve i ricordi nel prompt, non gli strumenti `recordare_*`); usa il

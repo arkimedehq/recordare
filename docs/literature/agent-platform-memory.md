@@ -131,7 +131,7 @@ This is the same direction we took in D28 / D29 (append-only + value chains), re
 **Zep / Graphiti (Graphiti Apache-2.0; Zep Cloud proprietary)** — [concepts](https://help.getzep.com/concepts); see
 `zep-temporal-kg.md`. It is a bi-temporal knowledge graph: episodes provide provenance, facts are edges with
 `valid_at / invalid_at`, and custom entity and edge types act as an ontology. The cloud product adds a per-thread
-**context block** and a **user summary** steered by up to five owner-written instructions. Nothing new beyond the card
+**context block** and a **user summary** steered by up to five developer-written instructions. Nothing new beyond the card
 and `ENGINE_IDEAS.md`.
 
 **Honcho (Plastic Labs, AGPL-3.0)** — [repo](https://github.com/plastic-labs/honcho). It models peers: each
@@ -179,14 +179,14 @@ our idle trigger (D1).
 | **Write trigger** | Idle window + nightly (digests, facts review) | Agent tool any time + review fork every 10 turns + provider sync per turn | Agent notes, pre-compaction flush, session end; nightly dreaming promotes | Model during session | Model during chat; background management | Agent tools; reflection on step count / compaction | Per `add` call | Per message batch; dreams when due |
 | **Write decider** | Background extractor (1 call), code applies verdicts; agent tools for explicit writes | Agent + background fork (LLM) | Agent for episodic; **code gates + LLM ops** for core | Model | Model | Agent / reflection subagent | LLM (add-only) | Deriver LLM; dream agents |
 | **Time model** | Event time + precision + original expression; record time; bi-temporal facts; as-of queries | Session time only | Observed timestamp + supersession key; dated daily files | `modified` stamp | Recency of mention | Commit history | Observation date in text; `created_at` | Message time; "knowledge updates" deductions |
-| **Provenance** | Evidence message ids validated in code; origin `owner_lived / owner_told / assistant_stated`; author role; claims kept apart; audience set (D29) | Store target; profile scope | **Origin class column (owner / agent / untrusted / system), session kind, turn taint** | None | None visible | Git author per reflection | Actor / role metadata | Peer and target flags; `source_ids` on deductions |
+| **Provenance** | Evidence message ids validated in code; origin `holder_lived / holder_told / assistant_stated`; author role; claims kept apart; audience set (D29) | Store target; profile scope | **Origin class column (holder / agent / untrusted / system), session kind, turn taint** | None | None visible | Git author per reflection | Actor / role metadata | Peer and target flags; `source_ids` on deductions |
 | **Corrections** | `corrects` vs `supersedes`, never rewrite; plan patches need evidence; recall-echo guard | Replace by substring (destructive) | Supersede by lineage; pre-image kept; append fallback | Edit file | Model updates / user deletes | Edit at source + git history | ADD only; ranking prefers new | Deduction deletes outdated |
 | **Recall / injection** | MCP tools (`search_episodes` modes, `search_facts` as-of, `search_memory`); claims / chat excerpts / people legs; no LLM at read | Frozen snapshot + per-turn provider prefetch (background) | Lane 1 zero-LLM (curated + triggers + ranked search); lane 2 escalation sub-agent | Index always + on-demand files | Always-on profile + history reference | Core always; tools for the rest | Search API; host injects | Dialectic Q&A (LLM), peer card, context |
-| **Consolidation** | Nightly digests (fingerprinted), nightly facts review (1 call / owner with news) | Review fork; size cap forces merges | Dreaming light / REM / deep with deterministic gates | None | Priority management | Reflection subagent | None (retrieval-time) | Deduction + induction dreams |
+| **Consolidation** | Nightly digests (fingerprinted), nightly facts review (1 call / memory with news) | Review fork; size cap forces merges | Dreaming light / REM / deep with deterministic gates | None | Priority management | Reflection subagent | None (retrieval-time) | Deduction + induction dreams |
 | **Privacy** | Consent rules, disclosure tiers, audience sets, forget with tombstones, raw-log scope per client | Injection scan, secret scrub, approval option | Taint quarantine, admission policy, forget by session, redaction before ingestion | Local files | Temporary chat, delete | Local / cloud | Delete API, expiry | Per-pair scoping |
 
-Overall, no platform has event time, plan lifecycle or owner-vs-others provenance at our level. OpenClaw is the
-only one with structural provenance, and its rules (never default to owner, quarantine untrusted, keep recall
+Overall, no platform has event time, plan lifecycle or holder-vs-others provenance at our level. OpenClaw is the
+only one with structural provenance, and its rules (never default to `owner`, quarantine untrusted, keep recall
 loops out) match what our poisoning and echo work found empirically. Platforms invest where we have not yet:
 **injection** (prefetch, budgets, triggers, prefix caching) and **use-driven curation** (recall frequency,
 feedback, priority).
@@ -196,14 +196,14 @@ feedback, priority).
 ### 1. Fenced, structurally marked recall in the connector contract (recall-loop prevention by construction)
 - **What**: everything Recordare injects into a host prompt (prefetch block, tool results) carries a machine marker,
   and ingest removes or marks those spans before extraction. Session kind (`primary | cron | subagent | heartbeat`)
-  travels with each turn, and non-interactive sessions never produce owner memories.
+  travels with each turn, and non-interactive sessions never produce holder memories.
 - **From**: Hermes `build_memory_context_block` / `sanitize_context` and `agent_context`
   (`agent/memory_manager.py`, `agent/memory_provider.py`); OpenClaw "recall-loop prevention" and "session-kind
   gating" (`memory-architecture.md`).
 - **Why us**: the recall-echo guard (`RESULTS.md`, "Recall echoes") works when a Recordare *tool* is in the turn. The
   6.6 connectors will mostly inject memory *before* the turn (prefetch), where the echo signal is weaker: the reply
   repeats injected text and no tool call shows it. A Claude Code subagent or a Hermes cron run would also feed
-  "assistant said" content about the owner.
+  "assistant said" content about the holder.
 - **Fit**: ingest contract (`API.md` §2: optional `injected_spans` or a fence convention, `session_kind`); the echo
   guard treats a fenced span exactly like a recall served; extraction ignores turns whose `session_kind` is not
   interactive (or keeps them as `assistant_stated` without facts).
@@ -214,7 +214,7 @@ feedback, priority).
 
 ### 2. Two-lane recall for connectors: a zero-LLM prefetch brief, with escalation to the tools
 - **What**: a `prefetch(query, conversation)` endpoint that returns a compact, budgeted block. It holds (a) a stable
-  **brief** (owner card + current facts + open plans of the next days), injected once per session in the system part
+  **brief** (holder card + current facts + open plans of the next days), injected once per session in the system part
   so prefix caching keeps it, and (b) at most 3 per-turn items whose stored `context` field matches the message
   strongly. It is skipped for trivial prompts. Deep recall stays in the MCP tools, and the brief tells the agent when
   to call them (past, period and "when did I…" questions).
@@ -235,7 +235,7 @@ feedback, priority).
 ### 3. Extraction prompt: incidental facts inside requests, and transitions
 - **What**: two rules. (a) A help request is not an episode, but the personal facts it carries as context are ("my
   knee hurts again, which exercises…", "since I moved in with Luca…"): record them as facts or notes with evidence.
-  (b) When the owner switches, stops or replaces something, the fact verdict is `replace` with the old value as target,
+  (b) When the holder switches, stops or replaces something, the fact verdict is `replace` with the old value as target,
   and a trial or temporary change is said as such.
 - **From**: Mem0 `ADDITIVE_EXTRACTION_PROMPT` ("Extract Incidental Facts, Not Just Requests", transitions paragraph),
   Apache-2.0, so wording is reusable with attribution. Honcho's rule that answering or accepting a proposal counts as
@@ -251,7 +251,7 @@ feedback, priority).
 ### 4. Turn taint from network tools
 - **What**: when a turn contains a tool result from the network (web search, fetch, browser), the assistant text after
   it in that turn is marked as tool-derived. Items extracted from it can be `assistant_stated` episodes ("the assistant
-  found the bus times") but never owner facts or notes, and they are not "the owner said".
+  found the bus times") but never holder facts or notes, and they are not "the holder said".
 - **From**: OpenClaw "Content origin also propagates within a turn" (`memory-architecture.md`).
 - **Why us**: guard v2 already counts non-memory tool output as a source for the echo case. Poisoning is the category
   every system fails (blind5 0.17–0.33 before the claims split), and agentic clients (Hermes, Claude Code) are
@@ -263,37 +263,37 @@ feedback, priority).
   `RESULTS.md`; blind5 regression.
 
 ### 5. A nightly "pattern" pass for notes: induction with evidence counts
-- **What**: once per owner per night with new episodes (the same gate as the facts review), propose **inferred notes**
+- **What**: once per memory per night with new episodes (the same gate as the facts review), propose **inferred notes**
   (habits, recurring people, paused activities, preferences shown by behaviour) only when supported by ≥ 2 episodes.
   Each note carries the episode ids, `stance: inferred` and confidence from the evidence count (2 = low, 3–4 = medium,
-  5+ = high). New inferred notes stay `pending` until the owner confirms, as `ENGINE_IDEAS` rejection 6 already
+  5+ = high). New inferred notes stay `pending` until the holder confirms, as `ENGINE_IDEAS` rejection 6 already
   requires.
 - **From**: Honcho `InductionSpecialist` (`src/dreamer/specialists.py`, AGPL-3.0); Graphiti "never manufacture pattern
   language from a single occurrence" (already adopted for digests); LangMem "persistent (frequently reinforced)".
 - **Why us**: notes score 0.64–0.79, and the named misses are cross-session by nature ("work colleagues, a paused
   habit"): a single window cannot see them, but a nightly view of 30 days can. The facts review is the same pattern
-  for facts (one call per owner per night, verdicts applied by code). It also feeds H9 (companion: "three months ago
+  for facts (one call per memory per night, verdicts applied by code). It also feeds H9 (companion: "three months ago
   you said…") and H12 (resting-state thinking).
 - **Fit**: M5 consolidation, next to `facts-review.service.ts`; output = note verdicts with episode evidence
   validated in code (invented ids discarded, as Honcho does).
-- **Cost**: ≤ 1 call per owner-night with news; behind a quality-profile knob (D35), off until measured.
+- **Cost**: ≤ 1 call per memory-night with news; behind a quality-profile knob (D35), off until measured.
 - **Measure**: notes score (`extraction_eval.py`) and the share of inferred notes judged unsupported; blind5
   answers on preference / habit questions.
 
-### 6. Owner card with a stability rule and explicit instructions
-- **What**: a derived, bounded **owner card** (≤ 40 lines) built from current facts and stated notes. It uses typed
+### 6. Holder card with a stability rule and explicit instructions
+- **What**: a derived, bounded **holder card** (≤ 40 lines) built from current facts and stated notes. It uses typed
   prefixes (identity, attribute, relationship, instruction to the assistant), takes only values stable for about six
-  months, and writes instructions only when the owner said them explicitly. Preferences are written as directives
+  months, and writes instructions only when the holder said them explicitly. Preferences are written as directives
   ("Prefers…", "Never…") with their observed date. The card is the core of the prefetch brief (idea 2).
 - **From**: Honcho `PEER_CARD_SYSTEM_SECTION` (AGPL-3.0); OpenClaw `USER.md` directive contract (citing PrefEval);
   Supermemory static and dynamic profile.
-- **Why us**: today a client gets the owner only by querying; there is no compact "who is this person". Directive
+- **Why us**: today a client gets the holder only by querying; there is no compact "who is this person". Directive
   form addresses preference adherence, which our eval does not yet measure. The six-month rule keeps volatile
   states (mood, current trip) out of the always-on part.
 - **Fit**: derived artefact (D29: source ids, audience = intersection), rebuilt nightly only when its inputs
   changed (fingerprint, as the digests do), so no LLM call when nothing changed. Deterministic rendering first; an LLM
   rewrite only if measured better.
-- **Cost**: 0 calls (deterministic) or ≤ 1 per owner-night with changes.
+- **Cost**: 0 calls (deterministic) or ≤ 1 per memory-night with changes.
 - **Measure**: a small preference-adherence probe set (the agent must apply a stated preference without being asked)
   and the brief's token size.
 
@@ -321,18 +321,18 @@ feedback, priority).
   there).
 - **Why us**: the "messages addressed to the assistant" category (0.25 → 0.62) and the vision's initiative L1 both
   need an explicit list of requests made to the assistant. `RESULTS.md` already names "an explicit list of requests
-  made to the assistant" as needed design work. Plans are for things the owner lives; intents are for things the
+  made to the assistant" as needed design work. Plans are for things the holder lives; intents are for things the
   assistant must do, which keeps the plan lifecycle clean.
 - **Fit**: a new extraction output kind (or a `remember` / `intent` tool), a table with lifecycle in code
   (pending → armed → fired → done / cancelled / expired), prefetch (idea 2).
 - **Cost**: 0 extra calls (same extraction call); matching without an LLM.
 - **Measure**: blind6 assistant-addressed slice (no longer blind; use a fresh one) and an intent-firing dev set.
 
-### 9. Owner review surface for what the night changed
+### 9. Holder review surface for what the night changed
 - **What**: a short "what I learned / changed" digest per night (facts replaced, notes inferred, plans closed),
   with one-tap confirm or reject. Rejections become corrections.
 - **From**: OpenClaw `DREAMS.md` and Dreams UI; Hermes `write_approval` and `/journey`; ChatGPT memory management UI.
-- **Why us**: inferred notes (idea 5) and facts-review changes are exactly the items the consent rules want an owner
+- **Why us**: inferred notes (idea 5) and facts-review changes are exactly the items the consent rules want a holder
   to see. The diary API (D18) and the atlas (5b) already exist as surfaces.
 - **Fit**: read API + Arkimede diary tab; data from `extraction_runs` / `run_outputs` (already the changelog).
 - **Cost**: 0 LLM calls.
@@ -354,14 +354,14 @@ feedback, priority).
 - **Agent-written bounded memory files as the store** (Hermes `MEMORY.md` / `USER.md`, Claude Code auto memory, Letta
   core blocks). Capacity errors force lossy rewrites, substring replace destroys history, and there is no event time
   or evidence. They are fine as a *client's* scratchpad; Recordare mirrors from them (Hermes `on_memory_write`) only
-  as `assistant_stated` input, never as owner facts.
+  as `assistant_stated` input, never as holder facts.
 - **Deleting outdated observations** (Honcho deduction "DELETE the outdated observation immediately"; Letta "fix the
   stale entry at the source"). This conflicts with append-only + `corrects` / `supersedes` (D28, D29) and with
   "why does the twin believe X".
 - **"When in doubt, extract"** (Mem0). We measured that more stored claims hurt (extract.v5 rejected twice:
   72.7 % vs 81.8 % on the slices). Our unsupported rate (4–13 %) is the metric that counts.
 - **Logical implications as stored memories** (Honcho: "works at Google" → "employed in tech"). This is noise for
-  recall, and invents facts the owner never stated. Inference stays at answer time.
+  recall, and invents facts the holder never stated. Inference stays at answer time.
 - **LLM at read time on the default path** (Honcho dialectic, OpenClaw lane-2 sub-agent, LangMem query generation).
   It breaks D12 / "no LLM at recall" and adds latency. A *synthesised answer* stays an optional extra for simple
   clients (`ENGINE_IDEAS` OpenHuman item 3). An escalation lane lives in the host agent (it calls our tools), not in
@@ -373,12 +373,12 @@ feedback, priority).
   twin a frequently recalled wrong fact must stay wrong. Use it for ranking only (idea 7).
 - **Skills / procedural memory and prompt optimisation** (Hermes skills, Letta skills, LangMem optimizer). This is
   the host agent's job, not the person's memory. The twin's "Mind" pillar (decision patterns) comes later and from
-  owner data, not from agent trajectories.
+  holder data, not from agent trajectories.
 - **Mem0 v3's "currency only at retrieval"**. Our value chains with explicit status are measured better for
   "state now" and corrections (blind4 / 5 categories); ranking alone left old values visible (blind3 noise
   corrections before extract.v4).
 - **Separate per-observer representations everywhere** (Honcho). The model is right for the twin's disclosure (H2:
-  "what Marco knows about the owner") but premature now; our audience sets (D29) already record who was present.
+  "what Marco knows about the holder") but premature now; our audience sets (D29) already record who was present.
   Revisit in phase 3.
 - **Content scanning as the main poisoning defence** (Hermes injection scan). It helps as a cheap filter, but OpenClaw's
   own reasoning (and ours: the claims split, not detection, fixed poisoning) favours provenance. Possible as an extra
@@ -395,7 +395,7 @@ feedback, priority).
    the injected system prompt into their own transcript (OpenClaw does not, Hermes strips it) decide this.
 4. **Intents vs plans**: one table with a `kind`, or a separate store? The lifecycle code differs (fire budget,
    cooldown) but the evidence and patch rules are the same.
-5. **Owner card vs notes**: is the card a view over facts and notes (deterministic) or its own curated artefact with
+5. **Holder card vs notes**: is the card a view over facts and notes (deterministic) or its own curated artefact with
    a nightly LLM pass? Measure the deterministic view first.
 6. **Use signals without traffic**: idea 7 needs real recall logs. Is the Arkimede dogfooding period enough, or do we
    simulate recall traffic in the eval?

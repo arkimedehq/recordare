@@ -27,8 +27,8 @@ describe('separate facts-and-notes pass (FACTS_PASS=separate)', () => {
   it('runs facts and notes in their own call on the facts task model and writes both in one go', async () => {
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
     const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest'] } })).body.key;
-    const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: client.body.id, externalId: 'luca' } });
+    const memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: memoryId, clientId: client.body.id, externalId: 'luca' } });
     const res = await call(url, 'POST', '/api/v1/ingest/messages', {
       token: key, headers: { 'x-recordare-user': 'luca' },
       body: { conversation: { externalId: 'fp' }, messages: [{ externalId: 'fp1', role: 'user', content: "Da oggi lavoro come infermiera all'ospedale Sant'Orsola.", sentAt: '2026-06-07T10:00:00+02:00' }] },
@@ -41,7 +41,7 @@ describe('separate facts-and-notes pass (FACTS_PASS=separate)', () => {
     expect(reqs).toHaveLength(2);
     expect(reqs.find((r) => r.messages[0]?.content.startsWith('You keep the state and profile'))?.model).toBe('facts-model');
     expect(reqs.some((r) => (r.messages[1]?.content ?? '').includes(EPISODES_ONLY_NOTE))).toBe(true);
-    expect(await app.get(DataSource).query(`SELECT value FROM facts WHERE owner_id = $1 AND key = 'employer' AND status = 'current'`, [ownerId]))
+    expect(await app.get(DataSource).query(`SELECT value FROM facts WHERE memory_id = $1 AND key = 'employer' AND status = 'current'`, [memoryId]))
       .toEqual([{ value: "Ospedale Sant'Orsola" }]);
   });
 });

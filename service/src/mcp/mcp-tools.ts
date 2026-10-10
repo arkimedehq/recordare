@@ -23,7 +23,7 @@ import { SOURCE_KINDS } from '../knowledge/sources.schemas';
 
 export interface ToolDeps {
   principal: Principal;
-  ownerId: string;
+  memoryId: string;
   conversations: ConversationResolver;
   episodes: EpisodeSearchService;
   memory: MemorySearchService;
@@ -31,7 +31,7 @@ export interface ToolDeps {
   knowledge: KnowledgeSearchService;
   sources: SourcesService;
   clock: ClockPort;
-  owner: { timezone: string; locale: string };
+  settings: { timezone: string; locale: string };
   allowClockOverride: boolean;
 }
 
@@ -54,7 +54,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   async function context(extra: Extra): Promise<ResolvedConversation> {
     const headers = extra.requestInfo?.headers as Headers | undefined;
     const meta = (extra._meta ?? {}) as { recordare?: { conversation?: string } };
-    return deps.conversations.resolve(deps.principal, deps.ownerId, header(headers, CONVERSATION_HEADER) ?? meta.recordare?.conversation);
+    return deps.conversations.resolve(deps.principal, deps.memoryId, header(headers, CONVERSATION_HEADER) ?? meta.recordare?.conversation);
   }
   const writable = (ctx: ResolvedConversation) => ctx.source !== 'none' && clientId !== null;
   /** "Now" of the request: the clock, or X-Recordare-Now when the deployment allows it (eval / tests). */
@@ -83,7 +83,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    return result(await deps.episodes.search(deps.ownerId, clientId, {
+    return result(await deps.episodes.search(deps.memoryId, clientId, {
       conversationId: ctx.conversationId, query: args.query, from: args.from, to: args.to, mode: args.mode, includePlans: args.include_plans, limit: args.limit,
     }, now(extra)) as unknown as Record<string, unknown>);
   });
@@ -100,7 +100,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    return result(await deps.memory.search(deps.ownerId, { conversationId: ctx.conversationId, query: args.query, asOf: args.as_of, includePending: args.include_pending }, now(extra)) as unknown as Record<string, unknown>);
+    return result(await deps.memory.search(deps.memoryId, { conversationId: ctx.conversationId, query: args.query, asOf: args.as_of, includePending: args.include_pending }, now(extra)) as unknown as Record<string, unknown>);
   });
 
   server.registerTool('search_knowledge', {
@@ -111,7 +111,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     inputSchema: { query: z.string().describe('What to look up'), limit: z.number().int().min(1).max(20).optional() },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    return result(await deps.knowledge.search(deps.ownerId, { query: args.query, limit: args.limit, conversationId: ctx.conversationId }, now(extra)) as unknown as Record<string, unknown>);
+    return result(await deps.knowledge.search(deps.memoryId, { query: args.query, limit: args.limit, conversationId: ctx.conversationId }, now(extra)) as unknown as Record<string, unknown>);
   });
 
   server.registerTool('learn_source', {
@@ -129,7 +129,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
     const externalId = `mcp:${createHash('sha256').update(args.title.trim().toLowerCase()).digest('hex').slice(0, 32)}`;
-    const r = await deps.sources.learn(deps.ownerId, clientId, {
+    const r = await deps.sources.learn(deps.memoryId, clientId, {
       externalId, title: args.title, text: args.text, kind: args.kind ?? 'document', author: args.author, uri: args.uri, providedBy: 'me', final: true,
     }, now(extra), ctx.conversationId);
     return result({ sourceId: r.sourceId, status: r.status, passages: r.passages, stored: !r.duplicate });
@@ -140,7 +140,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     description: 'Deterministic: "questa settimana", "la settimana scorsa", "a febbraio", "lo scorso dicembre", "last week"… → {from, to} (ISO, inclusive).',
     inputSchema: { expression: z.string() },
   }, async (args, extra) => {
-    const today = localDate(now(extra), deps.owner.timezone);
+    const today = localDate(now(extra), deps.settings.timezone);
     const p = resolvePeriod(args.expression, today);
     return result(p ? { ...p } : { error: 'unknown expression: pass explicit dates (from / to)' });
   });
@@ -160,7 +160,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    const id = await deps.writes.logEpisode(deps.ownerId, { conversationId: ctx.conversationId, clientId: clientId as string, ownerDirect: deps.principal.kind === 'owner_token' }, {
+    const id = await deps.writes.logEpisode(deps.memoryId, { conversationId: ctx.conversationId, clientId: clientId as string, memoryDirect: deps.principal.kind === 'memory_token' }, {
       content: args.content, kind: args.kind, occurredAt: args.occurred_at, occurredUntil: args.occurred_until,
       datePrecision: args.date_precision, people: args.people, place: args.place,
     });
@@ -177,7 +177,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    const id = await deps.writes.remember(deps.ownerId, { conversationId: ctx.conversationId, clientId: clientId as string, ownerDirect: deps.principal.kind === 'owner_token' }, args);
+    const id = await deps.writes.remember(deps.memoryId, { conversationId: ctx.conversationId, clientId: clientId as string, memoryDirect: deps.principal.kind === 'memory_token' }, args);
     return result({ id, stored: true });
   });
 
@@ -188,7 +188,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    const id = await deps.writes.correctEpisode(deps.ownerId, { conversationId: ctx.conversationId, clientId: clientId as string, ownerDirect: deps.principal.kind === 'owner_token' }, {
+    const id = await deps.writes.correctEpisode(deps.memoryId, { conversationId: ctx.conversationId, clientId: clientId as string, memoryDirect: deps.principal.kind === 'memory_token' }, {
       id: args.id, content: args.content, occurredAt: args.occurred_at, datePrecision: args.date_precision,
     });
     return result({ id, stored: true });
@@ -201,7 +201,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    await deps.writes.forgetEpisode(deps.ownerId, args.id);
+    await deps.writes.forgetEpisode(deps.memoryId, args.id);
     return result({ forgotten: true });
   });
 }

@@ -4,7 +4,7 @@
 """HTTP access to Recordare: REST (ingest, end of a conversation, pre-turn context) and a minimal MCP client (Streamable HTTP, JSON-RPC).
 
 Every request carries the credential (`Authorization: Bearer rp_…|rk_…`), the Recordare user with a client key
-(`X-Recordare-User`) and the conversation (`X-Recordare-Conversation`) — the headers Recordare resolves the owner and
+(`X-Recordare-User`) and the conversation (`X-Recordare-Conversation`) — the headers Recordare resolves the memory and
 the conversation from (docs/API.md §1). Errors are raised to the caller (the provider logs and swallows them).
 """
 
@@ -65,7 +65,7 @@ class RecordareClient:
         self._key = api_key
         self._http = requests.Session()
         self._mcp_lock = threading.Lock()
-        self._mcp_sessions: Dict[Optional[str], str] = {}  # Recordare user (None = token owner) → MCP session id
+        self._mcp_sessions: Dict[Optional[str], str] = {}  # Recordare user (None = the token's memory) → MCP session id
         self._ids = itertools.count(1)
 
     @property
@@ -137,7 +137,7 @@ class RecordareClient:
     def call_tool(self, name: str, arguments: Dict[str, Any], *, user: Optional[str], conversation: Optional[str],
                   timeout: float = 20.0) -> str:
         """Call one Recordare MCP tool; returns its text content (a JSON document). One MCP session per Recordare user
-        (Recordare fixes the owner at `initialize`); a session the server no longer knows (404, e.g. after a restart)
+        (Recordare fixes the memory at `initialize`); a session the server no longer knows (404, e.g. after a restart)
         is reopened once."""
         for attempt in (0, 1):
             with self._mcp_lock:

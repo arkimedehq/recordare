@@ -26,18 +26,18 @@ export class LlmCallRecorder {
 
   /** A call leaves now (the dashboard shows the wait; `llm.call` follows with tokens and latency). */
   started(promptId: string, task: string, ctx: LlmCallContext = {}): void {
-    this.telemetry?.emit({ type: 'llm.started', ownerId: ctx.ownerId ?? null, runId: ctx.runId ?? null, promptId, task });
+    this.telemetry?.emit({ type: 'llm.started', memoryId: ctx.memoryId ?? null, runId: ctx.runId ?? null, promptId, task });
   }
 
   async record(call: LlmCallRecord, ctx: LlmCallContext = {}): Promise<void> {
-    this.telemetry?.emit({ type: 'llm.call', ownerId: ctx.ownerId ?? null, runId: ctx.runId ?? null, promptId: call.promptId, model: call.model,
+    this.telemetry?.emit({ type: 'llm.call', memoryId: ctx.memoryId ?? null, runId: ctx.runId ?? null, promptId: call.promptId, model: call.model,
       inputTokens: call.inputTokens, cachedInputTokens: call.cachedInputTokens, outputTokens: call.outputTokens, latencyMs: call.latencyMs, status: call.status });
     try {
       await this.db.query(
-        `INSERT INTO llm_calls (owner_id, client_id, run_id, prompt_id, provider, model, input_tokens,
+        `INSERT INTO llm_calls (memory_id, client_id, run_id, prompt_id, provider, model, input_tokens,
            cached_input_tokens, output_tokens, latency_ms, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-        [ctx.ownerId ?? null, ctx.clientId ?? null, ctx.runId ?? null, call.promptId, call.provider, call.model,
+        [ctx.memoryId ?? null, ctx.clientId ?? null, ctx.runId ?? null, call.promptId, call.provider, call.model,
           call.inputTokens, call.cachedInputTokens, call.outputTokens, call.latencyMs, call.status],
       );
     } catch (err) {

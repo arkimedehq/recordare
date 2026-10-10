@@ -44,7 +44,7 @@ describe('learned sources (WORK_PLAN 8.9)', () => {
     db = app.get(DataSource);
     clientId = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } })).body.id;
     key = (await call(url, 'POST', `/api/v1/admin/clients/${clientId}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read', 'write', 'mcp'] } })).body.key;
-    marta = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Marta', gender: 'feminine' } })).body.personId;
+    marta = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Marta', gender: 'feminine' } })).body.personId;
     await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: marta, clientId, externalId: 'marta' } });
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
@@ -59,7 +59,7 @@ describe('learned sources (WORK_PLAN 8.9)', () => {
 
     const [episode] = await db.query(`SELECT e.content, e.author_role, e.subject_kind FROM episodes e JOIN sources s ON s.learned_episode_id = e.id WHERE s.id = $1`, [first.body.sourceId]);
     expect(episode).toEqual({ content: "L'8 ottobre 2026 ho imparato «Manuale della caldaia», da Paolo.", author_role: 'other', subject_kind: 'self' });
-    const [paolo] = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Paolo'`, [marta]);
+    const [paolo] = await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Paolo'`, [marta]);
     expect(paolo).toBeDefined(); // the giver is a contact
 
     const found = await app.get(KnowledgeSearchService).search(marta, { query: 'ogni quanto revisionare la caldaia' }, new Date());

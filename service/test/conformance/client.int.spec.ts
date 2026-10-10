@@ -108,8 +108,8 @@ describe('client conformance (packages/client against the service)', () => {
     await expect(rc.updateMe('user-1', { mode: 'entity' })).resolves.toBeUndefined(); // no episodes yet: allowed
     await rc.updateMe('user-1', { mode: 'personal' });
     await db().query(
-      `INSERT INTO notes (owner_id, category, content, origin, author_role, stance, confidence, disclosure, audience)
-       SELECT o.person_id, 'preference', 'x', 'owner_lived', 'owner', 'stated', 1, 'owner', ARRAY[o.person_id] FROM owners o
+      `INSERT INTO notes (memory_id, category, content, origin, author_role, stance, confidence, disclosure, audience)
+       SELECT o.person_id, 'preference', 'x', 'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[o.person_id] FROM memories o
        JOIN external_identities i ON i.person_id = o.person_id WHERE i.external_id = 'user-1'`);
     await expect(rc.updateMe('user-1', { mode: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);
   });
@@ -142,7 +142,7 @@ describe('client conformance (packages/client against the service)', () => {
     expect(res.isError).toBe(false);
     const [log] = await db().query(
       `SELECT c.external_id AS conversation, i.external_id AS user FROM recall_log r
-       JOIN conversations c ON c.id = r.conversation_id JOIN external_identities i ON i.person_id = r.owner_id
+       JOIN conversations c ON c.id = r.conversation_id JOIN external_identities i ON i.person_id = r.memory_id
        WHERE r.tool = 'search_episodes' ORDER BY r.served_at DESC LIMIT 1`);
     expect(log).toEqual({ conversation: 'chat-1', user: 'user-1' });
   });

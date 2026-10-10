@@ -53,7 +53,7 @@ describe('prompt inputs of the measured versions', () => {
   });
 
   it('entity memories: the shared agent in the first person, people by name, someone until named (8.5)', async () => {
-    const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Casa', mode: 'entity' } })).body.personId;
+    const id = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Casa', mode: 'entity' } })).body.personId;
     await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: id, clientId, externalId: 'Casa' } });
     await run({ externalId: 'u1' }, [
       { externalId: 'u1-1', role: 'user', content: 'Sono Andrea: ho comprato una Panda. Sabato 13 vado a Roma.', sentAt: '2026-06-07T10:00:00+02:00' },

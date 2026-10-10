@@ -25,8 +25,8 @@ export const extractionSchema = z.object({
     occurred_until: date,
     date_precision: precision,
     time_expression: z.string().nullable().optional(),
-    // The prompts ask lived / told; the stored values (owner_*, assistant_stated) are accepted as given.
-    origin: z.enum(['owner_lived', 'owner_told', 'assistant_stated', 'lived', 'told']).default('owner_lived'),
+    // The prompts ask lived / told; the stored values (holder_*, assistant_stated) are accepted as given.
+    origin: z.enum(['holder_lived', 'holder_told', 'assistant_stated', 'lived', 'told']).default('holder_lived'),
     people: z.array(z.string()).default([]),
     place: z.string().nullable().optional(),
     importance: z.number().int().min(1).max(10).default(5),

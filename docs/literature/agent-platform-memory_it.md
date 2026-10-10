@@ -133,7 +133,7 @@ grafo esterno). Idee di prompt degne di nota:
 **Zep / Graphiti (Graphiti Apache-2.0; Zep Cloud proprietario)** — [concepts](https://help.getzep.com/concepts); vedi
 `zep-temporal-kg_it.md`. È un knowledge graph bi-temporale: gli episodi forniscono la provenienza, i fatti sono archi con
 `valid_at / invalid_at` e i tipi personalizzati di entità e archi fungono da ontologia. Il prodotto cloud aggiunge per ogni thread un
-**context block** e un **user summary** guidato da fino a cinque istruzioni scritte dal proprietario. Nulla di nuovo oltre alla scheda
+**context block** e un **user summary** guidato da fino a cinque istruzioni scritte dallo sviluppatore. Nulla di nuovo oltre alla scheda
 e a `ENGINE_IDEAS_it.md`.
 
 **Honcho (Plastic Labs, AGPL-3.0)** — [repo](https://github.com/plastic-labs/honcho). Modella i peer: ogni
@@ -181,14 +181,14 @@ il nostro trigger idle (D1).
 | **Trigger di scrittura** | Finestra idle + notturno (digest, revisione dei fatti) | Strumento dell'agente in qualsiasi momento + fork di revisione ogni 10 turni + sync del provider a ogni turno | Note dell'agente, flush pre-compattazione, fine sessione; il dreaming notturno promuove | Il modello durante la sessione | Il modello durante la chat; gestione in background | Strumenti dell'agente; riflessione su step count / compattazione | Per ogni chiamata `add` | Per batch di messaggi; dream quando dovuto |
 | **Chi decide la scrittura** | Estrattore in background (1 chiamata), il codice applica i verdetti; strumenti dell'agente per le scritture esplicite | Agente + fork in background (LLM) | Agente per l'episodico; **gate nel codice + operazioni LLM** per il core | Il modello | Il modello | Agente / subagente di riflessione | LLM (solo add) | LLM del Deriver; agenti dream |
 | **Modello del tempo** | Tempo dell'evento + precisione + espressione originale; tempo di registrazione; fatti bi-temporali; query as-of | Solo tempo della sessione | Timestamp di osservazione + chiave di sostituzione; file giornalieri datati | Timestamp `modified` | Recenza della menzione | Cronologia dei commit | Data di osservazione nel testo; `created_at` | Tempo del messaggio; deduzioni di "knowledge updates" |
-| **Provenienza** | Id dei messaggi di evidenza validati nel codice; origine `owner_lived / owner_told / assistant_stated`; ruolo dell'autore; claim tenuti separati; audience set (D29) | Archivio di destinazione; ambito del profilo | **Colonna della classe di origine (owner / agent / untrusted / system), tipo di sessione, turn taint** | Nessuna | Nessuna visibile | Autore git per ogni riflessione | Metadati di attore / ruolo | Flag di peer e target; `source_ids` sulle deduzioni |
+| **Provenienza** | Id dei messaggi di evidenza validati nel codice; origine `holder_lived / holder_told / assistant_stated`; ruolo dell'autore; claim tenuti separati; audience set (D29) | Archivio di destinazione; ambito del profilo | **Colonna della classe di origine (owner / agent / untrusted / system), tipo di sessione, turn taint** | Nessuna | Nessuna visibile | Autore git per ogni riflessione | Metadati di attore / ruolo | Flag di peer e target; `source_ids` sulle deduzioni |
 | **Correzioni** | `corrects` vs `supersedes`, mai riscrivere; le patch dei piani richiedono evidenza; guardia contro gli echi del recall | Sostituzione per sottostringa (distruttiva) | Sostituzione per lignaggio; pre-immagine conservata; fallback append | Modifica del file | Il modello aggiorna / l'utente cancella | Modifica alla fonte + cronologia git | Solo ADD; il ranking preferisce il nuovo | La deduzione cancella l'obsoleto |
 | **Recall / iniezione** | Strumenti MCP (modalità `search_episodes`, `search_facts` as-of, `search_memory`); gambe claim / estratti di chat / persone; nessun LLM in lettura | Snapshot congelato + prefetch del provider a ogni turno (in background) | Corsia 1 zero-LLM (curato + trigger + ricerca ordinata); corsia 2 sub-agente di escalation | Indice sempre + file su richiesta | Profilo sempre attivo + riferimento alla cronologia | Core sempre; strumenti per il resto | API di ricerca; l'host inietta | Q&A dialectic (LLM), peer card, contesto |
-| **Consolidamento** | Digest notturni (con fingerprint), revisione notturna dei fatti (1 chiamata / proprietario con novità) | Fork di revisione; il tetto di dimensione forza i merge | Dreaming light / REM / deep con gate deterministici | Nessuno | Gestione delle priorità | Subagente di riflessione | Nessuno (in fase di retrieval) | Dream di deduzione + induzione |
+| **Consolidamento** | Digest notturni (con fingerprint), revisione notturna dei fatti (1 chiamata / memoria con novità) | Fork di revisione; il tetto di dimensione forza i merge | Dreaming light / REM / deep con gate deterministici | Nessuno | Gestione delle priorità | Subagente di riflessione | Nessuno (in fase di retrieval) | Dream di deduzione + induzione |
 | **Privacy** | Regole di consenso, livelli di disclosure, audience set, forget con tombstone, ambito del log grezzo per client | Scansione delle iniezioni, scrub dei segreti, opzione di approvazione | Quarantena dei taint, politica di ammissione, forget per sessione, redazione prima dell'ingestione | File locali | Chat temporanea, cancellazione | Locale / cloud | API di cancellazione, scadenza | Ambito per coppia |
 
-Nel complesso, nessuna piattaforma ha tempo dell'evento, ciclo di vita dei piani o provenienza proprietario-vs-altri al nostro livello. OpenClaw è
-l'unica con provenienza strutturale, e le sue regole (mai default a owner, mettere in quarantena l'untrusted, tenere fuori i loop di
+Nel complesso, nessuna piattaforma ha tempo dell'evento, ciclo di vita dei piani o provenienza titolare-vs-altri al nostro livello. OpenClaw è
+l'unica con provenienza strutturale, e le sue regole (mai default a `owner`, mettere in quarantena l'untrusted, tenere fuori i loop di
 recall) corrispondono a quanto hanno trovato empiricamente i nostri lavori su poisoning ed echi. Le piattaforme investono dove noi non l'abbiamo ancora fatto:
 **iniezione** (prefetch, budget, trigger, prefix caching) e **curatela guidata dall'uso** (frequenza di recall,
 feedback, priorità).
@@ -198,14 +198,14 @@ feedback, priorità).
 ### 1. Recall recintato e marcato strutturalmente nel contratto dei connettori (prevenzione dei loop di recall per costruzione)
 - **Che cosa**: tutto ciò che Recordare inietta in un prompt dell'host (blocco di prefetch, risultati degli strumenti) porta un marcatore
   leggibile dalla macchina, e l'ingestione rimuove o marca quegli intervalli prima dell'estrazione. Il tipo di sessione (`primary | cron | subagent | heartbeat`)
-  viaggia con ogni turno e le sessioni non interattive non producono mai ricordi del proprietario.
+  viaggia con ogni turno e le sessioni non interattive non producono mai ricordi del titolare.
 - **Da**: Hermes `build_memory_context_block` / `sanitize_context` e `agent_context`
   (`agent/memory_manager.py`, `agent/memory_provider.py`); OpenClaw "recall-loop prevention" e "session-kind
   gating" (`memory-architecture.md`).
 - **Perché per noi**: la guardia contro gli echi del recall (`RESULTS.md`, "Recall echoes") funziona quando un *tool* di Recordare è nel turno. I
   connettori 6.6 inietteranno per lo più la memoria *prima* del turno (prefetch), dove il segnale dell'eco è più debole: la risposta
   ripete il testo iniettato e nessuna chiamata di strumento lo mostra. Anche un subagente di Claude Code o un'esecuzione cron di Hermes alimenterebbe
-  contenuto "l'assistente ha detto" sul proprietario.
+  contenuto "l'assistente ha detto" sul titolare.
 - **Dove si inserisce**: contratto di ingestione (`API.md` §2: `injected_spans` opzionale o una convenzione di recinzione, `session_kind`); la guardia
   contro gli echi tratta un intervallo recintato esattamente come un recall servito; l'estrazione ignora i turni il cui `session_kind` non è
   interattivo (oppure li tiene come `assistant_stated` senza fatti).
@@ -216,7 +216,7 @@ feedback, priorità).
 
 ### 2. Recall a due corsie per i connettori: un brief di prefetch zero-LLM, con escalation verso gli strumenti
 - **Che cosa**: un endpoint `prefetch(query, conversation)` che restituisce un blocco compatto e con budget. Contiene (a) un
-  **brief** stabile (scheda del proprietario + fatti correnti + piani aperti dei prossimi giorni), iniettato una volta per sessione nella parte di sistema
+  **brief** stabile (scheda del titolare + fatti correnti + piani aperti dei prossimi giorni), iniettato una volta per sessione nella parte di sistema
   così il prefix caching lo mantiene, e (b) al massimo 3 elementi per turno il cui campo `context` memorizzato corrisponde al messaggio
   in modo forte. Viene saltato per i prompt banali. Il recall profondo resta negli strumenti MCP e il brief dice all'agente quando
   chiamarli (domande sul passato, su periodi e "quando ho…").
@@ -237,7 +237,7 @@ feedback, priorità).
 ### 3. Prompt di estrazione: fatti incidentali dentro le richieste, e transizioni
 - **Che cosa**: due regole. (a) Una richiesta di aiuto non è un episodio, ma lo sono i fatti personali che porta come contesto ("mi
   fa di nuovo male il ginocchio, quali esercizi…", "da quando convivo con Luca…"): registrarli come fatti o note con evidenza.
-  (b) Quando il proprietario cambia, smette o sostituisce qualcosa, il verdetto del fatto è `replace` con il vecchio valore come target,
+  (b) Quando il titolare cambia, smette o sostituisce qualcosa, il verdetto del fatto è `replace` con il vecchio valore come target,
   e una prova o un cambiamento temporaneo viene detto come tale.
 - **Da**: Mem0 `ADDITIVE_EXTRACTION_PROMPT` ("Extract Incidental Facts, Not Just Requests", paragrafo sulle transizioni),
   Apache-2.0, quindi la formulazione è riusabile con attribuzione. La regola di Honcho per cui rispondere a una proposta o accettarla conta come
@@ -253,7 +253,7 @@ feedback, priorità).
 ### 4. Turn taint dagli strumenti di rete
 - **Che cosa**: quando un turno contiene un risultato di strumento dalla rete (ricerca web, fetch, browser), il testo dell'assistente
   successivo in quel turno viene marcato come derivato da strumento. Gli elementi estratti da esso possono essere episodi `assistant_stated` ("l'assistente
-  ha trovato gli orari dell'autobus") ma mai fatti o note del proprietario, e non sono "l'ha detto il proprietario".
+  ha trovato gli orari dell'autobus") ma mai fatti o note del titolare, e non sono "l'ha detto il titolare".
 - **Da**: OpenClaw "Content origin also propagates within a turn" (`memory-architecture.md`).
 - **Perché per noi**: la guardia v2 conta già l'output di strumenti non-memoria come fonte per il caso dell'eco. Il poisoning è la categoria
   in cui ogni sistema fallisce (blind5 0,17–0,33 prima della separazione dei claim), e i client agentici (Hermes, Claude Code) fanno largo uso di
@@ -265,36 +265,36 @@ feedback, priorità).
   `RESULTS.md`; regressione su blind5.
 
 ### 5. Una passata notturna sui "pattern" per le note: induzione con conteggi di evidenza
-- **Che cosa**: una volta per proprietario per notte con nuovi episodi (lo stesso gate della revisione dei fatti), proporre **note inferite**
+- **Che cosa**: una volta per memoria per notte con nuovi episodi (lo stesso gate della revisione dei fatti), proporre **note inferite**
   (abitudini, persone ricorrenti, attività sospese, preferenze mostrate dal comportamento) solo quando supportate da ≥ 2 episodi.
   Ogni nota porta gli id degli episodi, `stance: inferred` e una confidenza ricavata dal conteggio delle evidenze (2 = bassa, 3–4 = media,
-  5+ = alta). Le nuove note inferite restano `pending` finché il proprietario non le conferma, come già richiede il rifiuto 6 di `ENGINE_IDEAS`.
+  5+ = alta). Le nuove note inferite restano `pending` finché il titolare non le conferma, come già richiede il rifiuto 6 di `ENGINE_IDEAS`.
 - **Da**: Honcho `InductionSpecialist` (`src/dreamer/specialists.py`, AGPL-3.0); Graphiti "never manufacture pattern
   language from a single occurrence" (già adottato per i digest); LangMem "persistent (frequently reinforced)".
 - **Perché per noi**: le note ottengono 0,64–0,79 e gli errori indicati sono per natura trasversali alle sessioni ("colleghi di lavoro, un'abitudine
   in pausa"): una singola finestra non li vede, ma una vista notturna di 30 giorni sì. La revisione dei fatti è lo stesso pattern
-  per i fatti (una chiamata per proprietario per notte, verdetti applicati dal codice). Alimenta anche H9 (compagno: "tre mesi fa
+  per i fatti (una chiamata per memoria per notte, verdetti applicati dal codice). Alimenta anche H9 (compagno: "tre mesi fa
   dicesti…") e H12 (pensiero a riposo).
 - **Dove si inserisce**: consolidamento M5, accanto a `facts-review.service.ts`; output = verdetti sulle note con evidenza di episodi
   validata nel codice (id inventati scartati, come fa Honcho).
-- **Costo**: ≤ 1 chiamata per proprietario-notte con novità; dietro un parametro del profilo di qualità (D35), spento finché non misurato.
+- **Costo**: ≤ 1 chiamata per memoria-notte con novità; dietro un parametro del profilo di qualità (D35), spento finché non misurato.
 - **Misura**: punteggio delle note (`extraction_eval.py`) e quota di note inferite giudicate non supportate; risposte blind5
   su domande di preferenze / abitudini.
 
-### 6. Scheda del proprietario con regola di stabilità e istruzioni esplicite
-- **Che cosa**: una **scheda del proprietario** derivata e limitata (≤ 40 righe) costruita dai fatti correnti e dalle note dichiarate. Usa prefissi
+### 6. Scheda del titolare con regola di stabilità e istruzioni esplicite
+- **Che cosa**: una **scheda del titolare** derivata e limitata (≤ 40 righe) costruita dai fatti correnti e dalle note dichiarate. Usa prefissi
   tipizzati (identità, attributo, relazione, istruzione per l'assistente), prende solo valori stabili per circa sei
-  mesi e scrive le istruzioni solo quando il proprietario le ha dette esplicitamente. Le preferenze sono scritte come direttive
+  mesi e scrive le istruzioni solo quando il titolare le ha dette esplicitamente. Le preferenze sono scritte come direttive
   ("Prefers…", "Never…") con la loro data di osservazione. La scheda è il nucleo del brief di prefetch (idea 2).
 - **Da**: Honcho `PEER_CARD_SYSTEM_SECTION` (AGPL-3.0); contratto delle direttive di `USER.md` di OpenClaw (che cita PrefEval);
   profilo statico e dinamico di Supermemory.
-- **Perché per noi**: oggi un client ottiene il proprietario solo interrogando; non esiste un compatto "chi è questa persona". La forma
+- **Perché per noi**: oggi un client ottiene il titolare solo interrogando; non esiste un compatto "chi è questa persona". La forma
   a direttiva affronta l'aderenza alle preferenze, che la nostra valutazione non misura ancora. La regola dei sei mesi tiene gli stati
   volatili (umore, viaggio in corso) fuori dalla parte sempre attiva.
 - **Dove si inserisce**: artefatto derivato (D29: id delle fonti, pubblico = intersezione), ricostruito di notte solo quando i suoi input
   sono cambiati (fingerprint, come fanno i digest), quindi nessuna chiamata LLM se nulla è cambiato. Prima rendering deterministico; una
   riscrittura LLM solo se misurata migliore.
-- **Costo**: 0 chiamate (deterministico) oppure ≤ 1 per proprietario-notte con cambiamenti.
+- **Costo**: 0 chiamate (deterministico) oppure ≤ 1 per memoria-notte con cambiamenti.
 - **Misura**: un piccolo set di sonde di aderenza alle preferenze (l'agente deve applicare una preferenza dichiarata senza che gli venga chiesto)
   e la dimensione in token del brief.
 
@@ -322,18 +322,18 @@ feedback, priorità).
   lì).
 - **Perché per noi**: la categoria dei "messaggi rivolti all'assistente" (0,25 → 0,62) e l'iniziativa L1 della visione richiedono entrambe
   un elenco esplicito delle richieste fatte all'assistente. `RESULTS.md` indica già "an explicit list of requests
-  made to the assistant" come lavoro di progetto necessario. I piani riguardano ciò che il proprietario vive; gli intenti ciò che
+  made to the assistant" come lavoro di progetto necessario. I piani riguardano ciò che il titolare vive; gli intenti ciò che
   l'assistente deve fare, il che mantiene pulito il ciclo di vita dei piani.
 - **Dove si inserisce**: un nuovo tipo di output di estrazione (o uno strumento `remember` / `intent`), una tabella con ciclo di vita nel codice
   (pending → armed → fired → done / cancelled / expired), prefetch (idea 2).
 - **Costo**: 0 chiamate extra (stessa chiamata di estrazione); confronto senza LLM.
 - **Misura**: fetta blind6 dei messaggi rivolti all'assistente (non più cieca; usarne una nuova) e un dev set di attivazione degli intenti.
 
-### 9. Superficie di revisione per il proprietario di ciò che la notte ha cambiato
+### 9. Superficie di revisione per il titolare di ciò che la notte ha cambiato
 - **Che cosa**: un breve digest "che cosa ho imparato / cambiato" per notte (fatti sostituiti, note inferite, piani chiusi),
   con conferma o rifiuto con un tocco. I rifiuti diventano correzioni.
 - **Da**: `DREAMS.md` e Dreams UI di OpenClaw; `write_approval` e `/journey` di Hermes; interfaccia di gestione della memoria di ChatGPT.
-- **Perché per noi**: le note inferite (idea 5) e i cambiamenti della revisione dei fatti sono esattamente gli elementi che le regole di consenso vogliono che un proprietario
+- **Perché per noi**: le note inferite (idea 5) e i cambiamenti della revisione dei fatti sono esattamente gli elementi che le regole di consenso vogliono che un titolare
   veda. L'API del diario (D18) e l'atlas (5b) esistono già come superfici.
 - **Dove si inserisce**: API di lettura + scheda diario di Arkimede; dati da `extraction_runs` / `run_outputs` (già il changelog).
 - **Costo**: 0 chiamate LLM.
@@ -355,14 +355,14 @@ feedback, priorità).
 - **File di memoria limitati scritti dall'agente come archivio** (`MEMORY.md` / `USER.md` di Hermes, auto memory di Claude Code, blocchi core
   di Letta). Gli errori di capacità forzano riscritture con perdita, la sostituzione per sottostringa distrugge la storia e non c'è tempo dell'evento
   né evidenza. Vanno bene come blocco appunti *del client*; Recordare vi si rispecchia (Hermes `on_memory_write`) solo
-  come input `assistant_stated`, mai come fatti del proprietario.
+  come input `assistant_stated`, mai come fatti del titolare.
 - **Cancellare le osservazioni obsolete** (deduzione di Honcho "DELETE the outdated observation immediately"; Letta "fix the
   stale entry at the source"). Entra in conflitto con append-only + `corrects` / `supersedes` (D28, D29) e con
   "perché il twin crede X".
 - **"When in doubt, extract"** (Mem0). Abbiamo misurato che più claim memorizzati nuocciono (extract.v5 scartato due volte:
   72,7 % vs 81,8 % sulle fette). Il nostro tasso di non supportati (4–13 %) è la metrica che conta.
 - **Implicazioni logiche come ricordi memorizzati** (Honcho: "works at Google" → "employed in tech"). È rumore per il
-  recall e inventa fatti che il proprietario non ha mai dichiarato. L'inferenza resta al momento della risposta.
+  recall e inventa fatti che il titolare non ha mai dichiarato. L'inferenza resta al momento della risposta.
 - **LLM in lettura sul percorso di default** (dialectic di Honcho, sub-agente di corsia 2 di OpenClaw, generazione di query di LangMem).
   Rompe D12 / "nessun LLM al recall" e aggiunge latenza. Una *risposta sintetizzata* resta un extra opzionale per i client
   semplici (`ENGINE_IDEAS` voce 3 di OpenHuman). Una corsia di escalation sta nell'agente host (chiama i nostri strumenti), non in
@@ -374,12 +374,12 @@ feedback, priorità).
   twin un fatto sbagliato richiamato spesso deve restare sbagliato. Usarla solo per il ranking (idea 7).
 - **Skill / memoria procedurale e ottimizzazione dei prompt** (skill di Hermes, skill di Letta, optimizer di LangMem). È
   compito dell'agente host, non della memoria della persona. Il pilastro "Mind" del twin (pattern decisionali) verrà dopo e da dati
-  del proprietario, non dalle traiettorie dell'agente.
+  del titolare, non dalle traiettorie dell'agente.
 - **L'"attualità solo al retrieval" di Mem0 v3**. Le nostre catene di valori con stato esplicito sono misurate meglio per
   "stato attuale" e correzioni (categorie blind4 / 5); il solo ranking lasciava visibili i vecchi valori (correzioni di rumore blind3
   prima di extract.v4).
 - **Rappresentazioni separate per observer ovunque** (Honcho). Il modello è giusto per la disclosure del twin (H2:
-  "che cosa Marco sa del proprietario") ma prematuro ora; i nostri audience set (D29) registrano già chi era presente.
+  "che cosa Marco sa del titolare") ma prematuro ora; i nostri audience set (D29) registrano già chi era presente.
   Da riprendere nella fase 3.
 - **La scansione dei contenuti come difesa principale dal poisoning** (scansione delle iniezioni di Hermes). Aiuta come filtro economico, ma il
   ragionamento stesso di OpenClaw (e il nostro: a risolvere il poisoning è stata la separazione dei claim, non il rilevamento) favorisce la provenienza. Possibile come ulteriore
@@ -396,7 +396,7 @@ feedback, priorità).
    il prompt di sistema iniettato nella propria trascrizione (OpenClaw no, Hermes lo toglie).
 4. **Intenti vs piani**: una tabella con un `kind`, o un archivio separato? Il codice del ciclo di vita differisce (budget di attivazioni,
    raffreddamento) ma le regole di evidenza e di patch sono le stesse.
-5. **Scheda del proprietario vs note**: la scheda è una vista su fatti e note (deterministica) o un artefatto curato a sé con
+5. **Scheda del titolare vs note**: la scheda è una vista su fatti e note (deterministica) o un artefatto curato a sé con
    una passata LLM notturna? Misurare prima la vista deterministica.
 6. **Segnali d'uso senza traffico**: l'idea 7 richiede veri log di recall. Il periodo di dogfooding con Arkimede basta, oppure
    simuliamo il traffico di recall nella valutazione?

@@ -8,7 +8,7 @@
  * QUESTIONS), which may answer it from the conversation; the memory context offers one relevant question to the agent
  * ("if natural, ask: …"). An answer adds the attribution (subject, person link) and never rewrites the memory's text.
  * Open questions expire after CLARIFICATION_TTL_DAYS (on read, at extraction and in the nightly consolidation).
- * A second kind (owner's decision 2026-10-09) asks whether a newly identified participant is a contact the memory knew
+ * A second kind (maintainer's decision 2026-10-09) asks whether a newly identified participant is a contact the memory knew
  * only by name ("Giulia, che ha scritto il 9 ottobre, è la stessa persona di Giulia (sorella)?"): `contact_id` is the new
  * contact, the candidates hold the known one; "yes" merges the two (contacts.ts), "no" keeps them apart.
  */
@@ -21,21 +21,21 @@ export const CLARIFICATION_TTL_DAYS = 14;
 type Queryable = Pick<EntityManager, 'query'>;
 
 /** Open questions older than the TTL (as of `now`) become `expired`. */
-export async function expireClarifications(db: Queryable, ownerId: string, now: Date): Promise<void> {
+export async function expireClarifications(db: Queryable, memoryId: string, now: Date): Promise<void> {
   await db.query(
     `UPDATE clarifications SET status = 'expired', resolved_at = $2
-     WHERE owner_id = $1 AND status = 'open' AND created_at < $2::timestamptz - make_interval(days => $3) AND created_at <= $2`,
-    [ownerId, now, CLARIFICATION_TTL_DAYS]);
+     WHERE memory_id = $1 AND status = 'open' AND created_at < $2::timestamptz - make_interval(days => $3) AND created_at <= $2`,
+    [memoryId, now, CLARIFICATION_TTL_DAYS]);
 }
 
 export interface ItemRef { table: 'episodes' | 'facts' | 'notes'; id: string }
 
 /** A new open question about one item (asked as of the conversation's time). */
-export async function askClarification(db: Queryable, ownerId: string, item: ItemRef, question: string, candidates: string[], at: Date): Promise<string> {
+export async function askClarification(db: Queryable, memoryId: string, item: ItemRef, question: string, candidates: string[], at: Date): Promise<string> {
   const column = item.table === 'episodes' ? 'episode_id' : item.table === 'facts' ? 'fact_id' : 'note_id';
   const [row] = await db.query(
-    `INSERT INTO clarifications (owner_id, question, candidates, ${column}, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-    [ownerId, question.slice(0, 300), candidates, item.id, at]);
+    `INSERT INTO clarifications (memory_id, question, candidates, ${column}, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    [memoryId, question.slice(0, 300), candidates, item.id, at]);
   return row.id as string;
 }
 
@@ -43,10 +43,10 @@ export async function askClarification(db: Queryable, ownerId: string, item: Ite
  * Applies an answer: the item gets the chosen contact as its subject (if undecided) and its people link; the question —
  * and any other open one with the same text and candidates — is resolved. The memory's text is never rewritten.
  */
-export async function resolveClarification(db: Queryable, ownerId: string, clarificationId: string, personId: string, at: Date): Promise<boolean> {
+export async function resolveClarification(db: Queryable, memoryId: string, clarificationId: string, personId: string, at: Date): Promise<boolean> {
   const [c]: Array<{ question: string; candidates: string[]; contact_id: string | null }> = await db.query(
-    `SELECT question, candidates, contact_id FROM clarifications WHERE id = $1 AND owner_id = $2 AND status = 'open'`, [clarificationId, ownerId]);
-  if (c?.contact_id) return resolveSameContact(db, ownerId, clarificationId, c.contact_id, c.candidates, personId, at);
+    `SELECT question, candidates, contact_id FROM clarifications WHERE id = $1 AND memory_id = $2 AND status = 'open'`, [clarificationId, memoryId]);
+  if (c?.contact_id) return resolveSameContact(db, memoryId, clarificationId, c.contact_id, c.candidates, personId, at);
   if (!c || !c.candidates.includes(personId)) return false;
   const [person]: Array<{ display_name: string; names: string[] }> = await db.query(
     `SELECT p.display_name, array_remove(array_agg(a.alias_norm), NULL) || ARRAY[lower(unaccent(p.display_name))] AS names
@@ -55,17 +55,17 @@ export async function resolveClarification(db: Queryable, ownerId: string, clari
     // WITH … SELECT: plain rows back (a bare UPDATE … RETURNING comes back as [rows, count]).
     `WITH u AS (
        UPDATE clarifications SET status = 'resolved', resolved_at = $3, resolved_person_id = $4, resolution = $5
-       WHERE owner_id = $1 AND status = 'open' AND (id = $2 OR (question = $6 AND candidates = $7::uuid[]))
+       WHERE memory_id = $1 AND status = 'open' AND (id = $2 OR (question = $6 AND candidates = $7::uuid[]))
        RETURNING episode_id, fact_id, note_id)
      SELECT * FROM u`,
-    [ownerId, clarificationId, at, personId, person?.display_name ?? null, c.question, c.candidates]);
+    [memoryId, clarificationId, at, personId, person?.display_name ?? null, c.question, c.candidates]);
   const names = new Set((person?.names ?? []).map(fold));
   for (const r of resolved) {
     for (const [table, id] of [['episodes', r.episode_id], ['facts', r.fact_id], ['notes', r.note_id]] as const) {
       if (!id) continue;
       await db.query(
         `UPDATE ${table} SET subject_kind = 'contact', subject_person_id = $1, subject_candidates = '{}'
-         WHERE id = $2 AND owner_id = $3 AND subject_kind = 'undecided'`, [personId, id, ownerId]);
+         WHERE id = $2 AND memory_id = $3 AND subject_kind = 'undecided'`, [personId, id, memoryId]);
     }
     if (r.episode_id) {
       const people: Array<{ alias: string }> = await db.query(
@@ -85,13 +85,13 @@ export async function resolveClarification(db: Queryable, ownerId: string, clari
  * A "same person?" answer: a candidate → the new contact is merged into it (every reference moves, `mergeContacts`); the
  * new contact itself → a different person, both stay. Either way the question is resolved.
  */
-async function resolveSameContact(db: Queryable, ownerId: string, id: string, contactId: string, candidates: string[], personId: string, at: Date): Promise<boolean> {
+async function resolveSameContact(db: Queryable, memoryId: string, id: string, contactId: string, candidates: string[], personId: string, at: Date): Promise<boolean> {
   const same = candidates.includes(personId);
   if (!same && personId !== contactId) return false;
   await db.query(
-    `UPDATE clarifications SET status = 'resolved', resolved_at = $3, resolved_person_id = $4, resolution = $5 WHERE id = $1 AND owner_id = $2`,
-    [id, ownerId, at, personId, same ? SAME_PERSON : DIFFERENT_PERSON]);
-  if (same) await mergeContacts(db, ownerId, contactId, personId, at);
+    `UPDATE clarifications SET status = 'resolved', resolved_at = $3, resolved_person_id = $4, resolution = $5 WHERE id = $1 AND memory_id = $2`,
+    [id, memoryId, at, personId, same ? SAME_PERSON : DIFFERENT_PERSON]);
+  if (same) await mergeContacts(db, memoryId, contactId, personId, at);
   return true;
 }
 
@@ -101,14 +101,14 @@ export interface OpenClarification { id: string; question: string; episodeId: st
  * Open questions relevant to a message or a recall: one of its candidates is named in the text (any of their names),
  * or the item it concerns is among `itemIds`. Newest first.
  */
-export async function relevantClarifications(db: Queryable, ownerId: string, text: string, itemIds: string[], now: Date, limit: number): Promise<OpenClarification[]> {
-  await expireClarifications(db, ownerId, now);
+export async function relevantClarifications(db: Queryable, memoryId: string, text: string, itemIds: string[], now: Date, limit: number): Promise<OpenClarification[]> {
+  await expireClarifications(db, memoryId, now);
   const rows: Array<{ id: string; question: string; episode_id: string | null; fact_id: string | null; note_id: string | null; candidates: string[]; names: string[] }> = await db.query(
     `SELECT c.id, c.question, c.episode_id, c.fact_id, c.note_id, c.candidates,
        ARRAY(SELECT a.alias_norm FROM person_aliases a WHERE a.person_id = ANY(c.candidates)
              UNION SELECT lower(unaccent(p.display_name)) FROM persons p WHERE p.id = ANY(c.candidates)) AS names
-     FROM clarifications c WHERE c.owner_id = $1 AND c.status = 'open' AND c.created_at <= $2 ORDER BY c.created_at DESC LIMIT 50`,
-    [ownerId, now]);
+     FROM clarifications c WHERE c.memory_id = $1 AND c.status = 'open' AND c.created_at <= $2 ORDER BY c.created_at DESC LIMIT 50`,
+    [memoryId, now]);
   const words = new Set(fold(text).split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 2));
   const ids = new Set(itemIds);
   return rows

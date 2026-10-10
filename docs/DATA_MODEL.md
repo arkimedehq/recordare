@@ -13,14 +13,14 @@ because adding them later means a backfill. **Whole tables and enum values** tha
 phases use are deferred — adding them later is purely additive (see the last section).
 
 Conventions: `uuid` primary keys (v7 planned; as built `gen_random_uuid()`, v4); `timestamptz` everywhere; Postgres enums; memory rows are
-append + link, never rewritten (D29); `owner_id` on every memory row and every query filtered by
+append + link, never rewritten (D29); `memory_id` on every memory row and every query filtered by
 it; FKs `ON DELETE` behaviour stated per table.
 
 ## Overview
 
 ```
 Identity      persons ─ person_aliases       clients ─ api_keys ─ access_tokens ─ oauth_clients
-              external_identities ─ link_codes   owners ─ owner_sessions   idempotency_keys   clarifications
+              external_identities ─ link_codes   memories ─ holder_sessions   idempotency_keys   clarifications
 Layer 0       conversations ─ conversation_participants ─ messages ─ message_revisions
 Layer 1       episodes ─ episode_evidence ─ episode_people ─ plan_events ─ episode_promotions
 Layer 2       digests ─ digest_sources
@@ -35,9 +35,9 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 
 | Column | Type | Notes |
 |---|---|---|
-| `origin` | enum `owner_lived \| owner_told \| assistant_stated` | Who lived / said it (D28, D30, H3). `owner_told` = what the owner reports about others, and messages written by others inside the owner's imports. `twin_experienced` is added with the twin phases |
+| `origin` | enum `holder_lived \| holder_told \| assistant_stated` | Who lived / said it (D28, D30, H3). `holder_told` = what the holder reports about others, and messages written by others inside the holder's imports. `twin_experienced` is added with the twin phases |
 | `stance` | enum `stated \| inferred` | Inferred items stay low-confidence / pending (D29) |
-| `author_role` | enum `owner \| assistant \| other \| tool` | Who wrote the evidence. Items whose only evidence comes from `other` / `tool` messages (group members, tool outputs, imported mail bodies) are extraction context, never `stance: stated`: at most `inferred` (facts: `pending`) — poisoning guard; recall labels them |
+| `author_role` | enum `holder \| assistant \| other \| tool` | Who wrote the evidence. Items whose only evidence comes from `other` / `tool` messages (group members, tool outputs, imported mail bodies) are extraction context, never `stance: stated`: at most `inferred` (facts: `pending`) — poisoning guard; recall labels them |
 | `confidence` | real 0–1 | |
 | `extraction_run_id` | uuid null → extraction_runs (`SET NULL`) | null for manual entries |
 
@@ -45,20 +45,20 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 
 | Column | Type | Notes |
 |---|---|---|
-| `disclosure` | enum `owner \| inner \| friends \| acquaintances \| public`, default `owner` | Tier ceiling (vision tiers) |
-| `audience` | uuid[] (person ids), GIN index | Humans present when it was recorded — immutable (D29); always contains the owner. **Only identities verified for this owner** enter it; assistants are not persons |
+| `disclosure` | enum `holder \| inner \| friends \| acquaintances \| public`, default `holder` | Tier ceiling (vision tiers) |
+| `audience` | uuid[] (person ids), GIN index | Humans present when it was recorded — immutable (D29); always contains the holder. **Only identities verified for this memory** enter it; assistants are not persons |
 | `audience_unverified` | text[] | Display names of present participants without a verified identity (never used to disclose) |
-| `confidence_of` | uuid null (person id) | A third party's confidence ("Marco told me…"): at most owner + that person, unless granted (phase 3) |
+| `confidence_of` | uuid null (person id) | A third party's confidence ("Marco told me…"): at most holder + that person, unless granted (phase 3) |
 
 **Read rule: none for now (D50, WORK_PLAN 8.2, 2026-10-09).** Every answer uses the whole memory, in every
 conversation; `disclosure`, `audience` and `audience_unverified` are **still written** (recorded data for the later
 privacy / disclosure work, WORK_PLAN 8.12) but **no read path filters on them**. Per-memory isolation stays (every read
-is scoped to one `owner_id`). *Superseded (phase-1 rule)*: rows were returned only if the viewer set `V` ⊆ `audience`
-and every viewer's tier ≥ `disclosure` — with no tiers yet, only when the viewers were exactly the owner (shared
+is scoped to one `memory_id`). *Superseded (phase-1 rule)*: rows were returned only if the viewer set `V` ⊆ `audience`
+and every viewer's tier ≥ `disclosure` — with no tiers yet, only when the viewers were exactly the holder (shared
 conversations saw no diary); derived rows took `audience = ∩ sources`, `disclosure = most restrictive source` (still how
 they are written).
 
-**Time.** Dates with coarse precision are stored as the **start of the period in the owner's
+**Time.** Dates with coarse precision are stored as the **start of the period in the memory's
 timezone** plus `date_precision` (day → local midnight, month → first day, year → 1 January);
 range queries match by **overlap** of `[occurred_at, occurred_until or end of period]` with the
 requested range.
@@ -72,9 +72,9 @@ requested range.
 | `recorded_at` | timestamptz | When Recordare learned it |
 
 **Embeddings**: `embedding vector(N)`, `embedding_model text`, `embedding_text text`. N fixed per
-installation (D27). HNSW (`vector_cosine_ops`) queried with `owner_id` filter and pgvector
-iterative scan (`hnsw.iterative_scan = relaxed_order`) so per-owner recall holds in multi-owner
-installs; partition by owner if an install grows large. <!-- verify: hnsw.iterative_scan is not set anywhere in
+installation (D27). HNSW (`vector_cosine_ops`) queried with `memory_id` filter and pgvector
+iterative scan (`hnsw.iterative_scan = relaxed_order`) so per-memory recall holds in multi-memory
+installs; partition by memory if an install grows large. <!-- verify: hnsw.iterative_scan is not set anywhere in
 service/src (main) — not built yet? -->
 
 ## Identity
@@ -83,31 +83,31 @@ service/src (main) — not built yet? -->
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid | |
-| `owner_scope` | uuid null → owners | **null for a memory's own row; required for every other person (a contact)** — a contact belongs to one memory, never shared across memories (deferred constraint trigger `persons_scope_required`, checked at commit) |
+| `memory_id` | uuid null → memories | **null for a memory's own row; required for every other person (a contact)** — a contact belongs to one memory, never shared across memories (deferred constraint trigger `persons_scope_required`, checked at commit) |
 | `display_name` | text | A memory auto-provisioned by a client is first named after the client's user id; the client then keeps it in sync (`PATCH api/v1/me`). A contact: the name it was first seen or mentioned with |
 | `full_name` | text null | Contacts: the full name when known (8.3: column only, nothing fills it yet) |
 | `relation` | text null | Contacts: the relation to the memory's self — sister, colleague, boss… (8.3: column only) |
 | `created_at` | timestamptz | |
 
-The memory's kind moved to `owners.mode` (migration `MemoryIdentity`, D50); `persons.kind` is gone.
+The memory's kind moved to `memories.mode` (migration `MemoryIdentity`, D50); `persons.kind` is gone.
 
 Person merge is **not supported in v1** (an attempt to link an identity already bound to another
-owner is rejected); a future merge must remap `audience` arrays and FKs in one transaction.
+memory is rejected); a future merge must remap `audience` arrays and FKs in one transaction.
 
 ### person_aliases
-`id, owner_id, person_id, alias text, alias_norm text (pg_trgm GIN), source enum
+`id, memory_id, person_id, alias text, alias_norm text (pg_trgm GIN), source enum
 (extracted|manual|client), created_at`, unique `(person_id, alias_norm)` — the names of a contact (first name,
 nicknames, "my sister"…). `alias_norm` = `lower(unaccent(btrim(alias)))`. As built (8.3) every contact has its display
 name as an alias (`client` when created from a participant the client identified, `extracted` when the writer created
 it by name); the writer's episode-subject rule reads them. Episodes still keep people as "Name (relation)" strings
 (`episode_people.alias`), which people-aware recall reads (D39).
 
-### owners
+### memories
 | Column | Type | Notes |
 |---|---|---|
 | `person_id` | uuid PK → persons | |
-| `email` | text unique null | Owner login (magic link, `API.md` §1) — used by the public profile only |
-| `locale`, `timezone` | text | Defaults `it`, `Europe/Rome`; the admin API accepts `it` / `en`. The locale only formats dates and recall notices: the deterministic language helpers (periods, months, relations, owner naming — `service/src/lang`, 25 most used languages) apply all languages at once |
+| `email` | text unique null | Holder login (magic link, `API.md` §1) — used by the public profile only |
+| `locale`, `timezone` | text | Defaults `it`, `Europe/Rome`; the admin API accepts `it` / `en`. The locale only formats dates and recall notices: the deterministic language helpers (periods, months, relations, self stand-ins for the leak detector — `service/src/lang`, 25 most used languages) apply all languages at once |
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
@@ -115,58 +115,58 @@ it by name); the writer's episode-subject rule reads them. Episodes still keep p
 | `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | The first person in gendered languages (D50; used from WORK_PLAN 8.4) |
 | `created_at` | timestamptz | |
 
-Idle delay is a global setting (D5), not per owner. No consent columns (D50): migration `NoConsent` dropped
+Idle delay is a global setting (D5), not per memory. No consent columns (D50): migration `NoConsent` dropped
 `episodic_enabled`, `episodic_enabled_at`, `episodic_enabled_by` and `ingest_refused_at` — every memory stores what its
 client sends; the on/off switch belongs to the client platform.
 
-### owner_sessions (public profile)
-`id, owner_id, created_at, expires_at, revoked_at, user_agent` — the owner's own login session on
+### holder_sessions (public profile)
+`id, memory_id, created_at, expires_at, revoked_at, user_agent` — the holder's own login session on
 Recordare's pages (link codes, OAuth authorisation, self-service diary).
 
 ### clients
 `id, name, kind enum (platform|mcp_client|import), auto_provision bool, raw_log_scope enum
 (own|all, default own), created_at, disabled_at` — `raw_log_scope = own`: the raw-log fallback of
 this client only searches conversations this client ingested (episodes / facts are shared across
-the owner's clients; raw chats are not, unless the owner widens it).
+the memory's clients; raw chats are not, unless the holder widens it).
 
 ### api_keys
 `id, client_id, prefix, hash (argon2id), scopes text[], created_at, last_used_at, revoked_at`
 (scope table: `API.md` §1).
 
 ### access_tokens and oauth_clients (oauth parts: public profile)
-`access_tokens(id, owner_id, client_id, kind enum (personal|oauth_access|oauth_refresh), prefix,
+`access_tokens(id, memory_id, client_id, kind enum (personal|oauth_access|oauth_refresh), prefix,
 hash, scopes text[], created_at, expires_at, last_used_at, revoked_at)` — as built the `kind` enum holds only
 `personal` (the OAuth values come with the public profile);
 `oauth_clients(id, client_id, redirect_uris text[], registered_at)` (MCP dynamic registration).
 
 ### external_identities
-`id, owner_scope null, person_id, kind enum (account|participant), client_id null, channel text
+`id, memory_id null, person_id, kind enum (account|participant), client_id null, channel text
 null, external_id, verified_at null, created_at` (migration `MemoryIdentity`, D50):
-- **`account`** — a client's user id opens a memory: `client_id` set, `channel` and `owner_scope` null, the person is a
-  memory's own row; unique `(client_id, external_id)`. The only kind `OwnerResolver` reads (`X-Recordare-User`).
-- **`participant`** — inside the memory `owner_scope` (required), a client's participant id (`client_id`) or a channel
+- **`account`** — a client's user id opens a memory: `client_id` set, `channel` and `memory_id` null, the person is a
+  memory's own row; unique `(client_id, external_id)`. The only kind `MemoryResolver` reads (`X-Recordare-User`).
+- **`participant`** — inside the memory `memory_id` (required), a client's participant id (`client_id`) or a channel
   id (`channel`, exactly one of the two) names the memory's self or one of its contacts; unique
-  `(owner_scope, client_id, external_id)` and `(owner_scope, channel, external_id)`. Never opens a memory: the same
+  `(memory_id, client_id, external_id)` and `(memory_id, channel, external_id)`. Never opens a memory: the same
   client user id can be one memory's account and a participant (a contact) in another. Ingest creates one (verified)
   when it first sees a participant's identity; an unverified binding (admin, `verified: false`) identifies nobody.
 Only verified bindings identify interlocutors and enter `audience`.
 
 ### link_codes (public profile)
-`id, owner_id, client_id (the only client allowed to redeem), code_hash, expires_at, used_at,
+`id, memory_id, client_id (the only client allowed to redeem), code_hash, expires_at, used_at,
 created_at`.
 
 ### idempotency_keys (public profile; v1 keeps replay keys in Redis for 24 h)
-`credential_id, owner_id, method_path, key, response_hash, response_body, created_at` — unique on
+`credential_id, memory_id, method_path, key, response_hash, response_body, created_at` — unique on
 the first four; 24 h retention.
 
 ### Agent memory (D50, WORK_PLAN 8.3) — design approved 2026-10-09, built 2026-10-09 (migration `MemoryIdentity1791070000000`)
-A memory belongs to an agent: one client account = one memory (today the `owners` row; renamed `memories` in 8.10).
-- **`owners.mode`** `personal | entity` (from `persons.kind`: human → personal, entity → entity; changeable only while
-  the memory is empty); **`owners.gender`** `masculine | feminine | neutral`, default **masculine**, for the first
+A memory belongs to an agent: one client account = one memory (the `memories` row).
+- **`memories.mode`** `personal | entity` (from `persons.kind`: human → personal, entity → entity; changeable only while
+  the memory is empty); **`memories.gender`** `masculine | feminine | neutral`, default **masculine**, for the first
   person in gendered languages (set by the client with `PATCH /me`). The memory's own person row (`persons`,
-  `owner_scope` null) carries the name: in a personal memory it is the name of "I" — the account holder, who is both
+  `memory_id` null) carries the name: in a personal memory it is the name of "I" — the account holder, who is both
   the user and the agent.
-- **Contacts** = the people a memory knows: `persons` rows with `owner_scope` = that memory (required for every human
+- **Contacts** = the people a memory knows: `persons` rows with `memory_id` = that memory (required for every human
   that is not the memory itself). The same human in two memories is two unrelated contacts (memories are isolated). A
   contact is created when a client identifies a participant, when someone introduces themselves or is recognised (voice,
   face), and also when a person is only **mentioned** with a name ("my sister Giulia"). Contact fields: names
@@ -195,14 +195,14 @@ A memory belongs to an agent: one client account = one memory (today the `owners
   name one known person, else `someone`, facts keep their subject; missing contacts created (e.g. Andrea inside the
   Arkim3de memory). The prompt and `origin` values do not change in 8.3 (first person arrives in 8.4).
 
-**As built (8.3).** Tables and columns: `owners.mode` / `gender`; `persons.full_name` / `relation` and the scope
+**As built (8.3).** Tables and columns: `memories.mode` / `gender`; `persons.full_name` / `relation` and the scope
 trigger; `person_aliases.source` + `client`; `external_identities.kind` `account | participant`; `messages.author_kind`
 / `attribution_method` / `attribution_confidence`; sources `document`, `perception`, `ambient`; `subject_kind`,
 `subject_person_id`, `subject_candidates` on episodes, facts, notes; `clarifications`. Rules:
 - *Ingest attribution* — `own: true` (only on `user` / `other` messages) → `own`; `tool` → `tool`; `assistant` → `agent`
   (method `client_assertion`, confidence 1); a message whose `authorRef` names a participant takes the participant's
   attribution; otherwise a `user` message is `self` in a personal memory (method `account`) and `someone` in an entity
-  memory (method `none`), any other `someone`. Participants: `assistant` → agent; `owner` → `self` in a personal memory
+  memory (method `none`), any other `someone`. Participants: `assistant` → agent; `holder` → `self` in a personal memory
   (implied when missing; an entity memory implies none); with an identity → resolved in this memory (the account's own
   user id → `self`; a participant identity → its person; first seen → a new contact + alias + verified participant
   identity; method `client_assertion` for a client's user id, `declared` for a channel id; an unverified binding →
@@ -212,20 +212,20 @@ trigger; `person_aliases.source` + `client`; `external_identities.kind` `account
   people name exactly one known contact (display name or alias, "(relation)" stripped; `episode_people.person_id` set
   for an unambiguous name), else `someone`; a note → `someone`. Never `undecided` yet. Explicit writes (`log_episode`,
   `remember`) follow the same rules; corrections and plan copies keep the subject of the row they derive from.
-- *Prompts unchanged* — the extraction / facts / review inputs still label the account's speaker `owner` (personal) /
+- *Prompts unchanged* — the extraction / facts / review inputs still label the account's speaker as in 0.1.0 (personal) /
   `person` (entity): a message counts as the account's speaker's when its role is `user`, its author kind is `self` or
-  `own`, or its `authorRef` is the conversation's `owner` participant (SQL `accountSpeaker`); the gate, `author_role` and
+  `own`, or its `authorRef` is the conversation's `holder` participant (SQL `accountSpeaker`); the gate, `author_role` and
   the raw-log `authorRole` use the same test.
-- *Backfill* — as the design above; in addition: persons of no memory (owner_scope null, not a memory) referenced in a
+- *Backfill* — as the design above; in addition: persons of no memory (memory_id null, not a memory) referenced in a
   memory become contacts there, then are deleted with their identities (also those referenced nowhere); an account id
   bound to a contact becomes a participant id of its memory; a channel id without scope is scoped to its person's
-  memory; personal `user` messages without an author get the self; entity conversations' `owner` participant loses the
+  memory; personal `user` messages without an author get the self; entity conversations' `holder` participant loses the
   entity as its person. `down` restores the previous shape (participant ids of a client are dropped; contacts stay).
 
 **As built (8.4, personal first person — `extract.v12`, `facts.v2`; migration `ContactClarification1791080000000`).** Personal memories only; entity
 memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
 - *Voice* — every episode, note and plan of a personal memory is written in the **first person**, in the conversation's
-  language, with `owners.gender` for agreement; the account holder's undeclared turns and the assistant's turns are both
+  language, with `memories.gender` for agreement; the account holder's undeclared turns and the assistant's turns are both
   "I" with no distinction in the text (who said it stays in `messages.author_kind` / `author_role` / `origin`, as data).
   External content (web, tools, files) is something "I" learned (extract.v11's news rule and its exclusion of others'
   claims about the self are kept). The prompt gets the self's names (`ME`: display name + aliases, with the gender),
@@ -240,7 +240,7 @@ memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
   them; no match → a new contact (`relation`, `full_name` for two or more capitalised words, the first name as an alias).
   Episode people are linked the same way (only names create contacts: "amiche del nuoto" does not). Facts of `someone`
   or of an undecided person are dropped; notes of `someone` too.
-- *Identified participants* (owner's decision 2026-10-09: a first name alone does not say that a participant is a
+- *Identified participants* (maintainer's decision 2026-10-09: a first name alone does not say that a participant is a
   contact known only by name — "mia sorella Giulia" and a Giulia writing in a group may be two people) — a participant
   identity seen for the first time **binds** to an existing contact only on strong evidence: its display name is a full
   name (two or more words) equal (case- and accent-insensitive) to the display name, full name or an alias of exactly one
@@ -279,7 +279,7 @@ memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
 - *Gate* — a personal window costs a call when anyone but the assistant or a tool speaks (the self, a contact,
   someone, own content); an identified contact sent as `user` with its `authorRef` is that contact, not the self (SQL
   `memorySpeaker`, also used by the raw-log search and MCP writes).
-- *Leak detector* (replaces 4.11's `nameOwner`, removed) — `extraction_runs.summary.leaks` counts the written episodes
+- *Leak detector* (replaces the 4.11 naming substitution, removed) — `extraction_runs.summary.leaks` counts the written episodes
   and notes that still speak of the self in the third person (one of its names, or a stand-in such as "the user",
   "l'utente", "the owner", "the assistant", in the most used languages: `service/src/lang/self.ts`); counts only, with
   `summary.clarifications` (`asked`, `resolved`) and `returned.answers`.
@@ -288,7 +288,7 @@ memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
 the same model as personal ones; the personal prompts stay byte-identical (`extract.v13`, `facts.v2`, pinned by a test).
 - *Voice* — "I" is the shared agent (a device, a place, a robot, a service): its replies and actions (`me (assistant)`),
   the content given to it to keep (`me (own)`), its place and what belongs to it, in the first person with
-  `owners.gender`. The people talking to it are never "I": whoever speaks through the account is `someone` until the
+  `memories.gender`. The people talking to it are never "I": whoever speaks through the account is `someone` until the
   conversation identifies them (a self-introduction or being addressed by name, for their following messages, never
   carried over from another conversation, never guessed); a participant with an identity is `Name [C3]`. A person's
   "I" is written with their name ("Nunzia ha comprato…"), an unidentified speaker's as "qualcuno…".
@@ -299,7 +299,7 @@ the same model as personal ones; the personal prompts stay byte-identical (`extr
   episode or note without a subject is `someone`'s, a fact without one the agent's (its place: where the keys are, the
   internet provider). The guard that every person an episode names occurs in the window stays. A fact or note of
   `someone` is not stored.
-- *Stance and claims* — the account's speaker's turns stay `owner`-authored (stated); `claims` in recall are other
+- *Stance and claims* — the account's speaker's turns stay `holder`-authored (stated); `claims` in recall are other
   conversation participants' inferred statements (the personal rule); a tool's news is the agent's learning.
 - *Recall* — `speaker` in every result: an identified contact, else `self` (personal) or `someone` (entity, with a
   note that "I" in the question is the speaker, not the agent); clarifications ("which Marco?", "same person?") are
@@ -311,7 +311,7 @@ the same model as personal ones; the personal prompts stay byte-identical (`extr
 ### conversations
 | Column | Type | Notes |
 |---|---|---|
-| `id`, `owner_id`, `client_id` | uuid | Unique `(client_id, owner_id, external_id)` |
+| `id`, `memory_id`, `client_id` | uuid | Unique `(client_id, memory_id, external_id)` |
 | `external_id` | text | |
 | `source` | enum `chat \| voice \| mcp_tool \| import_chat \| import_social \| import_email \| import_notes \| interview \| document \| perception \| ambient` | `mcp_tool` = synthetic conversation holding basic-level tool calls; `document` / `perception` / `ambient` (D50): a document given to the agent, what a device perceives, continuous listening |
 | `channel`, `title` | text null | |
@@ -320,13 +320,13 @@ the same model as personal ones; the personal prompts stay byte-identical (`extr
 | `deleted_at` | timestamptz null | |
 
 ### conversation_participants
-`conversation_id, person_id null, role enum (owner|assistant|other), display_name, ref text,
+`conversation_id, person_id null, role enum (holder|assistant|other), display_name, ref text,
 joined_at` — source of every row's `audience` (recorded; no read filters on it since D50).
 
 ### messages
 | Column | Type | Notes |
 |---|---|---|
-| `id`, `conversation_id`, `owner_id` | uuid | Unique `(conversation_id, external_id)`; index `(owner_id, sent_at)` |
+| `id`, `conversation_id`, `memory_id` | uuid | Unique `(conversation_id, external_id)`; index `(memory_id, sent_at)` |
 | `external_id` | text | |
 | `role` | enum `user \| assistant \| tool \| other` | `system` messages are **not ingested** (they can carry secrets); `tool` = tool calls / results of agentic clients (D30) |
 | `tool_name` | text null | For `role = tool` |
@@ -349,7 +349,7 @@ joined_at` — source of every row's `audience` (recorded; no read filters on it
 ### episodes
 | Column | Type | Notes |
 |---|---|---|
-| `id`, `owner_id` | uuid | |
+| `id`, `memory_id` | uuid | |
 | `kind` | enum `event \| plan \| state_change` | `thought` / `goal` added with track R |
 | `content` | text | Self-contained, absolute dates |
 | *time* | | `occurred_at`, `occurred_until`, `date_precision`, `time_expression`, `recorded_at` |
@@ -371,8 +371,8 @@ joined_at` — source of every row's `audience` (recorded; no read filters on it
 | *provenance*, *disclosure*, *embedding* | | |
 | `deleted_at` | timestamptz null | Forgetting in progress (purged by job). As built forgetting deletes the rows at once and the column is never set (reads still filter on it) |
 
-Indexes: `(owner_id, occurred_at) WHERE deleted_at IS NULL AND invalidated_at IS NULL AND
-duplicate_of IS NULL`, `(owner_id, kind, plan_status)`, HNSW `embedding`, GIN `tags`, `keywords`,
+Indexes: `(memory_id, occurred_at) WHERE deleted_at IS NULL AND invalidated_at IS NULL AND
+duplicate_of IS NULL`, `(memory_id, kind, plan_status)`, HNSW `embedding`, GIN `tags`, `keywords`,
 FTS on `content`.
 
 ### episode_evidence
@@ -393,21 +393,21 @@ confirmed is shown as unresolved); no job writes it and the `expire` patch is un
 that plan (D37).
 
 ### episode_promotions (D20) — created, unused yet (WORK_PLAN 5.4)
-`id, owner_id, pattern text, episode_ids uuid[], proposed_note_ref text null, status enum
+`id, memory_id, pattern text, episode_ids uuid[], proposed_note_ref text null, status enum
 (proposed|confirmed|rejected), created_at, updated_at` — recurring patterns proposed as
 semantic notes; exposed to clients as pending proposals (D26).
 
 ## Layer 2 — digests
 
 ### digests
-`id, owner_id, level enum (day|month), period_start date, period_end date, content, version int,
+`id, memory_id, level enum (day|month), period_start date, period_end date, content, version int,
 superseded_at null, embedding…, disclosure, audience, extraction_run_id, source_hash, created_at`; `source_hash` =
 fingerprint of the prompt version and the items the digest was written from (a day is rewritten only when it or the
 prompt changes — M5, 8.6). Content: the agent's diary in the first person (8.6, `digest.day.v2` / `digest.month.v2`,
 `+entity` for entity memories): the memory's own items, a person's news about themself, what a tool taught — never
 other people's claims (author other, inferred); each item reaches the prompt with its subject. Partial
-unique `(owner_id, level, period_start) WHERE superseded_at IS NULL`. Phase 3 will need
-per-audience digests (the intersection rule makes mixed-audience days owner-only).
+unique `(memory_id, level, period_start) WHERE superseded_at IS NULL`. Phase 3 will need
+per-audience digests (the intersection rule makes mixed-audience days holder-only).
 
 ### digest_sources
 `digest_id (CASCADE), episode_id (CASCADE) | source_digest_id (CASCADE)` — required.
@@ -430,7 +430,7 @@ by explicit statement.
 ### facts
 | Column | Type | Notes |
 |---|---|---|
-| `id`, `owner_id` | uuid | |
+| `id`, `memory_id` | uuid | |
 | `subject_person_id` | uuid null | null = the memory's self. **Entity memories (D48)**: the person the fact is about (a contact of that memory, found by name or created by the writer); null = the entity itself. Never set in a personal memory |
 | `subject_kind`, `subject_candidates` | | As on episodes (D50): `contact` with a subject, else `self` |
 | `key` | text → fact_slots | |
@@ -441,26 +441,26 @@ by explicit statement.
 | `supersedes`, `corrects` | uuid null → facts (`SET NULL`) | |
 | `verdict` | enum `new \| keep \| stale \| replace \| corrects \| unknown` | Write-time verdict (D29) |
 | `support_count` | int | Restatements counted (Graphiti) |
-| `pending` | bool | Inferred / promoted, awaiting owner confirmation; excluded from recall unless asked |
+| `pending` | bool | Inferred / promoted, awaiting holder confirmation; excluded from recall unless asked |
 | *provenance*, *disclosure*, *embedding* | | |
 | `deleted_at` | timestamptz null | |
 
-Partial unique `(owner_id, subject_person_id, key) WHERE status = 'current' AND key is single`
+Partial unique `(memory_id, subject_person_id, key) WHERE status = 'current' AND key is single`
 (enforced via trigger on `fact_slots.cardinality`). Supersession forward-only by world / message
 time. `derivedFrom` / `needsRecheck` (D29) are deferred until something produces derived facts.
 
 `fact_evidence(fact_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`.
 
 ### notes (D34)
-Semantic notes: who the owner is, beyond state slots.
+Semantic notes: who the memory's self is, beyond state slots.
 
 | Column | Type | Notes |
 |---|---|---|
-| `id`, `owner_id` | uuid | |
+| `id`, `memory_id` | uuid | |
 | `category` | enum `preference \| habit \| value \| relationship \| knowledge \| profile \| constraint` | |
 | `content` | text | Short, self-contained sentence |
 | `keywords`, `context`, `tags` | text[], text, text[] | Retrieval keys (same extraction call) |
-| `pinned` | bool | Always part of the stable context block (owner's choice) |
+| `pinned` | bool | Always part of the stable context block (the holder's choice) |
 | *subject* | | `subject_kind`, `subject_person_id`, `subject_candidates` as on episodes (D50): `self` in a personal memory, `someone` in an entity memory |
 | `status` | enum `current \| superseded \| corrected` | History kept, never rewritten |
 | `supersedes`, `corrects` | uuid null → notes (`SET NULL`) | |
@@ -471,7 +471,7 @@ Semantic notes: who the owner is, beyond state slots.
 | `deleted_at` | timestamptz null | |
 
 `note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`;
-`note_changes(seq bigserial, owner_id, note_id uuid, change enum (created|updated|corrected|
+`note_changes(seq bigserial, memory_id, note_id uuid, change enum (created|updated|corrected|
 confirmed|forgotten), at)` — the change feed clients use to keep copies aligned (forgotten notes are
 purged, the feed keeps only their id). As built the extraction writes `created` / `updated` / `corrected` and
 `remember` writes `created`; deleting, confirming or rejecting a note through the read API (`API.md` §4) writes no entry,
@@ -488,9 +488,9 @@ installation's (that of `episodes.embedding`).
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid | |
-| `owner_id` | uuid → owners (CASCADE) | |
+| `memory_id` | uuid → memories (CASCADE) | |
 | `client_id` | uuid null → clients (`SET NULL`) | The client that sent it (null: an MCP call without a client) |
-| `external_id` | text | The client's own id (`learn_source`: `mcp:` + a hash of the title); unique per `(owner_id, client_id, external_id)` |
+| `external_id` | text | The client's own id (`learn_source`: `mcp:` + a hash of the title); unique per `(memory_id, client_id, external_id)` |
 | `title` | text | |
 | `kind` | text check `document \| page \| note \| book \| own_text` | default `document` |
 | `author`, `origin_uri`, `language` | text null | |
@@ -504,11 +504,11 @@ installation's (that of `episodes.embedding`).
 | `learned_episode_id` | uuid null → episodes (`SET NULL`) | The episode that tells of the learning |
 | `created_at`, `updated_at` | timestamptz | |
 
-Indexes: unique `(owner_id, COALESCE(client_id, nil uuid), external_id)`; `(owner_id, learned_at DESC)`;
+Indexes: unique `(memory_id, COALESCE(client_id, nil uuid), external_id)`; `(memory_id, learned_at DESC)`;
 `(conversation_id) WHERE conversation_id IS NOT NULL`.
 
 ### source_passages
-`id, source_id → sources (CASCADE), owner_id → owners (CASCADE), ordinal int (unique per source), heading text null,
+`id, source_id → sources (CASCADE), memory_id → memories (CASCADE), ordinal int (unique per source), heading text null,
 content text, tsv tsvector (generated, 'simple', heading + content), embedding vector(dim) null, embedding_model text
 null` — GIN index on `tsv`, HNSW (cosine) on `embedding`, partial index of the passages still to embed. Split in code (no
 LLM): by Markdown headings, then paragraphs, then sentences (any script), ≈ 1 000 characters, at most 1 600; each
@@ -538,14 +538,14 @@ CONVERSATION`, only when there is one: every other input stays byte-identical; s
 episode may cite it (`"sources": ["S1"]`, linked both ways; an unknown S-number is dropped, `unknown_source`); a source
 learned on its own, or one the extraction left out, gets a code-written episode (no LLM, `service/src/lang/learned.ts`:
 "On 10 October 2026 I learned “title” from Paolo" in the memory's language and gender, date from Intl, English for a
-locale not listed; tag `learned`, author `owner` when the self gave it, `other` otherwise, the provider in
+locale not listed; tag `learned`, author `holder` when the self gave it, `other` otherwise, the provider in
 `episode_people`). `providedBy` by name resolves with the `ContactBook` (a new contact when unknown; ambiguous →
 `someone`).
 
 ## Engine bookkeeping
 
 ### extraction_runs
-`id, owner_id, conversation_id null, kind enum (extraction|digest|consolidation), window_from
+`id, memory_id, conversation_id null, kind enum (extraction|digest|consolidation), window_from
 timestamptz, window_to timestamptz, model, provider, prompt_version, status enum
 (running|done|failed), error text null (no user content), started_at, finished_at` — one
 `extraction` run per window produces episodes, plan patches and fact candidates (D32). `summary jsonb null`
@@ -556,36 +556,36 @@ dropped: {kind: {reason: n}}}` — what the model returned, what was written, wh
 `run_outputs(run_id CASCADE, table_name, row_id)` — changelog; rows removed by the purge job.
 
 ### llm_calls
-`id, owner_id null, client_id null, run_id null, prompt_id, provider, model, input_tokens,
+`id, memory_id null, client_id null, run_id null, prompt_id, provider, model, input_tokens,
 cached_input_tokens, output_tokens, latency_ms, status, created_at` — no prompt or completion
-text stored. Aggregated per owner / client / day for budgets and the CI cost gate.
+text stored. Aggregated per memory / client / day for budgets and the CI cost gate.
 
 ### recall_log
-`id bigserial, owner_id → persons (CASCADE), tool, mode null, items, conversation_id null → conversations (SET NULL),
+`id bigserial, memory_id → persons (CASCADE), tool, mode null, items, conversation_id null → conversations (SET NULL),
 served_at` — one row per recall served (`search_episodes`, `search_memory`, `search_knowledge`, a pre-turn memory-context block:
 `memory_context`), metadata only: never the query, never the memories;
 `conversation_id` tells the extraction which conversations had a recall served (recall-echo guard, D38). Lifetime totals for the operators' dashboard;
 the public profile's `read_audit` (below) extends it with client, viewers and returned row ids.
 
 ### forget_tombstones (D16)
-`id, owner_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,
+`id, memory_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,
 message_ids uuid[] (the forgotten evidence messages, hidden from chat search), period_from, period_to,
 conversation_id null, created_at` — checked **before inserting any
 episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
 
 ### clarifications (D50, vision L1; behaviour WORK_PLAN 8.4)
-`id, owner_id → owners (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null
+`id, memory_id → memories (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null
 (CASCADE; at most one), contact_id null → persons (CASCADE; migration `ContactClarification1791080000000`: the new
 contact of a "same person?" question — then no item), status enum (open|resolved|expired) default open, resolution text
 null (the answer as given: the chosen contact's name, or `same person` / `different person`), resolved_person_id null →
-persons (SET NULL), created_at, resolved_at null (set exactly when not open)`; partial index `(owner_id, created_at)
+persons (SET NULL), created_at, resolved_at null (set exactly when not open)`; partial index `(memory_id, created_at)
 WHERE status = 'open'`. A question Recordare wants answered ("which Marco — the colleague or the cousin?", "is this
 Giulia my sister?"); the memory context offers at most one relevant open question, the answer adds the attribution (or
 merges two contacts) at the next extraction, unanswered ones expire, the Diary resolves them by hand.
 
 ### read_audit (public profile)
-`id, owner_id, client_id, actor enum (client|owner|admin), viewer_ids uuid[], viewer_source enum
-(conversation|owner_direct|added_viewers), endpoint, row_ids uuid[], created_at` — which memories
+`id, memory_id, client_id, actor enum (client|holder|admin), viewer_ids uuid[], viewer_source enum
+(conversation|memory_direct|added_viewers), endpoint, row_ids uuid[], created_at` — which memories
 were returned to whom and how the viewer set was determined (vision principle 5, M7). Retention
 configurable.
 
@@ -603,7 +603,7 @@ facts on forgotten evidence, deletion of episodes left without evidence.
   it are superseded** and rewritten by the next consolidation;
   **facts whose evidence intersects its messages are re-verdicted or deleted** (not built yet); its evidence
   messages are **excluded from the raw-log fallback by message id** (not by fuzzy fingerprint) and
-  purged if the owner chooses "forget the conversation too".
+  purged if the holder chooses "forget the conversation too".
 - **Forget a period** `[from, to]`: tombstone; matches episodes by `occurred_at` **and** raw
   messages by `sent_at`; raw messages in the period are **purged by default** (`keepRaw: true`
   to keep them); digests of the period are recomputed or removed.
@@ -614,7 +614,7 @@ facts on forgotten evidence, deletion of episodes left without evidence.
   `embedding_text`, quotes, `run_outputs` rows. Queued jobs carry **ids only, never content**;
   `extraction_runs.error` and `llm_calls` never contain user content.
 - (Public profile) **Backups**: forgotten rows disappear from backups within a configured window (default 30 days,
-  shown to the owner). **LLM provider logs** are outside Recordare's control: the owner page states
+  shown to the holder). **LLM provider logs** are outside Recordare's control: the holder page states
   which provider processes their data and its retention policy (D27 provider profile).
 - **Forget a learned source** (8.9): the source and its passages are deleted; episodes that referred to it keep an
   `episode_sources` marker (`source_id` null, `forgotten_at`), see Learned sources.
@@ -624,6 +624,6 @@ facts on forgotten evidence, deletion of episodes left without evidence.
 
 Tables: `relationships` and `grants` (phase 3), `autonomy_settings` and `snapshots` (track R),
 `fact_derivations` + `needs_recheck` (when derived facts exist). Enum values: `origin =
-twin_experienced`, `kind = thought | goal`, `owners.mode = synthetic`, `conversations.source =
+twin_experienced`, `kind = thought | goal`, `memories.mode = synthetic`, `conversations.source =
 simulation`, participant role `twin`. Their design is recorded in `DIGITAL_TWIN_VISION.md`
 (research mode, money knob) and `literature/README.md`.

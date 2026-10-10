@@ -53,15 +53,15 @@ describe('live telemetry (M5b)', () => {
   it('streams the real steps of an ingest and an extraction, metadata only, to the admin', async () => {
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
     const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest'] } })).body.key;
-    const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: client.body.id, externalId: 'luca' } });
+    const memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: memoryId, clientId: client.body.id, externalId: 'luca' } });
 
     const events = await collect(url, ADMIN_KEY, 50, async () => {
       const res = await call(url, 'POST', '/api/v1/ingest/messages', {
         token: key, headers: { 'x-recordare-user': 'luca' },
         body: { conversation: { externalId: 't1' }, messages: [{ externalId: 'm1', role: 'user', content: 'Ieri cena da Marco, bellissima.', sentAt: '2026-05-10T21:00:00+02:00' }] },
       });
-      llm.queue.push({ episodes: [{ content: 'Il 9 maggio 2026 Luca ha cenato da Marco.', kind: 'event', occurred_at: '2026-05-09', date_precision: 'day', origin: 'owner_lived', people: ['Marco'], importance: 5, feelings: [], keywords: [], tags: [], evidence: [1] }] });
+      llm.queue.push({ episodes: [{ content: 'Il 9 maggio 2026 Luca ha cenato da Marco.', kind: 'event', occurred_at: '2026-05-09', date_precision: 'day', origin: 'holder_lived', people: ['Marco'], importance: 5, feelings: [], keywords: [], tags: [], evidence: [1] }] });
       await app.get<ExtractionRunner>(EXTRACTION_RUNNER).runForConversation(res.body.conversationId as string);
     });
     const types = events.map((e) => e['type']);
@@ -70,7 +70,7 @@ describe('live telemetry (M5b)', () => {
     // Work without an LLM call is visible too: started / finished pairs around the context read and the new embeddings.
     const work = events.filter((e) => e['type'] === 'work.started' || e['type'] === 'work.finished').map((e) => `${String(e['type'])}:${String(e['op'])}`);
     expect(work).toEqual(expect.arrayContaining(['work.started:context', 'work.finished:context', 'work.started:embed.memories', 'work.finished:embed.memories']));
-    expect(events.find((e) => e['type'] === 'memory.written')).toMatchObject({ ownerId, table: 'episodes', kind: 'event', authorRole: 'owner' });
+    expect(events.find((e) => e['type'] === 'memory.written')).toMatchObject({ memoryId, table: 'episodes', kind: 'event', authorRole: 'holder' });
     expect(JSON.stringify(events)).not.toContain('Marco'); // metadata only, never content
 
     const denied = await fetch(`${url}/api/v1/admin/telemetry/stream`, { headers: { authorization: `Bearer ${key}` } });

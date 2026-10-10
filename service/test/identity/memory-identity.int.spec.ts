@@ -40,7 +40,7 @@ describe('memory identity (D50)', () => {
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
   async function memory(user: string, name: string, mode?: 'entity'): Promise<string> {
-    const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: name, ...(mode ? { mode } : {}) } })).body.personId;
+    const id = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: name, ...(mode ? { mode } : {}) } })).body.personId;
     await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: id, clientId, externalId: user } });
     return id;
   }
@@ -69,8 +69,8 @@ describe('memory identity (D50)', () => {
       ],
     });
     expect(res.status).toBe(200);
-    const [giulia] = await db.query(`SELECT id, owner_scope FROM persons WHERE display_name = 'Giulia'`);
-    expect(giulia.owner_scope).toBe(personal); // a contact of this memory, created on first sight
+    const [giulia] = await db.query(`SELECT id, memory_id FROM persons WHERE display_name = 'Giulia'`);
+    expect(giulia.memory_id).toBe(personal); // a contact of this memory, created on first sight
     expect(await authors('p1')).toEqual([
       { id: 'm1', kind: 'self', person: personal, method: 'account', confidence: 1 },
       { id: 'm2', kind: 'agent', person: null, method: 'client_assertion', confidence: 1 },
@@ -88,19 +88,19 @@ describe('memory identity (D50)', () => {
   it('attributes the messages of an entity memory: someone unless identified, own when marked; new sources accepted', async () => {
     const res = await ingest('casa', {
       conversation: { externalId: 'e1', source: 'ambient', participants: [
-        { ref: 'owner', role: 'owner', displayName: 'Casa' },
+        { ref: 'holder', role: 'holder', displayName: 'Casa' },
         { ref: 'user:andrea', role: 'other', displayName: 'Andrea', identity: { externalUserId: 'andrea' } },
       ] },
       messages: [
         { externalId: 'm1', role: 'user', content: 'Chi ha lasciato la luce accesa?', sentAt: at(1) },
-        { externalId: 'm2', role: 'user', authorRef: 'owner', content: 'Io no.', sentAt: at(2) },
+        { externalId: 'm2', role: 'user', authorRef: 'holder', content: 'Io no.', sentAt: at(2) },
         { externalId: 'm3', role: 'other', authorRef: 'user:andrea', content: 'Sono stato io.', sentAt: at(3) },
         { externalId: 'm4', role: 'other', own: true, content: 'Temperatura in sala: 21 gradi.', sentAt: at(4) },
       ],
     });
     expect(res.status).toBe(200);
     // Andrea has a memory of his own, and in this one he is a contact: two unrelated rows.
-    const [andrea] = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Andrea'`, [entity]);
+    const [andrea] = await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Andrea'`, [entity]);
     expect(andrea.id).not.toBe(personal);
     expect(await authors('e1')).toEqual([
       { id: 'm1', kind: 'someone', person: null, method: 'none', confidence: null },
@@ -113,7 +113,7 @@ describe('memory identity (D50)', () => {
     await ingest('casa', { conversation: { externalId: 'e2', participants: [{ ref: 'a', role: 'other', displayName: 'Andrea', identity: { externalUserId: 'andrea' } }] },
       messages: [{ externalId: 'n1', role: 'other', authorRef: 'a', content: 'Ancora io.', sentAt: at(5) }] });
     expect((await authors('e2'))[0]).toMatchObject({ kind: 'contact', person: andrea.id });
-    expect(await db.query(`SELECT count(*)::int AS n FROM persons WHERE owner_scope = $1`, [entity])).toEqual([{ n: 1 }]);
+    expect(await db.query(`SELECT count(*)::int AS n FROM persons WHERE memory_id = $1`, [entity])).toEqual([{ n: 1 }]);
   });
 
   it('labels speakers: "me" for the self (personal) and the agent\'s own turns, contacts by name with their C-number, "someone" for whoever talks to an entity', async () => {
@@ -136,26 +136,26 @@ describe('memory identity (D50)', () => {
     ], [{ ref: 'g', role: 'other', displayName: 'Giulia', identity: { externalUserId: 'giulia' } }]);
     expect(asUser).toMatch(/ Giulia \[C\d+\]: Sono arrivata\./);
     const entityPrompt = await run('casa', 'l2', [
-      { externalId: 'a', role: 'user', authorRef: 'owner', content: 'Ho comprato il pane.', sentAt: at(1) },
-    ], [{ ref: 'owner', role: 'owner' }]);
+      { externalId: 'a', role: 'user', authorRef: 'holder', content: 'Ho comprato il pane.', sentAt: at(1) },
+    ], [{ ref: 'holder', role: 'holder' }]);
     expect(entityPrompt).toContain(' someone: Ho comprato il pane.');
     expect(entityPrompt).toMatch(/^ME: Casa — gender masculine/);
   });
 
   it('opens a memory only through an account identity; a participant identity names a contact of one memory', async () => {
-    const contactId = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 LIMIT 1`, [entity]))[0].id as string;
+    const contactId = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 LIMIT 1`, [entity]))[0].id as string;
     const link = (body: object) => call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body });
     // A participant identity: the client's id 'zoe' names Andrea inside the entity memory.
-    expect((await link({ kind: 'participant', ownerScope: entity, personId: contactId, clientId, externalId: 'zoe' })).status).toBe(201);
+    expect((await link({ kind: 'participant', memoryId: entity, personId: contactId, clientId, externalId: 'zoe' })).status).toBe(201);
     // …but never opens a memory.
     expect((await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'zoe' } })).status).toBe(404);
     // An account must be a memory; a participant must belong to the memory it is scoped to.
     expect(await link({ kind: 'account', personId: contactId, clientId, externalId: 'zoe2' })).toMatchObject({ status: 400, body: { code: 'cannot_link' } });
-    expect(await link({ kind: 'participant', ownerScope: personal, personId: contactId, clientId, externalId: 'zoe3' }))
+    expect(await link({ kind: 'participant', memoryId: personal, personId: contactId, clientId, externalId: 'zoe3' }))
       .toMatchObject({ status: 400, body: { code: 'cannot_link' } });
-    expect((await link({ kind: 'participant', ownerScope: personal, personId: personal, channel: 'telegram', externalId: '42', verified: true })).status).toBe(201);
-    expect((await link({ kind: 'participant', ownerScope: entity, personId: contactId, externalId: 'x' })).status).toBe(400); // client id or channel
-    expect((await link({ kind: 'participant', ownerScope: entity, personId: contactId, clientId, channel: 'tg', externalId: 'x' })).status).toBe(400);
+    expect((await link({ kind: 'participant', memoryId: personal, personId: personal, channel: 'telegram', externalId: '42', verified: true })).status).toBe(201);
+    expect((await link({ kind: 'participant', memoryId: entity, personId: contactId, externalId: 'x' })).status).toBe(400); // client id or channel
+    expect((await link({ kind: 'participant', memoryId: entity, personId: contactId, clientId, channel: 'tg', externalId: 'x' })).status).toBe(400);
     // The memory's own channel id identifies its self.
     await ingest('andrea', { conversation: { externalId: 'tg', participants: [{ ref: 't', role: 'other', identity: { channel: 'telegram', externalId: '42' } }] },
       messages: [{ externalId: 't1', role: 'other', authorRef: 't', content: 'Dal telefono.', sentAt: at(1) }] });
@@ -178,17 +178,17 @@ describe('memory identity (D50)', () => {
       facts: [{ key: 'car', value: 'VW Golf', verdict: 'new', evidence: [1] }],
       notes: [{ category: 'preference', content: 'Ad Andrea piace il jazz.', verdict: 'new', evidence: [1] }],
     });
-    const subjects = (owner: string) => db.query(
-      `SELECT 'episode' AS t, subject_kind, subject_person_id FROM episodes WHERE owner_id = $1
-       UNION ALL SELECT 'fact', subject_kind, subject_person_id FROM facts WHERE owner_id = $1
-       UNION ALL SELECT 'note', subject_kind, subject_person_id FROM notes WHERE owner_id = $1 ORDER BY 1, 2`, [owner]);
+    const subjects = (memory: string) => db.query(
+      `SELECT 'episode' AS t, subject_kind, subject_person_id FROM episodes WHERE memory_id = $1
+       UNION ALL SELECT 'fact', subject_kind, subject_person_id FROM facts WHERE memory_id = $1
+       UNION ALL SELECT 'note', subject_kind, subject_person_id FROM notes WHERE memory_id = $1 ORDER BY 1, 2`, [memory]);
     expect(await subjects(personal)).toEqual([
       { t: 'episode', subject_kind: 'self', subject_person_id: null },
       { t: 'fact', subject_kind: 'self', subject_person_id: null },
       { t: 'note', subject_kind: 'self', subject_person_id: null },
     ]);
 
-    const [andrea] = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Andrea'`, [entity]);
+    const [andrea] = await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Andrea'`, [entity]);
     await extract('casa', 's2', 'Sono Andrea: oggi ho visto Luca, ho una Panda e le chiavi sono nel cassetto. Qualcuno ha rotto un bicchiere.', {
       episodes: [{ content: 'Andrea ha visto Luca.', subject: 'Andrea', people: ['Luca'], evidence: [1] },
         { content: 'Andrea è passato in casa.', subject: 'Andrea (papà)', evidence: [1] },
@@ -199,30 +199,30 @@ describe('memory identity (D50)', () => {
         { category: 'preference', content: 'Ama il jazz.', verdict: 'new', evidence: [1] }],
     });
     const rows: Array<{ content: string }> = await db.query(
-      `SELECT content, subject_kind, subject_person_id FROM episodes WHERE owner_id = $1`, [entity]);
+      `SELECT content, subject_kind, subject_person_id FROM episodes WHERE memory_id = $1`, [entity]);
     expect(rows.sort((x, y) => x.content.length - y.content.length)).toEqual([
       { content: 'Andrea ha visto Luca.', subject_kind: 'contact', subject_person_id: andrea.id },
       { content: 'Andrea è passato in casa.', subject_kind: 'contact', subject_person_id: andrea.id },
       // No subject in an entity memory: someone's — the people talking to the agent are never "me".
       { content: 'Qualcuno in casa ha rotto un bicchiere.', subject_kind: 'someone', subject_person_id: null },
     ]);
-    const [luca] = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Luca'`, [entity]);
+    const [luca] = await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Luca'`, [entity]);
     expect(await db.query(`SELECT alias, person_id FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id
-      WHERE e.owner_id = $1 ORDER BY alias`, [entity])).toEqual([{ alias: 'Luca', person_id: luca.id }]);
-    expect(await db.query(`SELECT key, subject_kind, subject_person_id FROM facts WHERE owner_id = $1 ORDER BY key`, [entity])).toEqual([
+      WHERE e.memory_id = $1 ORDER BY alias`, [entity])).toEqual([{ alias: 'Luca', person_id: luca.id }]);
+    expect(await db.query(`SELECT key, subject_kind, subject_person_id FROM facts WHERE memory_id = $1 ORDER BY key`, [entity])).toEqual([
       { key: 'car', subject_kind: 'contact', subject_person_id: andrea.id },
       { key: 'spare_keys_location', subject_kind: 'self', subject_person_id: null }, // the agent's own (its place)
     ]);
     // The agent's own note is kept; someone's note is not (whose it is is unknown).
-    expect(await db.query(`SELECT subject_kind FROM notes WHERE owner_id = $1`, [entity])).toEqual([{ subject_kind: 'self' }]);
+    expect(await db.query(`SELECT subject_kind FROM notes WHERE memory_id = $1`, [entity])).toEqual([{ subject_kind: 'self' }]);
   });
 
   it('creates a memory with its mode and gender, and changes them through the admin API and PATCH /me', async () => {
-    const created = await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Robot', mode: 'entity', gender: 'neutral' } });
+    const created = await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Robot', mode: 'entity', gender: 'neutral' } });
     expect(created.body).toMatchObject({ mode: 'entity', gender: 'neutral' });
-    expect((await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'X', gender: 'plural' } })).status).toBe(400);
+    expect((await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'X', gender: 'plural' } })).status).toBe(400);
     const me = () => call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'andrea' } });
-    expect((await me()).body).toMatchObject({ ownerId: personal, mode: 'personal', gender: 'masculine' });
+    expect((await me()).body).toMatchObject({ memoryId: personal, mode: 'personal', gender: 'masculine' });
     expect((await call(url, 'PATCH', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'andrea' }, body: { gender: 'feminine' } })).status).toBe(204);
     expect((await call(url, 'PATCH', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'andrea' }, body: { mode: 'entity' } })).status).toBe(409);
     expect((await me()).body).toMatchObject({ mode: 'personal', gender: 'feminine' });
@@ -230,22 +230,22 @@ describe('memory identity (D50)', () => {
   });
 
   it('keeps clarifications (no behaviour yet): written, read, resolved, gone with the memory they concern', async () => {
-    const [episode] = await db.query(`SELECT id FROM episodes WHERE owner_id = $1 LIMIT 1`, [entity]);
-    const candidates = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1`, [entity])).map((r: { id: string }) => r.id);
+    const [episode] = await db.query(`SELECT id FROM episodes WHERE memory_id = $1 LIMIT 1`, [entity]);
+    const candidates = (await db.query(`SELECT id FROM persons WHERE memory_id = $1`, [entity])).map((r: { id: string }) => r.id);
     const repo = db.getRepository(Clarification);
-    const saved = await repo.save({ ownerId: entity, question: 'Quale Andrea?', candidates, episodeId: episode.id });
+    const saved = await repo.save({ memoryId: entity, question: 'Quale Andrea?', candidates, episodeId: episode.id });
     expect(await repo.findOneByOrFail({ id: saved.id })).toMatchObject({ status: 'open', candidates, episodeId: episode.id, resolvedAt: null });
     await repo.update(saved.id, { status: 'resolved', resolution: 'il papà', resolvedPersonId: candidates[0], resolvedAt: new Date() });
     expect(await repo.findOneByOrFail({ id: saved.id })).toMatchObject({ status: 'resolved', resolution: 'il papà', resolvedPersonId: candidates[0] });
     // One item at most; an open question has no resolution time.
-    await expect(db.query(`INSERT INTO clarifications (owner_id, question, episode_id, note_id) SELECT $1, 'x', $2, id FROM notes LIMIT 1`, [entity, episode.id]))
+    await expect(db.query(`INSERT INTO clarifications (memory_id, question, episode_id, note_id) SELECT $1, 'x', $2, id FROM notes LIMIT 1`, [entity, episode.id]))
       .rejects.toThrow();
-    await expect(db.query(`INSERT INTO clarifications (owner_id, question, resolved_at) VALUES ($1, 'x', now())`, [entity])).rejects.toThrow();
+    await expect(db.query(`INSERT INTO clarifications (memory_id, question, resolved_at) VALUES ($1, 'x', now())`, [entity])).rejects.toThrow();
     await db.query(`DELETE FROM episodes WHERE id = $1`, [episode.id]);
     expect(await repo.findOneBy({ id: saved.id })).toBeNull();
   });
 
   it('refuses a human that is neither a memory nor a contact of one', async () => {
-    await expect(db.query(`INSERT INTO persons (display_name) VALUES ('nessuno')`)).rejects.toThrow(/owner_scope is required/);
+    await expect(db.query(`INSERT INTO persons (display_name) VALUES ('nessuno')`)).rejects.toThrow(/memory_id is required/);
   });
 });

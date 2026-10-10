@@ -42,8 +42,8 @@ echo "== build"
 
 echo "== Recordare: test person + personal token"
 CLIENT="$(admin clients '{"name":"openclaw-smoke","kind":"mcp_client"}' | json "['id']")"
-PERSON="$(admin owners '{"displayName":"OpenClaw Smoke"}' | json "['personId']")"
-admin "owners/$PERSON/tokens" "{\"clientId\":\"$CLIENT\",\"scopes\":[\"mcp\",\"ingest\",\"read\"]}" | json "['token']" > "$SMOKE_DIR/secrets/token"
+PERSON="$(admin memories '{"displayName":"OpenClaw Smoke"}' | json "['personId']")"
+admin "memories/$PERSON/tokens" "{\"clientId\":\"$CLIENT\",\"scopes\":[\"mcp\",\"ingest\",\"read\"]}" | json "['token']" > "$SMOKE_DIR/secrets/token"
 { printf 'LLM_KEY=%s\n' "$(envval LLM_API_KEY)"; printf 'RECORDARE_API_KEY=%s\n' "$(cat "$SMOKE_DIR/secrets/token")"; } > "$SMOKE_DIR/secrets/env"
 chmod 600 "$SMOKE_DIR/secrets/"*
 echo "person $PERSON"
@@ -77,15 +77,15 @@ until docker logs "$GW" 2>&1 | grep -q '\[gateway\] ready'; do sleep 2; done
 
 echo "== turn 1 (capture)"
 agent agent:main:smoke-a "Sabato scorso ho adottato un gatto rosso che si chiama Biscotto. Rispondi in una frase."
-sql "select m.role, left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.owner_id = '$PERSON' order by m.sent_at"
+sql "select m.role, left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.memory_id = '$PERSON' order by m.sent_at"
 agent agent:main:smoke-a "/new" >/dev/null
 echo "== waiting for the extraction (conversation ended)"
-until [ "$(sql "select count(*) from episodes where owner_id = '$PERSON'")" -gt 0 ]; do sleep 3; done
-sql "select kind, left(content, 90) from episodes where owner_id = '$PERSON'"
+until [ "$(sql "select count(*) from episodes where memory_id = '$PERSON'")" -gt 0 ]; do sleep 3; done
+sql "select kind, left(content, 90) from episodes where memory_id = '$PERSON'"
 
 echo "== turn 2 (recall before the turn)"
 agent agent:main:smoke-b "Come si chiama il mio gatto e di che colore è? Rispondi in una frase, senza usare strumenti."
-sql "select count(*) || ' memory-context block(s) served' from recall_log where owner_id = '$PERSON'"
+sql "select count(*) || ' memory-context block(s) served' from recall_log where memory_id = '$PERSON'"
 echo "== turn 3 (memory tool)"
 agent agent:main:smoke-b "Usa lo strumento recordare_search_episodes (query: gatto) e dimmi in una frase che data risulta per l'adozione."
 echo "== done (test person $PERSON left in Recordare)"

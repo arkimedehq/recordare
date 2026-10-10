@@ -22,7 +22,7 @@ const rc = new RecordareClient({ baseUrl: 'http://recordare:8080', apiKey: proce
 // Quale memoria apre l'account dell'utente, il suo modo (personal | entity) e l'indirizzo di Atlas; il nome segue il profilo sulla piattaforma. `enabled` è
 // l'interruttore della memoria della piattaforma: finché è false Recordare non viene contattato (niente consenso, D50).
 const people = new PersonDirectory(rc, { user: async (id) => ({ enabled: true, name: 'Andrea' }) });
-const person = await people.refresh('user-42');           // { ownerId, mode, atlasUrl }; peek() legge la cache
+const person = await people.refresh('user-42');           // { memoryId, mode, atlasUrl }; peek() legge la cache
 
 // Ingest (diviso in richieste da 500, idempotente su ogni externalId): → { conversationId, accepted, duplicates, conflicts }.
 await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [

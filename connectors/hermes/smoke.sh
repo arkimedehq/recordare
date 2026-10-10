@@ -63,8 +63,8 @@ cp "$HERE"/recordare/*.py "$HERE"/recordare/plugin.yaml "$HH/plugins/recordare/"
 if [ "${SKIP_LLM:-0}" != 1 ]; then
 echo "== Recordare: test person + personal token"
 CLIENT="$(admin clients '{"name":"hermes-smoke","kind":"mcp_client"}' | json "['id']")"
-PERSON="$(admin owners '{"displayName":"Hermes Smoke"}' | json "['personId']")"
-TOKEN="$(admin "owners/$PERSON/tokens" "{\"clientId\":\"$CLIENT\",\"scopes\":[\"mcp\",\"ingest\",\"read\"]}" | json "['token']")"
+PERSON="$(admin memories '{"displayName":"Hermes Smoke"}' | json "['personId']")"
+TOKEN="$(admin "memories/$PERSON/tokens" "{\"clientId\":\"$CLIENT\",\"scopes\":[\"mcp\",\"ingest\",\"read\"]}" | json "['token']")"
 printf 'RECORDARE_URL=%s\nRECORDARE_API_KEY=%s\nLLM_API_KEY=%s\n' "$URL" "$TOKEN" "$(envval LLM_API_KEY)" > "$HH/.env"
 unset TOKEN
 echo "person $PERSON"
@@ -79,34 +79,34 @@ memory:
   provider: recordare
 EOF
 
-msgs() { sql "select m.role || ': ' || left(replace(m.content, E'\n', ' '), 90) from conversations c join messages m on m.conversation_id = c.id where c.owner_id = '$PERSON' order by m.sent_at, m.role desc"; }
+msgs() { sql "select m.role || ': ' || left(replace(m.content, E'\n', ' '), 90) from conversations c join messages m on m.conversation_id = c.id where c.memory_id = '$PERSON' order by m.sent_at, m.role desc"; }
 
 echo "== turn 1 (capture; the one-shot exit ends the session)"
 hermes -z "Sabato scorso ho adottato un gatto rosso che si chiama Biscotto. Rispondi in una frase."
 msgs
-sql "select external_id from conversations where owner_id = '$PERSON'"
+sql "select external_id from conversations where memory_id = '$PERSON'"
 
 echo "== waiting for the extraction"
 for _ in $(seq 1 60); do
-  n="$(sql "select count(*) from episodes where owner_id = '$PERSON'")"
+  n="$(sql "select count(*) from episodes where memory_id = '$PERSON'")"
   [ "$n" -gt 0 ] && break; sleep 5
 done
-sql "select kind || ': ' || content from episodes where owner_id = '$PERSON'"
+sql "select kind || ': ' || content from episodes where memory_id = '$PERSON'"
 
 echo "== turn 2 (new session: recall from the pre-turn memory context)"
 hermes -z "Come si chiama il mio gatto?"
-sql "select tool, items from recall_log where owner_id = '$PERSON' order by served_at"
+sql "select tool, items from recall_log where memory_id = '$PERSON' order by served_at"
 
 echo "== turn 3 (memory tool)"
 hermes -z "Usa lo strumento recordare_search_episodes per dirmi cosa ho fatto sabato scorso. Rispondi in una frase."
-sql "select tool, coalesce(mode, '-'), items from recall_log where owner_id = '$PERSON' order by served_at"
+sql "select tool, coalesce(mode, '-'), items from recall_log where memory_id = '$PERSON' order by served_at"
 echo "== conversations"
-sql "select external_id, (select count(*) from messages m where m.conversation_id = c.id) from conversations c where owner_id = '$PERSON' order by started_at"
+sql "select external_id, (select count(*) from messages m where m.conversation_id = c.id) from conversations c where memory_id = '$PERSON' order by started_at"
 fi
 
 echo "== gateway path (client key, X-Recordare-User; no LLM)"
 GCLIENT="$(admin clients '{"name":"hermes-gateway-smoke","kind":"platform"}' | json "['id']")"
-GPERSON="$(admin owners '{"displayName":"Hermes Gateway Smoke"}' | json "['personId']")"
+GPERSON="$(admin memories '{"displayName":"Hermes Gateway Smoke"}' | json "['personId']")"
 admin identities "{\"personId\":\"$GPERSON\",\"kind\":\"account\",\"clientId\":\"$GCLIENT\",\"externalId\":\"alice\"}" >/dev/null
 KEY="$(admin "clients/$GCLIENT/keys" '{"scopes":["mcp","ingest","read"]}' | json "['key']")"
 printf 'RECORDARE_URL=%s\nRECORDARE_API_KEY=%s\nRECORDARE_USER=alice\nRECORDARE_SELF_IDS=telegram:4242\n' "$URL" "$KEY" > "$HH/.env"
@@ -149,6 +149,6 @@ other.on_turn_start(1, "Ciao, sono Bruno, un amico di Alice.", author_id="999", 
 other.prefetch_all("Ciao, sono Bruno, un amico di Alice.")
 other.shutdown_all()
 PYEOF
-sql "select c.external_id || ' | ' || m.role || ': ' || left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.owner_id = '$GPERSON' order by m.sent_at"
-sql "select 'note: ' || content from notes where owner_id = '$GPERSON'"
-sql "select m.author_kind || ' ' || coalesce(p.display_name, '-') || ': ' || left(m.content, 50) from messages m left join persons p on p.id = m.author_person_id where m.owner_id = '$GPERSON' and m.role <> 'assistant' order by m.sent_at"
+sql "select c.external_id || ' | ' || m.role || ': ' || left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.memory_id = '$GPERSON' order by m.sent_at"
+sql "select 'note: ' || content from notes where memory_id = '$GPERSON'"
+sql "select m.author_kind || ' ' || coalesce(p.display_name, '-') || ': ' || left(m.content, 50) from messages m left join persons p on p.id = m.author_person_id where m.memory_id = '$GPERSON' and m.role <> 'assistant' order by m.sent_at"

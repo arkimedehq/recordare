@@ -178,7 +178,7 @@ export class Memory {
       source: 'chat',
       channel: `proxy:${turn.identity.platform}`,
       participants: [
-        { ref: 'owner', role: 'owner' },
+        { ref: 'holder', role: 'holder' },
         { ref: 'assistant', role: 'assistant', displayName: turn.model || 'assistant' },
         // A platform user who is not the account holder: a participant Recordare links to a contact of the memory.
         ...(turn.identity.participant ? [{ ...turn.identity.participant, role: 'other' as const }] : []),
@@ -190,7 +190,7 @@ export class Memory {
   private userMessage(turn: Turn): IngestMessage {
     const author = turn.identity.participant;
     return {
-      externalId: userMessageId(turn), role: author ? 'other' : 'user', authorRef: author ? author.ref : 'owner',
+      externalId: userMessageId(turn), role: author ? 'other' : 'user', authorRef: author ? author.ref : 'holder',
       content: clipUtf8(turn.text), sentAt: new Date(this.now()).toISOString(),
     };
   }

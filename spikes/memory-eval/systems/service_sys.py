@@ -56,8 +56,8 @@ class ServiceSystem:
         client = self._post("/api/v1/admin/clients", {"name": f"memory-eval {self.run}", "kind": "platform"})
         self.client_id = client["id"]
         self.key = self._post(f"/api/v1/admin/clients/{self.client_id}/keys", {"scopes": ["ingest", "mcp", "read"]})["key"]
-        self.owners: dict[str, dict] = {}
-        # Entity memories (D48): owners the dataset marks as an entity (a shared device everyone talks to).
+        self.memories: dict[str, dict] = {}
+        # Entity memories (D48): memories the dataset marks as an entity (a shared device everyone talks to).
         conv = DATASET / "conversations.json"
         meta = json.loads(conv.read_text()) if conv.exists() else {}
         self.entities = set(meta.get("entities", []))
@@ -69,31 +69,31 @@ class ServiceSystem:
         r.raise_for_status()
         return r.json() if r.content else {}
 
-    def _owner(self, user: str) -> dict:
-        if user not in self.owners:
+    def _account(self, user: str) -> dict:
+        if user not in self.memories:
             # An entity's name reads as a name ("casa_bellandi" → "Casa Bellandi"): it is "I" in its memory (8.5).
             name = user.replace("_", " ").title() if user in self.entities else user.capitalize()
-            o = self._post("/api/v1/admin/owners", {"displayName": name,
+            o = self._post("/api/v1/admin/memories", {"displayName": name,
                                                     **({"mode": "entity"} if user in self.entities else {}),
                                                     **({"gender": self.genders[user]} if user in self.genders else {})})
             ext = f"{user}-{self.run}"
             self._post("/api/v1/admin/identities", {"kind": "account", "personId": o["personId"], "clientId": self.client_id, "externalId": ext})
-            tok = self._post(f"/api/v1/admin/owners/{o['personId']}/tokens", {"clientId": self.client_id, "scopes": ["mcp"]})["token"]
-            self.owners[user] = {"id": o["personId"], "ext": ext, "token": tok}
-        return self.owners[user]
+            tok = self._post(f"/api/v1/admin/memories/{o['personId']}/tokens", {"clientId": self.client_id, "scopes": ["mcp"]})["token"]
+            self.memories[user] = {"id": o["personId"], "ext": ext, "token": tok}
+        return self.memories[user]
 
     # ── Ingest ──────────────────────────────────────────────────────────────────
 
     def ingest(self, sessions: list[dict]) -> None:
         for s in sessions:
-            owner = self._owner(s["user"])
+            account = self._account(s["user"])
             # Learned sources (WORK_PLAN 8.9): a dataset entry {"type": "source", …} is learned, {"type": "forget_source"} forgotten.
             if s.get("type") == "source":
-                self._learn(owner, s)
+                self._learn(account, s)
                 continue
             if s.get("type") == "forget_source":
                 self.http.delete(f"/api/v1/ingest/sources/{s['source']}", headers={"authorization": f"Bearer {self.key}",
-                                                                                   "x-recordare-user": owner["ext"]}).raise_for_status()
+                                                                                   "x-recordare-user": account["ext"]}).raise_for_status()
                 continue
             base = datetime.fromisoformat(s["ts"])
             # Group chats: other people's messages keep role "other" and their author as a participant — identified
@@ -119,38 +119,38 @@ class ServiceSystem:
             # conversationEnded: extract now instead of waiting for the idle delay.
             res = self._post("/api/v1/ingest/messages", {"conversation": conversation, "messages": messages,
                                                          "hints": {"conversationEnded": True}},
-                             token=self.key, headers={"x-recordare-user": owner["ext"]})
+                             token=self.key, headers={"x-recordare-user": account["ext"]})
             assert res.get("conversationId"), res
         self._wait_processed()
 
     def cost(self) -> dict:
-        """LLM calls made by the service for this run's owners (engine cost, by prompt)."""
-        ids = [o["id"] for o in self.owners.values()]
+        """LLM calls made by the service for this run's memories (engine cost, by prompt)."""
+        ids = [o["id"] for o in self.memories.values()]
         with psycopg.connect(DB_URL) as conn:
             rows = conn.execute(
                 "SELECT prompt_id, count(*), sum(input_tokens), sum(cached_input_tokens), sum(output_tokens) "
-                "FROM llm_calls WHERE owner_id = ANY(%s) GROUP BY prompt_id", (ids,)).fetchall()
+                "FROM llm_calls WHERE memory_id = ANY(%s) GROUP BY prompt_id", (ids,)).fetchall()
         return {r[0]: {"calls": r[1], "input": int(r[2] or 0), "cached": int(r[3] or 0), "output": int(r[4] or 0)} for r in rows}
 
-    def owner_ids(self) -> dict:
-        return {u: o["id"] for u, o in self.owners.items()}
+    def memory_ids(self) -> dict:
+        return {u: o["id"] for u, o in self.memories.items()}
 
     def dump(self) -> str:
         """The memories written (with their subject), the contacts, the clarifications and the extraction runs' leak
         counts (WORK_PLAN 8.4: first-person leaks, counts only in the service; the text here is the eval's own data)."""
-        ids = [o["id"] for o in self.owners.values()]
+        ids = [o["id"] for o in self.memories.values()]
         with psycopg.connect(DB_URL) as conn:
             q = lambda sql: [dict(zip([d.name for d in cur.description], r)) for cur in [conn.execute(sql, (ids,))] for r in cur.fetchall()]  # noqa: E731
             out = {
                 "episodes": q("SELECT e.content, e.kind, e.subject_kind, p.display_name AS subject, e.author_role, e.stance FROM episodes e "
-                              "LEFT JOIN persons p ON p.id = e.subject_person_id WHERE e.owner_id = ANY(%s) ORDER BY e.recorded_at"),
+                              "LEFT JOIN persons p ON p.id = e.subject_person_id WHERE e.memory_id = ANY(%s) ORDER BY e.recorded_at"),
                 "notes": q("SELECT n.content, n.subject_kind, p.display_name AS subject, n.pending FROM notes n "
-                           "LEFT JOIN persons p ON p.id = n.subject_person_id WHERE n.owner_id = ANY(%s) ORDER BY n.recorded_at"),
+                           "LEFT JOIN persons p ON p.id = n.subject_person_id WHERE n.memory_id = ANY(%s) ORDER BY n.recorded_at"),
                 "facts": q("SELECT f.key, f.value, f.status, f.pending, p.display_name AS subject FROM facts f "
-                           "LEFT JOIN persons p ON p.id = f.subject_person_id WHERE f.owner_id = ANY(%s) ORDER BY f.recorded_at"),
-                "contacts": q("SELECT display_name, full_name, relation FROM persons WHERE owner_scope = ANY(%s) ORDER BY created_at"),
-                "clarifications": q("SELECT question, status, resolution FROM clarifications WHERE owner_id = ANY(%s) ORDER BY created_at"),
-                "runs": q("SELECT prompt_version, summary FROM extraction_runs WHERE owner_id = ANY(%s) AND summary IS NOT NULL"),
+                           "LEFT JOIN persons p ON p.id = f.subject_person_id WHERE f.memory_id = ANY(%s) ORDER BY f.recorded_at"),
+                "contacts": q("SELECT display_name, full_name, relation FROM persons WHERE memory_id = ANY(%s) ORDER BY created_at"),
+                "clarifications": q("SELECT question, status, resolution FROM clarifications WHERE memory_id = ANY(%s) ORDER BY created_at"),
+                "runs": q("SELECT prompt_version, summary FROM extraction_runs WHERE memory_id = ANY(%s) AND summary IS NOT NULL"),
             }
         leaks = {"episodes": 0, "notes": 0}
         written = {"episodes": 0, "notes": 0}
@@ -164,15 +164,15 @@ class ServiceSystem:
 
     def _wait_processed(self, timeout_s: int = 1800) -> None:
         """Wait until the engine extracted every message and raw embeddings exist (failed runs are reported)."""
-        ids = [o["id"] for o in self.owners.values()]
+        ids = [o["id"] for o in self.memories.values()]
         deadline = time.time() + timeout_s
         with psycopg.connect(DB_URL, autocommit=True) as conn:
             while time.time() < deadline:
                 (pending,) = conn.execute(
-                    "SELECT count(*) FROM messages WHERE owner_id = ANY(%s) AND (extracted_run_id IS NULL OR (role <> 'assistant' AND embedding IS NULL))",
+                    "SELECT count(*) FROM messages WHERE memory_id = ANY(%s) AND (extracted_run_id IS NULL OR (role <> 'assistant' AND embedding IS NULL))",
                     (ids,)).fetchone()
                 (failed,) = conn.execute(
-                    "SELECT count(*) FROM extraction_runs WHERE owner_id = ANY(%s) AND status = 'failed'", (ids,)).fetchone()
+                    "SELECT count(*) FROM extraction_runs WHERE memory_id = ANY(%s) AND status = 'failed'", (ids,)).fetchone()
                 if pending == 0:
                     if failed:
                         print(f"  ! {failed} extraction runs failed", flush=True)
@@ -180,33 +180,33 @@ class ServiceSystem:
                 if failed and pending:
                     # A failed window stays pending (retried by the nightly sweep): do not wait forever.
                     (running,) = conn.execute(
-                        "SELECT count(*) FROM extraction_runs WHERE owner_id = ANY(%s) AND status = 'running'", (ids,)).fetchone()
+                        "SELECT count(*) FROM extraction_runs WHERE memory_id = ANY(%s) AND status = 'running'", (ids,)).fetchone()
                     if running == 0:
                         print(f"  ! {failed} extraction runs failed, {pending} messages left pending", flush=True)
                         return
                 time.sleep(1)
         print("  ! processing still pending after timeout", flush=True)
 
-    def _learn(self, owner: dict, s: dict) -> None:
+    def _learn(self, account: dict, s: dict) -> None:
         self.has_sources = True
         body = {"externalId": s["id"], "title": s["title"], "text": s["text"], "learnedAt": s["ts"],
                 **({"author": s["author"]} if s.get("author") else {}), **({"kind": s["kind"]} if s.get("kind") else {}),
                 **({"providedBy": {"name": s["provided_by"]}} if s.get("provided_by") else {}),
                 **({"conversation": {"externalId": s["conversation"]}} if s.get("conversation") else {})}
-        self._post("/api/v1/ingest/sources", body, token=self.key, headers={"x-recordare-user": owner["ext"]})
+        self._post("/api/v1/ingest/sources", body, token=self.key, headers={"x-recordare-user": account["ext"]})
 
     # ── Recall ──────────────────────────────────────────────────────────────────
 
     def context(self, user: str, question: dict) -> str:
-        owner = self._owner(user)
+        account = self._account(user)
         # The nights before the question have passed: run the consolidation as of that moment (M5). Idempotent and
         # free when nothing changed; set CONSOLIDATE=0 to measure without it.
         if os.getenv("CONSOLIDATE", "1") != "0":
             # The first call digests every past day: minutes with a slow provider.
-            r = self.http.post(f"/api/v1/admin/owners/{owner['id']}/consolidate", headers={"x-recordare-now": question["asked_at"]}, timeout=600)
+            r = self.http.post(f"/api/v1/admin/memories/{account['id']}/consolidate", headers={"x-recordare-now": question["asked_at"]}, timeout=600)
             r.raise_for_status()
         now = datetime.fromisoformat(question["asked_at"])
-        conversation = self._asker_turn(owner, question) if question.get("asker") else None
+        conversation = self._asker_turn(account, question) if question.get("asker") else None
         raw = chat([{"role": "system", "content": PLAN_SYSTEM}, {"role": "user", "content": (
             f"TODAY: {fmt_when(question['asked_at'])}\nCALENDAR:\n{calendar(now.date(), 21, 0)}\n\nQUESTION: {question['q']}")}],
             phase="recall", json_mode=True, max_tokens=2000)
@@ -222,15 +222,15 @@ class ServiceSystem:
             if plan.get(k):
                 args[k] = plan[k]
         memory_args = {"query": topic, **({"as_of": plan["to"]} if plan.get("to") else {})}
-        episodes, memory, knowledge = asyncio.run(self._call(owner["token"], question["asked_at"], args, memory_args, conversation,
+        episodes, memory, knowledge = asyncio.run(self._call(account["token"], question["asked_at"], args, memory_args, conversation,
                                                              {"query": topic} if getattr(self, "has_sources", False) else None))
         if conversation:
             # The asker's turn is not part of the dataset: purged once answered (never extracted into the memory).
             self.http.delete(f"/api/v1/ingest/conversations/{conversation}",
-                             headers={"authorization": f"Bearer {self.key}", "x-recordare-user": owner["ext"]}).raise_for_status()
+                             headers={"authorization": f"Bearer {self.key}", "x-recordare-user": account["ext"]}).raise_for_status()
         return format_context(args, episodes, memory, knowledge)
 
-    def _asker_turn(self, owner: dict, question: dict) -> str:
+    def _asker_turn(self, account: dict, question: dict) -> str:
         """A question asked by an identified participant: their turn in a conversation of its own (the speaker)."""
         asker = question["asker"]
         conv = f"ask-{question['id']}-{self.run}"
@@ -239,7 +239,7 @@ class ServiceSystem:
                 {"ref": asker["name"], "role": "other", "displayName": asker["name"], "identity": {"externalUserId": asker["identity"]}}]},
             "messages": [{"externalId": f"{conv}-q", "role": "other", "authorRef": asker["name"], "content": question["q"],
                           "sentAt": question["asked_at"]}]},
-            token=self.key, headers={"x-recordare-user": owner["ext"]})
+            token=self.key, headers={"x-recordare-user": account["ext"]})
         return conv
 
     @staticmethod
@@ -308,43 +308,43 @@ def _episode_line(e: dict, personal: bool = False, me: str = "") -> str:
 def format_context(args: dict, episodes: dict, memory: dict, knowledge: dict | None = None) -> str:
     lines = []
     mem = episodes.get("memory") or memory.get("memory") or {}
-    owner = mem.get("name") or (episodes.get("owner") or memory.get("owner") or {}).get("name")
+    self_name = mem.get("name")
     entity = mem.get("mode") == "entity"
     # Agent memory (D50): both modes are written in the first person of the memory's self (8.4 personal, 8.5 entity).
     personal = mem.get("mode") == "personal" or entity
     if entity:
-        lines.append(f"MEMORIA: la memoria di {owner}, un agente condiviso che più persone usano — i ricordi in prima persona "
-                     f"(«ho impostato…», «le chiavi di scorta sono…») sono di {owner}: le sue azioni, ciò che gli è stato dato da "
+        lines.append(f"MEMORIA: la memoria di {self_name}, un agente condiviso che più persone usano — i ricordi in prima persona "
+                     f"(«ho impostato…», «le chiavi di scorta sono…») sono di {self_name}: le sue azioni, ciò che gli è stato dato da "
                      "tenere, il suo luogo; quelli delle persone hanno il loro soggetto; «qualcuno» è chi non si è identificato.")
         speaker = episodes.get("speaker") or memory.get("speaker") or {}
         if speaker.get("kind") == "contact":
-            lines.append(f"CHI FA LA DOMANDA: {speaker['name']} — «io» nella domanda è {speaker['name']}, non {owner}.")
+            lines.append(f"CHI FA LA DOMANDA: {speaker['name']} — «io» nella domanda è {speaker['name']}, non {self_name}.")
         else:
-            lines.append(f"CHI FA LA DOMANDA: una persona che usa {owner}, non identificata — «io» nella domanda è chi parla "
-                         f"(se nella domanda dice chi è, vale quel nome), non {owner}.")
+            lines.append(f"CHI FA LA DOMANDA: una persona che usa {self_name}, non identificata — «io» nella domanda è chi parla "
+                         f"(se nella domanda dice chi è, vale quel nome), non {self_name}.")
     elif personal:
         # Agent memory (D50, 8.4): first person = the memory's self; the asker may be someone it knows.
-        lines.append(f"MEMORIA: la memoria di {owner} — i ricordi in prima persona («sono andato…», «ho prenotato…») sono di {owner}; "
+        lines.append(f"MEMORIA: la memoria di {self_name} — i ricordi in prima persona («sono andato…», «ho prenotato…») sono di {self_name}; "
                      "quelli di altre persone hanno il loro soggetto.")
         speaker = episodes.get("speaker") or memory.get("speaker") or {}
         if speaker.get("kind") == "contact":
-            lines.append(f"CHI FA LA DOMANDA: {speaker['name']}, una persona che {owner} conosce — «io» nella domanda è {speaker['name']}; "
-                         f"i ricordi in prima persona sono di {owner}, non di {speaker['name']}.")
+            lines.append(f"CHI FA LA DOMANDA: {speaker['name']}, una persona che {self_name} conosce — «io» nella domanda è {speaker['name']}; "
+                         f"i ricordi in prima persona sono di {self_name}, non di {speaker['name']}.")
         else:
-            lines.append(f"CHI FA LA DOMANDA: {owner} (l'utente) — «io» nella domanda è {owner}.")
-    elif owner:
-        lines.append(f"MEMORIA DI: {owner} — è l'utente che fa la domanda (i ricordi parlano di lui/lei in terza persona)")
+            lines.append(f"CHI FA LA DOMANDA: {self_name} (l'utente) — «io» nella domanda è {self_name}.")
+    elif self_name:
+        lines.append(f"MEMORIA DI: {self_name} — è l'utente che fa la domanda (i ricordi parlano di lui/lei in terza persona)")
     if args.get("from") or args.get("to"):
         lines.append(f"PERIODO CERCATO: {args.get('from', '…')} → {args.get('to', '…')}")
     lines.append("EPISODI:")
-    lines += [_episode_line(e, personal, owner) for e in episodes.get("episodes", [])] or ["- (nessuno)"]
+    lines += [_episode_line(e, personal, self_name) for e in episodes.get("episodes", [])] or ["- (nessuno)"]
     if episodes.get("claims"):
-        lines.append(f"AFFERMAZIONI DI ALTRE PERSONE (non confermate; ciò che dicono di {owner} non è un suo ricordo né qualcosa che ha detto):" if personal
+        lines.append(f"AFFERMAZIONI DI ALTRE PERSONE (non confermate; ciò che dicono di {self_name} non è un suo ricordo né qualcosa che ha detto):" if personal
                      else "AFFERMAZIONI DI ALTRE PERSONE (non sono ricordi del proprietario; su di lui/lei non confermate):")
-        lines += [_episode_line(e, personal, owner) for e in episodes["claims"]]
+        lines += [_episode_line(e, personal, self_name) for e in episodes["claims"]]
     if episodes.get("outsidePeriod"):
         lines.append("ALTRI EPISODI PERTINENTI (fuori dal periodo cercato):")
-        lines += [_episode_line(e, personal, owner) for e in episodes["outsidePeriod"]]
+        lines += [_episode_line(e, personal, self_name) for e in episodes["outsidePeriod"]]
     if episodes.get("digests"):
         lines.append("DIARIO DEL PERIODO (riassunti dei giorni / mesi):")
         lines += [f"- {d['from']}{'' if d['from'] == d['to'] else ' → ' + d['to']}: {d['text']}" for d in episodes["digests"]]
@@ -365,8 +365,8 @@ def format_context(args: dict, episodes: dict, memory: dict, knowledge: dict | N
     if episodes.get("fromChats"):
         lines.append("DALLE CHAT (testo originale):")
         for h in episodes["fromChats"]:
-            mine = f" · scritto da qualcuno che usa {owner}" if entity else f" · scritto da {owner}" if personal else " · scritto dal proprietario"
-            who = f" · scritto da {h['author']}" if h.get("author") else (mine if h.get("authorRole") == "owner" else "")
+            mine = f" · scritto da qualcuno che usa {self_name}" if entity else f" · scritto da {self_name}" if personal else " · scritto dal proprietario"
+            who = f" · scritto da {h['author']}" if h.get("author") else (mine if h.get("authorRole") == "holder" else "")
             lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}{who}] {h['excerpt']}")
     if knowledge and knowledge.get("passages"):
         lines.append("CONOSCENZA APPRESA (brani delle fonti imparate: il loro testo, non ricordi di fatti accaduti):")

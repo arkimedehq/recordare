@@ -116,10 +116,10 @@ def main() -> None:
     sys_ = ServiceSystem()
     sys_.ingest(load_sessions())
     questions = load_questions()
-    user = next(iter(sys_.owners))
-    owner = sys_.owners[user]
+    user = next(iter(sys_.memories))
+    account = sys_.memories[user]
     # A personal token that may also read the context (the harness's own MCP token has the mcp scope only).
-    token = httpx.post(f"{URL}/api/v1/admin/owners/{owner['id']}/tokens", timeout=30,
+    token = httpx.post(f"{URL}/api/v1/admin/memories/{account['id']}/tokens", timeout=30,
                        headers={"authorization": f"Bearer {ADMIN}"},
                        json={"clientId": sys_.client_id, "scopes": ["mcp", "read"]}).json()["token"]
     tools = asyncio.run(mcp_tools(token, questions[0]["asked_at"]))

@@ -4,7 +4,7 @@
 import { All, Controller, Headers, Req, Res } from '@nestjs/common';
 import { type Request, type Response } from 'express';
 import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
-import { USER_HEADER } from '../auth/owner-resolver.service';
+import { USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { McpService } from './mcp.service';
 

@@ -56,7 +56,7 @@ or remove the proxy. To use an existing memory as the proxy's, bind its account:
 `POST api/v1/admin/identities {kind: "account", personId, clientId, externalId: "<RECORDARE_USER>"}`, or use a
 **personal token** (`rp_…`) instead of a client key: every resolved request then goes to the token's memory.
 
-The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`) or, with
+The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`) or, with
 the client key, by `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`): `personal` (one person's assistant: they
 are "I", what arrives undeclared is theirs) or `entity` (a family, team or office assistant: what arrives undeclared is
 "someone"'s); `gender` `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The
@@ -101,7 +101,7 @@ message is ignored).
 
 The person id goes through `USER_MAP`. Then the memory (`MEMORY_PER`):
 - **`instance`** (default): the memory is `RECORDARE_USER` (or the personal token's). A person in `SELF_USERS` is the
-  account holder: message `user`, participant `owner`. Anyone else is a participant with the identity
+  account holder: message `user`, participant `holder`. Anyone else is a participant with the identity
   `{externalUserId: <person id>}` and their name, message `other` with that author: Recordare links it to a contact of
   the memory (created on first sight), so what they say about themselves stays theirs. Recordare answers with the whole
   memory in every conversation (D50): what one person told the assistant can come up with another; whoever runs the
@@ -184,7 +184,7 @@ Title requests (`… title for the conversation …`) are skipped by a built-in 
 ## Security
 The proxy trusts the identity its caller states: whoever can reach it can claim any user. Keep it on the platform's
 private network, or set `PROXY_API_KEY` so only the platform can call it; with Open WebUI use the JWT mode. The
-Recordare key is a client key: it never changes a person's settings (`owner_settings` is not a client scope).
+Recordare key is a client key: it never changes a person's settings (`memory_settings` is not a client scope).
 
 ## Limits (v0.1)
 - No MCP tool injection (the model gets memories in the prompt, not `recordare_*` tools); use the platform's MCP support.

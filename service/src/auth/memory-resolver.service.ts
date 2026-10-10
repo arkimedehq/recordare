@@ -3,7 +3,7 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, QueryFailedError } from 'typeorm';
-import { Client, ExternalIdentity, Owner, Person } from '../identity/identity.entities';
+import { Client, ExternalIdentity, Memory, Person } from '../identity/identity.entities';
 import { type Principal } from './principal';
 
 export const USER_HEADER = 'x-recordare-user';
@@ -14,11 +14,11 @@ export const USER_HEADER = 'x-recordare-user';
  * name contacts inside a memory, never open one — D50) and auto-provisioned if the client allows it.
  */
 @Injectable()
-export class OwnerResolver {
+export class MemoryResolver {
   constructor(private readonly db: DataSource) {}
 
   async resolve(principal: Principal, externalUserId: string | undefined): Promise<string> {
-    if (principal.kind === 'owner_token') return principal.ownerId;
+    if (principal.kind === 'memory_token') return principal.memoryId;
     if (principal.kind !== 'client' || !externalUserId) throw new NotFoundException();
 
     const known = await this.lookup(principal.clientId, externalUserId);
@@ -37,21 +37,21 @@ export class OwnerResolver {
     }
   }
 
-  /** Memory id for a client user id; undefined when unknown; 404 when bound to a non-owner. */
+  /** Memory id for a client user id; undefined when unknown; 404 when bound to a non-memory. */
   private async lookup(clientId: string, externalUserId: string): Promise<string | undefined> {
     const identity = await this.db.getRepository(ExternalIdentity).findOne({
       where: { kind: 'account', clientId, externalId: externalUserId },
     });
     if (!identity) return undefined;
-    const owner = await this.db.getRepository(Owner).findOne({ where: { personId: identity.personId } });
-    if (!owner) throw new NotFoundException();
-    return owner.personId;
+    const memory = await this.db.getRepository(Memory).findOne({ where: { personId: identity.personId } });
+    if (!memory) throw new NotFoundException();
+    return memory.personId;
   }
 
   private provision(clientId: string, externalUserId: string): Promise<string> {
     return this.db.transaction(async (tx) => {
-      const person = await tx.getRepository(Person).save({ displayName: externalUserId, ownerScope: null });
-      await tx.getRepository(Owner).save({ personId: person.id });
+      const person = await tx.getRepository(Person).save({ displayName: externalUserId, memoryId: null });
+      await tx.getRepository(Memory).save({ personId: person.id });
       await tx.getRepository(ExternalIdentity).save({
         personId: person.id, kind: 'account', clientId, externalId: externalUserId, verifiedAt: new Date(),
       });

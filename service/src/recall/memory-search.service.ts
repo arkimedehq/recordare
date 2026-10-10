@@ -63,14 +63,14 @@ export class MemorySearchService {
     private readonly telemetry: TelemetryService,
   ) {}
 
-  async search(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
-    return this.telemetry.track('recall', ownerId, () => this.searchNow(ownerId, args, now));
+  async search(memoryId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
+    return this.telemetry.track('recall', memoryId, () => this.searchNow(memoryId, args, now));
   }
 
-  private async searchNow(ownerId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
-    const [owner] = await this.db.query(
-      `SELECT o.timezone, o.locale, p.display_name, o.mode FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    const tz: string = owner.timezone;
+  private async searchNow(memoryId: string, args: MemorySearchArgs, now: Date): Promise<MemorySearchResult> {
+    const [memory] = await this.db.query(
+      `SELECT o.timezone, o.locale, p.display_name, o.mode FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
+    const tz: string = memory.timezone;
     const asOfDay = args.asOf ? (args.asOf.length === 7 ? `${args.asOf}-01` : args.asOf.slice(0, 10)) : null;
     const asOf = asOfDay ? zonedMidnight(addDays(asOfDay, 1), tz) : now; // end of that day
     const limit = args.limit ?? 8;
@@ -88,8 +88,8 @@ export class MemorySearchService {
         `SELECT id, category, content, pinned, pending, author_role, subject_kind, subject_person_id, subject_candidates,
                 CASE WHEN $2::text IS NULL OR embedding IS NULL THEN NULL ELSE 1 - (embedding <=> $2::vector) END AS sim,
                 ($3::text <> '' AND to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')) @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
-         FROM notes WHERE owner_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)`,
-        [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
+         FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)`,
+        [memoryId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
     const notes = noteRows.filter((n) => n.pinned || n.fts || (n.sim ?? 0) >= MIN_VECTOR_SIMILARITY)
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || (b.sim ?? 0) + (b.fts ? 0.1 : 0) - ((a.sim ?? 0) + (a.fts ? 0.1 : 0)))
       .slice(0, limit);
@@ -103,10 +103,10 @@ export class MemorySearchService {
               ($3::text <> '' AND to_tsvector('simple', COALESCE(s.display_name, '') || ' ' || f.key || ' ' || COALESCE(f.value, ''))
                 @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
        FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
-       WHERE f.owner_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected'
+       WHERE f.memory_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected'
          AND ($4::boolean OR NOT f.pending)
        ORDER BY f.key, f.valid_from NULLS FIRST, f.recorded_at`,
-      [ownerId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
+      [memoryId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
     // One slot per (person, key): Andrea's car and Marta's car are two histories.
     const byKey = new Map<string, typeof factRows>();
     for (const f of factRows) {
@@ -132,22 +132,22 @@ export class MemorySearchService {
       });
     const info: string[] = [];
     if (facts.some((f) => f.status === 'unknown')) {
-      info.push(owner.locale === 'it' ? 'per alcuni fatti il valore attuale non è noto' : 'the current value of some facts is not known');
+      info.push(memory.locale === 'it' ? 'per alcuni fatti il valore attuale non è noto' : 'the current value of some facts is not known');
     }
-    this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
+    this.telemetry.emit({ type: 'recall.served', memoryId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
       facts: facts.length, notes: notes.length });
-    await logRecall(this.db, ownerId, 'search_memory', null, facts.length + notes.length, args.conversationId, now);
+    await logRecall(this.db, memoryId, 'search_memory', null, facts.length + notes.length, args.conversationId, now);
     const names = await contactNames(this.db, notes);
-    const speaker = await speakerOf(this.db, args.conversationId, now, owner.mode);
+    const speaker = await speakerOf(this.db, args.conversationId, now, memory.mode);
     const result: MemorySearchResult = {
-      memory: { name: owner.display_name, mode: owner.mode },
+      memory: { name: memory.display_name, mode: memory.mode },
       speaker: speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : speaker,
       notes: notes.map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, authorRole: n.author_role,
         subject: subjectView(n, names) })),
       facts, notes_info: info,
     };
-    if (owner.mode === 'personal' || speaker.kind === 'contact') {
-      const asks = await relevantClarifications(this.db, ownerId, args.query, notes.map((n) => n.id), now, 2);
+    if (memory.mode === 'personal' || speaker.kind === 'contact') {
+      const asks = await relevantClarifications(this.db, memoryId, args.query, notes.map((n) => n.id), now, 2);
       if (asks.length) result.clarifications = asks.map((c) => c.question);
     }
     return result;

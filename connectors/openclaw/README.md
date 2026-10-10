@@ -9,7 +9,8 @@ own [Recordare](../../README.md) service — the **full** client level:
   a fenced `<memory-context>` block (`POST api/v1/context` with `ingest`, no LLM call, nothing added when nothing is
   relevant).
 - **Memory tools**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
-  `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode` (Recordare's MCP tools, bound in code to
+  `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode`, `recordare_search_knowledge`,
+  `recordare_learn_source` (Recordare's MCP tools, bound in code to
   the memory and the conversation — neither the model nor the user can point them elsewhere), with the schemas the
   service publishes (`TOOLS` of the client library). `log_episode` is left out: the conversation is already captured.
 - **One memory for the agent** (D50): the Gateway's agent has one memory; the people who talk to it — on any channel,
@@ -36,14 +37,14 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 2. Or from a checkout (development): `cd connectors/openclaw && npm ci && npm run build`, then
    `openclaw plugins install --link /path/to/recordare/connectors/openclaw --accept-capabilities` (`--link` keeps it
    pointing at the folder; without it OpenClaw copies it). Restart the Gateway, then check
-   `openclaw plugins inspect recordare --runtime --json` (status `loaded`, 4 hooks, 6 tools).
+   `openclaw plugins inspect recordare --runtime --json` (status `loaded`, 4 hooks, 8 tools).
 3. Ask the Recordare admin for a credential for the agent's memory:
-   - a **personal token** with the scopes `mcp`, `ingest`, `read` (`POST api/v1/admin/owners/{id}/tokens`, client of
+   - a **personal token** with the scopes `mcp`, `ingest`, `read` (`POST api/v1/admin/memories/{id}/tokens`, client of
      kind `mcp_client`) — the token's memory is the agent's;
    - or a **client key** with the same scopes and the agent's account in `defaultUser` (a client user, known to
      Recordare or auto-provisioned if the client allows it); a client key is also what one memory per person needs.
 
-   The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`), or
+   The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`), or
    with a client key by `PATCH api/v1/me`: `personal` (your own assistant: you are "I", what arrives undeclared is
    yours) or `entity` (an agent shared by a family, a team, a place: what arrives undeclared is "someone"'s); `gender`
    `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The plugin has no setting
@@ -88,7 +89,7 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 
 **Your own sender ids.** With `memoryPer: "agent"` a sender not in `selfSenders` is somebody the agent knows, not you:
 list your ids there (or have the admin bind them to the memory's self, `POST api/v1/admin/identities`
-`{kind: "participant", ownerScope, personId: <the memory>, channel, externalId}`, before you first write). Other
+`{kind: "participant", memoryId, personId: <the memory>, channel, externalId}`, before you first write). Other
 people's words are kept as theirs (role `other`, attributed to their contact), so what they say about themselves never
 becomes a fact about you.
 
@@ -111,7 +112,7 @@ the agent can come up with another; whoever runs the Gateway tells the people wh
 |---|---|
 | session (key + session id) | conversation `openclaw:<sessionKey>/<sessionId>` (channel `openclaw:<channel>`, title = session key) |
 | the agent (`memoryPer: agent`) — or `<channel>:<senderId>` (`users`) / `defaultUser` (`memoryPer: user`) | the memory (`X-Recordare-User` with a client key; the token's memory otherwise) |
-| a sender (`memoryPer: agent`) | the account holder (`selfSenders`, CLI, Control UI): participant `owner`, message `user`; anyone else: participant `<channel>:<senderId>` with the channel identity `{channel, externalId: senderId}` and their channel name (from `message_received`), message `other` — Recordare links it to a contact of the memory, created on first sight |
+| a sender (`memoryPer: agent`) | the account holder (`selfSenders`, CLI, Control UI): participant `holder`, message `user`; anyone else: participant `<channel>:<senderId>` with the channel identity `{channel, externalId: senderId}` and their channel name (from `message_received`), message `other` — Recordare links it to a contact of the memory, created on first sight |
 | the person's message (`before_prompt_build`) | message (as above), id `<currentUserMessageId or runId>:u`, stored **before** the agent runs, in the same call that returns the memory block (so what the agent stores with `recordare_remember` binds to the person's own words); a plain ingest when `autoRecall` is off |
 | the agent's text after it (`agent_end`) | message `assistant`, id `<runId>:a` (tool calls and results are not sent) |
 | other members' messages in a group (`message_received`) | messages `other`, author `<channel>:<senderId>` (participant with a channel identity); the account holder's own as `user` (`memoryPer: agent`) |

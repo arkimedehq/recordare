@@ -5,7 +5,7 @@
  * Read / write API for host UIs (API.md §4, WORK_PLAN 4.7) — the diary a platform shows the person: the timeline of
  * episodes, an episode's detail, the day / month diary, facts with their history, notes and plans; plus the person's
  * own edits (correct or forget an episode, pin or delete a note, confirm or reject what is pending). The reader is the
- * person themself in the platform's UI (owner-direct), never a conversation: no conversation resolution here. Quotes of
+ * person themself in the platform's UI (memory-direct), never a conversation: no conversation resolution here. Quotes of
  * messages are limited to the client's own conversations unless its raw-log scope is `all`.
  */
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -48,7 +48,7 @@ export interface EpisodeQuery {
   limit?: number;
 }
 
-interface Owner { tz: string; locale: string }
+interface Memory { tz: string; locale: string }
 
 interface EpisodeRow {
   id: string; kind: EpisodeItem['kind']; content: string; occurred_at: Date | null; occurred_until: Date | null;
@@ -86,8 +86,8 @@ function decodeCursor(cursor: string): { at: string; id: string } | null {
 export class ReadService {
   constructor(private readonly db: DataSource) {}
 
-  private async owner(ownerId: string): Promise<Owner> {
-    const [o] = await this.db.query(`SELECT timezone, locale FROM owners WHERE person_id = $1`, [ownerId]);
+  private async memory(memoryId: string): Promise<Memory> {
+    const [o] = await this.db.query(`SELECT timezone, locale FROM memories WHERE person_id = $1`, [memoryId]);
     if (!o) throw new NotFoundException();
     return { tz: o.timezone, locale: o.locale };
   }
@@ -102,7 +102,7 @@ export class ReadService {
     return r.plan_status as PlanStatus;
   }
 
-  private async items(rows: EpisodeRow[], o: Owner, now: Date): Promise<EpisodeItem[]> {
+  private async items(rows: EpisodeRow[], o: Memory, now: Date): Promise<EpisodeItem[]> {
     const ids = rows.map((r) => r.id);
     const people: Array<{ episode_id: string; alias: string }> = ids.length
       ? await this.db.query(`SELECT episode_id, alias FROM episode_people WHERE episode_id = ANY($1)`, [ids]) : [];
@@ -124,11 +124,11 @@ export class ReadService {
   }
 
   /** The timeline, newest first; `from` / `to` are local dates (inclusive), `q` a full-text filter. */
-  async episodes(ownerId: string, query: EpisodeQuery, now: Date): Promise<{ items: EpisodeItem[]; nextCursor: string | null }> {
-    const o = await this.owner(ownerId);
+  async episodes(memoryId: string, query: EpisodeQuery, now: Date): Promise<{ items: EpisodeItem[]; nextCursor: string | null }> {
+    const o = await this.memory(memoryId);
     const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
-    const where = [`e.owner_id = $1`, VISIBLE];
-    const params: unknown[] = [ownerId];
+    const where = [`e.memory_id = $1`, VISIBLE];
+    const params: unknown[] = [memoryId];
     const p = (v: unknown) => `$${params.push(v)}`;
     // Sort key: the event's date, else when it was recorded.
     const at = `COALESCE(e.occurred_at, e.recorded_at)`;
@@ -154,9 +154,9 @@ export class ReadService {
 
   /** One episode with its evidence (quotes from this client's conversations unless its raw-log scope is all), the
    * versions it corrected and, for a plan, its outcome and its history. */
-  async episode(ownerId: string, clientId: string, id: string, now: Date) {
-    const o = await this.owner(ownerId);
-    const [row]: EpisodeRow[] = await this.db.query(`SELECT e.* FROM episodes e WHERE e.id = $1 AND e.owner_id = $2 AND e.deleted_at IS NULL`, [id, ownerId]);
+  async episode(memoryId: string, clientId: string, id: string, now: Date) {
+    const o = await this.memory(memoryId);
+    const [row]: EpisodeRow[] = await this.db.query(`SELECT e.* FROM episodes e WHERE e.id = $1 AND e.memory_id = $2 AND e.deleted_at IS NULL`, [id, memoryId]);
     if (!row) throw new NotFoundException();
     const [item] = await this.items([row], o, now) as [EpisodeItem];
     const [client] = await this.db.query(`SELECT raw_log_scope FROM clients WHERE id = $1`, [clientId]);
@@ -177,7 +177,7 @@ export class ReadService {
       ? await this.db.query(`SELECT patch, note, created_at FROM plan_events WHERE plan_id = $1 ORDER BY created_at`, [id]) : [];
     const linked = async (linkId: string | null) => {
       if (!linkId) return null;
-      const [l]: EpisodeRow[] = await this.db.query(`SELECT e.* FROM episodes e WHERE e.id = $1 AND e.owner_id = $2 AND e.deleted_at IS NULL`, [linkId, ownerId]);
+      const [l]: EpisodeRow[] = await this.db.query(`SELECT e.* FROM episodes e WHERE e.id = $1 AND e.memory_id = $2 AND e.deleted_at IS NULL`, [linkId, memoryId]);
       return l ? (await this.items([l], o, now))[0] : null;
     };
     const showAll = client?.raw_log_scope === 'all';
@@ -197,10 +197,10 @@ export class ReadService {
   }
 
   /** The diary: current day / month entries, newest first. */
-  async digests(ownerId: string, query: { level?: 'day' | 'month'; from?: string; to?: string }) {
-    await this.owner(ownerId);
-    const where = [`owner_id = $1`, `superseded_at IS NULL`];
-    const params: unknown[] = [ownerId];
+  async digests(memoryId: string, query: { level?: 'day' | 'month'; from?: string; to?: string }) {
+    await this.memory(memoryId);
+    const where = [`memory_id = $1`, `superseded_at IS NULL`];
+    const params: unknown[] = [memoryId];
     const p = (v: unknown) => `$${params.push(v)}`;
     if (query.level) where.push(`level = ${p(query.level)}`);
     if (query.from) where.push(`period_end >= ${p(query.from.slice(0, 10))}::date`);
@@ -213,15 +213,15 @@ export class ReadService {
   }
 
   /** Facts as slots (per person in an entity memory), each with its value as of `asOf` (default now) and its history. */
-  async facts(ownerId: string, query: { key?: string; asOf?: string; includePending?: boolean }, now: Date) {
-    const o = await this.owner(ownerId);
+  async facts(memoryId: string, query: { key?: string; asOf?: string; includePending?: boolean }, now: Date) {
+    const o = await this.memory(memoryId);
     const asOf = query.asOf ? zonedMidnight(addDays(query.asOf.slice(0, 10), 1), o.tz) : now;
-    const params: unknown[] = [ownerId, query.includePending ?? false];
+    const params: unknown[] = [memoryId, query.includePending ?? false];
     const keyFilter = query.key ? `AND f.key = $${params.push(query.key)}` : '';
     const rows: FactRow[] = await this.db.query(
       `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, f.stance, f.author_role, s.display_name AS about
        FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
-       WHERE f.owner_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected' AND ($2::boolean OR NOT f.pending) ${keyFilter}
+       WHERE f.memory_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected' AND ($2::boolean OR NOT f.pending) ${keyFilter}
        ORDER BY s.display_name NULLS FIRST, f.key, f.valid_from NULLS FIRST, f.recorded_at`, params);
     const day = (d: Date | null) => (d ? localDate(d, o.tz) : null);
     const slots = new Map<string, FactRow[]>();
@@ -239,49 +239,49 @@ export class ReadService {
     });
   }
 
-  async notes(ownerId: string, query: { category?: string; pinned?: boolean; includePending?: boolean }) {
-    await this.owner(ownerId);
-    const params: unknown[] = [ownerId, query.includePending ?? false];
+  async notes(memoryId: string, query: { category?: string; pinned?: boolean; includePending?: boolean }) {
+    await this.memory(memoryId);
+    const params: unknown[] = [memoryId, query.includePending ?? false];
     const extra = [
       query.category ? `AND category = $${params.push(query.category)}` : '',
       query.pinned !== undefined ? `AND pinned = $${params.push(query.pinned)}` : '',
     ].join(' ');
     const rows: NoteRow[] = await this.db.query(
       `SELECT id, category, content, pinned, pending, stance, author_role, support_count, recorded_at FROM notes
-       WHERE owner_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($2::boolean OR NOT pending) ${extra}
+       WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($2::boolean OR NOT pending) ${extra}
        ORDER BY pinned DESC, recorded_at DESC`, params);
     return rows.map((r) => ({ id: r.id, category: r.category, content: r.content, pinned: r.pinned, pending: r.pending,
       inferred: r.stance === 'inferred', authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString() }));
   }
 
   /** Plans, soonest first (open and unresolved by default). */
-  async plans(ownerId: string, query: { status?: PlanStatus }, now: Date): Promise<EpisodeItem[]> {
-    const o = await this.owner(ownerId);
+  async plans(memoryId: string, query: { status?: PlanStatus }, now: Date): Promise<EpisodeItem[]> {
+    const o = await this.memory(memoryId);
     const rows: EpisodeRow[] = await this.db.query(
-      `SELECT e.* FROM episodes e WHERE e.owner_id = $1 AND ${VISIBLE} AND e.kind = 'plan'
-       ORDER BY e.occurred_at NULLS LAST, e.recorded_at`, [ownerId]);
+      `SELECT e.* FROM episodes e WHERE e.memory_id = $1 AND ${VISIBLE} AND e.kind = 'plan'
+       ORDER BY e.occurred_at NULLS LAST, e.recorded_at`, [memoryId]);
     const items = await this.items(rows, o, now);
     return items.filter((i) => (query.status ? i.planStatus === query.status : i.planStatus === 'open' || i.planStatus === 'unresolved'));
   }
 
   // ── The person's own edits ───────────────────────────────────────────────────
 
-  async pinNote(ownerId: string, id: string, pinned: boolean): Promise<void> {
-    const [, n] = await this.db.query(`UPDATE notes SET pinned = $3 WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`, [id, ownerId, pinned]);
+  async pinNote(memoryId: string, id: string, pinned: boolean): Promise<void> {
+    const [, n] = await this.db.query(`UPDATE notes SET pinned = $3 WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL`, [id, memoryId, pinned]);
     if (!n) throw new NotFoundException();
   }
 
   /** Deleting a note or a fact removes that row (its evidence goes with it); the history around it stays. */
-  async deleteRow(ownerId: string, table: 'notes' | 'facts', id: string): Promise<void> {
-    const [, n] = await this.db.query(`DELETE FROM ${table} WHERE id = $1 AND owner_id = $2`, [id, ownerId]);
+  async deleteRow(memoryId: string, table: 'notes' | 'facts', id: string): Promise<void> {
+    const [, n] = await this.db.query(`DELETE FROM ${table} WHERE id = $1 AND memory_id = $2`, [id, memoryId]);
     if (!n) throw new NotFoundException();
   }
 
   /** A pending (inferred) fact or note the person confirms becomes theirs; rejected, it is removed. */
-  async decide(ownerId: string, table: 'notes' | 'facts', id: string, confirm: boolean): Promise<void> {
-    if (!confirm) return this.deleteRow(ownerId, table, id);
+  async decide(memoryId: string, table: 'notes' | 'facts', id: string, confirm: boolean): Promise<void> {
+    if (!confirm) return this.deleteRow(memoryId, table, id);
     const [, n] = await this.db.query(
-      `UPDATE ${table} SET pending = false, stance = 'stated', confidence = 1 WHERE id = $1 AND owner_id = $2 AND pending AND deleted_at IS NULL`, [id, ownerId]);
+      `UPDATE ${table} SET pending = false, stance = 'stated', confidence = 1 WHERE id = $1 AND memory_id = $2 AND pending AND deleted_at IS NULL`, [id, memoryId]);
     if (!n) throw new NotFoundException();
   }
 }

@@ -29,13 +29,13 @@ Tested with Hermes Agent v0.21.6. Pure Python, only `requests` (a Hermes depende
 ## Install
 
 1. Ask the Recordare admin for a credential for the agent's memory:
-   - a **personal token** with the scopes `mcp`, `ingest`, `read` (`POST api/v1/admin/owners/{id}/tokens`, client of
+   - a **personal token** with the scopes `mcp`, `ingest`, `read` (`POST api/v1/admin/memories/{id}/tokens`, client of
      kind `mcp_client`) — the token's memory is the agent's;
    - or a **client key** with the same scopes and a fixed `RECORDARE_USER` (the agent's account: a client user, bound by
      the admin with `POST api/v1/admin/identities` or auto-provisioned if the client allows it); a client key is also
      what one memory per gateway user needs.
 
-   The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`), or
+   The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`), or
    with a client key by `PATCH api/v1/me`: `personal` (your own assistant: you are "I", what arrives undeclared is
    yours) or `entity` (an agent shared by a family, a team, a place: what arrives undeclared is "someone"'s); `gender`
    `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The provider has no
@@ -93,7 +93,7 @@ same bot is left out. Upgrading with an alias map: add `RECORDARE_MEMORY_PER=use
 |---|---|
 | session lineage (`gateway_session_key` or platform + first session id) | conversation `hermes:<gateway_session_key or platform>/<session id>` (channel `hermes:<platform>`, title = session title or chat name); kept across context compression and `--resume`, new on `/new` / `/reset` |
 | the agent (`RECORDARE_USER` or the token) — memory per user: `user_id_alt` / `user_id` (+ aliases), or `RECORDARE_USER` | the memory (`X-Recordare-User` with a client key; the token's memory otherwise) |
-| the turn's author / the session's gateway user (memory per agent) | the account holder (`RECORDARE_SELF_IDS`, CLI): participant `owner` (with `user_name`); anyone else: participant `<platform>:<user id>` with its identity and name |
+| the turn's author / the session's gateway user (memory per agent) | the account holder (`RECORDARE_SELF_IDS`, CLI): participant `holder` (with `user_name`); anyone else: participant `<platform>:<user id>` with its identity and name |
 | the person's message (`on_turn_start`, then `prefetch`) | message `user` (account holder) or `other` with its author, id `<session id>:<turn id>:u`, queued at turn start and stored **before** the agent runs (so what the agent stores with `recordare_remember` binds to the person's own words): by `prefetch` in the same call as the memory context; right away when recall is off; before any memory tool call when `prefetch` could not store it |
 | the agent's answer (`sync_turn`, background) | message `assistant`, id `<session id>:<turn id>:a` (tool calls and results are not sent) |
 | session end (`on_session_end`, `on_session_switch(reset)`) | `POST api/v1/ingest/conversations/{id}/end`, queued after every pending message of the conversation → extraction now |

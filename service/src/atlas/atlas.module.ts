@@ -4,15 +4,15 @@
 import { Controller, Get, Module, Param, ParseUUIDPipe } from '@nestjs/common';
 import { AtlasService } from './atlas.service';
 
-/** Admin only (no @RequireScopes): the dashboard's starting map of one owner's memory, metadata only. */
-@Controller('api/v1/admin/owners')
+/** Admin only (no @RequireScopes): the dashboard's starting map of one memory's memory, metadata only. */
+@Controller('api/v1/admin/memories')
 export class AtlasController {
   constructor(private readonly atlas: AtlasService) {}
 
-  /** Owners with their memory size, most recently active first (to pick whose brain to watch). */
+  /** Memories with their memory size, most recently active first (to pick whose brain to watch). */
   @Get()
-  owners() {
-    return this.atlas.owners();
+  memories() {
+    return this.atlas.memories();
   }
 
   @Get(':id/atlas')

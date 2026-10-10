@@ -150,7 +150,7 @@ def run_once(args, label: str, run: int | None) -> dict:
         json.dumps({"summary": summary, "rows": rows}, ensure_ascii=False, indent=2))
     if hasattr(sys_, "cost"):
         summary["engine_cost"] = sys_.cost()
-        summary["owner_ids"] = sys_.owner_ids()
+        summary["memory_ids"] = sys_.memory_ids()
         (RESULTS / f"{label}.json").write_text(json.dumps({"summary": summary, "rows": rows}, ensure_ascii=False, indent=2))
     if hasattr(sys_, "dump"):
         (RESULTS / f"{label}-memory.json").write_text(sys_.dump())

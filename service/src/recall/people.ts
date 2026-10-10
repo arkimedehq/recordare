@@ -3,8 +3,8 @@
 
 /**
  * People named by a question, by name ("what did Kevin ask you?") or by relation ("what did my mother ask you?").
- * No LLM call: the owner's people come from what the engine already stored — episode people written as
- * "Name (relation)" by the extractor, and the participants of the owner's chats. A relation resolves only when it
+ * No LLM call: the memory's people come from what the engine already stored — episode people written as
+ * "Name (relation)" by the extractor, and the participants of the holder's chats. A relation resolves only when it
  * points to a few people (a word like "friend" that matches many is left alone).
  */
 import { type DataSource } from 'typeorm';
@@ -17,15 +17,15 @@ const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,
 const tokens = (s: string) => fold(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 
 /** First names (folded) of the people a question is about; empty when it names none. */
-export async function peopleInQuestion(db: DataSource, ownerId: string, question: string): Promise<string[]> {
+export async function peopleInQuestion(db: DataSource, memoryId: string, question: string): Promise<string[]> {
   const asked = new Set(tokens(question));
   if (asked.size === 0) return [];
   const rows: Array<{ name: string }> = await db.query(
     `SELECT DISTINCT ep.alias AS name FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id
-     WHERE e.owner_id = $1 AND e.deleted_at IS NULL
+     WHERE e.memory_id = $1 AND e.deleted_at IS NULL
      UNION SELECT DISTINCT cp.display_name FROM conversation_participants cp JOIN conversations c ON c.id = cp.conversation_id
-     WHERE c.owner_id = $1 AND cp.display_name IS NOT NULL
-     LIMIT 5000`, [ownerId]);
+     WHERE c.memory_id = $1 AND cp.display_name IS NOT NULL
+     LIMIT 5000`, [memoryId]);
   const found = new Set<string>();
   const byRelation = new Map<number, Set<string>>();
   for (const { name } of rows) {

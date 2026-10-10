@@ -27,7 +27,7 @@ Checks — run all three before every commit (CI runs them): `npm run typecheck`
 | `src/db` | Data source, migrations (explicit SQL: enums, HNSW / GIN / partial indexes) |
 | `src/llm` | `LlmPort` + OpenAI-compatible and native Anthropic adapters, provider profiles (D27), per-call accounting |
 | `src/embedding`, `src/clock` | Embedding port (any OpenAI-compatible server), clock port |
-| `src/auth`, `src/admin`, `src/me` | Client API keys, personal tokens, admin API, owner resolution, conversation resolver; `GET / PATCH api/v1/me` |
+| `src/auth`, `src/admin`, `src/me` | Client API keys, personal tokens, admin API, memory resolution, conversation resolver; `GET / PATCH api/v1/me` |
 | `src/console` | Admin console, a static page served at `/admin` over the admin API |
 | `src/identity` | Identity entities |
 | `src/rawlog` | Layer 0: REST ingest (idempotent, always stores — the client holds the on/off switch, D50), edits and purges, raw-log search (full-text + vector) |
@@ -36,7 +36,7 @@ Checks — run all three before every commit (CI runs them): `npm run typecheck`
 | `src/recall` | `search_episodes`, `search_memory`, period resolver, people-aware recall, explicit writes and forgetting, the pre-turn memory context (`POST api/v1/context`), recall log |
 | `src/knowledge` | Learned sources (D49, WORK_PLAN 8.9): source ingest in parts, passages (split in code, embedded in the background), `search_knowledge`, the code-written learning episode, read / forget routes |
 | `src/read` | Read / write API for host UIs — the person's diary (`API.md` §4) |
-| `src/lang` | Language data for the deterministic helpers: periods and months (from `Intl`, 25 most used languages), relation words, owner naming |
+| `src/lang` | Language data for the deterministic helpers: periods and months (from `Intl`, 25 most used languages), relation words, self stand-ins for the leak detector |
 | `src/mcp` | MCP server at `/mcp` (streamable HTTP): the tools of `docs/API.md` §3 |
 | `src/telemetry`, `src/atlas` | Live event stream for operators (SSE) and the atlas snapshot — contract `docs/ATLAS_EVENTS.md` |
 | `src/health` | `GET api/v1/health` (container health check) |
@@ -55,7 +55,7 @@ Checks — run all three before every commit (CI runs them): `npm run typecheck`
 | Task | What it does | Recommended (measured, `spikes/memory-eval/RESULTS.md`) |
 |---|---|---|
 | `EXTRACT` | episodes, plans, facts and notes from a conversation window (one call per window) | `deepseek-flash`, reasoning off — best answers (91 % blind5) and best plan outcomes, cheapest with prefix caching |
-| `EXTRACT_ECONOMY` | the same for owners on the `economy` profile | `deepseek-flash` (no cheaper model measured reached it: Gemini 3.1 Flash-Lite 81 %, Qwen 3.7 Flash 78.5 %) |
+| `EXTRACT_ECONOMY` | the same for memories on the `economy` profile | `deepseek-flash` (no cheaper model measured reached it: Gemini 3.1 Flash-Lite 81 %, Qwen 3.7 Flash 78.5 %) |
 | `RESOLVE` | near-duplicate / correction check on short pairs (only when candidates exist) | `deepseek-flash` (a light model is enough; cheaper ones not yet measured on this task) |
 | `DIGEST` | nightly consolidation (M5): the diary of each changed day and month | `deepseek-flash` (to be measured) |
 | `FACTS` | the nightly facts review (knob `factsReview` / `FACTS_REVIEW`) and the separate facts-and-notes pass (`FACTS_PASS=separate`) — both off in every profile | both measured with no gain on facts (DeepSeek V4 Pro for the pass, blind5 for the review) — keep them off |

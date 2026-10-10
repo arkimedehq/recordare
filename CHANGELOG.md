@@ -17,7 +17,7 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   its context in one call); personal tokens read before their conversation is stored; `TOOLS` (MCP tool schemas) in the
   client library; the connectors use them.
 - **Diagnostics**: every extraction run keeps a summary (returned, written, dropped and why — counts only);
-  `GET api/v1/admin/owners/{id}/runs`.
+  `GET api/v1/admin/memories/{id}/runs`.
 
 ### Changed
 - **No consent flag any more** (D50, WORK_PLAN 8.1) — **breaking**. Recordare always stores, extracts and consolidates
@@ -35,8 +35,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `audience` / `disclosure` are still recorded; one memory still never sees another's data. The conversation header is
   still resolved: MCP writes bind their evidence to it.
 - **Memory identity** (D50, WORK_PLAN 8.3) — **breaking**. A memory belongs to a client account; the people it knows
-  are contacts of that memory only. Migration `MemoryIdentity1791070000000`: `persons.kind` becomes `owners.mode`
-  (`personal | entity`) with `owners.gender` (`masculine | feminine | neutral`, default masculine); every person that is
+  are contacts of that memory only. Migration `MemoryIdentity1791070000000`: `persons.kind` becomes `memories.mode`
+  (`personal | entity`) with `memories.gender` (`masculine | feminine | neutral`, default masculine); every person that is
   not a memory is a contact of exactly one memory (`full_name`, `relation`, names in `person_aliases`), and the contacts
   a memory was missing are created (e.g. a person with their own memory who also talks to a shared device);
   `external_identities.kind` becomes `account` (was `client_user`: opens a memory) or `participant` (was `channel`, now
@@ -44,7 +44,7 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   records who said it (`author_kind` `self | contact | someone | agent | own | tool`, `attribution_method`,
   `attribution_confidence`); episodes, facts and notes record whose they are (`subject_kind`, `subject_person_id`,
   `subject_candidates`); a `clarifications` table is created for later. API: `GET / PATCH api/v1/me` and the admin
-  owner routes take `mode` and `gender` instead of `kind`; `POST api/v1/admin/identities` takes `kind: account |
+  memory routes take `mode` and `gender` instead of `kind`; `POST api/v1/admin/identities` takes `kind: account |
   participant`; ingest accepts `own: true` on a message (the agent's own content) and the sources `document`,
   `perception`, `ambient`. The console shows mode, gender, contacts and identity kinds. Client library: `MemoryKind` →
   `MemoryMode` + `MemoryGender`, `Me.kind` → `mode` / `gender`, `MeSettings.kind` → `mode` / `gender`, `Person.kind` →
@@ -100,6 +100,22 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   previous behaviour). Other people's turns are sent as role `other` with their author, so they are never read as the
   account holder's words. Claude Code / Codex: unchanged (the personal token's memory), wording only. Upgrading with a
   per-person mapping: set `memoryPer: "user"` / `RECORDARE_MEMORY_PER=user` / `MEMORY_PER=user`.
+- **No "owner" any more** (D50, WORK_PLAN 8.10) — **breaking**: a memory is a memory, and the person a personal
+  memory belongs to is its holder. Migration `Memories1791100000000` renames in place (no data changes beyond the
+  renamed values): table `owners` → `memories`; every `owner_id` column and `persons.owner_scope` /
+  `external_identities.owner_scope` → `memory_id`, with indexes and constraints renamed the same way (e.g.
+  `facts_owner_key_idx` → `facts_memory_key_idx`); the enum value `owner` → `holder` for the participant role, the
+  author role and the disclosure tier, origins `owner_lived` / `owner_told` → `holder_lived` / `holder_told`, the implied
+  participant ref `owner` → `holder`; token scope `owner_settings` → `memory_settings`; extraction-run gate marker
+  `gate:no-owner-message` → `gate:no-holder-message`. API: `ownerId` → `memoryId` everywhere (REST, `GET api/v1/me`,
+  MCP, telemetry); ingest `participants[].role` and `authorRole` take `holder`; admin routes `api/v1/admin/owners…` →
+  `api/v1/admin/memories…` (incl. `GET api/v1/admin/memories/:id/atlas`); telemetry stream `?owner=<id>` →
+  `?memory=<id>`; `GET api/v1/me` `via` `owner_token` → `memory_token`; conversation resolution `owner_direct` →
+  `memory_direct`. Atlas contract **v2** (`docs/ATLAS_EVENTS.md`): events carry `memoryId`, the snapshot `memory {id,
+  name}`, the admin routes above. Client library: `memoryId` (e.g. `people.refresh()` → `{ memoryId, mode, atlasUrl }`),
+  role `holder`; connectors send the account holder as participant `holder`. Clients and connectors 0.1.0 do not work
+  with this version: upgrade them together with the service. The `X-Recordare-User` header and the prompts are
+  unchanged.
 
 ### Fixed
 - A short fact inside a long message of the person counts as their words; "il proprietario" is replaced by the name.

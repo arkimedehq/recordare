@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Dates in the owner's timezone. Coarse dates are stored as the start of their period in that
+ * Dates in the memory's timezone. Coarse dates are stored as the start of their period in that
  * timezone, with a precision (docs/DATA_MODEL.md → Time); calendars help models resolve
  * "sabato" / "last Friday" against the message time (spike finding).
  */
@@ -80,7 +80,7 @@ export function periodEnd(at: Date, precision: Precision, tz: string): Date {
   return zonedMidnight(addDays(day, 1), tz);
 }
 
-/** Human-readable date with precision, in the owner's language. */
+/** Human-readable date with precision, in the memory's language. */
 export function describe(at: Date | null, precision: Precision, tz: string, locale: string): string {
   if (!at) return locale === 'it' ? 'data ignota' : 'unknown date';
   const day = localDate(at, tz);

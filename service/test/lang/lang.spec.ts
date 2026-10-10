@@ -5,7 +5,7 @@ import { containsPhrase, LOCALES, normalize, periodPhrases, RELATION_GROUPS } fr
 
 const relationOf = (question: string) => RELATION_GROUPS.filter((g) => g.words.some((w) => containsPhrase(normalize(question), w))).map((g) => g.key);
 
-describe('language data (owner\'s rule: all languages, at least the most used)', () => {
+describe('language data (memory\'s rule: all languages, at least the most used)', () => {
   it('has period phrases from Intl for every locale', () => {
     for (const locale of LOCALES) {
       const yesterday = normalize(new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }).format(-1, 'day'));

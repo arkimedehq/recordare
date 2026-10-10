@@ -6,7 +6,7 @@ import { Inject, Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 import { EXTRACTION_QUEUE, EXTRACTION_RUNNER, type ExtractionRunner } from './queue.port';
 
-/** Idle extraction jobs (D1). One worker per process; per-owner serialisation lives in the runner. */
+/** Idle extraction jobs (D1). One worker per process; per-memory serialisation lives in the runner. */
 @Processor(EXTRACTION_QUEUE)
 export class ExtractionProcessor extends WorkerHost {
   private readonly log = new Logger(ExtractionProcessor.name);

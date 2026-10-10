@@ -31,33 +31,33 @@ describe('atlas snapshot (M5b.2)', () => {
     });
     afterAll(async () => { await app?.close(); emb?.close(); });
 
-    it('returns the network of one owner: real relations, metadata only, admin only', async () => {
-      const ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
+    it('returns the network of one memory: real relations, metadata only, admin only', async () => {
+      const memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
       const db = app.get(DataSource);
       const ins = async (content: string, corrects: string | null = null) => {
         const [r] = await db.query(
-          `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, occurred_at, date_precision, embedding, corrects)
-           VALUES ($1, 'event', $2, 'owner_lived', 'owner', $3, '2026-03-14T20:00:00Z', 'day', $4::vector, $5) RETURNING id`,
-          [ownerId, content, [ownerId], `[${fakeVector(content).join(',')}]`, corrects]);
+          `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision, embedding, corrects)
+           VALUES ($1, 'event', $2, 'holder_lived', 'holder', $3, '2026-03-14T20:00:00Z', 'day', $4::vector, $5) RETURNING id`,
+          [memoryId, content, [memoryId], `[${fakeVector(content).join(',')}]`, corrects]);
         return r.id as string;
       };
       const a = await ins('Cena da Marco segretissima');
       const b = await ins('Cena da Marco, correzione', a);
       await ins('Partita di calcetto');
-      const res = await call(url, 'GET', `/api/v1/admin/owners/${ownerId}/atlas`, { token: ADMIN_KEY });
+      const res = await call(url, 'GET', `/api/v1/admin/memories/${memoryId}/atlas`, { token: ADMIN_KEY });
       expect(res.status).toBe(200);
-      expect(res.body.owner).toEqual({ id: ownerId, name: 'Luca' });
+      expect(res.body.memory).toEqual({ id: memoryId, name: 'Luca' });
       expect(res.body.episodes).toHaveLength(3);
       expect(res.body.edges).toEqual(expect.arrayContaining([{ a: b, b: a, kind: 'corrects' }, expect.objectContaining({ kind: 'similar' })]));
       expect(JSON.stringify(res.body)).not.toContain('segretissima');
-      await db.query(`INSERT INTO llm_calls (owner_id, prompt_id, provider, model, input_tokens, cached_input_tokens, output_tokens, latency_ms, status)
-        VALUES ($1, 'extract.v6', 'p', 'm', 1000, 0, 200, 10, 'ok')`, [ownerId]);
-      await db.query(`INSERT INTO recall_log (owner_id, tool, items) VALUES ($1, 'search_episodes', 3)`, [ownerId]);
-      const again = await call(url, 'GET', `/api/v1/admin/owners/${ownerId}/atlas`, { token: ADMIN_KEY });
+      await db.query(`INSERT INTO llm_calls (memory_id, prompt_id, provider, model, input_tokens, cached_input_tokens, output_tokens, latency_ms, status)
+        VALUES ($1, 'extract.v6', 'p', 'm', 1000, 0, 200, 10, 'ok')`, [memoryId]);
+      await db.query(`INSERT INTO recall_log (memory_id, tool, items) VALUES ($1, 'search_episodes', 3)`, [memoryId]);
+      const again = await call(url, 'GET', `/api/v1/admin/memories/${memoryId}/atlas`, { token: ADMIN_KEY });
       expect(again.body.totals).toEqual({ llmCalls: 1, inputTokens: 1000, outputTokens: 200, recalls: 1 });
       const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
       const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
-      expect((await call(url, 'GET', `/api/v1/admin/owners/${ownerId}/atlas`, { token: key })).status).toBe(403);
+      expect((await call(url, 'GET', `/api/v1/admin/memories/${memoryId}/atlas`, { token: key })).status).toBe(403);
     });
   });
 });

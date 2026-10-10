@@ -9,8 +9,8 @@ import { ConsolidationService } from '../engine/consolidation.service';
 import { ZodBody } from '../common/zod-body.pipe';
 import { AdminService } from './admin.service';
 import {
-  createClientSchema, createIdentitySchema, createKeySchema, createOwnerSchema, createTokenSchema, updateClientSchema, updateOwnerSchema,
-  type CreateClient, type CreateIdentity, type CreateKey, type CreateOwner, type CreateToken, type UpdateClient, type UpdateOwner,
+  createClientSchema, createIdentitySchema, createKeySchema, createMemorySchema, createTokenSchema, updateClientSchema, updateMemorySchema,
+  type CreateClient, type CreateIdentity, type CreateKey, type CreateMemory, type CreateToken, type UpdateClient, type UpdateMemory,
 } from './admin.schemas';
 
 /** Admin API (no @RequireScopes → admin credential only). */
@@ -23,7 +23,7 @@ export class AdminController {
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
 
-  /** Admin console: owners with settings, counts, identities and tokens (metadata only). */
+  /** Admin console: memories with settings, counts, identities and tokens (metadata only). */
   @Get('persons')
   listPersons() {
     return this.admin.listPersons();
@@ -33,7 +33,7 @@ export class AdminController {
    * Recent extraction runs of a person (WORK_PLAN 4.12): status, model, prompt version and the summary — what the model
    * returned, what was written, what the rules dropped and why (counts only). `conversation` = a conversation's id.
    */
-  @Get('owners/:id/runs')
+  @Get('memories/:id/runs')
   listRuns(@Param('id', ParseUUIDPipe) id: string, @Query('conversation', new ParseUUIDPipe({ optional: true })) conversation?: string, @Query('limit') limit?: string) {
     return this.admin.listRuns(id, conversation, Math.min(Math.max(Number(limit) || 20, 1), 200));
   }
@@ -71,14 +71,14 @@ export class AdminController {
     return this.admin.revokeKey(id);
   }
 
-  @Post('owners')
-  createOwner(@Body(new ZodBody(createOwnerSchema)) body: CreateOwner) {
-    return this.admin.createOwner(body);
+  @Post('memories')
+  createMemory(@Body(new ZodBody(createMemorySchema)) body: CreateMemory) {
+    return this.admin.createMemory(body);
   }
 
-  @Patch('owners/:id')
-  updateOwner(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(updateOwnerSchema)) body: UpdateOwner) {
-    return this.admin.updateOwner(id, body);
+  @Patch('memories/:id')
+  updateMemory(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(updateMemorySchema)) body: UpdateMemory) {
+    return this.admin.updateMemory(id, body);
   }
 
   @Post('identities')
@@ -87,20 +87,20 @@ export class AdminController {
   }
 
   /** Run the nightly consolidation now (operators, tests and the eval harness; honours X-Recordare-Now when allowed). */
-  @Post('owners/:id/consolidate')
+  @Post('memories/:id/consolidate')
   consolidate(@Param('id', ParseUUIDPipe) id: string, @Headers('x-recordare-now') at?: string) {
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
-    return this.consolidation.consolidateOwner(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
+    return this.consolidation.consolidateMemory(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
   }
 
   /** Run the facts review alone now (operators and evaluations; honours X-Recordare-Now when allowed). */
-  @Post('owners/:id/review-facts')
+  @Post('memories/:id/review-facts')
   reviewFacts(@Param('id', ParseUUIDPipe) id: string, @Headers('x-recordare-now') at?: string) {
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
     return this.consolidation.reviewFactsNow(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
   }
 
-  @Post('owners/:id/tokens')
+  @Post('memories/:id/tokens')
   createToken(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(createTokenSchema)) body: CreateToken) {
     return this.admin.createToken(id, body);
   }

@@ -1,7 +1,7 @@
 #!/bin/sh
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Andrea Genovese
-# WORK_PLAN 4.10: extract.v11 (received news, minus others' claims about the owner, both dates kept) on :8083 —
+# WORK_PLAN 4.10: extract.v11 (received news, minus others' claims about the holder, both dates kept) on :8083 —
 # the news dev set (1 run) and blind7 (3 runs), DeepSeek direct; compare with v8 (b7) and v10 (b7v10).
 set -u
 cd "$(dirname "$0")"

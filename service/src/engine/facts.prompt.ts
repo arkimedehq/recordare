@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Facts-and-notes pass: a second call on the same window, focused only on the owner's durable state (fact slots
+ * Facts-and-notes pass: a second call on the same window, focused only on the memory's durable state (fact slots
  * with history) and profile notes — the weakest extraction stage, where a stronger model measured clearly better
  * (RESULTS.md, blind5: facts 0.62 → 0.77, notes 0.64 → 0.71 with DeepSeek V4 Pro). Runs on its own task model
  * (`facts`) when the quality profile asks for it; the episode call then leaves facts and notes to this pass.

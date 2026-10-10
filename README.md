@@ -64,10 +64,10 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 - **Plans have a lifecycle.** A plan is `open | confirmed | cancelled | rescheduled | unresolved`. A plan whose date
   has passed stays a plan until something confirms it, so recall answers "I don't know whether you went", never "you
   went".
-- **Provenance on every memory.** Each memory records who said it: the owner, the assistant, another person or a
-  tool (`author_role`). It also records its origin (`owner_lived`, `owner_told`, `assistant_stated`) and cites
+- **Provenance on every memory.** Each memory records who said it: the holder, the assistant, another person or a
+  tool (`author_role`). It also records its origin (`holder_lived`, `holder_told`, `assistant_stated`) and cites
   evidence message ids. Another person's claim ("Giorgio says Sofia is moving to London") is stored as that person's
-  claim, never as the owner's fact.
+  claim, never as the holder's fact.
 - **The whole memory in every conversation, for now** (D50). Answers use all of the memory, also in group chats and
   conversations other people take part in: privacy and disclosure come later. Each memory already stores its audience
   and a disclosure label, so that work needs no migration. One memory never sees another's data.
@@ -83,7 +83,7 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 - **Nightly consolidation.** A job per person writes the day and month diaries. It makes zero LLM calls when
   nothing is new.
 - **Quality / cost profiles** (D35): `economy | balanced | full`, per installation with a per-person override. Cost
-  is the owner's choice, and quality is never traded silently. Each profile is measured.
+  is the operator's choice, and quality is never traded silently. Each profile is measured.
 - **Any LLM / embedding provider** (D27): any OpenAI-compatible server (DeepSeek, OpenAI, OpenRouter, Ollama, vLLM, …)
   or native Anthropic, with a model per task. DeepSeek and local Ollama are only our test setups.
 - **One memory per person, across platforms.** One person using Arkimede and Claude Code has a single memory.
@@ -107,7 +107,7 @@ LLM runs at read time: the calling agent fills the parameters. Contracts: [API](
    - An item the assistant said while answering *from memory* is not written back as new evidence (the recall-echo
      guard).
    - After a recall, a fact changes only when someone asserts the change.
-   - Claims by other people are kept apart from the owner's facts.
+   - Claims by other people are kept apart from the holder's facts.
 3. **People-aware recall** (D39). A question that names someone, by name or by a stored relation ("my sister"), also
    retrieves that person's own messages, with no extra LLM call.
 4. **Cheap by construction** (economy defaults). One extraction call per window, deterministic gates before any LLM
@@ -159,7 +159,7 @@ What is new is narrower:
 
 - **The combination, in one service, behind any agent platform.** We surveyed Hermes, OpenClaw, Letta, Mem0, Honcho,
   Claude Code and ChatGPT ([agent-platform memory](docs/literature/agent-platform-memory.md)). None of them combines
-  event time, a plan lifecycle and owner-vs-others provenance at this level. OpenClaw is the only one with structural
+  event time, a plan lifecycle and holder-vs-others provenance at this level. OpenClaw is the only one with structural
   provenance, and its rules match what our poisoning and echo experiments found. Those platforms are ahead of us on
   context injection and use-driven curation.
 - **Open research ground** (the hypotheses register, verdict "partially novel, narrow"):
@@ -170,7 +170,7 @@ What is new is narrower:
     digests and notes, and an evaluation of prompt-only defences against pre-retrieval filtering with adversarial
     interlocutors. The filtering mechanism itself is published ("Authorization Before Context"); the twin-specific
     combination and its evaluation are open.
-  - **H3 — source monitoring for twins.** The owner's lived memories, what the owner was told, and what the twin
+  - **H3 — source monitoring for twins.** The holder's lived memories, what the holder was told, and what the twin
     itself experienced never mix.
   - Smaller items: blind evaluation sets written by a separate agent, and over-strict judge artefacts (H6, a methods
     note). Resting-state thinking that keeps open loops alive (H12, to design). Legacy mode as enforceable mechanisms
@@ -194,9 +194,9 @@ The [vision](docs/DIGITAL_TWIN_VISION.md) adds the next phases:
 
 - a self-model (style, values, decision patterns);
 - contacts and disclosure tiers;
-- the twin interface: companion mode with the owner, declared proxy toward others (EU AI Act art. 50);
+- the twin interface: companion mode with the holder, declared proxy toward others (EU AI Act art. 50);
 - initiative: inform and propose (L1), then act within a permission matrix (L2);
-- the owner's voice;
+- the holder's voice;
 - legacy mode;
 - a research mode on autonomous twins.
 
@@ -271,7 +271,7 @@ Each connector captures the conversation, gives the agent the memory context bef
 
 Recordare v1 is the **private (home / research) profile**: an installation run by someone the users trust (a family,
 a lab, a small team), not a public service for strangers.
-- The admin creates people and client keys; there is no owner login, no OAuth for MCP, no self-service linking UI
+- The admin creates people and client keys; there is no holder login, no OAuth for MCP, no self-service linking UI
   and no read audit yet.
 - The admin and the client platforms are trusted: a client key acts for any of its users, and the operator of the
   server can read the database.

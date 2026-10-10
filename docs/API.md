@@ -29,8 +29,8 @@ parts (§2).
 
 | Profile | For | Contents |
 |---|---|---|
-| **v1 — home / research** (built now) | One installation run by its owner(s) and their own clients (Arkimede, Claude Code, the research simulator) | Owners and identities created by the **admin API**; client API keys; **personal access tokens** for MCP-only clients (created via admin API); hashed credentials and simple scopes; per-owner isolation; conversation resolved by Recordare (the viewer filter on answers is gone with D50: privacy and disclosure come later); `author_role` provenance; forgetting that sticks |
-| **Public** (deferred — M7 / public release) | Recordare as a service for people the operator does not know | Owner login (email magic link, verified email, owner pages), OAuth 2.1 for MCP connectors, owner-driven link codes + revocation UI, `read_audit`, persistent idempotency table, backup-retention policy and provider-retention notice, export restricted to owner sessions; network-level protection (firewall / WAF / rate limits) in front |
+| **v1 — home / research** (built now) | One installation run by its operator(s) and their own clients (Arkimede, Claude Code, the research simulator) | Memories and identities created by the **admin API**; client API keys; **personal access tokens** for MCP-only clients (created via admin API); hashed credentials and simple scopes; per-memory isolation; conversation resolved by Recordare (the viewer filter on answers is gone with D50: privacy and disclosure come later); `author_role` provenance; forgetting that sticks |
+| **Public** (deferred — M7 / public release) | Recordare as a service for people the operator does not know | Holder login (email magic link, verified email, holder pages), OAuth 2.1 for MCP connectors, holder-driven link codes + revocation UI, `read_audit`, persistent idempotency table, backup-retention policy and provider-retention notice, export restricted to holder sessions; network-level protection (firewall / WAF / rate limits) in front |
 
 Items marked **(public profile)** below are specified so the design stays coherent, but are not
 built in v1. Nothing in the public profile changes memory rows, so enabling it later needs no data
@@ -39,7 +39,7 @@ migration.
 ## 1. Identity, authentication, conversation context (tasks 1.1, 1.5 → D24)
 
 ### Model
-- **Memory** (today the `owners` row, D50): the memory of one client account — an agent's. Its own person row carries
+- **Memory** (the `memories` row, D50): the memory of one client account — an agent's. Its own person row carries
   the account's name (in a personal memory, the name of "I"). **Contacts**: the people a memory knows, persons scoped to
   that memory only (the same human in two memories is two unrelated contacts).
 - **Client**: a platform integration (Arkimede installation, Claude Desktop setup, import tool).
@@ -48,37 +48,37 @@ migration.
   `email:…` → the self or a contact **of one memory**); only verified participant bindings identify interlocutors, and
   a participant identity never opens a memory.
 
-### Owner authentication (public profile)
-**v1**: owners are created by the admin (`POST api/v1/admin/owners`), or auto-provisioned at a client's first
+### Holder authentication (public profile)
+**v1**: memories are created by the admin (`POST api/v1/admin/memories`), or auto-provisioned at a client's first
 request when that client allows it (`autoProvision`, named after the client's user id until the client renames them);
 personal tokens and identity bindings are managed through the admin API (and its console,
-§6) — as built no route lets an owner personal token change them; there are no owner pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, owner's timezone); `POST api/v1/admin/owners/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/owners/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation). Quality profile (D35): `qualityProfile` `economy | balanced | full` on owner create /
-`PATCH api/v1/admin/owners/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set). The same
+§6) — as built no route lets a personal token change them; there are no holder pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, the memory's timezone); `POST api/v1/admin/memories/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/memories/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation). Quality profile (D35): `qualityProfile` `economy | balanced | full` on memory create /
+`PATCH api/v1/admin/memories/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set). The same
 routes take `mode` `personal | entity` (D50: `personal` — the account holder is "I", undeclared input is the memory's
 own; `entity` — a memory shared by everyone using the account, a home device, a robot, a place: undeclared input is
 "someone"'s) and `gender` `masculine | feminine | neutral` (the first person in gendered languages, default
 `masculine`), and `PATCH` takes `displayName` (a client's later sync of its user's name overwrites it: the name follows the platform).
 
-**Public profile**: owners log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
-OIDC later). The owner session is needed for: creating link
+**Public profile**: holders log in to Recordare's own pages with an **email magic link** (no passwords; passkeys and
+OIDC later). The holder session is needed for: creating link
 codes, revoking clients, authorising OAuth MCP clients, creating personal tokens, exports, the
 self-service diary.
-- The owner email is set **only** through a verification mail the owner opens (claim flow); it is
-  never taken from client or ingest payloads, and changing it requires the current owner session
+- The holder's email is set **only** through a verification mail the holder opens (claim flow); it is
+  never taken from client or ingest payloads, and changing it requires the current holder session
   plus verification of the new address.
 - Magic links: single use, ≤ 15 min, rate-limited per address and IP, bound to the browser that
   requested them; new-login notifications by email.
-- An auto-provisioned owner (created by a client) has no email until claimed: until then its
-  memory is exactly as protected as that client's key, and it has no owner pages. Host toggles
-  (e.g. Arkimede's "enable diary") **open Recordare's owner page**; they never change owner settings
+- An auto-provisioned memory (created by a client) has no email until claimed: until then its
+  memory is exactly as protected as that client's key, and it has no holder pages. Host toggles
+  (e.g. Arkimede's "enable diary") **open Recordare's holder page**; they never change memory settings
   with the client key.
 
 ### Credentials (D24)
 | Level | Credential | Acts as |
 |---|---|---|
-| Full | **Client API key** `Authorization: Bearer rk_…` | Owners mapped to that client, selected per request with `X-Recordare-User: <externalUserId>` |
-| Basic | **Personal access token** `rp_…`, bound to one owner + one client, created by the owner (owner session; v1: by the admin, `POST api/v1/admin/owners/:id/tokens {clientId, scopes, expiresAt?}`) — for header-capable MCP clients (Claude Code, Cursor, SDKs); with `ingest` and `read` too it also serves full-level connectors for one person (`connectors/`). Disabling its client stops it | That owner |
-| Basic (OAuth) — public profile | **OAuth 2.1** per the MCP authorization spec (code + PKCE, dynamic client registration, protected-resource metadata); the owner logs in (magic link) and consents — for clients that require it (Claude Desktop / claude.ai connectors). Scheduled for M6; personal tokens cover M3–M5 | That owner |
+| Full | **Client API key** `Authorization: Bearer rk_…` | Memories mapped to that client, selected per request with `X-Recordare-User: <externalUserId>` |
+| Basic | **Personal access token** `rp_…`, bound to one memory + one client, created by the holder (holder session; v1: by the admin, `POST api/v1/admin/memories/:id/tokens {clientId, scopes, expiresAt?}`) — for header-capable MCP clients (Claude Code, Cursor, SDKs); with `ingest` and `read` too it also serves full-level connectors for one person (`connectors/`). Disabling its client stops it | That memory |
+| Basic (OAuth) — public profile | **OAuth 2.1** per the MCP authorization spec (code + PKCE, dynamic client registration, protected-resource metadata); the holder logs in (magic link) and consents — for clients that require it (Claude Desktop / claude.ai connectors). Scheduled for M6; personal tokens cover M3–M5 | That memory |
 | Admin | API key with scope `admin` (v1: the installation's single `ADMIN_API_KEY`, set in its environment) | Installation management |
 
 ### Scopes
@@ -88,31 +88,31 @@ self-service diary.
 | `mcp` | §3 tools (reads + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
 | `read` | §4 GET endpoints (`GET api/v1/sources` included), `GET api/v1/me`, `POST api/v1/context` |
 | `write` | §4 manual entries, corrections, forgetting (a learned source included), fact / note edits |
-| `owner_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: admin key or the owner's personal token; public profile: owner sessions / owner-created tokens. As built no route uses it yet: these settings are set by the admin (`PATCH api/v1/admin/owners/:id`) |
-| `export` | §4 export jobs — v1: admin key or the owner's personal token; public profile: owner sessions only, expiring download. Not built yet |
+| `memory_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: admin key or the memory's personal token; public profile: holder sessions / holder-created tokens. As built no route uses it yet: these settings are set by the admin (`PATCH api/v1/admin/memories/:id`) |
+| `export` | §4 export jobs — v1: admin key or the memory's personal token; public profile: holder sessions only, expiring download. Not built yet |
 | `admin` | `api/v1/admin/…` (as built: only the `ADMIN_API_KEY` credential; a key or token listing `admin` gets no admin route) |
 
 Client keys are created with `ingest`, `mcp`, `read`, `write` only (`POST api/v1/admin/clients/:id/keys {scopes}`);
-`admin`, `owner_settings` and `export` are never given to a client key.
+`admin`, `memory_settings` and `export` are never given to a client key.
 
 Keys and tokens: argon2id hashes, shown once, visible prefix, rotation by create + revoke. A
 client can never mint tokens for another client. `Idempotency-Key` replays are scoped to
-`(credential, owner, method + path)`; v1 keeps them in Redis for 24 h (persistent table in the
+`(credential, memory, method + path)`; v1 keeps them in Redis for 24 h (persistent table in the
 public profile).
 
 ### Conversation context — no viewer filter (D50, WORK_PLAN 8.2)
 **Behaviour now (2026-10-09)**: every answer — MCP recall, the memory context — uses the **whole memory**, in every
-conversation: one only the owner takes part in, a shared or group conversation, a conversation Recordare has not stored,
+conversation: one only the holder takes part in, a shared or group conversation, a conversation Recordare has not stored,
 or no conversation at all. Who may be told what (privacy, disclosure) comes later (WORK_PLAN 8.12); the `audience` /
 `disclosure` columns are still written, so that work starts from recorded data. **Per-memory isolation stays**: a
 request only ever opens the memory its credential and `X-Recordare-User` name.
 
 The conversation is still **resolved by Recordare, never asserted by the client or the LLM**, from
 `X-Recordare-Conversation: <externalConversationId>` (MCP calls may carry it as `_meta.recordare.conversation` instead),
-against the conversations this client has ingested for the owner. It is used for:
+against the conversations this client has ingested for the memory. It is used for:
 - **MCP writes** (`log_episode`, `remember`, `correct_episode`, `forget_episode`): they need a resolvable context — an
-  ingested conversation (its recent messages are the evidence of the write), or a personal token (owner-direct; without
-  a stored conversation the owner's recent messages from this client count). A client key without one gets
+  ingested conversation (its recent messages are the evidence of the write), or a personal token (memory-direct; without
+  a stored conversation the holder's recent messages from this client count). A client key without one gets
   `"cannot write here"`.
 - leaving the current turn out of the chat excerpts (`fromChats`), and the `recall_log` row.
 
@@ -120,7 +120,7 @@ against the conversations this client has ingested for the owner. It is used for
 returned): Recordare ignores them. The `"nothing to show here"` notice is gone too.
 
 *Superseded (phase-1 rule, D24 / D33 → D50)*: memories — and raw data derived from chats — were returned only when the
-viewers were exactly the owner (client keys needed a resolvable conversation whose participants were only the owner;
+viewers were exactly the holder (client keys needed a resolvable conversation whose participants were only the holder;
 extra viewers could only narrow); otherwise an empty answer with `"nothing to show here"`. Kept here as the starting
 point of the later privacy work (`RESEARCH_NOTES.md` H2).
 
@@ -131,33 +131,33 @@ memory, or a participant to a person outside that memory fails with a generic `4
 participant identities (§2).
 
 **Public profile**:
-1. In an **owner session**, the owner picks the target client and creates a link code
+1. In a **holder session**, the holder picks the target client and creates a link code
    (`POST api/v1/me/link-codes {clientId}` → `{code, expiresAt}`, single use, 10 min), seeing what
    that client will get: episodes and facts of all clients; raw chats only of its own conversations
-   (`clients.raw_log_scope = own`, widenable by the owner).
+   (`clients.raw_log_scope = own`, widenable by the holder).
 2. That client submits it: `POST api/v1/identities/link {code, externalUserId}`; redemption by any
-   other client is rejected. The owner receives a notification.
-3. If the `externalUserId` is already bound to another owner, the link fails with a generic
+   other client is rejected. The holder receives a notification.
+3. If the `externalUserId` is already bound to another memory, the link fails with a generic
    `400 cannot_link` (no hint that the id exists) — person merge is not supported in v1.
-4. The owner can list and revoke connected clients and identities at any time:
-   `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` (owner session).
+4. The holder can list and revoke connected clients and identities at any time:
+   `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` (holder session).
 
 Admin (`api/v1/admin/…`), built: `POST clients {name, kind: platform | mcp_client | import, autoProvision?,
 rawLogScope?}`, `GET clients`, `PATCH clients/:id`, `POST clients/:id/keys {scopes}` (→ `{id, key, prefix}`, the key
-shown once), `DELETE keys/:id`, `POST owners {displayName, mode? (personal | entity), gender? (masculine | feminine |
-neutral), locale? (it | en), timezone?, qualityProfile?}`, `PATCH owners/:id` (same fields; the admin may change the
+shown once), `DELETE keys/:id`, `POST memories {displayName, mode? (personal | entity), gender? (masculine | feminine |
+neutral), locale? (it | en), timezone?, qualityProfile?}`, `PATCH memories/:id` (same fields; the admin may change the
 mode of a memory that is not empty), `GET persons`, `POST identities {kind: account, personId (a memory), clientId,
-externalId} | {kind: participant, ownerScope (the memory), personId (its self or one of its contacts), clientId |
+externalId} | {kind: participant, memoryId (the memory), personId (its self or one of its contacts), clientId |
 channel (exactly one), externalId, verified?}`, `DELETE identities/:id`,
-`POST owners/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST owners/:id/consolidate`,
-`POST owners/:id/review-facts`, `GET owners` (owners with memory size, for the atlas), `GET owners/:id/atlas`,
+`POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/consolidate`,
+`POST memories/:id/review-facts`, `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; the console routes are described there). Revocations take effect at once (the credential
-cache is cleared). Not built yet: owner export / full erasure jobs.
+cache is cleared). Not built yet: memory export / full erasure jobs.
 
 ## 2. REST ingest (task 1.2) — full integration
 
 ### `POST api/v1/ingest/messages` (scope `ingest`)
-A client key names the person with `X-Recordare-User`; a personal token with `ingest` ingests for its owner (the
+A client key names the person with `X-Recordare-User`; a personal token with `ingest` ingests for its memory (the
 connectors for one person). The admin credential cannot ingest (403).
 ```ts
 {
@@ -168,7 +168,7 @@ connectors for one person). The admin credential cannot ingest (403).
            | "document" | "perception" | "ambient";       // default "chat"
     channel?: string; title?: string;
     participants?: Array<{
-      ref: string; role: "owner" | "assistant" | "other"; displayName?: string;
+      ref: string; role: "holder" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
       // resolved inside this memory only: its participant identity, or the account's own
       // user id (the self); seen for the first time → a new contact of this memory
@@ -199,7 +199,7 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
 - Each accepted batch (re)schedules the conversation's idle job (D1, D5, global delay); messages
   are extracted when pending, by `sentAt`, so late or out-of-order messages are never skipped.
 - **Attribution** (D50, WORK_PLAN 8.3): every message records who said it, as knowledge — `author_kind` `self` (personal
-  memory: a `user` turn without another author, the `owner` participant, the account's own user id; method `account`),
+  memory: a `user` turn without another author, the `holder` participant, the account's own user id; method `account`),
   `contact` (a participant with an identity; method `client_assertion` for a client's user id, `declared` for a channel
   id), `someone` (anyone unidentified, and in an entity memory the account's speaker; method `none`), `agent`
   (`assistant`), `tool`, `own` (`own: true`) — with a confidence (1, or none when nothing was established). Not exposed
@@ -221,7 +221,7 @@ What the agent learned — a manual, a page, a note, a book, its own text — ke
 searched with `search_knowledge` (§3). **Text only**: the client turns files (PDF, office documents, pages) into text.
 **No size limit** per source or per memory: only the request body limit applies (`MAX_REQUEST_BYTES`), and a bigger
 text arrives in parts (the client library does it, §5). Scope `ingest`; a client key names the person with
-`X-Recordare-User`, a personal token is its owner; the admin credential gets 403.
+`X-Recordare-User`, a personal token is its memory; the admin credential gets 403.
 
 `POST api/v1/ingest/sources` → `200`:
 ```ts
@@ -261,14 +261,14 @@ segmentation (D29); forward-only supersession by `sentAt`.
 
 ## 3. MCP tools (task 1.3) — both levels
 
-Transport: **MCP streamable HTTP** at `/mcp`. **One MCP session per owner**: the owner is fixed
-at `initialize` (token owner, or `X-Recordare-User` for client keys); every request re-validates
-`X-Recordare-User` against the session owner — a mismatch returns 403 and terminates the session
+Transport: **MCP streamable HTTP** at `/mcp`. **One MCP session per memory**: the memory is fixed
+at `initialize` (the token's memory, or `X-Recordare-User` for client keys); every request re-validates
+`X-Recordare-User` against the session's memory — a mismatch returns 403 and terminates the session
 (hosts that reuse one session across users cannot cross memories). The conversation follows §1
 (conversation header or `_meta.recordare.conversation`; answers use the whole memory, D50). Tool schemas use the provider-neutral subset
 (D27). Tools are always listed (no hint whether a diary exists). As built: a session is opened only by an `initialize` request (`404` for an
 unknown session id); the admin credential gets `403`; a request from another credential than the one that opened the
-session is refused like an owner mismatch. Writes (`log_episode`, `remember`, `learn_source`, corrections, forgetting) need a resolvable context — a personal token, or a conversation
+session is refused like a memory mismatch. Writes (`log_episode`, `remember`, `learn_source`, corrections, forgetting) need a resolvable context — a personal token, or a conversation
 Recordare has ingested — otherwise they return `{error: "cannot write here"}`. The published tool schemas are in
 `packages/client` (`TOOLS`, kept in sync by the conformance suite) for connectors that declare tools up front.
 
@@ -282,17 +282,17 @@ Recordare has ingested — otherwise they return `{error: "cannot write here"}`.
 | `people` | string[] | Names as mentioned |
 | `place` | string | |
 
-Returns `{id, stored}`. Evidence (as built): the owner's message in the conversation of the call received in the last
+Returns `{id, stored}`. Evidence (as built): the holder's message in the conversation of the call received in the last
 30 minutes whose text overlaps the content (trigram similarity ≥ 0.2, or the content found inside the message: word similarity
 ≥ 0.6) — with a personal token and no conversation named, the
-owner's messages from the same client (a connector that ingests the turns); planned, not built yet: 10-minute dedup of agent
+holder's messages from the same client (a connector that ingests the turns); planned, not built yet: 10-minute dedup of agent
 retries and late binding when the ingest has not arrived. **Importance 10 and `stance: stated` only when
-the evidence binds to a `user` message of the owner**; otherwise (`stance: inferred`, confidence 0.6) (basic level, or no owner message)
+the evidence binds to a `user` message of the holder**; otherwise (`stance: inferred`, confidence 0.6) (basic level, or no holder message)
 the call is stored in a per-client daily conversation (`source: mcp_tool`, `evidence_kind:
 agent_paraphrase`) with `origin: assistant_stated`, default importance and the label "noted by the
 assistant" — so an injected tool output cannot create a high-importance "the user said" memory.
 
-### `correct_episode` / `forget_episode` (D16, D18 — also for MCP-only owners)
+### `correct_episode` / `forget_episode` (D16, D18 — also for MCP-only memories)
 - `correct_episode {id, content?, occurred_at?, date_precision?}` → new row with `corrects`, old
   row invalidated; returns `{id, stored}` (the new row's id).
 - `forget_episode {id}` → forgetting as in `DATA_MODEL.md` (tombstone, no comeback); returns `{forgotten: true}`.
@@ -319,7 +319,7 @@ Returns (as built):
   claims: Episode[];                                  // others' statements about the self or someone else (other, inferred) — kept apart
   outsidePeriod: Episode[];                           // same shape; filled only when the period has no match (max 5)
   fromChats: Array<{ conversationId: string; conversation: string; messageId: string; at: string;
-                     authorRole: "owner" | "other" | "tool"; author?: string; excerpt: string }>;
+                     authorRole: "holder" | "other" | "tool"; author?: string; excerpt: string }>;
   notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice, who is asking
   clarifications?: string[];                          // open questions about the people involved (8.4; entity: identified speaker)
 }
@@ -327,8 +327,8 @@ type Episode = {
   id: string; kind: "event" | "plan" | "state_change"; content: string;
   when: string;                                       // human-readable, with precision
   planStatus?: "open" | "confirmed" | "cancelled" | "rescheduled" | "unresolved";
-  rescheduledTo?: string; origin: "owner_lived" | "owner_told" | "assistant_stated";
-  authorRole: "owner" | "assistant" | "other" | "tool";   // who wrote the evidence
+  rescheduledTo?: string; origin: "holder_lived" | "holder_told" | "assistant_stated";
+  authorRole: "holder" | "assistant" | "other" | "tool";   // who wrote the evidence
   subject: { kind: "self" } | { kind: "contact"; name: string } | { kind: "someone" }
          | { kind: "undecided"; candidates: string[] };   // whose memory it is (D50, 8.4)
   claimedBy?: string[];                               // for claims: who wrote the evidence
@@ -339,7 +339,7 @@ type Episode = {
 };
 ```
 The same in every conversation, including those others take part in (D50: no viewer filter).
-Every item carries `authorRole` (`owner | assistant | other | tool`) so hosts can wrap content not written by the
+Every item carries `authorRole` (`holder | assistant | other | tool`) so hosts can wrap content not written by the
 memory's own turns as data, not instructions; such items also carry `claimedBy` (the names of who wrote the evidence),
 chat excerpts carry their `author` when not the memory's own turn; when such items are returned, `notes` says so
 explicitly (M4b: answer models ignored the bare field). **Agent memory (D50, WORK_PLAN 8.4)**: every result names its
@@ -378,9 +378,9 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
 `unknown_current` → "the current value is not known".
 
 ### `remember` and `search_memory` (D34 — semantic notes)
-- `remember {content, category?}` — explicit "remember that…": stored as a stated note (owner's
+- `remember {content, category?}` — explicit "remember that…": stored as a stated note (holder's
   `user` message as evidence, same rules as `log_episode`); without such evidence it is stored as an inferred,
-  **pending** note (`origin: assistant_stated`) the owner confirms in the diary (§4). `category` defaults to
+  **pending** note (`origin: assistant_stated`) the holder confirms in the diary (§4). `category` defaults to
   `knowledge`. Returns `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferences, habits, values, knowledge, plus the
   relevant state facts valid at `as_of` (ISO date, default today) with their history; complements `search_episodes`
@@ -418,7 +418,7 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
 ### `resolve_period` (D12, deterministic)
 As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); expressions in the
 most used languages (`service/src/lang`: relative periods and month names from Intl for 25 locales, plus seasons and
-synonyms); Monday-based weeks, owner's timezone; "now" is the server clock (`X-Recordare-Now` overrides it where
+synonyms); Monday-based weeks, the memory's timezone; "now" is the server clock (`X-Recordare-Now` overrides it where
 `ALLOW_CLOCK_OVERRIDE` is set — tests and evaluations). No LLM. `now?` / `locale?` parameters: not built.
 
 ### Pre-turn memory context (WORK_PLAN 5.7) — built
@@ -450,7 +450,7 @@ appends it at the end of its system prompt and never stores it as a message).
 entries, newest first), `GET facts` (slots with `history`, `asOf`, per person in an entity memory), `DELETE facts/{id}`,
 `POST facts/{id}/confirm | reject`, `GET notes`, `PATCH notes/{id} {pinned}`, `DELETE notes/{id}`,
 `POST notes/{id}/confirm | reject`, `GET plans` (open and unresolved by default, soonest first); plus the
-`GET / PATCH api/v1/me` rows. Edits answer `204` (`404` for an id that is not the owner's); only `GET episodes` pages
+`GET / PATCH api/v1/me` rows. Edits answer `204` (`404` for an id that is not this memory's); only `GET episodes` pages
 (`{items, nextCursor}`, default 50), the other lists are arrays. As built, deleting a fact or a note (and rejecting a
 pending one) removes the row with its evidence — no tombstone, no `note_changes` entry; confirming makes it stated
 (`pending` false). **Not built yet**: manual entry, fact / note corrections, promotions (5.4), forgetting a period
@@ -458,7 +458,7 @@ pending one) removes the row with its evidence — no tombstone, no `note_change
 `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`, `correctEpisode`, `forgetEpisode`,
 `pinNote`, `delete`, `decide`).
 
-Scoped to the owner, and the reader is the owner themself in the host's UI (owner-direct): a client key names the person
+Scoped to the memory, and the reader is the holder themself in the host's UI (memory-direct): a client key names the person
 with `X-Recordare-User` (scope `read` to read, `write` to edit), a personal token is the person; no conversation header,
 no conversation resolution. In an entity memory everyone using the
 account sees all of it (D48).
@@ -480,15 +480,15 @@ account sees all of it (D48).
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Manage notes |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed for clients keeping copies (Arkimede → A-MEM, D34) |
-| `GET api/v1/settings`, `PATCH api/v1/settings` | read / owner_settings | locale, timezone, quality profile |
-| `GET api/v1/usage?from&to` | read | LLM calls and tokens for this owner |
+| `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | locale, timezone, quality profile |
+| `GET api/v1/usage?from&to` | read | LLM calls and tokens for this memory |
 | `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
 | `GET api/v1/sources` | read | What the agent learned, newest first: `[{id, externalId, title, kind, author, uri, providedBy, learnedAt, status, chars, passages, episodeIds}]` (built, 8.9) |
 | `GET api/v1/sources/{id}` | read | The same with its text, passage by passage: `text: [{ordinal, heading, content}]` (built) |
-| `DELETE api/v1/sources/{id}` | write | Forget a source (as `DELETE api/v1/ingest/sources/{externalId}`; `404` for an id that is not the owner's) (built) |
-| `GET api/v1/me` | read | Who the request acts for: `{ownerId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`mode` `entity` = a shared memory: the client tells its users so) (with a client key: the memory of the account behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| owner_token`) |
+| `DELETE api/v1/sources/{id}` | write | Forget a source (as `DELETE api/v1/ingest/sources/{externalId}`; `404` for an id that is not this memory's) (built) |
+| `GET api/v1/me` | read | Who the request acts for: `{memoryId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`mode` `entity` = a shared memory: the client tells its users so) (with a client key: the memory of the account behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| memory_token`) |
 | `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (client key; a personal token gets 403) | The memory's settings from the platform: the name follows the client's user (sync on every rename); `mode` `personal \| entity` (D50) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it); `gender` `masculine \| feminine \| neutral` (first person, from the account's profile) any time |
-| `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | owner session (public profile) | Connected clients / identities, revoke |
+| `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | holder session (public profile) | Connected clients / identities, revoke |
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 
@@ -514,7 +514,7 @@ routes directly.
 ### Admin console (WORK_PLAN 6.9)
 `GET /admin` serves a static page (public: it holds no data) over the admin API; the operator types the admin key, kept
 in that browser tab only (strict CSP, `no-store`). Routes it uses besides those above, all admin only and metadata only:
-`GET api/v1/admin/owners/{id}/runs?conversation=&limit=` (a person's recent extraction runs with their summary — returned,
+`GET api/v1/admin/memories/{id}/runs?conversation=&limit=` (a person's recent extraction runs with their summary — returned,
 written, dropped and why, counts only; WORK_PLAN 4.12), `GET api/v1/admin/persons` (memories with settings — mode, gender, locale, profile —, message / episode / fact / note /
 contact counts, pending extraction, last message, identities — the accounts that open the memory and the participant
 ids of its self and contacts —, active personal tokens by prefix), `GET api/v1/admin/clients` (clients with active keys by prefix),
@@ -524,7 +524,7 @@ the other admin routes of §1 for the rest (memory mode and gender, quality prof
 client keys, consolidate); it is in Italian and English.
 
 ### Live telemetry (M5b, admin only)
-`GET api/v1/admin/telemetry/stream[?owner=<personId>]` — Server-Sent Events, one per real step inside the service:
+`GET api/v1/admin/telemetry/stream[?memory=<memoryId>]` — Server-Sent Events, one per real step inside the service:
 `message.ingested`, `extraction.started` / `extraction.finished`, `work.started` / `work.finished` (op: `embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`; id, duration — work without an LLM call), `llm.started` (prompt id, task — the call left) and `llm.call` (prompt id, model, tokens, latency, status),
 `memory.written` (episodes / facts / notes with kind and author role), `episode.linked` (duplicate / corrects),
 `recall.served` (tool, mode, returned episode and claim ids, counts), `digest.written`, `consolidation.finished`,
@@ -535,8 +535,8 @@ Recall log: every `search_episodes` / `search_memory` / `search_knowledge` serve
 `memory_context`), writes one `recall_log` row (tool, mode, item count,
 conversation; never the query or the memories) — the source of the atlas totals and of the recall-echo guard (D38).
 
-`GET api/v1/admin/owners/:id/atlas` — the dashboard's starting map of one owner: episodes as neurons (kind, author
+`GET api/v1/admin/memories/:id/atlas` — the dashboard's starting map of one memory: episodes as neurons (kind, author
 role, importance, day, plan status, hidden state, position by meaning = first three principal components of the
 embeddings), real edges (nearest neighbours in meaning, corrections, duplicates, plan → outcome, reschedules, shared
-people), facts / notes / digests as the cortex, and the owner's lifetime `totals` (LLM calls, input / output tokens,
+people), facts / notes / digests as the cortex, and the memory's lifetime `totals` (LLM calls, input / output tokens,
 recalls — from `llm_calls` and `recall_log`). Metadata only.

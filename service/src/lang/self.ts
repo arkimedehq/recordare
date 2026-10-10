@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Leak detector for first-person memories (WORK_PLAN 8.4, both modes since 8.5; replaces 4.11's `nameOwner`): a memory is written in the
+ * Leak detector for first-person memories (WORK_PLAN 8.4, both modes since 8.5; replaces 4.11's `nameMemory`): a memory is written in the
  * first person, which no substitution can produce (verbs agree with the subject), so the run summary counts the items
  * that still speak of "I" in the third person — the self's name, or a stand-in for it ("the user", "l'utente", "the
  * owner", "the assistant"…) in any of the most used languages. Counts only (WORK_PLAN 4.12): the text is never logged.

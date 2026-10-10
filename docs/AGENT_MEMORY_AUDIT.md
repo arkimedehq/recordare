@@ -10,10 +10,16 @@
 > account holder as "I" and no distinction between the person and the assistant (the D38 echo guard kept); gender is a
 > per-memory setting; an identified speaker asking about themselves gets their own memories, an undeclared one the
 > agent's; no consent; no viewer filter for now.
+>
+> **Names (2026-10-10):** this audit quotes the code and docs as they were before WORK_PLAN 8.10's rename — `owners` →
+> `memories`, `owner_id` / `owner_scope` → `memory_id`, `ownerId` → `memoryId`, role / author role / disclosure `owner`
+> → `holder` (`owner_lived` / `owner_told` → `holder_lived` / `holder_told`), `owner_token` → `memory_token`,
+> `owner_settings` → `memory_settings`, admin routes `owners…` → `memories…`, `OwnerResolver` → `MemoryResolver`. The
+> old names below describe the audited code.
 
 ## 0. The vision in engineering terms
 
-| # | Owner's decision | Consequence in Recordare |
+| # | Maintainer's decision | Consequence in Recordare |
 |---|---|---|
 | 1 | One memory = one **agent** (a client account, e.g. "Caino"); another account = another memory, isolated | `owners` stop being humans: a memory belongs to an account. Humans become **contacts of that memory** (scoped persons). The per-memory isolation already built stays; cross-memory person identity (`external_identities` binding one human to a global person) goes |
 | 2 | Two modes: **personal** (undeclared input = the agent itself, **first person**; declared speakers by name) and **entity** (undeclared input = "someone"; declared by name; input marked **own** = the agent, first person) | `persons.kind human / entity` becomes the memory's **mode** `personal / entity`. Both modes attribute identified speakers by name (today only entity does). Ingest needs an **own** marker. Prompts change voice: first person replaces "the owner … by name" |
@@ -167,7 +173,7 @@ clients (Arkimede group chats, OpenClaw groups) start receiving memories in shar
 | People-aware recall (`recall/people.ts` 5–28; `lang/relations.ts`) | "my mother" resolved against the owner's people | Personal: relations are the self's. Entity: "my mother" depends on who asks — resolve only when the asker is identified (the conversation's declared participant) | M | dev set `mcp.int.spec.ts` 113 |
 | Memory context (`context.service.ts` 70–120, `context.module.ts` 62–64) | viewer gate; facts with `about` in entity | No gate; per-item subject marker in the block (`[me]` / `[Name]`) | M | Its own dev set `dataset_dev_context` (1 run) + one blind run with the context on (KNOBS: off by default in Arkimede) |
 | MCP writes (`memory-write.service.ts` 7, 18, 29–30, 47–110, 152–190) | `byOwner` = a recent `user` / owner-authored message overlaps the text; else `assistant_stated`, inferred, pending | "by the self" (personal) or "by the identified speaker" (subject = that person); entity: an unidentified speaker's write is `someone` / inferred | M | `mcp.int.spec.ts`; dev_poison slice |
-| `forget_episode` / `correct_episode` | owner's | the maintainer's (Diary) — unchanged logic | — | — |
+| `forget_episode` / `correct_episode` | the person's | the maintainer's (Diary) — unchanged logic | — | — |
 | `resolve_period` | owner timezone | memory timezone | — | — |
 
 ### I. Read API / Diary, admin console
@@ -238,7 +244,7 @@ the owner"), `rawlog/ingest.int.spec.ts` 43–53, `mcp/mcp.int.spec.ts` 78, 113,
 | `WORK_PLAN.md` | 81 (1.1 "one memory per person"), 86 (1.5), 151 (4.5), 250–272 (M6 status, 6.2, 6.3, 6.5, 6.6b(11), 6.8, 6.9), 213 (5.9), M7 criteria 306–322 | + milestone for D50 (the plan of §5 below) |
 | `CLAUDE.md` | 12–13, 24, 30, 133 | Summary lines (not translated) |
 | `docs/connectors/*`, connector READMEs | user mapping, consent | per connector (J) |
-| `*_it.md` | every English change | same commit (owner's rule) |
+| `*_it.md` | every English change | same commit (maintainer's rule) |
 | `CHANGELOG.md` / `_it` | Unreleased | breaking API changes listed |
 
 ---
@@ -311,7 +317,7 @@ person in some items. Detector + drop / retry, or accept. Measure the rate befor
 **Q9 — No consent vs the vision's principle 8 and the law.** Principle 8 ("only consenting people are modelled") and
 the README's "Consent per person" become false. Recordare will hold facts about third parties (family members) without
 their consent, and the responsibility moves to the client operator (the switch is the client's). The GDPR household
-exemption covers personal use only; an agent for others is not household use. Not a blocker (owner's decision), but
+exemption covers personal use only; an agent for others is not household use. Not a blocker (maintainer's decision), but
 the README / VISION must say who is responsible, and D50 should record that privacy (and legal notices) come later.
 
 **Q10 — "Kind changes only while empty".** Keep it for `mode`: first-person items and "someone" items do not mix.
@@ -328,7 +334,7 @@ column can go.
 
 **Q13 — What is the account in each connector?** OpenClaw: the agent (senders → participants) — a real change of
 its identity code; openai-proxy: the platform user (unchanged); Hermes: the agent profile; Claude Code / Codex: the
-token's memory. Owner's call per connector.
+token's memory. Maintainer's call per connector.
 
 **Q14 — Talkiosk (D45, WORK_PLAN 6.5).** Its design routes "each recognised person's words into their own memory";
 under the vision a voice device is an **account** (an entity agent), recognised voices are declared identities with
@@ -375,7 +381,7 @@ service per queue (rule 9). Order of magnitude per full service run on a blind s
 
 | # | Branch | Content | Eval | Rough budget |
 |---|---|---|---|---|
-| 0 | `d50-agent-memory` (docs only) | D50 in EPISODIC_MEMORY_TODO (+ `_it`), supersede D4 / D36 / parts of D33, D45, D48; resolve Q1–Q7, Q13 with the owner; VISION direction G becomes the default | none | 0 |
+| 0 | `d50-agent-memory` (docs only) | D50 in EPISODIC_MEMORY_TODO (+ `_it`), supersede D4 / D36 / parts of D33, D45, D48; resolve Q1–Q7, Q13 with the maintainer; VISION direction G becomes the default | none | 0 |
 | 1 | `no-consent` | §C everywhere (service, migration, console, library, connectors, Arkimede sync); tests | tests only | 0 |
 | 2 | `no-viewer-rule` | §D: drop `ownerOnly`, keep a conversation resolver; tests inverted | tests only (harness uses personal tokens: numbers unchanged) | 0 |
 | 3 | `memory-identity` | §A + §B + §E: memory = account (`mode` personal / entity, migration `human → personal`), contacts per memory, account vs participant identities, attribution method / confidence on participants / messages, `own` marker, `self` participant, entity undeclared author = unknown. **Prompt input kept identical** (speaker labels mapped to today's) so no number moves | tests; **1 run** blind7 + **1 run** dev_entity as a no-change check | ≈ 2 runs |
@@ -395,5 +401,5 @@ are the only steps that touch prompts and carry the full rule (dev sets + 3 blin
 the Kinox migration waits until the voice is final; renames come last so the measured branches stay small.
 
 Total measured budget (steps 3–6, 9, 11): roughly 25–35 service runs, of which 12 blind — comparable to the M4b
-round. Every step leaves `main` working (owner's rule: never break existing behaviour; additive where possible,
+round. Every step leaves `main` working (maintainer's rule: never break existing behaviour; additive where possible,
 clean code over dual paths).

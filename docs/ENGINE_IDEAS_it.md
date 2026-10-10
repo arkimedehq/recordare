@@ -40,7 +40,7 @@ DeepSeek `deepseek-flash`, con ragionamento disattivato, ha eguagliato `deepseek
    sub-topic ha `description`, `update_description` (politica di merge, ad es. "remove outdated
    goals") e validazione opzionale; i progetti possono sovrascrivere o estendere. → fatti del Livello 3 e
    self-model della fase 2. *Miglioramento*: **livello di disclosure** predefinito per slot e origine
-   vissuta dal proprietario / vissuta dal twin; etichette IT/EN.
+   vissuta dal titolare / vissuta dal twin; etichette IT/EN.
 2. *[done]* **Merge in batch con azioni per elemento** (`prompts/merge_profile_yolo.py`): una chiamata decide
    APPEND / UPDATE / ABORT per tutti i fatti candidati. *Miglioramento*: UPDATE crea una nuova
    versione (`validFrom`, vecchia riga `invalidatedAt` + `supersededBy`, episodio di provenienza) — non
@@ -168,7 +168,7 @@ ordinate per priorità: `docs/literature/agent-platform-memory_it.md` §3 (WORK_
   contesto di memoria, usato da ogni connettore prima di ogni turno (una sola chiamata insieme all'ingest).
 - *[open]* §3.4 turn
   taint dagli strumenti di rete, §3.5 passata notturna sui pattern con conteggi di evidenza (→ D20 / WORK_PLAN 5.4), §3.6 scheda
-  del proprietario, §3.7 segnali d'uso solo per il ranking, §3.8 richieste all'assistente come intenti permanenti, §3.9 revisione da parte del proprietario di ciò che
+  del titolare, §3.7 segnali d'uso solo per il ranking, §3.8 richieste all'assistente come intenti permanenti, §3.9 revisione da parte del titolare di ciò che
   la notte ha cambiato, §3.10 hook di pre-compattazione / cambio sessione nei connettori.
 
 Misurati e scartati (o tenuti spenti) finora: una passata separata sui fatti (`FACTS_PASS=separate`, nessun guadagno rispetto

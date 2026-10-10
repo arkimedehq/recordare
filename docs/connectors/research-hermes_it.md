@@ -51,7 +51,7 @@ vince la prima fonte in caso di conflitto di nomi:
    [--enable]` (le installazioni da sottodirectory scaricano solo quella cartella);
 3. progetto `./.hermes/plugins/<name>/` (solo con `HERMES_ENABLE_PROJECT_PLUGINS=1`);
 4. gruppo di entry point pip `hermes_agent.memory_providers` (`my-provider = "my_provider:register"`) — la documentazione sconsiglia
-   di iniettare con pip in un'installazione gestita dal package manager; pensato per build gestite dal proprietario (Nix).
+   di iniettare con pip in un'installazione gestita dal package manager; pensato per build gestite in proprio (Nix).
 
 L'`__init__.py` della directory deve definire `register(ctx)` che chiama `ctx.register_memory_provider(Provider())` (oppure una
 sottoclasse `MemoryProvider` di primo livello). Attivazione: `hermes config set memory.provider <name>` oppure `hermes memory setup`.
@@ -97,7 +97,7 @@ Altre chiavi: `identity_header {name, value_from: static|profile, value}`, `clie
 (`hermes mcp login <server>`), `lazy`. **Limite**: gli header sono fissi per voce di server (statici o il nome del profilo) —
 non esiste un header per utente del gateway né per conversazione, quindi l'MCP da solo non può inviare `X-Recordare-User` /
 `X-Recordare-Conversation` per un gateway multiutente. Per un'installazione per una sola persona funziona un token personale (letture
-dirette del proprietario, INTEGRATION §4b).
+memory-direct, INTEGRATION §4b).
 
 ## 3. Identità (utente / sessione / piattaforma)
 
@@ -121,7 +121,7 @@ Mappatura per Recordare:
   (`telegram:123`) salvo alias, così due piattaforme restano distinte finché l'admin non collega le identità.
 - `externalId` della conversazione = `gateway_session_key` se presente, altrimenti il primo `session_id` della linea (mantenerlo
   attraverso i cambi per compressione, `on_session_switch(reset=False)`; iniziarne uno nuovo con `reset=True`).
-- partecipanti: owner (l'utente), assistant (`agent_identity`), e nelle stanze condivise ogni `turn_author` come `other`.
+- partecipanti: `holder` (l'utente), assistant (`agent_identity`), e nelle stanze condivise ogni `turn_author` come `other`.
 
 ## 4. Licenze
 
@@ -133,7 +133,7 @@ Mappatura per Recordare:
 | `supermemoryai/hermes-supermemory` | MIT | sì |
 
 Nota: il plugin stesso gira dentro Hermes (MIT) come opera separata che parla HTTP con Recordare; possiamo rilasciarlo con AGPL-3.0
-(o in modo più permissivo, decisione del proprietario — non presa qui).
+(o in modo più permissivo, decisione del maintainer — non presa qui).
 
 ## 5. Progetto minimo — memory provider `recordare`
 

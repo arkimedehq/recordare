@@ -57,18 +57,18 @@ export class ConsolidationService {
     private readonly config: ConfigService<Env, true>,
   ) {}
 
-  /** Consolidate every complete day (in the owner's timezone) before `now`. Idempotent; one run per owner at a time. */
-  async consolidateOwner(ownerId: string, now: Date): Promise<ConsolidationReport> {
+  /** Consolidate every complete day (in the memory's timezone) before `now`. Idempotent; one run per memory at a time. */
+  async consolidateMemory(memoryId: string, now: Date): Promise<ConsolidationReport> {
     const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
-      const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [ownerId]);
+      const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [memoryId]);
       if (!locked) return report;
       try {
-        await this.telemetry.track('consolidation', ownerId, () => this.run(ownerId, now, report));
+        await this.telemetry.track('consolidation', memoryId, () => this.run(memoryId, now, report));
       } finally {
-        await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 11))`, [ownerId]);
+        await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 11))`, [memoryId]);
       }
     } finally {
       await runner.release();
@@ -76,21 +76,21 @@ export class ConsolidationService {
     return report;
   }
 
-  private async run(ownerId: string, now: Date, report: ConsolidationReport): Promise<void> {
-    const [owner] = await this.db.query(
+  private async run(memoryId: string, now: Date, report: ConsolidationReport): Promise<void> {
+    const [memory] = await this.db.query(
       `SELECT o.timezone, o.locale, o.quality_profile, o.mode, o.gender, p.display_name,
          ARRAY(SELECT alias FROM person_aliases a WHERE a.person_id = o.person_id ORDER BY created_at) AS aliases
-       FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    if (!owner) return;
-    const entity = owner.mode === 'entity';
-    const selfNames: string[] = [...new Set([owner.display_name as string, ...(owner.aliases as string[])].filter(Boolean))];
-    const me = `ME: ${selfNames[0] ?? '(unnamed)'}${selfNames.length > 1 ? ` (also: ${selfNames.slice(1).join(', ')})` : ''} — gender ${owner.gender ?? 'masculine'}`
-      + `\nMEMORY LANGUAGE: ${owner.locale}`;
+       FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
+    if (!memory) return;
+    const entity = memory.mode === 'entity';
+    const selfNames: string[] = [...new Set([memory.display_name as string, ...(memory.aliases as string[])].filter(Boolean))];
+    const me = `ME: ${selfNames[0] ?? '(unnamed)'}${selfNames.length > 1 ? ` (also: ${selfNames.slice(1).join(', ')})` : ''} — gender ${memory.gender ?? 'masculine'}`
+      + `\nMEMORY LANGUAGE: ${memory.locale}`;
     const dayVersion = entity ? `${DAY_DIGEST_VERSION}${ENTITY_DIGEST_SUFFIX}` : DAY_DIGEST_VERSION;
     const monthVersion = entity ? `${MONTH_DIGEST_VERSION}${ENTITY_DIGEST_SUFFIX}` : MONTH_DIGEST_VERSION;
     // Open clarifications nobody answered expire (D50 / 8.4; also checked on read and at extraction).
-    await expireClarifications(this.db, ownerId, now);
-    const tz: string = owner.timezone;
+    await expireClarifications(this.db, memoryId, now);
+    const tz: string = memory.timezone;
     const today = localDate(now, tz);
     const episodes: EpisodeRow[] = await this.db.query(
       `SELECT e.id, e.kind, e.content, e.occurred_at, e.occurred_until, e.date_precision, e.plan_status,
@@ -99,10 +99,10 @@ export class ConsolidationService {
               e.subject_kind, (SELECT display_name FROM persons WHERE id = e.subject_person_id) AS subject,
               (SELECT array_agg(COALESCE(full_name, display_name) ORDER BY created_at) FROM persons WHERE id = ANY(e.subject_candidates)) AS candidates
        FROM episodes e
-       WHERE e.owner_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
+       WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
          AND NOT (e.author_role = 'other' AND e.stance = 'inferred') AND e.occurred_at IS NOT NULL AND e.occurred_at < $3
          AND e.date_precision IN ('day', 'approximate', 'month')
-       ORDER BY e.occurred_at, e.id`, [ownerId, tz, now]);
+       ORDER BY e.occurred_at, e.id`, [memoryId, tz, now]);
 
     // Group by local day (multi-day items on each day) and month-only items by month.
     const byDay = new Map<string, EpisodeRow[]>();
@@ -115,14 +115,14 @@ export class ConsolidationService {
     }
 
     const current: DigestRow[] = await this.db.query(
-      `SELECT id, level, period_start::text, version, source_hash, content FROM digests WHERE owner_id = $1 AND superseded_at IS NULL`, [ownerId]);
+      `SELECT id, level, period_start::text, version, source_hash, content FROM digests WHERE memory_id = $1 AND superseded_at IS NULL`, [memoryId]);
     const currentDay = new Map(current.filter((d) => d.level === 'day').map((d) => [d.period_start, d]));
     const currentMonth = new Map(current.filter((d) => d.level === 'month').map((d) => [d.period_start.slice(0, 7), d]));
 
     const [run] = await this.db.query(
-      `INSERT INTO extraction_runs (owner_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:digest', 'configured', $3) RETURNING id`,
-      [ownerId, now, dayVersion]);
-    const ctx = { ownerId, runId: run.id as string };
+      `INSERT INTO extraction_runs (memory_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:digest', 'configured', $3) RETURNING id`,
+      [memoryId, now, dayVersion]);
+    const ctx = { memoryId, runId: run.id as string };
     try {
       // Days: rewrite only when the fingerprint of their items changed; drop digests of days that emptied.
       for (const [day, items] of byDay) {
@@ -136,7 +136,7 @@ export class ConsolidationService {
         }, ctx).catch((err: unknown) => this.skip(report, `day ${day}`, err));
         if (!out) continue;
         if (selfLeak(out.summary, selfNames)) report.leaks++;
-        await this.write(ownerId, 'day', day, day, out.summary, hash, currentDay.get(day), items.map((e) => e.id), [], ctx.runId);
+        await this.write(memoryId, 'day', day, day, out.summary, hash, currentDay.get(day), items.map((e) => e.id), [], ctx.runId);
         report.days++;
       }
       for (const [day, d] of currentDay) if (!byDay.has(day)) { await this.supersede([d.id]); report.superseded++; }
@@ -144,7 +144,7 @@ export class ConsolidationService {
       // Months: from the current day digests of the month plus month-dated items.
       const days: DigestRow[] = await this.db.query(
         `SELECT id, level, period_start::text, version, source_hash, content FROM digests
-         WHERE owner_id = $1 AND superseded_at IS NULL AND level = 'day' ORDER BY period_start`, [ownerId]);
+         WHERE memory_id = $1 AND superseded_at IS NULL AND level = 'day' ORDER BY period_start`, [memoryId]);
       const months = new Set([...days.map((d) => d.period_start.slice(0, 7)), ...monthOnly.keys()]);
       for (const month of [...months].sort()) {
         const dayDigests = days.filter((d) => d.period_start.startsWith(month));
@@ -160,21 +160,21 @@ export class ConsolidationService {
         if (!out) continue;
         if (selfLeak(out.summary, selfNames)) report.leaks++;
         const last = addDays(`${nextMonth(month)}-01`, -1);
-        await this.write(ownerId, 'month', `${month}-01`, last, out.summary, hash, currentMonth.get(month),
+        await this.write(memoryId, 'month', `${month}-01`, last, out.summary, hash, currentMonth.get(month),
           (monthOnly.get(month) ?? []).map((e) => e.id), dayDigests.map((d) => d.id), ctx.runId);
         report.months++;
       }
       // Facts: checked against the episodes recorded since the last review (quality-profile knob, off by default).
-      const profile = qualityProfile(owner.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
+      const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
         undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }));
       if (profile.factsReview) {
-        const r = await this.factsReview.review(ownerId, now, ctx.runId);
+        const r = await this.factsReview.review(memoryId, now, ctx.runId);
         report.facts += r.changed; report.llmCalls += r.calls; report.failed += r.failed;
       }
       await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), summary = $2 WHERE id = $1`, [ctx.runId,
         { days: report.days, months: report.months, superseded: report.superseded, failed: report.failed, facts: report.facts, leaks: report.leaks }]);
-      await this.db.query(`UPDATE owners SET consolidated_at = $2 WHERE person_id = $1`, [ownerId, now]);
-      this.telemetry.emit({ type: 'consolidation.finished', ownerId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
+      await this.db.query(`UPDATE memories SET consolidated_at = $2 WHERE person_id = $1`, [memoryId, now]);
+      this.telemetry.emit({ type: 'consolidation.finished', memoryId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
     } catch (err) {
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`, [(err as Error).name, ctx.runId]);
       throw err;
@@ -183,23 +183,23 @@ export class ConsolidationService {
 
   /**
    * The facts review alone, now (operators and evaluations; the night runs it inside the consolidation when the
-   * profile asks for it). Same lock as the consolidation: never two at once for one owner.
+   * profile asks for it). Same lock as the consolidation: never two at once for one memory.
    */
-  async reviewFactsNow(ownerId: string, now: Date): Promise<{ calls: number; changed: number; failed: number }> {
+  async reviewFactsNow(memoryId: string, now: Date): Promise<{ calls: number; changed: number; failed: number }> {
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
-      const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [ownerId]);
+      const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [memoryId]);
       if (!locked) return { calls: 0, changed: 0, failed: 0 };
       try {
         const [run] = await this.db.query(
-          `INSERT INTO extraction_runs (owner_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:facts', 'configured', $3) RETURNING id`,
-          [ownerId, now, FACTS_REVIEW_VERSION]);
-        const r = await this.telemetry.track('consolidation', ownerId, () => this.factsReview.review(ownerId, now, run.id));
+          `INSERT INTO extraction_runs (memory_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:facts', 'configured', $3) RETURNING id`,
+          [memoryId, now, FACTS_REVIEW_VERSION]);
+        const r = await this.telemetry.track('consolidation', memoryId, () => this.factsReview.review(memoryId, now, run.id));
         await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [run.id]);
         return r;
       } finally {
-        await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 11))`, [ownerId]);
+        await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 11))`, [memoryId]);
       }
     } finally {
       await runner.release();
@@ -227,7 +227,7 @@ export class ConsolidationService {
     return `- ${subjectLabel(e.subject_kind, e.subject, e.candidates)}[${kind}] ${e.content}${extra ? ` (${extra})` : ''}`;
   }
 
-  private async write(ownerId: string, level: 'day' | 'month', start: string, end: string, text: string, hash: string,
+  private async write(memoryId: string, level: 'day' | 'month', start: string, end: string, text: string, hash: string,
     previous: DigestRow | undefined, episodeIds: string[], digestIds: string[], runId: string): Promise<void> {
     let vector: number[] | undefined;
     try {
@@ -238,15 +238,15 @@ export class ConsolidationService {
     await this.db.transaction(async (tx) => {
       if (previous) await tx.query(`UPDATE digests SET superseded_at = now() WHERE id = $1`, [previous.id]);
       const [d] = await tx.query(
-        `INSERT INTO digests (owner_id, level, period_start, period_end, content, version, audience, extraction_run_id, source_hash,
+        `INSERT INTO digests (memory_id, level, period_start, period_end, content, version, audience, extraction_run_id, source_hash,
            embedding, embedding_model, embedding_text)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $5) RETURNING id`,
-        [ownerId, level, start, end, text, (previous?.version ?? 0) + 1, [ownerId], runId, hash,
+        [memoryId, level, start, end, text, (previous?.version ?? 0) + 1, [memoryId], runId, hash,
           vector ? `[${vector.join(',')}]` : null, vector ? this.embeddings.model : null]);
       for (const id of episodeIds) await tx.query(`INSERT INTO digest_sources (digest_id, episode_id) VALUES ($1, $2)`, [d.id, id]);
       for (const id of digestIds) await tx.query(`INSERT INTO digest_sources (digest_id, source_digest_id) VALUES ($1, $2)`, [d.id, id]);
     });
-    this.telemetry.emit({ type: 'digest.written', ownerId, level, period: start, sources: episodeIds.length + digestIds.length });
+    this.telemetry.emit({ type: 'digest.written', memoryId, level, period: start, sources: episodeIds.length + digestIds.length });
   }
 
   private async supersede(ids: string[]): Promise<void> {

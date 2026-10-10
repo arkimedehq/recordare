@@ -18,7 +18,7 @@ export const ingestSchema = z.object({
     title: z.string().max(500).optional(),
     participants: z.array(z.object({
       ref: z.string().min(1).max(200),
-      role: z.enum(['owner', 'assistant', 'other']),
+      role: z.enum(['holder', 'assistant', 'other']),
       displayName: z.string().max(200).optional(),
       identity: identity.optional(),
     })).max(200).default([]),

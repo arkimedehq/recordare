@@ -12,7 +12,7 @@ import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { type ExtractionRunner } from '../queue/queue.port';
-import { buildInput, pendingWindows, type Owner, type WindowMessage } from './extraction.context';
+import { buildInput, pendingWindows, type Memory, type WindowMessage } from './extraction.context';
 import { buildExtractionUser, ENTITY_PROMPT_VERSION, ENTITY_SYSTEM, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
 import { extractionSchema } from './extraction.schema';
 import { ConcurrentExtractionError, ExtractionWriter, type WrittenRow } from './extraction.writer';
@@ -46,11 +46,11 @@ export class EngineExtractionRunner implements ExtractionRunner {
 
   async runForConversation(conversationId: string): Promise<void> {
     const [conv] = await this.db.query(
-      `SELECT c.owner_id, c.client_id, o.locale, o.timezone, o.quality_profile, o.mode, o.gender, p.display_name
-       FROM conversations c JOIN owners o ON o.person_id = c.owner_id JOIN persons p ON p.id = c.owner_id
+      `SELECT c.memory_id, c.client_id, o.locale, o.timezone, o.quality_profile, o.mode, o.gender, p.display_name
+       FROM conversations c JOIN memories o ON o.person_id = c.memory_id JOIN persons p ON p.id = c.memory_id
        WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
     if (!conv) return;
-    const owner: Owner = { id: conv.owner_id, name: conv.display_name, locale: conv.locale, timezone: conv.timezone, entity: conv.mode === 'entity',
+    const memory: Memory = { id: conv.memory_id, name: conv.display_name, locale: conv.locale, timezone: conv.timezone, entity: conv.mode === 'entity',
       gender: conv.gender };
     const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride, this.factsPassOverride);
 
@@ -62,9 +62,9 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 7)) AS locked`, [conversationId]);
       if (!locked) return;
       try {
-        const windows = await pendingWindows(this.db.manager, conversationId, profile.windowChars, !owner.entity);
+        const windows = await pendingWindows(this.db.manager, conversationId, profile.windowChars, !memory.entity);
         for (const window of windows) {
-          await this.runWindow(owner, profile, conv.client_id as string, conversationId, window);
+          await this.runWindow(memory, profile, conv.client_id as string, conversationId, window);
         }
       } finally {
         await runner.query(`SELECT pg_advisory_unlock(hashtextextended($1, 7))`, [conversationId]);
@@ -74,35 +74,35 @@ export class EngineExtractionRunner implements ExtractionRunner {
     }
   }
 
-  private async runWindow(owner: Owner, profile: QualityProfile, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
-    const runId = await this.startRun(owner, conversationId, window);
+  private async runWindow(memory: Memory, profile: QualityProfile, clientId: string, conversationId: string, window: WindowMessage[]): Promise<void> {
+    const runId = await this.startRun(memory, conversationId, window);
     // Gate (D5): no LLM call without input from a person — the self, a contact, someone, own content (both modes).
     const worth = window.some((m) => m.role === 'user' || m.role === 'other');
     if (!worth) {
       await this.db.transaction(async (tx) => {
         await tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [runId, window.map((m) => m.id)]);
-        await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), model = 'gate:no-owner-message' WHERE id = $1`, [runId]);
+        await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), model = 'gate:no-holder-message' WHERE id = $1`, [runId]);
       });
       return;
     }
-    this.telemetry.emit({ type: 'extraction.started', ownerId: owner.id, runId, conversationId, messages: window.length });
+    this.telemetry.emit({ type: 'extraction.started', memoryId: memory.id, runId, conversationId, messages: window.length });
     try {
-      // Only the seeded slots and this owner's own keys: slot names never leak across owners
+      // Only the seeded slots and this memory's own keys: slot names never leak across memories
       // and the list stays bounded.
       const slots: Array<{ key: string }> = await this.db.query(
         `SELECT key FROM fact_slots WHERE key = ANY($2)
-         UNION SELECT DISTINCT key FROM facts WHERE owner_id = $1 ORDER BY key`, [owner.id, SEED_SLOTS]);
-      const input = await this.telemetry.track('context', owner.id, async () =>
-        buildInput(this.db.manager, owner, window, slots.map((s) => s.key), await this.windowVector(window), profile));
-      const ctx = { ownerId: owner.id, clientId, runId };
+         UNION SELECT DISTINCT key FROM facts WHERE memory_id = $1 ORDER BY key`, [memory.id, SEED_SLOTS]);
+      const input = await this.telemetry.track('context', memory.id, async () =>
+        buildInput(this.db.manager, memory, window, slots.map((s) => s.key), await this.windowVector(window), profile));
+      const ctx = { memoryId: memory.id, clientId, runId };
       const user = buildExtractionUser(input.prompt);
       const separate = profile.factsPass === 'separate';
       // With a separate facts pass the two calls run side by side on their own task models; one writer
       // transaction applies both (same numbered lists, so references stay valid).
       const [episodesOut, factsOut] = await Promise.all([
         this.llm.completeJson({
-          promptId: extractionVersion(owner),
-          system: owner.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
+          promptId: extractionVersion(memory),
+          system: memory.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
           user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
           schema: extractionSchema,
           maxTokens: 6000,
@@ -110,13 +110,13 @@ export class EngineExtractionRunner implements ExtractionRunner {
           reasoning: profile.reasoning,
         }, ctx),
         separate
-          ? this.llm.completeJson({ promptId: owner.entity ? `${FACTS_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : FACTS_PROMPT_VERSION,
-            system: owner.entity ? ENTITY_FACTS_SYSTEM : FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
+          ? this.llm.completeJson({ promptId: memory.entity ? `${FACTS_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : FACTS_PROMPT_VERSION,
+            system: memory.entity ? ENTITY_FACTS_SYSTEM : FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
           : Promise.resolve(null),
       ]);
       const output = factsOut ? { ...episodesOut, facts: factsOut.facts, notes: factsOut.notes } : episodesOut;
       const written = await this.db.transaction(async (tx) => {
-        const writer = new ExtractionWriter(tx, { ownerId: owner.id, timezone: owner.timezone, runId, conversationId, entity: !!owner.entity }, input);
+        const writer = new ExtractionWriter(tx, { memoryId: memory.id, timezone: memory.timezone, runId, conversationId, entity: !!memory.entity }, input);
         const rows = await writer.apply(output);
         // Sources of this conversation the episodes did not tell of get their learning episode in code (D49).
         for (const sourceId of input.sources.values()) {
@@ -126,23 +126,23 @@ export class EngineExtractionRunner implements ExtractionRunner {
         await tx.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), summary = $2 WHERE id = $1`, [runId, writer.summary(output)]);
         return rows;
       });
-      await this.telemetry.track('embed.memories', owner.id, () => this.embed(written));
-      await this.announce(owner.id, runId, written);
+      await this.telemetry.track('embed.memories', memory.id, () => this.embed(written));
+      await this.announce(memory.id, runId, written);
       // Second call only when near-duplicates exist (corrections not linked, same event in two chats).
-      const links = await resolveNearDuplicates(this.db, this.llm, owner.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
-        { ownerId: owner.id, clientId, runId }, profile).catch((err: unknown) => {
+      const links = await resolveNearDuplicates(this.db, this.llm, memory.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
+        { memoryId: memory.id, clientId, runId }, profile).catch((err: unknown) => {
         this.log.warn(`near-duplicate resolution skipped: ${(err as Error).name}`);
         return [];
       });
-      for (const l of links) this.telemetry.emit({ type: 'episode.linked', ownerId: owner.id, ...l });
-      this.telemetry.emit({ type: 'extraction.finished', ownerId: owner.id, runId, status: 'done', written: written.length });
+      for (const l of links) this.telemetry.emit({ type: 'episode.linked', memoryId: memory.id, ...l });
+      this.telemetry.emit({ type: 'extraction.finished', memoryId: memory.id, runId, status: 'done', written: written.length });
     } catch (err) {
       if (err instanceof ConcurrentExtractionError) {
         await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), model = 'skipped:concurrent' WHERE id = $1`, [runId]);
-        this.telemetry.emit({ type: 'extraction.finished', ownerId: owner.id, runId, status: 'skipped', written: 0 });
+        this.telemetry.emit({ type: 'extraction.finished', memoryId: memory.id, runId, status: 'skipped', written: 0 });
         return;
       }
-      this.telemetry.emit({ type: 'extraction.finished', ownerId: owner.id, runId, status: 'failed', written: 0 });
+      this.telemetry.emit({ type: 'extraction.finished', memoryId: memory.id, runId, status: 'failed', written: 0 });
       // No user content in the error column (docs/DATA_MODEL.md).
       await this.db.query(`UPDATE extraction_runs SET status = 'failed', finished_at = now(), error = $1 WHERE id = $2`,
         [(err as Error).name, runId]);
@@ -151,23 +151,23 @@ export class EngineExtractionRunner implements ExtractionRunner {
     }
   }
 
-  private async startRun(owner: Owner, conversationId: string, window: WindowMessage[]): Promise<string> {
+  private async startRun(memory: Memory, conversationId: string, window: WindowMessage[]): Promise<string> {
     const [run] = await this.db.query(
-      `INSERT INTO extraction_runs (owner_id, conversation_id, kind, window_from, window_to, model, provider, prompt_version)
+      `INSERT INTO extraction_runs (memory_id, conversation_id, kind, window_from, window_to, model, provider, prompt_version)
        VALUES ($1, $2, 'extraction', $3, $4, 'pending', 'configured', $5) RETURNING id`,
-      [owner.id, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, extractionVersion(owner)]);
+      [memory.id, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, extractionVersion(memory)]);
     return run.id as string;
   }
 
   /** Telemetry for the rows a window wrote: kind and author of episodes (metadata only). */
-  private async announce(ownerId: string, runId: string, written: WrittenRow[]): Promise<void> {
+  private async announce(memoryId: string, runId: string, written: WrittenRow[]): Promise<void> {
     const episodeIds = written.filter((w) => w.table === 'episodes').map((w) => w.id);
     const meta: Array<{ id: string; kind: string; author_role: string; importance: number; corrects: string | null }> = episodeIds.length
       ? await this.db.query(`SELECT id, kind, author_role, importance, corrects FROM episodes WHERE id = ANY($1)`, [episodeIds]) : [];
     const byId = new Map(meta.map((m) => [m.id, m]));
     for (const w of written) {
       const m = byId.get(w.id);
-      this.telemetry.emit({ type: 'memory.written', ownerId, runId, table: w.table, id: w.id,
+      this.telemetry.emit({ type: 'memory.written', memoryId, runId, table: w.table, id: w.id,
         ...(m ? { kind: m.kind, authorRole: m.author_role, importance: m.importance, corrects: m.corrects } : {}) });
     }
   }
@@ -207,4 +207,4 @@ export class EngineExtractionRunner implements ExtractionRunner {
  * The prompt version as recorded and traced (rule 9 compares these): personal memories `extract.v13`; entity memories
  * the same base plus their sections' version (`extract.v13+entity.v4`).
  */
-const extractionVersion = (owner: Owner): string => owner.entity ? `${EXTRACTION_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : EXTRACTION_PROMPT_VERSION;
+const extractionVersion = (memory: Memory): string => memory.entity ? `${EXTRACTION_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : EXTRACTION_PROMPT_VERSION;

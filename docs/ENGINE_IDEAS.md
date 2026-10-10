@@ -37,7 +37,7 @@ is test cost, not the product's.
 1. *[partial]* **Slot schema for facts** (`types.py` SubTopic, `profile_init_utils.py`): each topic /
    sub-topic has `description`, `update_description` (merge policy, e.g. "remove outdated
    goals") and optional validation; projects can override or extend. → Layer 3 facts and the
-   phase-2 self-model. *Improvement*: per-slot default **disclosure tier** and owner-lived /
+   phase-2 self-model. *Improvement*: per-slot default **disclosure tier** and holder-lived /
    twin-lived origin; IT/EN labels.
 2. *[done]* **Batched merge with per-item actions** (`prompts/merge_profile_yolo.py`): one call decides
    APPEND / UPDATE / ABORT for all candidate facts. *Improvement*: UPDATE creates a new
@@ -164,8 +164,8 @@ ideas: `docs/literature/agent-platform-memory.md` §3 (WORK_PLAN 5.7).
   ("switched / stopped") as replace / stale, an accepted proposal states it while a bare "ok" does not.
 - *[done]* §3.1 fenced injected recall (`<memory-context>`) and §3.2 zero-LLM pre-turn brief for connectors: the
   memory context, used by every connector before each turn (one call with ingest).
-- *[open]* §3.4 turn taint from network tools, §3.5 nightly pattern pass with evidence counts (→ D20 / WORK_PLAN 5.4), §3.6 owner card,
-  §3.7 use signals for ranking only, §3.8 requests to the assistant as standing intents, §3.9 owner review of what the
+- *[open]* §3.4 turn taint from network tools, §3.5 nightly pattern pass with evidence counts (→ D20 / WORK_PLAN 5.4), §3.6 holder card,
+  §3.7 use signals for ranking only, §3.8 requests to the assistant as standing intents, §3.9 holder review of what the
   night changed, §3.10 pre-compaction / session-switch hooks in connectors.
 
 Measured and rejected (or kept off) so far: a separate facts pass (`FACTS_PASS=separate`, no gain over the inline

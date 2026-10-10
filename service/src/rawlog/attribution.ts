@@ -34,12 +34,12 @@ export const SOMEONE: Attribution = { kind: 'someone', personId: null, method: '
 
 /**
  * SQL predicate: the message is the account's speaker's own turn (role `user`, the memory's self or own content, or the
- * conversation's `owner` participant) — what the extraction prompts call the owner (personal) or the person (entity)
+ * conversation's `holder` participant) — what the extraction prompts call the memory (personal) or the person (entity)
  * until first person arrives (WORK_PLAN 8.4). `m` is the alias of `messages`.
  */
 export const accountSpeaker = (m: string): string =>
   `(${m}.role = 'user' OR ${m}.author_kind IN ('self', 'own') OR EXISTS (SELECT 1 FROM conversation_participants asp
-     WHERE asp.conversation_id = ${m}.conversation_id AND asp.ref = ${m}.author_ref AND asp.role = 'owner'))`;
+     WHERE asp.conversation_id = ${m}.conversation_id AND asp.ref = ${m}.author_ref AND asp.role = 'holder'))`;
 
 /**
  * SQL predicate: the message is the memory's own turn in either mode — personal memories (8.4): the self or own content
@@ -47,5 +47,5 @@ export const accountSpeaker = (m: string): string =>
  * 8.5). `m` is the alias of `messages`.
  */
 export const memorySpeaker = (m: string): string =>
-  `(CASE WHEN (SELECT o.mode FROM owners o WHERE o.person_id = ${m}.owner_id) = 'personal'
+  `(CASE WHEN (SELECT o.mode FROM memories o WHERE o.person_id = ${m}.memory_id) = 'personal'
      THEN ${m}.author_kind IN ('self', 'own') ELSE ${accountSpeaker(m)} END)`;

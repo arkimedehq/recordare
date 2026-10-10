@@ -31,9 +31,9 @@ describe('AnythingLLM marker', () => {
     const none = resolveIdentity(config(), {}, m, now);
     expect(none.identity).toBeNull();
     expect(none.messages[0]?.content).toBe('Be brief.');
-    const owner = resolveIdentity(config({ DEFAULT_USER: 'me' }), {}, m, now);
-    expect(owner.identity?.user).toBe('anythingllm:me');
-    expect(owner.identity?.conversation).toBe('anythingllm:2:me:2026-10-08');
+    const mine = resolveIdentity(config({ DEFAULT_USER: 'me' }), {}, m, now);
+    expect(mine.identity?.user).toBe('anythingllm:me');
+    expect(mine.identity?.conversation).toBe('anythingllm:2:me:2026-10-08');
   });
 
   it('removes markers from later system messages and content arrays, but trusts only the first system message', () => {

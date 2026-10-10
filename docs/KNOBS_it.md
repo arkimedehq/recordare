@@ -3,7 +3,7 @@
 *Traduzione italiana di [KNOBS.md](KNOBS.md) — la versione inglese è quella di riferimento.*
 
 Tutte le impostazioni di Recordare, dei suoi componenti opzionali e del lato client: dove si impostano, il valore
-predefinito e — per le manopole del motore — se e come sono state misurate. Il costo è un'opzione del proprietario, mai
+predefinito e — per le manopole del motore — se e come sono state misurate. Il costo è un'opzione dell'operatore, mai
 un limite silenzioso (D35); una manopola che non ha mostrato un guadagno resta spenta finché una misura non dice il
 contrario (regole di valutazione, `WORK_PLAN.md`).
 
@@ -81,7 +81,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `autoProvision` | off | Crea una persona al primo contatto di un nuovo utente |
 | `rawLogScope` | `own` | Estratti del registro grezzo solo dalle conversazioni di questo client, o da tutte |
 | `disabled` | off | Tutte le chiavi e i token del client smettono subito di funzionare |
-| Permessi delle chiavi | — | `ingest`, `mcp`, `read`, `write` (mai admin, impostazioni dell'owner o export) |
+| Permessi delle chiavi | — | `ingest`, `mcp`, `read`, `write` (mai admin, impostazioni della memoria o export) |
 
 ## 6. Script di installazione (`deploy/`)
 

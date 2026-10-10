@@ -40,9 +40,9 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     db = app.get(DataSource);
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
     key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read', 'mcp'] } })).body.key;
-    me = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Andrea' } })).body.personId;
+    me = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Andrea' } })).body.personId;
     await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: me, clientId: client.body.id, externalId: 'andrea' } });
-    token = (await call(url, 'POST', `/api/v1/admin/owners/${me}/tokens`, { token: ADMIN_KEY, body: { clientId: client.body.id, scopes: ['mcp'] } })).body.token;
+    token = (await call(url, 'POST', `/api/v1/admin/memories/${me}/tokens`, { token: ADMIN_KEY, body: { clientId: client.body.id, scopes: ['mcp'] } })).body.token;
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
@@ -62,10 +62,10 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     return lastUser();
   }
   const run = async (conv: string) => app.get<ExtractionRunner>(EXTRACTION_RUNNER).runForConversation(conv);
-  const contacts = () => db.query(`SELECT display_name, full_name, relation FROM persons WHERE owner_scope = $1 ORDER BY created_at`, [me]);
+  const contacts = () => db.query(`SELECT display_name, full_name, relation FROM persons WHERE memory_id = $1 ORDER BY created_at`, [me]);
   const episode = (like: string) => db.query(
     `SELECT e.id, e.content, e.subject_kind, p.display_name AS subject, e.subject_candidates, e.stance, e.author_role
-     FROM episodes e LEFT JOIN persons p ON p.id = e.subject_person_id WHERE e.owner_id = $1 AND e.content LIKE $2`, [me, like]).then((r) => r[0]);
+     FROM episodes e LEFT JOIN persons p ON p.id = e.subject_person_id WHERE e.memory_id = $1 AND e.content LIKE $2`, [me, like]).then((r) => r[0]);
   const context = (query: string, now: string) => call(url, 'POST', '/api/v1/context', {
     token: key, headers: { 'x-recordare-user': 'andrea', 'x-recordare-now': now }, body: { query },
   });
@@ -110,7 +110,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
       { display_name: 'Marco', full_name: null, relation: 'cugino' },
       { display_name: 'Marco Bellini', full_name: 'Marco Bellini', relation: 'collega' },
     ]);
-    const facts = await db.query(`SELECT p.display_name, f.key, f.value FROM facts f JOIN persons p ON p.id = f.subject_person_id WHERE f.owner_id = $1`, [me]);
+    const facts = await db.query(`SELECT p.display_name, f.key, f.value FROM facts f JOIN persons p ON p.id = f.subject_person_id WHERE f.memory_id = $1`, [me]);
     expect(facts).toEqual([{ display_name: 'Marco', key: 'city', value: 'Torino' }]);
     // A single "Luca" with another relation is someone else: a new contact, never a merge.
     await extract('l1', [{ id: 'l1-1', content: 'Mio fratello Luca e il vicino Luca.', at: '2026-09-12T10:00:00+02:00' }], {
@@ -130,7 +130,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     const ep = await episode('%polso%');
     expect(ep).toMatchObject({ subject_kind: 'undecided', subject: null });
     expect(ep.subject_candidates).toHaveLength(2);
-    const [q] = await db.query(`SELECT question, status, episode_id FROM clarifications WHERE owner_id = $1`, [me]);
+    const [q] = await db.query(`SELECT question, status, episode_id FROM clarifications WHERE memory_id = $1`, [me]);
     expect(q).toMatchObject({ question: 'Marco? Marco (cugino) / Marco Bellini (collega)', status: 'open', episode_id: ep.id }); // fallback question
     const [summary] = await db.query(`SELECT summary FROM extraction_runs WHERE conversation_id = (SELECT id FROM conversations WHERE external_id = 'a1')`);
     expect(summary.summary.clarifications).toEqual({ asked: 1, resolved: 0 });
@@ -141,7 +141,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     expect(ctx.body.block).toContain('Background from your memory (you are Andrea: first-person items are yours)');
 
     // A later window lists it under OPEN QUESTIONS; an unknown contact or the assistant's turn is no answer.
-    const cousin = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Marco'`, [me]))[0].id as string;
+    const cousin = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Marco'`, [me]))[0].id as string;
     const later = await ingest('a2', [{ id: 'a2-1', content: 'Il Marco dell\'incidente è mio cugino.', at: '2026-09-21T10:00:00+02:00' }]);
     llm.queue.push({ answers: [{ question: 'Q1', contact: 'C9', evidence: [1] }] });
     await run(later);
@@ -191,10 +191,10 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
       ],
       facts: [{ subject: 'me', key: 'car', value: 'Tesla', verdict: 'new', evidence: [2] }],
     }, [giulia, { ref: 'p', role: 'other', displayName: 'Paolo' }]);
-    // A first name is not enough (owner's decision 2026-10-09): the identified Giulia is a new contact, and the memory
+    // A first name is not enough (maintainer's decision 2026-10-09): the identified Giulia is a new contact, and the memory
     // asks whether she is the sister it knew only by name.
-    const sister = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Giulia' AND relation = 'sorella'`, [me]))[0].id as string;
-    const giulias = await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Giulia' ORDER BY created_at`, [me]);
+    const sister = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Giulia' AND relation = 'sorella'`, [me]))[0].id as string;
+    const giulias = await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Giulia' ORDER BY created_at`, [me]);
     expect(giulias).toHaveLength(2);
     const newcomer = giulias[1].id as string;
     const [ask] = await db.query(`SELECT id, question, candidates, contact_id, status, episode_id FROM clarifications WHERE contact_id IS NOT NULL`);
@@ -210,7 +210,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     expect(lastUser()).toContain('Q1: Giulia, che ha scritto il 22 settembre, è la stessa persona di Giulia (sorella)? (about: C2 — the same person as C1?; answer C1 if yes, C2 if not)');
     expect((await db.query(`SELECT status, resolved_person_id, resolution FROM clarifications WHERE id = $1`, [ask.id]))[0])
       .toEqual({ status: 'resolved', resolved_person_id: sister, resolution: 'same person' });
-    expect(await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Giulia'`, [me])).toEqual([{ id: sister }]);
+    expect(await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Giulia'`, [me])).toEqual([{ id: sister }]);
     expect(await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'giulia-1'`)).toEqual([{ person_id: sister }]);
     expect(await db.query(`SELECT author_person_id FROM messages WHERE external_id = 'grp-1'`)).toEqual([{ author_person_id: sister }]);
     expect(await db.query(`SELECT person_id FROM conversation_participants WHERE ref = 'g'`)).toEqual([{ person_id: sister }]);
@@ -236,8 +236,8 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
 
     // Giulia asks in her own conversation: she is the speaker, her items come first.
     await ingest('ask-g', [{ id: 'ask-g-1', role: 'other', authorRef: 'g', content: 'Cosa faccio sabato?', at: '2026-09-23T10:00:00+02:00' }], [giulia]);
-    await db.query(`INSERT INTO episodes (owner_id, kind, content, occurred_at, date_precision, origin, author_role, stance, audience)
-      VALUES ($1, 'event', 'Sabato cosa faccio: vado al mare.', '2026-09-26', 'day', 'owner_lived', 'owner', 'stated', $2)`, [me, [me]]);
+    await db.query(`INSERT INTO episodes (memory_id, kind, content, occurred_at, date_precision, origin, author_role, stance, audience)
+      VALUES ($1, 'event', 'Sabato cosa faccio: vado al mare.', '2026-09-26', 'day', 'holder_lived', 'holder', 'stated', $2)`, [me, [me]]);
     const hers = await connect({ authorization: `Bearer ${token}`, 'x-recordare-now': '2026-09-23T10:00:01+02:00', 'x-recordare-conversation': 'ask-g' });
     const res = (await hers.callTool({ name: 'search_episodes', arguments: { query: 'Cosa faccio sabato?' } })).structuredContent as Record<string, unknown>;
     expect(res['speaker']).toEqual({ kind: 'contact', name: 'Giulia' });
@@ -267,7 +267,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
 
   it('identified participants: a unique full name binds; several namesakes ask nothing; a "no" keeps two contacts', async () => {
     const before = await db.query(`SELECT count(*)::int AS n FROM clarifications WHERE contact_id IS NOT NULL`);
-    const bellini = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND full_name = 'Marco Bellini'`, [me]))[0].id as string;
+    const bellini = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND full_name = 'Marco Bellini'`, [me]))[0].id as string;
     // Full name equal to exactly one contact without an identity: the same person, bound directly.
     await ingest('fn', [{ id: 'fn-1', role: 'other', authorRef: 'mb', content: 'Ciao!', at: '2026-09-28T10:00:00+02:00' }],
       [{ ref: 'mb', role: 'other', displayName: 'Marco Bellini', identity: { externalUserId: 'mb-1' } }]);
@@ -280,7 +280,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     expect((await contacts()).filter((c: { display_name: string }) => c.display_name === 'Luca')).toHaveLength(lucas + 1);
     expect(await db.query(`SELECT count(*)::int AS n FROM clarifications WHERE contact_id IS NOT NULL`)).toEqual(before);
     // One unbound Marco (the cousin; Bellini is now bound): a new contact and a question; answered "no", both stay.
-    const cousin = (await db.query(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Marco' AND relation = 'cugino'`, [me]))[0].id as string;
+    const cousin = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Marco' AND relation = 'cugino'`, [me]))[0].id as string;
     await ingest('mx', [{ id: 'mx-1', role: 'other', authorRef: 'm', content: 'Sono Marco del calcetto.', at: '2026-09-28T12:00:00+02:00' }],
       [{ ref: 'm', role: 'other', displayName: 'Marco', identity: { externalUserId: 'marco-x' } }]);
     const marco = (await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'marco-x'`))[0].person_id as string;
@@ -298,20 +298,20 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
   });
 
   it('mergeContacts moves every reference (arrays, facts, questions) and deletes the merged contact', async () => {
-    const [{ id: a }] = await db.query(`INSERT INTO persons (owner_scope, display_name, relation) VALUES ($1, 'Sara', 'amica') RETURNING id`, [me]);
-    const [{ id: b }] = await db.query(`INSERT INTO persons (owner_scope, display_name, full_name) VALUES ($1, 'Sara', 'Sara Neri') RETURNING id`, [me]);
-    await db.query(`INSERT INTO person_aliases (owner_id, person_id, alias, alias_norm, source) VALUES ($1, $2, 'Sara', 'sara', 'extracted'),
+    const [{ id: a }] = await db.query(`INSERT INTO persons (memory_id, display_name, relation) VALUES ($1, 'Sara', 'amica') RETURNING id`, [me]);
+    const [{ id: b }] = await db.query(`INSERT INTO persons (memory_id, display_name, full_name) VALUES ($1, 'Sara', 'Sara Neri') RETURNING id`, [me]);
+    await db.query(`INSERT INTO person_aliases (memory_id, person_id, alias, alias_norm, source) VALUES ($1, $2, 'Sara', 'sara', 'extracted'),
       ($1, $3, 'Sara', 'sara', 'client'), ($1, $3, 'Sarina', 'sarina', 'client')`, [me, a, b]);
     const ins = (sql: string, params: unknown[]) => db.query(sql, params).then((r) => r[0].id as string);
-    const ep = await ins(`INSERT INTO episodes (owner_id, kind, content, origin, author_role, stance, audience, subject_kind, subject_candidates)
-      VALUES ($1, 'event', 'Sara ha traslocato.', 'owner_told', 'owner', 'stated', $2, 'undecided', $3) RETURNING id`, [me, [me, b], [a, b]]);
+    const ep = await ins(`INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, subject_kind, subject_candidates)
+      VALUES ($1, 'event', 'Sara ha traslocato.', 'holder_told', 'holder', 'stated', $2, 'undecided', $3) RETURNING id`, [me, [me, b], [a, b]]);
     await db.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, 'Sara', $2)`, [ep, b]);
-    const old = await ins(`INSERT INTO facts (owner_id, subject_person_id, key, value, origin, author_role, audience, subject_kind, recorded_at)
-      VALUES ($1, $2, 'city', 'Roma', 'owner_told', 'owner', $3, 'contact', '2026-09-01') RETURNING id`, [me, a, [me]]);
-    const recent = await ins(`INSERT INTO facts (owner_id, subject_person_id, key, value, origin, author_role, audience, subject_kind, recorded_at, confidence_of)
-      VALUES ($1, $2, 'city', 'Milano', 'owner_told', 'owner', $3, 'contact', '2026-09-20', $2) RETURNING id`, [me, b, [me, b]]);
-    const which = await ins(`INSERT INTO clarifications (owner_id, question, candidates, episode_id, created_at) VALUES ($1, 'Quale Sara?', $2, $3, '2026-09-29') RETURNING id`, [me, [a, b], ep]);
-    const same = await ins(`INSERT INTO clarifications (owner_id, question, candidates, contact_id, created_at) VALUES ($1, 'Stessa Sara?', $2, $3, '2026-09-29') RETURNING id`, [me, [a], b]);
+    const old = await ins(`INSERT INTO facts (memory_id, subject_person_id, key, value, origin, author_role, audience, subject_kind, recorded_at)
+      VALUES ($1, $2, 'city', 'Roma', 'holder_told', 'holder', $3, 'contact', '2026-09-01') RETURNING id`, [me, a, [me]]);
+    const recent = await ins(`INSERT INTO facts (memory_id, subject_person_id, key, value, origin, author_role, audience, subject_kind, recorded_at, confidence_of)
+      VALUES ($1, $2, 'city', 'Milano', 'holder_told', 'holder', $3, 'contact', '2026-09-20', $2) RETURNING id`, [me, b, [me, b]]);
+    const which = await ins(`INSERT INTO clarifications (memory_id, question, candidates, episode_id, created_at) VALUES ($1, 'Quale Sara?', $2, $3, '2026-09-29') RETURNING id`, [me, [a, b], ep]);
+    const same = await ins(`INSERT INTO clarifications (memory_id, question, candidates, contact_id, created_at) VALUES ($1, 'Stessa Sara?', $2, $3, '2026-09-29') RETURNING id`, [me, [a], b]);
     expect(await db.transaction((tx) => mergeContacts(tx, me, b, a, new Date('2026-09-30T10:00:00Z')))).toBe(true);
 
     expect(await db.query(`SELECT id, full_name, relation FROM persons WHERE id = ANY($1::uuid[])`, [[a, b]])).toEqual([{ id: a, full_name: 'Sara Neri', relation: 'amica' }]);

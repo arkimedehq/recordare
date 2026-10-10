@@ -22,7 +22,7 @@ Stato: nota di ricerca, 2026-10-08. Le fonti sono state lette dai pacchetti pubb
 | --- | --- | --- |
 | Plugin nativo (`openclaw.plugin.json` + entry TS/JS) | Modulo in-process; registra hook, tool, servizi, comandi CLI, resolver MCP ([building plugins](https://docs.openclaw.ai/plugins/building-plugins), [SDK overview](https://docs.openclaw.ai/plugins/sdk-overview)) | **Sì: il connettore** |
 | Hook tipizzati del plugin `api.on(name, handler)` | ~40 hook del ciclo di vita ([hooks](https://docs.openclaw.ai/plugins/hooks), [hook reference](https://docs.openclaw.ai/plugins/hooks/reference)) | cattura + recall |
-| Slot di memoria `plugins.slots.memory` | Un solo plugin con `kind: "memory"` lo possiede (predefinito: `memory-core` incluso, `MEMORY.md` Markdown + `memory_search`); rivendicarlo disabilita il proprietario precedente | **No** (vedi §5) |
+| Slot di memoria `plugins.slots.memory` | Un solo plugin con `kind: "memory"` lo possiede (predefinito: `memory-core` incluso, `MEMORY.md` Markdown + `memory_search`); rivendicarlo disabilita il plugin precedente | **No** (vedi §5) |
 | Slot del context engine `plugins.slots.contextEngine` | Sostituisce l'assemblaggio della cronologia / la compattazione ([context engine](https://docs.openclaw.ai/concepts/context-engine)) | No |
 | Skill (`SKILL.md`) | Istruzioni a livello di prompt, senza codice | Opzionale, in seguito |
 | Hook interni (`HOOK.md`, `command:new`…) | Script dell'operatore sui comandi | No |
@@ -103,7 +103,7 @@ di Honcho in un file JSON locale (`~/.honcho/openclaw-peers.json`). Documentazio
   `ctx = { requesterSenderId: string; agentAccountId?; messageChannel? }`
   ([infrastructure → requester-scoped MCP](https://docs.openclaw.ai/plugins/sdk-overview/infrastructure)).
   Limiti che contano per Recordare: il resolver **non riceve sessione/conversazione**, quindi non può impostare
-  `X-Recordare-Conversation`; le esecuzioni senza un mittente attendibile (cron, owner della Control UI, CLI) non ottengono mai il server; il
+  `X-Recordare-Conversation`; le esecuzioni senza un mittente attendibile (cron, operatore della Control UI, CLI) non ottengono mai il server; il
   trasporto risolto viene messo in cache e riconvalidato al più ogni 5 min. → L'MCP statico/per richiedente da solo non può soddisfare
   la regola del viewer di Recordare (INTEGRATION.md §4). Usare invece i tool registrati dal plugin (§5). *(Dal D50 / WORK_PLAN
   8.2 la regola non c'è più: il richiamo funziona senza conversazione; le scritture MCP con una chiave client ne hanno
@@ -138,7 +138,7 @@ Le factory dei tool ricevono `OpenClawPluginToolContext`: `agentId`, `sessionKey
   registrato in `THIRD_PARTY_NOTICES.md` nel momento del riuso (ad es. gli helper di Honcho per la rimozione dell'envelope / i confini del turno).
 - Il plugin importa `openclaw/plugin-sdk/*` (MIT) e il nostro `@arkimedehq/recordare-client` (AGPL-3.0-or-later). Un
   plugin AGPL caricato in un host MIT va bene dal punto di vista della licenza; se pubblicare il plugin con AGPL o con una licenza
-  permissiva (adozione su ClawHub) è una decisione del proprietario — si noti che la libreria client è AGPL, quindi un plugin permissivo
+  permissiva (adozione su ClawHub) è una decisione del maintainer — si noti che la libreria client è AGPL, quindi un plugin permissivo
   non potrebbe includerla.
 
 ## 5. Progetto minimo proposto: `@arkimedehq/openclaw-recordare` (id del plugin `recordare`)
@@ -163,7 +163,7 @@ packages/openclaw-recordare/
 Configurazione (`plugins.entries.recordare.config`):
 `url` (obbligatorio), `apiKey` (chiave client, scope ingest+mcp+read; espansione `${ENV}`), `users` (mappa
 `"<channel>:<senderId>"` → id utente Recordare; predefinito `"<channel>:<senderId>"` alla lettera, facendo affidamento su
-`autoProvision` di Recordare), `defaultUser` (per i turni senza mittente: Control UI, CLI, owner), `capture` (bool, predefinito true),
+`autoProvision` di Recordare), `defaultUser` (per i turni senza mittente: Control UI, CLI, il titolare), `capture` (bool, predefinito true),
 `autoRecall` (`"off" | "context" `, predefinito `"context"`), `tools` (bool, predefinito true), `groups`
 (`"off" | "mapped"`, predefinito `"mapped"`: acquisisce i turni di gruppo solo per i mittenti presenti in `users`), `captureSystemRuns` (predefinito false).
 Necessario inoltre in `openclaw.json`: `plugins.entries.recordare.hooks.allowConversationAccess: true`; per più persone,
@@ -178,7 +178,7 @@ Hook e flusso:
    contesto lato utente; `appendSystemContext` romperebbe la cache del prompt a ogni turno — misurare prima di scegliere).
 2. `agent_end` (se `success`): prendere il testo utente memorizzato (ripiego: l'ultimo messaggio `role:"user"`, envelope rimosso) e i
    blocchi di testo dell'ultimo `role:"assistant"`; mettere in coda `POST api/v1/ingest/messages` con
-   `conversation: { externalId: sessionKey, channel: ctx.channel, participants: [owner ref → user, assistant ref → agentId] }`,
+   `conversation: { externalId: sessionKey, channel: ctx.channel, participants: [holder ref → user, assistant ref → agentId] }`,
    `externalId` dei messaggi = `<currentUserMessageId|runId>:u` / `<runId>:a`, `sentAt` ISO. Outbox: non bloccare mai il turno.
    I risultati dei tool (ruolo `toolResult`) sono opzionali in seguito (D30: `role: "tool"`).
 3. `message_received` (gruppi, `groups: "mapped"`): mettere in buffer i messaggi del gruppo non destinati all'agente con `role: "other"` e

@@ -17,13 +17,13 @@ plugin. Gli hook non bloccano mai Claude Code: se Recordare non risponde, il tur
 **Di chi è la memoria** (D50): il token personale apre una sola memoria — quella del tuo agente, in cui tu sei l'"io"
 (una memoria `personal`: sei insieme il suo utente e il suo agente). La stessa
 memoria può servire anche i tuoi altri agenti (un altro token o client). La modalità e il genere della sua prima persona
-li imposta l'amministratore (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`; `gender` `masculine` per default,
+li imposta l'amministratore (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`; `gender` `masculine` per default,
 `feminine`, `neutral`); il plugin non ha impostazioni per questi valori.
 
 ## Installazione
 
 1. Chiedi all'amministratore di Recordare un **token personale** con gli scope `mcp`, `ingest` e `read` (console admin →
-   la tua memoria → token, client di tipo `mcp_client`; oppure `POST api/v1/admin/owners/{id}/tokens`).
+   la tua memoria → token, client di tipo `mcp_client`; oppure `POST api/v1/admin/memories/{id}/tokens`).
 2. In Claude Code:
    ```
    /plugin marketplace add arkimedehq/recordare

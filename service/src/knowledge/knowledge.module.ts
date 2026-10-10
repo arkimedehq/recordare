@@ -8,7 +8,7 @@
  */
 import { Body, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, Inject, Module, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
-import { OwnerResolver, USER_HEADER } from '../auth/owner-resolver.service';
+import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { ZodBody } from '../common/zod-body.pipe';
@@ -19,41 +19,41 @@ import { SourcesService, type SourceView } from './sources.service';
 @Controller('api/v1/ingest/sources')
 @RequireScopes('ingest')
 export class SourceIngestController {
-  constructor(private readonly sources: SourcesService, private readonly owners: OwnerResolver, @Inject(CLOCK_PORT) private readonly clock: ClockPort) {}
+  constructor(private readonly sources: SourcesService, private readonly memories: MemoryResolver, @Inject(CLOCK_PORT) private readonly clock: ClockPort) {}
 
   @Post()
   @HttpCode(200)
   async learn(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(learnSourceSchema)) body: LearnSourceRequest): Promise<LearnSourceResult> {
-    const { clientId, ownerId } = await this.scope(p, user);
-    return this.sources.learn(ownerId, clientId, body, this.clock.now());
+    const { clientId, memoryId } = await this.scope(p, user);
+    return this.sources.learn(memoryId, clientId, body, this.clock.now());
   }
 
   @Post(':externalId/parts')
   @HttpCode(200)
   async part(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('externalId') externalId: string,
     @Body(new ZodBody(sourcePartSchema)) body: SourcePartRequest): Promise<LearnSourceResult> {
-    const { clientId, ownerId } = await this.scope(p, user);
-    return this.sources.part(ownerId, clientId, externalId, body);
+    const { clientId, memoryId } = await this.scope(p, user);
+    return this.sources.part(memoryId, clientId, externalId, body);
   }
 
   /** Forgets a source the client sent (by its own id); one Recordare never had is done. */
   @Delete(':externalId')
   @HttpCode(204)
   async forget(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('externalId') externalId: string): Promise<void> {
-    const { clientId, ownerId } = await this.scope(p, user);
-    await this.sources.forget(ownerId, { clientId, externalId });
+    const { clientId, memoryId } = await this.scope(p, user);
+    await this.sources.forget(memoryId, { clientId, externalId });
   }
 
-  private async scope(p: Principal, user: string | undefined): Promise<{ clientId: string; ownerId: string }> {
+  private async scope(p: Principal, user: string | undefined): Promise<{ clientId: string; memoryId: string }> {
     if (p.kind === 'admin') throw new ForbiddenException();
-    return { clientId: p.clientId, ownerId: await this.owners.resolve(p, user) };
+    return { clientId: p.clientId, memoryId: await this.memories.resolve(p, user) };
   }
 }
 
 @Controller('api/v1/sources')
 export class SourceReadController {
-  constructor(private readonly sources: SourcesService, private readonly owners: OwnerResolver) {}
+  constructor(private readonly sources: SourcesService, private readonly memories: MemoryResolver) {}
 
   @Get()
   @RequireScopes('read')
@@ -76,7 +76,7 @@ export class SourceReadController {
 
   private async who(p: Principal, user: string | undefined): Promise<string> {
     if (p.kind === 'admin') throw new ForbiddenException();
-    return this.owners.resolve(p, user);
+    return this.memories.resolve(p, user);
   }
 }
 

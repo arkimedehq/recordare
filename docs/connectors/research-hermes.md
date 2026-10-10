@@ -51,7 +51,7 @@ first source wins on a name clash:
    [--enable]` produces (subdirectory installs download only that folder);
 3. project `./.hermes/plugins/<name>/` (only with `HERMES_ENABLE_PROJECT_PLUGINS=1`);
 4. pip entry point group `hermes_agent.memory_providers` (`my-provider = "my_provider:register"`) — the docs discourage
-   pip-injecting into a PM-managed install; meant for owner-managed builds (Nix).
+   pip-injecting into a PM-managed install; meant for self-managed builds (Nix).
 
 The directory's `__init__.py` must define `register(ctx)` calling `ctx.register_memory_provider(Provider())` (or a
 top-level `MemoryProvider` subclass). Activation: `hermes config set memory.provider <name>` or `hermes memory setup`.
@@ -96,7 +96,7 @@ mcp_servers:
 Other keys: `identity_header {name, value_from: static|profile, value}`, `client_cert`/`client_key` (mTLS), OAuth
 (`hermes mcp login <server>`), `lazy`. **Limit**: headers are fixed per server entry (static or the profile name) —
 there is no per-gateway-user or per-conversation header, so MCP alone cannot send `X-Recordare-User` /
-`X-Recordare-Conversation` for a multi-user gateway. For a single-person install a personal token (owner-direct reads,
+`X-Recordare-Conversation` for a multi-user gateway. For a single-person install a personal token (memory-direct reads,
 INTEGRATION §4b) works.
 
 ## 3. Identity (user / session / platform)
@@ -121,7 +121,7 @@ Mapping for Recordare:
   (`telegram:123`) unless aliased, so two platforms stay distinct until the admin links identities.
 - conversation `externalId` = `gateway_session_key` if present, else the first `session_id` of the lineage (keep it
   across compression switches, `on_session_switch(reset=False)`; start a new one on `reset=True`).
-- participants: owner (the user), assistant (`agent_identity`), and in shared rooms each `turn_author` as `other`.
+- participants: `holder` (the user), assistant (`agent_identity`), and in shared rooms each `turn_author` as `other`.
 
 ## 4. Licences
 
@@ -133,7 +133,7 @@ Mapping for Recordare:
 | `supermemoryai/hermes-supermemory` | MIT | yes |
 
 Note: the plugin itself runs inside Hermes (MIT) as a separate work talking HTTP to Recordare; we can licence it AGPL-3.0
-(or more permissively, owner's choice — not decided here).
+(or more permissively, maintainer's choice — not decided here).
 
 ## 5. Minimal design — `recordare` memory provider
 

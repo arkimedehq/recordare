@@ -40,7 +40,7 @@ lo legge **solo dal primo messaggio `system`** (mai dal testo dell'utente, che l
 l'id utente AnythingLLM → `X-Recordare-User` (tramite una tabella di mappatura, oppure `{user.name}` se i nomi utente sono gli id esterni).
 Spoofing: solo admin / manager possono modificare i prompt dei workspace; una richiesta senza un marcatore valido (widget embed, `[User ID]` in
 single-user, estrazione di memoria, titolo e classificatore del router propri di AnythingLLM) passa senza modifiche — oppure, in
-modalità single-user, viene mappata su un unico owner configurato.
+modalità single-user, viene mappata su un'unica memoria configurata.
 
 Per ogni richiesta il proxy: (1) `POST /api/v1/context {query: last user message}` → aggiunge il blocco `<memory-context>` al
 messaggio di sistema; (2) inoltra (in stream o no) al provider reale, duplicando lo stream SSE; (3) a completamento,
@@ -68,7 +68,7 @@ non vengono segnalati (le righe con `include: false` dopo un reset si potrebbero
 a livello di istanza custodita dal connettore. Nessuna iniezione: il recall deve venire da MCP o dal proxy.
 
 ### (iii) MCP solo in modalità agent
-Fornisce tool di recall (e `remember` ecc.) senza alcuna modifica ad AnythingLLM, ma header statici ⇒ un solo owner Recordare per
+Fornisce tool di recall (e `remember` ecc.) senza alcuna modifica ad AnythingLLM, ma header statici ⇒ una sola memoria Recordare per
 istanza di AnythingLLM; nessuna cattura automatica (il modello dovrebbe chiamare un tool). Va bene per un'installazione desktop
 single-user, non per il multi-user.
 
@@ -88,7 +88,7 @@ dovremmo averne bisogno: il connettore parla solo con la sua API HTTP / i suoi f
 Un piccolo servizio connettore nel repo di Recordare (TypeScript, costruito su `packages/client`), con due modalità a scelta dell'admin:
 
 1. **Cattura = polling (ii) per impostazione predefinita**: id affidabili, utente e thread reali, nessuna modifica al percorso LLM. Idempotente tramite
-   gli externalId dei messaggi; il consenso per owner è applicato da Recordare (`stored: false`).
+   gli externalId dei messaggi; il consenso per memoria è applicato da Recordare (`stored: false`).
 2. **Recall**: (a) **modalità proxy** (i) per l'iniezione a ogni turno — il proxy fa allora anche la cattura inline, e il polling
    viene spento (il proxy non può derivare gli id del polling, quindi eseguirli entrambi duplicherebbe l'ingest: una sola fonte di cattura
    per istanza); oppure (b) **modalità MCP** (iii) per le installazioni single-user.
@@ -114,7 +114,7 @@ docker run -d --name allm -p 3001:3001 --cap-add SYS_ADMIN \
 - `POST /api/v1/workspace/new {name}`; impostare il prompt con il marcatore tramite `POST /api/v1/workspace/{slug}/update
   {openAiPrompt}`; `POST /api/v1/workspace/{slug}/thread/new {userId}`;
   `POST /api/v1/workspace/{slug}/thread/{thread}/chat {message, mode:"chat"|"automatic", userId}`.
-- Verificare: il log grezzo di Recordare contiene entrambi i turni sotto l'owner e la conversazione giusti; una seconda chat che richiede il primo
+- Verificare: il log grezzo di Recordare contiene entrambi i turni sotto la memoria e la conversazione giuste; una seconda chat che richiede il primo
   fatto lo ottiene dal blocco iniettato (proxy) o da `search_memory` (MCP, `mode:"automatic"`).
 - MCP: scrivere `storage/plugins/anythingllm_mcp_servers.json`
   `{"mcpServers":{"recordare":{"type":"streamable","url":"http://host.docker.internal:<port>/mcp","headers":{"Authorization":"Bearer rk_…","X-Recordare-User":"<id>"}}}}`.

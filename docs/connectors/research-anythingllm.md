@@ -40,7 +40,7 @@ reads it from the **first `system` message only** (never from user text, which t
 the AnythingLLM user id → `X-Recordare-User` (via a mapping table, or `{user.name}` if usernames are the external ids).
 Spoofing: only admins / managers can edit workspace prompts; a request without a valid marker (embed widget, single-user
 `[User ID]`, AnythingLLM's own memory-extraction, title, router-classifier calls) is passed through untouched — or, in
-single-user mode, mapped to one configured owner.
+single-user mode, mapped to one configured memory.
 
 Per request the proxy: (1) `POST /api/v1/context {query: last user message}` → appends the `<memory-context>` block to
 the system message; (2) forwards (stream or not) to the real provider, teeing the SSE stream; (3) after completion,
@@ -68,7 +68,7 @@ are not signalled (rows with `include: false` after a reset could be diffed but 
 admin API key held by the connector. No injection: recall must come from MCP or the proxy.
 
 ### (iii) MCP in agent mode only
-Gives recall tools (and `remember` etc.) with zero AnythingLLM changes, but static headers ⇒ one Recordare owner per
+Gives recall tools (and `remember` etc.) with zero AnythingLLM changes, but static headers ⇒ one Recordare memory per
 AnythingLLM instance; no automatic capture (the model would have to call a tool). Fine for a single-user desktop
 install, not for multi-user.
 
@@ -88,7 +88,7 @@ should not need any: the connector only talks to its HTTP API / config files.
 A small connector service in the Recordare repo (TypeScript, built on `packages/client`), two modes the admin picks:
 
 1. **Capture = polling (ii) by default**: reliable ids, real user and thread, no change to the LLM path. Idempotent via
-   message externalIds; per-owner consent is enforced by Recordare (`stored: false`).
+   message externalIds; per-memory consent is enforced by Recordare (`stored: false`).
 2. **Recall**: (a) **proxy mode** (i) for injection on every turn — the proxy then also does capture inline, and polling
    is switched off (the proxy cannot derive the polling ids, so running both would double-ingest: one capture source
    per instance); or (b) **MCP mode** (iii) for single-user installs.
@@ -114,7 +114,7 @@ docker run -d --name allm -p 3001:3001 --cap-add SYS_ADMIN \
 - `POST /api/v1/workspace/new {name}`; set the prompt with the marker via `POST /api/v1/workspace/{slug}/update
   {openAiPrompt}`; `POST /api/v1/workspace/{slug}/thread/new {userId}`;
   `POST /api/v1/workspace/{slug}/thread/{thread}/chat {message, mode:"chat"|"automatic", userId}`.
-- Assert: Recordare raw log has both turns under the right owner and conversation; a second chat that needs the first
+- Assert: Recordare raw log has both turns under the right memory and conversation; a second chat that needs the first
   fact gets it from the injected block (proxy) or from `search_memory` (MCP, `mode:"automatic"`).
 - MCP: write `storage/plugins/anythingllm_mcp_servers.json`
   `{"mcpServers":{"recordare":{"type":"streamable","url":"http://host.docker.internal:<port>/mcp","headers":{"Authorization":"Bearer rk_…","X-Recordare-User":"<id>"}}}}`.

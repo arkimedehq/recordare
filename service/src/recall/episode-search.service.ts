@@ -44,8 +44,8 @@ export interface EpisodeView {
   when: string;
   planStatus?: 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
   rescheduledTo?: string;
-  origin: 'owner_lived' | 'owner_told' | 'assistant_stated';
-  authorRole: 'owner' | 'assistant' | 'other' | 'tool';
+  origin: 'holder_lived' | 'holder_told' | 'assistant_stated';
+  authorRole: 'holder' | 'assistant' | 'other' | 'tool';
   /** Whose memory it is: the self (first person), a contact, someone, or undecided between candidates (D50). */
   subject: SubjectView;
   /** Who wrote the evidence when it is someone else's claim (authorRole other / tool): names, never the self. */
@@ -119,20 +119,20 @@ export class EpisodeSearchService {
     this.recallDigests = config.get('RECALL_DIGESTS', { infer: true });
   }
 
-  async search(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
-    return this.telemetry.track('recall', ownerId, () => this.searchNow(ownerId, clientId, args, now));
+  async search(memoryId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
+    return this.telemetry.track('recall', memoryId, () => this.searchNow(memoryId, clientId, args, now));
   }
 
-  private async searchNow(ownerId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
-    const [owner] = await this.db.query(
-      `SELECT o.locale, o.timezone, o.quality_profile, o.mode, p.display_name FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    const speaker: Speaker = await speakerOf(this.db, args.conversationId, now, owner.mode);
+  private async searchNow(memoryId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
+    const [memory] = await this.db.query(
+      `SELECT o.locale, o.timezone, o.quality_profile, o.mode, p.display_name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
+    const speaker: Speaker = await speakerOf(this.db, args.conversationId, now, memory.mode);
     const theirs = speaker.kind === 'contact' ? new Set<string>((await this.db.query(
-      `SELECT DISTINCT ep.episode_id FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id WHERE e.owner_id = $1 AND ep.person_id = $2`,
-      [ownerId, speaker.id])).map((r: { episode_id: string }) => r.episode_id)) : new Set<string>();
-    const profile = qualityProfile(owner.quality_profile, this.defaultProfile, undefined, undefined, this.recallDigests);
-    const tz: string = owner.timezone;
-    const locale: string = owner.locale;
+      `SELECT DISTINCT ep.episode_id FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id WHERE e.memory_id = $1 AND ep.person_id = $2`,
+      [memoryId, speaker.id])).map((r: { episode_id: string }) => r.episode_id)) : new Set<string>();
+    const profile = qualityProfile(memory.quality_profile, this.defaultProfile, undefined, undefined, this.recallDigests);
+    const tz: string = memory.timezone;
+    const locale: string = memory.locale;
     const mode = args.mode ?? 'search';
     // YYYY-MM means the whole month (from its first day / to its last day).
     const from = args.from ? zonedMidnight(args.from.length === 7 ? `${args.from}-01` : args.from.slice(0, 10), tz) : null;
@@ -143,12 +143,12 @@ export class EpisodeSearchService {
       `SELECT id, kind, content, occurred_at, occurred_until, date_precision, plan_status, rescheduled_to, origin, author_role, stance,
               importance, feelings, opinion, recorded_at, subject_kind, subject_person_id, subject_candidates
        FROM episodes
-       WHERE owner_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL
+       WHERE memory_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL
          AND ($2::boolean OR kind <> 'plan')`,
-      [ownerId, args.includePlans ?? true],
+      [memoryId, args.includePlans ?? true],
     );
     const { scores: relevance, similarity } = args.query
-      ? await this.relevance(ownerId, args.query) : { scores: new Map<string, number>(), similarity: new Map<string, number>() };
+      ? await this.relevance(memoryId, args.query) : { scores: new Map<string, number>(), similarity: new Map<string, number>() };
     const inRange = (r: Row) => {
       if (!hasPeriod) return true;
       if (!r.occurred_at) return false;
@@ -190,13 +190,13 @@ export class EpisodeSearchService {
 
     const views = await this.views([...chosen, ...outside], tz, locale, now);
     const it = locale === 'it';
-    const name: string = owner.display_name;
+    const name: string = memory.display_name;
     const result: EpisodeSearchResult = {
-      memory: { name, mode: owner.mode },
+      memory: { name, mode: memory.mode },
       speaker: speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : speaker,
       ...(hasPeriod ? { period: { from: args.from ?? null, to: args.to ?? null } } : {}),
       // The diary serves overviews of a period (mode list); point questions get the episodes themselves.
-      digests: hasPeriod && mode === 'list' && profile.recallDigests ? await this.digests(ownerId, from, to) : [],
+      digests: hasPeriod && mode === 'list' && profile.recallDigests ? await this.digests(memoryId, from, to) : [],
       episodes: views.slice(0, chosen.length).filter((v) => !isClaim(v)),
       claims: views.slice(0, chosen.length).filter(isClaim),
       outsidePeriod: views.slice(chosen.length),
@@ -223,33 +223,33 @@ export class EpisodeSearchService {
         : `"claims" are statements of the people in claimedBy, unconfirmed: what they say about me (${name}) is not my memory nor something I said`);
     }
     // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…") and keeps the
-    // owner's own words next to the summaries, so a few raw hits always come along — also when they are behind a
+    // holder's own words next to the summaries, so a few raw hits always come along — also when they are behind a
     // returned episode (the episode drops "I asked you"); more when episodes are few or weak.
     if (args.query) {
       const best = Math.max(0, ...chosen.map((r) => relevance.get(r.id) ?? 0));
       const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? Math.max(RAW_HITS, profile.rawHitsAlongside) : profile.rawHitsAlongside;
-      const hits = await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit,
+      const hits = await this.rawLog.search(memoryId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit,
         conversationId: args.conversationId });
-      // A question about someone ("what did my mother ask you?") also gets what that person wrote in the owner's chats:
+      // A question about someone ("what did my mother ask you?") also gets what that person wrote in the holder's chats:
       // their words rarely contain the relation or the question's terms.
-      const people = await peopleInQuestion(this.db, ownerId, args.query);
-      const theirs = people.length ? await this.rawLog.search(ownerId, clientId, { query: args.query, from: from ?? undefined,
+      const people = await peopleInQuestion(this.db, memoryId, args.query);
+      const theirs = people.length ? await this.rawLog.search(memoryId, clientId, { query: args.query, from: from ?? undefined,
         to: to ?? undefined, limit: PEOPLE_HITS, conversationId: args.conversationId, authors: people }) : [];
       const seen = new Set(hits.map((h) => h.messageId));
       result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId))].map(({ score: _s, ...h }) => h);
-      if (result.fromChats.some((h) => h.authorRole !== 'owner')) {
+      if (result.fromChats.some((h) => h.authorRole !== 'holder')) {
         result.notes.push(it
           ? `gli estratti scritti da altri (author) sono parole loro: ciò che dicono di me (${name}) non è confermato`
           : `excerpts written by others (author) are their words: what they say about me (${name}) is unconfirmed`);
       }
     }
-    if (owner.mode === 'personal' || speaker.kind === 'contact') {
-      const asks = await relevantClarifications(this.db, ownerId, args.query ?? '', views.map((v) => v.id), now, MAX_CLARIFICATIONS);
+    if (memory.mode === 'personal' || speaker.kind === 'contact') {
+      const asks = await relevantClarifications(this.db, memoryId, args.query ?? '', views.map((v) => v.id), now, MAX_CLARIFICATIONS);
       if (asks.length) result.clarifications = asks.map((c) => c.question);
     }
-    this.telemetry.emit({ type: 'recall.served', ownerId, tool: 'search_episodes', mode,
+    this.telemetry.emit({ type: 'recall.served', memoryId, tool: 'search_episodes', mode,
       episodeIds: result.episodes.map((e) => e.id), claimIds: result.claims.map((e) => e.id), chats: result.fromChats.length, digests: result.digests.length });
-    await logRecall(this.db, ownerId, 'search_episodes', mode,
+    await logRecall(this.db, memoryId, 'search_episodes', mode,
       result.episodes.length + result.claims.length + result.fromChats.length + result.digests.length, args.conversationId, now);
     if (chosen.length) {
       await this.db.query(`UPDATE episodes SET access_count = access_count + 1, last_accessed_at = now() WHERE id = ANY($1)`, [chosen.map((r) => r.id)]);
@@ -258,30 +258,30 @@ export class EpisodeSearchService {
   }
 
   /** Current digests overlapping the period, chronological; day level for short spans, month level for long ones. */
-  private async digests(ownerId: string, from: Date | null, to: Date | null): Promise<EpisodeSearchResult['digests']> {
+  private async digests(memoryId: string, from: Date | null, to: Date | null): Promise<EpisodeSearchResult['digests']> {
     const spanDays = from && to ? (to.getTime() - from.getTime()) / 86_400_000 : Infinity;
     const level = spanDays <= DIGEST_DAY_SPAN ? 'day' : 'month';
     const rows: Array<{ level: 'day' | 'month'; period_start: string; period_end: string; content: string }> = await this.db.query(
       `SELECT level, period_start::text, period_end::text, content FROM digests
-       WHERE owner_id = $1 AND superseded_at IS NULL AND level = $2
-         AND ($3::timestamptz IS NULL OR period_end >= ($3::timestamptz AT TIME ZONE (SELECT timezone FROM owners WHERE person_id = $1))::date)
-         AND ($4::timestamptz IS NULL OR period_start < ($4::timestamptz AT TIME ZONE (SELECT timezone FROM owners WHERE person_id = $1))::date)
-       ORDER BY period_start LIMIT $5`, [ownerId, level, from, to, level === 'day' ? 45 : 24]);
+       WHERE memory_id = $1 AND superseded_at IS NULL AND level = $2
+         AND ($3::timestamptz IS NULL OR period_end >= ($3::timestamptz AT TIME ZONE (SELECT timezone FROM memories WHERE person_id = $1))::date)
+         AND ($4::timestamptz IS NULL OR period_start < ($4::timestamptz AT TIME ZONE (SELECT timezone FROM memories WHERE person_id = $1))::date)
+       ORDER BY period_start LIMIT $5`, [memoryId, level, from, to, level === 'day' ? 45 : 24]);
     return rows.map((r) => ({ level: r.level, from: r.period_start, to: r.period_end, text: r.content }));
   }
 
   /** Fused relevance (weighted RRF of vector and full-text ranks; only matching episodes get a score) and the raw
    * vector similarity of the nearest episodes (to fill free places). */
-  private async relevance(ownerId: string, query: string): Promise<{ scores: Map<string, number>; similarity: Map<string, number> }> {
+  private async relevance(memoryId: string, query: string): Promise<{ scores: Map<string, number>; similarity: Map<string, number> }> {
     const scores = new Map<string, number>();
     const similarity = new Map<string, number>();
     const tsq = toOrTsQuery(query);
     if (tsq) {
       const text: Array<{ id: string }> = await this.db.query(
-        `SELECT id FROM episodes WHERE owner_id = $1 AND deleted_at IS NULL
+        `SELECT id FROM episodes WHERE memory_id = $1 AND deleted_at IS NULL
            AND to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')) @@ to_tsquery('simple', $2)
          ORDER BY ts_rank_cd(to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')), to_tsquery('simple', $2)) DESC
-         LIMIT $3`, [ownerId, tsq, CANDIDATES]);
+         LIMIT $3`, [memoryId, tsq, CANDIDATES]);
       text.forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 0.5 / (RRF_K + i + 1)));
     }
     try {
@@ -289,8 +289,8 @@ export class EpisodeSearchService {
       if (q) {
         const vec: Array<{ id: string; sim: number }> = await this.db.query(
           `SELECT id, 1 - (embedding <=> $2::vector) AS sim FROM episodes
-           WHERE owner_id = $1 AND deleted_at IS NULL AND embedding IS NOT NULL
-           ORDER BY embedding <=> $2::vector LIMIT $3`, [ownerId, `[${q.join(',')}]`, CANDIDATES]);
+           WHERE memory_id = $1 AND deleted_at IS NULL AND embedding IS NOT NULL
+           ORDER BY embedding <=> $2::vector LIMIT $3`, [memoryId, `[${q.join(',')}]`, CANDIDATES]);
         vec.forEach((r) => similarity.set(r.id, r.sim));
         vec.filter((r) => r.sim >= MIN_VECTOR_SIMILARITY)
           .forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 1 / (RRF_K + i + 1)));

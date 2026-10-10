@@ -101,4 +101,4 @@ citarli all'esterno. Licenze del codice riutilizzabile: `../LICENSING_it.md`.
   single-session-assistant). Per i client agentici conta (le azioni dell'agente,
   le raccomandazioni che l'utente ha accettato). Opzioni: (a) i turni dell'assistente solo come contesto, (b) estrarre anche
   gli elementi affermati dall'assistente con una propria origine (`assistant_stated`), mai mescolati con i ricordi
-  vissuti dal proprietario. Scelta: (b), coerente con la provenienza H3.
+  vissuti dal titolare. Scelta: (b), coerente con la provenienza H3.

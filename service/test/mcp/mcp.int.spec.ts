@@ -27,7 +27,7 @@ describe('MCP endpoint', () => {
   let keyA: string;
   let keyB: string;
   let token: string;
-  let ownerId: string;
+  let memoryId: string;
 
   beforeAll(async () => {
     const fake = await startFakeEmbeddings();
@@ -45,12 +45,12 @@ describe('MCP endpoint', () => {
     const b = await mk('Other platform');
     keyA = a.key;
     keyB = b.key;
-    ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
+    memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
     for (const [cid, ext] of [[a.id, 'luca-a'], [b.id, 'luca-b']]) {
-      await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: cid, externalId: ext } });
+      await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: memoryId, clientId: cid, externalId: ext } });
     }
-    token = (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: a.id, scopes: ['mcp'] } })).body.token;
-    const other = await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Elena' } });
+    token = (await call(url, 'POST', `/api/v1/admin/memories/${memoryId}/tokens`, { token: ADMIN_KEY, body: { clientId: a.id, scopes: ['mcp'] } })).body.token;
+    const other = await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Elena' } });
     await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: other.body.personId, clientId: a.id, externalId: 'elena' } });
 
     const ingest = (user: string, conv: string, content: string, participants: unknown[] = []) => call(url, 'POST', '/api/v1/ingest/messages', {
@@ -63,15 +63,15 @@ describe('MCP endpoint', () => {
   });
   afterAll(async () => { await app?.close(); emb?.close(); });
 
-  it('lists the tools and searches the raw log for the token owner (owner-direct)', async () => {
+  it('lists the tools and searches the raw log for the token memory (memory-direct)', async () => {
     const { client } = await connect(url, { authorization: `Bearer ${token}` });
     const tools = await client.listTools();
     expect(tools.tools.map((t) => t.name)).toContain('search_episodes');
     const out = await search(client, { query: 'backup del NAS' });
     const hits = out['fromChats'] as Array<{ excerpt: string; authorRole: string }>;
     expect(hits.map((h) => h.excerpt)).toContain('Come faccio un backup del NAS Synology su un disco esterno USB?');
-    expect(hits.some((h) => h.excerpt.includes('Elena'))).toBe(false); // other owner never leaks
-    expect(hits[0]?.authorRole).toBe('owner');
+    expect(hits.some((h) => h.excerpt.includes('Elena'))).toBe(false); // other memory never leaks
+    expect(hits[0]?.authorRole).toBe('holder');
     await client.close();
   });
 
@@ -121,7 +121,7 @@ describe('MCP endpoint', () => {
     await group('shifts', 'Kevin', 'k1', '@bot put in his calendar that he covers all my Saturdays in April', '2026-02-10T18:00:00+01:00');
     // The extractor stores people as "Name (relation)": that is where "my mother" becomes Gabriella.
     const db = app.get(DataSource);
-    const [ep] = await db.query(`INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience) VALUES ($1, 'event', 'Pranzo da Gabriella', 'owner_lived', 'owner', $2) RETURNING id`, [ownerId, [ownerId]]);
+    const [ep] = await db.query(`INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience) VALUES ($1, 'event', 'Pranzo da Gabriella', 'holder_lived', 'holder', $2) RETURNING id`, [memoryId, [memoryId]]);
     await db.query(`INSERT INTO episode_people (episode_id, alias, role) VALUES ($1, 'Gabriella (mamma)', 'with')`, [ep.id]);
     const { client } = await connect(url, { authorization: `Bearer ${token}` });
     const excerpts = async (query: string) => ((await search(client, { query }))['fromChats'] as Array<{ excerpt: string; author?: string }>);
@@ -142,7 +142,7 @@ describe('MCP endpoint', () => {
     await b.client.close();
   });
 
-  it('binds a session to its owner: another user on the same session is rejected and the session closed', async () => {
+  it('binds a session to its memory: another user on the same session is rejected and the session closed', async () => {
     const { transport, client } = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', 'x-recordare-conversation': 'nas-chat' });
     const sessionId = transport.sessionId as string;
     const hijack = await fetch(`${url}/mcp`, {
@@ -170,7 +170,7 @@ describe('MCP endpoint', () => {
     await client.close();
   });
 
-  it('does not bind an agent write to an unrelated owner message; forgetting removes hidden duplicates too', async () => {
+  it('does not bind an agent write to an unrelated memory message; forgetting removes hidden duplicates too', async () => {
     await call(url, 'POST', '/api/v1/ingest/messages', {
       token: keyA, headers: { 'x-recordare-user': 'luca-a' },
       body: { conversation: { externalId: 'hi-chat' }, messages: [{ externalId: 'h1', role: 'user', content: 'ciao', sentAt: new Date().toISOString() }] },
@@ -183,11 +183,11 @@ describe('MCP endpoint', () => {
       .toEqual([{ origin: 'assistant_stated', author_role: 'assistant', importance: 5, stance: 'inferred', confidence: 0.6 }]);
     // A hidden duplicate of it must be forgotten together with it.
     const [dup] = await db.query(
-      `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, duplicate_of)
-       VALUES ($1, 'event', 'copia', 'owner_lived', 'owner', $2, $3) RETURNING id`, [ownerId, [ownerId], id]);
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, duplicate_of)
+       VALUES ($1, 'event', 'copia', 'holder_lived', 'holder', $2, $3) RETURNING id`, [memoryId, [memoryId], id]);
     await client.callTool({ name: 'forget_episode', arguments: { id } });
     expect(await db.query(`SELECT count(*)::int AS n FROM episodes WHERE id = ANY($1)`, [[id, dup.id]])).toEqual([{ n: 0 }]);
-    // The owner's unrelated "ciao" is not hidden from chat search.
+    // The memory's unrelated "ciao" is not hidden from chat search.
     expect(await db.query(`SELECT count(*)::int AS n FROM forget_tombstones WHERE $1 = ANY(message_ids)`,
       [(await db.query(`SELECT id FROM messages WHERE external_id = 'h1'`))[0].id])).toEqual([{ n: 0 }]);
     await client.close();
@@ -196,7 +196,7 @@ describe('MCP endpoint', () => {
   it('binds a personal-token write to the person\'s own recent words from the same client (no conversation header)', async () => {
     const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Connector', kind: 'mcp_client' } })).body.id;
     const other = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Elsewhere', kind: 'mcp_client' } })).body.id;
-    const tok = async (clientId: string) => (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`,
+    const tok = async (clientId: string) => (await call(url, 'POST', `/api/v1/admin/memories/${memoryId}/tokens`,
       { token: ADMIN_KEY, body: { clientId, scopes: ['mcp', 'ingest'] } })).body.token as string;
     const [mine, elsewhere] = [await tok(cc), await tok(other)];
     expect((await call(url, 'POST', '/api/v1/ingest/messages', { token: mine, body: { conversation: { externalId: 'session-1' },
@@ -208,28 +208,28 @@ describe('MCP endpoint', () => {
       await client.close();
       return (await db.query(`SELECT pending, author_role FROM notes WHERE id = $1`, [(res.structuredContent as { id: string }).id]))[0];
     };
-    expect(await note(mine)).toEqual({ pending: false, author_role: 'owner' });
+    expect(await note(mine)).toEqual({ pending: false, author_role: 'holder' });
     // The same words ingested through another client are no evidence for this one.
     expect(await note(elsewhere)).toEqual({ pending: true, author_role: 'assistant' });
   });
 
   it('writes through the tools for any memory: there is no consent step (D50)', async () => {
     const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Fresh', kind: 'mcp_client' } })).body.id;
-    const fresh = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Nuova' } })).body.personId;
-    const token = (await call(url, 'POST', `/api/v1/admin/owners/${fresh}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp'] } })).body.token as string;
+    const fresh = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Nuova' } })).body.personId;
+    const token = (await call(url, 'POST', `/api/v1/admin/memories/${fresh}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp'] } })).body.token as string;
     const { client } = await connect(url, { authorization: `Bearer ${token}` });
     const out = async (name: string, args: Record<string, unknown>) => (await client.callTool({ name, arguments: args })).structuredContent;
     expect(await out('log_episode', { content: 'Ho comprato una bici' })).toMatchObject({ stored: true });
     expect(await out('remember', { content: 'Preferisco il tè' })).toMatchObject({ stored: true });
     const db = app.get((await import('typeorm')).DataSource);
-    expect(await db.query(`SELECT (SELECT count(*) FROM episodes WHERE owner_id = $1)::int AS e, (SELECT count(*) FROM notes WHERE owner_id = $1)::int AS n`, [fresh]))
+    expect(await db.query(`SELECT (SELECT count(*) FROM episodes WHERE memory_id = $1)::int AS e, (SELECT count(*) FROM notes WHERE memory_id = $1)::int AS n`, [fresh]))
       .toEqual([{ e: 1, n: 1 }]);
     await client.close();
   });
 
   it('finds a short fact inside a long message of the person (word similarity), not in an unrelated one', async () => {
     const cc = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Long', kind: 'mcp_client' } })).body.id;
-    const token = (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp', 'ingest'] } })).body.token as string;
+    const token = (await call(url, 'POST', `/api/v1/admin/memories/${memoryId}/tokens`, { token: ADMIN_KEY, body: { clientId: cc, scopes: ['mcp', 'ingest'] } })).body.token as string;
     await call(url, 'POST', '/api/v1/ingest/messages', { token, body: { conversation: { externalId: 'long-1' }, messages: [{ externalId: 'l1', role: 'user', sentAt: new Date().toISOString(),
       content: 'Usa gli strumenti di memoria: prima cerca con chi sono andato allo stadio sabato scorso a vedere la partita con mio fratello, poi ricorda che il mio colore preferito è il verde, e alla fine rispondi in due righe brevi senza elenchi puntati.' }] } });
     const db = app.get((await import('typeorm')).DataSource);
@@ -238,7 +238,7 @@ describe('MCP endpoint', () => {
       const res = await client.callTool({ name: 'remember', arguments: { content, category: 'preference' } });
       return (await db.query(`SELECT pending, author_role FROM notes WHERE id = $1`, [(res.structuredContent as { id: string }).id]))[0];
     };
-    expect(await write('Il mio colore preferito è il verde')).toEqual({ pending: false, author_role: 'owner' });
+    expect(await write('Il mio colore preferito è il verde')).toEqual({ pending: false, author_role: 'holder' });
     expect(await write('Il mio piatto preferito è la carbonara')).toEqual({ pending: true, author_role: 'assistant' });
     await client.close();
   });
@@ -247,16 +247,16 @@ describe('MCP endpoint', () => {
     const db = app.get((await import('typeorm')).DataSource);
     const [msg] = await db.query(`SELECT id FROM messages WHERE external_id = 'nas-chat-1'`);
     const rows: Array<{ id: string }> = [];
-    for (const [content, role] of [['Backup del NAS su disco USB fatto', 'owner'], ['Backup del NAS spostato al cloud', 'owner'], ['Backup del NAS rotto, dice Guest', 'other']]) {
+    for (const [content, role] of [['Backup del NAS su disco USB fatto', 'holder'], ['Backup del NAS spostato al cloud', 'holder'], ['Backup del NAS rotto, dice Guest', 'other']]) {
       const [r] = await db.query(
-        `INSERT INTO episodes (owner_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision)
-         VALUES ($1, 'event', $2, 'owner_lived', $3, $5, $4, '2026-01-22T20:00:00Z', 'day') RETURNING id`,
-        [ownerId, content, role, [ownerId], role === 'other' ? 'inferred' : 'stated']);
+        `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision)
+         VALUES ($1, 'event', $2, 'holder_lived', $3, $5, $4, '2026-01-22T20:00:00Z', 'day') RETURNING id`,
+        [memoryId, content, role, [memoryId], role === 'other' ? 'inferred' : 'stated']);
       rows.push(r);
     }
     const { client } = await connect(url, { authorization: `Bearer ${token}` });
     const out = await search(client, { query: 'backup del NAS' });
-    // Other people's statements are kept apart from the owner's memories, with who said them.
+    // Other people's statements are kept apart from the memory's memories, with who said them.
     expect((out['episodes'] as unknown[]).length).toBe(2);
     expect((out['claims'] as Array<{ authorRole: string; claimedBy?: string[] }>)).toEqual([expect.objectContaining({ authorRole: 'other', claimedBy: [] })]);
     expect((out['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).toContain(msg.id);
@@ -264,7 +264,7 @@ describe('MCP endpoint', () => {
     expect(out['memory']).toEqual({ name: 'Luca', mode: 'personal' }); // the memory's self: items in the first person
     expect(out['speaker']).toEqual({ kind: 'self' }); // a personal token, no conversation: the self asks
     expect((out['episodes'] as Array<{ subject: unknown }>)[0]?.subject).toEqual({ kind: 'self' });
-    // The owner's own words stay even when an episode stands on that message ("I asked you" is not in the episode).
+    // The holder's own words stay even when an episode stands on that message ("I asked you" is not in the episode).
     await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2)`, [rows[0]?.id, msg.id]);
     const again = await search(client, { query: 'backup del NAS' });
     expect((again['fromChats'] as Array<{ messageId: string }>).map((h) => h.messageId)).toContain(msg.id);
@@ -277,9 +277,9 @@ describe('MCP endpoint', () => {
     const ids: string[] = [];
     for (const content of ['Cena al ristorante giapponese', 'Visita dal dentista', 'Partita di calcetto']) {
       const [r] = await db.query(
-        `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, occurred_at, date_precision, embedding)
-         VALUES ($1, 'event', $2, 'owner_lived', 'owner', $3, '2026-01-20T20:00:00Z', 'day', $4::vector) RETURNING id`,
-        [ownerId, content, [ownerId], `[${fakeVector(content).join(',')}]`]);
+        `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision, embedding)
+         VALUES ($1, 'event', $2, 'holder_lived', 'holder', $3, '2026-01-20T20:00:00Z', 'day', $4::vector) RETURNING id`,
+        [memoryId, content, [memoryId], `[${fakeVector(content).join(',')}]`]);
       ids.push(r.id);
     }
     const { client } = await connect(url, { authorization: `Bearer ${token}` });

@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Raw-log search (D13 fallback, Layer 0): full-text + vector over the owner's non-assistant
+ * Raw-log search (D13 fallback, Layer 0): full-text + vector over the memory's non-assistant
  * messages, fused with weighted reciprocal rank (the spike found vector retrieval more robust
  * under noise, so it weighs more). Limited to the calling client's conversations unless the
  * client's `raw_log_scope` is `all`.
@@ -18,7 +18,7 @@ export interface RawHit {
   conversation: string;
   messageId: string;
   at: string;
-  authorRole: 'owner' | 'other' | 'tool';
+  authorRole: 'holder' | 'other' | 'tool';
   /** Who wrote it, when not the memory's own turn (people by their display name; tools by name). */
   author?: string;
   excerpt: string;
@@ -49,12 +49,12 @@ export class RawLogSearchService {
 
   constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {}
 
-  async search(ownerId: string, clientId: string | null, opts: RawSearchOptions): Promise<RawHit[]> {
+  async search(memoryId: string, clientId: string | null, opts: RawSearchOptions): Promise<RawHit[]> {
     const scope = await this.scopeClause(clientId);
-    const params: unknown[] = [ownerId, opts.from ?? null, opts.to ?? null];
+    const params: unknown[] = [memoryId, opts.from ?? null, opts.to ?? null];
     // Messages behind forgotten memories never come back through the chat search (D16).
-    const base = `m.owner_id = $1 AND m.role <> 'assistant' AND c.deleted_at IS NULL
-      AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.owner_id = $1 AND m.id = ANY(t.message_ids))
+    const base = `m.memory_id = $1 AND m.role <> 'assistant' AND c.deleted_at IS NULL
+      AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.memory_id = $1 AND m.id = ANY(t.message_ids))
       AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}
       ${opts.conversationId ? `AND NOT (m.conversation_id = $${params.push(opts.conversationId)} AND m.sent_at > COALESCE(
         (SELECT max(a.sent_at) FROM messages a WHERE a.conversation_id = $${params.length} AND a.role = 'assistant'), '-infinity'::timestamptz))` : ''}
@@ -106,7 +106,7 @@ export class RawLogSearchService {
     return top.flatMap(([id, score]) => {
       const r = byId.get(id);
       if (!r) return [];
-      const authorRole = r.role === 'tool' ? 'tool' : r.account_speaker ? 'owner' : 'other';
+      const authorRole = r.role === 'tool' ? 'tool' : r.account_speaker ? 'holder' : 'other';
       const author = authorRole === 'tool' ? r.tool_name : authorRole === 'other' ? r.author_name : null;
       return [{
         conversationId: r.conversation_id, conversation: r.external_id, messageId: r.id, at: r.sent_at.toISOString(), authorRole,
