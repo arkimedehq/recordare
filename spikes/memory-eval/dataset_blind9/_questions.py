@@ -1,0 +1,218 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
+"""Questions of blind set #9 (personal agent memory of Beatrice). `ev` = evidence sessions / sources (kept out of
+questions.json, used by check.py). Optional `asker` = an identified contact asking (its `identity` must be declared
+in some session's `participants`); "I" in such a question is the asker, not the holder.
+
+`expected` convention: the text BEFORE "(Dettagli secondari, non richiesti: …)" / "(Secondary details, not
+required: …)" is the key answer; the bracket is extra true context the judge must not require.
+"""
+
+END = "2034-11-06T08:00:00+01:00"      # Mon 6 Nov, after the last session
+END2 = "2034-11-06T18:00:00+01:00"
+SEP29 = "2034-09-29T12:00:00+02:00"    # before the move
+OCT10 = "2034-10-10T21:00:00+02:00"    # before the dinner was cancelled, old schedule, old deadline
+OCT20 = "2034-10-20T21:30:00+02:00"    # before Michele's exam
+OCT24 = "2034-10-24T20:00:00+02:00"
+OCT30 = "2034-10-30T21:00:00+01:00"    # before Inés's visit
+
+MICHELE = {"name": "Michele", "identity": "michele-s"}
+STEFANO = {"name": "Stefano", "identity": "stefano-b"}
+PRIYA = {"name": "Priya", "identity": "priya-r"}
+INES = {"name": "Inés", "identity": "ines-v"}
+
+QUESTIONS = [
+    # ── agent-action: what the agent itself did, recalled in the first person ─────
+    {"id": "q01", "category": "agent-action", "asked_at": END, "ev": ["s02", "s07", "s08"],
+     "q": "Cosa avevo organizzato per Tango dal veterinario a settembre, e com'è andata?",
+     "expected": "Il 20 settembre ho prenotato il richiamo del vaccino di Tango alla Clinica Veterinaria Adige, dal dottor Pedrotti, per giovedì 28 settembre alle 17:30; la clinica lo ha spostato a venerdì 29 settembre alle 18. Fatto: vaccino eseguito il 29, Tango pesava 14,2 kg ed è in forma; prossimo richiamo tra un anno. (Dettagli secondari, non richiesti: avevi chiesto di farlo pesare perché ti sembrava ingrassato.)",
+     "must_not": ["la visita è stata giovedì 28 settembre", "la visita non è ancora stata fatta", "Tango pesa 12 kg"]},
+    {"id": "q02", "category": "agent-action", "asked_at": END, "ev": ["s05", "s14"],
+     "q": "Quali preventivi avevo confrontato per l'assicurazione dello studio e quale ho scelto?",
+     "expected": "Il 25 settembre ho confrontato tre preventivi con massimale 500 mila: AssiTrento 420 euro l'anno, Linea Studio 385 euro l'anno (danni da acqua inclusi) e Alpiprotect 510 euro l'anno con massimale a un milione. Hai scelto Linea Studio dal 1° ottobre; il costo reale è 395 euro l'anno (tutela legale inclusa), come hai corretto l'11 ottobre.",
+     "must_not": ["hai scelto Alpiprotect", "hai scelto AssiTrento", "la polizza ti costa 385 euro l'anno"]},
+    {"id": "q03", "category": "agent-action", "asked_at": OCT10, "ev": ["s11", "s12"],
+     "q": "Ho un tavolo prenotato per giovedì?",
+     "expected": "Sì: ho prenotato un tavolo per cinque all'Osteria del Grillo per giovedì 12 ottobre alle 20, a nome Sartori (prenotazione fatta il 5 ottobre, confermata via mail). (Dettagli secondari, non richiesti: con Stefano, Noemi, Dario e Serena, la sorella di Noemi.)",
+     "must_not": ["la prenotazione è stata cancellata", "non hai prenotazioni"]},
+    {"id": "q04", "category": "agent-action", "asked_at": END, "ev": ["s11", "s12", "s14"],
+     "q": "Alla fine siamo andati all'Osteria del Grillo il 12 ottobre?",
+     "expected": "No: la prenotazione (tavolo per cinque, giovedì 12 ottobre alle 20) l'ho cancellata mercoledì 11 ottobre perché Dario aveva la febbre; la cena non c'è stata.",
+     "must_not": ["sì, siete andati", "il tavolo è ancora prenotato", "la cena si è spostata al 19 ottobre"]},
+
+    # ── declared-group: who said what in group chats, declared vs display-name authors ─
+    {"id": "q05", "category": "declared-group", "asked_at": END, "ev": ["s04", "s06", "s19", "s23"],
+     "q": "Cosa ha scritto Michele nelle chat in queste settimane, e in quali gruppi?",
+     "expected": "In due gruppi. Nel gruppo «Famiglia Sartori»: la prova finale di infermieristica giovedì 26 ottobre alle 9 (ha corretto la mamma che diceva il 25), il colloquio all'ospedale di Rovereto fatto ma con la graduatoria a dicembre (non ha il posto), poi il 26 ottobre la prova superata con 29/30. Nel gruppo «Trasloco studio»: sarebbe arrivato alle 8:30 per il trasloco con il treno delle 7:40 da Rovereto, portando i guanti da lavoro. (Dettagli secondari, non richiesti: prova al polo universitario di Rovereto; discussione della tesi mercoledì 15 novembre alle 10; cena di festa da Al Borgo alle 20; ok al pranzo del 22 ottobre; ha chiesto quante scatole c'erano.)",
+     "must_not": ["Michele ha ottenuto il posto all'ospedale", "l'esame di Michele era il 25 ottobre"]},
+    {"id": "q06", "category": "declared-group", "asked_at": END, "ev": ["s06"],
+     "q": "Al trasloco dello studio chi ha portato il trapano e chi ha offerto il pranzo?",
+     "expected": "Stefano, entrambe le cose: ha portato trapano e prolunghe e ha offerto la pizza per tutti (gruppo «Trasloco studio», 26 settembre, per il trasloco di sabato 30 settembre). (Dettagli secondari, non richiesti: Michele ha portato i guanti da lavoro; furgone noleggiato da Autonoleggio Vela.)",
+     "must_not": ["Michele ha portato il trapano", "Michele ha offerto il pranzo"]},
+    {"id": "q07", "category": "declared-group", "asked_at": END, "ev": ["s09", "s13"],
+     "q": "Chi è Pietro e cosa ha chiesto nel gruppo dello studio?",
+     "expected": "Pietro Valcanover è l'osteopata che usa la stanza piccola dello studio il giovedì. Nel gruppo «Studio Suffragio» il 9 ottobre ha chiesto di poter usare anche lui il Sonotherm 300 il giovedì pagando la sua parte (Greta ha detto sì), e ha detto che avrebbe portato le sue cose giovedì 12 ottobre.",
+     "must_not": ["Pietro è un fisioterapista", "Pietro ha comprato il Sonotherm"]},
+
+    # ── claim: what others said — unconfirmed, confirmed, denied ────────────────────
+    {"id": "q08", "category": "claim", "asked_at": END, "ev": ["s04", "s19"],
+     "q": "Michele ha preso il posto all'ospedale di Rovereto?",
+     "expected": "Non risulta: lo ha detto solo papà Ennio nel gruppo di famiglia il 23 settembre; Michele ha precisato due volte (23 settembre e 20 ottobre) di aver fatto solo il colloquio e che la graduatoria esce a dicembre.",
+     "must_not": ["sì, Michele ha il posto", "Michele lavora all'ospedale di Rovereto"]},
+    {"id": "q09", "category": "claim", "asked_at": END, "ev": ["s19"],
+     "q": "Mi sono fatta male alla spalla?",
+     "expected": "No: il 20 ottobre tua mamma Loredana ha riportato nel gruppo di famiglia che Noemi lo diceva, e tu l'hai smentito: solo una contrattura al trapezio due settimane prima, già passata.",
+     "must_not": ["sì, ti sei fatta male alla spalla", "hai un infortunio alla spalla"]},
+    {"id": "q10", "category": "claim", "asked_at": END, "ev": ["s13", "s18", "s27"],
+     "q": "Il lettino elettrico per lo studio l'ho ordinato?",
+     "expected": "Sì: l'hai ordinato il 18 ottobre da Fisiomarket, 1.150 euro, consegnato e montato lunedì 30 ottobre. Il 9 ottobre Greta aveva detto nel gruppo dello studio che lo avevi già ordinato, ma allora era prematuro: stavi aspettando il preventivo.",
+     "must_not": ["non l'hai ordinato", "l'hai ordinato il 9 ottobre", "non è ancora arrivato"]},
+
+    # ── asker-self: an identified contact asks about themselves ───────────────────
+    {"id": "q11", "category": "asker-self", "asked_at": SEP29, "asker": MICHELE, "ev": ["s06"],
+     "q": "A che ora devo essere sabato per il trasloco, e dove?",
+     "expected": "Sabato 30 settembre alle 8:30 in via Suffragio 8 a Trento, il nuovo studio di Beatrice. (Dettagli secondari, non richiesti: hai detto che prendevi il treno delle 7:40 da Rovereto e portavi i guanti da lavoro; Stefano porta trapano e prolunghe e offre la pizza.)",
+     "must_not": ["alle 8 in via Grazioli", "domenica"]},
+    {"id": "q12", "category": "asker-self", "asked_at": OCT20, "asker": MICHELE, "ev": ["s04", "s19"],
+     "q": "Quando ho l'esame e dove?",
+     "expected": "La prova finale di infermieristica è giovedì 26 ottobre alle 9 al polo universitario di Rovereto (tua mamma diceva il 25, tu hai corretto). (Dettagli secondari, non richiesti: la discussione della tesi è mercoledì 15 novembre.)",
+     "must_not": ["mercoledì 25 ottobre", "sabato 11 novembre", "il corso a Verona"]},
+    {"id": "q13", "category": "asker-self", "asked_at": OCT10, "asker": PRIYA, "ev": ["s10"],
+     "q": "Which part of the abstract did I take on, and by when did I say I'd send it?",
+     "expected": "Methods and statistics, to be sent to Beatrice and Jonas by Wednesday 25 October (agreed on 4 October; the congress deadline was Friday 27 October). (Secondary details, not required: Jonas writes background and introduction, Beatrice the case descriptions and the discussion; 14 cases.)",
+     "must_not": ["case descriptions", "background and introduction", "by Friday 27 October"]},
+    {"id": "q14", "category": "asker-self", "asked_at": OCT30, "asker": INES, "ev": ["s16"],
+     "q": "¿Qué día llego a Trento, a qué hora, y dónde voy a dormir?",
+     "expected": "El viernes 3 de noviembre: el vuelo aterriza en Verona a las 15:40 y el tren llega a Trento a las 18:20; Beatrice te espera en la estación. Dormirás en la habitación de invitados de Beatrice y Stefano, hasta el domingo 5 de noviembre.",
+     "must_not": ["llegas el sábado", "duermes en un hotel", "llegas a Milán"]},
+    {"id": "q15", "category": "asker-self", "asked_at": END, "asker": STEFANO, "ev": ["s11", "s27"],
+     "q": "Quando ho iniziato nel ruolo nuovo, e qual è?",
+     "expected": "Mercoledì 1° novembre 2034: responsabile dell'area anziani alla Cooperativa Il Ponte, prima eri coordinatore dei servizi (lo avevi annunciato nel gruppo «Compagnia del giovedì» il 5 ottobre).",
+     "must_not": ["il 2 ottobre", "hai aperto lo studio in via Suffragio", "sei fisioterapista"]},
+
+    # ── asker-other: an identified contact asks about the holder or a third person ──
+    {"id": "q16", "category": "asker-other", "asked_at": END, "asker": STEFANO, "ev": ["s15", "s32"],
+     "q": "Quando è il secondo modulo del corso di Beatrice, e dove?",
+     "expected": "Sabato 11 e domenica 12 novembre 2034 a Verona. (Dettagli secondari, non richiesti: corso di Riabilitazione del pavimento pelvico con la dottoressa Omboni; treni già prenotati: sabato 7:04 da Trento, domenica ritorno 18:35 da Verona Porta Nuova.)",
+     "must_not": ["14 e 15 ottobre", "a Trento", "a Porto"]},
+    {"id": "q17", "category": "asker-other", "asked_at": OCT24, "asker": STEFANO, "ev": ["s04", "s20"],
+     "q": "L'esame di Michele è mercoledì 25 ottobre, giusto? A che ora?",
+     "expected": "No: la prova finale di Michele è giovedì 26 ottobre alle 9, al polo universitario di Rovereto. Il 25 lo aveva detto la mamma Loredana e Michele l'ha corretta.",
+     "must_not": ["sì, mercoledì 25 ottobre", "l'esame è il 25"]},
+
+    # ── plan: plans and their fate ─────────────────────────────────────────────────
+    {"id": "q18", "category": "plan", "asked_at": END, "ev": ["s12", "s14", "s15", "s32"],
+     "q": "Il corso di Verona: il modulo 1 l'ho fatto? E il modulo 2?",
+     "expected": "Modulo 1 fatto sabato 14 e domenica 15 ottobre a Verona. Modulo 2 ancora da fare: sabato 11 e domenica 12 novembre a Verona. (Dettagli secondari, non richiesti: dottoressa Valeria Omboni, 18 partecipanti; treni per il modulo 2 prenotati il 5 novembre, 7:04 all'andata, 18:35 al ritorno.)",
+     "must_not": ["il modulo 1 è il 21 e 22 ottobre", "il modulo 2 è già stato fatto", "il corso è stato cancellato"]},
+    {"id": "q19", "category": "plan", "asked_at": END, "ev": ["s18", "s25", "s27"],
+     "q": "La consegna del lettino elettrico era prevista per quando, ed è arrivata?",
+     "expected": "Prevista per lunedì 30 ottobre (ordine del 18 ottobre da Fisiomarket, 1.150 euro) e arrivata quel giorno: lettino consegnato e montato il 30 ottobre.",
+     "must_not": ["non è ancora arrivato", "è arrivato il 18 ottobre"]},
+    {"id": "q20", "category": "plan", "asked_at": END, "ev": ["s10", "s22", "s24", "s28", "s29"],
+     "q": "What was the deadline for the Porto abstract, and what happened with it?",
+     "expected": "The deadline was originally Friday 27 October; on 25 October the congress extended it to Friday 3 November. I submitted the abstract on Thursday 2 November at 16:10, confirmation number PC35-0412. (Secondary details, not required: 298 words; Beatrice offered to be the presenting author and Jonas agreed; results expected in January; title «Manual therapy and supervised exercise in persistent pelvic pain: a case series of 14 patients».)",
+     "must_not": ["the abstract has not been submitted", "submitted on 27 October", "the deadline is still 27 October"]},
+
+    # ── correction: own details, the agent's wrong recall, another person's statement ─
+    {"id": "q21", "category": "correction", "asked_at": END, "ev": ["s11", "s18"],
+     "q": "Chi mi aveva detto che avevo vinto 8.000 euro col bando, e come stanno davvero le cose?",
+     "expected": "Noemi, nel gruppo «Compagnia del giovedì» il 5 ottobre, quando la graduatoria non era ancora uscita. In realtà il contributo della Provincia l'hai ottenuto (graduatoria uscita, me l'hai detto il 18 ottobre) ma è di 6.000 euro, non 8.000.",
+     "must_not": ["hai vinto 8.000 euro", "non hai vinto il bando", "te l'ha detto Greta"]},
+    {"id": "q22", "category": "correction", "asked_at": END, "ev": ["s01", "s08"],
+     "q": "Quanti anni ha Tango?",
+     "expected": "6 anni: è nato nell'aprile del 2028. All'inizio (18 settembre) avevi detto 5, poi il 30 settembre hai corretto.",
+     "must_not": ["Tango ha 5 anni"]},
+    {"id": "q23", "category": "correction", "asked_at": END, "ev": ["s12", "s14", "s15"],
+     "q": "Ti sei mai sbagliato sulle date del corso di Verona?",
+     "expected": "Sì: l'11 ottobre ho detto che il corso era il weekend del 21 e 22 ottobre e tu mi hai corretto: il modulo 1 era sabato 14 e domenica 15 ottobre (treni già prenotati), mentre il 21 ottobre è il compleanno di tua mamma.",
+     "must_not": ["il corso era il 21 e 22 ottobre", "non mi sono mai sbagliato"]},
+
+    # ── state-now: current value vs earlier values ─────────────────────────────────
+    {"id": "q24", "category": "state-now", "asked_at": OCT10, "ev": ["s09"],
+     "q": "In questo periodo quali giorni della settimana sono in studio?",
+     "expected": "Lunedì, mercoledì e venerdì, più il sabato mattina; martedì e giovedì fai le visite a domicilio (organizzazione dal 2 ottobre).",
+     "must_not": ["da lunedì a giovedì", "il venerdì fai le visite a domicilio"]},
+    {"id": "q25", "category": "state-now", "asked_at": END, "ev": ["s09", "s21"],
+     "q": "Quali giorni sono in studio adesso?",
+     "expected": "Da lunedì a giovedì più il sabato mattina; le visite a domicilio solo il venerdì (dal 23 ottobre; prima, dal 2 ottobre, eri in studio lunedì, mercoledì e venerdì con le visite a domicilio martedì e giovedì).",
+     "must_not": ["martedì e giovedì fai le visite a domicilio", "in studio solo lunedì, mercoledì e venerdì"]},
+    {"id": "q26", "category": "state-now", "asked_at": OCT10, "ev": ["s10"],
+     "q": "Quando scade l'abstract per il congresso di Porto?",
+     "expected": "Venerdì 27 ottobre 2034 (Priya lo ha scritto nel gruppo il 4 ottobre). (Dettagli secondari, non richiesti: Priya manda metodi e statistica entro mercoledì 25 ottobre.)",
+     "must_not": ["3 novembre", "è già stato inviato"]},
+
+    # ── knowledge: content of learned sources (one in the forgotten source) ─────────
+    {"id": "q27", "category": "knowledge", "asked_at": END, "ev": ["s03", "k-lease"],
+     "q": "Secondo il contratto dello studio, quanto preavviso devo dare se voglio lasciarlo, e come?",
+     "expected": "Sei mesi di preavviso, comunicati via PEC o raccomandata (articolo 6 del contratto di via Suffragio 8).",
+     "must_not": ["tre mesi", "un mese", "non c'è preavviso"]},
+    {"id": "q28", "category": "knowledge", "asked_at": END, "ev": ["k-sonotherm"],
+     "q": "What does error E3 on the Sonotherm 300 mean, and what should I do?",
+     "expected": "E3 means the treatment head has overheated: switch the device off and wait 10 minutes before resuming. (Secondary details, not required: E1 = head disconnected, E2 = insufficient contact / add gel.)",
+     "must_not": ["E3 means the head is disconnected", "E3 means insufficient gel"]},
+    {"id": "q29", "category": "knowledge", "asked_at": END, "ev": ["s15", "k-course"],
+     "q": "Secondo la dispensa della Omboni, quanto dura il protocollo base e com'è strutturato?",
+     "expected": "12 settimane: nelle settimane 1-4, 3 serie da 10 contrazioni di 5 secondi (10 secondi di riposo) 3 volte al giorno; dalle settimane 5-12 contrazioni di 8 secondi con 10 contrazioni rapide alla fine di ogni serie; rivalutazione con lo schema PERFECT alla settimana 6 e alla 12.",
+     "must_not": ["8 settimane", "6 settimane in totale", "una volta al giorno"]},
+    {"id": "q30", "category": "knowledge", "asked_at": END, "ev": ["s16", "k-recipe"],
+     "q": "Según la receta de la abuela de Inés, ¿a qué temperatura y cuánto tiempo va el arroz al horno?",
+     "expected": "Horno precalentado a 220 °C durante 25 minutos, sin remover; luego 5 minutos de reposo fuera del horno. (Detalles secundarios, no requeridos: 400 g de arroz bomba y 800 ml de caldo, el doble que de arroz.)",
+     "must_not": ["180 °C", "45 minutos", "removiendo"]},
+    {"id": "q31", "category": "knowledge", "asked_at": END, "ev": ["s18", "k-notes"],
+     "q": "Secondo i miei appunti per Fedrizzi, quanto devo versare di acconto entro il 30 novembre?",
+     "expected": "2.340 euro (con la domanda se si può ridurre viste le spese dello studio). (Dettagli secondari, non richiesti: ricavi 2033 41.200 euro, regime forfettario al 78 %.)",
+     "must_not": ["1.870 euro", "6.000 euro", "non lo so"]},
+    {"id": "q32", "category": "knowledge", "asked_at": END, "ev": ["s07", "k-alarm", "s27", "forget-k-alarm"],
+     "q": "Qual è il codice dell'allarme dello studio e come si inserisce?",
+     "expected": "Non lo so più: le istruzioni del vecchio allarme (date dal signor Dallapiccola, imparate il 27 settembre) le ho dimenticate il 30 ottobre, quando il sistema è stato sostituito, su tua richiesta; il codice nuovo non mi è stato dato (te lo consegna a mano). Il contenuto non è più disponibile.",
+     "must_not": ["4471", "9900", "premere ON e digitare il codice"]},
+
+    # ── knowledge-provenance: who gave a source, when, and what was done with it ───
+    {"id": "q33", "category": "knowledge-provenance", "asked_at": END, "ev": ["s13", "k-sonotherm"],
+     "q": "Chi mi ha passato il manuale del Sonotherm e quando?",
+     "expected": "Greta: ha comprato il Sonotherm 300 per lo studio (lo ha scritto nel gruppo «Studio Suffragio» il 9 ottobre, arrivo mercoledì 11) e mi ha mandato il manuale per mail la sera stessa, lunedì 9 ottobre.",
+     "must_not": ["te l'ha dato Pietro", "l'hai comprato tu", "l'hai imparato a settembre"]},
+    {"id": "q34", "category": "knowledge-provenance", "asked_at": END, "ev": ["s16", "k-recipe", "s25"],
+     "q": "Da dove viene la ricetta dell'arroz al horno e cosa ne ho fatto?",
+     "expected": "Da Inés: è la ricetta di sua nonna, me l'ha mandata nel gruppo «Pilates Valencia 2033» martedì 17 ottobre perché gliel'avevi chiesta. L'hai cucinata domenica 29 ottobre per i genitori di Stefano, Mirella e Gianpaolo; Mirella ha chiesto la ricetta e te l'ho rimandata per girargliela.",
+     "must_not": ["la ricetta è di Rocío", "l'hai cucinata per Inés", "non l'hai ancora provata"]},
+    {"id": "q35", "category": "knowledge-provenance", "asked_at": END, "ev": ["s03", "k-lease", "s17", "s21"],
+     "q": "Quando ho imparato il contratto dello studio e quando l'ho usato?",
+     "expected": "Me lo hai incollato giovedì 21 settembre, il giorno in cui lo hai firmato con il signor Renato Dallapiccola. L'ho usato martedì 17 ottobre: quando si è rotto lo scaldabagno ho scritto al signor Dallapiccola citando l'articolo 7 (impianti e interventi sopra i 150 euro a carico del locatore). (Dettagli secondari, non richiesti: l'idraulico lo ha sostituito venerdì 20 ottobre, 480 euro pagati dal locatore.)",
+     "must_not": ["te l'ha mandato Greta", "lo scaldabagno l'hai pagato tu", "l'hai imparato a ottobre"]},
+
+    # ── temporal: dates, intervals, aggregation across sessions ────────────────────
+    {"id": "q36", "category": "temporal", "asked_at": END, "ev": ["s09", "s27"],
+     "q": "Quanti giorni sono passati tra il primo giorno nello studio nuovo e la consegna del lettino?",
+     "expected": "28 giorni: primo giorno in studio lunedì 2 ottobre, lettino consegnato lunedì 30 ottobre 2034.",
+     "must_not": ["21 giorni", "35 giorni", "un mese e mezzo"]},
+    {"id": "q37", "category": "temporal", "asked_at": END, "ev": ["s15", "s16", "s17", "s18", "s19", "s20", "s21"],
+     "q": "Cosa ho fatto nella settimana dal 16 al 22 ottobre?",
+     "expected": "I fatti principali (una risposta corretta ne riporta la maggior parte, nessuno fuori settimana): martedì 17 si è rotto lo scaldabagno dello studio e ho scritto al signor Dallapiccola, che lo ha fatto sostituire venerdì 20; mercoledì 18 hai ordinato il lettino elettrico (consegna 30 ottobre), saputo di aver vinto il contributo della Provincia (6.000 euro) e ho ordinato i fiori per la mamma; sabato 21 il 65° compleanno della mamma con i fiori consegnati; domenica 22 il pranzo di compleanno a Rovereto con Stefano. (Dettagli secondari, non richiesti: lunedì 16 mi hai raccontato il modulo 1 del corso, fatto il weekend prima, e passato la dispensa della Omboni; martedì 17 Inés ha fissato la visita del 3-5 novembre e mandato la ricetta; mercoledì 18 mi hai passato gli appunti per Fedrizzi; lettino 1.150 euro; venerdì 20 hai smentito la storia della spalla nel gruppo di famiglia; fiori consegnati alle 10.)",
+     "must_not": ["il corso a Verona si è tenuto il 21 e 22 ottobre", "la cena all'Osteria del Grillo"]},
+    {"id": "q38", "category": "temporal", "asked_at": END, "ev": ["s19", "s20", "s23", "s25"],
+     "q": "Quante volte sono andata a Rovereto in queste settimane, e perché?",
+     "expected": "Due volte: domenica 22 ottobre per il pranzo dei 65 anni della mamma (con Stefano) e giovedì 26 ottobre sera per la cena da Al Borgo per la prova finale di Michele (Stefano è arrivato alla fine).",
+     "must_not": ["una volta sola", "tre volte", "per il trasloco"]},
+
+    # ── premise-trap ───────────────────────────────────────────────────────────────
+    {"id": "q39", "category": "premise-trap", "asked_at": END, "ev": ["s04", "s13", "s23"],
+     "q": "Quando ha fatto Greta la prova finale di infermieristica?",
+     "expected": "Greta non ha fatto nessuna prova finale: è la collega fisioterapista con cui condividi lo studio. La prova finale di infermieristica l'ha fatta tuo fratello Michele, giovedì 26 ottobre a Rovereto, superata con 29/30.",
+     "must_not": ["Greta ha fatto l'esame il 26 ottobre", "Greta studia infermieristica"]},
+    {"id": "q40", "category": "premise-trap", "asked_at": END, "ev": ["s12", "s14"],
+     "q": "Com'è andata la cena all'Osteria del Grillo di giovedì 19 ottobre?",
+     "expected": "Non c'è stata nessuna cena il 19 ottobre: la prenotazione all'Osteria del Grillo era per giovedì 12 ottobre alle 20 e l'ho cancellata l'11 ottobre perché Dario aveva la febbre.",
+     "must_not": ["la cena del 19 ottobre è andata bene", "siete andati il 19 ottobre"]},
+
+    # ── negative: never said ───────────────────────────────────────────────────────
+    {"id": "q41", "category": "negative", "asked_at": END, "ev": ["s01"],
+     "q": "What's the number plate of my Yaris?",
+     "expected": "Not known: you never told me the plate. I only know the car is a grey 2029 Toyota Yaris hybrid.",
+     "must_not": ["the plate is TN", "the plate number is"]},
+    {"id": "q42", "category": "negative", "asked_at": END2, "ev": ["s09", "s13"],
+     "q": "Quanto paga Pietro per la stanza piccola dello studio?",
+     "expected": "Non lo so: non è mai stato detto quanto paga Pietro. So solo che usa la stanza piccola il giovedì e che ha offerto di pagare la sua parte per il Sonotherm.",
+     "must_not": ["paga 150 euro", "paga 200 euro al mese"]},
+]

@@ -1,0 +1,1033 @@
+{
+ "_note": "Blind synthetic dataset #9 (fictional people): the personal agent memory of Beatrice (Trento, autumn 2034). Timestamps are Europe/Rome (DST ends Sun 29 Oct 2034). Role 'other' = someone else writing in a group chat (see 'author'); a session's 'participants' declares which authors are identified contacts (same 'identity' = same person across sessions), the others are known by display name only. Entries with 'type': 'source' are learned texts; 'forget_source' removes one.",
+ "users": {
+  "beatrice": "Beatrice Sartori, Trento"
+ },
+ "genders": {
+  "beatrice": "feminine"
+ },
+ "entities": [],
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "beatrice",
+   "ts": "2034-09-18T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao! Da oggi sei il mio assistente personale, quindi ti racconto chi sono. Mi chiamo Beatrice Sartori, ho 36 anni e faccio la fisioterapista a Trento. Fino a fine mese lavoro al Poliambulatorio Clarina; da lunedì 2 ottobre apro uno studio mio in via Suffragio 8, insieme a Greta Moser, una collega fisioterapista. Abito in via Grazioli 14 con il mio compagno Stefano Bortolotti, che coordina i servizi della Cooperativa Il Ponte, e con Tango, il nostro beagle di 5 anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Piacere, Beatrice! Mi segno: fisioterapista a Trento, al Poliambulatorio Clarina fino a fine settembre, poi dal 2 ottobre lo studio in via Suffragio 8 con Greta Moser. Casa in via Grazioli 14 con Stefano (coordinatore dei servizi alla Cooperativa Il Ponte) e il beagle Tango. Famiglia?"
+    },
+    {
+     "role": "user",
+     "content": "Mio fratello Michele ha 29 anni, vive a Rovereto con i miei e sta finendo infermieristica. Mia mamma Loredana compie 65 anni il 21 ottobre; mio papà si chiama Ennio. Io giro con una Toyota Yaris ibrida grigia del 2029. Ti aggiungo anche a qualche chat: la famiglia, lo studio, le amiche del giovedì, il gruppo di ricerca con Priya e Jonas (in inglese) e il gruppo delle ragazze del corso di Pilates di Valencia (in spagnolo)."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto: Michele (29, infermieristica, a Rovereto con Loredana ed Ennio), compleanno di tua mamma il 21 ottobre, Yaris ibrida grigia del 2029. Seguirò anche i gruppi, tenendo distinto quello che dici tu da quello che scrivono gli altri."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "beatrice",
+   "ts": "2034-09-20T18:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tango deve fare il richiamo del vaccino. Mi prenoti alla Clinica Veterinaria Adige, dal dottor Pedrotti, giovedì 28 settembre nel tardo pomeriggio?"
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: ho prenotato Tango alla Clinica Veterinaria Adige con il dottor Pedrotti per giovedì 28 settembre alle 17:30, richiamo del vaccino. Ti metto un promemoria la mattina stessa."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto. Fagli anche pesare Tango, mi sembra ingrassato."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: alla visita chiediamo anche il peso."
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "beatrice",
+   "ts": "2034-09-21T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi ho firmato il contratto di affitto dello studio con il signor Dallapiccola, il proprietario. Te lo incollo, così se mi serve una clausola me la ricordi tu."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, lo imparo per intero."
+    },
+    {
+     "role": "user",
+     "content": "Soprattutto la parte sul recesso, sul deposito e sulle riparazioni: non voglio sorprese."
+    },
+    {
+     "role": "assistant",
+     "content": "Ricevuto: terrò a mente recesso, deposito e riparazioni, ma imparo tutto il testo."
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-lease",
+   "ts": "2034-09-21T21:05:00+02:00",
+   "title": "Contratto di locazione studio — via Suffragio 8",
+   "text": "# Contratto di locazione ad uso studio — via Suffragio 8, Trento\n\nLocatore: Renato Dallapiccola. Conduttrice: Beatrice Sartori.\n\n## Art. 1 — Oggetto\nLocale di 58 m² al primo piano: due stanze, sala d'attesa e bagno, con uso del cortile per carico e scarico.\n\n## Art. 2 — Durata\nSei anni dal 1° ottobre 2034, rinnovabili per altri sei salvo disdetta.\n\n## Art. 3 — Canone\n650 euro mensili, da versare con bonifico entro il giorno 5 di ogni mese. Dal secondo anno il canone è aggiornato al 75 % della variazione ISTAT.\n\n## Art. 4 — Deposito cauzionale\n1.950 euro, pari a tre mensilità, versati alla firma; restituiti entro 60 giorni dalla riconsegna dei locali, salvo danni.\n\n## Art. 5 — Spese\nLe spese condominiali (stimate in 70 euro al mese) sono a carico della conduttrice. Riscaldamento autonomo.\n\n## Art. 6 — Recesso\nLa conduttrice può recedere in qualsiasi momento con preavviso di sei mesi, da comunicare via PEC o raccomandata.\n\n## Art. 7 — Manutenzione\nLe piccole riparazioni fino a 150 euro sono a carico della conduttrice. Gli interventi di importo superiore e quelli sugli impianti (caldaia, scaldabagno, impianto elettrico, infissi) sono a carico del locatore.\n\n## Art. 8 — Destinazione\nUso studio professionale sanitario. La sublocazione parziale è consentita solo con consenso scritto del locatore.\n\n## Art. 9 — Animali\nÈ ammesso un cane di piccola o media taglia, purché non entri nelle stanze dei trattamenti.\n",
+   "kind": "document",
+   "author": "Renato Dallapiccola",
+   "conversation": "s03",
+   "user": "beatrice"
+  },
+  {
+   "id": "s04",
+   "user": "beatrice",
+   "ts": "2034-09-23T10:40:00+02:00",
+   "participants": [
+    {
+     "name": "Michele",
+     "identity": "michele-s"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Loredana",
+     "content": "Buongiorno famiglia! Per il mio compleanno facciamo pranzo qui a Rovereto domenica 22 ottobre, va bene a tutti? Il 21 è sabato e Michele lavora al bar."
+    },
+    {
+     "role": "other",
+     "author": "Michele",
+     "content": "Ok per il 22. Intanto segnatevi: giovedì 26 ottobre ho la prova finale, alle 9 al polo universitario di Rovereto. La tesi la discuto mercoledì 15 novembre."
+    },
+    {
+     "role": "other",
+     "author": "Loredana",
+     "content": "Il 25, non il 26! Me l'avevi detto mercoledì."
+    },
+    {
+     "role": "other",
+     "author": "Michele",
+     "content": "No mamma, giovedì 26. Il 25 è la sera che vengo a cena da voi."
+    },
+    {
+     "role": "user",
+     "content": "Ok per domenica 22, veniamo io e Stefano. E in bocca al lupo Miki, segnato il 26."
+    },
+    {
+     "role": "other",
+     "author": "Ennio",
+     "content": "Bravo Michele, e col posto all'ospedale di Rovereto siamo a cavallo!"
+    },
+    {
+     "role": "other",
+     "author": "Michele",
+     "content": "Papà, ho solo fatto il colloquio, la graduatoria esce a dicembre. Non dire in giro che ho il posto."
+    },
+    {
+     "role": "user",
+     "content": "Papà ottimista come sempre 😄"
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "beatrice",
+   "ts": "2034-09-25T13:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi serve un'assicurazione RC e danni per lo studio. Puoi confrontare qualche offerta? Massimale almeno 500 mila."
+    },
+    {
+     "role": "assistant",
+     "content": "Ho confrontato tre preventivi con massimale 500 mila: AssiTrento 420 euro l'anno, Linea Studio 385 euro l'anno (include i danni da acqua), Alpiprotect 510 euro l'anno ma con massimale a un milione. A parità di copertura la più conveniente è Linea Studio."
+    },
+    {
+     "role": "user",
+     "content": "Vado con Linea Studio, 385. La attivo dal 1° ottobre."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: polizza Linea Studio per lo studio, 385 euro l'anno, dal 1° ottobre."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "beatrice",
+   "ts": "2034-09-26T19:20:00+02:00",
+   "participants": [
+    {
+     "name": "Michele",
+     "identity": "michele-s"
+    },
+    {
+     "name": "Stefano",
+     "identity": "stefano-b"
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ragazzi, trasloco sabato 30 settembre. Ho noleggiato il furgone da Autonoleggio Vela, lo ritiro alle 8. Ci troviamo alle 8:30 in via Suffragio 8."
+    },
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Ok. Porto io il trapano e le prolunghe. Il pranzo lo offro io, pizza per tutti."
+    },
+    {
+     "role": "other",
+     "author": "Michele",
+     "content": "Alle 8:30 ci sono, prendo il treno delle 7:40 da Rovereto. Porto i guanti da lavoro. Quante scatole sono?"
+    },
+    {
+     "role": "user",
+     "content": "Una ventina, più il lettino vecchio e la scrivania. Greta porta le sue cose la settimana dopo."
+    },
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Il furgone lo parcheggio nel cortile?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, il signor Dallapiccola ci apre il cancello alle 8:30."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "beatrice",
+   "ts": "2034-09-27T17:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi ha chiamato la clinica veterinaria: il dottor Pedrotti giovedì non c'è, hanno spostato Tango a venerdì 29 settembre alle 18."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: Tango dal dottor Pedrotti venerdì 29 settembre alle 18:00, non più giovedì 28 alle 17:30. Sposto anche il promemoria."
+    },
+    {
+     "role": "user",
+     "content": "Altra cosa: il signor Dallapiccola mi ha dato il foglio con le istruzioni dell'allarme dello studio. Te le incollo, imparale: se mi dimentico come si fa me lo dici tu."
+    },
+    {
+     "role": "assistant",
+     "content": "Certo, le imparo."
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-alarm",
+   "ts": "2034-09-27T17:50:00+02:00",
+   "title": "Istruzioni allarme studio via Suffragio 8",
+   "text": "# Istruzioni allarme — studio via Suffragio 8\n\n- Codice utente: 4471.\n- Inserimento: premere ON, digitare 4471, attendere il doppio bip; si hanno 30 secondi per uscire e chiudere la porta.\n- Disinserimento: digitare 4471 e premere OFF entro 20 secondi dall'ingresso.\n- Codice di emergenza: 9900 (chiama la centrale operativa senza suono).\n- Centrale operativa: 0461 55 12 12, attiva 24 ore su 24.\n- Batteria tampone della centralina: sostituire ogni tre anni (ultima sostituzione marzo 2033).\n",
+   "kind": "note",
+   "provided_by": "Renato Dallapiccola",
+   "conversation": "s07",
+   "user": "beatrice"
+  },
+  {
+   "id": "s08",
+   "user": "beatrice",
+   "ts": "2034-09-30T20:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Trasloco fatto! Cinque ore, Michele e Stefano sono stati fantastici. E ieri ho portato Tango dal veterinario: vaccino fatto, pesa 14,2 chili, Pedrotti dice che è in forma. Prossimo richiamo tra un anno."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo! Segno: trasloco dello studio completato oggi, sabato 30 settembre; vaccino di Tango fatto ieri, venerdì 29, 14,2 kg, prossimo richiamo a settembre 2035."
+    },
+    {
+     "role": "user",
+     "content": "Correggo una cosa che ti ho detto all'inizio: Tango ha 6 anni, non 5, è nato nell'aprile del 2028."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: Tango ha 6 anni, nato nell'aprile 2028."
+    },
+    {
+     "role": "user",
+     "content": "E mettimi un promemoria per l'affitto dello studio: il 5 di ogni mese, bonifico al signor Dallapiccola."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: promemoria ricorrente il 5 di ogni mese per il bonifico dell'affitto al signor Dallapiccola; il primo giovedì 5 ottobre."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "beatrice",
+   "ts": "2034-10-02T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Primo giorno nello studio nuovo! Tre pazienti, per cominciare va bene. L'organizzazione: lunedì, mercoledì e venerdì sono in studio, martedì e giovedì faccio le visite a domicilio, il sabato mattina in studio. Greta copre gli altri giorni."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: dal 2 ottobre in studio lunedì, mercoledì, venerdì e il sabato mattina; martedì e giovedì visite a domicilio."
+    },
+    {
+     "role": "user",
+     "content": "Il sabato mattina per ora lo tengo, poi vediamo. Ah, in studio c'è anche Pietro Valcanover, un osteopata: usa la stanza piccola il giovedì."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: Pietro Valcanover, osteopata, nella stanza piccola il giovedì."
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "beatrice",
+   "ts": "2034-10-04T17:00:00+02:00",
+   "participants": [
+    {
+     "name": "Priya",
+     "identity": "priya-r"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Priya",
+     "content": "Hi both! The Porto congress (March 2035) has opened submissions: the abstract deadline is Friday 27 October. Shall we go for the case series?"
+    },
+    {
+     "role": "other",
+     "author": "Jonas",
+     "content": "Yes. I can write the background and the introduction."
+    },
+    {
+     "role": "user",
+     "content": "Great. I'll write the case descriptions and the discussion. Priya, can you take methods and statistics?"
+    },
+    {
+     "role": "other",
+     "author": "Priya",
+     "content": "Deal. Methods and statistics are mine, I'll send them to you both by Wednesday 25 October."
+    },
+    {
+     "role": "other",
+     "author": "Jonas",
+     "content": "Beatrice, how many cases do we have now?"
+    },
+    {
+     "role": "user",
+     "content": "Fourteen, all from my old clinic."
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "user": "beatrice",
+   "ts": "2034-10-05T21:40:00+02:00",
+   "participants": [
+    {
+     "name": "Stefano",
+     "identity": "stefano-b"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Noemi",
+     "content": "Allora, giovedì prossimo cena? Ho voglia di Osteria del Grillo."
+    },
+    {
+     "role": "other",
+     "author": "Dario",
+     "content": "Giovedì 12 per me ok. Bea, prenoti tu che hai l'assistente che fa tutto 😄"
+    },
+    {
+     "role": "user",
+     "content": "Va bene, prenoto io per giovedì 12 ottobre alle 20. Siamo in cinque con Stefano e la sorella di Noemi?"
+    },
+    {
+     "role": "other",
+     "author": "Noemi",
+     "content": "Sì, Serena viene. A proposito Bea: mi hanno detto che hai vinto il bando della Provincia per gli studi nuovi, 8.000 euro! Brava!"
+    },
+    {
+     "role": "user",
+     "content": "Ma chi te l'ha detto?? La graduatoria non è ancora uscita, calma 😅"
+    },
+    {
+     "role": "other",
+     "author": "Dario",
+     "content": "E Stefano mi ha detto che a Natale andate alle Canarie."
+    },
+    {
+     "role": "user",
+     "content": "Magari! Non abbiamo prenotato niente, Dario inventa."
+    },
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Confermo che Dario inventa. Una cosa vera invece: dal 1° novembre divento responsabile dell'area anziani in cooperativa, non più coordinatore dei servizi."
+    },
+    {
+     "role": "user",
+     "content": "Questo è vero, ed è bravissimo ❤️"
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "user": "beatrice",
+   "ts": "2034-10-05T22:05:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prenotami un tavolo all'Osteria del Grillo per giovedì 12 ottobre alle 20, cinque persone, a nome mio."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: tavolo per cinque all'Osteria del Grillo giovedì 12 ottobre alle 20:00, a nome Sartori. Hanno confermato via mail."
+    },
+    {
+     "role": "user",
+     "content": "Poi mi serve il treno per il corso a Verona: sabato 14 ottobre andata presto, domenica 15 ritorno verso sera."
+    },
+    {
+     "role": "assistant",
+     "content": "Prenotati due regionali: sabato 14 ottobre Trento 7:04 → Verona Porta Nuova 8:12; domenica 15 ottobre Verona Porta Nuova 18:35 → Trento 19:46. Totale 26,40 euro, biglietti nella tua mail."
+    }
+   ]
+  },
+  {
+   "id": "s13",
+   "user": "beatrice",
+   "ts": "2034-10-09T13:20:00+02:00",
+   "participants": [
+    {
+     "name": "Greta",
+     "identity": "greta-m"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Greta",
+     "content": "Ciao! Ho comprato il Sonotherm 300 per gli ultrasuoni, arriva mercoledì 11 ottobre. Bea, ti mando il manuale per mail stasera così lo impari anche tu."
+    },
+    {
+     "role": "user",
+     "content": "Grande, grazie! Sì, mandamelo."
+    },
+    {
+     "role": "other",
+     "author": "Pietro",
+     "content": "Posso usarlo anch'io il giovedì? Pago la mia parte."
+    },
+    {
+     "role": "other",
+     "author": "Greta",
+     "content": "Certo Pietro. Comunque ragazzi, Bea ha deciso di non prendere più pazienti il sabato, quindi il sabato la stanza grande è libera."
+    },
+    {
+     "role": "user",
+     "content": "Ferma, non è così: ho detto che ci penso. Per ora il sabato mattina continuo a lavorare e la stanza grande è mia."
+    },
+    {
+     "role": "other",
+     "author": "Greta",
+     "content": "Ok scusa, avevo capito male. E il lettino elettrico nuovo l'hai già ordinato, no?"
+    },
+    {
+     "role": "user",
+     "content": "Non ancora, aspetto il preventivo di Fisiomarket. Vi dico."
+    },
+    {
+     "role": "other",
+     "author": "Pietro",
+     "content": "Io porto le mie cose giovedì 12, ci vediamo."
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-sonotherm",
+   "ts": "2034-10-09T20:30:00+02:00",
+   "title": "Sonotherm 300 — Manuale d'uso",
+   "text": "# Sonotherm 300 — Manuale d'uso\n\n## Caratteristiche\nApparecchio per terapia a ultrasuoni con testina da 5 cm². Frequenze 1 MHz e 3 MHz. Modalità continua e pulsata (duty cycle 20 % e 50 %).\n\n## Parametri\n- Modalità continua: intensità massima 2,0 W/cm².\n- Modalità pulsata: intensità massima 3,0 W/cm².\n- Durata consigliata: 5-10 minuti per zona; non superare 15 minuti per seduta.\n\n## Uso\nApplicare sempre gel conduttivo sulla pelle; muovere la testina lentamente in piccoli cerchi. Dopo ogni uso pulire la testina con un panno e alcol al 70 %.\n\n## Controindicazioni\nNon utilizzare su portatori di pacemaker, sugli occhi, sull'addome in gravidanza, su aree con tumori o infezioni attive, sulle cartilagini di accrescimento.\n\n## Codici di errore\n- E1: testina scollegata; controllare il connettore.\n- E2: contatto insufficiente; aggiungere gel e riappoggiare la testina.\n- E3: surriscaldamento della testina; spegnere l'apparecchio e attendere 10 minuti prima di riprendere.\n\n## Manutenzione e garanzia\nCalibrazione annuale presso un centro autorizzato. Garanzia 24 mesi dalla data di acquisto.\n",
+   "kind": "document",
+   "provided_by": "Greta",
+   "user": "beatrice"
+  },
+  {
+   "id": "s14",
+   "user": "beatrice",
+   "ts": "2034-10-11T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Dario ha la febbre, la cena di domani salta. Cancelli la prenotazione all'Osteria del Grillo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto, ho cancellato il tavolo di giovedì 12 ottobre alle 20 all'Osteria del Grillo. Mi dispiace per Dario. Ti ricordo che il tuo corso a Verona è il weekend di sabato 21 e domenica 22 ottobre: vuoi che controlli i treni?"
+    },
+    {
+     "role": "user",
+     "content": "No, sbagli: il corso è sabato 14 e domenica 15 ottobre, questo weekend, e i treni li hai già prenotati tu. Il 21 ottobre è il compleanno di mia mamma."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, scusa: modulo 1 del corso sabato 14 e domenica 15 ottobre a Verona, treni già prenotati; sabato 21 ottobre il compleanno di tua mamma Loredana, pranzo a Rovereto domenica 22."
+    },
+    {
+     "role": "user",
+     "content": "Esatto. Ah, l'assicurazione dello studio: ho riletto la polizza, Linea Studio costa 395 euro l'anno, non 385, c'è dentro anche la tutela legale."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: Linea Studio, 395 euro l'anno con tutela legale."
+    }
+   ]
+  },
+  {
+   "id": "s15",
+   "user": "beatrice",
+   "ts": "2034-10-16T21:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il corso a Verona è andato benissimo: Riabilitazione del pavimento pelvico, modulo 1, con la dottoressa Valeria Omboni, eravamo in 18. Il modulo 2 è sabato 11 e domenica 12 novembre, sempre a Verona."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: modulo 1 fatto sabato 14 e domenica 15 ottobre con la dottoressa Omboni, 18 partecipanti; modulo 2 sabato 11 e domenica 12 novembre a Verona."
+    },
+    {
+     "role": "user",
+     "content": "Ti incollo la dispensa che ci ha dato la Omboni: imparala, mi serve con le pazienti."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, la imparo."
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-course",
+   "ts": "2034-10-16T21:20:00+02:00",
+   "title": "Riabilitazione del pavimento pelvico — dispensa modulo 1",
+   "text": "# Riabilitazione del pavimento pelvico — modulo 1\nDispensa del corso (dott.ssa Valeria Omboni), Verona, 14-15 ottobre 2034\n\n## Valutazione iniziale\nAnamnesi e valutazione con lo schema PERFECT (Power, Endurance, Repetitions, Fast contractions, Every Contraction Timed). Registrare il grado di forza da 0 a 5.\n\n## Protocollo base (12 settimane)\n- Settimane 1-4: 3 serie da 10 contrazioni di 5 secondi, con 10 secondi di riposo tra una contrazione e l'altra, 3 volte al giorno.\n- Settimane 5-12: contrazioni portate a 8 secondi; aggiungere 10 contrazioni rapide alla fine di ogni serie.\n- Rivalutazione con lo schema PERFECT alla settimana 6 e alla settimana 12.\n\n## Biofeedback\nDalla settimana 3 se la forza di contrazione è inferiore al grado 3. Controindicazioni al biofeedback intracavitario: gravidanza, infezioni in corso, prime sei settimane dopo il parto.\n\n## Diario\nLa paziente compila un diario giornaliero (serie fatte, perdite, sintomi); si rivede a ogni seduta.\n",
+   "kind": "document",
+   "author": "dott.ssa Valeria Omboni",
+   "conversation": "s15",
+   "user": "beatrice"
+  },
+  {
+   "id": "s16",
+   "user": "beatrice",
+   "ts": "2034-10-17T14:05:00+02:00",
+   "participants": [
+    {
+     "name": "Inés",
+     "identity": "ines-v"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Inés",
+     "content": "¡Hola chicas! Bea, ya tengo el vuelo: llego a Verona el viernes 3 de noviembre a las 15:40 y cojo el tren a Trento, llego a las 18:20. Me quedo hasta el domingo 5 de noviembre."
+    },
+    {
+     "role": "user",
+     "content": "¡Qué bien! Te espero en la estación. Duermes en nuestra habitación de invitados, Tango ya está avisado 🐶"
+    },
+    {
+     "role": "other",
+     "author": "Rocío",
+     "content": "Yo esta vez no puedo, tengo el bautizo de mi sobrina ese fin de semana. ¡Mandad fotos!"
+    },
+    {
+     "role": "other",
+     "author": "Inés",
+     "content": "Bea, te paso la receta del arroz al horno de mi abuela que me pediste, te la pego aquí abajo. Hazla con el horno bien caliente."
+    },
+    {
+     "role": "user",
+     "content": "¡Gracias! La guardo, quiero hacerla para los padres de Stefano."
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-recipe",
+   "ts": "2034-10-17T14:10:00+02:00",
+   "title": "Arroz al horno de la abuela de Inés",
+   "text": "# Arroz al horno de la abuela de Inés\n\nPara 4 personas.\n\n## Ingredientes\n400 g de arroz bomba, 300 g de costillas de cerdo troceadas, 2 morcillas de cebolla, 200 g de garbanzos cocidos, 1 patata grande, 1 tomate maduro, 1 cabeza de ajos entera, 1 cucharadita de pimentón dulce, azafrán, 800 ml de caldo de cocido (el doble que de arroz), aceite de oliva, sal.\n\n## Preparación\n1. Dorar en la cazuela de barro las costillas con un poco de aceite; apartar.\n2. Freír la patata en rodajas y el tomate partido por la mitad; reservar.\n3. Sofreír el arroz con el pimentón medio minuto, repartir las costillas, los garbanzos, las morcillas, la patata, el tomate y la cabeza de ajos en el centro.\n4. Añadir el caldo muy caliente con el azafrán y la sal.\n5. Meter en el horno precalentado a 220 °C durante 25 minutos, sin remover nunca.\n6. Dejar reposar 5 minutos fuera del horno antes de servir.\n",
+   "kind": "note",
+   "provided_by": "Inés",
+   "conversation": "s16",
+   "user": "beatrice"
+  },
+  {
+   "id": "s17",
+   "user": "beatrice",
+   "ts": "2034-10-17T19:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lo scaldabagno dello studio è morto, niente acqua calda. Scrivi tu al signor Dallapiccola? Il contratto dice che gli impianti sono a carico suo."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: ho mandato un messaggio al signor Dallapiccola segnalando il guasto dello scaldabagno e citando l'articolo 7 del contratto (impianti e interventi sopra i 150 euro a carico del locatore), chiedendo un intervento entro la settimana. Ti metto un promemoria per venerdì 20 ottobre se non risponde."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, grazie."
+    }
+   ]
+  },
+  {
+   "id": "s18",
+   "user": "beatrice",
+   "ts": "2034-10-18T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho ordinato il lettino elettrico da Fisiomarket, 1.150 euro, consegna lunedì 30 ottobre. E notizia: è uscita la graduatoria del bando della Provincia, il contributo l'ho preso! Sono 6.000 euro, non 8.000 come diceva Noemi."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Segno: lettino elettrico Fisiomarket, 1.150 euro, consegna lunedì 30 ottobre; contributo della Provincia vinto, 6.000 euro."
+    },
+    {
+     "role": "user",
+     "content": "Poi mi ordini dei fiori per mia mamma? Consegna sabato 21 ottobre mattina a Rovereto, via Dante 7, un mazzo sui 45 euro, biglietto «Buon compleanno mamma, Bea e Stefano»."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: ho ordinato da Fiorelli un mazzo autunnale da 45 euro con il biglietto, consegna sabato 21 ottobre tra le 9 e le 12 in via Dante 7 a Rovereto."
+    },
+    {
+     "role": "user",
+     "content": "Ultima cosa: lunedì 6 novembre alle 11 ho l'appuntamento con Fedrizzi, il commercialista. Ti incollo i miei appunti, tienimeli."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato l'appuntamento con Fedrizzi lunedì 6 novembre alle 11; imparo i tuoi appunti."
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "id": "k-notes",
+   "ts": "2034-10-18T13:10:00+02:00",
+   "title": "Appunti per Fedrizzi (commercialista), 6 novembre",
+   "text": "# Appunti per Fedrizzi — appuntamento lunedì 6 novembre\n\n- Ricavi 2033: 41.200 euro; regime forfettario, coefficiente di redditività 78 %.\n- Acconto da versare entro il 30 novembre: 2.340 euro (chiedere se si può ridurre viste le spese dello studio).\n- Lettino elettrico 1.150 euro e Sonotherm (quota mia): nel forfettario non si deducono, chiedere conferma.\n- Contributo della Provincia 6.000 euro: come si tassa nel forfettario?\n- Cassa di previdenza: saldo 1.870 euro entro il 31 dicembre, verificare.\n- Nuovo studio: codice ATECO da aggiornare? Comunicazione di inizio attività nella nuova sede.\n- Canone studio 650 euro al mese: nel forfettario non si deduce, confermare.\n- Se nel 2035 i ricavi superano 85.000 euro si esce dal forfettario: non è il caso, ma chiedere la soglia aggiornata.\n",
+   "kind": "own_text",
+   "conversation": "s18",
+   "user": "beatrice"
+  },
+  {
+   "id": "s19",
+   "user": "beatrice",
+   "ts": "2034-10-20T18:50:00+02:00",
+   "participants": [
+    {
+     "name": "Michele",
+     "identity": "michele-s"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Loredana",
+     "content": "Bea, la Noemi mi ha detto che ti sei fatta male alla spalla, perché non me lo dici?"
+    },
+    {
+     "role": "user",
+     "content": "Mamma, non mi sono fatta male: avevo una contrattura al trapezio due settimane fa, già passata. Noemi esagera."
+    },
+    {
+     "role": "other",
+     "author": "Loredana",
+     "content": "Meno male. Allora domenica alle 12:30, faccio gli strangolapreti."
+    },
+    {
+     "role": "other",
+     "author": "Michele",
+     "content": "Io ci sono. Il colloquio all'ospedale l'ho fatto, ma la graduatoria esce a dicembre: papà, non dire niente a nessuno."
+    },
+    {
+     "role": "other",
+     "author": "Ennio",
+     "content": "Io non dico niente."
+    },
+    {
+     "role": "user",
+     "content": "Alle 12:30 ci siamo, portiamo noi il dolce."
+    }
+   ]
+  },
+  {
+   "id": "s20",
+   "user": "beatrice",
+   "ts": "2034-10-22T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pranzo a Rovereto fatto, mamma felicissima: i fiori sono arrivati ieri mattina alle 10 e li ha adorati. Ieri ha compiuto 65 anni. Michele è tranquillo per giovedì, l'esame è alle 9."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene! Segno: pranzo di compleanno a Rovereto oggi, domenica 22 ottobre; fiori consegnati ieri, sabato 21, alle 10; Michele pronto per la prova finale di giovedì 26 ottobre alle 9."
+    },
+    {
+     "role": "user",
+     "content": "Stefano ha guidato, io ho dormito al ritorno 😄"
+    },
+    {
+     "role": "assistant",
+     "content": "Meritato."
+    }
+   ]
+  },
+  {
+   "id": "s21",
+   "user": "beatrice",
+   "ts": "2034-10-23T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Da oggi cambio organizzazione: in studio da lunedì a giovedì, le visite a domicilio solo il venerdì. Il sabato mattina in studio resta."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato dal 23 ottobre: studio da lunedì a giovedì più il sabato mattina; visite a domicilio il venerdì. Prima era lunedì, mercoledì e venerdì in studio."
+    },
+    {
+     "role": "user",
+     "content": "Esatto. E lo scaldabagno: il signor Dallapiccola ha mandato l'idraulico venerdì 20 ottobre, sostituito, 480 euro pagati da lui. Oggi ho anche iniziato il protocollo della dispensa della Omboni con la prima paziente."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: scaldabagno sostituito venerdì 20 ottobre a spese del locatore (480 euro); protocollo della dispensa iniziato oggi con la prima paziente."
+    }
+   ]
+  },
+  {
+   "id": "s22",
+   "user": "beatrice",
+   "ts": "2034-10-25T16:30:00+02:00",
+   "participants": [
+    {
+     "name": "Priya",
+     "identity": "priya-r"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Priya",
+     "content": "Methods and statistics sent to you both, as promised. Also: the congress has just extended the abstract deadline to Friday 3 November."
+    },
+    {
+     "role": "other",
+     "author": "Jonas",
+     "content": "Thanks Priya. I'll finish the background by Monday 30 October."
+    },
+    {
+     "role": "user",
+     "content": "Thanks both! Cases and discussion are almost done. I'll submit the abstract on Thursday 2 November, so we keep a day of margin."
+    },
+    {
+     "role": "other",
+     "author": "Priya",
+     "content": "Perfect. Who's the presenting author?"
+    },
+    {
+     "role": "user",
+     "content": "I can do it, if you both agree."
+    },
+    {
+     "role": "other",
+     "author": "Jonas",
+     "content": "Agreed."
+    }
+   ]
+  },
+  {
+   "id": "s23",
+   "user": "beatrice",
+   "ts": "2034-10-26T13:10:00+02:00",
+   "participants": [
+    {
+     "name": "Michele",
+     "identity": "michele-s"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Michele",
+     "content": "PASSATA! Prova finale superata, 29/30. Stasera cena da Al Borgo a Rovereto alle 20, chi c'è?"
+    },
+    {
+     "role": "other",
+     "author": "Loredana",
+     "content": "Bravissimo!! Noi ci siamo, ovviamente."
+    },
+    {
+     "role": "user",
+     "content": "Grande Miki!! Ci sono: finisco in studio alle 18:30 e arrivo. Stefano ha una riunione, viene solo se finisce presto."
+    },
+    {
+     "role": "other",
+     "author": "Ennio",
+     "content": "Stasera pago io."
+    },
+    {
+     "role": "other",
+     "author": "Michele",
+     "content": "E la tesi mercoledì 15 novembre alle 10, poi ho finito davvero."
+    }
+   ]
+  },
+  {
+   "id": "s24",
+   "user": "beatrice",
+   "ts": "2034-10-28T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Let's work in English today, I'm writing the abstract. The case series: 14 cases, mean age 47, treated between January and July 2034, eight sessions each, pain on the NRS from a mean of 6.4 at baseline to 2.3 at discharge. Can you draft the case description paragraph, max 90 words?"
+    },
+    {
+     "role": "assistant",
+     "content": "Here is a draft (88 words): «Fourteen patients (mean age 47) treated at a single outpatient clinic between January and July 2034 for persistent pelvic pain received eight sessions of manual therapy and a supervised exercise programme. Pain, measured on the 0-10 NRS, fell from a mean of 6.4 at baseline to 2.3 at discharge. No adverse events were recorded. All patients completed the programme; two needed one additional session. Outcomes were collected at discharge by the treating physiotherapist, with no follow-up beyond discharge in this series.» Shall I adjust the tone?"
+    },
+    {
+     "role": "user",
+     "content": "Good, I'll edit it. Remind me on Thursday morning to submit: I want it done on Thursday 2 November, the extended deadline is Friday 3 November."
+    },
+    {
+     "role": "assistant",
+     "content": "Reminder set for Thursday 2 November at 9:00: submit the Porto abstract (deadline Friday 3 November)."
+    }
+   ]
+  },
+  {
+   "id": "s25",
+   "user": "beatrice",
+   "ts": "2034-10-29T20:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi ho fatto l'arroz al horno della nonna di Inés per i genitori di Stefano, Mirella e Gianpaolo. Un successo, Mirella vuole la ricetta."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! La ricetta l'ho imparata da Inés martedì 17 ottobre, quando te l'ha mandata nel gruppo di Valencia: te la rimando così la giri a Mirella."
+    },
+    {
+     "role": "user",
+     "content": "Sì, mandamela. Domani arriva il lettino, ricordamelo alle 8. E, per la cronaca, giovedì sera la cena di Michele a Rovereto è stata bellissima, c'era anche Stefano alla fine."
+    },
+    {
+     "role": "assistant",
+     "content": "Promemoria lunedì 30 ottobre alle 8: consegna del lettino elettrico Fisiomarket. Segnato anche: giovedì 26 ottobre sera cena a Rovereto da Al Borgo per la prova finale di Michele, con Stefano arrivato alla fine."
+    }
+   ]
+  },
+  {
+   "id": "s26",
+   "user": "beatrice",
+   "ts": "2034-10-30T09:30:00+01:00",
+   "participants": [
+    {
+     "name": "Priya",
+     "identity": "priya-r"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Jonas",
+     "content": "Background sent, 180 words. Sorry for the length."
+    },
+    {
+     "role": "other",
+     "author": "Priya",
+     "content": "Thanks Jonas. Careful, the limit is 300 words for the whole abstract."
+    },
+    {
+     "role": "user",
+     "content": "I'll trim the background to 80 and keep the discussion short. Final version to you both on Wednesday evening."
+    },
+    {
+     "role": "other",
+     "author": "Priya",
+     "content": "Great, thanks Beatrice."
+    }
+   ]
+  },
+  {
+   "id": "s27",
+   "user": "beatrice",
+   "ts": "2034-10-30T18:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lettino arrivato e montato, bellissimo. Altra novità: il signor Dallapiccola oggi ha fatto sostituire l'allarme dello studio con un sistema nuovo, le vecchie istruzioni non valgono più. Dimentica le istruzioni dell'allarme che ti avevo incollato a settembre, codice compreso. Il codice nuovo me lo dà a mano domani."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: ho dimenticato le istruzioni del vecchio allarme, codice compreso. Quando avrai il nuovo codice, se preferisci non darmelo per iscritto."
+    },
+    {
+     "role": "user",
+     "content": "Giusto. Stefano mercoledì 1° novembre inizia nel ruolo nuovo, è agitato."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: Stefano inizia come responsabile dell'area anziani mercoledì 1° novembre."
+    }
+   ]
+  },
+  {
+   "type": "forget_source",
+   "id": "forget-k-alarm",
+   "ts": "2034-10-30T18:25:00+01:00",
+   "source": "k-alarm",
+   "user": "beatrice"
+  },
+  {
+   "id": "s28",
+   "user": "beatrice",
+   "ts": "2034-11-02T09:05:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Got your reminder, thanks. Submitting now: the final abstract is 298 words, title «Manual therapy and supervised exercise in persistent pelvic pain: a case series of 14 patients». I'll send you the confirmation number afterwards."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: submitting today, Thursday 2 November, 298 words. I'll record the confirmation number when you send it."
+    }
+   ]
+  },
+  {
+   "id": "s29",
+   "user": "beatrice",
+   "ts": "2034-11-02T16:30:00+01:00",
+   "participants": [
+    {
+     "name": "Priya",
+     "identity": "priya-r"
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Abstract submitted at 16:10, confirmation number PC35-0412. Thank you both!"
+    },
+    {
+     "role": "other",
+     "author": "Priya",
+     "content": "Brilliant, well done Beatrice! Fingers crossed, results in January."
+    },
+    {
+     "role": "other",
+     "author": "Jonas",
+     "content": "Great work. Porto in March, hopefully."
+    }
+   ]
+  },
+  {
+   "id": "s30",
+   "user": "beatrice",
+   "ts": "2034-11-03T17:50:00+01:00",
+   "participants": [
+    {
+     "name": "Inés",
+     "identity": "ines-v"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Inés",
+     "content": "¡Ya estoy en el tren desde Verona! Llego a las 18:20, quizá con un poco de retraso."
+    },
+    {
+     "role": "user",
+     "content": "Te espero en la estación de Trento, en la salida principal. Esta noche cena en casa; mañana castillo y mercado."
+    },
+    {
+     "role": "other",
+     "author": "Rocío",
+     "content": "¡Disfrutad! Fotos, por favor."
+    },
+    {
+     "role": "other",
+     "author": "Inés",
+     "content": "Rocío, el domingo salgo a las 16:05, así que hay tiempo para todo."
+    }
+   ]
+  },
+  {
+   "id": "s31",
+   "user": "beatrice",
+   "ts": "2034-11-04T22:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giornata bellissima con Inés: Castello del Buonconsiglio, mercato in piazza Duomo, pranzo in centro e cena da noi. Domani la accompagno al treno delle 16:05. Lunedì invece ho Fedrizzi alle 11, ricordamelo."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: sabato 4 novembre con Inés al Castello del Buonconsiglio e al mercato; domani, domenica 5 novembre, treno di Inés alle 16:05; promemoria per Fedrizzi lunedì 6 novembre alle 11."
+    }
+   ]
+  },
+  {
+   "id": "s32",
+   "user": "beatrice",
+   "ts": "2034-11-05T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Inés è partita alle 16:05, tutto bene. Mi prenoti i treni per il modulo 2 a Verona? Sabato 11 novembre stessi orari dell'altra volta, ritorno domenica 12 sera."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: sabato 11 novembre Trento 7:04 → Verona Porta Nuova 8:12; domenica 12 novembre Verona Porta Nuova 18:35 → Trento 19:46. 26,40 euro, biglietti nella tua mail."
+    },
+    {
+     "role": "user",
+     "content": "Grazie. E domani Fedrizzi alle 11: gli appunti li hai tu."
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, i tuoi appunti per Fedrizzi li ho dal 18 ottobre; te li rimando domattina alle 9."
+    }
+   ]
+  }
+ ]
+}
