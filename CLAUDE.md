@@ -2,10 +2,10 @@
 
 Standalone memory + **digital twin** service for agentic platforms (MCP + REST ingest + SDK).
 Arkimede (`~/Development/personalAgent`, public mirror `arkimedehq/arkimede`) is the first
-client. Status (2026-10-08): **v0.1.0 released and public** (2026-10-08, private profile; `CHANGELOG.md`): service
+client. Status (2026-10-10): **v0.2.0 released and public** (2026-10-10, the agent memory, M8 8.0–8.10; v0.1.0 on 2026-10-08; `CHANGELOG.md`): service
 implemented (`service/`): M0–M4b done, M5 done or partial (5.7 memory context done 2026-10-08), M5b mostly done, M6 mostly
 done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 criteria met — per-row status in
-`docs/WORK_PLAN.md`. Published: npm `@arkimedehq/recordare-client` and `@arkimedehq/openclaw-recordare` (0.1.0), image
+`docs/WORK_PLAN.md`. Published: npm `@arkimedehq/recordare-client` and `@arkimedehq/openclaw-recordare` (0.2.0), image
 `ghcr.io/arkimedehq/recordare-openai-proxy`; GitHub Sponsors (`.github/FUNDING.yml`).
 
 ## Read first
@@ -107,7 +107,7 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   SDK, RFC 9457, Retry-After, W3C trace context); no host-specific code. Checks: `npm run typecheck`, `npm test` in
   `packages/client`; the conformance suite runs it against the service (`service/test/conformance`, needs `npm ci` in
   `packages/client` first).
-- Published on npm (0.1.0); Arkimede still uses a synced copy
+- Published on npm (0.2.0); Arkimede still uses a synced copy
   (`packages/client/scripts/sync-to.sh ../personalAgent/backend/src/recordare/client`) until it switches to the
   package: never edit the copy; change the library, sync, commit in both repos.
 

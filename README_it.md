@@ -14,7 +14,7 @@ di un **gemello digitale** dichiarato di quella persona. Qualsiasi piattaforma d
 (qualsiasi client MCP) oppure tramite **MCP + ingest REST** (la piattaforma invia le sue conversazioni e Recordare
 estrae la memoria in background). [Arkimede](https://github.com/arkimedehq/arkimede) è il primo client.
 
-> **Stato (2026-10-08).** **La v0.1.0 è pubblica** (2026-10-08, il profilo privato; [CHANGELOG](CHANGELOG_it.md)). La
+> **Stato (2026-10-10).** **La v0.2.0 è pubblica** (2026-10-10, la memoria dell'agente; prima versione pubblica v0.1.0 il 2026-10-08, il profilo privato; [CHANGELOG](CHANGELOG_it.md)). La
 > fase 1 (memoria episodica) è implementata in `service/` (NestJS, Postgres + pgvector, BullMQ). Comprende il log
 > grezzo, gli episodi, i piani, i fatti, le note, i digest notturni, gli strumenti MCP di lettura e scrittura, il
 > contesto di memoria prima di ogni turno, l'API di lettura (il diario della persona), l'API e la console di
@@ -320,7 +320,7 @@ compito. Altre due guide: [integrare una piattaforma client](docs/INTEGRATION_it
 | `deploy/` | Script di installazione, aggiornamento e backup, file Compose (standalone / co-ospitato) |
 | `spikes/memory-eval/` | Harness di valutazione e dataset: confronto tra motori, set ciechi, risultati ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
 | `docs/` | Visione, decisioni di design D1–D48 ([design della memoria episodica](docs/EPISODIC_MEMORY_TODO_it.md)), [piano di lavoro](docs/WORK_PLAN_it.md), contratti, [tutte le impostazioni](docs/KNOBS_it.md), note di ricerca, schede di letteratura, note di ricerca sui connettori (`docs/connectors/`) |
-| `CHANGELOG.md` | Note di rilascio ([v0.1.0](CHANGELOG_it.md)) |
+| `CHANGELOG.md` | Note di rilascio ([v0.2.0](CHANGELOG_it.md)) |
 | `docker-compose.yml` | Stack di sviluppo locale (Postgres + pgvector, Redis, servizio) |
 | `CLAUDE.md` | Contesto e convenzioni per le sessioni di sviluppo |
 

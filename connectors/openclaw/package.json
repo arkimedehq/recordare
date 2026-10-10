@@ -1,6 +1,6 @@
 {
   "name": "@arkimedehq/openclaw-recordare",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Recordare for OpenClaw: long-term episodic memory kept by your own Recordare service (capture, recall before each turn, memory tools).",
   "license": "AGPL-3.0-or-later",
   "author": "Andrea Genovese",

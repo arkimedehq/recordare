@@ -35,7 +35,7 @@ export interface SessionKinds {
   isSubagent: (key: string | undefined) => boolean;
 }
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const TOOL_TIMEOUT_MS = 20_000;
 /** Background retries of captured messages: ~8 attempts over ≈ 10 minutes, then dropped (logged). */
 const RETRY: DeliveryPolicy = { maxAttempts: 8, baseDelayMs: 2_000, maxDelayMs: 5 * 60_000 };

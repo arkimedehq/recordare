@@ -125,7 +125,7 @@ class RecordareClient:
     def _open_session(self, user: Optional[str], conversation: Optional[str], timeout: float) -> str:
         init = {"jsonrpc": "2.0", "id": next(self._ids), "method": "initialize", "params": {
             "protocolVersion": MCP_PROTOCOL_VERSION, "capabilities": {},
-            "clientInfo": {"name": "recordare-hermes", "version": "0.1.0"}}}
+            "clientInfo": {"name": "recordare-hermes", "version": "0.2.0"}}}
         msg, resp = self._rpc(init, user=user, conversation=conversation, session=None, timeout=timeout)
         session = resp.headers.get("Mcp-Session-Id")
         if not session or not msg or "error" in msg:

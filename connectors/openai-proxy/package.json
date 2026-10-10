@@ -1,6 +1,6 @@
 {
   "name": "@arkimedehq/recordare-openai-proxy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Recordare memory proxy: an OpenAI-compatible proxy that gives chat platforms without plugin hooks (AnythingLLM, Open WebUI, LibreChat) long-term memory — capture of every turn and recall before each answer.",
   "license": "AGPL-3.0-or-later",
   "author": "Andrea Genovese",

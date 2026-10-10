@@ -1,6 +1,6 @@
 {
   "name": "recordare",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Recordare episodic memory for Claude Code: your conversations are remembered and recalled — memory tools plus the relevant memories before each prompt.",
   "author": { "name": "Andrea Genovese" },
   "homepage": "https://github.com/arkimedehq/recordare/tree/main/connectors/claude-code",

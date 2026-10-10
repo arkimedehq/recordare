@@ -4,7 +4,7 @@
 
 Stato: **2026-10-08** — fase 1 implementata fino a M5 (alcune righe parziali), M4b completata tranne la
 matrice dei provider, M5b quasi completa, M6 quasi completa (Arkimede integrato con il Diario, connettori 6.6 fatti), M7:
-**i criteri della v0.1.0 sono soddisfatti e la v0.1.0 è pubblica** (2026-10-08; il profilo pubblico resta rinviato, D33).
+**v0.1.0 pubblica** (2026-10-08; il profilo pubblico resta rinviato, D33); **v0.2.0 pubblica** (2026-10-10: M8, la memoria dell'agente, 8.0–8.10).
 Ogni milestone qui sotto ha una riga di stato; le righe indicano **done / partial / TODO**.
 Copre la fase 1 della roadmap (memoria episodica, `EPISODIC_MEMORY_TODO.md`) dalla decisione sul motore a una prima integrazione con Arkimede.
 Le fasi successive della roadmap (`DIGITAL_TWIN_VISION.md` → Roadmap) sono elencate in fondo e avranno

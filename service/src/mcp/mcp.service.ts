@@ -74,7 +74,7 @@ export class McpService implements OnModuleDestroy {
     }
     if (req.method !== 'POST' || !isInitializeRequest(body)) throw new NotFoundException();
 
-    const server = new McpServer({ name: 'recordare', version: '0.1.0' });
+    const server = new McpServer({ name: 'recordare', version: '0.2.0' });
     const [settings] = await this.db.query(`SELECT timezone, locale FROM memories WHERE person_id = $1`, [memoryId]);
     registerTools(server, {
       principal, memoryId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,

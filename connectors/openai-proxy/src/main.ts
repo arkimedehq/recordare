@@ -6,7 +6,7 @@ import { loadConfig } from './config.js';
 import { Memory, type Logger } from './memory.js';
 import { createProxy } from './proxy.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const log: Logger = {
   info: (m) => console.log(`${new Date().toISOString()} info ${m}`),
   warn: (m) => console.warn(`${new Date().toISOString()} warn ${m}`),

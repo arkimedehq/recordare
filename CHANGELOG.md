@@ -6,6 +6,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-10
+
+The **agent memory** (D50): every memory belongs to an agent and is written in its first person — a person's own
+assistant (personal) or an agent many people use (entity, "someone" until they say who they are); people are its
+contacts; the agent learns sources (D49). **Breaking**: no consent state in Recordare (the client's switch is the only
+one), "owner" renamed (memory / holder, below) — upgrade the client library and the connectors together with the
+service. Quality (DeepSeek `deepseek-flash`, `spikes/memory-eval/RESULTS.md`): blind entity set 91.4 % (82.1 % in 0.1.0),
+blind personal set 90.9 %, learned sources (dev set) 96.7 %.
+
 ### Added
 - **News received as a memory** (`extract.v11`): news that touches the person's life (an open plan, a person they know,
   something they own, or a reaction) becomes a low-importance episode with both dates; trivia stays in the chat log.

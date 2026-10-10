@@ -2,7 +2,7 @@
 
 Status: **2026-10-08** — phase 1 implemented through M5 (some rows partial), M4b done except the
 provider matrix, M5b mostly done, M6 mostly done (Arkimede integrated with the Diary, connectors 6.6 done), M7: the
-**v0.1.0 release criteria are met and v0.1.0 is public** (2026-10-08; public profile still deferred, D33). Each
+**v0.1.0 public** (2026-10-08; public profile still deferred, D33); **v0.2.0 public** (2026-10-10: M8, the agent memory, 8.0–8.10). Each
 milestone below has a status line; rows say **done / partial / TODO**.
 Covers roadmap phase 1 (episodic memory, `EPISODIC_MEMORY_TODO.md`) from engine decision to a first Arkimede integration.
 Later roadmap phases (`DIGITAL_TWIN_VISION.md` → Roadmap) are listed at the end and get

@@ -6,6 +6,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.2.0] — 2026-10-10
+
+La **memoria dell'agente** (D50): ogni memoria appartiene a un agente ed è scritta in prima persona — l'assistente di
+una persona (personale) o un agente che usano in tanti (entità, "qualcuno" finché non dice chi è); le persone sono i
+suoi contatti; l'agente impara fonti (D49). **Incompatibile**: nessuno stato di consenso in Recordare (l'unico
+interruttore è quello del client), "owner" rinominato (memoria / titolare, sotto) — aggiornare la libreria client e i
+connettori insieme al servizio. Qualità (DeepSeek `deepseek-flash`, `spikes/memory-eval/RESULTS.md`): insieme cieco di
+entità 91,4 % (82,1 % nella 0.1.0), insieme cieco personale 90,9 %, fonti apprese (insieme di sviluppo) 96,7 %.
+
 ### Aggiunto
 - **Notizie ricevute come ricordo** (`extract.v11`): una notizia che tocca la vita della persona (un piano aperto, una
   persona che conosce, una cosa che possiede, o una sua reazione) diventa un episodio a bassa importanza con entrambe le
