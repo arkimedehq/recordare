@@ -1,0 +1,182 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
+"""Questions of blind set #10 (entity memory, Camping Il Ginepro). `ev` = evidence entries (sessions and learned
+sources; kept out of questions.json, used by check.py).
+
+Questions are asked to the campsite's reception assistant by someone unidentified (no `asker` field); "tu" / "you"
+is the assistant, which answers in the first person about what it did and what it was given. `expected` convention:
+the text BEFORE "(Dettagli secondari, non richiesti: …)" is the key answer; the bracket is extra true context that
+must not be required. For the unidentified / carry-over questions the key point is "not known who": the judge must
+fail an answer that names a person.
+"""
+
+END = "2034-04-23T20:00:00+02:00"      # Sunday 23 April, after the last session
+MAR30 = "2034-03-30T21:30:00+02:00"    # Thursday 30 March, after s12
+APR05 = "2034-04-05T21:00:00+02:00"    # Wednesday 5 April, after s16
+APR11 = "2034-04-11T20:00:00+02:00"    # Tuesday 11 April, after s19
+
+QUESTIONS = [
+    # ── own-content ────────────────────────────────────────────────────────────────
+    {"id": "q01", "category": "own-content", "asked_at": END, "ev": ["s01", "s23"],
+     "q": "Quali sono adesso gli orari della reception?",
+     "expected": "Dal 18 aprile 2034 la reception è aperta 8:00–13:00 e 16:00–20:00 tutti i giorni (Ottavio ha spostato l'apertura del pomeriggio dalle 15 alle 16 il 18 aprile; prima, dall'apertura del 7 aprile, era 8–13 e 15–20). (Dettagli secondari, non richiesti: bar 7:30–23; piscina 10–19 dal 1° giugno al 10 settembre.)",
+     "must_not": ["la reception apre alle 15:00 il pomeriggio", "orario attuale 15:00–20:00"]},
+    {"id": "q02", "category": "own-content", "asked_at": MAR30, "ev": ["s02"],
+     "q": "Quanto costa un cane a notte secondo il listino?",
+     "expected": "3 € a notte (listino 2034 dato da Benedetta il 14 marzo 2034). (Dettagli secondari, non richiesti: piazzola 14/19 €, adulto 8/10 €, bambino 4–12 anni 5/6 €, bassa/alta stagione.)",
+     "must_not": ["4 € a notte", "il cane è gratis"]},
+    {"id": "q03", "category": "own-content", "asked_at": END, "ev": ["s02", "s15"],
+     "q": "Quanto costa il bungalow da 4 posti in alta stagione, e quanto costava nel listino precedente?",
+     "expected": "115 € a notte nel listino aggiornato che Benedetta ha dato il 3 aprile 2034 (valido dal 7 aprile); nel listino del 14 marzo costava 110 €. (Dettagli secondari, non richiesti: in bassa stagione resta 85 €; alla famiglia Brandt è stato tenuto il prezzo confermato di 110 €; lo stesso aggiornamento ha portato il cane a 4 € e l'adulto in alta stagione a 11 €.)",
+     "must_not": ["costa 110 € adesso", "costava 85 € in alta stagione"]},
+
+    # ── agent-action ───────────────────────────────────────────────────────────────
+    {"id": "q04", "category": "agent-action", "asked_at": END, "ev": ["s02", "s10", "s15"],
+     "q": "Che cosa hai fatto tu per la famiglia Brandt prima del loro arrivo?",
+     "expected": "Il 14 marzo 2034 ho prenotato il bungalow B4 da venerdì 7 a mercoledì 12 aprile (5 notti, 2 adulti e 2 bambini) e registrato la caparra di 150 € arrivata con bonifico il 13 marzo (su richiesta di Benedetta); il 27 marzo ho segnato l'allergia alle noci del figlio Till (9 anni) per il bar e riservato un secondo posto auto sul parcheggio P2 (chiesti da Katrin Brandt) e ho registrato l'arrivo tardivo di venerdì 7 aprile verso le 21:30 con la chiave nella cassetta accanto alla reception (chiesto da Jonas Brandt). (Dettagli secondari, non richiesti: il 3 aprile Benedetta ha confermato che ai Brandt resta il prezzo di 110 € a notte; a Jonas ho detto che non noleggiamo biciclette; il giorno dell'arrivo i Brandt hanno ricevuto il codice della cassetta delle chiavi.)",
+     "must_not": ["ho prenotato il B2 per i Brandt", "ho prenotato biciclette per i Brandt", "i Brandt non hanno versato caparra"]},
+    {"id": "q05", "category": "agent-action", "asked_at": END, "ev": ["s02", "s15"],
+     "q": "Il bungalow B6 adesso è prenotabile? Che cosa avevi impostato tu?",
+     "expected": "Sì, è prenotabile da lunedì 3 aprile 2034. Il 14 marzo, su richiesta di Benedetta, lo avevo messo come non prenotabile fino al 15 aprile per un'infiltrazione dal tetto; il 3 aprile Benedetta mi ha detto che era sistemato (Nico ha rifatto la guaina sabato 1° aprile) e ho tolto il blocco. (Dettagli secondari, non richiesti: il B6 è un bungalow da 4 posti; non risultano prenotazioni per il B6.)",
+     "must_not": ["il B6 è bloccato fino al 15 aprile", "il B6 non è prenotabile"]},
+    {"id": "q06", "category": "agent-action", "asked_at": END, "ev": ["s08", "s13", "s14"],
+     "q": "Quali messaggi hai dovuto riferire a Nico, da parte di chi, e com'è andata?",
+     "expected": "Due messaggi, entrambi da Marta Venturi (la stagionale della piazzola 3): il 25 marzo 2034, controllare la veranda della sua roulotte prima del suo arrivo di sabato 1° aprile — fatto, Nico l'ha controllata ed era a posto (detto da Nico il 31 marzo, confermato da Marta il 1° aprile); il 1° aprile, la bassa pressione dell'acqua sulla piazzola 3 — nessun esito registrato. Accettabile anche citare che il 10 aprile ho detto a un ospite non identificato (non si sa chi) che avrei segnalato alla manutenzione l'acqua fredda nelle docce del blocco B, senza esito registrato. (Dettagli secondari, non richiesti: il messaggio di Ottavio del 20 marzo sul tecnico della macchina del caffè era per Chiara, non per Nico.)",
+     "must_not": ["Nico ha sistemato la pressione dell'acqua", "il messaggio sulla veranda era di Marta Olivetti", "il messaggio sul tecnico del caffè era per Nico"]},
+
+    # ── attribution ────────────────────────────────────────────────────────────────
+    {"id": "q07", "category": "attribution", "asked_at": END, "ev": ["s06", "s09", "s10", "s16", "s22"],
+     "q": "Chi tra gli ospiti ha allergie o esigenze alimentari, e quali?",
+     "expected": "Till Brandt (9 anni, figlio di Katrin e Jonas): allergia alle noci (detto da Katrin il 27 marzo 2034). Rob Hadley: celiaco (detto da Fiona il 21 marzo, confermato da Rob il 15 aprile). Marta Olivetti: intollerante al lattosio (26 marzo). Priya Shah: vegana (5 aprile). (Dettagli secondari, non richiesti: per Rob il panificio non ha prodotti senza glutine, solo pane di riso confezionato con 3 giorni di anticipo; Rob ha rinunciato.)",
+     "must_not": ["Jonas Brandt è allergico alle noci", "Katrin è allergica alle noci", "Fiona è celiaca", "Marta Venturi è intollerante al lattosio", "Priya è celiaca"]},
+    {"id": "q08", "category": "attribution", "asked_at": END, "ev": ["s02", "s06", "s08", "s09", "s14", "s21"],
+     "q": "Chi ha versato una caparra per la prenotazione, e quanto?",
+     "expected": "La famiglia Brandt: 150 € con bonifico arrivato il 13 marzo 2034 (bungalow B4). Marta Olivetti: 100 € con carta il 26 marzo (bungalow B2). Nessuna caparra dagli Hadley, da Priya Shah e da Wouter de Vries (per le piazzole non si chiede caparra). Marta Venturi non ha pagato una caparra ma la prima rata della piazzola stagionale, 450 € con bonifico del 24 marzo. (Dettagli secondari, non richiesti: le cauzioni di 50 € dei bungalow lasciate al check-in dai Brandt e da Marta Olivetti sono state restituite; la cauzione di 10 € della tessera del cancello degli Hadley non è una caparra.)",
+     "must_not": ["gli Hadley hanno versato una caparra", "Marta Venturi ha versato 100 € di caparra", "Marta Olivetti ha versato 150 €", "Priya ha pagato una caparra"]},
+    {"id": "q09", "category": "attribution", "asked_at": END, "ev": ["s02", "s15", "s20"],
+     "q": "In welchem Bungalow waren die Brandts, und wie viel haben sie beim Check-out bezahlt?",
+     "expected": "Bungalow B4, von Freitag, 7. April bis Mittwoch, 12. April 2034 (5 Nächte). Beim Check-out am 12. April haben sie 410 € mit Karte bezahlt: 5 Nächte × 110 € + 10 € Kurtaxe − 150 € Anzahlung (laut Benedetta); die Kaution von 50 € wurde zurückgegeben. (Dettagli secondari, non richiesti: der Preis von 110 € pro Nacht wurde ihnen trotz der neuen Preisliste von 115 € gehalten; insgesamt 560 € bezahlt.)",
+     "must_not": ["Bungalow B2", "Bungalow B6", "435 € bezahlt", "575 € bezahlt"]},
+
+    # ── unidentified (incl. carry-over traps and hand-overs) ───────────────────────
+    {"id": "q10", "category": "unidentified", "asked_at": END, "ev": ["s03", "s04"],
+     "q": "Chi ha chiesto informazioni per Pasqua con il cane Birillo?",
+     "expected": "Non si sa: la persona non ha voluto lasciare il nome (doveva sentire il marito e avrebbe richiamato). Ha chiamato giovedì 16 marzo 2034 chiedendo una piazzola per una tenda, due adulti e una bambina di 7 anni con il cane Birillo, da venerdì 7 a lunedì 10 aprile; non è stata fatta nessuna prenotazione. (Dettagli secondari, non richiesti: le ho indicato 48 € a notte più tassa di soggiorno con il listino di allora.)",
+     "must_not": ["Nico", "Marta Venturi", "Marta Olivetti", "Benedetta", "Chiara", "Fiona", "Katrin", "è stata prenotata una piazzola"]},
+    {"id": "q11", "category": "unidentified", "asked_at": END, "ev": ["s11", "s12"],
+     "q": "Chi ha messo il lucchetto al cancello lato lago e ha portato il trattorino dal meccanico?",
+     "expected": "Non si sa chi: lo ha detto giovedì 30 marzo 2034 una persona che non ha voluto identificarsi. Il cancello lato lago non chiudeva bene ed è stato chiuso con il lucchetto a chiave rossa (chiave nel cassetto della reception); la stessa persona ha detto che avrebbe portato il trattorino dal meccanico venerdì 31 marzo e che sarebbe tornato la settimana dopo (nessuna conferma successiva).",
+     "must_not": ["Chiara", "Nico", "Ottavio", "Benedetta", "Samira"]},
+    {"id": "q12", "category": "unidentified", "asked_at": END, "ev": ["s18", "s19"],
+     "q": "Who reported the cold showers in toilet block B on Easter Monday?",
+     "expected": "Not known: an English-speaking guest who declined to give a name or pitch number reported it on Monday 10 April 2034 at about 9:30, saying they were leaving that day; they also left a blue towel on a chair by the bar the night before. (Dettagli secondari, non richiesti: I said I would report it to maintenance; no outcome recorded.)",
+     "must_not": ["Chiara", "Priya", "Fiona", "Rob", "Jonas", "Katrin", "Wouter", "Marta"]},
+    {"id": "q13", "category": "unidentified", "asked_at": END, "ev": ["s10"],
+     "q": "Nella telefonata dei Brandt del 27 marzo, chi ha segnalato l'allergia di Till e chi ha chiesto l'arrivo tardivo?",
+     "expected": "L'allergia alle noci di Till (e il secondo posto auto) l'ha segnalata Katrin Brandt; poi ha passato il telefono al marito Jonas Brandt, che ha chiesto l'arrivo tardivo di venerdì 7 aprile verso le 21:30 (e se noleggiamo biciclette: no). (Dettagli secondari, non richiesti: Katrin ha anche chiesto se la biancheria da letto è inclusa, sì.)",
+     "must_not": ["Jonas ha segnalato l'allergia", "Katrin ha chiesto l'arrivo tardivo", "Till ha chiamato"]},
+    {"id": "q14", "category": "unidentified", "asked_at": END, "ev": ["s06", "s22"],
+     "q": "When the Hadleys arrived, who asked about gluten-free bread, Fiona or Rob?",
+     "expected": "Rob: Fiona announced their arrival on pitch 17 on Saturday 15 April 2034 and handed the chat to Rob, who asked about gluten-free bread for breakfast (he is the coeliac one) and whether Pip could go on the lake beach, and set the reminder for Monday 17 April at 9. (Dettagli secondari, non richiesti: on 21 March it was Fiona who first said Rob is coeliac; the bakery has no gluten-free bread, only packaged rice bread with 3 days' notice, and Rob declined.)",
+     "must_not": ["Fiona asked about gluten-free bread on arrival", "Fiona is coeliac"]},
+
+    # ── same-name ──────────────────────────────────────────────────────────────────
+    {"id": "q15", "category": "same-name", "asked_at": END, "ev": ["s09", "s11", "s18", "s20"],
+     "q": "Quante notti ha prenotato Marta Olivetti, e quanto ha pagato in tutto?",
+     "expected": "Tre notti nel bungalow B2, da sabato 8 a martedì 11 aprile 2034 (aveva prenotato due notti fino a lunedì 10 il 26 marzo e l'aggiunta di una notte me l'ha riferita Chiara il 29 marzo). In tutto 261 €: caparra di 100 € con carta il 26 marzo più saldo di 161 € con carta all'uscita dell'11 aprile (3 notti × 85 € + 6 € di tassa − 100 €). (Dettagli secondari, non richiesti: cauzione di 50 € lasciata e restituita; è di Arezzo, intollerante al lattosio.)",
+     "must_not": ["ha pagato 450 €", "ha la piazzola stagionale", "ha dormito due notti", "resta fino a fine ottobre"]},
+    {"id": "q16", "category": "same-name", "asked_at": END, "ev": ["s08", "s14", "s20"],
+     "q": "Quanto ha pagato finora Marta Venturi, e quanto le resta da pagare?",
+     "expected": "450 € di prima rata della piazzola stagionale 3 (roulotte), con bonifico di venerdì 24 marzo 2034, su un totale di 1.800 €: restano 1.350 € in due rate, la seconda a giugno e la terza a settembre (Benedetta il 12 aprile: non deve niente fino alla rata di giugno). (Dettagli secondari, non richiesti: il 25 marzo aveva detto 400 €, corretto da lei in 450 il 1° aprile; resta fino a fine ottobre.)",
+     "must_not": ["ha pagato 100 € di caparra", "ha pagato 161 € di saldo", "ha prenotato il bungalow B2", "ha pagato 400 € in tutto"]},
+
+    # ── knowledge (learned sources) ────────────────────────────────────────────────
+    {"id": "q17", "category": "knowledge", "asked_at": END, "ev": ["k-caldaia"],
+     "q": "Lo scaldabagno di un bungalow segna E3: cosa devo fare? E se segna E5?",
+     "expected": "E3 è un guasto del sensore del termostato: tenere premuto RESET per 5 secondi; se ricompare entro 24 ore chiamare l'assistenza. E5 non è un guasto: è il ciclo anti-legionella automatico in corso, dura circa due ore e poi il display torna normale (manuale Thermolux AQ-80). (Dettagli secondari, non richiesti: E1 = riscaldamento a secco, E2 = sovratemperatura.)",
+     "must_not": ["E5 è un guasto", "con E3 chiamare subito l'assistenza senza provare il reset"]},
+    {"id": "q18", "category": "knowledge", "asked_at": END, "ev": ["k-pane"],
+     "q": "In quali giorni e a che ora consegna il panificio, e entro quando si può cambiare l'ordine?",
+     "expected": "Il Panificio Sabatini consegna tutti i giorni tranne il lunedì entro le 7:15 al bar; nei festivi infrasettimanali, compreso lunedì 10 aprile (Pasquetta), consegna con l'orario della domenica, entro le 7:45. Le variazioni all'ordine vanno comunicate via WhatsApp entro le 18:00 del giorno prima. (Dettagli secondari, non richiesti: ordine minimo 20 € al giorno; contratto dal 7 aprile al 30 settembre 2034.)",
+     "must_not": ["consegna anche il lunedì", "consegna alle 8:30", "l'ordine si cambia la mattina stessa"]},
+    {"id": "q19", "category": "knowledge", "asked_at": END, "ev": ["k-lago"],
+     "q": "Are dogs allowed on the lake beach, and where exactly?",
+     "expected": "Only on the equipped stretch called Spiaggia dei Platani, at the north end of the lido, on a lead and with a muzzle at hand; dogs may not swim in the people's bathing zones (lake rules, extract 2034). (Dettagli secondari, non richiesti: swimming for people only inside the yellow buoys; no fires or barbecues on the beach.)",
+     "must_not": ["dogs are allowed anywhere on the beach", "dogs are not allowed on the beach at all"]},
+    {"id": "q20", "category": "knowledge", "asked_at": END, "ev": ["k-piscina"],
+     "q": "Quali valori di cloro libero e di pH deve avere l'acqua della piscina, e quante volte al giorno vanno misurati?",
+     "expected": "Cloro libero 0,7–1,5 mg/L e pH 6,5–7,5; misurati almeno tre volte al giorno (apertura, metà giornata, chiusura) e annotati sul registro con ora e firma (scheda di autocontrollo piscina). (Dettagli secondari, non richiesti: cloro combinato massimo 0,4 mg/L; analisi di laboratorio mensili; massimo un bagnante ogni 2 m².)",
+     "must_not": ["una volta al giorno", "pH 7,8–8,2"]},
+
+    # ── knowledge-provenance ───────────────────────────────────────────────────────
+    {"id": "q21", "category": "knowledge-provenance", "asked_at": END, "ev": ["s03", "k-caldaia"],
+     "q": "Chi ti ha dato il manuale degli scaldabagni e quando?",
+     "expected": "Nico (il genero di Ottavio, manutenzione), giovedì 16 marzo 2034, nella stessa conversazione in cui mi ha detto di aver sostituito l'anodo di uno scaldabagno. È il manuale del Thermolux AQ-80, lo scaldabagno elettrico da 80 litri dei bungalow.",
+     "must_not": ["Ottavio mi ha dato il manuale", "Benedetta mi ha dato il manuale", "l'ho trovato da solo"]},
+    {"id": "q22", "category": "knowledge-provenance", "asked_at": END, "ev": ["k-lago", "s16"],
+     "q": "Chi ti ha dato il regolamento del lago?",
+     "expected": "Nessuna persona risulta avermelo dato: l'estratto 2034 delle regole del lago (balneazione, navigazione, pesca, cani) l'ho appreso io, martedì 4 aprile 2034, senza che nessuno me lo consegnasse (risposte come «nessuno», «l'ho appreso da solo» o «non risulta chi me l'abbia dato, l'ho appreso il 4 aprile» sono corrette; ciò che conta è non attribuirlo a una persona e la data del 4 aprile). (Dettagli secondari, non richiesti: il manuale degli scaldabagni me l'ha dato Nico, il contratto del panificio Benedetta, la scheda della piscina Ottavio.)",
+     "must_not": ["me l'ha dato Nico", "me l'ha dato Ottavio", "me l'ha dato Priya", "me l'ha dato Benedetta"]},
+
+    # ── plan ───────────────────────────────────────────────────────────────────────
+    {"id": "q23", "category": "plan", "asked_at": END, "ev": ["s03", "s13", "s23"],
+     "q": "Com'è andata la recinzione della piscina?",
+     "expected": "Fatta: Nico voleva finire di ridipingerla entro venerdì 31 marzo 2034, il 31 marzo ha spostato la fine a martedì 4 aprile (mancava la seconda mano su due lati) e l'ha finita martedì 4 aprile, come riferito da Ottavio il 18 aprile.",
+     "must_not": ["finita il 31 marzo", "non è ancora finita"]},
+    {"id": "q24", "category": "plan", "asked_at": END, "ev": ["s11", "s18"],
+     "q": "L'aperitivo di apertura al bar si è fatto?",
+     "expected": "No: Chiara lo aveva programmato per venerdì 7 aprile 2034 alle 18:30, ma è saltato per la pioggia e non è stato recuperato (detto da Chiara l'8 aprile).",
+     "must_not": ["si è fatto", "è stato spostato a un'altra data"]},
+    {"id": "q25", "category": "plan", "asked_at": END, "ev": ["s21"],
+     "q": "Che cosa ha prenotato Wouter e quando arriva?",
+     "expected": "Wouter de Vries, di Utrecht, ha la piazzola 9 per una tenda piccola da venerdì 28 a domenica 30 aprile 2034, due notti, una persona, arrivo in bicicletta; nessun anticipo, 46 € da pagare al check-out (prenotato il 13 aprile). Deve ancora arrivare. (Dettagli secondari, non richiesti: ha chiesto della pesca nel lago.)",
+     "must_not": ["è già arrivato", "ha prenotato un bungalow", "ha versato una caparra"]},
+
+    # ── correction ─────────────────────────────────────────────────────────────────
+    {"id": "q26", "category": "correction", "asked_at": END, "ev": ["s03", "s13"],
+     "q": "Di quale bungalow è stato sostituito l'anodo dello scaldabagno il 16 marzo?",
+     "expected": "Del B3. Nico il 16 marzo 2034 aveva detto B4, ma il 31 marzo Ottavio lo ha corretto (nel B4 c'è ancora l'anodo vecchio) e Nico ha confermato che era il B3.",
+     "must_not": ["l'anodo del B4 è stato sostituito", "l'anodo del B4 è nuovo"]},
+    {"id": "q27", "category": "correction", "asked_at": END, "ev": ["s09", "s11", "s18", "s20"],
+     "q": "Fino a quando è rimasta Marta Olivetti nel B2? C'è stato qualche malinteso?",
+     "expected": "Fino a martedì 11 aprile 2034 (arrivata sabato 8, tre notti). Sì: l'8 aprile avevo ripetuto per errore la data iniziale, lunedì 10 aprile, e Chiara mi ha corretto ricordandomi che il 29 marzo mi aveva detto lei dell'aggiunta della notte. Il check-out dell'11 aprile è stato poi confermato da Benedetta il 12 aprile.",
+     "must_not": ["è rimasta fino a lunedì 10 aprile", "è partita il 10 aprile"]},
+    {"id": "q28", "category": "correction", "asked_at": END, "ev": ["s08", "s14"],
+     "q": "Marta Venturi aveva detto di aver pagato 400 euro di prima rata: è giusto?",
+     "expected": "No: il 25 marzo 2034 aveva detto 400 €, ma il 1° aprile si è corretta lei stessa dopo aver ricontrollato il bonifico: la prima rata è di 450 € (bonifico di venerdì 24 marzo, su 1.800 € totali).",
+     "must_not": ["la prima rata è di 400 €", "ha pagato 400 €"]},
+
+    # ── state-now ──────────────────────────────────────────────────────────────────
+    {"id": "q29", "category": "state-now", "asked_at": APR05, "ev": ["s06"],
+     "q": "Quando arrivano gli Hadley e quante notti restano?",
+     "expected": "Venerdì 14 aprile 2034, piazzola 17 (camper), fino a martedì 18 aprile: quattro notti, due adulti e il cane Pip (prenotato da Fiona Hadley il 21 marzo). (Dettagli secondari, non richiesti: nessuna caparra; Rob è celiaco.)",
+     "must_not": ["arrivano sabato 15 aprile", "tre notti"]},
+    {"id": "q30", "category": "state-now", "asked_at": END, "ev": ["s06", "s20", "s22", "s23"],
+     "q": "When did the Hadleys actually arrive, how many nights did they stay and what did they pay?",
+     "expected": "They arrived on Saturday 15 April 2034 (Fiona's email, reported by Benedetta on 12 April, moved the arrival from Friday 14 to Saturday 15), stayed three nights on pitch 17 and left on Tuesday 18 April, paying 108 € in cash (3 nights × 34 € + 6 € tourist tax; reported by Ottavio). (Dettagli secondari, non richiesti: the original booking of 21 March was 14–18 April, four nights.)",
+     "must_not": ["they arrived on Friday 14 April", "they stayed four nights", "they paid by card"]},
+    {"id": "q31", "category": "state-now", "asked_at": APR11, "ev": ["s02", "s11", "s15", "s18"],
+     "q": "Chi c'è in questo momento nei bungalow, e fino a quando?",
+     "expected": "La famiglia Brandt nel B4 fino a domani, mercoledì 12 aprile 2034. Marta Olivetti aveva il B2 fino a oggi, martedì 11 aprile, giorno della sua partenza: è corretto sia dire che oggi è il suo ultimo giorno / il check-out non mi è ancora stato riferito, sia dire che è partita oggi. Nessun altro bungalow è occupato: il B6 è di nuovo prenotabile dal 3 aprile e non risultano prenotazioni per B1, B3, B5 e B6.",
+     "must_not": ["Marta Olivetti resta fino al 12 aprile", "i Brandt sono nel B2", "il B6 è bloccato"]},
+
+    # ── premise-trap ───────────────────────────────────────────────────────────────
+    {"id": "q32", "category": "premise-trap", "asked_at": END, "ev": ["s06", "s23"],
+     "q": "Quanto hanno versato di caparra gli Hadley?",
+     "expected": "Niente: per le piazzole non si chiede caparra e il 21 marzo 2034 ho detto a Fiona che avrebbero pagato al check-out. Hanno pagato tutto all'uscita, martedì 18 aprile: 108 € in contanti. (Dettagli secondari, non richiesti: le caparre le hanno versate i Brandt, 150 €, e Marta Olivetti, 100 €; la cauzione di 10 € per la tessera del cancello, chiesta a Fiona all'arrivo il 15 aprile, è una cauzione e non una caparra — citarla non è un errore.)",
+     "must_not": ["gli Hadley hanno versato 150 €", "gli Hadley hanno versato 100 €", "hanno versato una caparra per la prenotazione"]},
+    {"id": "q33", "category": "premise-trap", "asked_at": END, "ev": ["s10"],
+     "q": "Wie viele Fahrräder haben die Brandts bei uns geliehen?",
+     "expected": "Keine: wir verleihen keine Fahrräder. Jonas Brandt hat am 27. März 2034 danach gefragt, und ich habe gesagt, dass Fahrradverleih nicht auf meiner Preisliste steht (in Castiglione del Lago gibt es Verleihe).",
+     "must_not": ["zwei Fahrräder", "die Brandts haben Fahrräder geliehen"]},
+
+    # ── negative ───────────────────────────────────────────────────────────────────
+    {"id": "q34", "category": "negative", "asked_at": END, "ev": ["k-pane", "s07"],
+     "q": "Qual è il numero di telefono del Panificio Sabatini?",
+     "expected": "Non lo so: il contratto che Benedetta mi ha dato il 23 marzo 2034 non riporta un numero di telefono (le variazioni all'ordine si mandano via WhatsApp, ma il numero non è nel testo) e nessuno me lo ha detto.",
+     "must_not": ["il numero è 075", "il numero è 3", "+39"]},
+    {"id": "q35", "category": "negative", "asked_at": END, "ev": ["s14"],
+     "q": "È stata risolta la bassa pressione dell'acqua sulla piazzola 3?",
+     "expected": "Non risulta: Marta Venturi l'ha segnalata sabato 1° aprile 2034 e ho registrato il messaggio per Nico, ma nessuno mi ha riferito un intervento o un esito.",
+     "must_not": ["è stata risolta", "Nico ha sistemato la pressione"]},
+]
