@@ -212,7 +212,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   `occurredAt` / `datePrecision`, `kind` (event|plan).
 - Loaded only when `episodicMemoryEnabled` (class B, like `save_memory`) → zero
   prompt cost for users without the diary. Explicit capture → max importance.
-- As built (D22): a Recordare MCP tool, not an Arkimede tool; importance 10 / `stated` only with the owner's own
+- As built (D22): a Recordare MCP tool, not an Arkimede tool; importance 10 / `stated` only with the holder's own
   words behind it (`API.md` §3). Arkimede exposes the Recordare tools as `recordare_*` but not `log_episode`.
 
 ### D12 — Dedicated tool `search_episodes` (2026-10-01)
@@ -287,9 +287,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 
 ### D21 — Episodes capture emotions and opinions (2026-10-01)
 - Driven by the digital twin goal: "great day", "the hut was disappointing" are part
-  of who the owner is, not noise.
+  of who the holder is, not noise.
 - Episode fields: `valence` (-2..+2), `feelings` (short free tags), `opinion`
-  (optional one-line stance expressed by the owner). Emotional charge also feeds
+  (optional one-line stance expressed by the holder). Emotional charge also feeds
   `importance` (amygdala tagging).
 - Future-proofing for phase 3 (disclosure): episodes involving third parties keep
   `people` (names as mentioned) so a disclosure level can be applied later.
@@ -357,10 +357,10 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   held-out) within a set margin of the reference and its structured output validates; a CLI
   command runs the suite against a given configuration; results kept in a supported-models table.
   At equal quality the cheaper model wins.
-- As built (2026-10-08): one prompt set written in English with a line naming the owner's language; the deterministic
-  language data (periods, month names, relation words, owner naming) lives in `service/src/lang` for the most used
-  languages (owner's rule: all languages, never IT / EN only). Certification CLI and supported-models table not built
-  (WORK_PLAN 4.5b); owner's rule: an engine model is supported only at ≥ 95 % on the suite.
+- As built (2026-10-08): one prompt set written in English with a line naming the memory's language; the deterministic
+  language data (periods, month names, relation words, self stand-ins for the leak detector) lives in `service/src/lang` for the most used
+  languages (maintainer's rule: all languages, never IT / EN only). Certification CLI and supported-models table not built
+  (WORK_PLAN 4.5b); maintainer's rule: an engine model is supported only at ≥ 95 % on the suite.
 
 ### D28 — Phase-1 data model reserves the fields the research hypotheses need (2026-10-02)
 - From `RESEARCH_NOTES.md` (H1–H3): adding these later would mean migrating episodes, so they
@@ -372,9 +372,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   (`validFrom` / `validTo`) and knowledge time (`recordedAt` / `expiredAt`).
 - `corrects` (the old value was never true) distinct from `supersedes` (true until t); both keep
   the old row (no rewrite).
-- `origin: owner_lived | owner_told | twin_experienced` on episodes and facts (phase 1 writes
+- `origin: holder_lived | holder_told | twin_experienced` on episodes and facts (phase 1 writes
   the first two), plus the conversation's interlocutor and audience.
-- `disclosure` label on episodes, facts and digests (default `owner`); derived artefacts keep
+- `disclosure` label on episodes, facts and digests (default `holder`); derived artefacts keep
   their source ids so labels can propagate (most restrictive wins).
 - `stated | inferred` on facts; inferred ones stay pending (see `ENGINE_IDEAS.md`).
 
@@ -407,8 +407,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   single-session-assistant regression) — for agentic clients that is the agent's actions and the
   recommendations the user accepted.
 - Assistant turns are always extraction context, and assistant-stated items are extracted with
-  `origin: assistant_stated` (extends D28's `owner_lived | owner_told | twin_experienced`),
-  never merged with owner-lived memories; recall labels them ("the assistant suggested / did").
+  `origin: assistant_stated` (extends D28's `holder_lived | holder_told | twin_experienced`),
+  never merged with holder-lived memories; recall labels them ("the assistant suggested / did").
 
 ### D31 — Recordare facts are state slots with a value chain (2026-10-03; notes part superseded by D34)
 - Layer 3 in Recordare = **state slots** ("car", "address", "employer", "children") with their
@@ -427,15 +427,15 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 
 ### D33 — Deployment profiles: v1 home / research, hardening deferred (2026-10-03)
 - Terminology: the "home" profile is about who runs the installation; it has nothing to do with a memory shared by a device or a household, which is the **entity memory** (D48).
-- The owner's guidance: stay on the twin; when more security is needed, put firewalls and
-  hardening in front. v1 = **home / research profile**: admin-created owners, client keys, personal
-  tokens, simple scopes, per-owner isolation.
+- The maintainer's guidance: stay on the twin; when more security is needed, put firewalls and
+  hardening in front. v1 = **home / research profile**: admin-created memories, client keys, personal
+  tokens, simple scopes, per-memory isolation.
 - Kept in v1 because they are part of the twin, not security add-ons: viewer context resolved by
   Recordare (knowing what to tell whom — disclosure pillar — *superseded by D50 for answers, 2026-10-09 / WORK_PLAN 8.2:
   no viewer filter; only the conversation is resolved, for the evidence of MCP writes*), `author_role` provenance (principle 3,
   memory quality), consent flag (D4 — *superseded by D50, 2026-10-09: no consent flag*), forgetting that sticks (D16).
-- Deferred to the **public profile** (M7 / public release): owner login and pages, OAuth for MCP,
-  owner-driven linking and revocation UI, read audit, persistent idempotency, backup / provider
+- Deferred to the **public profile** (M7 / public release): holder login and pages, OAuth for MCP,
+  holder-driven linking and revocation UI, read audit, persistent idempotency, backup / provider
   retention policy, network protection. Specified in `API.md` §0 so enabling them needs no data
   migration.
 - Status (2026-10-08): v0.1.0 was released publicly on this profile, its limits stated in the README (WORK_PLAN M7);
@@ -462,9 +462,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   is not built yet (WORK_PLAN 4.3 / 4.7); the Arkimede side (toggle split, copying notes into A-MEM) is TODO.
 
 ### D35 — Cost is an option, not a limit: quality profiles (2026-10-03)
-- The owner's guidance: models get cheaper and local models stronger; users choose the quality they
+- The maintainer's guidance: models get cheaper and local models stronger; users choose the quality they
   want. Every costly mechanism sits behind a **quality profile**, chosen per installation with a
-  per-owner override:
+  per-memory override:
   - **economy** — today's cost principles (`ENGINE_IDEAS.md`): one extraction call per window,
     strict gates, light model where possible, no reranker, digests by day, resting-state thinking
     (H12) limited to deterministic open loops;
@@ -476,17 +476,17 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   measured on the eval suite (quality and cost per message) so the trade-off is visible.
 - Implemented (M4b, 2026-10-04): `service/src/engine/quality-profile.ts` — one table of knobs (window size,
   extraction model role, reasoning, recent / related episodes, near-duplicate window and threshold, chat
-  excerpts); `QUALITY_PROFILE` installation default + `owners.quality_profile`. `balanced` = measured service v4.
+  excerpts); `QUALITY_PROFILE` installation default + `memories.quality_profile`. `balanced` = measured service v4.
   Not yet: verification pass, reranker, monthly digests, H12 (they arrive with M5 / H11 and join `full`).
-- Model per task (owner's rule, 2026-10-06): every LLM task has its own configurable model and provider
+- Model per task (maintainer's rule, 2026-10-06): every LLM task has its own configurable model and provider
   (`LLM_<TASK>_*`, tasks `extract`, `extract_economy`, `resolve`, `digest`, `facts`); defaults documented as the best measured model.
   Profiles pick the extraction task (`economy` → `extract_economy`), never a model.
 - Replaces the earlier rule "as cheap as possible" with: **never trade quality silently — the
-  owner chooses the profile**.
+  operator chooses the profile**.
 
 ### D36 — Consent in two steps (2026-10-07)
 - A client's per-user switch gates the client's side; the episodic consent itself is given by the Recordare admin
-  (home profile) or the owner (public profile). `GET api/v1/me` returns `episodicEnabled`; clients do not buffer
+  (home profile) or the holder (public profile). `GET api/v1/me` returns `episodicEnabled`; clients do not buffer
   messages before consent (they show "waiting for activation").
 - **Superseded by D50 (2026-10-09)**: no consent step in Recordare (WORK_PLAN 8.1). The client's per-user switch is the
   only one; `episodicEnabled` and the "waiting for activation" state are gone.
@@ -499,7 +499,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D38 — Recall echo is stopped by a code guard, not a prompt rule (2026-10-07)
 - A prompt label ("answering from memory") made the extractor trust a wrong recall (dev set 75 %), so extract.v6 stays.
 - The writer drops items said only by an assistant reply answering from memory (a Recordare read tool in the turn, or
-  a recall served in that conversation) and not by the owner, another person or a non-memory tool; after a recall a
+  a recall served in that conversation) and not by the holder, another person or a non-memory tool; after a recall a
   fact changes only with an asserting (non-question) sentence. Dev echo set 79 % → 100 % (3 + 3 runs).
 
 ### D39 — People-aware recall (2026-10-07)
@@ -511,7 +511,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   third-party news in group chats.
 
 ### D41 — Nightly facts review built, kept off (2026-10-07)
-- `facts_review.v1` (task `facts`), admin `POST owners/:id/review-facts`; blind5: no gain on current facts
+- `facts_review.v1` (task `facts`), admin `POST memories/:id/review-facts`; blind5: no gain on current facts
   (0.769 × 3) → quality-profile knob `factsReview` off. Facts work moves to the extraction prompt (D40).
 
 ### D42 — Recordare Atlas is its own optional repo (2026-10-06)
@@ -546,9 +546,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D48 — Entity memory: one memory per person, plus memories of entities (2026-10-07)
 - Problem: a family talks to one shared account (Arkimede's voice user on the satellites); its turns cannot go to any
   person's memory, and one mixed "person" memory would turn everyone's words into facts about the account.
-- **A person's memory is written only through a secure identity**: the client's user (Arkimede's owner id or another
+- **A person's memory is written only through a secure identity**: the client's user (Arkimede's user id or another
   client's), bound by the admin. A self-introduction or a voiceprint never routes a turn into someone's own memory.
-- **Entity memory**: an owner can be an entity (`persons.kind = entity`) — a shared device, a home robot, a place.
+- **Entity memory**: a memory can be an entity (`persons.kind = entity`) — a shared device, a home robot, a place.
   Everyone using it reads and writes all of it, and knows it is shared (`GET /me` returns `kind`). Several entities
   may exist (one per shared device or room).
 - Identification inside it ("sono Andrea", being addressed by name; later a voiceprint) only says **whose** a memory
@@ -556,12 +556,12 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "someone" and their personal facts are not recorded. Every conversation starts with nobody identified.
 - Code guard: a fact about a person, or an episode naming one, is recorded only if that name occurs in the window
   (no identity carried over from earlier chats — measured: the model did that without it).
-- Prompt: `extract.v8` (now `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), appended only for entity owners (person memories unchanged).
+- Prompt: `extract.v8` (now `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), appended only for entity memories (person memories unchanged).
   Measured on `dataset_dev_entity` (RESULTS.md).
 - TODO (later): stronger identification so the most intimate memories in an entity memory are readable only by the
   person they belong to — then the entity can be a home robot everyone confides in (vision direction G). A client's
   rename of its user propagates to Recordare (WORK_PLAN 6.8).
-- Owner's follow-up (2026-10-07): the **person chooses the kind on their platform** (Arkimede's memory settings →
+- Maintainer's follow-up (2026-10-07): the **person chooses the kind on their platform** (Arkimede's memory settings →
   `PATCH /me {kind}`), only while the memory is empty; the **name always follows the platform's profile** (a client's
   sync overwrites an admin rename); consent stays with the Recordare admin (*superseded by D50, 2026-10-09: no consent*).
 - Status (2026-10-08): on a fresh blind entity set (`dataset_blind8`, WORK_PLAN 4.8) 82.1 % over 3 runs (dev set 95.5 %);
@@ -569,7 +569,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   spots.
 
 ### D49 — Semantic memory: learned sources (proposal, 2026-10-08; built 2026-10-10, WORK_PLAN 8.9)
-- Owner's request: many clients have no RAG of their own (a robot with its own agent, a small assistant), so Recordare
+- Maintainer's request: many clients have no RAG of their own (a robot with its own agent, a small assistant), so Recordare
   should be a **complete** memory — what the person lived **and what they learned**. Recordare stays a personal memory:
   documents are not mixed into episodes, facts or notes.
 - **Semantic memory = learned sources.** A source (a text, a document, a page, a book's notes, the person's own writing)
@@ -591,7 +591,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   size limits and cost per quality profile (D35); third-party texts are kept for the person's own use only (never
   disclosed to others, D33 limits); whether takeaways in the person's words are extracted by an LLM (a later option).
   WORK_PLAN 5.9 (now 8.9).
-- **As built (8.9, 2026-10-10)** — owner's decisions: sources arrive as **text only** (the client converts files:
+- **As built (8.9, 2026-10-10)** — maintainer's decisions: sources arrive as **text only** (the client converts files:
   `POST api/v1/ingest/sources`, or the MCP tool `learn_source`); **no size limit** per source or per memory — only the
   request body limit (`MAX_REQUEST_BYTES`, 16 MB), a bigger text comes in parts (`…/parts`; the client library splits at
   paragraph boundaries); the source belongs to the agent's memory (D50), provided by me, someone or a contact by name.
@@ -603,13 +603,13 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   (OpenClaw, Hermes…) do not expose the new tools yet (follow-up). Data: `DATA_MODEL.md` → Learned sources; contract:
   `API.md` §2, §3.
 
-### D50 — Agent memory: every memory belongs to the agent (owner's decision, 2026-10-09)
-Supersedes "one memory per person" (D24 identity, D48's person / entity split as two kinds of owner), the consent
+### D50 — Agent memory: every memory belongs to the agent (maintainer's decision, 2026-10-09)
+Supersedes "one memory per person" (D24 identity, D48's person / entity split as two kinds of memory), the consent
 switch (D4), the viewer rule as a filter on answers (§1 of API.md), and turns the digital twin (VISION) into an
 emergent case. Research: `docs/literature/human-memory-and-agent-architectures.md`; inventory and plan:
 `docs/AGENT_MEMORY_AUDIT.md`.
 - **A memory belongs to an agent**: one client account ("Caino" — e.g. an Arkimede account) = one memory; another
-  account ("Abele") = another memory, isolated as if it were another installation. Humans are not owners any more:
+  account ("Abele") = another memory, isolated as if it were another installation. Humans no longer hold memories:
   they are **contacts the agent knows**, scoped to that memory. Goal: anyone can give a machine a brain (later a
   robot with cameras, microphones and other sensors builds its own memories).
 - **Everything that comes in enriches the agent's memory**: chats, voice, documents, photos, audio, video, sensors;
@@ -633,7 +633,7 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   (privacy, disclosure tiers) is a later decision. `audience` / `disclosure` stay recorded for it.
   Implemented in WORK_PLAN 8.2 (2026-10-09): no read path filters by viewers; `X-Recordare-Viewers` is gone; the
   conversation is still resolved (MCP writes bind their evidence to it).
-- **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38), in the owner's words:
+- **Kept**: the Diary (correction tool for whoever maintains the memory); the recall-echo guard (D38), in the maintainer's words:
   when the agent answers from a memory it already has ("where was I yesterday?" → "at the sea"), the answer does not
   go back in, right or wrong; when it says something new ("what's the weather in Ispica?" → the forecast), that is
   something the agent learned and may become its memory, selected by importance like any other input; append-only
@@ -646,14 +646,14 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
 - Plan: WORK_PLAN M8 (steps 0–11 of the audit), each prompt step measured on dev sets + 3 blind runs; existing
   memories on Kinox migrated after the voice is final (backup first).
 
-- **Owner's follow-up (2026-10-09, after `docs/COMPETITORS.md`):** (a) attribution is stored as data — who said it,
+- **Maintainer's follow-up (2026-10-09, after `docs/COMPETITORS.md`):** (a) attribution is stored as data — who said it,
   how it was established, how sure, re-attributable later; (b) in personal mode everything is written in the first
   person, and **who said it** (the person or the assistant) is recorded **only as knowledge**: it must not influence the
   memory in any way and stays out of the reasoning (extraction, recall, answers); (c) **external content** (web, tool
   results, files) is the agent's memory too: the agent did not say it, but now it knows it. Points 4–10 of the
   comparison (forget a contact, privacy scopes, self / contact cards, sources model, things to avoid, Mem0 re-run,
-  LongMemEval point) are accepted in principle — each is discussed with the owner before it is built (WORK_PLAN M8).
-- **Contacts and attribution (owner, 2026-10-09):** in a personal memory only the account holder exists as "I" (user and
+  LongMemEval point) are accepted in principle — each is discussed with the maintainer before it is built (WORK_PLAN M8).
+- **Contacts and attribution (maintainer, 2026-10-09):** in a personal memory only the account holder exists as "I" (user and
   agent at once); first person defaults to masculine. Contacts belong to one memory, also people only mentioned; names
   and nicknames, full name, relation; same-name people separated by identifiers → full name → context, and when still
   ambiguous Recordare **asks** ("which Marco?") through the agent — its first initiative (L1). Data design: DATA_MODEL
@@ -664,9 +664,9 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   the memory's contacts (created when only mentioned, merged only when clear); an ambiguous person is stored `undecided`
   with a clarification, answered by a later conversation or expired after 14 days, offered once by the memory context
   ("if natural, ask: …"); recall returns each item's subject and who is asking (an identified speaker gets their own
-  memories first); `nameOwner` replaced by a leak detector (counts in the run summary). Entity memories unchanged
+  memories first); the 4.11 naming substitution replaced by a leak detector (counts in the run summary). Entity memories unchanged
   (byte-identical prompt inputs) until 8.5. Details: DATA_MODEL "Agent memory → As built (8.4)", RESULTS.md (dev runs).
-- **D50 follow-up — same-name participants (owner, 2026-10-09):** a first name alone is not enough to say that an
+- **D50 follow-up — same-name participants (maintainer, 2026-10-09):** a first name alone is not enough to say that an
   identified participant is a contact the memory knows only by name ("mia sorella Giulia" vs a Giulia writing in a
   group). Ingest binds automatically only on a full name equal to exactly one contact without an identity; otherwise a
   new contact and, when exactly one such contact shares the name, a "same person?" clarification (`clarifications.contact_id`,

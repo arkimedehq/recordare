@@ -32,7 +32,7 @@ export function senderParticipant(channel: string | undefined, senderId: string,
   };
 }
 
-/** Who wrote the person's message of a turn: the memory's owner ("I"), or a participant recognised inside the memory. */
+/** Who wrote the person's message of a turn: the memory's holder ("I"), or a participant recognised inside the memory. */
 export interface Speaker {
   /** `authorRef` of the message. */
   ref: string;
@@ -44,12 +44,12 @@ export interface Speaker {
 
 /**
  * The speaker of a turn. `user` mode, turns without a channel sender (CLI, Control UI) and `selfSenders`: the account
- * holder (participant `owner`). Anyone else in `agent` mode: a participant with the channel identity
+ * holder (participant `holder`). Anyone else in `agent` mode: a participant with the channel identity
  * `<channel>:<senderId>` — Recordare links it to a contact of the agent's memory (created on first sight).
  */
 export function resolveSpeaker(cfg: RecordareConfig, channel: string | undefined, senderId: string | undefined, displayName?: string): Speaker {
   if (cfg.memoryPer === 'user' || !senderId || cfg.selfSenders.includes(senderRef(channel, senderId))) {
-    return { ref: 'owner', role: 'user' };
+    return { ref: 'holder', role: 'user' };
   }
   const participant = senderParticipant(channel, senderId, displayName);
   return { ref: participant.ref, role: 'other', participant };

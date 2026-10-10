@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { qualityProfile } from '../../src/engine/quality-profile';
 
 describe('quality profiles (D35)', () => {
-  it('uses the owner choice, else the installation default; unknown values fall back', () => {
+  it('uses the memory choice, else the installation default; unknown values fall back', () => {
     expect(qualityProfile('full', 'balanced').name).toBe('full');
     expect(qualityProfile(null, 'economy').name).toBe('economy');
     expect(qualityProfile('platinum', 'balanced').name).toBe('balanced');

@@ -41,7 +41,7 @@ async function main(): Promise<void> {
 
   const note = await tool('remember', { content: `Smoke test ${marker}: prefers green tea` });
   check('remember', note['stored'] === true);
-  // Without ingested owner messages behind it, an agent's note waits for the person's confirmation (API.md §3).
+  // Without ingested messages of the holder behind it, an agent's note waits for the person's confirmation (API.md §3).
   const notes = JSON.stringify(await tool('search_memory', { query: `green tea ${marker}`, include_pending: true }));
   check('search_memory finds it (pending)', notes.includes(marker));
 

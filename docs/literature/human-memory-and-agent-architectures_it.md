@@ -14,7 +14,7 @@ ACT-R, Nuxoll & Laird 2012. Bartlett 1932 è citato come origine classica di "sc
 appoggia alla tabella "Cognitive model" di `../EPISODIC_MEMORY_TODO_it.md`, a `agent-platform-memory_it.md` (Letta,
 Honcho, OpenClaw) e a H3 / H12 in `../RESEARCH_NOTES_it.md`.
 
-## 0. La visione su cui è riportata questa scheda (proprietario, 2026-10-09)
+## 0. La visione su cui è riportata questa scheda (maintainer, 2026-10-09)
 
 Una memoria appartiene **all'agente stesso**: "Caino" (un account di una piattaforma cliente) ha una memoria, "Abele"
 (un altro account) un'altra, isolata. Tutto ciò che entra la arricchisce: conversazioni, voce, documenti, foto, audio,
@@ -78,7 +78,7 @@ umana e delle architetture di agenti esistenti servono alla visione, e che cosa 
 - **Schacter, Addis & Buckner (2007)**: immaginare il futuro usa gran parte dello stesso apparato neurale del ricordare
   il passato ("il cervello prospettico").
 - Per noi: la memoria prospettica è un sistema a sé, non una variante degli episodi. I piani di Recordare con ciclo di
-  vita sono memoria prospettica *del proprietario*. Le due vie di recupero corrispondono a due meccanismi già
+  vita sono memoria prospettica *del titolare*. Le due vie di recupero corrispondono a due meccanismi già
   discussi: intenzioni a tempo → uno scheduler ("monitoraggio"), intenzioni legate a un evento → un confronto con gli
   indizi al recall pre-turno ("recupero spontaneo"; standing intents di OpenClaw, `agent-platform-memory_it.md` idea 8).
 
@@ -168,7 +168,7 @@ umana e delle architetture di agenti esistenti servono alla visione, e che cosa 
   è utile: riduce il peso delle informazioni superate e impedisce l'overfitting su eventi specifici; "lo scopo della
   memoria è ottimizzare le decisioni".
 - Per noi: negli umani l'oblio serve **le decisioni**, non i limiti di spazio. Recordare tiene tutto e dimentica solo
-  nel ranking (recenza, accessi) e per scelta del proprietario; così ottiene il beneficio per le decisioni senza perdere
+  nel ranking (recenza, accessi) e per scelta del titolare; così ottiene il beneficio per le decisioni senza perdere
   la registrazione, purché i valori superati siano etichettati (catene di valori, stato). Il retrieval-induced
   forgetting ha un analogo macchina da tenere d'occhio: gli elementi richiamati spesso spingono in basso quelli simili
   (segnali d'uso solo per il ranking, mai per la verità, `agent-platform-memory_it.md` idea 7).
@@ -302,24 +302,24 @@ umana e delle architetture di agenti esistenti servono alla visione, e che cosa 
 | Episodica | Tulving; stream di Generative Agents; istantanee di Soar | Episodi: bi-temporali, persone, luogo, importanza, valenza / sentimenti / opinione, evidenze, fallback sul raw log, recall `latest` / `list` / per periodo | Episodi vissuti dall'agente (`twin_experienced` riservato, non scritto); navigazione successivo / precedente |
 | Semantica — sulle persone | Tulving; base di conoscenza di Conway | Fatti come state slot con catene di valori (D31), note per categoria (D34), `subject_person_id` nella memoria di entità (D48) | Fatti su terzi nella memoria di una persona (per scelta, oggi) |
 | Semantica — conoscenza del mondo | Memoria semantica di CoALA; archival di MemGPT | Fonti apprese D49: proposta, non costruita (WORK_PLAN 5.9) | Tutto |
-| Autobiografica / sé | Self-memory system di Conway; periodi di vita | Digest giornalieri e mensili (cronologici) | Periodi di vita / eventi generali; un **modello di sé** (chi è l'agente, il suo rapporto con ciascuna persona); l'idea della owner card |
-| Prospettica | Einstein & McDaniel; multiprocess framework; obiettivi nella memoria episodica di Soar | Piani con ciclo di vita nel codice (`open … unresolved`, D10, D37): le intenzioni **del proprietario** | Le intenzioni **dell'agente**: promesse, richieste rivolte a lui, standing intents (idea 8) |
+| Autobiografica / sé | Self-memory system di Conway; periodi di vita | Digest giornalieri e mensili (cronologici) | Periodi di vita / eventi generali; un **modello di sé** (chi è l'agente, il suo rapporto con ciascuna persona); l'idea della holder card |
+| Prospettica | Einstein & McDaniel; multiprocess framework; obiettivi nella memoria episodica di Soar | Piani con ciclo di vita nel codice (`open … unresolved`, D10, D37): le intenzioni **del titolare** | Le intenzioni **dell'agente**: promesse, richieste rivolte a lui, standing intents (idea 8) |
 | Procedurale | Squire; CoALA (pesi + codice); libreria di abilità di Voyager; chunking di Soar | Nessuna; respinta in precedenza come "compito dell'agente host" (`agent-platform-memory_it.md` §4) | Da decidere con la nuova visione (lacuna 1) |
 | Priming / condizionamento | Non dichiarativa di Squire | Conteggi di accesso solo nel ranking | Non proposto |
-| Source / reality monitoring | Johnson & Raye; Johnson et al. 1993; reality monitoring negli LLM (2026) | `origin` (`owner_lived / owner_told / assistant_stated`), `author_role`, `stance`, `confidence`, `audience`, `confidence_of`; guardia anti-eco D38 nel codice; "qualcuno" e guardia nome-nella-finestra di D48 | **Come** è stata stabilita la fonte (legame dichiarato, presentazione, impronta vocale, volto, inferenza) e **con quale sicurezza**, come dato; un "parlante sconosciuto" riattribuibile in seguito |
+| Source / reality monitoring | Johnson & Raye; Johnson et al. 1993; reality monitoring negli LLM (2026) | `origin` (`holder_lived / holder_told / assistant_stated`), `author_role`, `stance`, `confidence`, `audience`, `confidence_of`; guardia anti-eco D38 nel codice; "qualcuno" e guardia nome-nella-finestra di D48 | **Come** è stata stabilita la fonte (legame dichiarato, presentazione, impronta vocale, volto, inferenza) e **con quale sicurezza**, come dato; un "parlante sconosciuto" riattribuibile in seguito |
 | Consolidamento / replay | CLS; Wilson & McNaughton; Diekelmann & Born | Job notturno (zero chiamate se non c'è nulla di nuovo), digest; risolutore di quasi-duplicati all'estrazione | Promozioni di pattern (D20, TODO), passata di dedup in consolidamento (5.3 parziale); revisione dei fatti costruita ma spenta (D41, nessun guadagno) |
 | Riflessione / pensieri propri | Riflessione di Generative Agents; Reflexion; sleep-time di Letta | Solo il disegno H12; `kind = thought / goal` riservati alla traccia R | Tutto |
 | Riconsolidamento | Nader et al.; Loftus & Palmer | Di proposito non copiato: `corrects` / `supersedes` append-only | Nulla (mantenere) |
 | Schemi | Bartlett; Tse et al.; Gilboa & Marlatte | Schema dei fact slot con cardinalità e politica di fusione; categorie delle note | Un controllo che gli schemi non trasformino eventi isolati in abitudini (sonda di valutazione) |
-| Oblio | Anderson & Schooler; Richards & Frankland; ACT-R | Retrocessione nel ranking; oblio di un episodio per scelta del proprietario (periodo TODO, D16) | Nulla di nuovo; oblio di un periodo |
+| Oblio | Anderson & Schooler; Richards & Frankland; ACT-R | Retrocessione nel ranking; oblio di un episodio per scelta del titolare (periodo TODO, D16) | Nulla di nuovo; oblio di un periodo |
 | Sviluppo | Turing; robotica dello sviluppo; amnesia infantile | Nessuno | Fasi e rielaborazione della prima vita (§3.3) |
 
 ### 3.2 Che cosa cambia con la nuova visione
 
-1. **Il proprietario è l'account dell'agente.** Oggi un proprietario è una persona (`kind = human`) o un'entità
+1. **La memoria è l'account dell'agente.** Oggi una memoria è una persona (`kind = human`) o un'entità
    (`kind = entity`, D48). Nella visione entrambi sono "la memoria dell'agente" con una modalità. Sul piano dei dati è
    vicino a ciò che esiste: modalità personale ≈ la memoria di persona di oggi (l'utente dell'account è il
-   proprietario; le sue parole sono `owner_lived`), modalità entità ≈ D48. Il cambiamento sta soprattutto in **come
+   titolare; le sue parole sono `holder_lived`), modalità entità ≈ D48. Il cambiamento sta soprattutto in **come
    parla la memoria** (prima persona) e in due nuovi valori di provenienza (sotto).
 2. **Modalità personale, prima persona: mantenere il reality monitoring.** Se tutto ciò che non è dichiarato è
    dell'agente, le parole dell'utente e le risposte dell'agente sono entrambe "mie". La distinzione di Johnson & Raye
@@ -336,7 +336,7 @@ umana e delle architetture di agenti esistenti servono alla visione, e che cosa 
    possibile; la guardia di D48 (il nome deve comparire nella finestra) resta per l'attribuzione *automatica*.
 4. **Marcare la memoria propria richiede due nuovi valori di provenienza.** "Conoscenze che gli vengono date" = fonti
    apprese (D49), con chi le fornisce come fonte. "Ciò che un robot percepisce lavorando da solo" = percezione di prima
-   mano dell'agente, che nessuno fra `owner_lived / owner_told / assistant_stated` descrive: qualcosa come
+   mano dell'agente, che nessuno fra `holder_lived / holder_told / assistant_stated` descrive: qualcosa come
    `agent_perceived` (percepito di prima mano) accanto a `agent_generated` (le sue parole e i suoi pensieri). Il reality
    monitoring è esattamente percepito vs generato, quindi i due non dovrebbero condividere un valore.
 5. **I metodi di identificazione come evidenza di attribuzione, non come autorità.** Identità dichiarata (legame
@@ -368,7 +368,7 @@ umana e delle architetture di agenti esistenti servono alla visione, e che cosa 
    `attributed_to`, `attribution_method`, `attribution_confidence`, legami di riattribuzione. La misura di H3 (trappole
    di attribuzione errata) diventa il test.
 4. **Modello di sé.** Il working self di Conway: obiettivi e identità dell'agente orientano il recall. Partire dalla
-   owner card derivata (idea 6) per la modalità personale, e da un "chi sono / il mio rapporto con ciascuna persona"
+   holder card derivata (idea 6) per la modalità personale, e da un "chi sono / il mio rapporto con ciascuna persona"
    inferito per la modalità entità (direzione G della visione), sempre `inferred`, tracciabile, senza mai riscrivere gli
    episodi.
 5. **Memoria prospettica propria dell'agente.** Promesse e richieste rivolte all'agente come intenzioni con ciclo di vita
@@ -388,13 +388,13 @@ umana e delle architetture di agenti esistenti servono alla visione, e che cosa 
   elementi semantici (multiple trace theory).
 - Importanza alla codifica e ranking recenza + importanza + rilevanza: segue Generative Agents e ACT-R / Anderson &
   Schooler.
-- Oblio solo nel ranking e per scelta del proprietario (Richards & Frankland: l'oblio serve alle decisioni).
+- Oblio solo nel ranking e per scelta del titolare (Richards & Frankland: l'oblio serve alle decisioni).
 - Provenienza memorizzata alla scrittura invece che ricostruita al recall (errori di source monitoring nelle persone e
   negli LLM).
 
 ## 5. Domande aperte
 
-1. Un unico tipo di proprietario ("agente") con una modalità (personale / entità) è più pulito di `human` / `entity`, o
+1. Un unico tipo di memoria ("agente") con una modalità (personale / entità) è più pulito di `human` / `entity`, o
    è solo un cambio di nome? (Fase di sviluppo: codice pulito prima della compatibilità.)
 2. In modalità personale, la persona deve mai essere *distinta* dall'agente (le percezioni dell'agente dalla
    fotocamera di un telefono, le sue opinioni)? Se sì, anche la modalità personale ha bisogno di `agent_perceived` /

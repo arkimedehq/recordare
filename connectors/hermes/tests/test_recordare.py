@@ -250,7 +250,7 @@ class AgentMemoryTest(unittest.TestCase):
         path, headers, body = self.fake.requests[-1]
         self.assertEqual((path, headers["X-Recordare-User"]), ("/api/v1/context", "hermes-agent"))
         conv = body["ingest"]["conversation"]
-        self.assertEqual(conv["participants"][0], {"ref": "owner", "role": "owner"})  # not Alice: she is not the holder
+        self.assertEqual(conv["participants"][0], {"ref": "holder", "role": "holder"})  # not Alice: she is not the holder
         self.assertIn({"ref": "telegram:42", "role": "other", "identity": {"channel": "telegram", "externalId": "42"},
                        "displayName": "Alice"}, conv["participants"])
         msg = body["ingest"]["messages"][0]
@@ -272,7 +272,7 @@ class AgentMemoryTest(unittest.TestCase):
         self.assertEqual([(m["role"], m.get("authorRef")) for m in msgs],
                          [("other", "telegram:77"), ("assistant", None), ("user", None), ("assistant", None)])
         conv = self.fake.ingests()[-1]["conversation"]
-        self.assertEqual(conv["participants"][0], {"ref": "owner", "role": "owner", "displayName": "Alice"})
+        self.assertEqual(conv["participants"][0], {"ref": "holder", "role": "holder", "displayName": "Alice"})
         bob = next(x for x in conv["participants"] if x["ref"] == "telegram:77")
         self.assertEqual((bob["identity"], bob["displayName"]), ({"externalUserId": "bob"}, "Bob"))
 

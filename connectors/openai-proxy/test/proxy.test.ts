@@ -180,8 +180,8 @@ describe('proxy', () => {
     await until(() => calls.length >= 1);
     expect(calls[0]!.headers.get('x-recordare-user')).toBe('anythingllm:7');
     const ingest = calls[0]!.body.ingest as { conversation: { participants: Array<{ ref: string }> }; messages: Array<{ role: string; authorRef: string }> };
-    expect(ingest.conversation.participants.map((p) => p.ref)).toEqual(['owner', 'assistant']);
-    expect(ingest.messages[0]).toMatchObject({ role: 'user', authorRef: 'owner' });
+    expect(ingest.conversation.participants.map((p) => p.ref)).toEqual(['holder', 'assistant']);
+    expect(ingest.messages[0]).toMatchObject({ role: 'user', authorRef: 'holder' });
   });
 
   it('with recall off, stores the message with a plain ingest', async () => {

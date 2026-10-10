@@ -42,18 +42,18 @@ describe('config and identity', () => {
       participant: { ref: 'telegram:42', role: 'other', identity: { channel: 'telegram', externalId: '42' }, displayName: 'Alice' },
     });
     // The account holder ("I"): listed senders and turns without a channel sender (CLI, Control UI).
-    expect(resolveSpeaker(cfg, 'telegram', '1')).toEqual({ ref: 'owner', role: 'user' });
-    expect(resolveSpeaker(cfg, undefined, undefined)).toEqual({ ref: 'owner', role: 'user' });
+    expect(resolveSpeaker(cfg, 'telegram', '1')).toEqual({ ref: 'holder', role: 'user' });
+    expect(resolveSpeaker(cfg, undefined, undefined)).toEqual({ ref: 'holder', role: 'user' });
     const key = parseConfig({ url: 'http://r', apiKey: 'rk_x', defaultUser: 'agent' }, {})!;
     expect(resolveUser(key, 'telegram', '99')).toBe('agent');
   });
 
   it('memoryPer user: a client key remembers mapped senders and the default user only', () => {
-    const cfg = parseConfig({ url: 'http://r', apiKey: 'rk_x', memoryPer: 'user', users: { 'telegram:42': 'alice' }, defaultUser: 'owner' }, {})!;
+    const cfg = parseConfig({ url: 'http://r', apiKey: 'rk_x', memoryPer: 'user', users: { 'telegram:42': 'alice' }, defaultUser: 'me' }, {})!;
     expect(resolveUser(cfg, 'telegram', '42')).toBe('alice');
     expect(resolveUser(cfg, 'telegram', '43')).toBeUndefined();
-    expect(resolveUser(cfg, undefined, undefined)).toBe('owner');
-    expect(resolveSpeaker(cfg, 'telegram', '42')).toEqual({ ref: 'owner', role: 'user' });
+    expect(resolveUser(cfg, undefined, undefined)).toBe('me');
+    expect(resolveSpeaker(cfg, 'telegram', '42')).toEqual({ ref: 'holder', role: 'user' });
     expect(conversationId('agent:main:main', 's1')).toBe('openclaw:agent:main:main/s1');
   });
 });
@@ -101,7 +101,7 @@ describe('hooks and tools', () => {
     const ingest = calls[0]!.body.ingest as { conversation: { externalId: string }; messages: Array<{ externalId: string; authorRef: string }> };
     expect(ingest.conversation.externalId).toBe('openclaw:agent:main:telegram:42/s1');
     expect(ingest.messages[0]!.externalId).toBe('m1:u');
-    expect(ingest.messages[0]!.authorRef).toBe('owner');
+    expect(ingest.messages[0]!.authorRef).toBe('holder');
     expect(calls[0]!.body.query).toBe('my sister is Giulia');
 
     await hooks.agent_end({ success: true, messages: [{ role: 'user', content: 'x' }, { role: 'assistant', content: 'Nice!' }] }, ctx);
@@ -128,7 +128,7 @@ describe('hooks and tools', () => {
     await plugin.stop();
   });
 
-  it('offers the six memory tools from the published schemas, as the manifest lists them', () => {
+  it('offers the eight memory tools from the published schemas, as the manifest lists them', () => {
     const manifest = JSON.parse(readFileSync(new URL('../openclaw.plugin.json', import.meta.url), 'utf8')) as { contracts: { tools: string[] } };
     expect(TOOLS.map(toolName).sort()).toEqual([...manifest.contracts.tools].sort());
     expect(TOOLS.map((t) => t.mcpName)).not.toContain('log_episode');
@@ -165,8 +165,8 @@ describe('hooks and tools', () => {
       { runId: 'r1', sessionKey: key, sessionId: 's1', channel: 'telegram', senderId: '1' });
     const ingest = calls[0]!.body.ingest as { conversation: { participants: Array<{ ref: string }> }; messages: Array<{ externalId: string; role: string; authorRef: string }> };
     expect(calls[0]!.headers.get('x-recordare-user')).toBeNull();
-    expect(ingest.conversation.participants.map((p) => p.ref)).toEqual(['owner', 'assistant', 'telegram:5']);
-    expect(ingest.messages.map((m) => [m.externalId, m.role, m.authorRef])).toEqual([['msg:g1', 'other', 'telegram:5'], ['g2:u', 'user', 'owner']]);
+    expect(ingest.conversation.participants.map((p) => p.ref)).toEqual(['holder', 'assistant', 'telegram:5']);
+    expect(ingest.messages.map((m) => [m.externalId, m.role, m.authorRef])).toEqual([['msg:g1', 'other', 'telegram:5'], ['g2:u', 'user', 'holder']]);
     await plugin.stop();
   });
 

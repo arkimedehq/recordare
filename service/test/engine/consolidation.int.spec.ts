@@ -14,19 +14,19 @@ describe('nightly consolidation (M5): day and month digests', () => {
   let db: DataSource;
   let llm: Awaited<ReturnType<typeof startFakeLlm>>;
   let emb: Server;
-  let ownerId: string;
+  let memoryId: string;
   let token: string;
   const NOW = '2026-03-20T10:00:00+01:00';
 
-  const consolidate = () => call(url, 'POST', `/api/v1/admin/owners/${ownerId}/consolidate`, { token: ADMIN_KEY, headers: { 'x-recordare-now': NOW } });
-  const episode = async (content: string, at: string, author = 'owner', stance = 'stated', subject: string | null = null) => {
+  const consolidate = () => call(url, 'POST', `/api/v1/admin/memories/${memoryId}/consolidate`, { token: ADMIN_KEY, headers: { 'x-recordare-now': NOW } });
+  const episode = async (content: string, at: string, author = 'holder', stance = 'stated', subject: string | null = null) => {
     const [r] = await db.query(
-      `INSERT INTO episodes (owner_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, subject_kind, subject_person_id)
-       VALUES ($1, 'event', $2, 'owner_lived', $3, $4, $5, $6, 'day', $7, $8) RETURNING id`,
-      [ownerId, content, author, stance, [ownerId], at, subject ? 'contact' : 'self', subject]);
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, subject_kind, subject_person_id)
+       VALUES ($1, 'event', $2, 'holder_lived', $3, $4, $5, $6, 'day', $7, $8) RETURNING id`,
+      [memoryId, content, author, stance, [memoryId], at, subject ? 'contact' : 'self', subject]);
     return r.id as string;
   };
-  const current = () => db.query(`SELECT level, period_start::text AS day, content FROM digests WHERE owner_id = $1 AND superseded_at IS NULL ORDER BY level, period_start`, [ownerId]);
+  const current = () => db.query(`SELECT level, period_start::text AS day, content FROM digests WHERE memory_id = $1 AND superseded_at IS NULL ORDER BY level, period_start`, [memoryId]);
 
   beforeAll(async () => {
     llm = await startFakeLlm();
@@ -37,13 +37,13 @@ describe('nightly consolidation (M5): day and month digests', () => {
     ({ app, url } = await startApp());
     db = app.get(DataSource);
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
-    ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
-    token = (await call(url, 'POST', `/api/v1/admin/owners/${ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: client.body.id, scopes: ['mcp'] } })).body.token;
+    memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
+    token = (await call(url, 'POST', `/api/v1/admin/memories/${memoryId}/tokens`, { token: ADMIN_KEY, body: { clientId: client.body.id, scopes: ['mcp'] } })).body.token;
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
   it('writes my diary — one digest per changed past day and one per month — and costs nothing when nothing changed', async () => {
-    const [{ id: giulia }] = await db.query(`INSERT INTO persons (owner_scope, display_name, relation) VALUES ($1, 'Giulia', 'sorella') RETURNING id`, [ownerId]);
+    const [{ id: giulia }] = await db.query(`INSERT INTO persons (memory_id, display_name, relation) VALUES ($1, 'Giulia', 'sorella') RETURNING id`, [memoryId]);
     const a = await episode('Ho cenato al ristorante con Marco', '2026-03-14T20:00:00+01:00');
     await episode('Ho giocato a calcetto', '2026-03-15T18:00:00+01:00');
     await episode('Mia sorella Giulia ha vinto la gara di nuoto', '2026-03-15T12:00:00+01:00', 'other', 'stated', giulia); // her own news
@@ -66,13 +66,13 @@ describe('nightly consolidation (M5): day and month digests', () => {
     expect(prompts).toContain('- [event] Ho giocato a calcetto');
     expect(prompts).not.toContain('Londra');
     expect(prompts).not.toContain('dentista');
-    expect((await db.query(`SELECT prompt_version, summary FROM extraction_runs WHERE owner_id = $1 AND kind = 'consolidation'`, [ownerId]))[0])
+    expect((await db.query(`SELECT prompt_version, summary FROM extraction_runs WHERE memory_id = $1 AND kind = 'consolidation'`, [memoryId]))[0])
       .toMatchObject({ prompt_version: 'digest.day.v2', summary: { days: 2, months: 1, leaks: 0 } });
 
     expect((await consolidate()).body).toEqual({ days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0 });
 
     // Forgetting an episode supersedes the digests built on it; the next night rewrites the month from what is left.
-    const { client } = await connectOwner();
+    const { client } = await connectMemory();
     await client.callTool({ name: 'forget_episode', arguments: { id: a } });
     await client.close();
     expect((await current()).map((d: { day: string }) => d.day)).toEqual(['2026-03-15']);
@@ -89,22 +89,22 @@ describe('nightly consolidation (M5): day and month digests', () => {
   });
 
   it("writes an entity's diary in the shared agent's voice, with people by name and someone (8.6)", async () => {
-    const casa = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Casa Rossi', mode: 'entity' } })).body.personId;
+    const casa = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Casa Rossi', mode: 'entity' } })).body.personId;
     await db.query(
-      `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, occurred_at, date_precision, subject_kind)
-       VALUES ($1, 'event', 'Qualcuno in casa ha rotto un bicchiere.', 'owner_lived', 'owner', $2, '2026-03-14T10:00:00+01:00', 'day', 'someone')`, [casa, [casa]]);
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision, subject_kind)
+       VALUES ($1, 'event', 'Qualcuno in casa ha rotto un bicchiere.', 'holder_lived', 'holder', $2, '2026-03-14T10:00:00+01:00', 'day', 'someone')`, [casa, [casa]]);
     llm.queue.push({ summary: 'Il 14 qualcuno in casa ha rotto un bicchiere.' }, { summary: 'Marzo: un bicchiere rotto.' });
     const before = llm.requests.length;
-    expect((await call(url, 'POST', `/api/v1/admin/owners/${casa}/consolidate`, { token: ADMIN_KEY, headers: { 'x-recordare-now': NOW } })).body)
+    expect((await call(url, 'POST', `/api/v1/admin/memories/${casa}/consolidate`, { token: ADMIN_KEY, headers: { 'x-recordare-now': NOW } })).body)
       .toMatchObject({ days: 1, months: 1, leaks: 0 });
     const [day] = llm.requests.slice(before);
     expect(day?.messages[0]?.content).toContain('a shared agent');
     expect(day?.messages[1]?.content).toContain('- [someone] [event] Qualcuno in casa ha rotto un bicchiere.');
-    expect(await db.query(`SELECT prompt_version FROM extraction_runs WHERE owner_id = $1`, [casa])).toEqual([{ prompt_version: 'digest.day.v2+entity' }]);
+    expect(await db.query(`SELECT prompt_version FROM extraction_runs WHERE memory_id = $1`, [casa])).toEqual([{ prompt_version: 'digest.day.v2+entity' }]);
   });
 
   it('gives the diary of a period to search_episodes', async () => {
-    const { client } = await connectOwner();
+    const { client } = await connectMemory();
     const res = await client.callTool({ name: 'search_episodes', arguments: { from: '2026-03-14', to: '2026-03-16', mode: 'list' } });
     const out = res.structuredContent as { digests: Array<{ level: string; from: string; text: string }> };
     expect(out.digests).toEqual([
@@ -115,13 +115,13 @@ describe('nightly consolidation (M5): day and month digests', () => {
     expect((point.structuredContent as { digests: unknown[] }).digests).toEqual([]); // point questions: episodes only
     const long = await client.callTool({ name: 'search_episodes', arguments: { from: '2026-01-01', to: '2026-06-30', mode: 'list' } });
     expect((long.structuredContent as { digests: Array<{ level: string }> }).digests.map((d) => d.level)).toEqual(['month']);
-    expect(await db.query(`SELECT tool, mode FROM recall_log WHERE owner_id = $1 ORDER BY id`, [ownerId])).toEqual([
+    expect(await db.query(`SELECT tool, mode FROM recall_log WHERE memory_id = $1 ORDER BY id`, [memoryId])).toEqual([
       { tool: 'search_episodes', mode: 'list' }, { tool: 'search_episodes', mode: 'search' }, { tool: 'search_episodes', mode: 'list' },
     ]); // every recall is logged (metadata only)
     await client.close();
   });
 
-  async function connectOwner(): Promise<{ client: Client }> {
+  async function connectMemory(): Promise<{ client: Client }> {
     const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token}` } } });
     const client = new Client({ name: 'test', version: '1' });
     await client.connect(transport);

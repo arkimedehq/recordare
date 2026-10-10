@@ -33,13 +33,13 @@ describe('per-person isolation', () => {
     const client = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'P', kind: 'platform' } })).body;
     key = (await call(url, 'POST', `/api/v1/admin/clients/${client.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'mcp', 'read', 'write'] } })).body.key;
     const person = async (name: string, ext: string) => {
-      const id = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: name } })).body.personId as string;
+      const id = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: name } })).body.personId as string;
       await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: id, clientId: client.id, externalId: ext } });
       return id;
     };
     const a = await person('Anna', 'anna');
     const b = await person('Bruno', 'bruno');
-    tokenB = (await call(url, 'POST', `/api/v1/admin/owners/${b}/tokens`, { token: ADMIN_KEY, body: { clientId: client.id, scopes: ['mcp'] } })).body.token;
+    tokenB = (await call(url, 'POST', `/api/v1/admin/memories/${b}/tokens`, { token: ADMIN_KEY, body: { clientId: client.id, scopes: ['mcp'] } })).body.token;
     await call(url, 'POST', '/api/v1/ingest/messages', { ...as('anna'), body: { conversation: { externalId: 'anna-chat' }, messages: [
       { externalId: 'a1', role: 'user', content: SECRET, sentAt: '2026-10-05T10:00:00+02:00' },
     ] } });
@@ -47,17 +47,17 @@ describe('per-person isolation', () => {
     // Anna's memory, embedded like the query Bruno will send: a leak would be the best match.
     const db = app.get(DataSource);
     const v = `[${fakeVector(SECRET).join(',')}]`;
-    const prov = `'owner_lived', 'owner', 'stated', 1, 'owner', ARRAY[$1::uuid]`;
-    ids['episode'] = (await db.query(`INSERT INTO episodes (owner_id, kind, content, occurred_at, date_precision, origin, author_role, stance, confidence, disclosure, audience, embedding)
+    const prov = `'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[$1::uuid]`;
+    ids['episode'] = (await db.query(`INSERT INTO episodes (memory_id, kind, content, occurred_at, date_precision, origin, author_role, stance, confidence, disclosure, audience, embedding)
       VALUES ($1, 'event', $2, '2026-10-05', 'day', ${prov}, $3) RETURNING id`, [a, SECRET, v]))[0].id;
-    ids['plan'] = (await db.query(`INSERT INTO episodes (owner_id, kind, content, occurred_at, date_precision, plan_status, origin, author_role, stance, confidence, disclosure, audience, embedding)
+    ids['plan'] = (await db.query(`INSERT INTO episodes (memory_id, kind, content, occurred_at, date_precision, plan_status, origin, author_role, stance, confidence, disclosure, audience, embedding)
       VALUES ($1, 'plan', $2, '2026-10-10', 'day', 'open', ${prov}, $3) RETURNING id`, [a, `Controllo: ${SECRET}`, v]))[0].id;
     await db.query(`INSERT INTO fact_slots (key, description) VALUES ('health', 'health') ON CONFLICT DO NOTHING`);
-    ids['fact'] = (await db.query(`INSERT INTO facts (owner_id, key, value, valid_from, origin, author_role, stance, confidence, disclosure, audience, embedding)
+    ids['fact'] = (await db.query(`INSERT INTO facts (memory_id, key, value, valid_from, origin, author_role, stance, confidence, disclosure, audience, embedding)
       VALUES ($1, 'health', $2, '2026-10-05', ${prov}, $3) RETURNING id`, [a, SECRET, v]))[0].id;
-    ids['note'] = (await db.query(`INSERT INTO notes (owner_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience, embedding)
+    ids['note'] = (await db.query(`INSERT INTO notes (memory_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience, embedding)
       VALUES ($1, 'preference', $2, true, ${prov}, $3) RETURNING id`, [a, SECRET, v]))[0].id;
-    await db.query(`INSERT INTO digests (owner_id, level, period_start, period_end, content, audience) VALUES ($1, 'day', '2026-10-05', '2026-10-05', $2, ARRAY[$1::uuid])`, [a, SECRET]);
+    await db.query(`INSERT INTO digests (memory_id, level, period_start, period_end, content, audience) VALUES ($1, 'day', '2026-10-05', '2026-10-05', $2, ARRAY[$1::uuid])`, [a, SECRET]);
   });
   afterAll(async () => { await app?.close(); emb?.close(); });
 

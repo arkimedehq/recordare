@@ -4,7 +4,7 @@
 /**
  * Builds the input of one extraction call: a window of pending messages plus bounded,
  * numbered shortlists (open plans P#, current facts F#, current notes N#, recent + related episodes E#)
- * the model can reference. Lists are capped so the prompt does not grow with the owner's history
+ * the model can reference. Lists are capped so the prompt does not grow with the memory's history
  * (cost principle; flash used +20% input tokens in the spike because lists grew).
  */
 import { type EntityManager } from 'typeorm';
@@ -32,9 +32,9 @@ export interface WindowMessage {
   role: 'user' | 'assistant' | 'tool' | 'other';
   toolName: string | null;
   /**
-   * The account speaker's turn (author role `owner`: what they say is stated, not a claim). Personal memories: the self
+   * The account speaker's turn (author role `holder`: what they say is stated, not a claim). Personal memories: the self
    * or own content (author kind `self` / `own`). Entity memories: whoever talks to the agent through its account (role
-   * `user`, own content, the `owner` participant) — a person, never the agent itself (labelled `someone` until named).
+   * `user`, own content, the `holder` participant) — a person, never the agent itself (labelled `someone` until named).
    */
   accountSpeaker: boolean;
   /** Who wrote it, as recorded at ingest (D50). */
@@ -48,7 +48,7 @@ export interface WindowMessage {
   fromMemory?: boolean;
 }
 
-export interface Owner {
+export interface Memory {
   id: string;
   /** The memory's name (display name of its own person row): the name of "I" (the account holder, or the shared agent). */
   name?: string;
@@ -146,38 +146,38 @@ function speaker(m: WindowMessage, contactRef: Map<string, string>): string {
   return m.authorName ? `other:${m.authorName}` : 'someone';
 }
 
-export async function buildInput(tx: EntityManager, owner: Owner, window: WindowMessage[], knownSlots: string[],
+export async function buildInput(tx: EntityManager, memory: Memory, window: WindowMessage[], knownSlots: string[],
   windowVector: number[] | null, profile: Pick<QualityProfile, 'recentEpisodes' | 'relatedEpisodes'>): Promise<ExtractionInput> {
-  const tz = owner.timezone;
+  const tz = memory.timezone;
   const first = window[0] as WindowMessage;
   const messageDay = localDate(first.sentAt, tz);
 
   const plans: Array<{ id: string; content: string; occurred_at: Date | null; occurred_until: Date | null; date_precision: Precision }> = await tx.query(
     `SELECT id, content, occurred_at, occurred_until, date_precision FROM episodes
-     WHERE owner_id = $1 AND kind = 'plan' AND plan_status = 'open' AND deleted_at IS NULL AND invalidated_at IS NULL
-     ORDER BY recorded_at DESC LIMIT $2`, [owner.id, MAX_OPEN_PLANS]);
+     WHERE memory_id = $1 AND kind = 'plan' AND plan_status = 'open' AND deleted_at IS NULL AND invalidated_at IS NULL
+     ORDER BY recorded_at DESC LIMIT $2`, [memory.id, MAX_OPEN_PLANS]);
   // Facts of the memory's self and of the people it knows (both modes since 8.4), each labelled with its subject.
   const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null; subject_id: string | null; subject: string | null }> = await tx.query(
     `SELECT f.id, f.key, f.value, f.valid_from, f.subject_person_id AS subject_id, p.display_name AS subject
      FROM facts f LEFT JOIN persons p ON p.id = f.subject_person_id
-     WHERE f.owner_id = $1 AND f.status IN ('current', 'unknown_current') AND f.deleted_at IS NULL
-     ORDER BY f.recorded_at DESC LIMIT $2`, [owner.id, MAX_FACTS]);
+     WHERE f.memory_id = $1 AND f.status IN ('current', 'unknown_current') AND f.deleted_at IS NULL
+     ORDER BY f.recorded_at DESC LIMIT $2`, [memory.id, MAX_FACTS]);
   const notes: Array<{ id: string; category: string; content: string }> = await tx.query(
     `SELECT id, category, content FROM notes
-     WHERE owner_id = $1 AND status = 'current' AND deleted_at IS NULL
-     ORDER BY pinned DESC, recorded_at DESC LIMIT $2`, [owner.id, MAX_NOTES]);
+     WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL
+     ORDER BY pinned DESC, recorded_at DESC LIMIT $2`, [memory.id, MAX_NOTES]);
   type EpisodeRow = { id: string; content: string; occurred_at: Date | null; date_precision: Precision };
-  const visible = `owner_id = $1 AND kind <> 'plan' AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL`;
+  const visible = `memory_id = $1 AND kind <> 'plan' AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL`;
   const recent: EpisodeRow[] = await tx.query(
     `SELECT id, content, occurred_at, date_precision FROM episodes
      WHERE ${visible} AND recorded_at > $2::timestamptz - interval '30 days'
-     ORDER BY recorded_at DESC LIMIT $3`, [owner.id, first.sentAt, profile.recentEpisodes]);
+     ORDER BY recorded_at DESC LIMIT $3`, [memory.id, first.sentAt, profile.recentEpisodes]);
   const related: EpisodeRow[] = windowVector
     ? await tx.query(
       `SELECT id, content, occurred_at, date_precision FROM (
          SELECT id, content, occurred_at, date_precision, embedding <=> $2::vector AS dist FROM episodes
          WHERE ${visible} AND embedding IS NOT NULL ORDER BY dist LIMIT $3) r
-       WHERE 1 - dist >= $4`, [owner.id, `[${windowVector.join(',')}]`, profile.relatedEpisodes, MIN_RELATED_SIMILARITY])
+       WHERE 1 - dist >= $4`, [memory.id, `[${windowVector.join(',')}]`, profile.relatedEpisodes, MIN_RELATED_SIMILARITY])
     : [];
   const episodes = [...recent, ...related.filter((r) => !recent.some((e) => e.id === r.id))];
 
@@ -185,10 +185,10 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
   const factMap = new Map<string, FactRef>();
   const noteMap = new Map<string, string>();
   const episodeMap = new Map<string, string>();
-  const when = (at: Date | null, p: Precision) => describe(at, p, tz, owner.locale);
+  const when = (at: Date | null, p: Precision) => describe(at, p, tz, memory.locale);
   const clock = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit' });
 
-  const people = await peopleContext(tx, owner, window, facts.map((f) => f.subject_id).filter((x): x is string => !!x));
+  const people = await peopleContext(tx, memory, window, facts.map((f) => f.subject_id).filter((x): x is string => !!x));
   // Sources learned in this conversation that no episode tells of yet (complete ones: all parts received).
   const learned: Array<{ id: string; title: string; author: string | null; kind: string; provider: string | null; provided_by_kind: string }> = await tx.query(
     `SELECT s.id, s.title, s.author, s.kind, p.display_name AS provider, s.provided_by_kind FROM sources s LEFT JOIN persons p ON p.id = s.provided_by_person_id
@@ -198,7 +198,7 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
   const messages: PromptMessage[] = window.map((m, i) => ({
     n: i + 1,
     speaker: speaker(m, people.refOf),
-    sentAt: `${describe(m.sentAt, 'day', tz, owner.locale)} ${clock.format(m.sentAt)}`,
+    sentAt: `${describe(m.sentAt, 'day', tz, memory.locale)} ${clock.format(m.sentAt)}`,
     content: m.content,
   }));
 
@@ -219,12 +219,12 @@ export async function buildInput(tx: EntityManager, owner: Owner, window: Window
         return `S${i + 1}: «${l.title}»${l.author ? ` by ${l.author}` : ''} (${l.kind}; ${by})`;
       }),
       selfNames: people.selfNames,
-      gender: owner.gender ?? 'masculine',
+      gender: memory.gender ?? 'masculine',
       contacts: people.list,
       openQuestions: people.lines,
-      locale: owner.locale,
+      locale: memory.locale,
       messageDay,
-      calendar: calendar(messageDay, 14, 21, owner.locale),
+      calendar: calendar(messageDay, 14, 21, memory.locale),
       openPlans: plans.map((p, i) => {
         planMap.set(`P${i + 1}`, p.id);
         const until = p.occurred_until ? ` → ${localDate(p.occurred_until, tz)}` : '';
@@ -262,21 +262,21 @@ export interface PeopleContext {
  * the subjects of listed facts, the candidates of open questions — numbered C1…) and the open questions (Q1…), after
  * expiring old ones (as of the window's first message).
  */
-export async function peopleContext(tx: EntityManager, owner: Owner, window: WindowMessage[], factSubjects: string[]): Promise<PeopleContext> {
+export async function peopleContext(tx: EntityManager, memory: Memory, window: WindowMessage[], factSubjects: string[]): Promise<PeopleContext> {
   const selfRows: Array<{ alias: string }> = await tx.query(
-    `SELECT alias FROM person_aliases WHERE person_id = $1 ORDER BY created_at`, [owner.id]);
-  const selfNames = [...new Set([owner.name, ...selfRows.map((r) => r.alias)].filter((n): n is string => !!n?.trim()))];
+    `SELECT alias FROM person_aliases WHERE person_id = $1 ORDER BY created_at`, [memory.id]);
+  const selfNames = [...new Set([memory.name, ...selfRows.map((r) => r.alias)].filter((n): n is string => !!n?.trim()))];
 
-  await expireClarifications(tx, owner.id, (window[0] as WindowMessage).sentAt);
+  await expireClarifications(tx, memory.id, (window[0] as WindowMessage).sentAt);
   const open: Array<{ id: string; question: string; candidates: string[]; contact_id: string | null; about: string | null }> = await tx.query(
     `SELECT c.id, c.question, c.candidates, c.contact_id, COALESCE(e.content, n.content, f.key || ' = ' || COALESCE(f.value, '?')) AS about
      FROM clarifications c LEFT JOIN episodes e ON e.id = c.episode_id LEFT JOIN notes n ON n.id = c.note_id LEFT JOIN facts f ON f.id = c.fact_id
-     WHERE c.owner_id = $1 AND c.status = 'open' ORDER BY c.created_at DESC LIMIT $2`, [owner.id, MAX_QUESTIONS]);
+     WHERE c.memory_id = $1 AND c.status = 'open' ORDER BY c.created_at DESC LIMIT $2`, [memory.id, MAX_QUESTIONS]);
 
   const all: Array<{ id: string; display_name: string; full_name: string | null; relation: string | null; aliases: string[] | null }> = await tx.query(
     `SELECT p.id, p.display_name, p.full_name, p.relation, array_remove(array_agg(a.alias ORDER BY a.created_at), NULL) AS aliases
      FROM persons p LEFT JOIN person_aliases a ON a.person_id = p.id
-     WHERE p.owner_scope = $1 GROUP BY p.id ORDER BY p.created_at LIMIT 5000`, [owner.id]);
+     WHERE p.memory_id = $1 GROUP BY p.id ORDER BY p.created_at LIMIT 5000`, [memory.id]);
   const participants: Array<{ person_id: string }> = await tx.query(
     `SELECT DISTINCT cp.person_id FROM conversation_participants cp JOIN messages m ON m.conversation_id = cp.conversation_id
      WHERE m.id = ANY($1) AND cp.person_id IS NOT NULL`, [window.map((m) => m.id)]);

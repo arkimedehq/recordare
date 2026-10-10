@@ -300,9 +300,9 @@ class RecordareMemoryProvider(MemoryProvider):
         uids = [str(v) for v in (kwargs.get("user_id_alt"), kwargs.get("user_id")) if v]
         self._session_user = (uids, name) if uids else None
         self._participants = {}
-        # The `owner` participant is the account holder: the session's user only when it is them (memory per user: always).
-        owner_name = name if self._per_user or self._session_speaker() is None else None
-        participants = [{"ref": "owner", "role": "owner", **({"displayName": owner_name} if owner_name else {})},
+        # The `holder` participant is the account holder: the session's user only when it is them (memory per user: always).
+        holder_name = name if self._per_user or self._session_speaker() is None else None
+        participants = [{"ref": "holder", "role": "holder", **({"displayName": holder_name} if holder_name else {})},
                         {"ref": "assistant", "role": "assistant", "displayName": assistant}]
         title = kwargs.get("session_title") or kwargs.get("chat_name")
         self._meta = {"channel": f"hermes:{platform}", "participants": participants,

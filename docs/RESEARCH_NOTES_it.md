@@ -15,7 +15,7 @@ pubblica. Regola: non rivendicare mai novità senza ricontrollare questa tabella
 
 Quadro d'insieme: la fase 1 è per ~85–90 % integrazione di idee note (vedi `ENGINE_IDEAS_it.md`). Il
 terreno davvero aperto è ristretto e sta soprattutto nelle fasi del twin: disclosure per un twin personale,
-provenienza proprietario vs twin e piani utente irrisolti.
+provenienza titolare vs twin e piani utente irrisolti.
 
 ## Riepilogo
 
@@ -23,16 +23,16 @@ provenienza proprietario vs twin e piani utente irrisolti.
 |---|---|---|---|
 | H1 | Piani **dell'utente** irrisolti come epistemicamente sconosciuti; accumulo di eventi vs sostituzione di stati vs correzione, testati congiuntamente | Parzialmente nuova (ristretta) | 1 |
 | H2 | Disclosure per un twin personale: livelli sociali graduati, confidenze di terzi, propagazione delle etichette, interlocutori avversari, confronto tra filtraggio solo-prompt e filtraggio pre-retrieval | Parzialmente nuova (meccanismo pubblicato, combinazione + valutazione aperte) | 3 |
-| H3 | Source monitoring per i twin: vissuto-dal-proprietario / raccontato-al-proprietario / vissuto-dal-twin mai mescolati | Parzialmente nuova (ristretta) | 3–4 |
+| H3 | Source monitoring per i twin: vissuto-dal-titolare / raccontato-al-titolare / vissuto-dal-twin mai mescolati | Parzialmente nuova (ristretta) | 3–4 |
 | H4 | Modalità legacy come meccanismi applicabili (persona congelata, macchina a stati dell'esecutore, azioni pre-autorizzate) | Principi fatti; ingegneria aperta | 8 |
 | H5 | Memoria attenta ai costi (gate, costo per elemento) | Già fatta / affollata — solo ingegneria | 1 |
 | H6 | Metodo di valutazione: set held-out cieco scritto da un agente separato; artefatti di giudice troppo severo | Parzialmente nuova, modesta (appendice metodi) | 1 |
 | H7 | Distillare il motore di estrazione in un piccolo modello locale chiude gran parte del divario dei modelli locali | Da testare (ipotesi di ingegneria); il divario ora è misurato (sotto) | dopo M4 |
-| H8 | Stile del twin: fine-tuning per persona vs recupero few-shot dei messaggi del proprietario | Da testare | 2 |
+| H8 | Stile del twin: fine-tuning per persona vs recupero few-shot dei messaggi del titolare | Da testare | 2 |
 | H12 | Pensiero a riposo ("default mode"): un processo in background con budget che rivede gli episodi recenti, li collega, mantiene i cicli aperti (piani irrisolti, promesse), prepara domande / proposte e aggiorna il self-model migliora recall e iniziativa senza confabulazione | Da progettare con M5 / traccia R | 5 / R |
 | H11 | Retrieval oltre il singolo embedding: reranking con cross-encoder, vettori sparsi bge-m3, un indice persone / entità migliorano il recall su negazioni, dettagli esatti e "tutto su X" | Da testare (ingegneria); misurate correzioni del recall e un ramo per le persone, reranker / vettori sparsi non ancora | 1 / 3 |
-| H10 | Evoluzione autonoma: un twin libero nel pensiero e nell'azione si allontana dal proprietario in modi misurabili; vite partite dallo stesso inizio divergono | Da rivedere (letteratura non ancora cercata) | R |
-| H9 | Twin come compagno riflessivo del proprietario (dialogo con se stessi; non accondiscendente, evidenze dai propri ricordi) | Da rivedere (letteratura non ancora cercata) | 4 |
+| H10 | Evoluzione autonoma: un twin libero nel pensiero e nell'azione si allontana dal titolare in modi misurabili; vite partite dallo stesso inizio divergono | Da rivedere (letteratura non ancora cercata) | R |
+| H9 | Twin come compagno riflessivo del titolare (dialogo con se stessi; non accondiscendente, evidenze dai propri ricordi) | Da rivedere (letteratura non ancora cercata) | 4 |
 
 ## H1 — Piani, esiti sconosciuti, eventi vs stati, correzioni
 
@@ -82,13 +82,13 @@ bi-temporali).
 
 ## H2 — Memoria consapevole della disclosure per un twin personale
 
-**Stato: rinviata (D50, owner 2026-10-09).** Per ora le risposte usano tutta la memoria in ogni conversazione
+**Stato: rinviata (D50, maintainer 2026-10-09).** Per ora le risposte usano tutta la memoria in ogni conversazione
 (WORK_PLAN 8.2); privacy e riservatezza verranno dopo (8.12). La ricerca qui sotto resta come punto di partenza di quel
 lavoro.
 
 **Affermazione (ristretta).** Il filtraggio pre-contesto per pubblico autenticato è pubblicato; ciò che è aperto
 è la **combinazione** per un twin personale: livelli sociali graduati + concessioni per persona, provenienza
-delle confidenze di terzi ("Marco mi ha detto X" → rivelabile solo al proprietario e a Marco), propagazione
+delle confidenze di terzi ("Marco mi ha detto X" → rivelabile solo al titolare e a Marco), propagazione
 delle etichette agli artefatti derivati (digest, note, profilo ereditano l'etichetta più restrittiva tra le
 fonti), livello ricavato solo dal binding del canale (in caso di dubbio, pubblico), e una **valutazione** che
 confronta le difese solo-prompt con il filtraggio pre-retrieval su fuga di informazioni e utilità con
@@ -125,17 +125,17 @@ Punto debole da misurare: **accuratezza dell'etichettatura in fase di scrittura*
 
 **Il modello dati della fase 1 deve memorizzare.** `people` sugli episodi (D21) con id di persona risolti in seguito;
 `source` di ogni ricordo (chi l'ha raccontato, in quale conversazione, con quale pubblico presente);
-una colonna etichetta `disclosure` (default `owner`) su episodi, fatti e digest; gli artefatti derivati
+una colonna etichetta `disclosure` (default `holder`) su episodi, fatti e digest; gli artefatti derivati
 conservano gli id delle loro fonti così le etichette possono propagarsi. — Realizzato nella fase 1: colonne
-`disclosure` (default `owner`) e `audience`; le letture hanno seguito una regola sul lettore (ciò che si dice in una
+`disclosure` (default `holder`) e `audience`; le letture hanno seguito una regola sul lettore (ciò che si dice in una
 conversazione con altri partecipanti non trapelava verso di loro) finché il D50 non l'ha tolta (8.2) — le colonne
 continuano a essere scritte. I tier non sono ancora usati (fase 3).
 
-## H3 — Source monitoring: vissuto dal proprietario vs vissuto dal twin
+## H3 — Source monitoring: vissuto dal titolare vs vissuto dal twin
 
 **Affermazione (ristretta).** La memoria tipizzata per provenienza è un tema attivo del 2026, ma nulla separa i
 **ricordi vissuti dal principale** dai **ricordi di interazione propri del proxy**, con la regola che
-il twin non presenta mai i secondi come i primi (e raccontato-al-proprietario ≠ vissuto-dal-proprietario).
+il twin non presenta mai i secondi come i primi (e raccontato-al-titolare ≠ vissuto-dal-titolare).
 
 **Lavoro precedente più vicino.** MemIR — memoria tipizzata contro il collasso dei ruoli di provenienza, arXiv:2605.25869
 [A]; Reality Monitoring in LLMs arXiv:2607.23927 [A]; survey Mnemonic Sovereignty
@@ -146,11 +146,11 @@ Johnson, Hashtroudi & Lindsay 1993 (source monitoring, classico).
 **Verdetto.** Parzialmente nuova, ristretta (aspettarsi "MemIR + EP-Mem applicati ai twin").
 
 **Misura.** Trappole di misattribuzione ("hai promesso la casa a Marco?" quando ne ha discusso il twin, non il
-proprietario); tasso di contenuto vissuto-dal-twin affermato come del proprietario; accuratezza dei digest del proprietario.
+titolare); tasso di contenuto vissuto-dal-twin affermato come del titolare; accuratezza dei digest del titolare.
 
-**Il modello dati della fase 1 deve memorizzare.** `origin: owner_lived | owner_told | twin_experienced` su ogni
+**Il modello dati della fase 1 deve memorizzare.** `origin: holder_lived | holder_told | twin_experienced` su ogni
 episodio / fatto (la fase 1 scrive solo i primi due) e l'interlocutore della conversazione. — Realizzato: la fase 1
-scrive `owner_lived`, `owner_told` e `assistant_stated` (turni dell'assistente, D30); `twin_experienced` attende le
+scrive `holder_lived`, `holder_told` e `assistant_stated` (turni dell'assistente, D30); `twin_experienced` attende le
 fasi 3–4.
 <!-- verify: the origin enum has no `twin_experienced` value yet (InitialSchema) — added when the twin speaks to others -->
 
@@ -201,19 +201,19 @@ Supporta D27 (un altro modello certificato, mai un requisito).
 
 ## H8 — Stile del twin: fine-tuning per persona vs retrieval
 
-**Affermazione.** Per riprodurre lo stile di scrittura del proprietario, il recupero few-shot dei messaggi del
-proprietario stesso può raggiungere gran parte della qualità di un LoRA per persona senza i suoi costi (riaddestramento,
+**Affermazione.** Per riprodurre lo stile di scrittura del titolare, il recupero few-shot dei messaggi del
+titolare stesso può raggiungere gran parte della qualità di un LoRA per persona senza i suoi costi (riaddestramento,
 artefatto per persona che è un kit di impersonificazione da proteggere). Confrontare nella fase 2 con un
 harness di concordanza in stile Park e metriche di stile (preferenza a coppie cieca umana / LLM).
 Lavoro precedente da rivedere allora: Second Me arXiv:2503.08102, TwinVoice arXiv:2510.25536, letteratura sulla
 coerenza della persona.
 
-## H9 — Il twin come compagno riflessivo del proprietario
+## H9 — Il twin come compagno riflessivo del titolare
 
-**Affermazione.** Un twin che parla con il proprio proprietario come compagno ("dialogo con se stessi") è utile
-quando *non* è un'eco: è in disaccordo con evidenze tratte dai ricordi del proprietario stesso, fa emergere
+**Affermazione.** Un twin che parla con il proprio titolare come compagno ("dialogo con se stessi") è utile
+quando *non* è un'eco: è in disaccordo con evidenze tratte dai ricordi del titolare stesso, fa emergere
 pattern ricorrenti e verifica le decisioni rispetto ai valori dichiarati. Misurare rispetto a una baseline accondiscendente:
-utilità valutata dal proprietario, tasso di accordo e se le obiezioni citano ricordi reali.
+utilità valutata dal titolare, tasso di accordo e se le obiezioni citano ricordi reali.
 Rischi: dipendenza emotiva, rafforzamento dei pregiudizi. **Lavoro precedente da cercare** (non ancora rivisto):
 studi di chat con il "sé futuro" (ad es. MIT Media Lab *Future You*, 2024 — da verificare), agenti di auto-riflessione e
 journaling, letteratura sulla piaggeria degli LLM, studi sulla compagnia dei digital twin.
@@ -221,9 +221,9 @@ journaling, letteratura sulla piaggeria degli LLM, studi sulla compagnia dei dig
 ## H10 — Evoluzione autonoma di un twin
 
 **Affermazione / domande.** Un twin con riflessione autodiretta, obiettivi propri e iniziativa senza
-conferma (visione → modalità Research) evolve: quanto e quanto in fretta si allontana dal proprietario, quali
+conferma (visione → modalità Research) evolve: quanto e quanto in fretta si allontana dal titolare, quali
 obiettivi forma, come gestisce i propri errori e se più vite partite dallo stesso
-twin divergono. **Misura** in una società simulata di agenti: concordanza in stile Park con il proprietario nel
+twin divergono. **Misura** in una società simulata di agenti: concordanza in stile Park con il titolare nel
 tempo simulato, stabilità di opinioni / valori, log degli obiettivi, tassonomia e ricorrenza degli errori, divergenza
 tra le vite (stesso seed vs seed diversi). **Lavoro precedente da cercare** (non ancora rivisto):
 Generative Agents (Park et al. 2023) e società / simulazioni di agenti, agenti open-ended e
@@ -233,7 +233,7 @@ auto-motivati, deriva della persona negli agenti LLM di lunga durata, deriva dei
 
 **Perché.** Un embedding è un indice, non la memoria: sfuma numeri, date e nomi, mette le negazioni
 accanto alle affermazioni ("è andato a Porto" ≈ "non è mai andato a Porto"), non capisce il tempo, assegna punteggi alti a elementi
-simili ma irrilevanti (la gita sugli sci di un collega vs quella del proprietario) e sottovaluta
+simili ma irrilevanti (la gita sugli sci di un collega vs quella del titolare) e sottovaluta
 lo stesso evento raccontato in breve vs in dettaglio (osservato: ~0,6 di similarità tra i due racconti della
 visita dall'ortopedico). Recordare tiene già la memoria strutturata (date, stati, storia) e
 fonde full-text + vettori; lo spike ha mostrato che la struttura conta più del modello di embedding.
@@ -274,13 +274,13 @@ più vecchi, collegamenti, proposte e aggiornamenti del self-model, per gli uten
 **Bozza di progetto:**
 1. Rivedere gli episodi recenti e collegarli a quelli più vecchi (episodi / note `linked`).
 2. Mantenere i **cicli aperti**: piani passati senza esito, promesse, elementi in attesa → domande per
-   il proprietario ("alla fine sei andato a Roma?").
-3. Preparare **proposte** per il proprietario (iniziativa L1).
+   il titolare ("alla fine sei andato a Roma?").
+3. Preparare **proposte** per il titolare (iniziativa L1).
 4. Aggiornare il **self-model**: opinioni ricorrenti, valori, preoccupazioni → note `inferred`, pending.
 5. In modalità research: riflessioni e obiettivi propri del twin (`thought` / `goal`, `twin_experienced`).
 Salvaguardie: ogni riflessione è `inferred` con i ricordi di origine; non riscrive mai il passato.
 
-**Misura:** recall dei cicli aperti (piani irrisolti fatti emergere), utilità delle proposte (valutazione del proprietario),
+**Misura:** recall dei cicli aperti (piani irrisolti fatti emergere), utilità delle proposte (valutazione del titolare),
 costo giornaliero, tasso di false riflessioni. **Lavoro precedente da rivedere:** sleep-time compute di Letta
 (arXiv:2504.13171), riflessione di Generative Agents (Park et al. 2023), letteratura su default mode network /
 replay da svegli.

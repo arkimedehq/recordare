@@ -28,10 +28,10 @@ describe('memory context, WORK_PLAN 5.7: sentences and named periods', () => {
   it('adds what happened in the period a message names, with a lower bar — not other days', async () => {
     const question = 'Cosa ho fatto ieri?'; // one sentence: one vector (the fake embedder's vectors are random)
     const q = fakeVector('Cosa ho fatto ieri?');
-    const prov = `'owner_lived', 'owner', 'stated', 1, 'owner', ARRAY[$1::uuid]`;
+    const prov = `'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[$1::uuid]`;
     const add = (content: string, day: string, cos: number) => s.db.query(
-      `INSERT INTO episodes (owner_id, kind, content, occurred_at, date_precision, origin, author_role, stance, confidence, disclosure, audience, embedding)
-       VALUES ($1, 'event', $2, $3, 'day', ${prov}, $4)`, [s.ownerId, content, `${day}T12:00:00+02:00`, at(q, cos, content)]);
+      `INSERT INTO episodes (memory_id, kind, content, occurred_at, date_precision, origin, author_role, stance, confidence, disclosure, audience, embedding)
+       VALUES ($1, 'event', $2, $3, 'day', ${prov}, $4)`, [s.memoryId, content, `${day}T12:00:00+02:00`, at(q, cos, content)]);
     await add('Pranzo al lago con Anna', '2026-10-06', 0.45);   // yesterday, moderately related: in
     await add('Cena con i colleghi', '2026-10-05', 0.45);       // two days ago: out
     await add('Riunione condominio', '2026-10-06', 0.1);        // yesterday but unrelated: out

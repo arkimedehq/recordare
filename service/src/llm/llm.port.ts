@@ -7,7 +7,7 @@ import { type z } from 'zod';
  * The engine's LLM tasks. Each task has its own configurable model (and, if wanted, its own provider), so an
  * installation can give every job the model that measured best for it (D27, D35). Unset tasks use the default.
  * - `extract`: episodes, plans, facts and notes from a conversation window;
- * - `extract_economy`: the same, for owners on the economy profile (a cheaper model, if configured);
+ * - `extract_economy`: the same, for memories on the economy profile (a cheaper model, if configured);
  * - `resolve`: the near-duplicate / correction check (short pairs, a light model is enough);
  * - `facts`: the separate facts-and-notes pass (when the quality profile runs it);
  * - `digest`: nightly consolidation — the diary of a day and of a month (M5).
@@ -38,7 +38,7 @@ export function outputBudget(req: { maxTokens?: number; reasoning?: boolean }): 
 
 /** Who the call is for (llm_calls accounting); content is never recorded. */
 export interface LlmCallContext {
-  ownerId?: string;
+  memoryId?: string;
   clientId?: string;
   runId?: string;
 }

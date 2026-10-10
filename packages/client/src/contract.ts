@@ -27,7 +27,7 @@ export type MemoryGender = 'masculine' | 'feminine' | 'neutral';
 
 /** `GET api/v1/me`: who a request acts for. */
 export interface Me {
-  ownerId: string;
+  memoryId: string;
   displayName: string | null;
   mode: MemoryMode;
   gender: MemoryGender;
@@ -52,7 +52,7 @@ export type ParticipantIdentity = { externalUserId: string } | { channel: string
 export interface IngestParticipant {
   /** The conversation-local reference messages use in `authorRef`. */
   ref: string;
-  role: 'owner' | 'assistant' | 'other';
+  role: 'holder' | 'assistant' | 'other';
   displayName?: string;
   /**
    * The participant's id on the platform (its user id) or on a channel: Recordare links it to a contact of this memory
@@ -235,7 +235,7 @@ export interface Source {
 
 /** `POST api/v1/context`: the memories relevant to the message a host is about to answer (WORK_PLAN 5.7). */
 export interface MemoryContext {
-  /** A fenced `<memory-context>` block to append to the prompt, or null (nothing relevant, not owner-only, or off). */
+  /** A fenced `<memory-context>` block to append to the prompt, or null (nothing relevant, or off). */
   block: string | null;
   items: number;
 }

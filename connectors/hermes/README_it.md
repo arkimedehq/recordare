@@ -31,13 +31,13 @@ Provato con Hermes Agent v0.21.6. Python puro, solo `requests` (una dipendenza d
 ## Installazione
 
 1. Chiedi all'admin di Recordare una credenziale per la memoria dell'agente:
-   - un **token personale** con gli scope `mcp`, `ingest`, `read` (`POST api/v1/admin/owners/{id}/tokens`, client di
+   - un **token personale** con gli scope `mcp`, `ingest`, `read` (`POST api/v1/admin/memories/{id}/tokens`, client di
      tipo `mcp_client`) — la memoria del token è quella dell'agente;
    - oppure una **chiave client** con gli stessi scope e un `RECORDARE_USER` fisso (l'account dell'agente: un utente del
      client, collegato dall'admin con `POST api/v1/admin/identities` o creato automaticamente se il client lo
      consente); la chiave client serve anche per una memoria per utente del gateway.
 
-   **Modalità** e **genere** della memoria li imposta l'admin (`PATCH api/v1/admin/owners/{id}` `{mode, gender}`),
+   **Modalità** e **genere** della memoria li imposta l'admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`),
    oppure, con una chiave client, `PATCH api/v1/me`: `personal` (il tuo assistente: tu sei l'"io", ciò che arriva senza
    identità dichiarata è tuo) o `entity` (un agente condiviso da una famiglia, un team, un luogo: ciò che arriva senza
    identità è di "qualcuno"); `gender` `masculine` (predefinito) | `feminine` | `neutral` per la prima persona nelle
@@ -96,7 +96,7 @@ ricordati e chiunque altro scriva allo stesso bot resta fuori. Aggiornando con u
 |---|---|
 | linea della sessione (`gateway_session_key` o piattaforma + primo id di sessione) | conversazione `hermes:<gateway_session_key o piattaforma>/<id sessione>` (canale `hermes:<piattaforma>`, titolo = titolo della sessione o nome della chat); mantenuta attraverso la compressione del contesto e `--resume`, nuova con `/new` / `/reset` |
 | l'agente (`RECORDARE_USER` o il token) — memoria per utente: `user_id_alt` / `user_id` (+ alias), oppure `RECORDARE_USER` | la memoria (`X-Recordare-User` con una chiave client; altrimenti la memoria del token) |
-| l'autore del turno / l'utente del gateway della sessione (memoria per agente) | il titolare dell'account (`RECORDARE_SELF_IDS`, CLI): partecipante `owner` (con `user_name`); chiunque altro: partecipante `<piattaforma>:<id utente>` con la sua identità e il suo nome |
+| l'autore del turno / l'utente del gateway della sessione (memoria per agente) | il titolare dell'account (`RECORDARE_SELF_IDS`, CLI): partecipante `holder` (con `user_name`); chiunque altro: partecipante `<piattaforma>:<id utente>` con la sua identità e il suo nome |
 | il messaggio della persona (`on_turn_start`, poi `prefetch`) | messaggio `user` (titolare dell'account) o `other` con il suo autore, id `<id sessione>:<id turno>:u`, messo in coda all'inizio del turno e conservato **prima** che l'agente parta (così ciò che l'agente salva con `recordare_remember` si lega alle parole della persona): da `prefetch` nella stessa chiamata del contesto di memoria; subito se il richiamo è spento; prima di ogni chiamata a uno strumento di memoria se `prefetch` non ha potuto conservarlo |
 | la risposta dell'agente (`sync_turn`, in background) | messaggio `assistant`, id `<id sessione>:<id turno>:a` (chiamate e risultati degli strumenti non vengono inviati) |
 | fine sessione (`on_session_end`, `on_session_switch(reset)`) | `POST api/v1/ingest/conversations/{id}/end`, in coda dopo ogni messaggio in attesa della conversazione → estrazione subito |

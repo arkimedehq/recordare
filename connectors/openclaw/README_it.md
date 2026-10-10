@@ -10,7 +10,8 @@ tenuta dal tuo servizio [Recordare](../../README_it.md) — il livello client **
   di esso in un blocco delimitato `<memory-context>` (`POST api/v1/context` con `ingest`, nessuna chiamata LLM, nulla se
   nulla è rilevante).
 - **Strumenti di memoria**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
-  `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode` (gli strumenti MCP di Recordare, legati
+  `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode`, `recordare_search_knowledge`,
+  `recordare_learn_source` (gli strumenti MCP di Recordare, legati
   nel codice alla memoria e alla conversazione — né il modello né l'utente possono puntarli altrove), con gli schemi
   pubblicati dal servizio (`TOOLS` della libreria client). `log_episode` è escluso: la conversazione è già catturata.
 - **Una memoria per l'agente** (D50): l'agente del Gateway ha una sola memoria; le persone che gli parlano — su qualsiasi
@@ -39,15 +40,15 @@ Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 2. Oppure da un checkout (sviluppo): `cd connectors/openclaw && npm ci && npm run build`, poi
    `openclaw plugins install --link /percorso/di/recordare/connectors/openclaw --accept-capabilities` (`--link` lo
    lascia puntato alla cartella; senza, OpenClaw lo copia). Riavvia il Gateway, poi controlla
-   `openclaw plugins inspect recordare --runtime --json` (stato `loaded`, 4 hook, 6 strumenti).
+   `openclaw plugins inspect recordare --runtime --json` (stato `loaded`, 4 hook, 8 strumenti).
 3. Chiedi all'amministratore di Recordare una credenziale per la memoria dell'agente:
-   - un **token personale** con gli scope `mcp`, `ingest`, `read` (`POST api/v1/admin/owners/{id}/tokens`, client di
+   - un **token personale** con gli scope `mcp`, `ingest`, `read` (`POST api/v1/admin/memories/{id}/tokens`, client di
      tipo `mcp_client`) — la memoria del token è quella dell'agente;
    - oppure una **chiave client** con gli stessi scope e l'account dell'agente in `defaultUser` (un utente del client,
      noto a Recordare o creato automaticamente se il client lo consente); la chiave client serve anche per una memoria
      per persona.
 
-   **Modalità** e **genere** della memoria li imposta l'amministratore (`PATCH api/v1/admin/owners/{id}`
+   **Modalità** e **genere** della memoria li imposta l'amministratore (`PATCH api/v1/admin/memories/{id}`
    `{mode, gender}`), oppure, con una chiave client, `PATCH api/v1/me`: `personal` (il tuo assistente: tu sei l'"io",
    ciò che arriva senza identità dichiarata è tuo) o `entity` (un agente condiviso da una famiglia, un team, un luogo:
    ciò che arriva senza identità è di "qualcuno"); `gender` `masculine` (default) | `feminine` | `neutral` per la prima
@@ -92,7 +93,7 @@ Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 
 **I tuoi sender id.** Con `memoryPer: "agent"` un mittente che non è in `selfSenders` è qualcuno che l'agente conosce,
 non tu: elenca lì i tuoi id (oppure chiedi all'amministratore di legarli al sé della memoria,
-`POST api/v1/admin/identities` `{kind: "participant", ownerScope, personId: <la memoria>, channel, externalId}`, prima
+`POST api/v1/admin/identities` `{kind: "participant", memoryId, personId: <la memoria>, channel, externalId}`, prima
 di scrivere la prima volta). Le parole degli altri restano loro (ruolo `other`, attribuite al loro contatto), così ciò
 che dicono di sé non diventa mai un fatto su di te.
 
@@ -116,7 +117,7 @@ emergere con un'altra; chi gestisce il Gateway lo dice alle persone che gli parl
 |---|---|
 | sessione (chiave + session id) | conversazione `openclaw:<sessionKey>/<sessionId>` (canale `openclaw:<canale>`, titolo = chiave di sessione) |
 | l'agente (`memoryPer: agent`) — oppure `<canale>:<senderId>` (`users`) / `defaultUser` (`memoryPer: user`) | la memoria (`X-Recordare-User` con una chiave client; altrimenti la memoria del token) |
-| un mittente (`memoryPer: agent`) | il titolare dell'account (`selfSenders`, CLI, Control UI): partecipante `owner`, messaggio `user`; chiunque altro: partecipante `<canale>:<senderId>` con l'identità di canale `{channel, externalId: senderId}` e il nome che ha sul canale (da `message_received`), messaggio `other` — Recordare lo lega a un contatto della memoria, creato alla prima occasione |
+| un mittente (`memoryPer: agent`) | il titolare dell'account (`selfSenders`, CLI, Control UI): partecipante `holder`, messaggio `user`; chiunque altro: partecipante `<canale>:<senderId>` con l'identità di canale `{channel, externalId: senderId}` e il nome che ha sul canale (da `message_received`), messaggio `other` — Recordare lo lega a un contatto della memoria, creato alla prima occasione |
 | il messaggio della persona (`before_prompt_build`) | messaggio (come sopra), id `<currentUserMessageId o runId>:u`, salvato **prima** che l'agente parta, nella stessa chiamata che restituisce il blocco di memoria (così ciò che l'agente salva con `recordare_remember` si lega alle parole della persona); un semplice ingest se `autoRecall` è spento |
 | il testo dell'agente che segue (`agent_end`) | messaggio `assistant`, id `<runId>:a` (chiamate e risultati degli strumenti non vengono inviati) |
 | messaggi degli altri membri di un gruppo (`message_received`) | messaggi `other`, autore `<canale>:<senderId>` (partecipante con identità di canale); quelli del titolare dell'account come `user` (`memoryPer: agent`) |

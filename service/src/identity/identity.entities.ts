@@ -5,7 +5,7 @@
 import { Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
 import { type QualityProfileName } from '../engine/quality-profile';
 
-export const SCOPES = ['ingest', 'mcp', 'read', 'write', 'owner_settings', 'export', 'admin'] as const;
+export const SCOPES = ['ingest', 'mcp', 'read', 'write', 'memory_settings', 'export', 'admin'] as const;
 export type Scope = (typeof SCOPES)[number];
 
 /**
@@ -25,7 +25,7 @@ export type SubjectKind = (typeof SUBJECT_KINDS)[number];
 export class Person {
   @PrimaryGeneratedColumn('uuid') id!: string;
   /** null for a memory's own row; set for contacts (required: a contact belongs to exactly one memory, D50). */
-  @Column({ name: 'owner_scope', type: 'uuid', nullable: true }) ownerScope!: string | null;
+  @Column({ name: 'memory_id', type: 'uuid', nullable: true }) memoryId!: string | null;
   @Column({ name: 'display_name', type: 'text' }) displayName!: string;
   /** Contacts: the full name when known (names and nicknames live in `person_aliases`). */
   @Column({ name: 'full_name', type: 'text', nullable: true }) fullName!: string | null;
@@ -34,8 +34,8 @@ export class Person {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
 }
 
-@Entity('owners')
-export class Owner {
+@Entity('memories')
+export class Memory {
   @PrimaryColumn({ name: 'person_id', type: 'uuid' }) personId!: string;
   @Column({ type: 'text', nullable: true }) email!: string | null;
   @Column({ type: 'text', default: 'it' }) locale!: string;
@@ -73,7 +73,7 @@ export class ApiKey {
 @Entity('access_tokens')
 export class AccessToken {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column({ name: 'owner_id', type: 'uuid' }) ownerId!: string;
+  @Column({ name: 'memory_id', type: 'uuid' }) memoryId!: string;
   @Column({ name: 'client_id', type: 'uuid' }) clientId!: string;
   @Column({ type: 'enum', enumName: 'token_kind', enum: ['personal'], default: 'personal' }) kind!: 'personal';
   @Column({ type: 'text' }) prefix!: string;
@@ -86,14 +86,14 @@ export class AccessToken {
 }
 
 /**
- * `account`: a client's user id → the memory it opens (`owner_scope` null, the person is the memory's own row).
+ * `account`: a client's user id → the memory it opens (`memory_id` null, the person is the memory's own row).
  * `participant`: a client's participant id (`client_id`) or a channel id (`channel`) → a contact, or the self, of the
- * memory `owner_scope` (D50).
+ * memory `memory_id` (D50).
  */
 @Entity('external_identities')
 export class ExternalIdentity {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column({ name: 'owner_scope', type: 'uuid', nullable: true }) ownerScope!: string | null;
+  @Column({ name: 'memory_id', type: 'uuid', nullable: true }) memoryId!: string | null;
   @Column({ name: 'person_id', type: 'uuid' }) personId!: string;
   @Column({ type: 'enum', enumName: 'identity_kind', enum: ['account', 'participant'] }) kind!: 'account' | 'participant';
   @Column({ name: 'client_id', type: 'uuid', nullable: true }) clientId!: string | null;
@@ -107,7 +107,7 @@ export class ExternalIdentity {
 @Entity('clarifications')
 export class Clarification {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column({ name: 'owner_id', type: 'uuid' }) ownerId!: string;
+  @Column({ name: 'memory_id', type: 'uuid' }) memoryId!: string;
   @Column({ type: 'text' }) question!: string;
   /** The candidate contacts. */
   @Column({ type: 'uuid', array: true, default: () => "'{}'" }) candidates!: string[];

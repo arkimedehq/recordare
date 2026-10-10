@@ -2,8 +2,8 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * MCP streamable HTTP endpoint (docs/API.md §3): one session per owner, fixed at `initialize`;
- * every later request must come from the same credential acting for the same owner, otherwise
+ * MCP streamable HTTP endpoint (docs/API.md §3): one session per memory, fixed at `initialize`;
+ * every later request must come from the same credential acting for the same memory, otherwise
  * the session is closed (hosts reusing a session across users cannot cross memories).
  */
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException, type OnModuleDestroy } from '@nestjs/common';
@@ -14,7 +14,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { randomUUID } from 'node:crypto';
 import { type IncomingMessage, type ServerResponse } from 'node:http';
-import { OwnerResolver } from '../auth/owner-resolver.service';
+import { MemoryResolver } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { ConversationResolver } from '../auth/conversation-resolver.service';
 import { DataSource } from 'typeorm';
@@ -29,14 +29,14 @@ import { SourcesService } from '../knowledge/sources.service';
 interface Session {
   transport: StreamableHTTPServerTransport;
   server: McpServer;
-  ownerId: string;
+  memoryId: string;
   credential: string;
 }
 
 const SESSION_HEADER = 'mcp-session-id';
 
 function credentialId(p: Principal): string {
-  return p.kind === 'client' ? `key:${p.keyId}` : p.kind === 'owner_token' ? `token:${p.tokenId}` : 'admin';
+  return p.kind === 'client' ? `key:${p.keyId}` : p.kind === 'memory_token' ? `token:${p.tokenId}` : 'admin';
 }
 
 @Injectable()
@@ -45,7 +45,7 @@ export class McpService implements OnModuleDestroy {
   private readonly sessions = new Map<string, Session>();
 
   constructor(
-    private readonly owners: OwnerResolver,
+    private readonly memories: MemoryResolver,
     private readonly conversations: ConversationResolver,
     private readonly episodes: EpisodeSearchService,
     private readonly memory: MemorySearchService,
@@ -59,13 +59,13 @@ export class McpService implements OnModuleDestroy {
 
   async handle(principal: Principal, externalUser: string | undefined, req: IncomingMessage, res: ServerResponse, body: unknown): Promise<void> {
     if (principal.kind === 'admin') throw new ForbiddenException();
-    const ownerId = await this.owners.resolve(principal, externalUser);
+    const memoryId = await this.memories.resolve(principal, externalUser);
     const sessionId = req.headers[SESSION_HEADER] as string | undefined;
 
     if (sessionId) {
       const session = this.sessions.get(sessionId);
       if (!session) throw new NotFoundException();
-      if (session.ownerId !== ownerId || session.credential !== credentialId(principal)) {
+      if (session.memoryId !== memoryId || session.credential !== credentialId(principal)) {
         await this.close(sessionId);
         throw new ForbiddenException();
       }
@@ -75,17 +75,17 @@ export class McpService implements OnModuleDestroy {
     if (req.method !== 'POST' || !isInitializeRequest(body)) throw new NotFoundException();
 
     const server = new McpServer({ name: 'recordare', version: '0.1.0' });
-    const [owner] = await this.db.query(`SELECT timezone, locale FROM owners WHERE person_id = $1`, [ownerId]);
+    const [settings] = await this.db.query(`SELECT timezone, locale FROM memories WHERE person_id = $1`, [memoryId]);
     registerTools(server, {
-      principal, ownerId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,
+      principal, memoryId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,
       knowledge: this.knowledge, sources: this.sources,
-      clock: this.clock, owner: { timezone: owner.timezone, locale: owner.locale },
+      clock: this.clock, settings: { timezone: settings.timezone, locale: settings.locale },
       allowClockOverride: this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }),
     });
     const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (id) => {
-        this.sessions.set(id, { transport, server, ownerId, credential: credentialId(principal) });
+        this.sessions.set(id, { transport, server, memoryId, credential: credentialId(principal) });
       },
     });
     transport.onclose = () => {

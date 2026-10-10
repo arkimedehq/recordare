@@ -152,7 +152,7 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
 
   function conversationMeta(w: Who, ctx: AgentContext): IngestConversation {
     const participants: IngestParticipant[] = [
-      { ref: 'owner', role: 'owner' },
+      { ref: 'holder', role: 'holder' },
       { ref: 'assistant', role: 'assistant', displayName: ctx.agentId ?? 'assistant' },
       ...(w.speaker.participant ? [w.speaker.participant] : []),
     ];

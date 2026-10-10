@@ -65,10 +65,10 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 - **I piani hanno un ciclo di vita.** Un piano è `open | confirmed | cancelled | rescheduled | unresolved`. Un piano la
   cui data è passata resta un piano finché qualcosa non lo conferma, quindi il richiamo risponde "non so se ci sei
   andato", mai "ci sei andato".
-- **Provenienza su ogni ricordo.** Ogni ricordo registra chi lo ha detto: il proprietario, l'assistente, un'altra
-  persona o uno strumento (`author_role`). Registra anche la sua origine (`owner_lived`, `owner_told`,
+- **Provenienza su ogni ricordo.** Ogni ricordo registra chi lo ha detto: il titolare, l'assistente, un'altra
+  persona o uno strumento (`author_role`). Registra anche la sua origine (`holder_lived`, `holder_told`,
   `assistant_stated`) e cita gli id dei messaggi di evidenza. L'affermazione di un'altra persona ("Giorgio dice che
-  Sofia si trasferisce a Londra") è memorizzata come affermazione di quella persona, mai come fatto del proprietario.
+  Sofia si trasferisce a Londra") è memorizzata come affermazione di quella persona, mai come fatto del titolare.
 - **Per ora tutta la memoria in ogni conversazione** (D50). Le risposte usano l'intera memoria, anche nelle chat di
   gruppo e nelle conversazioni a cui partecipano altre persone: privacy e riservatezza verranno dopo. Ogni ricordo
   memorizza già il proprio pubblico e un'etichetta di riservatezza, quindi quel lavoro non richiede migrazioni. Una
@@ -86,7 +86,7 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 - **Consolidamento notturno.** Un job per persona scrive i diari del giorno e del mese. Non fa alcuna chiamata LLM
   quando non c'è nulla di nuovo.
 - **Profili di qualità / costo** (D35): `economy | balanced | full`, per installazione con un override per persona. Il
-  costo è una scelta del proprietario e la qualità non viene mai scambiata in silenzio. Ogni profilo è misurato.
+  costo è una scelta dell'operatore e la qualità non viene mai scambiata in silenzio. Ogni profilo è misurato.
 - **Qualsiasi provider LLM / di embedding** (D27): qualsiasi server compatibile con OpenAI (DeepSeek, OpenAI,
   OpenRouter, Ollama, vLLM, …) oppure Anthropic nativo, con un modello per compito. DeepSeek e Ollama locale sono solo
   i nostri ambienti di test.
@@ -112,7 +112,7 @@ dati](docs/DATA_MODEL_it.md).
    - Un elemento detto dall'assistente mentre rispondeva *dalla memoria* non viene riscritto come nuova evidenza (la
      protezione dall'eco del richiamo).
    - Dopo un richiamo, un fatto cambia solo quando qualcuno afferma il cambiamento.
-   - Le affermazioni di altre persone sono tenute separate dai fatti del proprietario.
+   - Le affermazioni di altre persone sono tenute separate dai fatti del titolare.
 3. **Richiamo consapevole delle persone** (D39). Una domanda che nomina qualcuno, per nome o tramite una relazione
    memorizzata ("mia sorella"), recupera anche i messaggi di quella persona, senza ulteriori chiamate LLM.
 4. **Economico per costruzione** (default economy). Una chiamata di estrazione per finestra, controlli deterministici
@@ -168,7 +168,7 @@ Ciò che è nuovo è più circoscritto:
 - **La combinazione, in un unico servizio, dietro qualsiasi piattaforma di agenti.** Abbiamo esaminato Hermes,
   OpenClaw, Letta, Mem0, Honcho, Claude Code e ChatGPT ([memoria delle piattaforme di
   agenti](docs/literature/agent-platform-memory_it.md)). Nessuno di essi combina tempo dell'evento, ciclo di vita dei
-  piani e provenienza proprietario-vs-altri a questo livello. OpenClaw è l'unico con provenienza strutturale, e le sue
+  piani e provenienza titolare-vs-altri a questo livello. OpenClaw è l'unico con provenienza strutturale, e le sue
   regole coincidono con ciò che hanno trovato i nostri esperimenti di avvelenamento ed eco. Quelle piattaforme ci
   precedono nell'iniezione del contesto e nella cura guidata dall'uso.
 - **Terreno di ricerca aperto** (il registro delle ipotesi, verdetto "parzialmente nuovo, ristretto"):
@@ -179,7 +179,7 @@ Ciò che è nuovo è più circoscritto:
     propagano ai digest e alle note, e una valutazione delle difese solo-prompt rispetto al filtraggio pre-recupero con
     interlocutori avversari. Il meccanismo di filtraggio in sé è pubblicato ("Authorization Before Context"); la
     combinazione specifica per il gemello e la sua valutazione sono aperte.
-  - **H3 — monitoraggio della fonte per i gemelli.** I ricordi vissuti dal proprietario, ciò che al proprietario è
+  - **H3 — monitoraggio della fonte per i gemelli.** I ricordi vissuti dal titolare, ciò che al titolare è
     stato detto e ciò che il gemello stesso ha vissuto non si mescolano mai.
   - Voci minori: set di valutazione ciechi scritti da un agente separato, e artefatti di giudici troppo severi (H6, una
     nota di metodo). Pensiero a riposo che mantiene vivi i cicli aperti (H12, da progettare). Modalità legacy come
@@ -205,9 +205,9 @@ La [visione](docs/DIGITAL_TWIN_VISION_it.md) aggiunge le fasi successive:
 
 - un automodello (stile, valori, schemi decisionali);
 - contatti e livelli di divulgazione;
-- l'interfaccia del gemello: modalità compagno con il proprietario, procuratore dichiarato verso gli altri (AI Act UE art. 50);
+- l'interfaccia del gemello: modalità compagno con il titolare, procuratore dichiarato verso gli altri (AI Act UE art. 50);
 - iniziativa: informare e proporre (L1), poi agire entro una matrice di permessi (L2);
-- la voce del proprietario;
+- la voce del titolare;
 - la modalità legacy;
 - una modalità di ricerca sui gemelli autonomi.
 

@@ -12,7 +12,7 @@ describe('read / write API for host UIs — the diary (API.md §4, WORK_PLAN 4.7
   let emb: Server;
   let key: string;
   let otherKey: string;
-  let ownerId: string;
+  let memoryId: string;
   const NOW = '2026-10-08T10:00:00+02:00';
   const as = (k: string, user = 'u1') => ({ token: k, headers: { 'x-recordare-user': user, 'x-recordare-now': NOW } });
 
@@ -26,17 +26,17 @@ describe('read / write API for host UIs — the diary (API.md §4, WORK_PLAN 4.7
     key = (await call(url, 'POST', `/api/v1/admin/clients/${client.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read', 'write'] } })).body.key;
     const other = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Other', kind: 'platform' } })).body;
     otherKey = (await call(url, 'POST', `/api/v1/admin/clients/${other.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
-    ownerId = (await call(url, 'GET', '/api/v1/me', as(key))).body.ownerId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: other.id, externalId: 'u1' } });
+    memoryId = (await call(url, 'GET', '/api/v1/me', as(key))).body.memoryId;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: memoryId, clientId: other.id, externalId: 'u1' } });
     await call(url, 'POST', '/api/v1/ingest/messages', { ...as(key), body: { conversation: { externalId: 'chat-1' }, messages: [
       { externalId: 'm1', role: 'user', content: 'Sabato sono andata a Bologna con Marco', sentAt: '2026-10-05T10:00:00+02:00' },
     ] } });
 
     const db = app.get(DataSource);
-    const prov = `'owner_lived', 'owner', 'stated', 1, 'owner', ARRAY[$1::uuid]`;
+    const prov = `'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[$1::uuid]`;
     const ep = async (kind: string, content: string, at: string, extra = '') => (await db.query(
-      `INSERT INTO episodes (owner_id, kind, content, occurred_at, date_precision, plan_status, origin, author_role, stance, confidence, disclosure, audience${extra ? ', corrects' : ''})
-       VALUES ($1, $2, $3, $4, 'day', ${kind === 'plan' ? "'open'" : 'NULL'}, ${prov}${extra ? `, '${extra}'` : ''}) RETURNING id`, [ownerId, kind, content, at]))[0].id as string;
+      `INSERT INTO episodes (memory_id, kind, content, occurred_at, date_precision, plan_status, origin, author_role, stance, confidence, disclosure, audience${extra ? ', corrects' : ''})
+       VALUES ($1, $2, $3, $4, 'day', ${kind === 'plan' ? "'open'" : 'NULL'}, ${prov}${extra ? `, '${extra}'` : ''}) RETURNING id`, [memoryId, kind, content, at]))[0].id as string;
     const wrong = await ep('event', 'Gita a Modena con Marco', '2026-10-03');
     await db.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1`, [wrong]);
     const trip = await ep('event', 'Gita a Bologna con Marco', '2026-10-03', wrong);
@@ -47,13 +47,13 @@ describe('read / write API for host UIs — the diary (API.md §4, WORK_PLAN 4.7
     await ep('plan', 'Cena da Luca', '2026-10-09');      // upcoming → open
     for (let i = 0; i < 4; i++) await ep('event', `Corsa ${i}`, `2026-09-2${i}`);
     await db.query(`INSERT INTO fact_slots (key, description) VALUES ('car', 'car') ON CONFLICT DO NOTHING`);
-    const old = (await db.query(`INSERT INTO facts (owner_id, key, value, status, valid_from, valid_to, origin, author_role, stance, confidence, disclosure, audience)
-      VALUES ($1, 'car', 'Fiat Panda', 'superseded', '2020-01-01', '2026-10-03', ${prov}) RETURNING id`, [ownerId]))[0].id;
-    await db.query(`INSERT INTO facts (owner_id, key, value, valid_from, supersedes, origin, author_role, stance, confidence, disclosure, audience)
-      VALUES ($1, 'car', 'Toyota Yaris', '2026-10-03', $2, ${prov})`, [ownerId, old]);
-    await db.query(`INSERT INTO notes (owner_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience)
-      VALUES ($1, 'preference', 'Prende il caffè amaro', false, ${prov}), ($1, 'habit', 'Forse corre il sabato', true, 'owner_lived', 'other', 'inferred', 0.6, 'owner', ARRAY[$1::uuid])`, [ownerId]);
-    await db.query(`INSERT INTO digests (owner_id, level, period_start, period_end, content, audience) VALUES ($1, 'day', '2026-10-03', '2026-10-03', 'Gita a Bologna.', ARRAY[$1::uuid])`, [ownerId]);
+    const old = (await db.query(`INSERT INTO facts (memory_id, key, value, status, valid_from, valid_to, origin, author_role, stance, confidence, disclosure, audience)
+      VALUES ($1, 'car', 'Fiat Panda', 'superseded', '2020-01-01', '2026-10-03', ${prov}) RETURNING id`, [memoryId]))[0].id;
+    await db.query(`INSERT INTO facts (memory_id, key, value, valid_from, supersedes, origin, author_role, stance, confidence, disclosure, audience)
+      VALUES ($1, 'car', 'Toyota Yaris', '2026-10-03', $2, ${prov})`, [memoryId, old]);
+    await db.query(`INSERT INTO notes (memory_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience)
+      VALUES ($1, 'preference', 'Prende il caffè amaro', false, ${prov}), ($1, 'habit', 'Forse corre il sabato', true, 'holder_lived', 'other', 'inferred', 0.6, 'holder', ARRAY[$1::uuid])`, [memoryId]);
+    await db.query(`INSERT INTO digests (memory_id, level, period_start, period_end, content, audience) VALUES ($1, 'day', '2026-10-03', '2026-10-03', 'Gita a Bologna.', ARRAY[$1::uuid])`, [memoryId]);
   });
   afterAll(async () => { await app?.close(); emb?.close(); });
 

@@ -20,12 +20,12 @@ export const updateClientSchema = z.object({
   disabled: z.boolean().optional(),
 });
 
-/** Client keys never carry `admin`, `owner_settings` or `export` (installation-level powers stay with the admin). */
+/** Client keys never carry `admin`, `memory_settings` or `export` (installation-level powers stay with the admin). */
 export const createKeySchema = z.object({
   scopes: z.array(z.enum(['ingest', 'mcp', 'read', 'write'])).min(1),
 });
 
-export const createOwnerSchema = z.object({
+export const createMemorySchema = z.object({
   displayName: z.string().min(1).max(200),
   /** `entity`: a memory everyone using the account reads and writes — a shared device, a robot, a place (D48, D50). */
   mode: z.enum(MEMORY_MODES).default('personal'),
@@ -37,7 +37,7 @@ export const createOwnerSchema = z.object({
   qualityProfile: z.enum(QUALITY_PROFILES).nullable().default(null),
 });
 
-export const updateOwnerSchema = z.object({
+export const updateMemorySchema = z.object({
   displayName: z.string().trim().min(1).max(200).optional(),
   mode: z.enum(MEMORY_MODES).optional(),
   gender: z.enum(MEMORY_GENDERS).optional(),
@@ -48,13 +48,13 @@ export const updateOwnerSchema = z.object({
 });
 
 /**
- * `account`: a client's user opens the memory `personId`. `participant`: inside the memory `ownerScope`, a client's
+ * `account`: a client's user opens the memory `personId`. `participant`: inside the memory `memoryId`, a client's
  * participant id (`clientId`) or a channel id (`channel`) names `personId` — a contact of that memory or its self (D50).
  */
 export const createIdentitySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('account'), personId: z.uuid(), clientId: z.uuid(), externalId: z.string().min(1) }),
   z.object({
-    kind: z.literal('participant'), ownerScope: z.uuid(), personId: z.uuid(),
+    kind: z.literal('participant'), memoryId: z.uuid(), personId: z.uuid(),
     clientId: z.uuid().optional(), channel: z.string().min(1).optional(), externalId: z.string().min(1), verified: z.boolean().default(false),
   }).refine((b) => (b.clientId === undefined) !== (b.channel === undefined), { message: 'exactly one of clientId or channel' }),
 ]);
@@ -68,7 +68,7 @@ export const createTokenSchema = z.object({
 export type CreateClient = z.infer<typeof createClientSchema>;
 export type CreateKey = z.infer<typeof createKeySchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
-export type CreateOwner = z.infer<typeof createOwnerSchema>;
-export type UpdateOwner = z.infer<typeof updateOwnerSchema>;
+export type CreateMemory = z.infer<typeof createMemorySchema>;
+export type UpdateMemory = z.infer<typeof updateMemorySchema>;
 export type CreateIdentity = z.infer<typeof createIdentitySchema>;
 export type CreateToken = z.infer<typeof createTokenSchema>;

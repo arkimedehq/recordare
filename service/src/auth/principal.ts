@@ -7,7 +7,7 @@ import { type Scope } from '../identity/identity.entities';
 export type Principal =
   | { kind: 'admin' }
   | { kind: 'client'; clientId: string; keyId: string; scopes: Scope[] }
-  | { kind: 'owner_token'; ownerId: string; clientId: string; tokenId: string; scopes: Scope[] };
+  | { kind: 'memory_token'; memoryId: string; clientId: string; tokenId: string; scopes: Scope[] };
 
 export function hasScope(p: Principal, scope: Scope): boolean {
   return p.kind === 'admin' || p.scopes.includes(scope);

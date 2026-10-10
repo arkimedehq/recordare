@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
-import { OwnerResolver, USER_HEADER } from '../auth/owner-resolver.service';
+import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { ZodBody } from '../common/zod-body.pipe';
@@ -47,7 +47,7 @@ function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
 }
 
 /**
- * The person's diary, read and edited from their platform's UI: the reader is the person themself (owner-direct), so
+ * The person's diary, read and edited from their platform's UI: the reader is the person themself (memory-direct), so
  * a client key names them with X-Recordare-User; a personal token is the person.
  */
 @Controller('api/v1')
@@ -55,14 +55,14 @@ export class ReadController {
   constructor(
     private readonly read: ReadService,
     private readonly writes: MemoryWriteService,
-    private readonly owners: OwnerResolver,
+    private readonly memories: MemoryResolver,
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
 
-  private async who(p: Principal, user: string | undefined): Promise<{ ownerId: string; clientId: string }> {
+  private async who(p: Principal, user: string | undefined): Promise<{ memoryId: string; clientId: string }> {
     if (p.kind === 'admin') throw new ForbiddenException();
-    return { ownerId: await this.owners.resolve(p, user), clientId: p.clientId };
+    return { memoryId: await this.memories.resolve(p, user), clientId: p.clientId };
   }
 
   private now(at: string | undefined): Date {
@@ -74,78 +74,78 @@ export class ReadController {
   @RequireScopes('read')
   async episodes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Query() q: Record<string, string>) {
-    const { ownerId } = await this.who(p, user);
-    return this.read.episodes(ownerId, parse(episodesQuery, q), this.now(at));
+    const { memoryId } = await this.who(p, user);
+    return this.read.episodes(memoryId, parse(episodesQuery, q), this.now(at));
   }
 
   @Get('episodes/:id')
   @RequireScopes('read')
   async episode(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId, clientId } = await this.who(p, user);
-    return this.read.episode(ownerId, clientId, id, this.now(at));
+    const { memoryId, clientId } = await this.who(p, user);
+    return this.read.episode(memoryId, clientId, id, this.now(at));
   }
 
   @Post('episodes/:id/corrections')
   @RequireScopes('write')
   async correct(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodBody(correctionBody)) body: z.infer<typeof correctionBody>) {
-    const { ownerId, clientId } = await this.who(p, user);
-    return { id: await this.writes.correctEpisode(ownerId, { clientId }, { id, ...body }) };
+    const { memoryId, clientId } = await this.who(p, user);
+    return { id: await this.writes.correctEpisode(memoryId, { clientId }, { id, ...body }) };
   }
 
   @Delete('episodes/:id')
   @HttpCode(204)
   @RequireScopes('write')
   async forget(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId } = await this.who(p, user);
-    await this.writes.forgetEpisode(ownerId, id);
+    const { memoryId } = await this.who(p, user);
+    await this.writes.forgetEpisode(memoryId, id);
   }
 
   @Get('digests')
   @RequireScopes('read')
   async digests(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query() q: Record<string, string>) {
-    const { ownerId } = await this.who(p, user);
-    return this.read.digests(ownerId, parse(digestsQuery, q));
+    const { memoryId } = await this.who(p, user);
+    return this.read.digests(memoryId, parse(digestsQuery, q));
   }
 
   @Get('facts')
   @RequireScopes('read')
   async facts(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Query() q: Record<string, string>) {
-    const { ownerId } = await this.who(p, user);
-    return this.read.facts(ownerId, parse(factsQuery, q), this.now(at));
+    const { memoryId } = await this.who(p, user);
+    return this.read.facts(memoryId, parse(factsQuery, q), this.now(at));
   }
 
   @Delete('facts/:id')
   @HttpCode(204)
   @RequireScopes('write')
   async deleteFact(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId } = await this.who(p, user);
-    await this.read.deleteRow(ownerId, 'facts', id);
+    const { memoryId } = await this.who(p, user);
+    await this.read.deleteRow(memoryId, 'facts', id);
   }
 
   @Post('facts/:id/confirm')
   @HttpCode(204)
   @RequireScopes('write')
   async confirmFact(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId } = await this.who(p, user);
-    await this.read.decide(ownerId, 'facts', id, true);
+    const { memoryId } = await this.who(p, user);
+    await this.read.decide(memoryId, 'facts', id, true);
   }
 
   @Post('facts/:id/reject')
   @HttpCode(204)
   @RequireScopes('write')
   async rejectFact(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId } = await this.who(p, user);
-    await this.read.decide(ownerId, 'facts', id, false);
+    const { memoryId } = await this.who(p, user);
+    await this.read.decide(memoryId, 'facts', id, false);
   }
 
   @Get('notes')
   @RequireScopes('read')
   async notes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query() q: Record<string, string>) {
-    const { ownerId } = await this.who(p, user);
-    return this.read.notes(ownerId, parse(notesQuery, q));
+    const { memoryId } = await this.who(p, user);
+    return this.read.notes(memoryId, parse(notesQuery, q));
   }
 
   @Patch('notes/:id')
@@ -153,40 +153,40 @@ export class ReadController {
   @RequireScopes('write')
   async pin(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodBody(pinBody)) body: z.infer<typeof pinBody>) {
-    const { ownerId } = await this.who(p, user);
-    await this.read.pinNote(ownerId, id, body.pinned);
+    const { memoryId } = await this.who(p, user);
+    await this.read.pinNote(memoryId, id, body.pinned);
   }
 
   @Delete('notes/:id')
   @HttpCode(204)
   @RequireScopes('write')
   async deleteNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId } = await this.who(p, user);
-    await this.read.deleteRow(ownerId, 'notes', id);
+    const { memoryId } = await this.who(p, user);
+    await this.read.deleteRow(memoryId, 'notes', id);
   }
 
   @Post('notes/:id/confirm')
   @HttpCode(204)
   @RequireScopes('write')
   async confirmNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId } = await this.who(p, user);
-    await this.read.decide(ownerId, 'notes', id, true);
+    const { memoryId } = await this.who(p, user);
+    await this.read.decide(memoryId, 'notes', id, true);
   }
 
   @Post('notes/:id/reject')
   @HttpCode(204)
   @RequireScopes('write')
   async rejectNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
-    const { ownerId } = await this.who(p, user);
-    await this.read.decide(ownerId, 'notes', id, false);
+    const { memoryId } = await this.who(p, user);
+    await this.read.decide(memoryId, 'notes', id, false);
   }
 
   @Get('plans')
   @RequireScopes('read')
   async plans(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Query() q: Record<string, string>) {
-    const { ownerId } = await this.who(p, user);
-    return this.read.plans(ownerId, parse(plansQuery, q), this.now(at));
+    const { memoryId } = await this.who(p, user);
+    return this.read.plans(memoryId, parse(plansQuery, q), this.now(at));
   }
 }
 

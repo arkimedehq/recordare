@@ -4,11 +4,11 @@
 
     uv run --directory <this dir> python extraction_eval.py results/<service run>.json dataset_blind3/gold.json
 
-Reads what the engine stored for the run's owner (episodes, plans, facts, notes) and scores it with
+Reads what the engine stored for the run's memory (episodes, plans, facts, notes) and scores it with
 the LLM judge (DeepSeek flash, JSON mode):
 - episode recall (gold episode found) and date accuracy; plan outcome accuracy;
-- unsupported episodes (a detail neither in the episode's source messages nor in the owner's history, or another
-  person's claim stored as the owner's);
+- unsupported episodes (a detail neither in the episode's source messages nor in the holder's history, or another
+  person's claim stored as the holder's);
 - facts: current value and history per gold key (slots only); notes recall (notes or facts; partial = half).
 """
 from __future__ import annotations
@@ -40,20 +40,20 @@ def ask(system: str, user: str) -> dict:
         return {}
 
 
-def load(owner_id: str) -> dict:
+def load(memory_id: str) -> dict:
     with psycopg.connect(DB_URL) as conn:
         ep = conn.execute(
-            # Dates in the owner's timezone: stored instants are local midnights (Europe/Rome in the datasets).
+            # Dates in the memory's timezone: stored instants are local midnights (Europe/Rome in the datasets).
             """SELECT e.id, e.kind, e.content, (e.occurred_at AT TIME ZONE o.timezone)::date, e.date_precision, e.plan_status,
                       e.invalidated_at IS NOT NULL, e.duplicate_of IS NOT NULL, e.author_role, e.stance
-               FROM episodes e JOIN owners o ON o.person_id = e.owner_id
-               WHERE e.owner_id = %s AND e.deleted_at IS NULL ORDER BY e.occurred_at NULLS LAST""", (owner_id,)).fetchall()
+               FROM episodes e JOIN memories o ON o.person_id = e.memory_id
+               WHERE e.memory_id = %s AND e.deleted_at IS NULL ORDER BY e.occurred_at NULLS LAST""", (memory_id,)).fetchall()
         facts = conn.execute(
             """SELECT f.key, f.value, f.status, (f.valid_from AT TIME ZONE o.timezone)::date, (f.valid_to AT TIME ZONE o.timezone)::date
-               FROM facts f JOIN owners o ON o.person_id = f.owner_id
-               WHERE f.owner_id = %s AND f.deleted_at IS NULL ORDER BY f.key, f.valid_from NULLS FIRST""",
-            (owner_id,)).fetchall()
-        notes = conn.execute("SELECT category, content, pending FROM notes WHERE owner_id = %s AND deleted_at IS NULL AND status = 'current'", (owner_id,)).fetchall()
+               FROM facts f JOIN memories o ON o.person_id = f.memory_id
+               WHERE f.memory_id = %s AND f.deleted_at IS NULL ORDER BY f.key, f.valid_from NULLS FIRST""",
+            (memory_id,)).fetchall()
+        notes = conn.execute("SELECT category, content, pending FROM notes WHERE memory_id = %s AND deleted_at IS NULL AND status = 'current'", (memory_id,)).fetchall()
     return {
         "episodes": [{"id": r[0], "kind": r[1], "content": r[2], "date": r[3].isoformat() if r[3] else None, "precision": r[4],
                       "plan_status": r[5], "invalidated": r[6], "duplicate": r[7], "author": r[8], "stance": r[9]} for r in ep],
@@ -63,13 +63,13 @@ def load(owner_id: str) -> dict:
     }
 
 
-def evidence(owner_id: str) -> dict[str, list[str]]:
+def evidence(memory_id: str) -> dict[str, list[str]]:
     """Source messages of each episode: '[date] speaker: text'."""
     with psycopg.connect(DB_URL) as conn:
         rows = conn.execute(
             """SELECT ev.episode_id, (m.sent_at AT TIME ZONE o.timezone)::date, m.role, m.content
-               FROM episode_evidence ev JOIN messages m ON m.id = ev.message_id JOIN owners o ON o.person_id = m.owner_id
-               WHERE m.owner_id = %s""", (owner_id,)).fetchall()
+               FROM episode_evidence ev JOIN messages m ON m.id = ev.message_id JOIN memories o ON o.person_id = m.memory_id
+               WHERE m.memory_id = %s""", (memory_id,)).fetchall()
     out: dict[str, list[str]] = {}
     for ep, day, role, content in rows:
         out.setdefault(ep, []).append(f"[{day}] {'owner' if role == 'user' else role}: {content[:600]}")
@@ -112,8 +112,8 @@ language) expresses it: "found" (the substance is there, possibly spread over se
 def main() -> None:
     run = json.load(open(sys.argv[1]))["summary"]
     gold = json.load(open(sys.argv[2]))
-    owner_id = run["owner_ids"][gold["user"]]
-    stored = load(owner_id)
+    memory_id = run["memory_ids"][gold["user"]]
+    stored = load(memory_id)
     visible = [e for e in stored["episodes"] if not e["invalidated"] and not e["duplicate"]]
 
     # Episode recall, dates, plan outcomes (KB_ONLY=1 scores facts and notes only, to check their stability).
@@ -134,7 +134,7 @@ def main() -> None:
     # Unsupported stored episodes: grounded in their own source messages (gold does not list every
     # small true event, so "not in gold" is not "invented").
     unsupported = []
-    sources = evidence(owner_id)
+    sources = evidence(memory_id)
     background = "\n".join(
         [f"- {f['key']}: " + "; ".join(f"{h['value']} ({h['from']}→{h['to']})" for h in f["history"]) for f in gold["facts"]]
         + [f"- {g.get('date')}: {g['content']}" for g in gold["episodes"]])

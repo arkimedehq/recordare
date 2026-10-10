@@ -26,8 +26,8 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
 
 ## 2. People
 - Every request names the platform's user: `X-Recordare-User: <the platform's own user id>`. With `autoProvision`
-  the person is created at first contact; `GET api/v1/me` returns `ownerId` — store it next to your user (it ties
-  your telemetry to the person: OpenTelemetry attribute `recordare.owner_id`).
+  the person is created at first contact; `GET api/v1/me` returns `memoryId` — store it next to your user (it ties
+  your telemetry to the person: OpenTelemetry attribute `recordare.memory_id`).
 - Name the person after your user and keep it in sync (client key only): `PATCH api/v1/me {displayName}` whenever the user renames their
   profile (the name follows the platform). The user's choice of memory mode goes the same way: `PATCH api/v1/me
   {mode: personal | entity}` (D50 — `entity` for a shared account everyone uses: a home device, a robot, a place),
@@ -91,7 +91,7 @@ searched with `search_knowledge` (`API.md` §2, §3).
   connectors do); tool schemas: `TOOLS` in the client library.
 - The person's own diary in your UI (`API.md` §4, e.g. the Arkimede Diary): timeline, episode detail, day / month
   diary, facts, notes, plans, and the person's edits (correct, forget, pin, confirm / reject what is pending) — scope
-  `read`, `write` for edits; owner-direct (no conversation header).
+  `read`, `write` for edits; memory-direct (no conversation header).
 
 ## 4b. Standard MCP clients — Claude Code (basic level, WORK_PLAN 6.1)
 A client that only speaks MCP (no ingest) uses a **personal token** bound to one person and one client:
@@ -100,11 +100,11 @@ A client that only speaks MCP (no ingest) uses a **personal token** bound to one
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"name":"Claude Code","kind":"mcp_client"}' $RECORDARE_URL/api/v1/admin/clients
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
-  -d '{"clientId":"<client id>","scopes":["mcp"]}' $RECORDARE_URL/api/v1/admin/owners/<person id>/tokens
+  -d '{"clientId":"<client id>","scopes":["mcp"]}' $RECORDARE_URL/api/v1/admin/memories/<memory id>/tokens
 # the person, in Claude Code (scope local = this project only; user = every project)
 claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --header "Authorization: Bearer rp_…"
 ```
-- With a personal token reads are owner-direct (no conversation header needed).
+- With a personal token reads are memory-direct (no conversation header needed).
 - **Writes wait for the person**: such a client sends no conversation, so Recordare has none of the person's own words
   behind what the agent writes. `log_episode` is stored as stated by the assistant (inferred), `remember` as a pending
   note that recall shows only with `include_pending`; the person confirms it in their diary (read API §4, e.g. the
@@ -135,5 +135,5 @@ admin or with `PATCH api/v1/me`, not by the connectors.
 
 ## 5. Observability (optional)
 Recordare Atlas shows Recordare's own work from its telemetry stream; your agents (LLM calls, tools) appear when you
-export OpenTelemetry GenAI traces to the atlas (`recordare-atlas` README) — metadata only, with `recordare.owner_id`
+export OpenTelemetry GenAI traces to the atlas (`recordare-atlas` README) — metadata only, with `recordare.memory_id`
 on the spans.

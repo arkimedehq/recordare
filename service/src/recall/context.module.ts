@@ -5,7 +5,7 @@ import { BadRequestException, Body, Controller, ForbiddenException, Headers, Htt
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
-import { OwnerResolver, USER_HEADER } from '../auth/owner-resolver.service';
+import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { hasScope, type Principal } from '../auth/principal';
 import { CONVERSATION_HEADER, ConversationResolver } from '../auth/conversation-resolver.service';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
@@ -32,7 +32,7 @@ const contextSchema = z.object({
 export class ContextController {
   constructor(
     private readonly context: ContextService,
-    private readonly owners: OwnerResolver,
+    private readonly memories: MemoryResolver,
     private readonly conversations: ConversationResolver,
     private readonly ingestion: IngestService,
     private readonly config: ConfigService<Env, true>,
@@ -49,20 +49,20 @@ export class ContextController {
     @Headers(NOW_HEADER) at: string | undefined,
     @Body(new ZodBody(contextSchema)) body: z.infer<typeof contextSchema>,
   ): Promise<MemoryContext> {
-    const ownerId = await this.owners.resolve(principal, user);
+    const memoryId = await this.memories.resolve(principal, user);
     let query = body.query;
     if (body.ingest) {
       if (principal.kind === 'admin' || !hasScope(principal, 'ingest')) throw new ForbiddenException();
-      await this.ingestion.ingest(principal.clientId, ownerId, body.ingest);
+      await this.ingestion.ingest(principal.clientId, memoryId, body.ingest);
       conversation = body.ingest.conversation.externalId;
       query ??= [...body.ingest.messages].reverse().find((m) => m.role === 'user')?.content;
     }
     if (!query?.trim()) throw new BadRequestException('query required');
     // The whole memory in every conversation (D50); the conversation only scopes the recall log and the current turn.
-    const ctx = await this.conversations.resolve(principal, ownerId, conversation);
+    const ctx = await this.conversations.resolve(principal, memoryId, conversation);
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
     const now = override && !Number.isNaN(override.getTime()) ? override : this.clock.now();
-    return this.context.build(ownerId, query.trim().slice(0, 8_000), ctx.conversationId, now);
+    return this.context.build(memoryId, query.trim().slice(0, 8_000), ctx.conversationId, now);
   }
 }
 

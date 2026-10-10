@@ -2,8 +2,8 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Language data for the deterministic helpers (owner's rule 2026-10-08: all languages, at least the most used). Every
- * language applies at once — a person may write in several, and their words do not collide; the owner's locale only
+ * Language data for the deterministic helpers (maintainer's rule 2026-10-08: all languages, at least the most used). Every
+ * language applies at once — a person may write in several, and their words do not collide; the memory's locale only
  * formats dates. To add a language: add it to LOCALES (months and relative periods come from Intl), then its relation
  * words and its third-person stand-ins for the self ("the user", "l'utente") in self.ts.
  */

@@ -125,15 +125,15 @@ function personCard(p) {
   const mode = h('select', {
     onchange: (e) => {
       if (hasMemories && !confirm(t('modeConfirm'))) { e.target.value = p.mode; return; }
-      act(() => api('PATCH', `owners/${p.id}`, { mode: e.target.value }));
+      act(() => api('PATCH', `memories/${p.id}`, { mode: e.target.value }));
     },
   }, h('option', { value: 'personal', selected: p.mode === 'personal' }, t('modePersonal')),
      h('option', { value: 'entity', selected: p.mode === 'entity' }, t('modeEntity')));
   const gender = h('select', {
-    onchange: (e) => act(() => api('PATCH', `owners/${p.id}`, { gender: e.target.value })),
+    onchange: (e) => act(() => api('PATCH', `memories/${p.id}`, { gender: e.target.value })),
   }, ['masculine', 'feminine', 'neutral'].map((g) => h('option', { value: g, selected: p.gender === g }, t(g))));
   const profile = h('select', {
-    onchange: (e) => act(() => api('PATCH', `owners/${p.id}`, { qualityProfile: e.target.value || null })),
+    onchange: (e) => act(() => api('PATCH', `memories/${p.id}`, { qualityProfile: e.target.value || null })),
   }, h('option', { value: '', selected: !p.qualityProfile }, t('profileDefault')),
      PROFILES.map((q) => h('option', { value: q, selected: p.qualityProfile === q }, q)));
   const nameInput = h('input', { value: p.name, maxlength: 200 });
@@ -163,7 +163,7 @@ function personCard(p) {
       h('label', { class: 'field' }, h('span', {}, t('profile')), profile),
       h('div', { class: 'field' }, h('span', { title: t('renameHint') }, `${t('name')} ⓘ`),
         h('div', { class: 'row' }, nameInput, h('button', {
-          class: 'ghost small', onclick: () => nameInput.value.trim() && act(() => api('PATCH', `owners/${p.id}`, { displayName: nameInput.value.trim() })),
+          class: 'ghost small', onclick: () => nameInput.value.trim() && act(() => api('PATCH', `memories/${p.id}`, { displayName: nameInput.value.trim() })),
         }, t('rename')))),
     ),
     h('div', { class: 'sub' },
@@ -189,13 +189,13 @@ function personCard(p) {
       clientsCache.length ? h('div', { class: 'row' }, tokenClient, h('button', {
         class: 'ghost small',
         onclick: () => act(async () => {
-          const res = await api('POST', `owners/${p.id}/tokens`, { clientId: tokenClient.value, scopes: ['mcp', 'read', 'write'] });
+          const res = await api('POST', `memories/${p.id}/tokens`, { clientId: tokenClient.value, scopes: ['mcp', 'read', 'write'] });
           showSecret(res.token);
         }, null),
       }, t('newToken'))) : null,
     ),
     h('div', { class: 'row' },
-      h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `owners/${p.id}/consolidate`), t('consolidated')) }, t('consolidate')),
+      h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `memories/${p.id}/consolidate`), t('consolidated')) }, t('consolidate')),
     ),
   );
 }
@@ -205,7 +205,7 @@ function newPersonForm() {
   const mode = h('select', {}, h('option', { value: 'personal' }, t('modePersonal')), h('option', { value: 'entity' }, t('modeEntity')));
   const form = h('form', {
     class: 'card',
-    onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'owners', { displayName: name.value.trim(), mode: mode.value })); },
+    onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'memories', { displayName: name.value.trim(), mode: mode.value })); },
   }, h('div', { class: 'row' }, name, mode, h('button', { type: 'submit' }, t('create')),
     h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))));
   return form;

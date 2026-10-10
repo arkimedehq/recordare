@@ -19,7 +19,7 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   turno e restituisce il contesto in una chiamata); i token personali leggono prima che la conversazione sia salvata;
   `TOOLS` (schemi degli strumenti MCP) nella libreria client; i connettori li usano.
 - **Diagnostica**: ogni estrazione conserva un riassunto (restituito, scritto, scartato e perché — solo conteggi);
-  `GET api/v1/admin/owners/{id}/runs`.
+  `GET api/v1/admin/memories/{id}/runs`.
 
 ### Modificato
 - **Niente più flag di consenso** (D50, WORK_PLAN 8.1) — **incompatibile**. Recordare conserva, estrae e consolida
@@ -38,7 +38,7 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   comunque mai i dati di un'altra. L'header della conversazione è ancora risolto: le scritture MCP vi legano le loro prove.
 - **Identità della memoria** (D50, WORK_PLAN 8.3) — **incompatibile**. Una memoria appartiene a un account di un client;
   le persone che conosce sono contatti di quella sola memoria. Migrazione `MemoryIdentity1791070000000`: `persons.kind`
-  diventa `owners.mode` (`personal | entity`) con `owners.gender` (`masculine | feminine | neutral`, default maschile);
+  diventa `memories.mode` (`personal | entity`) con `memories.gender` (`masculine | feminine | neutral`, default maschile);
   ogni persona che non è una memoria è un contatto di esattamente una memoria (`full_name`, `relation`, nomi in
   `person_aliases`), e i contatti che mancavano a una memoria vengono creati (per esempio una persona con una propria
   memoria che parla anche a un dispositivo condiviso); `external_identities.kind` diventa `account` (era `client_user`:
@@ -46,7 +46,7 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   dentro una sola memoria, creato dall'ingest al primo incontro); ogni messaggio registra chi l'ha detto (`author_kind`
   `self | contact | someone | agent | own | tool`, `attribution_method`, `attribution_confidence`); episodi, fatti e
   note registrano di chi sono (`subject_kind`, `subject_person_id`, `subject_candidates`); viene creata una tabella
-  `clarifications` per dopo. API: `GET / PATCH api/v1/me` e le rotte admin degli owner accettano `mode` e `gender` al
+  `clarifications` per dopo. API: `GET / PATCH api/v1/me` e le rotte admin delle memorie accettano `mode` e `gender` al
   posto di `kind`; `POST api/v1/admin/identities` accetta `kind: account | participant`; l'ingest accetta `own: true`
   su un messaggio (contenuto proprio dell'agente) e le sorgenti `document`, `perception`, `ambient`. La console mostra
   modo, genere, contatti e tipi di identità. Libreria client: `MemoryKind` → `MemoryMode` + `MemoryGender`, `Me.kind` →
@@ -107,6 +107,23 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   loro autore, così non vengono mai letti come parole del titolare dell'account. Claude Code / Codex: invariati (la
   memoria del token personale), solo testi. Chi aggiorna con una mappatura per persona: imposti `memoryPer: "user"` /
   `RECORDARE_MEMORY_PER=user` / `MEMORY_PER=user`.
+- **Niente più "owner"** (D50, WORK_PLAN 8.10) — **incompatibile**: una memoria è una memoria, e la persona a cui
+  appartiene una memoria personale è il suo titolare (`holder`). La migrazione `Memories1791100000000` rinomina sul posto
+  (nessuna modifica ai dati oltre ai valori rinominati): tabella `owners` → `memories`; ogni colonna `owner_id` e
+  `persons.owner_scope` / `external_identities.owner_scope` → `memory_id`, con indici e vincoli rinominati allo stesso
+  modo (per esempio `facts_owner_key_idx` → `facts_memory_key_idx`); il valore enum `owner` → `holder` per il ruolo del
+  partecipante, il ruolo dell'autore e il livello di disclosure, le origini `owner_lived` / `owner_told` →
+  `holder_lived` / `holder_told`, il ref del partecipante implicito `owner` → `holder`; scope dei token `owner_settings`
+  → `memory_settings`; marcatore del gate delle esecuzioni di estrazione `gate:no-owner-message` →
+  `gate:no-holder-message`. API: `ownerId` → `memoryId` ovunque (REST, `GET api/v1/me`, MCP, telemetria); nell'ingest
+  `participants[].role` e `authorRole` accettano `holder`; rotte admin `api/v1/admin/owners…` → `api/v1/admin/memories…`
+  (compresa `GET api/v1/admin/memories/:id/atlas`); flusso di telemetria `?owner=<id>` → `?memory=<id>`; `GET
+  api/v1/me` `via` `owner_token` → `memory_token`; risoluzione della conversazione `owner_direct` → `memory_direct`.
+  Contratto di Atlas **v2** (`docs/ATLAS_EVENTS_it.md`): gli eventi portano `memoryId`, lo snapshot `memory {id, name}`,
+  le rotte admin qui sopra. Libreria client: `memoryId` (per esempio `people.refresh()` → `{ memoryId, mode, atlasUrl
+  }`), ruolo `holder`; i connettori inviano il titolare dell'account come partecipante `holder`. Client e connettori 0.1.0
+  non funzionano con questa versione: vanno aggiornati insieme al servizio. L'header `X-Recordare-User` e i prompt non
+  cambiano.
 
 ### Corretto
 - Un fatto breve dentro un messaggio lungo della persona conta come sue parole; "il proprietario" viene sostituito dal

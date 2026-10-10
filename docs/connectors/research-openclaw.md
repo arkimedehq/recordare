@@ -22,7 +22,7 @@ Status: research note, 2026-10-08. Sources were read from the published packages
 | --- | --- | --- |
 | Native plugin (`openclaw.plugin.json` + TS/JS entry) | In-process module; registers hooks, tools, services, CLI commands, MCP resolvers ([building plugins](https://docs.openclaw.ai/plugins/building-plugins), [SDK overview](https://docs.openclaw.ai/plugins/sdk-overview)) | **Yes: the connector** |
 | Typed plugin hooks `api.on(name, handler)` | ~40 lifecycle hooks ([hooks](https://docs.openclaw.ai/plugins/hooks), [hook reference](https://docs.openclaw.ai/plugins/hooks/reference)) | capture + recall |
-| Memory slot `plugins.slots.memory` | Exactly one plugin of `kind: "memory"` owns it (default: bundled `memory-core`, Markdown `MEMORY.md` + `memory_search`); claiming it disables the previous owner | **No** (see §5) |
+| Memory slot `plugins.slots.memory` | Exactly one plugin of `kind: "memory"` owns it (default: bundled `memory-core`, Markdown `MEMORY.md` + `memory_search`); claiming it disables the previous plugin | **No** (see §5) |
 | Context-engine slot `plugins.slots.contextEngine` | Replaces history assembly / compaction ([context engine](https://docs.openclaw.ai/concepts/context-engine)) | No |
 | Skills (`SKILL.md`) | Prompt-level instructions, no code | Optional, later |
 | Internal hooks (`HOOK.md`, `command:new`…) | Operator scripts on commands | No |
@@ -102,7 +102,7 @@ peers in a local JSON file (`~/.honcho/openclaw-peers.json`). Docs: [Honcho memo
   `ctx = { requesterSenderId: string; agentAccountId?; messageChannel? }`
   ([infrastructure → requester-scoped MCP](https://docs.openclaw.ai/plugins/sdk-overview/infrastructure)).
   Limits that matter for Recordare: the resolver gets **no session/conversation**, so it cannot set
-  `X-Recordare-Conversation`; runs without a trusted sender (cron, Control UI owner, CLI) never get the server; the
+  `X-Recordare-Conversation`; runs without a trusted sender (cron, the Control UI's operator, CLI) never get the server; the
   resolved transport is cached and revalidated at most every 5 min. → Static/requester MCP alone cannot satisfy
   Recordare's viewer rule (INTEGRATION.md §4). Use plugin-registered tools instead (§5). *(Since D50 / WORK_PLAN 8.2
   there is no viewer rule: recall works without a conversation; MCP writes from a client key still need one, so the
@@ -137,7 +137,7 @@ Tool factories get `OpenClawPluginToolContext`: `agentId`, `sessionKey`, `sessio
   recorded in `THIRD_PARTY_NOTICES.md` at the moment of reuse (e.g. Honcho's envelope-stripping / turn-boundary helpers).
 - The plugin imports `openclaw/plugin-sdk/*` (MIT) and our `@arkimedehq/recordare-client` (AGPL-3.0-or-later). An
   AGPL plugin loaded in an MIT host is fine licence-wise; whether to publish the plugin under AGPL or a permissive
-  licence (adoption on ClawHub) is the owner's call — note the client library is AGPL, so a permissive plugin
+  licence (adoption on ClawHub) is the maintainer's call — note the client library is AGPL, so a permissive plugin
   could not bundle it.
 
 ## 5. Proposed minimal design: `@arkimedehq/openclaw-recordare` (plugin id `recordare`)
@@ -162,7 +162,7 @@ packages/openclaw-recordare/
 Config (`plugins.entries.recordare.config`):
 `url` (required), `apiKey` (client key, scopes ingest+mcp+read; `${ENV}` expansion), `users` (map
 `"<channel>:<senderId>"` → Recordare user id; default `"<channel>:<senderId>"` verbatim, relying on Recordare
-`autoProvision`), `defaultUser` (for turns without a sender: Control UI, CLI, owner), `capture` (bool, default true),
+`autoProvision`), `defaultUser` (for turns without a sender: Control UI, CLI, the holder), `capture` (bool, default true),
 `autoRecall` (`"off" | "context" `, default `"context"`), `tools` (bool, default true), `groups`
 (`"off" | "mapped"`, default `"mapped"`: ingest group turns only for senders in `users`), `captureSystemRuns` (default false).
 Also required in `openclaw.json`: `plugins.entries.recordare.hooks.allowConversationAccess: true`; for several people,
@@ -177,7 +177,7 @@ Hooks and flow:
    the user-side context; `appendSystemContext` would break prompt caching every turn — measure before choosing).
 2. `agent_end` (if `success`): take the stashed user text (fallback: last `role:"user"` message, envelope stripped) and the
    last `role:"assistant"` text blocks; enqueue `POST api/v1/ingest/messages` with
-   `conversation: { externalId: sessionKey, channel: ctx.channel, participants: [owner ref → user, assistant ref → agentId] }`,
+   `conversation: { externalId: sessionKey, channel: ctx.channel, participants: [holder ref → user, assistant ref → agentId] }`,
    messages `externalId` = `<currentUserMessageId|runId>:u` / `<runId>:a`, `sentAt` ISO. Outbox: never block the turn.
    Tool results (`toolResult` role) optional later (D30: `role: "tool"`).
 3. `message_received` (groups, `groups: "mapped"`): buffer non-agent messages of the group with `role: "other"` and

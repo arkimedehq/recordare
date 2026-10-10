@@ -13,7 +13,7 @@ public. Rule: never claim novelty without re-checking this table.
 
 Overall picture: phase 1 is ~85–90 % integration of known ideas (see `ENGINE_IDEAS.md`). The
 genuinely open ground is narrow and lies mostly in the twin phases: disclosure for a personal
-twin, owner vs twin provenance, and unresolved user plans.
+twin, holder vs twin provenance, and unresolved user plans.
 
 ## Summary
 
@@ -21,16 +21,16 @@ twin, owner vs twin provenance, and unresolved user plans.
 |---|---|---|---|
 | H1 | Unresolved **user** plans as epistemically unknown; event-accumulate vs state-supersede vs correction, tested jointly | Partially novel (narrow) | 1 |
 | H2 | Disclosure for a personal twin: graded social tiers, third-party confidences, label propagation, adversarial interlocutors, prompt-only vs pre-retrieval filtering compared | Partially novel (mechanism published, combination + evaluation open) | 3 |
-| H3 | Source monitoring for twins: owner-lived / owner-told / twin-experienced never mixed | Partially novel (narrow) | 3–4 |
+| H3 | Source monitoring for twins: holder-lived / holder-told / twin-experienced never mixed | Partially novel (narrow) | 3–4 |
 | H4 | Legacy mode as enforceable mechanisms (frozen persona, executor state machine, pre-authorised actions) | Principles done; engineering open | 8 |
 | H5 | Cost-aware memory (gates, cost per item) | Already done / crowded — engineering only | 1 |
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis); the gap is now measured (below) | after M4 |
-| H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the owner's own messages | To test | 2 |
+| H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the holder's own messages | To test | 2 |
 | H12 | Resting-state thinking ("default mode"): a budgeted background process that replays recent episodes, links them, keeps open loops (unresolved plans, promises), prepares questions / proposals and updates the self-model improves recall and initiative without confabulation | To design with M5 / track R | 5 / R |
 | H11 | Retrieval beyond a single embedding: cross-encoder reranking, bge-m3 sparse vectors, a people / entity index improve recall on negations, exact details and "everything about X" | To test (engineering); recall fixes and a people-aware leg measured, reranker / sparse vectors not yet | 1 / 3 |
-| H10 | Autonomous evolution: a twin free in thought and action drifts from its owner in measurable ways; lives from the same start diverge | To review (literature not yet searched) | R |
-| H9 | Twin as a reflective companion of its owner (dialogue with oneself; non-sycophantic, evidence from own memories) | To review (literature not yet searched) | 4 |
+| H10 | Autonomous evolution: a twin free in thought and action drifts from its holder in measurable ways; lives from the same start diverge | To review (literature not yet searched) | R |
+| H9 | Twin as a reflective companion of its holder (dialogue with oneself; non-sycophantic, evidence from own memories) | To review (literature not yet searched) | 4 |
 
 ## H1 — Plans, unknown outcomes, events vs states, corrections
 
@@ -80,12 +80,12 @@ knowledge time (`recordedAt` / `expiredAt`); `corrects` (never true) distinct fr
 
 ## H2 — Disclosure-aware memory for a personal twin
 
-**Status: deferred (D50, owner 2026-10-09).** Answers use the whole memory in every conversation for now (WORK_PLAN
+**Status: deferred (D50, maintainer 2026-10-09).** Answers use the whole memory in every conversation for now (WORK_PLAN
 8.2); privacy and disclosure come later (8.12). The research below stays as the starting point of that work.
 
 **Claim (narrowed).** Pre-context filtering by authenticated audience is published; what is open
 is the **combination** for a personal twin: graded social tiers + per-person grants, provenance
-of third-party confidences ("Marco told me X" → disclosable to owner and Marco only), label
+of third-party confidences ("Marco told me X" → disclosable to holder and Marco only), label
 propagation to derived artefacts (digests, notes, profile take the most restrictive source
 label), tier only from channel binding (fail closed to public), and an **evaluation** that
 compares prompt-only defences with pre-retrieval filtering on leakage and utility under
@@ -122,16 +122,16 @@ Weak spot to measure: **write-time labelling accuracy** (the filter is only as g
 
 **Phase-1 data model must store.** `people` on episodes (D21) with resolved person ids later;
 `source` of each memory (who told it, in which conversation, with which audience present);
-a `disclosure` label column (default `owner`) on episodes, facts and digests; derived artefacts
-keep the ids of their sources so labels can propagate. — Built in phase 1: `disclosure` (default `owner`) and
+a `disclosure` label column (default `holder`) on episodes, facts and digests; derived artefacts
+keep the ids of their sources so labels can propagate. — Built in phase 1: `disclosure` (default `holder`) and
 `audience` columns; reads followed a viewer rule (what is said in a conversation others take part in did not leak to
 them) until D50 removed it (8.2) — the columns are still written. Tiers are not used yet (phase 3).
 
-## H3 — Source monitoring: owner-lived vs twin-experienced
+## H3 — Source monitoring: holder-lived vs twin-experienced
 
 **Claim (narrowed).** Provenance-typed memory is an active 2026 topic, but nothing separates the
 **principal's lived memories** from the **proxy's own interaction memories**, with the rule that
-the twin never presents the latter as the former (and owner-told ≠ owner-lived).
+the twin never presents the latter as the former (and holder-told ≠ holder-lived).
 
 **Closest prior work.** MemIR — typed memory against provenance-role collapse, arXiv:2605.25869
 [A]; Reality Monitoring in LLMs arXiv:2607.23927 [A]; Mnemonic Sovereignty survey
@@ -142,12 +142,12 @@ Johnson, Hashtroudi & Lindsay 1993 (source monitoring, classic).
 **Verdict.** Partially novel, narrow (expect "MemIR + EP-Mem applied to twins").
 
 **Measure.** Misattribution traps ("did you promise Marco the house?" when the twin, not the
-owner, discussed it); rate of twin-experienced content asserted as owner's; owner digest
+holder, discussed it); rate of twin-experienced content asserted as holder's; holder digest
 accuracy.
 
-**Phase-1 data model must store.** `origin: owner_lived | owner_told | twin_experienced` on every
+**Phase-1 data model must store.** `origin: holder_lived | holder_told | twin_experienced` on every
 episode / fact (phase 1 writes only the first two) and the interlocutor of the conversation. — Built: phase 1 writes
-`owner_lived`, `owner_told` and `assistant_stated` (assistant turns, D30); `twin_experienced` waits for phases 3–4.
+`holder_lived`, `holder_told` and `assistant_stated` (assistant turns, D30); `twin_experienced` waits for phases 3–4.
 <!-- verify: the origin enum has no `twin_experienced` value yet (InitialSchema) — added when the twin speaks to others -->
 
 ## H4 — Legacy mode
@@ -196,19 +196,19 @@ Supports D27 (one more certified model, never a requirement).
 
 ## H8 — Twin style: per-person fine-tuning vs retrieval
 
-**Claim.** For reproducing the owner's writing style, few-shot retrieval of the owner's own
+**Claim.** For reproducing the holder's writing style, few-shot retrieval of the holder's own
 messages may reach most of the quality of a per-person LoRA without its costs (retraining,
 per-person artefact that is an impersonation kit to protect). Compare in phase 2 with a
 Park-style agreement harness and style metrics (blind human / LLM pairwise preference).
 Prior work to review then: Second Me arXiv:2503.08102, TwinVoice arXiv:2510.25536, persona
 consistency literature.
 
-## H9 — The twin as a reflective companion of its owner
+## H9 — The twin as a reflective companion of its holder
 
-**Claim.** A twin talking with its own owner as a companion ("dialogue with oneself") is useful
-when it is *not* an echo: it disagrees with evidence from the owner's own memories, surfaces
+**Claim.** A twin talking with its own holder as a companion ("dialogue with oneself") is useful
+when it is *not* an echo: it disagrees with evidence from the holder's own memories, surfaces
 recurring patterns, and checks decisions against stated values. Measure against a sycophantic
-baseline: owner-rated usefulness, agreement rate, and whether challenges cite real memories.
+baseline: holder-rated usefulness, agreement rate, and whether challenges cite real memories.
 Risks: emotional dependency, reinforcing biases. **Prior work to search** (not yet reviewed):
 "future self" chat studies (e.g. MIT Media Lab *Future You*, 2024 — verify), self-reflection and
 journaling agents, LLM sycophancy literature, digital-twin companionship studies.
@@ -216,9 +216,9 @@ journaling agents, LLM sycophancy literature, digital-twin companionship studies
 ## H10 — Autonomous evolution of a twin
 
 **Claim / questions.** A twin with self-directed reflection, its own goals and initiative without
-confirmation (vision → Research mode) evolves: how far and how fast it drifts from its owner, which
+confirmation (vision → Research mode) evolves: how far and how fast it drifts from its holder, which
 goals it forms, how it handles its own errors, and whether several lives started from the same
-twin diverge. **Measure** in a simulated agent society: Park-style agreement with the owner over
+twin diverge. **Measure** in a simulated agent society: Park-style agreement with the holder over
 simulated time, opinion / value stability, goal logs, error taxonomy and recurrence, divergence
 between lives (same seed vs different seeds). **Prior work to search** (not yet reviewed):
 Generative Agents (Park et al. 2023) and agent societies / simulations, open-ended and
@@ -228,7 +228,7 @@ self-motivated agents, persona drift in long-running LLM agents, value drift.
 
 **Why.** An embedding is an index, not the memory: it blurs numbers, dates and names, puts negations
 next to affirmations ("went to Porto" ≈ "never went to Porto"), does not understand time, scores
-similar-but-irrelevant items high (a colleague's ski trip vs the owner's), and under-scores the
+similar-but-irrelevant items high (a colleague's ski trip vs the holder's), and under-scores the
 same event told briefly vs in detail (observed: ~0.6 similarity between the two tellings of the
 orthopaedist visit). Recordare already keeps the memory structured (dates, statuses, history) and
 fuses full-text + vector; the spike showed structure matters more than the embedding model.
@@ -267,13 +267,13 @@ older memories, linking, proposals and self-model updates, for users who choose 
 **Design sketch:**
 1. Replay recent episodes and link them to older ones (`linked` episodes / notes).
 2. Maintain **open loops**: past plans without outcome, promises, waiting-for items → questions for
-   the owner ("did you go to Rome in the end?").
-3. Prepare **proposals** for the owner (initiative L1).
+   the holder ("did you go to Rome in the end?").
+3. Prepare **proposals** for the holder (initiative L1).
 4. Update the **self-model**: recurring opinions, values, concerns → `inferred` notes, pending.
 5. In research mode: the twin's own reflections and goals (`thought` / `goal`, `twin_experienced`).
 Guardrails: every reflection is `inferred` with its source memories; never rewrites the past.
 
-**Measure:** open-loop recall (unresolved plans surfaced), usefulness of proposals (owner rating),
+**Measure:** open-loop recall (unresolved plans surfaced), usefulness of proposals (holder rating),
 cost per day, false-reflection rate. **Prior work to review:** Letta sleep-time compute
 (arXiv:2504.13171), Generative Agents reflection (Park et al. 2023), default mode network /
 awake replay literature.

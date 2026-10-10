@@ -30,7 +30,7 @@ Controlli — eseguili tutti e tre prima di ogni commit (la CI li esegue): `npm 
 | `src/db` | Data source, migrazioni (SQL esplicito: enum, indici HNSW / GIN / parziali) |
 | `src/llm` | `LlmPort` + adattatori compatibili con OpenAI e Anthropic nativo, profili dei provider (D27), contabilità per chiamata |
 | `src/embedding`, `src/clock` | Porta degli embedding (qualsiasi server compatibile con OpenAI), porta dell'orologio |
-| `src/auth`, `src/admin`, `src/me` | Chiavi API dei client, token personali, API di amministrazione, risoluzione del proprietario, risoluzione della conversazione; `GET / PATCH api/v1/me` |
+| `src/auth`, `src/admin`, `src/me` | Chiavi API dei client, token personali, API di amministrazione, risoluzione della memoria, risoluzione della conversazione; `GET / PATCH api/v1/me` |
 | `src/console` | Console di amministrazione, una pagina statica servita su `/admin` sopra l'API di amministrazione |
 | `src/identity` | Entità di identità |
 | `src/rawlog` | Layer 0: ingest REST (idempotente, conserva sempre — l'interruttore acceso / spento è del client, D50), modifiche ed eliminazioni, ricerca nel log grezzo (full-text + vettoriale) |
@@ -39,7 +39,7 @@ Controlli — eseguili tutti e tre prima di ogni commit (la CI li esegue): `npm 
 | `src/recall` | `search_episodes`, `search_memory`, risolutore di periodi, richiamo consapevole delle persone, scritture esplicite e oblio, il contesto di memoria prima del turno (`POST api/v1/context`), log dei richiami |
 | `src/knowledge` | Fonti apprese (D49, WORK_PLAN 8.9): ingest delle fonti a parti, passaggi (divisi nel codice, embedding in background), `search_knowledge`, l'episodio dell'apprendimento scritto nel codice, rotte di lettura / oblio |
 | `src/read` | API di lettura / scrittura per le interfacce dei client — il diario della persona (`API.md` §4) |
-| `src/lang` | Dati linguistici per gli helper deterministici: periodi e mesi (da `Intl`, le 25 lingue più parlate), parole di parentela, come chiamare il proprietario |
+| `src/lang` | Dati linguistici per gli helper deterministici: periodi e mesi (da `Intl`, le 25 lingue più parlate), parole di parentela, i sostituti del sé per il rilevatore di fughe |
 | `src/mcp` | Server MCP su `/mcp` (HTTP in streaming): gli strumenti di `docs/API.md` §3 |
 | `src/telemetry`, `src/atlas` | Flusso di eventi in tempo reale per gli operatori (SSE) e snapshot di atlas — contratto `docs/ATLAS_EVENTS.md` |
 | `src/health` | `GET api/v1/health` (controllo di salute del container) |
@@ -58,7 +58,7 @@ Controlli — eseguili tutti e tre prima di ogni commit (la CI li esegue): `npm 
 | Compito | Che cosa fa | Consigliato (misurato, `spikes/memory-eval/RESULTS.md`) |
 |---|---|---|
 | `EXTRACT` | episodi, piani, fatti e note da una finestra di conversazione (una chiamata per finestra) | `deepseek-flash`, ragionamento disattivato — le migliori risposte (91 % blind5) e i migliori esiti sui piani, il più economico con la cache dei prefissi |
-| `EXTRACT_ECONOMY` | lo stesso per i proprietari con il profilo `economy` | `deepseek-flash` (nessun modello più economico misurato lo ha raggiunto: Gemini 3.1 Flash-Lite 81 %, Qwen 3.7 Flash 78,5 %) |
+| `EXTRACT_ECONOMY` | lo stesso per le memorie con il profilo `economy` | `deepseek-flash` (nessun modello più economico misurato lo ha raggiunto: Gemini 3.1 Flash-Lite 81 %, Qwen 3.7 Flash 78,5 %) |
 | `RESOLVE` | controllo di quasi-duplicati / correzioni su coppie brevi (solo quando esistono candidati) | `deepseek-flash` (basta un modello leggero; quelli più economici non sono ancora misurati su questo compito) |
 | `DIGEST` | consolidamento notturno (M5): il diario di ogni giorno e mese cambiato | `deepseek-flash` (da misurare) |
 | `FACTS` | la revisione notturna dei fatti (parametro `factsReview` / `FACTS_REVIEW`) e il passaggio separato fatti-e-note (`FACTS_PASS=separate`) — entrambi disattivati in ogni profilo | entrambi misurati senza guadagno sui fatti (DeepSeek V4 Pro per il passaggio, blind5 per la revisione) — tenerli disattivati |

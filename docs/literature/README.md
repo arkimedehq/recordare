@@ -99,4 +99,4 @@ quoting them externally. Licences of reusable code: `../LICENSING.md`.
   single-session-assistant regression). For agentic clients this matters (the agent's actions,
   recommendations the user accepted). Options: (a) assistant turns only as context, (b) also
   extract assistant-stated items with their own origin (`assistant_stated`), never mixed with
-  owner-lived memories. Chosen: (b), consistent with H3 provenance.
+  holder-lived memories. Chosen: (b), consistent with H3 provenance.

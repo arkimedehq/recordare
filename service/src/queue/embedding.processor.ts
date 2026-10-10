@@ -26,12 +26,12 @@ export class EmbeddingProcessor extends WorkerHost {
 
   async process(job: Job<{ messageIds: string[] } | { sourceId: string }>): Promise<void> {
     if ('sourceId' in job.data) return this.passages(job.data.sourceId);
-    const rows: { id: string; content: string; owner_id: string }[] = await this.db.query(
-      `SELECT id, content, owner_id FROM messages WHERE id = ANY($1) AND role <> 'assistant' AND embedding IS NULL`,
+    const rows: { id: string; content: string; memory_id: string }[] = await this.db.query(
+      `SELECT id, content, memory_id FROM messages WHERE id = ANY($1) AND role <> 'assistant' AND embedding IS NULL`,
       [job.data.messageIds],
     );
     if (rows.length === 0) return;
-    await this.telemetry.track('embed.messages', rows[0]?.owner_id ?? null, async () => {
+    await this.telemetry.track('embed.messages', rows[0]?.memory_id ?? null, async () => {
       const vectors = await this.embeddings.embed(rows.map((r) => r.content), 'document');
       for (const [i, row] of rows.entries()) {
         await this.db.query(`UPDATE messages SET embedding = $1 WHERE id = $2`, [`[${(vectors[i] ?? []).join(',')}]`, row.id]);
@@ -41,11 +41,11 @@ export class EmbeddingProcessor extends WorkerHost {
 
   private async passages(sourceId: string): Promise<void> {
     for (;;) {
-      const rows: { id: string; heading: string | null; content: string; owner_id: string }[] = await this.db.query(
-        `SELECT id, heading, content, owner_id FROM source_passages WHERE source_id = $1 AND embedding IS NULL ORDER BY ordinal LIMIT $2`,
+      const rows: { id: string; heading: string | null; content: string; memory_id: string }[] = await this.db.query(
+        `SELECT id, heading, content, memory_id FROM source_passages WHERE source_id = $1 AND embedding IS NULL ORDER BY ordinal LIMIT $2`,
         [sourceId, PASSAGE_BATCH]);
       if (rows.length === 0) break;
-      await this.telemetry.track('embed.memories', rows[0]?.owner_id ?? null, async () => {
+      await this.telemetry.track('embed.memories', rows[0]?.memory_id ?? null, async () => {
         const vectors = await this.embeddings.embed(rows.map((r) => (r.heading ? `${r.heading}\n${r.content}` : r.content)), 'document');
         for (const [i, row] of rows.entries()) {
           await this.db.query(`UPDATE source_passages SET embedding = $1::vector, embedding_model = $2 WHERE id = $3`,

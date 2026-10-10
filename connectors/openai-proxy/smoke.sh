@@ -54,7 +54,7 @@ echo "== build"
 echo "== Recordare: client key + the proxy's memory (account proxy-smoke; anythingllm:2 is its holder)"
 CLIENT="$(admin clients '{"name":"openai-proxy-smoke","kind":"platform","autoProvision":true}' | json "['id']")"
 admin "clients/$CLIENT/keys" '{"scopes":["ingest","mcp","read"]}' | json "['key']" > "$S/rk"
-PERSON="$(admin owners '{"displayName":"Proxy Smoke"}' | json "['personId']")"
+PERSON="$(admin memories '{"displayName":"Proxy Smoke"}' | json "['personId']")"
 admin identities "{\"kind\":\"account\",\"personId\":\"$PERSON\",\"clientId\":\"$CLIENT\",\"externalId\":\"proxy-smoke\"}" >/dev/null
 { echo "UPSTREAM_BASE_URL=${LLM_BASE_URL:-https://api.deepseek.com/v1}"; echo "UPSTREAM_API_KEY=$(envval LLM_API_KEY)"
   echo "PROXY_API_KEY=$(openssl rand -hex 16)"; echo "RECORDARE_URL=$URL"; echo "RECORDARE_API_KEY=$(cat "$S/rk")"
@@ -89,11 +89,11 @@ echo "== turn 1 (capture)"
 T1="$(thread t1)"
 curl -sf -m 120 -X POST "${H[@]}" "localhost:3001/api/v1/workspace/memoria/thread/$T1/chat" \
   -d '{"message":"Sabato scorso ho adottato un gatto rosso che si chiama Biscotto.","userId":2}' | json "['textResponse']"
-sql "select m.role, left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.owner_id = '$PERSON' order by m.sent_at"
+sql "select m.role, left(m.content, 60) from conversations c join messages m on m.conversation_id = c.id where c.memory_id = '$PERSON' order by m.sent_at"
 
 echo "== waiting for the episode (the proxy ends the conversation after 20 s)"
-for _ in $(seq 1 60); do [ "$(sql "select count(*) from episodes where owner_id = '$PERSON'")" -gt 0 ] && break; sleep 5; done
-sql "select content from episodes where owner_id = '$PERSON'"
+for _ in $(seq 1 60); do [ "$(sql "select count(*) from episodes where memory_id = '$PERSON'")" -gt 0 ] && break; sleep 5; done
+sql "select content from episodes where memory_id = '$PERSON'"
 
 echo "== turn 2 (recall, streamed, new thread)"
 T2="$(thread t2)"
@@ -102,5 +102,5 @@ curl -sfN -m 120 -X POST "${H[@]}" "localhost:3001/api/v1/workspace/memoria/thre
 sleep 1
 echo "upstream received the memory block: $(grep -c 'upstream request (stream: true.*memory-context' "$SMOKE_DIR/proxy.log" || true)"
 echo "marker sent upstream (must be 0): $(grep 'upstream request' "$SMOKE_DIR/proxy.log" | grep -c '\[\[recordare' || true)"
-sql "select m.role, left(m.content, 80) from conversations c join messages m on m.conversation_id = c.id where c.owner_id = '$PERSON' order by m.sent_at"
+sql "select m.role, left(m.content, 80) from conversations c join messages m on m.conversation_id = c.id where c.memory_id = '$PERSON' order by m.sent_at"
 echo "== done (test person $PERSON and client $CLIENT stay in Recordare)"

@@ -11,7 +11,7 @@ equation, Nuxoll & Laird 2012. Bartlett 1932 is cited as the classic origin of "
 the "Cognitive model" table of `../EPISODIC_MEMORY_TODO.md`, on `agent-platform-memory.md` (Letta, Honcho, OpenClaw)
 and on H3 / H12 in `../RESEARCH_NOTES.md`.
 
-## 0. The vision this card is mapped onto (owner, 2026-10-09)
+## 0. The vision this card is mapped onto (maintainer, 2026-10-09)
 
 A memory belongs to **the agent itself**: "Caino" (one account of a client platform) has one memory, "Abele" (another
 account) another, isolated. Everything that comes in enriches it: conversations, voice, documents, photos, audio,
@@ -73,7 +73,7 @@ existing agent architectures the vision needs, and what Recordare already has.
 - **Schacter, Addis & Buckner (2007)**: imagining the future uses much of the same neural machinery as remembering the
   past ("the prospective brain").
 - For us: prospective memory is its own system, not a flavour of episodes. Recordare's plans with a lifecycle are
-  prospective memory *of the owner*. The two retrieval routes map onto two mechanisms already discussed: time-based
+  prospective memory *of the holder*. The two retrieval routes map onto two mechanisms already discussed: time-based
   intents → a scheduler ("monitoring"), event-conditioned intents → a cue match at pre-turn recall ("spontaneous
   retrieval"; OpenClaw standing intents, `agent-platform-memory.md` idea 8).
 
@@ -162,7 +162,7 @@ existing agent architectures the vision needs, and what Recordare already has.
   weight of outdated information and prevents overfitting to specific events; "the goal of memory is to optimize
   decision-making".
 - For us: forgetting in humans serves **decision-making**, not storage limits. Recordare keeps everything and forgets
-  only in ranking (recency, access) and by the owner's choice; that gets the decision-making benefit without losing the
+  only in ranking (recency, access) and by the holder's choice; that gets the decision-making benefit without losing the
   record, as long as outdated values are labelled (value chains, status). Retrieval-induced forgetting has a machine
   analogue to watch: items recalled often push similar ones down (use signals for ranking only, never for truth,
   `agent-platform-memory.md` idea 7).
@@ -281,23 +281,23 @@ existing agent architectures the vision needs, and what Recordare already has.
 | Episodic | Tulving; Generative Agents stream; Soar snapshots | Episodes: bi-temporal, people, place, importance, valence / feelings / opinion, evidence, raw-log fallback, `latest` / `list` / period recall | Agent-lived episodes (`twin_experienced` reserved, not written); next / previous navigation |
 | Semantic — about people | Tulving; Conway's knowledge base | Facts as state slots with value chains (D31), notes by category (D34), `subject_person_id` in entity memory (D48) | Facts about third parties in a person's memory (by design today) |
 | Semantic — knowledge of the world | CoALA semantic memory; MemGPT archival | D49 learned sources: proposal, not built (WORK_PLAN 5.9) | All of it |
-| Autobiographical / self | Conway's self-memory system; lifetime periods | Day and month digests (chronological) | Lifetime periods / general events; a **self-model** (who the agent is, its relations with each person); the owner card idea |
-| Prospective | Einstein & McDaniel; multiprocess framework; Soar goals in episodic memory | Plans with lifecycle in code (`open … unresolved`, D10, D37): the **owner's** intentions | The **agent's own** intentions: promises, requests addressed to it, standing intents (idea 8) |
+| Autobiographical / self | Conway's self-memory system; lifetime periods | Day and month digests (chronological) | Lifetime periods / general events; a **self-model** (who the agent is, its relations with each person); the holder card idea |
+| Prospective | Einstein & McDaniel; multiprocess framework; Soar goals in episodic memory | Plans with lifecycle in code (`open … unresolved`, D10, D37): the **holder's** intentions | The **agent's own** intentions: promises, requests addressed to it, standing intents (idea 8) |
 | Procedural | Squire; CoALA (weights + code); Voyager skill library; Soar chunking | None; rejected earlier as "the host agent's job" (`agent-platform-memory.md` §4) | To be decided under the new vision (gap 1) |
 | Priming / conditioning | Squire non-declarative | Access counts in ranking only | Not proposed |
-| Source / reality monitoring | Johnson & Raye; Johnson et al. 1993; LLM reality monitoring (2026) | `origin` (`owner_lived / owner_told / assistant_stated`), `author_role`, `stance`, `confidence`, `audience`, `confidence_of`; D38 echo guard in code; D48 "someone" and name-in-window guard | **How** the source was established (declared binding, self-introduction, voiceprint, face, inferred) and **how sure**, as data; an "unknown speaker" that can be re-attributed later |
+| Source / reality monitoring | Johnson & Raye; Johnson et al. 1993; LLM reality monitoring (2026) | `origin` (`holder_lived / holder_told / assistant_stated`), `author_role`, `stance`, `confidence`, `audience`, `confidence_of`; D38 echo guard in code; D48 "someone" and name-in-window guard | **How** the source was established (declared binding, self-introduction, voiceprint, face, inferred) and **how sure**, as data; an "unknown speaker" that can be re-attributed later |
 | Consolidation / replay | CLS; Wilson & McNaughton; Diekelmann & Born | Nightly job (zero calls when nothing new), digests; near-duplicate resolver at extraction | Pattern promotions (D20, TODO), consolidation dedup pass (5.3 partial); facts review built but off (D41, no gain) |
 | Reflection / own thoughts | Generative Agents reflection; Reflexion; Letta sleep-time | H12 design only; `kind = thought / goal` reserved for track R | All of it |
 | Reconsolidation | Nader et al.; Loftus & Palmer | Deliberately not copied: append-only `corrects` / `supersedes` | Nothing (keep) |
 | Schemas | Bartlett; Tse et al.; Gilboa & Marlatte | Fact-slot schema with cardinality and merge policy; note categories | A check that schemas do not distort one-offs into habits (eval probe) |
-| Forgetting | Anderson & Schooler; Richards & Frankland; ACT-R | Ranking demotion; owner-driven forgetting of one episode (period TODO, D16) | Nothing new; forgetting a period |
+| Forgetting | Anderson & Schooler; Richards & Frankland; ACT-R | Ranking demotion; holder-driven forgetting of one episode (period TODO, D16) | Nothing new; forgetting a period |
 | Development | Turing; developmental robotics; infantile amnesia | None | Stages and re-processing of early life (§3.3) |
 
 ### 3.2 What the new vision changes
 
-1. **The owner is the agent account.** Today an owner is a person (`kind = human`) or an entity (`kind = entity`,
+1. **The memory is the agent account.** Today a memory is a person (`kind = human`) or an entity (`kind = entity`,
    D48). In the vision both are "the agent's memory" with a mode. Data-wise this is close to what exists: personal mode
-   ≈ today's person memory (the account's user is the owner; their words are `owner_lived`), entity mode ≈ D48. The
+   ≈ today's person memory (the account's user is the holder; their words are `holder_lived`), entity mode ≈ D48. The
    change is mostly in **how the memory speaks** (first person) and in two new provenance values below.
 2. **Personal mode, first person: keep reality monitoring.** If everything undeclared is the agent's own, the user's
    words and the agent's own replies are both "mine". Johnson & Raye's distinction (perceived vs self-generated) and
@@ -313,7 +313,7 @@ existing agent architectures the vision needs, and what Recordare already has.
    attribution.
 4. **Own-memory marking needs two new provenance values.** "Knowledge it is given" = learned sources (D49), with the
    provider as source. "What a robot perceives working on its own" = first-hand perception by the agent, which none of
-   `owner_lived / owner_told / assistant_stated` describes: something like `agent_perceived` (perceived first-hand)
+   `holder_lived / holder_told / assistant_stated` describes: something like `agent_perceived` (perceived first-hand)
    next to `agent_generated` (its own words and thoughts). Reality monitoring is precisely perceived vs generated, so
    the two should not share a value.
 5. **Identity methods as attribution evidence, not as authority.** Declared identity (secure binding), self-
@@ -341,7 +341,7 @@ existing agent architectures the vision needs, and what Recordare already has.
 3. **Attribution confidence as a first-class field.** Separate from content `confidence`: `attributed_to`,
    `attribution_method`, `attribution_confidence`, re-attribution links. H3's measure (misattribution traps) becomes
    the test.
-4. **Self-model.** Conway's working self: the agent's goals and identity steer recall. Start as the derived owner card
+4. **Self-model.** Conway's working self: the agent's goals and identity steer recall. Start as the derived holder card
    (idea 6) for personal mode, and as an inferred "who I am / my relation with each person" for entity mode
    (vision direction G), always `inferred`, traceable, never rewriting episodes.
 5. **Agent's own prospective memory.** Promises and requests addressed to the agent as intents with lifecycle
@@ -359,12 +359,12 @@ existing agent architectures the vision needs, and what Recordare already has.
   (multiple trace theory).
 - Importance at encoding and recency + importance + relevance ranking: follows Generative Agents and ACT-R / Anderson
   & Schooler.
-- Forgetting only in ranking and by the owner's choice (Richards & Frankland: forgetting is for decisions).
+- Forgetting only in ranking and by the holder's choice (Richards & Frankland: forgetting is for decisions).
 - Provenance stored at write time instead of reconstructed at recall (source-monitoring errors in people and in LLMs).
 
 ## 5. Open questions
 
-1. Is a single owner kind ("agent") with a mode (personal / entity) cleaner than `human` / `entity`, or only a rename?
+1. Is a single memory kind ("agent") with a mode (personal / entity) cleaner than `human` / `entity`, or only a rename?
    (Development phase: clean code over compatibility.)
 2. In personal mode, does the person ever need to be *distinct* from the agent (the agent's own perceptions on a
    phone camera, its own opinions)? If yes, personal mode needs `agent_perceived` / `agent_generated` too.

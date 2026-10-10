@@ -3,7 +3,7 @@
 
 /**
  * Deterministic period resolver (D12): common period expressions in the supported languages (src/lang) → inclusive
- * date range in the owner's calendar, so small agent models never compute calendars themselves.
+ * date range in the memory's calendar, so small agent models never compute calendars themselves.
  * Weeks are Monday-based. Unknown expressions return null (the agent passes dates instead).
  */
 import { addDays, weekdayIndex } from '../engine/time';
@@ -22,7 +22,7 @@ function monthRange(year: number, month: number): Period {
   return { from: `${year}-${pad(month)}-01`, to: `${year}-${pad(month)}-${pad(last)}`, label: `${year}-${pad(month)}` };
 }
 
-/** @param today local date of "now" in the owner's timezone (YYYY-MM-DD). */
+/** @param today local date of "now" in the memory's timezone (YYYY-MM-DD). */
 export function resolvePeriod(expression: string, today: string): Period | null {
   const e = normalize(expression);
   const [y, m] = today.split('-').map(Number) as [number, number];

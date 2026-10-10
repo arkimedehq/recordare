@@ -16,7 +16,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   let llm: Awaited<ReturnType<typeof startFakeLlm>>;
   let emb: Server;
   let key: string;
-  let ownerId: string;
+  let memoryId: string;
 
   beforeAll(async () => {
     llm = await startFakeLlm();
@@ -29,8 +29,8 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     runner = app.get<ExtractionRunner>(EXTRACTION_RUNNER);
     const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });
     key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest'] } })).body.key;
-    ownerId = (await call(url, 'POST', '/api/v1/admin/owners', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
-    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: ownerId, clientId: client.body.id, externalId: 'luca' } });
+    memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Luca' } })).body.personId;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: memoryId, clientId: client.body.id, externalId: 'luca' } });
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
@@ -56,7 +56,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(llm.requests.at(-1)?.messages[0]?.content).toBe(EXTRACTION_SYSTEM); // stable prefix
     const eps = await db.query(`SELECT id, content, date_precision, origin, author_role, stance, audience, time_expression FROM episodes`);
     expect(eps).toHaveLength(1);
-    expect(eps[0]).toMatchObject({ date_precision: 'day', origin: 'owner_lived', author_role: 'owner', stance: 'stated', time_expression: 'ieri', audience: [ownerId] });
+    expect(eps[0]).toMatchObject({ date_precision: 'day', origin: 'holder_lived', author_role: 'holder', stance: 'stated', time_expression: 'ieri', audience: [memoryId] });
     expect(await db.query(`SELECT alias FROM episode_people`)).toEqual([{ alias: 'Marco (cognato)' }]);
     expect(await db.query(`SELECT count(*)::int AS n FROM episode_evidence`)).toEqual([{ n: 1 }]);
     expect(await db.query(`SELECT count(*)::int AS n FROM messages WHERE extracted_run_id IS NULL`)).toEqual([{ n: 0 }]);
@@ -174,7 +174,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     });
     await runner.runForConversation(c);
     const [run] = await db.query(
-      `SELECT r.id, r.owner_id, r.conversation_id, r.summary FROM extraction_runs r JOIN conversations c ON c.id = r.conversation_id
+      `SELECT r.id, r.memory_id, r.conversation_id, r.summary FROM extraction_runs r JOIN conversations c ON c.id = r.conversation_id
        WHERE c.external_id = 'sum1'`);
     expect(run.summary).toEqual({
       returned: { episodes: 2, plan_patches: 0, facts: 0, notes: 1, answers: 0 },
@@ -184,9 +184,9 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       clarifications: { asked: 0, resolved: 0 },
     });
     expect(JSON.stringify(run.summary)).not.toContain('ombrello'); // never text
-    const runs = (await call(url, 'GET', `/api/v1/admin/owners/${run.owner_id}/runs?conversation=${run.conversation_id}`, { token: ADMIN_KEY })).body;
+    const runs = (await call(url, 'GET', `/api/v1/admin/memories/${run.memory_id}/runs?conversation=${run.conversation_id}`, { token: ADMIN_KEY })).body;
     expect(runs).toEqual([expect.objectContaining({ id: run.id, status: 'done', conversation: 'sum1', summary: run.summary })]);
-    expect((await call(url, 'GET', `/api/v1/admin/owners/${run.owner_id}/runs?conversation=not-a-uuid`, { token: ADMIN_KEY })).status).toBe(400);
+    expect((await call(url, 'GET', `/api/v1/admin/memories/${run.memory_id}/runs?conversation=not-a-uuid`, { token: ADMIN_KEY })).status).toBe(400);
   });
 
   it('links an unlinked correction through the near-duplicate check (one extra call only when candidates exist)', async () => {
@@ -244,10 +244,10 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(await db.query(`SELECT count(*)::int AS n FROM extraction_runs WHERE status = 'failed'`)).toEqual([{ n: 0 }]);
   });
 
-  it("extracts the owner's messages ingested with role other (group chats, imports)", async () => {
+  it("extracts the memory's messages ingested with role other (group chats, imports)", async () => {
     const c = await ingest('grp', [{ id: 'g1', role: 'other', content: 'Sono io, Luca: domani vado a Torino.', at: '2026-06-03T10:00:00+02:00' }],
-      [{ ref: 'luca', role: 'owner' }]);
-    await db.query(`UPDATE messages SET author_person_id = $1, author_kind = 'self' WHERE conversation_id = $2`, [ownerId, c]);
+      [{ ref: 'luca', role: 'holder' }]);
+    await db.query(`UPDATE messages SET author_person_id = $1, author_kind = 'self' WHERE conversation_id = $2`, [memoryId, c]);
     const before = llm.requests.length;
     llm.queue.push({ episodes: [] });
     await runner.runForConversation(c);
@@ -263,15 +263,15 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     llm.queue.length = 0;
   });
 
-  it("never shows another owner's slot names in the prompt", async () => {
-    await db.query(`INSERT INTO fact_slots (key, description) VALUES ('secret_other_owner_slot', 'x') ON CONFLICT DO NOTHING`);
+  it("never shows another memory's slot names in the prompt", async () => {
+    await db.query(`INSERT INTO fact_slots (key, description) VALUES ('secret_other_memory_slot', 'x') ON CONFLICT DO NOTHING`);
     const c = await ingest('slots', [{ id: 's1', role: 'user', content: 'Niente di nuovo.', at: '2026-06-05T10:00:00+02:00' }]);
     llm.queue.push({});
     await runner.runForConversation(c);
     const user = llm.requests.at(-1)?.messages[1]?.content ?? '';
     expect(user).toContain('KNOWN SLOTS:');
-    expect(user).not.toContain('secret_other_owner_slot');
-    expect(user).toContain('employer'); // this owner's own key
+    expect(user).not.toContain('secret_other_memory_slot');
+    expect(user).toContain('employer'); // this memory's own key
   });
 
   it('never lets other people or tools create stated memories (poisoning guard)', async () => {
@@ -289,12 +289,12 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   it('shows older episodes related to the window, not only the most recent ones', async () => {
     const text = "L'hotel a Lubiana in realtà è costato 210 euro, non 180.";
     const [old] = await db.query(
-      `INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience, recorded_at, embedding)
-       VALUES ($1, 'event', 'Hotel a Lubiana prenotato: 180 euro', 'owner_lived', 'owner', $2, now() - interval '90 days', $3::vector) RETURNING id`,
-      [ownerId, [ownerId], `[${fakeVector(text).join(',')}]`]);
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, recorded_at, embedding)
+       VALUES ($1, 'event', 'Hotel a Lubiana prenotato: 180 euro', 'holder_lived', 'holder', $2, now() - interval '90 days', $3::vector) RETURNING id`,
+      [memoryId, [memoryId], `[${fakeVector(text).join(',')}]`]);
     for (let i = 0; i < 10; i++) {
-      await db.query(`INSERT INTO episodes (owner_id, kind, content, origin, author_role, audience) VALUES ($1, 'event', $2, 'owner_lived', 'owner', $3)`,
-        [ownerId, `Rumore ${i}`, [ownerId]]);
+      await db.query(`INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience) VALUES ($1, 'event', $2, 'holder_lived', 'holder', $3)`,
+        [memoryId, `Rumore ${i}`, [memoryId]]);
     }
     const c = await ingest('rel', [{ id: 'r1', role: 'user', content: text, at: new Date().toISOString() }]);
     llm.queue.push({});
@@ -303,9 +303,9 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     await db.query(`DELETE FROM episodes WHERE id = $1 OR content LIKE 'Rumore %'`, [old.id]);
   });
 
-  it('follows the owner\'s quality profile: economy uses its own task model, full lets the model reason', async () => {
+  it('follows the memory\'s quality profile: economy uses its own task model, full lets the model reason', async () => {
     const setProfile = (qualityProfile: string | null) =>
-      call(url, 'PATCH', `/api/v1/admin/owners/${ownerId}`, { token: ADMIN_KEY, body: { qualityProfile } });
+      call(url, 'PATCH', `/api/v1/admin/memories/${memoryId}`, { token: ADMIN_KEY, body: { qualityProfile } });
     const last = () => llm.requests.at(-1) as unknown as { model: string; max_tokens: number };
 
     await setProfile('economy');
@@ -343,15 +343,15 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       { id: 'a5', role: 'assistant', content: 'Il primo bus AST per Catania parte alle 6:45 da Messina.', at: '2026-10-07T09:24:22+02:00' },
       { id: 'q6', role: 'user', content: 'Perfetto, prendo quello.', at: '2026-10-07T09:25:00+02:00' },
     ]);
-    await db.query(`DELETE FROM facts WHERE owner_id = $1`, [ownerId]);
+    await db.query(`DELETE FROM facts WHERE memory_id = $1`, [memoryId]);
     await db.query(`INSERT INTO fact_slots (key, description, cardinality) VALUES ('dentist', 'dentist', 'single') ON CONFLICT (key) DO NOTHING`);
-    await db.query(`INSERT INTO facts (owner_id, key, value, status, verdict, valid_from, origin, author_role, audience) VALUES ($1, 'dentist', 'dottor Bianchi', 'current', 'new', '2026-01-01', 'owner_lived', 'owner', $2)`, [ownerId, [ownerId]]);
+    await db.query(`INSERT INTO facts (memory_id, key, value, status, verdict, valid_from, origin, author_role, audience) VALUES ($1, 'dentist', 'dottor Bianchi', 'current', 'new', '2026-01-01', 'holder_lived', 'holder', $2)`, [memoryId, [memoryId]]);
     // The third reply has no tool message: Recordare itself served a recall in this conversation during that turn.
-    await db.query(`INSERT INTO recall_log (owner_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [ownerId, conv]);
+    await db.query(`INSERT INTO recall_log (memory_id, tool, items, conversation_id, served_at) VALUES ($1, 'search_episodes', 1, $2, '2026-10-07T09:22:10+02:00')`, [memoryId, conv]);
     llm.queue.push({
       episodes: [
         { content: 'Luca ha portato Marta a Sestola', occurred_at: '2026-10-06', evidence: [7] },                    // echo only
-        { content: 'Sul Monte Cimone con Luca Marta ha visto i camosci', occurred_at: '2026-02-28', evidence: [7, 8] }, // owner added
+        { content: 'Sul Monte Cimone con Luca Marta ha visto i camosci', occurred_at: '2026-02-28', evidence: [7, 8] }, // memory added
         { content: 'Cena alla Trattoria Aldina con i genitori', kind: 'plan', occurred_at: '2026-10-10', evidence: [4] },
         { content: 'Bus AST delle 6:45 da Messina per Catania', kind: 'plan', occurred_at: '2026-10-08', evidence: [12, 13] }, // news from the web, same turn as a recall
       ],
@@ -361,13 +361,13 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       ],
     });
     await runner.runForConversation(conv);
-    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'dentist' AND owner_id = $1`, [ownerId])).toEqual([{ value: 'dottor Bianchi', status: 'current' }]);
-    const kept = (await db.query(`SELECT content FROM episodes WHERE owner_id = $1 AND content ~ 'Sestola|camosci|Aldina|AST' ORDER BY content`, [ownerId]))
+    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'dentist' AND memory_id = $1`, [memoryId])).toEqual([{ value: 'dottor Bianchi', status: 'current' }]);
+    const kept = (await db.query(`SELECT content FROM episodes WHERE memory_id = $1 AND content ~ 'Sestola|camosci|Aldina|AST' ORDER BY content`, [memoryId]))
       .map((r: { content: string }) => r.content);
     expect(kept).toEqual(['Bus AST delle 6:45 da Messina per Catania', 'Cena alla Trattoria Aldina con i genitori', 'Sul Monte Cimone con Luca Marta ha visto i camosci']);
   });
 
-  it('makes no LLM call without a message from the owner (gate)', async () => {
+  it('makes no LLM call without a message from the memory (gate)', async () => {
     const before = llm.requests.length;
     const c8 = await ingest('c8', [{ id: 'a1', role: 'assistant', content: 'Promemoria automatico.', at: '2026-03-06T10:00:00+01:00' }]);
     await runner.runForConversation(c8);
@@ -378,7 +378,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
   it('does not recreate forgotten content (tombstones)', async () => {
     const c9 = await ingest('c9', [{ id: 't1', role: 'user', content: 'Oggi ho fatto una cosa da dimenticare.', at: '2026-03-07T10:00:00+01:00' }]);
     const [msg] = await db.query(`SELECT id FROM messages WHERE conversation_id = $1`, [c9]);
-    await db.query(`INSERT INTO forget_tombstones (owner_id, scope, message_ids) VALUES ($1, 'message', $2)`, [ownerId, [msg.id]]);
+    await db.query(`INSERT INTO forget_tombstones (memory_id, scope, message_ids) VALUES ($1, 'message', $2)`, [memoryId, [msg.id]]);
     llm.queue.push({ episodes: [{ content: 'Cosa da dimenticare', occurred_at: '2026-03-07', evidence: [1] }] });
     await runner.runForConversation(c9);
     expect(await db.query(`SELECT count(*)::int AS n FROM episodes WHERE content = 'Cosa da dimenticare'`)).toEqual([{ n: 0 }]);

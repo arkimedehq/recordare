@@ -9,13 +9,13 @@ import { ATTRIBUTION_METHODS, AUTHOR_KINDS, type AttributionMethod, type AuthorK
 export const CONVERSATION_SOURCES = ['chat', 'voice', 'mcp_tool', 'import_chat', 'import_social', 'import_email', 'import_notes', 'interview',
   'document', 'perception', 'ambient'] as const;
 export type ConversationSource = (typeof CONVERSATION_SOURCES)[number];
-export type ParticipantRole = 'owner' | 'assistant' | 'other';
+export type ParticipantRole = 'holder' | 'assistant' | 'other';
 export type MessageRole = 'user' | 'assistant' | 'tool' | 'other';
 
 @Entity('conversations')
 export class Conversation {
   @PrimaryGeneratedColumn('uuid') id!: string;
-  @Column({ name: 'owner_id', type: 'uuid' }) ownerId!: string;
+  @Column({ name: 'memory_id', type: 'uuid' }) memoryId!: string;
   @Column({ name: 'client_id', type: 'uuid' }) clientId!: string;
   @Column({ name: 'external_id', type: 'text' }) externalId!: string;
   @Column({ type: 'enum', enumName: 'conversation_source', enum: CONVERSATION_SOURCES, default: 'chat' }) source!: ConversationSource;
@@ -32,7 +32,7 @@ export class ConversationParticipant {
   @PrimaryColumn({ name: 'conversation_id', type: 'uuid' }) conversationId!: string;
   @PrimaryColumn({ type: 'text' }) ref!: string;
   @Column({ name: 'person_id', type: 'uuid', nullable: true }) personId!: string | null;
-  @Column({ type: 'enum', enumName: 'participant_role', enum: ['owner', 'assistant', 'other'] }) role!: ParticipantRole;
+  @Column({ type: 'enum', enumName: 'participant_role', enum: ['holder', 'assistant', 'other'] }) role!: ParticipantRole;
   @Column({ name: 'display_name', type: 'text', nullable: true }) displayName!: string | null;
   @Column({ name: 'joined_at', type: 'timestamptz', default: () => 'now()' }) joinedAt!: Date;
 }
@@ -41,7 +41,7 @@ export class ConversationParticipant {
 export class Message {
   @PrimaryGeneratedColumn('uuid') id!: string;
   @Column({ name: 'conversation_id', type: 'uuid' }) conversationId!: string;
-  @Column({ name: 'owner_id', type: 'uuid' }) ownerId!: string;
+  @Column({ name: 'memory_id', type: 'uuid' }) memoryId!: string;
   @Column({ name: 'external_id', type: 'text' }) externalId!: string;
   @Column({ type: 'enum', enumName: 'message_role', enum: ['user', 'assistant', 'tool', 'other'] }) role!: MessageRole;
   @Column({ name: 'tool_name', type: 'text', nullable: true }) toolName!: string | null;

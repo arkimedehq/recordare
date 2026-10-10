@@ -66,7 +66,7 @@ export class AuthService {
     if (!(await this.clientActive(t.clientId))) return null;
     this.touch(this.tokens.update(t.id, { lastUsedAt: new Date() }));
     return {
-      principal: { kind: 'owner_token', ownerId: t.ownerId, clientId: t.clientId, tokenId: t.id, scopes: t.scopes },
+      principal: { kind: 'memory_token', memoryId: t.memoryId, clientId: t.clientId, tokenId: t.id, scopes: t.scopes },
       expiresAt: t.expiresAt ?? undefined,
     };
   }

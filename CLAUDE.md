@@ -33,7 +33,7 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   memory proxy); `docs/connectors/` — research notes on the target platforms; WORK_PLAN 6.6 / 6.6b.
 - `CHANGELOG.md` — release notes (Keep a Changelog, SemVer 0.x).
 - `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H12) with literature verdicts: phase 1 is
-  mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), owner vs
+  mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), holder vs
   twin provenance (H3). Never claim novelty without re-checking it.
 - `docs/literature/` — deep-reading cards of 15 key sources + `README.md` synthesis (D29 data-model
   additions, D30 assistant turns, recall changes, eval-suite upgrade). Read before designing a component.
@@ -46,23 +46,23 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   client side, spike), with defaults and what was measured. Update it with every new knob.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
   gaps, and **cost principles** (economy-profile defaults: zero LLM calls when nothing to do, cheap
-  model, no reasoning, prefix caching — D35 makes cost an owner's option).
+  model, no reasoning, prefix caching — D35 makes cost a deployer's option).
 
-## Conventions (the owner's preferences — follow them)
-- Chat with the owner in **Italian**; code comments and dev-facing docs in **English**.
-- **Bilingual docs** (owner's rule 2026-10-07): every project document (`README.md`, `service/README.md`, `docs/*.md`,
+## Conventions (the maintainer's preferences — follow them)
+- Chat with the maintainer in **Italian**; code comments and dev-facing docs in **English**.
+- **Bilingual docs** (maintainer's rule 2026-10-07): every project document (`README.md`, `service/README.md`, `docs/*.md`,
   `docs/literature/*.md`, `docs/connectors/*.md`, `connectors/*/README.md`, `packages/client/README.md`,
   `CHANGELOG.md`) has an Italian copy next to it, `<name>_it.md`; the English one is the reference. Any change
   to an English document updates its `_it.md` in the same commit. Not translated: `CLAUDE.md` and the evaluation
   artefacts (`spikes/**`: RESULTS, GOLD_AUDIT, dataset READMEs).
-- Commits as the owner (`andreagenovese <info@rstonline.it>`), **no Claude/Anthropic trailers**.
+- Commits as the maintainer (`andreagenovese <info@rstonline.it>`), **no Claude/Anthropic trailers**.
 - **Ask before any push / publish** (the repositories are public since v0.1.0; so are the npm packages and the proxy
-  image — a release, tag, npm publish or image push always needs the owner's OK).
-- Substantial work on a dedicated branch, merge `--no-ff` after the owner's OK; small obvious
+  image — a release, tag, npm publish or image push always needs the maintainer's OK).
+- Substantial work on a dedicated branch, merge `--no-ff` after the maintainer's OK; small obvious
   fixes directly on `main`. Delete merged branches.
 - Never break existing behaviour: enumerate call sites, prefer additive changes, test old and new.
 - Platform code and prompts stay generic (no customer/domain names hardcoded).
-- **All languages** (owner's rule 2026-10-08): Recordare supports all languages, at least the most used. Never add a
+- **All languages** (maintainer's rule 2026-10-08): Recordare supports all languages, at least the most used. Never add a
   word list for IT / EN only: language data lives in `service/src/lang/` (Intl where possible, tables otherwise; scripts
   without spaces matched as substrings), one test per language.
 - Development phase: clean code over backward compatibility (no dual paths / lazy migrations).
@@ -77,7 +77,7 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   local Ollama are only our test setups — never hardcode provider specifics outside the
   provider-profile configuration.
 - Cost (**D35**): an option, not a limit — costly mechanisms sit behind quality profiles
-  (economy / balanced / full) the owner chooses; never trade quality silently; measure every profile.
+  (economy / balanced / full) the deployer chooses; never trade quality silently; measure every profile.
 
 ## Spike (`spikes/memory-eval/`) — how to run
 - Python via `uv`; run commands as `uv run --directory <abs path to spikes/memory-eval> python …`

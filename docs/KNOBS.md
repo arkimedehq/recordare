@@ -3,7 +3,7 @@
 *Italian version: [KNOBS_it.md](KNOBS_it.md).*
 
 Every setting of Recordare, its optional companions and its client side, with where it is set, its default and — for the
-engine's knobs — whether and how it was measured. Cost is the owner's option, never a silent limit (D35); a knob that
+engine's knobs — whether and how it was measured. Cost is the operator's option, never a silent limit (D35); a knob that
 did not show a gain stays off until a measurement says otherwise (evaluation rules, `WORK_PLAN.md`).
 
 ## 1. Quality profiles (per installation, per person)
@@ -79,7 +79,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `autoProvision` | off | Create a person at the first contact of a new user |
 | `rawLogScope` | `own` | Raw-log excerpts from this client's conversations only, or all |
 | `disabled` | off | Every key and token of the client stops at once |
-| Key scopes | — | `ingest`, `mcp`, `read`, `write` (never admin, owner settings or export) |
+| Key scopes | — | `ingest`, `mcp`, `read`, `write` (never admin, memory settings or export) |
 
 ## 6. Installation scripts (`deploy/`)
 

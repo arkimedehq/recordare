@@ -199,7 +199,7 @@ state of WORK_PLAN M8 (steps 8.3–8.12), not built yet beyond 8.1–8.2.
 
 | System | Whose memory | Speaker identity / source monitoring | Kinds | Time model | Provenance / poisoning guards | Consolidation |
 |---|---|---|---|---|---|---|
-| **Recordare (today)** | One memory per person; entity memory for shared devices (D48, experimental) | `author_role`, origin `owner_lived / owner_told / assistant_stated`, others' claims kept apart, named-in-window guard for entity speakers | Ep (event / plan / state change), Fact-h (value chains), Pref (notes), Prosp (owner's plans with lifecycle); raw log forever; no Proc, no Docs (D49 proposal; built since 2026-10-10 as text sources, WORK_PLAN 8.9) | Bi-temporal; event time + **precision** + original expression; facts **as of** a date; `corrects` vs `supersedes` | Evidence ids validated in code; LLM never deletes; recall-echo guard; plan patches need evidence; tombstones | Idle window + nightly day / month digests (fingerprinted, zero calls when nothing new) |
+| **Recordare (today)** | One memory per person; entity memory for shared devices (D48, experimental) | `author_role`, origin `holder_lived / holder_told / assistant_stated`, others' claims kept apart, named-in-window guard for entity speakers | Ep (event / plan / state change), Fact-h (value chains), Pref (notes), Prosp (holder's plans with lifecycle); raw log forever; no Proc, no Docs (D49 proposal; built since 2026-10-10 as text sources, WORK_PLAN 8.9) | Bi-temporal; event time + **precision** + original expression; facts **as of** a date; `corrects` vs `supersedes` | Evidence ids validated in code; LLM never deletes; recall-echo guard; plan patches need evidence; tombstones | Idle window + nightly day / month digests (fingerprinted, zero calls when nothing new) |
 | **Recordare (D50)** | **The agent's**: one per client account, personal or entity mode | Planned: subject on every item, attribution **method + confidence**, `own` marker, "someone" + re-attribution | + D49 sources (Docs), later reflection, Proc notes, the agent's own intents, perception | Unchanged | Unchanged + reality monitoring kept in data while text is first person | + digests in the agent's voice |
 | Mem0 | User-centric with `user_id` / `agent_id` / `run_id` scopes | Actor / role metadata; no third-party role (our adapter had to prefix names) | Flat fact strings + entity links; Pref | Observation date in text; platform: temporal ranking + `reference_date` (May 2026) | ADD-only (nothing deleted); currency only at retrieval | None (retrieval-time ranking, decay bias) |
 | Zep / Graphiti | User graph per user + shared graphs | Entities resolved; episodes as provenance; no speaker-trust model | Facts as graph edges, entities, episodes, summaries | **Bi-temporal** edges (`valid_at / invalid_at` + record time) | Invalidation not deletion; LLM decides contradictions (all facts treated as states) | Incremental; communities / summaries |
@@ -268,7 +268,7 @@ Memory paper already stores immutable per-fragment provenance (originating user 
 read time.
 
 **Kinds of memory.**
-- **Recordare covers well**: episodes with event time, facts with value chains, notes, and the owner's plans with a
+- **Recordare covers well**: episodes with event time, facts with value chains, notes, and the holder's plans with a
   lifecycle.
 - **Recordare lacks**:
   - procedural memory (Letta, Hermes, LangMem and MemOS have skills or prompt optimisation);
@@ -290,7 +290,7 @@ from stored validity.
 - Managed Agents' read-only mounts and versions;
 - Recordare's code-validated evidence and claims split.
 
-In our measurements both Mem0 and Cognee attributed a group member's claim to the owner (blind3 b34, 0/3).
+In our measurements both Mem0 and Cognee attributed a group member's claim to the holder (blind3 b34, 0/3).
 Anthropic's documentation states the risk plainly: an injection into a read-write store "later sessions then read …
 as trusted memory".
 
@@ -364,7 +364,7 @@ Conclusions we can actually draw:
 1. On the sets where both ran, Recordare's service was **at Mem0's level** (within noise). It was ahead of Cognee on
    noise, and ahead of Memobase and Graphiti in the earlier, smaller rounds.
 2. Mem0 and Cognee failed the same structural probes every time: period questions and a third party's claim about the
-   owner.
+   holder.
 3. **No market system has been run on the sets that matter for D50**: multi-speaker attribution (blind6, blind8) and
    the coming agent sets. The Mem0 we measured is the OSS library. The platform's May 2026 temporal ranking was not
    tested.
@@ -440,7 +440,7 @@ Caveats on the benchmarks themselves:
 | **Honcho** | Every participant is a peer; facts about a peer only from that peer; the agent itself can be a peer that observes the others | Honcho stores **per-pair** representations (A's view of B) and answers through an LLM at read time. D50 keeps **one** memory per agent with a subject on every item, renders it in the first person (personal mode), has no LLM at read, keeps an append-only history (Honcho's deduction deletes outdated observations) and has an explicit event-time model |
 | **Letta / Letta Code** | Memory belongs to a persistent agent that keeps its identity across models; sleep-time reflection | Letta's memory is files the agent edits itself (lossy rewrites, no event time, no per-speaker attribution); D50 keeps extraction-by-service with evidence and attribution |
 | **Collaborative Memory** (paper) | Immutable provenance per fragment (originating user, contributing agent), multiple users of the same agents, read-time permission checks | It is a research design with private and shared tiers and LLM redaction; D50 has one tier and **no permission check yet** (no viewer filter). Collaborative Memory's read-time check is the natural shape for D50's later privacy step |
-| **OpenClaw** | Agent-owned memory with origin classes and turn taint | OpenClaw never defaults content to the owner; D50's personal mode **does** default undeclared content to the self, which needs OpenClaw-style taint to keep tool and web text out of "I" |
+| **OpenClaw** | Agent-owned memory with origin classes and turn taint | OpenClaw never defaults content to its `owner` class; D50's personal mode **does** default undeclared content to the self, which needs OpenClaw-style taint to keep tool and web text out of "I" |
 | **Claude Managed Agents** | Stores owned by the deployment, attached per session, versions attributed to the session | Free-form files written by the agent; attribution is to a session, not to a speaker; no semantics of time or plans |
 | **Mem0 (`agent_id`, actor metadata)** | Agent scope next to user scope | Scopes, not attribution inside one memory; no third-party role |
 

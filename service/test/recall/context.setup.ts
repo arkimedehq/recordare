@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-/** Shared set-up of the memory context tests: an owner, two conversations, memories with controlled vectors. */
+/** Shared set-up of the memory context tests: an memory, two conversations, memories with controlled vectors. */
 import { DataSource } from 'typeorm';
 import { ADMIN_KEY, call, fakeVector, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
 
@@ -17,7 +17,7 @@ export async function setup(env: Record<string, string>) {
   const { app, url } = await startApp();
   const client = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'P', kind: 'platform', autoProvision: true } })).body;
   const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read'] } })).body.key;
-  const ownerId = (await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'u1' } })).body.ownerId;
+  const memoryId = (await call(url, 'GET', '/api/v1/me', { token: key, headers: { 'x-recordare-user': 'u1' } })).body.memoryId;
   const send = (conversation: string, participants: object[] = []) => call(url, 'POST', '/api/v1/ingest/messages', {
     token: key, headers: { 'x-recordare-user': 'u1' },
     body: { conversation: { externalId: conversation, participants }, messages: [{ externalId: `${conversation}-1`, role: 'user', content: 'ciao', sentAt: '2026-10-01T10:00:00+02:00' }] },
@@ -25,15 +25,15 @@ export async function setup(env: Record<string, string>) {
   await send('chat-1');
   await send('group', [{ ref: 'bob', role: 'other', displayName: 'Bob' }]);
   const db = app.get(DataSource);
-  const prov = `'owner_lived', 'owner', 'stated', 1, 'owner', ARRAY[$1::uuid]`;
+  const prov = `'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[$1::uuid]`;
   await db.query(`INSERT INTO fact_slots (key, description) VALUES ('car', 'car') ON CONFLICT DO NOTHING`);
-  await db.query(`INSERT INTO facts (owner_id, key, value, valid_from, origin, author_role, stance, confidence, disclosure, audience, embedding)
-    VALUES ($1, 'car', 'Toyota Yaris', '2026-10-03', ${prov}, $2)`, [ownerId, near]);
-  await db.query(`INSERT INTO notes (owner_id, category, content, origin, author_role, stance, confidence, disclosure, audience, embedding)
-    VALUES ($1, 'preference', 'Prende il caffè amaro', ${prov}, $2)`, [ownerId, far]);
+  await db.query(`INSERT INTO facts (memory_id, key, value, valid_from, origin, author_role, stance, confidence, disclosure, audience, embedding)
+    VALUES ($1, 'car', 'Toyota Yaris', '2026-10-03', ${prov}, $2)`, [memoryId, near]);
+  await db.query(`INSERT INTO notes (memory_id, category, content, origin, author_role, stance, confidence, disclosure, audience, embedding)
+    VALUES ($1, 'preference', 'Prende il caffè amaro', ${prov}, $2)`, [memoryId, far]);
   const episode = (content: string, kind: string, at: string, v: string) => db.query(
-    `INSERT INTO episodes (owner_id, kind, content, occurred_at, date_precision, plan_status, origin, author_role, stance, confidence, disclosure, audience, embedding)
-     VALUES ($1, $2, $3, $4, 'day', ${kind === 'plan' ? "'open'" : 'NULL'}, ${prov}, $5)`, [ownerId, kind, content, at, v]);
+    `INSERT INTO episodes (memory_id, kind, content, occurred_at, date_precision, plan_status, origin, author_role, stance, confidence, disclosure, audience, embedding)
+     VALUES ($1, $2, $3, $4, 'day', ${kind === 'plan' ? "'open'" : 'NULL'}, ${prov}, $5)`, [memoryId, kind, content, at, v]);
   await episode('Ha comprato una Toyota Yaris ibrida grigia', 'state_change', '2026-10-03', near);
   await episode('Cena da Marco', 'event', '2026-10-02', far);
   await episode('Tagliando della Yaris', 'plan', '2026-10-09', near);
@@ -42,6 +42,6 @@ export async function setup(env: Record<string, string>) {
     token: key, headers: { 'x-recordare-user': 'u1', 'x-recordare-conversation': conversation, 'x-recordare-now': '2026-10-07T10:00:00+02:00' },
     body: { query },
   });
-  return { app, fake, db, ownerId, context, url, key, query: QUERY };
+  return { app, fake, db, memoryId, context, url, key, query: QUERY };
 }
 

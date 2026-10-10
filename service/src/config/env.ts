@@ -62,9 +62,9 @@ const baseSchema = z.object({
   CONTEXT_MIN_PASSAGE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
-  /** Local hour (owner's timezone) after which the nightly consolidation runs (M5). */
+  /** Local hour (memory's timezone) after which the nightly consolidation runs (M5). */
   CONSOLIDATION_HOUR: z.coerce.number().int().min(0).max(23).default(3),
-  /** Installation default quality profile (D35); owners may override it. */
+  /** Installation default quality profile (D35); memories may override it. */
   QUALITY_PROFILE: z.enum(QUALITY_PROFILES).default('balanced'),
 
   /** `claude-cli`: local evaluation only, through the operator's own Claude plan (headless Claude Code). */

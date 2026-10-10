@@ -30,8 +30,8 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
 
 ## 2. Persone
 - Ogni richiesta nomina l'utente della piattaforma: `X-Recordare-User: <the platform's own user id>`. Con
-  `autoProvision` la persona viene creata al primo contatto; `GET api/v1/me` restituisce `ownerId` — conservarlo
-  accanto al proprio utente (lega la propria telemetria alla persona: attributo OpenTelemetry `recordare.owner_id`).
+  `autoProvision` la persona viene creata al primo contatto; `GET api/v1/me` restituisce `memoryId` — conservarlo
+  accanto al proprio utente (lega la propria telemetria alla persona: attributo OpenTelemetry `recordare.memory_id`).
 - Dare alla persona il nome del proprio utente e tenerlo sincronizzato (solo con una chiave client): `PATCH api/v1/me {displayName}` ogni volta che
   l'utente rinomina il proprio profilo (il nome segue la piattaforma). La scelta dell'utente sul modo della memoria
   segue la stessa via: `PATCH api/v1/me {mode: personal | entity}` (D50 — `entity` per un account condiviso che usano
@@ -104,8 +104,8 @@ che è successo e cercato con `search_knowledge` (`API_it.md` §2, §3).
   lo fanno); schemi degli strumenti: `TOOLS` nella libreria client.
 - Il diario della persona nella propria interfaccia (`API.md` §4, per esempio il Diario di Arkimede): linea del tempo,
   dettaglio di un episodio, diario per giorno / mese, fatti, note, piani, e le modifiche della persona (correggere,
-  dimenticare, fissare, confermare / rifiutare ciò che è in attesa) — scope `read`, `write` per le modifiche; diretto del
-  titolare (senza intestazione della conversazione).
+  dimenticare, fissare, confermare / rifiutare ciò che è in attesa) — scope `read`, `write` per le modifiche; diretto della
+  memoria, memory-direct (senza intestazione della conversazione).
 
 ## 4b. Client MCP standard — Claude Code (livello basic, WORK_PLAN 6.1)
 Un client che parla solo MCP (senza ingest) usa un **token personale** legato a una persona e a un client:
@@ -114,11 +114,11 @@ Un client che parla solo MCP (senza ingest) usa un **token personale** legato a 
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
   -d '{"name":"Claude Code","kind":"mcp_client"}' $RECORDARE_URL/api/v1/admin/clients
 curl -H "authorization: Bearer $ADMIN_API_KEY" -H 'content-type: application/json' \
-  -d '{"clientId":"<id client>","scopes":["mcp"]}' $RECORDARE_URL/api/v1/admin/owners/<id persona>/tokens
+  -d '{"clientId":"<id client>","scopes":["mcp"]}' $RECORDARE_URL/api/v1/admin/memories/<id memoria>/tokens
 # la persona, in Claude Code (scope local = solo questo progetto; user = tutti i progetti)
 claude mcp add --transport http --scope user recordare $RECORDARE_URL/mcp --header "Authorization: Bearer rp_…"
 ```
-- Con un token personale le letture sono dirette del titolare (non serve l'intestazione della conversazione).
+- Con un token personale le letture sono dirette della memoria, memory-direct (non serve l'intestazione della conversazione).
 - **Le scritture attendono la persona**: un client così non invia conversazioni, quindi Recordare non ha le parole
   della persona dietro ciò che l'agente scrive. `log_episode` viene salvato come affermato dall'assistente (dedotto),
   `remember` come nota in attesa che il richiamo mostra solo con `include_pending`; la persona la conferma nel suo
@@ -151,4 +151,4 @@ connettori.
 ## 5. Osservabilità (opzionale)
 Recordare Atlas mostra il lavoro di Recordare stesso dal suo flusso di telemetria; i propri agenti (chiamate LLM,
 strumenti) compaiono quando si esportano le tracce OpenTelemetry GenAI verso l'atlas (README di `recordare-atlas`) —
-solo metadati, con `recordare.owner_id` sugli span.
+solo metadati, con `recordare.memory_id` sugli span.

@@ -4,7 +4,7 @@
 /**
  * What the code (not the LLM) needs to know about languages. The engine is language-neutral — the model reads and
  * writes any language — but a few deterministic helpers match words: period expressions (D12), month names, relations in
- * questions, the leak detector of first-person memories. Owner's rule (2026-10-08): every one of them covers the most used
+ * questions, the leak detector of first-person memories. maintainer's rule (2026-10-08): every one of them covers the most used
  * languages, generated from Intl where it can be (months, relative periods) and from the tables here otherwise.
  */
 

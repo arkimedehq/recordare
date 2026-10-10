@@ -100,8 +100,8 @@ describe('migration MemoryIdentity (D50, WORK_PLAN 8.3)', () => {
     }
   }
 
-  it('moves the kind of memory to owners.mode, with the default gender', async () => {
-    expect(await db.query(`SELECT person_id, mode, gender FROM owners ORDER BY mode`)).toEqual([
+  it('moves the kind of memory to memories.mode, with the default gender', async () => {
+    expect(await db.query(`SELECT person_id, mode, gender FROM memories ORDER BY mode`)).toEqual([
       { person_id: ids['andrea'], mode: 'personal', gender: 'masculine' },
       { person_id: ids['arkim3de'], mode: 'entity', gender: 'masculine' },
     ]);
@@ -109,20 +109,20 @@ describe('migration MemoryIdentity (D50, WORK_PLAN 8.3)', () => {
   });
 
   it('creates the contacts each memory references and moves every reference to them', async () => {
-    const marco = await one(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Marco'`, [ids['andrea']]);
-    const andreaHere = await one(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Andrea'`, [ids['arkim3de']]);
+    const marco = await one(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Marco'`, [ids['andrea']]);
+    const andreaHere = await one(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Andrea'`, [ids['arkim3de']]);
     expect(marco).toBeTruthy();
     expect(andreaHere).toBeTruthy();
     // Persons of no memory are gone (Ghost with its identity, Marco replaced by his contact row).
     expect(await db.query(`SELECT id FROM persons WHERE id = ANY($1)`, [[ids['ghost'], ids['marco']]])).toEqual([]);
-    expect(await db.query(`SELECT count(*)::int AS n FROM persons p WHERE p.owner_scope IS NULL`)).toEqual([{ n: 2 }]);
+    expect(await db.query(`SELECT count(*)::int AS n FROM persons p WHERE p.memory_id IS NULL`)).toEqual([{ n: 2 }]);
     // Identities: the accounts open the memories; participant ids name the contacts inside one memory.
-    expect(await db.query(`SELECT i.kind, i.owner_scope, i.person_id, i.channel, i.external_id, i.verified_at IS NOT NULL AS verified
+    expect(await db.query(`SELECT i.kind, i.memory_id, i.person_id, i.channel, i.external_id, i.verified_at IS NOT NULL AS verified
       FROM external_identities i ORDER BY i.kind, i.external_id`)).toEqual([
-      { kind: 'account', owner_scope: null, person_id: ids['andrea'], channel: null, external_id: 'andrea', verified: true },
-      { kind: 'account', owner_scope: null, person_id: ids['arkim3de'], channel: null, external_id: 'arkim3de', verified: true },
-      { kind: 'participant', owner_scope: ids['andrea'], person_id: marco, channel: 'telegram', external_id: '111', verified: true },
-      { kind: 'participant', owner_scope: ids['arkim3de'], person_id: andreaHere, channel: null, external_id: 'andrea', verified: true },
+      { kind: 'account', memory_id: null, person_id: ids['andrea'], channel: null, external_id: 'andrea', verified: true },
+      { kind: 'account', memory_id: null, person_id: ids['arkim3de'], channel: null, external_id: 'arkim3de', verified: true },
+      { kind: 'participant', memory_id: ids['andrea'], person_id: marco, channel: 'telegram', external_id: '111', verified: true },
+      { kind: 'participant', memory_id: ids['arkim3de'], person_id: andreaHere, channel: null, external_id: 'andrea', verified: true },
     ]);
     expect(await db.query(`SELECT person_id, alias, alias_norm FROM person_aliases ORDER BY alias`)).toEqual([
       { person_id: andreaHere, alias: 'Andrea', alias_norm: 'andrea' },
@@ -133,19 +133,19 @@ describe('migration MemoryIdentity (D50, WORK_PLAN 8.3)', () => {
       { ref: 'assistant', person_id: null },
       { ref: 'guest', person_id: null },
       { ref: 'marco', person_id: marco },
-      { ref: 'owner', person_id: ids['andrea'] },
-      { ref: 'owner', person_id: null }, // entity memory: its user is not the entity
+      { ref: 'holder', person_id: ids['andrea'] },
+      { ref: 'holder', person_id: null }, // entity memory: its user is not the entity
       { ref: 'user:andrea', person_id: andreaHere },
     ].sort((a, b) => a.ref.localeCompare(b.ref)));
     expect(await db.query(`SELECT audience FROM episodes WHERE id = $1`, [ids['e-marta']])).toEqual([{ audience: [ids['arkim3de'], andreaHere] }]);
     expect(await db.query(`SELECT audience FROM episodes WHERE id = $1`, [ids['p-episode']])).toEqual([{ audience: [ids['andrea'], marco] }]);
     // A human that is neither a memory nor a contact is refused from now on.
-    await expect(db.query(`INSERT INTO persons (display_name) VALUES ('x')`)).rejects.toThrow(/owner_scope is required/);
+    await expect(db.query(`INSERT INTO persons (display_name) VALUES ('x')`)).rejects.toThrow(/memory_id is required/);
   });
 
   it('attributes every message: personal self / agent / tool / contact / someone; entity someone unless identified', async () => {
-    const marco = await one(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Marco'`, [ids['andrea']]);
-    const andreaHere = await one(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Andrea'`, [ids['arkim3de']]);
+    const marco = await one(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Marco'`, [ids['andrea']]);
+    const andreaHere = await one(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Andrea'`, [ids['arkim3de']]);
     expect(await db.query(`SELECT external_id AS id, author_kind AS kind, author_person_id AS person, attribution_method AS method,
       attribution_confidence AS confidence FROM messages ORDER BY external_id`)).toEqual([
       { id: 'e-andrea', kind: 'contact', person: andreaHere, method: 'client_assertion', confidence: 1 },
@@ -159,7 +159,7 @@ describe('migration MemoryIdentity (D50, WORK_PLAN 8.3)', () => {
   });
 
   it('records whose each memory is', async () => {
-    const andreaHere = await one(`SELECT id FROM persons WHERE owner_scope = $1 AND display_name = 'Andrea'`, [ids['arkim3de']]);
+    const andreaHere = await one(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Andrea'`, [ids['arkim3de']]);
     const episodes = await db.query(`SELECT id, subject_kind, subject_person_id, subject_candidates FROM episodes`);
     const subject = (id: string) => episodes.find((e: { id: string }) => e.id === id);
     expect(subject(ids['p-episode'] as string)).toMatchObject({ subject_kind: 'self', subject_person_id: null, subject_candidates: [] });
@@ -167,13 +167,13 @@ describe('migration MemoryIdentity (D50, WORK_PLAN 8.3)', () => {
     expect(subject(ids['e-andrea'] as string)).toMatchObject({ subject_kind: 'contact', subject_person_id: andreaHere });
     expect(subject(ids['e-both'] as string)).toMatchObject({ subject_kind: 'someone', subject_person_id: null }); // two known contacts
     expect(subject(ids['e-none'] as string)).toMatchObject({ subject_kind: 'someone', subject_person_id: null });
-    expect(await db.query(`SELECT owner_id, value, subject_kind, subject_person_id FROM facts ORDER BY value`)).toEqual([
-      { owner_id: ids['arkim3de'], value: 'cassetto', subject_kind: 'self', subject_person_id: null },
-      { owner_id: ids['arkim3de'], value: 'Clio', subject_kind: 'contact', subject_person_id: ids['marta'] },
-      { owner_id: ids['andrea'], value: 'Golf', subject_kind: 'self', subject_person_id: null },
+    expect(await db.query(`SELECT memory_id, value, subject_kind, subject_person_id FROM facts ORDER BY value`)).toEqual([
+      { memory_id: ids['arkim3de'], value: 'cassetto', subject_kind: 'self', subject_person_id: null },
+      { memory_id: ids['arkim3de'], value: 'Clio', subject_kind: 'contact', subject_person_id: ids['marta'] },
+      { memory_id: ids['andrea'], value: 'Golf', subject_kind: 'self', subject_person_id: null },
     ].sort((a, b) => a.value.localeCompare(b.value)));
-    expect(await db.query(`SELECT owner_id, subject_kind FROM notes ORDER BY subject_kind`)).toEqual([
-      { owner_id: ids['andrea'], subject_kind: 'self' }, { owner_id: ids['arkim3de'], subject_kind: 'someone' },
+    expect(await db.query(`SELECT memory_id, subject_kind FROM notes ORDER BY subject_kind`)).toEqual([
+      { memory_id: ids['andrea'], subject_kind: 'self' }, { memory_id: ids['arkim3de'], subject_kind: 'someone' },
     ]);
     expect(await db.query(`SELECT count(*)::int AS n FROM clarifications`)).toEqual([{ n: 0 }]);
   });

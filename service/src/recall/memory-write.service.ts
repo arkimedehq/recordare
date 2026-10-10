@@ -4,7 +4,7 @@
 /**
  * Explicit writes from tools (D11, D16, D34): log_episode, remember, correct_episode,
  * forget_episode. Explicit capture is "stated" with importance 10 only when evidence binds to a
- * message of the owner; otherwise it is recorded as noted by the assistant (poisoning guard).
+ * message of the holder; otherwise it is recorded as noted by the assistant (poisoning guard).
  * Forgetting is physical and sticks (tombstones also hide the evidence from the chat search).
  */
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
@@ -17,7 +17,7 @@ import { memorySpeaker } from '../rawlog/attribution';
 import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
 
 /**
- * The agent's text is backed by a message of the owner when the two overlap as a whole (trigram similarity ≥ 0.2) or
+ * The agent's text is backed by a message of the holder when the two overlap as a whole (trigram similarity ≥ 0.2) or
  * when the text is found inside the message (word similarity ≥ 0.6): a long message ("use the tools: … remember that
  * my favourite colour is green") dilutes the whole-text similarity of the short fact it contains.
  */
@@ -28,8 +28,8 @@ export interface Evidence {
   /** Conversation the tool was called from (resolved by Recordare), if any. */
   conversationId?: string;
   clientId: string;
-  /** A personal token (owner-direct): without a conversation, the owner's recent messages from this client count. */
-  ownerDirect?: boolean;
+  /** A personal token (memory-direct): without a conversation, the holder's recent messages from this client count. */
+  memoryDirect?: boolean;
 }
 
 @Injectable()
@@ -40,29 +40,29 @@ export class MemoryWriteService {
     private readonly telemetry: TelemetryService,
   ) {}
 
-  async logEpisode(ownerId: string, ev: Evidence, input: {
+  async logEpisode(memoryId: string, ev: Evidence, input: {
     content: string; kind?: 'event' | 'plan'; occurredAt?: string; occurredUntil?: string; datePrecision?: Precision; people?: string[]; place?: string;
   }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
-      const [owner] = await tx.query(`SELECT timezone, mode FROM owners WHERE person_id = $1`, [ownerId]);
-      const { messageId, byOwner } = await this.bindEvidence(tx, ownerId, ev, input.content);
-      const at = toStored(input.occurredAt, input.datePrecision, owner.timezone);
-      const until = toStored(input.occurredUntil, 'day', owner.timezone);
+      const [memory] = await tx.query(`SELECT timezone, mode FROM memories WHERE person_id = $1`, [memoryId]);
+      const { messageId, byHolder } = await this.bindEvidence(tx, memoryId, ev, input.content);
+      const at = toStored(input.occurredAt, input.datePrecision, memory.timezone);
+      const until = toStored(input.occurredUntil, 'day', memory.timezone);
       const kind = input.kind ?? 'event';
       // Whose it is (D50): the self's in a personal memory; in an entity memory the one known contact it names, else someone's.
-      const { subject, people } = owner.mode === 'entity'
-        ? await episodeSubject(tx, ownerId, input.people ?? []) : { subject: SELF_SUBJECT, people: new Map<string, string>() };
+      const { subject, people } = memory.mode === 'entity'
+        ? await episodeSubject(tx, memoryId, input.people ?? []) : { subject: SELF_SUBJECT, people: new Map<string, string>() };
       const [row] = await tx.query(
-        `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, plan_status, plan_status_at,
+        `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, plan_status, plan_status_at,
            origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_person_id, subject_candidates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'owner', $15, $16, $17, $18) RETURNING id`,
-        [ownerId, kind, input.content, at.at, until.at, at.precision, input.place ?? null, byOwner ? 10 : 5,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'holder', $15, $16, $17, $18) RETURNING id`,
+        [memoryId, kind, input.content, at.at, until.at, at.precision, input.place ?? null, byHolder ? 10 : 5,
           kind === 'plan' ? 'open' : null, kind === 'plan' ? new Date() : null,
-          byOwner ? 'owner_lived' : 'assistant_stated', byOwner ? 'owner' : 'assistant',
-          // "stated" only with the owner's own words behind it (API.md §3), as for notes.
-          byOwner ? 'stated' : 'inferred', byOwner ? 1 : 0.6, [ownerId], subject.kind, subject.personId, subject.candidates]);
+          byHolder ? 'holder_lived' : 'assistant_stated', byHolder ? 'holder' : 'assistant',
+          // "stated" only with the holder's own words behind it (API.md §3), as for notes.
+          byHolder ? 'stated' : 'inferred', byHolder ? 1 : 0.6, [memoryId], subject.kind, subject.personId, subject.candidates]);
       await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, $3)`,
-        [row.id, messageId, byOwner ? 'message' : 'agent_paraphrase']);
+        [row.id, messageId, byHolder ? 'message' : 'agent_paraphrase']);
       for (const p of input.people ?? []) {
         await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [row.id, p, people.get(p) ?? null]);
       }
@@ -72,40 +72,40 @@ export class MemoryWriteService {
     return id;
   }
 
-  async remember(ownerId: string, ev: Evidence, input: { content: string; category?: string }): Promise<string> {
+  async remember(memoryId: string, ev: Evidence, input: { content: string; category?: string }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
-      const { messageId, byOwner } = await this.bindEvidence(tx, ownerId, ev, input.content);
-      const [owner] = await tx.query(`SELECT mode FROM owners WHERE person_id = $1`, [ownerId]);
-      const subject = owner.mode === 'entity' ? SOMEONE_SUBJECT : SELF_SUBJECT;
+      const { messageId, byHolder } = await this.bindEvidence(tx, memoryId, ev, input.content);
+      const [memory] = await tx.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
+      const subject = memory.mode === 'entity' ? SOMEONE_SUBJECT : SELF_SUBJECT;
       const [row] = await tx.query(
-        `INSERT INTO notes (owner_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_candidates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'owner', $9, $10, $11) RETURNING id`,
-        [ownerId, input.category ?? 'knowledge', input.content, !byOwner, byOwner ? 'owner_lived' : 'assistant_stated',
-          byOwner ? 'owner' : 'assistant', byOwner ? 'stated' : 'inferred', byOwner ? 1 : 0.6, [ownerId], subject.kind, subject.candidates]);
+        `INSERT INTO notes (memory_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'holder', $9, $10, $11) RETURNING id`,
+        [memoryId, input.category ?? 'knowledge', input.content, !byHolder, byHolder ? 'holder_lived' : 'assistant_stated',
+          byHolder ? 'holder' : 'assistant', byHolder ? 'stated' : 'inferred', byHolder ? 1 : 0.6, [memoryId], subject.kind, subject.candidates]);
       await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, messageId]);
-      await tx.query(`INSERT INTO note_changes (owner_id, note_id, change) VALUES ($1, $2, 'created')`, [ownerId, row.id]);
+      await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'created')`, [memoryId, row.id]);
       return row.id as string;
     });
     await this.embed('notes', id, input.content);
     return id;
   }
 
-  async correctEpisode(ownerId: string, ev: Evidence, input: { id: string; content?: string; occurredAt?: string; datePrecision?: Precision }): Promise<string> {
+  async correctEpisode(memoryId: string, ev: Evidence, input: { id: string; content?: string; occurredAt?: string; datePrecision?: Precision }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
-      const [old] = await tx.query(`SELECT * FROM episodes WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`, [input.id, ownerId]);
+      const [old] = await tx.query(`SELECT * FROM episodes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL`, [input.id, memoryId]);
       if (!old) throw new NotFoundException();
-      const [owner] = await tx.query(`SELECT timezone FROM owners WHERE person_id = $1`, [ownerId]);
-      const { messageId } = await this.bindEvidence(tx, ownerId, ev, input.content ?? old.content);
-      const at = input.occurredAt ? toStored(input.occurredAt, input.datePrecision, owner.timezone) : { at: old.occurred_at, precision: old.date_precision };
+      const [memory] = await tx.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
+      const { messageId } = await this.bindEvidence(tx, memoryId, ev, input.content ?? old.content);
+      const at = input.occurredAt ? toStored(input.occurredAt, input.datePrecision, memory.timezone) : { at: old.occurred_at, precision: old.date_precision };
       const [row] = await tx.query(
-        `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
+        `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
            opinion, keywords, context, tags, plan_status, plan_status_at, corrects, origin, author_role, stance, confidence, disclosure, audience,
            subject_kind, subject_person_id, subject_candidates)
-         SELECT owner_id, kind, $3, $4, occurred_until, $5, place, importance, valence, feelings, opinion, keywords, context, tags,
+         SELECT memory_id, kind, $3, $4, occurred_until, $5, place, importance, valence, feelings, opinion, keywords, context, tags,
            plan_status, plan_status_at, id, origin, author_role, stance, confidence, disclosure, audience,
            subject_kind, subject_person_id, subject_candidates
-         FROM episodes WHERE id = $1 AND owner_id = $2 RETURNING id`,
-        [input.id, ownerId, input.content ?? old.content, at.at, at.precision]);
+         FROM episodes WHERE id = $1 AND memory_id = $2 RETURNING id`,
+        [input.id, memoryId, input.content ?? old.content, at.at, at.precision]);
       await tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1`, [input.id]);
       await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, input.id]);
       await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, messageId]);
@@ -117,81 +117,81 @@ export class MemoryWriteService {
   }
 
   /** Physical forgetting of an episode and its correction chain; never recreated (tombstone). */
-  async forgetEpisode(ownerId: string, id: string): Promise<void> {
+  async forgetEpisode(memoryId: string, id: string): Promise<void> {
     let forgotten: string[] = [];
     await this.db.transaction(async (tx) => {
       const chain: Array<{ id: string; content: string }> = await tx.query(
         // Everything that tells the same memory: corrections, hidden duplicates, the event of a
         // confirmed plan and rescheduled plans — otherwise a forgotten memory would resurface.
         `WITH RECURSIVE chain AS (
-           SELECT id, content, corrects, duplicate_of, confirmed_by, rescheduled_to FROM episodes WHERE id = $1 AND owner_id = $2
+           SELECT id, content, corrects, duplicate_of, confirmed_by, rescheduled_to FROM episodes WHERE id = $1 AND memory_id = $2
            UNION
            SELECT e.id, e.content, e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to FROM episodes e JOIN chain c
              ON e.id IN (c.corrects, c.duplicate_of, c.confirmed_by, c.rescheduled_to)
              OR c.id IN (e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to)
-           WHERE e.owner_id = $2)
-         SELECT id, content FROM chain`, [id, ownerId]);
+           WHERE e.memory_id = $2)
+         SELECT id, content FROM chain`, [id, memoryId]);
       if (chain.length === 0) throw new NotFoundException();
       const ids = chain.map((c) => c.id);
       // Only real evidence is hidden from the chat search (agent paraphrases are tool messages).
       const msgs: Array<{ message_id: string }> = await tx.query(
         `SELECT DISTINCT message_id FROM episode_evidence WHERE episode_id = ANY($1) AND evidence_kind = 'message'`, [ids]);
       await tx.query(
-        `INSERT INTO forget_tombstones (owner_id, scope, episode_fingerprint, message_ids) VALUES ($1, 'episode', $2, $3)`,
-        [ownerId, createHash('sha256').update(chain.map((c) => c.content).join('\n')).digest(), msgs.map((m) => m.message_id)]);
+        `INSERT INTO forget_tombstones (memory_id, scope, episode_fingerprint, message_ids) VALUES ($1, 'episode', $2, $3)`,
+        [memoryId, createHash('sha256').update(chain.map((c) => c.content).join('\n')).digest(), msgs.map((m) => m.message_id)]);
       // Digests written from these episodes are superseded now (no stale diary text); the next consolidation
       // rewrites the day / month from what is left (D16).
       await tx.query(
         `WITH days AS (SELECT DISTINCT digest_id FROM digest_sources WHERE episode_id = ANY($1)),
               months AS (SELECT DISTINCT s.digest_id FROM digest_sources s JOIN days d ON s.source_digest_id = d.digest_id)
          UPDATE digests SET superseded_at = now()
-         WHERE owner_id = $2 AND superseded_at IS NULL AND id IN (SELECT digest_id FROM days UNION SELECT digest_id FROM months)`,
-        [ids, ownerId]);
-      await tx.query(`DELETE FROM episodes WHERE id = ANY($1) AND owner_id = $2`, [ids, ownerId]);
+         WHERE memory_id = $2 AND superseded_at IS NULL AND id IN (SELECT digest_id FROM days UNION SELECT digest_id FROM months)`,
+        [ids, memoryId]);
+      await tx.query(`DELETE FROM episodes WHERE id = ANY($1) AND memory_id = $2`, [ids, memoryId]);
       forgotten = ids;
     });
-    this.telemetry.emit({ type: 'episode.forgotten', ownerId, ids: forgotten });
+    this.telemetry.emit({ type: 'episode.forgotten', memoryId, ids: forgotten });
   }
 
   /**
-   * Evidence for an explicit write: the owner's latest message in the calling conversation when
-   * there is one (stated by the owner); otherwise the tool call is stored in a per-client daily
+   * Evidence for an explicit write: the holder's latest message in the calling conversation when
+   * there is one (stated by the holder); otherwise the tool call is stored in a per-client daily
    * `mcp_tool` conversation as the agent's paraphrase (role assistant: the extraction gate never
    * spends a call on it).
    */
-  private async bindEvidence(tx: EntityManager, ownerId: string, ev: Evidence, text: string): Promise<{ messageId: string; byOwner: boolean }> {
+  private async bindEvidence(tx: EntityManager, memoryId: string, ev: Evidence, text: string): Promise<{ messageId: string; byHolder: boolean }> {
     if (ev.conversationId) {
-      // Owner-stated only when a recent message of the owner actually says it (text overlap):
-      // an agent cannot turn "ciao" into "the owner decided X" (poisoning guard).
+      // Memory-stated only when a recent message of the holder actually says it (text overlap):
+      // an agent cannot turn "ciao" into "the memory decided X" (poisoning guard).
       const [m] = await tx.query(
         `SELECT m.id FROM messages m
-         WHERE m.conversation_id = $1 AND m.owner_id = $2 AND ${memorySpeaker('m')}
+         WHERE m.conversation_id = $1 AND m.memory_id = $2 AND ${memorySpeaker('m')}
            AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
          ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
-        [ev.conversationId, ownerId, text]);
-      if (m) return { messageId: m.id, byOwner: true };
-    } else if (ev.ownerDirect) {
+        [ev.conversationId, memoryId, text]);
+      if (m) return { messageId: m.id, byHolder: true };
+    } else if (ev.memoryDirect) {
       // A personal-token client (Claude Code, a connector) ingests the person's turns but cannot name the conversation
       // on MCP calls: the person's own recent words from the same client are the evidence, same overlap rule.
       const [m] = await tx.query(
         `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
-         WHERE c.client_id = $1 AND m.owner_id = $2 AND ${memorySpeaker('m')}
+         WHERE c.client_id = $1 AND m.memory_id = $2 AND ${memorySpeaker('m')}
            AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
          ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
-        [ev.clientId, ownerId, text]);
-      if (m) return { messageId: m.id, byOwner: true };
+        [ev.clientId, memoryId, text]);
+      if (m) return { messageId: m.id, byHolder: true };
     }
     const day = new Date().toISOString().slice(0, 10);
     const [conv] = await tx.query(
-      `INSERT INTO conversations (owner_id, client_id, external_id, source, channel, started_at, last_message_at)
+      `INSERT INTO conversations (memory_id, client_id, external_id, source, channel, started_at, last_message_at)
        VALUES ($1, $2, $3, 'mcp_tool', 'mcp', now(), now())
-       ON CONFLICT (client_id, owner_id, external_id) DO UPDATE SET last_message_at = now() RETURNING id`,
-      [ownerId, ev.clientId, `mcp-tool-${day}`]);
+       ON CONFLICT (client_id, memory_id, external_id) DO UPDATE SET last_message_at = now() RETURNING id`,
+      [memoryId, ev.clientId, `mcp-tool-${day}`]);
     const [msg] = await tx.query(
-      `INSERT INTO messages (conversation_id, owner_id, external_id, role, author_kind, attribution_method, attribution_confidence, content, content_hash, sent_at)
+      `INSERT INTO messages (conversation_id, memory_id, external_id, role, author_kind, attribution_method, attribution_confidence, content, content_hash, sent_at)
        VALUES ($1, $2, $3, 'assistant', 'agent', 'client_assertion', 1, $4, $5, now()) RETURNING id`,
-      [conv.id, ownerId, `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text, createHash('sha256').update(text).digest()]);
-    return { messageId: msg.id, byOwner: false };
+      [conv.id, memoryId, `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text, createHash('sha256').update(text).digest()]);
+    return { messageId: msg.id, byHolder: false };
   }
 
   private async embed(table: 'episodes' | 'notes', id: string, text: string): Promise<void> {

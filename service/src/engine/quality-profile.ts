@@ -4,7 +4,7 @@
 /**
  * Quality profiles (D35): cost is an option, not a limit. Every costly knob of the engine and of
  * recall lives here, never as scattered branches; the installation picks a default
- * (`QUALITY_PROFILE`) and each owner may override it (`owners.quality_profile`).
+ * (`QUALITY_PROFILE`) and each memory may override it (`memories.quality_profile`).
  * Models stay provider configuration (D27): every LLM task has its own configurable model; a profile only says
  * which task runs the extraction and whether reasoning is allowed. `balanced` = service v4 engine + the h11 recall changes.
  */
@@ -36,8 +36,8 @@ export interface QualityProfile {
   /** Give the nightly diary (M5 digests) to period overviews. Measured 2026-10-07 (blind5, 3+3 runs): −1.9 pt,
    * within noise (overviews +0.12, other period questions lower) — off until a version shows a gain. */
   recallDigests: boolean;
-  /** Nightly facts review (M5): the owner's facts checked against the episodes recorded since the last review — one
-   * call per owner per night with new episodes, none otherwise. Off until a measurement shows a gain. */
+  /** Nightly facts review (M5): the memory's facts checked against the episodes recorded since the last review — one
+   * call per memory per night with new episodes, none otherwise. Off until a measurement shows a gain. */
   factsReview: boolean;
 }
 
@@ -56,11 +56,11 @@ const PROFILES: Record<QualityProfileName, QualityProfile> = {
   },
 };
 
-/** The owner's profile, else the installation default; explicit installation settings override single knobs. */
-export function qualityProfile(ownerChoice: string | null | undefined, installationDefault: QualityProfileName,
+/** The memory's profile, else the installation default; explicit installation settings override single knobs. */
+export function qualityProfile(memoryChoice: string | null | undefined, installationDefault: QualityProfileName,
   windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass'], recallDigestsOverride?: boolean,
   factsReviewOverride?: boolean): QualityProfile {
-  const name = (QUALITY_PROFILES as readonly string[]).includes(ownerChoice ?? '') ? ownerChoice as QualityProfileName : installationDefault;
+  const name = (QUALITY_PROFILES as readonly string[]).includes(memoryChoice ?? '') ? memoryChoice as QualityProfileName : installationDefault;
   const p = PROFILES[name];
   return {
     ...p,

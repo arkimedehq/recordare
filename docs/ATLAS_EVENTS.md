@@ -1,4 +1,4 @@
-# Atlas events — contract v1
+# Atlas events — contract v2
 
 The contract between Recordare and any live viewer of it — first of all **Recordare Atlas**
 (`arkimedehq/recordare-atlas`, optional, WORK_PLAN 5b.7). Recordare works the same with no viewer attached.
@@ -9,17 +9,22 @@ only. Each event carries `v` (contract version) and `at` (ISO time). **Versionin
 are additive and keep `v`; removing or changing the meaning of a field raises it. A viewer ignores types it does not
 know.
 
+**Versions.** **v2** (WORK_PLAN 8.10): every event carries `memoryId` instead of `ownerId`; the endpoints
+`api/v1/admin/owners…` became `api/v1/admin/memories…`, the stream filter `?owner=` became `?memory=`, the snapshot's
+`owner {id, name}` became `memory {id, name}`, and the author role `owner` became `holder`. **v1** (WORK_PLAN 5b.7):
+the first contract, with those old names.
+
 ## Endpoints (admin key; read-only)
 
 | Endpoint | What |
 |---|---|
-| `GET api/v1/admin/owners` | People list: `id, name, episodes, lastActivity` (most recent first, max 200) |
-| `GET api/v1/admin/owners/:id/atlas` | Snapshot of one person: episodes (kind, author role, importance, day, plan status, hidden state, `xyz` position by meaning), real edges (`similar`, `corrects`, `duplicate`, `outcome`, `rescheduled`, `people`), facts / notes / digests (ids and kinds), lifetime `totals` (LLM calls, input / output tokens, recalls) |
-| `GET api/v1/admin/telemetry/stream[?owner=<id>]` | Server-Sent Events, one per step below (`event:` = type, `data:` = JSON) |
+| `GET api/v1/admin/memories` | Memory list: `id, name, episodes, lastActivity` (most recent first, max 200) |
+| `GET api/v1/admin/memories/:id/atlas` | Snapshot of one memory: episodes (kind, author role, importance, day, plan status, hidden state, `xyz` position by meaning), real edges (`similar`, `corrects`, `duplicate`, `outcome`, `rescheduled`, `people`), facts / notes / digests (ids and kinds), lifetime `totals` (LLM calls, input / output tokens, recalls) |
+| `GET api/v1/admin/telemetry/stream[?memory=<id>]` | Server-Sent Events, one per step below (`event:` = type, `data:` = JSON) |
 
 ## Events
 
-| Type | Fields (besides `v`, `at`, `ownerId`) | Emitted when |
+| Type | Fields (besides `v`, `at`, `memoryId`) | Emitted when |
 |---|---|---|
 | `message.ingested` | `conversationId`, `messages`, `roles` (count per role) | messages stored by ingest |
 | `extraction.started` / `extraction.finished` | `runId`, `conversationId`, `messages` / `status` (`done`, `failed`, `skipped`), `written` | one extraction window starts / ends |
@@ -30,7 +35,7 @@ know.
 | `episode.linked` | `relation` (`duplicate`, `corrects`), `from`, `to` | the resolver linked two episodes |
 | `recall.served` | `tool` (an MCP tool, or `memory_context` for the pre-turn block, only when it is not empty), `mode`, `episodeIds`, `claimIds`, `chats`, `digests`, `facts`, `notes` | a recall answered |
 | `digest.written` | `level` (`day`, `month`), `period`, `sources` | a nightly diary written |
-| `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | an owner's consolidation ends |
+| `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | a memory's consolidation ends |
 | `episode.forgotten` | `ids` | episodes forgotten |
 
 Client platforms (agents, their LLM calls, tools) reach the atlas on their own channel — OpenTelemetry GenAI traces —

@@ -70,7 +70,7 @@ describe('OpenAiCompatibleAdapter', () => {
     const f = fakeFetch([{ content: '{"episodes": "nope"}' }, { content: '```json\n{"episodes":[{"content":"ok"}]}\n```' }]);
     const r = recorder();
     const a = new OpenAiCompatibleAdapter({ model: 'm', profile: resolveProfile('generic'), fetch: f.fn, baseURL: 'http://x/v1' }, r.rec);
-    const out = await a.completeJson(req, { ownerId: 'o1' });
+    const out = await a.completeJson(req, { memoryId: 'o1' });
     expect(out.episodes[0]?.content).toBe('ok');
     expect(r.calls.map((c) => c.status)).toEqual(['invalid_output', 'ok']);
     const repairMsgs = (f.bodies[1] as { messages: { role: string }[] }).messages;

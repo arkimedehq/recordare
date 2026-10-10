@@ -216,7 +216,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Caricato solo quando `episodicMemoryEnabled` (classe B, come `save_memory`) → costo zero
   di prompt per gli utenti senza diario. Cattura esplicita → importanza massima.
 - Come realizzato (D22): uno strumento MCP di Recordare, non uno strumento di Arkimede; importanza 10 / `stated` solo con le
-  parole del proprietario a monte (`API.md` §3). Arkimede espone gli strumenti di Recordare come `recordare_*` ma non `log_episode`.
+  parole del titolare a monte (`API.md` §3). Arkimede espone gli strumenti di Recordare come `recordare_*` ma non `log_episode`.
 
 ### D12 — Strumento dedicato `search_episodes` (2026-10-01)
 - Simmetrico a `log_episode`, stesso gate `episodicMemoryEnabled`; `search_memory`
@@ -290,9 +290,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 
 ### D21 — Gli episodi catturano emozioni e opinioni (2026-10-01)
 - Guidato dall'obiettivo del digital twin: "giornata splendida", "il rifugio era deludente" fanno parte
-  di chi è il proprietario, non sono rumore.
+  di chi è il titolare, non sono rumore.
 - Campi dell'episodio: `valence` (-2..+2), `feelings` (brevi tag liberi), `opinion`
-  (presa di posizione opzionale in una riga espressa dal proprietario). La carica emotiva alimenta anche
+  (presa di posizione opzionale in una riga espressa dal titolare). La carica emotiva alimenta anche
   `importance` (marcatura dell'amigdala).
 - Predisposizione per la fase 3 (disclosure): gli episodi che coinvolgono terze parti conservano
   `people` (nomi come citati) così che un livello di disclosure possa essere applicato in seguito.
@@ -360,10 +360,10 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   held-out) entro un margine stabilito rispetto al riferimento e il suo output strutturato si valida; un comando CLI
   esegue la suite su una data configurazione; risultati conservati in una tabella dei modelli supportati.
   A parità di qualità vince il modello più economico.
-- Come realizzato (2026-10-08): un solo set di prompt scritto in inglese, con una riga che indica la lingua del proprietario;
-  i dati linguistici delle parti deterministiche (periodi, nomi dei mesi, parole di relazione, nome del proprietario) stanno
-  in `service/src/lang` per le lingue più usate (regola del proprietario: tutte le lingue, mai solo IT / EN). CLI di
-  certificazione e tabella dei modelli supportati non realizzate (WORK_PLAN 4.5b); regola del proprietario: un modello del
+- Come realizzato (2026-10-08): un solo set di prompt scritto in inglese, con una riga che indica la lingua della memoria;
+  i dati linguistici delle parti deterministiche (periodi, nomi dei mesi, parole di relazione, sostituti del sé per il rilevatore di fughe) stanno
+  in `service/src/lang` per le lingue più usate (regola del maintainer: tutte le lingue, mai solo IT / EN). CLI di
+  certificazione e tabella dei modelli supportati non realizzate (WORK_PLAN 4.5b); regola del maintainer: un modello del
   motore è supportato solo se raggiunge il 95 % sulla suite.
 
 ### D28 — Il modello dati della fase 1 riserva i campi di cui le ipotesi di ricerca hanno bisogno (2026-10-02)
@@ -376,9 +376,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   (`validFrom` / `validTo`) e tempo della conoscenza (`recordedAt` / `expiredAt`).
 - `corrects` (il vecchio valore non è mai stato vero) distinto da `supersedes` (vero fino a t); entrambi conservano
   la vecchia riga (nessuna riscrittura).
-- `origin: owner_lived | owner_told | twin_experienced` su episodi e fatti (la fase 1 scrive
+- `origin: holder_lived | holder_told | twin_experienced` su episodi e fatti (la fase 1 scrive
   i primi due), più l'interlocutore e il pubblico della conversazione.
-- Etichetta `disclosure` su episodi, fatti e digest (default `owner`); gli artefatti derivati conservano
+- Etichetta `disclosure` su episodi, fatti e digest (default `holder`); gli artefatti derivati conservano
   gli id delle loro fonti così che le etichette possano propagarsi (vince la più restrittiva).
 - `stated | inferred` sui fatti; quelli inferiti restano pending (vedi `ENGINE_IDEAS.md`).
 
@@ -412,8 +412,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   sul single-session-assistant) — per i client agentici sono le azioni dell'agente e le
   raccomandazioni che l'utente ha accettato.
 - I turni dell'assistente sono sempre contesto di estrazione, e gli elementi dichiarati dall'assistente sono estratti con
-  `origin: assistant_stated` (estende `owner_lived | owner_told | twin_experienced` di D28),
-  mai fusi con i ricordi vissuti dal proprietario; il richiamo li etichetta ("l'assistente ha suggerito / fatto").
+  `origin: assistant_stated` (estende `holder_lived | holder_told | twin_experienced` di D28),
+  mai fusi con i ricordi vissuti dal titolare; il richiamo li etichetta ("l'assistente ha suggerito / fatto").
 
 ### D31 — I fatti di Recordare sono slot di stato con una catena di valori (2026-10-03; la parte sulle note è superata da D34)
 - Lo Strato 3 in Recordare = **slot di stato** ("auto", "indirizzo", "datore di lavoro", "figli") con la loro
@@ -432,15 +432,15 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 
 ### D33 — Profili di deployment: v1 privato / di ricerca, hardening rinviato (2026-10-03)
 - Terminologia: "profilo privato" (in inglese `home`) indica chi gestisce l'installazione; non ha nulla a che fare con la memoria condivisa di un dispositivo o di una casa, che è la **memoria di entità** (D48).
-- Indicazione del proprietario: restare sul twin; quando serve più sicurezza, mettere firewall e
-  hardening davanti. v1 = **profilo privato / di ricerca**: proprietari creati dall'admin, chiavi client, token
-  personali, scope semplici, isolamento per proprietario.
+- Indicazione del maintainer: restare sul twin; quando serve più sicurezza, mettere firewall e
+  hardening davanti. v1 = **profilo privato / di ricerca**: memorie create dall'admin, chiavi client, token
+  personali, scope semplici, isolamento per memoria.
 - Mantenuti nella v1 perché fanno parte del twin, non sono aggiunte di sicurezza: contesto del visualizzatore risolto da
   Recordare (sapere cosa dire a chi — pilastro della disclosure — *superato dal D50 per le risposte, 2026-10-09 /
   WORK_PLAN 8.2: nessun filtro su chi legge; si risolve solo la conversazione, per le prove delle scritture MCP*), provenienza `author_role` (principio 3,
   qualità della memoria), flag di consenso (D4 — *superato da D50, 2026-10-09: niente flag di consenso*), oblio che resta (D16).
-- Rinviati al **profilo pubblico** (M7 / rilascio pubblico): login e pagine del proprietario, OAuth per MCP,
-  UI di collegamento e revoca guidata dal proprietario, audit di lettura, idempotenza persistente, politica di backup / retention
+- Rinviati al **profilo pubblico** (M7 / rilascio pubblico): login e pagine del titolare, OAuth per MCP,
+  UI di collegamento e revoca guidata dal titolare, audit di lettura, idempotenza persistente, politica di backup / retention
   del provider, protezione di rete. Specificati in `API.md` §0 così che abilitarli non richieda alcuna migrazione
   dei dati.
 - Stato (2026-10-08): la v0.1.0 è stata rilasciata pubblicamente con questo profilo, con i suoi limiti dichiarati nel README
@@ -468,9 +468,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   delle note in A-MEM) è TODO.
 
 ### D35 — Il costo è un'opzione, non un limite: profili di qualità (2026-10-03)
-- Indicazione del proprietario: i modelli diventano più economici e i modelli locali più forti; gli utenti scelgono la qualità
+- Indicazione del maintainer: i modelli diventano più economici e i modelli locali più forti; gli utenti scelgono la qualità
   che vogliono. Ogni meccanismo costoso sta dietro un **profilo di qualità**, scelto per installazione con una
-  sovrascrittura per proprietario:
+  sovrascrittura per memoria:
   - **economy** — i principi di costo odierni (`ENGINE_IDEAS.md`): una chiamata di estrazione per finestra,
     gate rigorosi, modello leggero dove possibile, nessun reranker, digest per giorno, pensiero a riposo
     (H12) limitato ai cicli aperti deterministici;
@@ -482,17 +482,17 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   misurato sulla suite di valutazione (qualità e costo per messaggio) così che il compromesso sia visibile.
 - Implementato (M4b, 2026-10-04): `service/src/engine/quality-profile.ts` — un'unica tabella di parametri (dimensione della finestra,
   ruolo del modello di estrazione, reasoning, episodi recenti / correlati, finestra e soglia dei quasi-duplicati, estratti
-  di chat); `QUALITY_PROFILE` predefinito dell'installazione + `owners.quality_profile`. `balanced` = service v4 misurato.
+  di chat); `QUALITY_PROFILE` predefinito dell'installazione + `memories.quality_profile`. `balanced` = service v4 misurato.
   Non ancora: passaggio di verifica, reranker, digest mensili, H12 (arrivano con M5 / H11 e si uniscono a `full`).
-- Modello per compito (regola del proprietario, 2026-10-06): ogni compito LLM ha il proprio modello e provider configurabili
+- Modello per compito (regola del maintainer, 2026-10-06): ogni compito LLM ha il proprio modello e provider configurabili
   (`LLM_<TASK>_*`, compiti `extract`, `extract_economy`, `resolve`, `digest`, `facts`); i default sono documentati come il miglior modello misurato.
   I profili scelgono il compito di estrazione (`economy` → `extract_economy`), mai un modello.
 - Sostituisce la precedente regola "il più economico possibile" con: **mai scambiare la qualità
-  in silenzio — il proprietario sceglie il profilo**.
+  in silenzio — l'operatore sceglie il profilo**.
 
 ### D36 — Consenso in due passi (2026-10-07)
 - L'interruttore per utente di un client governa il lato del client; il consenso episodico vero e proprio è dato dall'admin di Recordare
-  (profilo privato) o dal proprietario (profilo pubblico). `GET api/v1/me` restituisce `episodicEnabled`; i client non mettono in buffer
+  (profilo privato) o dal titolare (profilo pubblico). `GET api/v1/me` restituisce `episodicEnabled`; i client non mettono in buffer
   i messaggi prima del consenso (mostrano "in attesa di attivazione").
 - **Superata da D50 (2026-10-09)**: nessun passo di consenso in Recordare (WORK_PLAN 8.1). L'interruttore per utente del
   client è l'unico; `episodicEnabled` e lo stato "in attesa di attivazione" non esistono più.
@@ -505,7 +505,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D38 — L'eco del richiamo è fermata da una guardia nel codice, non da una regola di prompt (2026-10-07)
 - Un'etichetta nel prompt ("rispondo dalla memoria") faceva fidare l'estrattore di un richiamo sbagliato (dev set 75 %), quindi resta extract.v6.
 - Lo scrittore scarta gli elementi detti solo da una risposta dell'assistente che risponde dalla memoria (uno strumento di lettura di Recordare nel turno, o
-  un richiamo servito in quella conversazione) e non dal proprietario, da un'altra persona o da uno strumento non di memoria; dopo un richiamo un
+  un richiamo servito in quella conversazione) e non dal titolare, da un'altra persona o da uno strumento non di memoria; dopo un richiamo un
   fatto cambia solo con una frase asserente (non una domanda). Set di eco dev 79 % → 100 % (3 + 3 run).
 
 ### D39 — Richiamo consapevole delle persone (2026-10-07)
@@ -517,7 +517,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   le notizie su terzi nelle chat di gruppo.
 
 ### D41 — Revisione notturna dei fatti realizzata, tenuta spenta (2026-10-07)
-- `facts_review.v1` (compito `facts`), admin `POST owners/:id/review-facts`; blind5: nessun guadagno sui fatti correnti
+- `facts_review.v1` (compito `facts`), admin `POST memories/:id/review-facts`; blind5: nessun guadagno sui fatti correnti
   (0.769 × 3) → parametro del profilo di qualità `factsReview` off. Il lavoro sui fatti passa al prompt di estrazione (D40).
 
 ### D42 — Recordare Atlas è un repo proprio opzionale (2026-10-06)
@@ -552,9 +552,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D48 — Memoria di entità: una memoria per persona, più memorie di entità (2026-10-07)
 - Problema: una famiglia parla con un unico account condiviso (l'utente vocale di Arkimede sui satelliti); i suoi turni non possono andare nella
   memoria di nessuna persona, e una sola memoria "persona" mista trasformerebbe le parole di tutti in fatti sull'account.
-- **La memoria di una persona è scritta solo tramite un'identità sicura**: l'utente del client (l'id proprietario di Arkimede o quello di un altro
+- **La memoria di una persona è scritta solo tramite un'identità sicura**: l'utente del client (l'id utente di Arkimede o quello di un altro
   client), associato dall'admin. Una presentazione di sé o un'impronta vocale non instrada mai un turno nella memoria personale di qualcuno.
-- **Memoria di entità**: un proprietario può essere un'entità (`persons.kind = entity`) — un dispositivo condiviso, un robot domestico, un luogo.
+- **Memoria di entità**: una memoria può essere un'entità (`persons.kind = entity`) — un dispositivo condiviso, un robot domestico, un luogo.
   Chiunque la usi la legge e la scrive per intero, e sa che è condivisa (`GET /me` restituisce `kind`). Possono esistere più entità
   (una per dispositivo condiviso o stanza).
 - L'identificazione al suo interno ("sono Andrea", essere chiamati per nome; poi un'impronta vocale) dice solo **di chi** è un ricordo:
@@ -562,12 +562,12 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   "qualcuno" e i suoi fatti personali non vengono registrati. Ogni conversazione inizia senza nessuno identificato.
 - Guardia nel codice: un fatto su una persona, o un episodio che ne nomina una, è registrato solo se quel nome compare nella finestra
   (nessuna identità riportata da chat precedenti — misurato: senza questa il modello lo faceva).
-- Prompt: `extract.v8` (ora `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), aggiunto solo per i proprietari entità (memorie di persona invariate).
+- Prompt: `extract.v8` (ora `extract.v11`, WORK_PLAN 4.10) + `ENTITY_RULES` (`entity.v3`), aggiunto solo per le memorie di entità (memorie di persona invariate).
   Misurato su `dataset_dev_entity` (RESULTS.md).
 - TODO (più avanti): identificazione più forte così che i ricordi più intimi in una memoria di entità siano leggibili solo dalla
   persona a cui appartengono — allora l'entità potrà essere un robot domestico a cui tutti si confidano (direzione G della visione). La
   rinomina di un utente da parte del client si propaga a Recordare (WORK_PLAN 6.8).
-- Seguito del proprietario (2026-10-07): la **persona sceglie il tipo sulla sua piattaforma** (impostazioni di memoria di Arkimede →
+- Seguito del maintainer (2026-10-07): la **persona sceglie il tipo sulla sua piattaforma** (impostazioni di memoria di Arkimede →
   `PATCH /me {kind}`), solo finché la memoria è vuota; il **nome segue sempre il profilo della piattaforma** (una
   sincronizzazione del client sovrascrive una rinomina dell'admin); il consenso resta all'admin di Recordare (*superato da D50, 2026-10-09: niente consenso*).
 - Stato (2026-10-08): su un nuovo set cieco per la memoria di entità (`dataset_blind8`, WORK_PLAN 4.8) 82,1 % su 3 run (dev
@@ -575,7 +575,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   sono i punti deboli.
 
 ### D49 — Memoria semantica: fonti imparate (proposta, 2026-10-08; costruita il 2026-10-10, WORK_PLAN 8.9)
-- Richiesta del proprietario: molti client non hanno un RAG proprio (un robot con il suo agente, un piccolo
+- Richiesta del maintainer: molti client non hanno un RAG proprio (un robot con il suo agente, un piccolo
   assistente), quindi Recordare dovrebbe essere una memoria **completa** — ciò che la persona ha vissuto **e ciò che ha
   imparato**. Recordare resta una memoria personale: i documenti non si mescolano con episodi, fatti o note.
 - **Memoria semantica = fonti imparate.** Una fonte (un testo, un documento, una pagina, gli appunti di un libro, i
@@ -600,7 +600,7 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   oltre al testo); limiti di dimensione e costo per profilo di qualità (D35); i testi di terzi sono conservati solo per
   l'uso della persona (mai divulgati ad altri, limiti D33); se estrarre con un LLM i punti chiave con le parole della
   persona (un'opzione successiva). WORK_PLAN 5.9 (ora 8.9).
-- **Come costruito (8.9, 2026-10-10)** — decisioni del proprietario: le fonti arrivano **solo come testo** (è il client a
+- **Come costruito (8.9, 2026-10-10)** — decisioni del maintainer: le fonti arrivano **solo come testo** (è il client a
   convertire i file: `POST api/v1/ingest/sources`, oppure lo strumento MCP `learn_source`); **nessun limite di
   dimensione** per fonte né per memoria — solo il limite del corpo della richiesta (`MAX_REQUEST_BYTES`, 16 MB), un testo
   più grande arriva a parti (`…/parts`; la libreria client divide ai confini dei paragrafi); la fonte appartiene alla
@@ -613,14 +613,14 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   (OpenClaw, Hermes…) non espongono ancora i nuovi strumenti (passo successivo). Dati: `DATA_MODEL_it.md` → Fonti
   apprese; contratto: `API_it.md` §2, §3.
 
-### D50 — Memoria dell'agente: ogni memoria appartiene all'agente (decisione del proprietario, 2026-10-09)
-Sostituisce "una memoria per persona" (identità D24, la divisione persona / entità di D48 come due tipi di owner),
+### D50 — Memoria dell'agente: ogni memoria appartiene all'agente (decisione del maintainer, 2026-10-09)
+Sostituisce "una memoria per persona" (identità D24, la divisione persona / entità di D48 come due tipi di memoria),
 l'interruttore del consenso (D4), la regola dello spettatore come filtro sulle risposte (§1 di API.md), e fa del
 gemello digitale (VISION) un caso emergente. Ricerca: `docs/literature/human-memory-and-agent-architectures_it.md`;
 inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
 - **Una memoria appartiene a un agente**: un account del client ("Caino" — per esempio un account di Arkimede) = una
   memoria; un altro account ("Abele") = un'altra memoria, isolata come fosse un'altra installazione. Gli umani non
-  sono più proprietari: sono **contatti che l'agente conosce**, dentro quella memoria. Obiettivo: chiunque possa dare un
+  hanno più una memoria propria: sono **contatti che l'agente conosce**, dentro quella memoria. Obiettivo: chiunque possa dare un
   cervello a una macchina (domani un robot con telecamere, microfoni e altri sensori costruisce i propri ricordi).
 - **Tutto ciò che arriva arricchisce la memoria dell'agente**: chat, voce, documenti, foto, audio, video, sensori; le
   fonti imparate di D49 ne fanno parte. L'agente distingue i tipi di memoria (episodica, semantica, prospettica…, vedi
@@ -645,7 +645,7 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   registrati per allora. Realizzato nella WORK_PLAN 8.2 (2026-10-09): nessun percorso di lettura filtra per chi legge;
   `X-Recordare-Viewers` non esiste più; la conversazione è ancora risolta (le scritture MCP vi legano le loro prove).
 - **Resta**: il Diario (strumento di correzione per chi mantiene la memoria); la protezione contro l'eco del richiamo (D38),
-  nelle parole del proprietario: quando l'agente risponde con un ricordo che ha già ("ieri dove sono stato?" → "al
+  nelle parole del maintainer: quando l'agente risponde con un ricordo che ha già ("ieri dove sono stato?" → "al
   mare"), la risposta non rientra, giusta o sbagliata che sia; quando dice qualcosa di nuovo ("che tempo fa a Ispica?" →
   le previsioni), è una cosa che l'agente ha appreso e può diventare memoria, scelta per importanza come ogni altro input;
   storia solo in aggiunta, consolidamento a inattività e notturno, oblio per scelta.
@@ -657,15 +657,15 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
 - Piano: WORK_PLAN M8 (passi 0–11 dell'audit), ogni passo sui prompt misurato su set di sviluppo + 3 run ciechi; le
   memorie esistenti su Kinox migrate quando la voce è definitiva (prima un backup).
 
-- **Seguito del proprietario (2026-10-09, dopo `docs/COMPETITORS_it.md`):** (a) l'attribuzione è salvata come dato —
+- **Seguito del maintainer (2026-10-09, dopo `docs/COMPETITORS_it.md`):** (a) l'attribuzione è salvata come dato —
   chi l'ha detto, come è stato stabilito, con quale certezza, riattribuibile in seguito; (b) nella modalità personale
   tutto è scritto in prima persona, e **chi l'ha detto** (la persona o l'assistente) è registrato **solo come
   conoscenza**: non deve influenzare in alcun modo la memoria e resta fuori dal ragionamento (estrazione, richiamo,
   risposte); (c) i **contenuti esterni** (web, risultati di strumenti, file) sono anch'essi memoria dell'agente: non li
   ha detti l'agente, ma ora li sa. I punti 4–10 del confronto (dimenticare un contatto, ambiti di privacy, schede di sé
   e dei contatti, modello delle fonti, cose da evitare, nuovo run di Mem0, un punto su LongMemEval) sono accettati in
-  linea di principio — ognuno si discute con il proprietario prima di essere costruito (WORK_PLAN M8).
-- **Contatti e attribuzione (proprietario, 2026-10-09):** in una memoria personale esiste solo il titolare dell'account
+  linea di principio — ognuno si discute con il maintainer prima di essere costruito (WORK_PLAN M8).
+- **Contatti e attribuzione (maintainer, 2026-10-09):** in una memoria personale esiste solo il titolare dell'account
   come "io" (utente e agente insieme); la prima persona è maschile per default. I contatti appartengono a una memoria,
   anche le persone solo nominate; nomi e soprannomi, nome completo, relazione; le persone con lo stesso nome si separano
   con identificativi → nome e cognome → contesto, e se resta ambiguo Recordare **chiede** ("quale Marco?") tramite
@@ -676,11 +676,11 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   soggetto collegato ai contatti della memoria (creati anche quando solo nominati, fusi solo quando è chiaro); una
   persona ambigua è salvata `undecided` con una chiarificazione, a cui risponde una conversazione successiva o che scade
   dopo 14 giorni, offerta una volta dal contesto di memoria ("if natural, ask: …"); il richiamo restituisce il soggetto di
-  ogni elemento e chi sta chiedendo (chi è identificato riceve per primi i propri ricordi); `nameOwner` sostituito da un
+  ogni elemento e chi sta chiedendo (chi è identificato riceve per primi i propri ricordi); la sostituzione del nome di 4.11 sostituita da un
   rilevatore di fughe (conteggi nel riepilogo dell'esecuzione). Memorie di entità invariate (input dei prompt identici
   byte per byte) fino alla 8.5. Dettagli: DATA_MODEL "Memoria dell'agente → Come costruito (8.4)", RESULTS.md (esecuzioni
   di sviluppo).
-- **Seguito D50 — partecipanti omonimi (titolare, 2026-10-09):** un nome di battesimo da solo non basta a dire che un
+- **Seguito D50 — partecipanti omonimi (maintainer, 2026-10-09):** un nome di battesimo da solo non basta a dire che un
   partecipante identificato è un contatto che la memoria conosce solo per nome ("mia sorella Giulia" contro una Giulia
   che scrive in un gruppo). L'ingest lega automaticamente solo con un nome completo uguale a esattamente un contatto
   senza identità; altrimenti un nuovo contatto e, quando esattamente un contatto del genere condivide il nome, una

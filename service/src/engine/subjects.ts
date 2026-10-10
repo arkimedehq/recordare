@@ -24,13 +24,13 @@ export const contact = (personId: string): Subject => ({ kind: 'contact', person
 export const withoutRelation = (raw: string): string => raw.replace(/\s*\(.*\)\s*$/, '').trim();
 
 /** The contacts of this memory a name designates (by display name or alias); several when the name is ambiguous. */
-export async function contactsNamed(tx: EntityManager, ownerId: string, raw: string): Promise<string[]> {
+export async function contactsNamed(tx: EntityManager, memoryId: string, raw: string): Promise<string[]> {
   const name = withoutRelation(raw).slice(0, 200);
   if (!name) return [];
   const rows: Array<{ id: string }> = await tx.query(
-    `SELECT p.id FROM persons p WHERE p.owner_scope = $1 AND (lower(p.display_name) = lower($2)
+    `SELECT p.id FROM persons p WHERE p.memory_id = $1 AND (lower(p.display_name) = lower($2)
        OR EXISTS (SELECT 1 FROM person_aliases a WHERE a.person_id = p.id AND a.alias_norm = lower(unaccent(btrim($2)))))
-     ORDER BY p.created_at`, [ownerId, name]);
+     ORDER BY p.created_at`, [memoryId, name]);
   return rows.map((r) => r.id);
 }
 
@@ -39,11 +39,11 @@ export async function contactsNamed(tx: EntityManager, ownerId: string, raw: str
  * otherwise someone's.
  * Also returns, per alias, the contact it designates unambiguously (for `episode_people.person_id`).
  */
-export async function episodeSubject(tx: EntityManager, ownerId: string, people: string[]): Promise<{ subject: Subject; people: Map<string, string> }> {
+export async function episodeSubject(tx: EntityManager, memoryId: string, people: string[]): Promise<{ subject: Subject; people: Map<string, string> }> {
   const all = new Set<string>();
   const byAlias = new Map<string, string>();
   for (const alias of people) {
-    const ids = await contactsNamed(tx, ownerId, alias);
+    const ids = await contactsNamed(tx, memoryId, alias);
     ids.forEach((id) => all.add(id));
     if (ids.length === 1) byAlias.set(alias, ids[0] as string);
   }
@@ -98,7 +98,7 @@ export class ContactBook {
 
   constructor(
     private readonly tx: EntityManager,
-    private readonly ownerId: string,
+    private readonly memoryId: string,
     private readonly selfNames: string[],
     private readonly refs: Map<string, string>,
   ) {}
@@ -140,7 +140,7 @@ export class ContactBook {
       `SELECT p.id, p.display_name, p.full_name, p.relation,
          array_remove(array_agg(a.alias_norm), NULL) || ARRAY[lower(unaccent(p.display_name)), lower(unaccent(COALESCE(p.full_name, '')))] AS names
        FROM persons p LEFT JOIN person_aliases a ON a.person_id = p.id
-       WHERE p.owner_scope = $1 GROUP BY p.id ORDER BY p.created_at`, [this.ownerId]);
+       WHERE p.memory_id = $1 GROUP BY p.id ORDER BY p.created_at`, [this.memoryId]);
     const f = fold(name);
     const full = isFullName(name);
     const sameRelation = (c: ContactRow) => !relation || !c.relation || fold(c.relation) === fold(relation);
@@ -173,13 +173,13 @@ export class ContactBook {
   private async create(name: string, relation: string | null): Promise<string> {
     const full = isFullName(name);
     const [{ id }] = await this.tx.query(
-      `INSERT INTO persons (owner_scope, display_name, full_name, relation) VALUES ($1, $2, $3, $4) RETURNING id`,
-      [this.ownerId, name, full ? name : null, relation]);
+      `INSERT INTO persons (memory_id, display_name, full_name, relation) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [this.memoryId, name, full ? name : null, relation]);
     const first = name.split(/\s+/)[0] ?? '';
     for (const alias of new Set([name, ...(full && first.length >= 2 ? [first] : [])])) {
       await this.tx.query(
-        `INSERT INTO person_aliases (owner_id, person_id, alias, alias_norm, source) VALUES ($1, $2, $3, lower(unaccent(btrim($3))), 'extracted')
-         ON CONFLICT DO NOTHING`, [this.ownerId, id, alias]);
+        `INSERT INTO person_aliases (memory_id, person_id, alias, alias_norm, source) VALUES ($1, $2, $3, lower(unaccent(btrim($3))), 'extracted')
+         ON CONFLICT DO NOTHING`, [this.memoryId, id, alias]);
     }
     return id as string;
   }

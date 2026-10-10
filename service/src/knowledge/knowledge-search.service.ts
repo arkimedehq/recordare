@@ -46,17 +46,17 @@ export class KnowledgeSearchService {
 
   constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {}
 
-  async search(ownerId: string, args: { query: string; limit?: number; conversationId?: string }, now: Date): Promise<KnowledgeResult> {
-    const [owner]: Array<{ display_name: string; mode: MemoryMode; locale: string; timezone: string }> = await this.db.query(
-      `SELECT p.display_name, o.mode, o.locale, o.timezone FROM owners o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [ownerId]);
-    const ranked = await this.rank(ownerId, args.query);
+  async search(memoryId: string, args: { query: string; limit?: number; conversationId?: string }, now: Date): Promise<KnowledgeResult> {
+    const [memory]: Array<{ display_name: string; mode: MemoryMode; locale: string; timezone: string }> = await this.db.query(
+      `SELECT p.display_name, o.mode, o.locale, o.timezone FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
+    const ranked = await this.rank(memoryId, args.query);
     const top = [...ranked.scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, args.limit ?? 5).map(([id]) => id);
     const rows: Array<{ id: string; heading: string | null; content: string; source_id: string; title: string; kind: string; author: string | null;
       origin_uri: string | null; provided_by_kind: string; provider: string | null; learned_at: Date }> = top.length ? await this.db.query(
       `SELECT x.id, x.heading, x.content, s.id AS source_id, s.title, s.kind, s.author, s.origin_uri, s.provided_by_kind,
          p.display_name AS provider, s.learned_at
        FROM source_passages x JOIN sources s ON s.id = x.source_id LEFT JOIN persons p ON p.id = s.provided_by_person_id
-       WHERE x.id = ANY($1) AND x.owner_id = $2`, [top, ownerId]) : [];
+       WHERE x.id = ANY($1) AND x.memory_id = $2`, [top, memoryId]) : [];
     const byId = new Map(rows.map((r) => [r.id, r]));
     const passages: KnowledgePassage[] = top.flatMap((id) => {
       const r = byId.get(id);
@@ -77,40 +77,40 @@ export class KnowledgeSearchService {
            SELECT e.id, es.source_id, e.content, e.occurred_at, e.date_precision,
              row_number() OVER (PARTITION BY es.source_id ORDER BY e.occurred_at DESC NULLS LAST) AS n
            FROM episode_sources es JOIN episodes e ON e.id = es.episode_id
-           WHERE es.source_id = ANY($1) AND e.owner_id = $2 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL) r
-         WHERE n <= $3 ORDER BY occurred_at`, [sourceIds, ownerId, EPISODES_PER_SOURCE])
+           WHERE es.source_id = ANY($1) AND e.memory_id = $2 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL) r
+         WHERE n <= $3 ORDER BY occurred_at`, [sourceIds, memoryId, EPISODES_PER_SOURCE])
       : [];
-    const it = owner?.locale === 'it';
+    const it = memory?.locale === 'it';
     const notes = passages.length
       ? [it ? 'i brani sono ciò che ho imparato dalle fonti (il loro testo), non ricordi di ciò che è successo; la fonte dice da chi e quando'
         : 'passages are what I learned from sources (their text), not memories of what happened; the source says from whom and when']
       : [];
-    await logRecall(this.db, ownerId, 'search_knowledge', null, passages.length, args.conversationId, now);
+    await logRecall(this.db, memoryId, 'search_knowledge', null, passages.length, args.conversationId, now);
     return {
-      memory: { name: owner?.display_name ?? '', mode: owner?.mode ?? 'personal' },
+      memory: { name: memory?.display_name ?? '', mode: memory?.mode ?? 'personal' },
       passages,
       episodes: episodes.map((e) => ({ id: e.id, sourceId: e.source_id, content: e.content,
-        when: describe(e.occurred_at, e.date_precision, owner?.timezone ?? 'UTC', owner?.locale ?? 'en') })),
+        when: describe(e.occurred_at, e.date_precision, memory?.timezone ?? 'UTC', memory?.locale ?? 'en') })),
       notes,
     };
   }
 
   /** The passages nearest a text, for the memory context: id, text, source title and similarity (vector leg only). */
-  async nearest(ownerId: string, vector: number[], limit: number): Promise<Array<{ text: string; title: string; similarity: number }>> {
+  async nearest(memoryId: string, vector: number[], limit: number): Promise<Array<{ text: string; title: string; similarity: number }>> {
     return this.db.query(
       `SELECT x.content AS text, s.title, 1 - (x.embedding <=> $2::vector) AS similarity
        FROM source_passages x JOIN sources s ON s.id = x.source_id
-       WHERE x.owner_id = $1 AND x.embedding IS NOT NULL ORDER BY x.embedding <=> $2::vector LIMIT $3`, [ownerId, `[${vector.join(',')}]`, limit]);
+       WHERE x.memory_id = $1 AND x.embedding IS NOT NULL ORDER BY x.embedding <=> $2::vector LIMIT $3`, [memoryId, `[${vector.join(',')}]`, limit]);
   }
 
-  private async rank(ownerId: string, query: string): Promise<{ scores: Map<string, number>; similarity: Map<string, number> }> {
+  private async rank(memoryId: string, query: string): Promise<{ scores: Map<string, number>; similarity: Map<string, number> }> {
     const scores = new Map<string, number>();
     const similarity = new Map<string, number>();
     const tsq = toOrTsQuery(query);
     if (tsq) {
       const text: Array<{ id: string }> = await this.db.query(
-        `SELECT id FROM source_passages WHERE owner_id = $1 AND tsv @@ to_tsquery('simple', $2)
-         ORDER BY ts_rank_cd(tsv, to_tsquery('simple', $2)) DESC LIMIT $3`, [ownerId, tsq, CANDIDATES]);
+        `SELECT id FROM source_passages WHERE memory_id = $1 AND tsv @@ to_tsquery('simple', $2)
+         ORDER BY ts_rank_cd(tsv, to_tsquery('simple', $2)) DESC LIMIT $3`, [memoryId, tsq, CANDIDATES]);
       text.forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 0.5 / (RRF_K + i + 1)));
     }
     try {
@@ -118,7 +118,7 @@ export class KnowledgeSearchService {
       if (q) {
         const vec: Array<{ id: string; sim: number }> = await this.db.query(
           `SELECT id, 1 - (embedding <=> $2::vector) AS sim FROM source_passages
-           WHERE owner_id = $1 AND embedding IS NOT NULL ORDER BY embedding <=> $2::vector LIMIT $3`, [ownerId, `[${q.join(',')}]`, CANDIDATES]);
+           WHERE memory_id = $1 AND embedding IS NOT NULL ORDER BY embedding <=> $2::vector LIMIT $3`, [memoryId, `[${q.join(',')}]`, CANDIDATES]);
         vec.forEach((r) => similarity.set(r.id, r.sim));
         vec.filter((r) => r.sim >= MIN_VECTOR_SIMILARITY).forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 1 / (RRF_K + i + 1)));
       }

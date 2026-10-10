@@ -24,7 +24,7 @@ describe('connector calls (WORK_PLAN 6.6b)', () => {
     // Without the ingest scope the turn is refused (a read-only key cannot write).
     const client = (await call(s.url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'R', kind: 'platform' } })).body;
     const readOnly = (await call(s.url, 'POST', `/api/v1/admin/clients/${client.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
-    await call(s.url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: s.ownerId, clientId: client.id, externalId: 'u1' } });
+    await call(s.url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: s.memoryId, clientId: client.id, externalId: 'u1' } });
     expect((await call(s.url, 'POST', '/api/v1/context', { token: readOnly, headers: { 'x-recordare-user': 'u1' }, body: { ingest: turn('x', 'x1', 'ciao') } })).status).toBe(403);
     expect((await call(s.url, 'POST', '/api/v1/context', { ...as(), body: {} })).status).toBe(400);
   });
@@ -47,7 +47,7 @@ describe('connector calls (WORK_PLAN 6.6b)', () => {
 
   it('lets a personal token and a client key read before their conversation is stored', async () => {
     const client = (await call(s.url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'T', kind: 'mcp_client' } })).body;
-    const token = (await call(s.url, 'POST', `/api/v1/admin/owners/${s.ownerId}/tokens`, { token: ADMIN_KEY, body: { clientId: client.id, scopes: ['read'] } })).body.token;
+    const token = (await call(s.url, 'POST', `/api/v1/admin/memories/${s.memoryId}/tokens`, { token: ADMIN_KEY, body: { clientId: client.id, scopes: ['read'] } })).body.token;
     const ask = (t: string, user?: string) => call(s.url, 'POST', '/api/v1/context', {
       token: t, headers: { 'x-recordare-conversation': 'not-stored-yet', 'x-recordare-now': '2026-10-07T10:00:00+02:00', ...(user ? { 'x-recordare-user': user } : {}) }, body: { query: s.query } });
     expect((await ask(token)).body.items).toBe(3);

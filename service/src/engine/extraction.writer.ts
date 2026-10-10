@@ -20,9 +20,9 @@
  *   (the people talking to the agent are never "me"), a fact without one is the agent's (its place); every person an
  *   episode names must be named in the window (identification never carries over from another conversation);
  * - leaks: items still speaking of the self in the third person are counted in the run summary;
- * - recall echoes: what only an assistant reply answering from memory said — neither the owner nor another person nor
+ * - recall echoes: what only an assistant reply answering from memory said — neither the holder nor another person nor
  *   a non-memory tool (web search, a calendar…) said it — is not recorded: a wrong or invented recall must not become
- *   a memory because the owner said "ok", while news a tool brought in the same turn stays news.
+ *   a memory because the holder said "ok", while news a tool brought in the same turn stays news.
  */
 import { type EntityManager } from 'typeorm';
 import { type ExtractionInput, isMemoryTool, type WindowMessage } from './extraction.context';
@@ -32,7 +32,7 @@ import { localDate, toStored, type Precision } from './time';
 import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 import { askClarification, resolveClarification } from './clarifications';
 
-type AuthorRole = 'owner' | 'assistant' | 'other' | 'tool';
+type AuthorRole = 'holder' | 'assistant' | 'other' | 'tool';
 
 /**
  * Below this plan ↔ evidence-message similarity, with no shared name, place or keyword, a plan patch is treated as
@@ -43,7 +43,7 @@ type AuthorRole = 'owner' | 'assistant' | 'other' | 'tool';
 const PLAN_EVIDENCE_MIN_SIMILARITY = 0.37;
 
 export interface WriteContext {
-  ownerId: string;
+  memoryId: string;
   timezone: string;
   runId: string;
   conversationId: string;
@@ -83,7 +83,7 @@ export class ExtractionWriter {
   private readonly contactNames = new Map<string, Set<string>>();
 
   constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {
-    this.book = new ContactBook(tx, ctx.ownerId, input.selfNames, input.contacts);
+    this.book = new ContactBook(tx, ctx.memoryId, input.selfNames, input.contacts);
   }
 
   async apply(out: ExtractionOutput): Promise<WrittenRow[]> {
@@ -108,10 +108,10 @@ export class ExtractionWriter {
 
   /**
    * Facts only, from the nightly review (no chat window to lock): the same code-side rules as the extraction's facts.
-   * The evidence messages are those of the reviewed episodes; the audience is the owner alone.
+   * The evidence messages are those of the reviewed episodes; the audience is the memory alone.
    */
   async applyFacts(facts: ExtractionOutput['facts']): Promise<WrittenRow[]> {
-    this.audience = [this.ctx.ownerId];
+    this.audience = [this.ctx.memoryId];
     await this.loadTombstones();
     await this.writeFacts({ episodes: [], plan_patches: [], facts, notes: [] } as unknown as ExtractionOutput);
     return this.written;
@@ -157,7 +157,7 @@ export class ExtractionWriter {
   private async loadAudience(): Promise<void> {
     const rows: Array<{ person_id: string | null; display_name: string | null; role: string }> = await this.tx.query(
       `SELECT person_id, display_name, role FROM conversation_participants WHERE conversation_id = $1`, [this.ctx.conversationId]);
-    const ids = new Set<string>([this.ctx.ownerId]);
+    const ids = new Set<string>([this.ctx.memoryId]);
     for (const r of rows) {
       if (r.person_id) ids.add(r.person_id);
       else if (r.role === 'other' && r.display_name) this.audienceUnverified.push(r.display_name);
@@ -167,7 +167,7 @@ export class ExtractionWriter {
 
   private async loadTombstones(): Promise<void> {
     const rows: Array<{ message_ids: string[]; period_from: Date | null; period_to: Date | null }> = await this.tx.query(
-      `SELECT message_ids, period_from, period_to FROM forget_tombstones WHERE owner_id = $1`, [this.ctx.ownerId]);
+      `SELECT message_ids, period_from, period_to FROM forget_tombstones WHERE memory_id = $1`, [this.ctx.memoryId]);
     for (const r of rows) {
       for (const id of r.message_ids) this.tombstones.messageIds.add(id);
       if (r.period_from && r.period_to) this.tombstones.periods.push({ from: r.period_from, to: r.period_to });
@@ -186,7 +186,7 @@ export class ExtractionWriter {
 
   /**
    * True when an item comes only from a recall echo: its names (or, without names, its words) appear in an assistant
-   * reply answering from memory and in no message of the owner, of another person or of a non-memory tool (the
+   * reply answering from memory and in no message of the holder, of another person or of a non-memory tool (the
    * world's sources) in the window. Inactive when the window has no such reply.
    */
   private echoOnly(text: string): boolean {
@@ -203,7 +203,7 @@ export class ExtractionWriter {
 
   /**
    * After a recall, a fact changes (replaced, stale, unknown, corrected) only when a statement in its evidence — by the
-   * owner, another person or a non-memory tool, not a question — speaks of it: asking "what's my dentist called?" and
+   * holder, another person or a non-memory tool, not a question — speaks of it: asking "what's my dentist called?" and
    * hearing a wrong name is no news about the dentist. Always true when the window has no reply answering from memory.
    */
   private assertedAfterRecall(msgs: WindowMessage[], about: string): boolean {
@@ -215,7 +215,7 @@ export class ExtractionWriter {
   }
 
   private authorRole(msgs: WindowMessage[]): AuthorRole {
-    if (msgs.some((m) => m.accountSpeaker)) return 'owner';
+    if (msgs.some((m) => m.accountSpeaker)) return 'holder';
     if (msgs.some((m) => m.role === 'assistant')) return 'assistant';
     if (msgs.some((m) => m.role === 'tool')) return 'tool';
     return 'other';
@@ -250,27 +250,27 @@ export class ExtractionWriter {
       const who = await this.resolveSubject(this.itemSubject(e.subject), e.candidates, e.question);
       if (!who) { this.drop('episode', 'unknown_contact'); ids.push(null); continue; }
       const role = this.authorRole(msgs);
-      const origin = role === 'assistant' ? 'assistant_stated' : e.origin === 'lived' ? 'owner_lived' : e.origin === 'told' ? 'owner_told' : e.origin;
+      const origin = role === 'assistant' ? 'assistant_stated' : e.origin === 'lived' ? 'holder_lived' : e.origin === 'told' ? 'holder_told' : e.origin;
       const corrects = e.corrects ? (this.input.episodes.get(e.corrects) ?? null) : null;
       const subject = who.subject;
       const people = await this.linkPeople(e.people);
       const stance = (await this.inferred(role, msgs, subject)) ? 'inferred' : 'stated';
       const [row] = await this.tx.query(
-        `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, time_expression, place,
+        `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, time_expression, place,
            importance, valence, feelings, opinion, keywords, context, tags, plan_status, plan_status_at, corrects,
            origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified,
            subject_kind, subject_person_id, subject_candidates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, 'owner', $24, $25,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, 'holder', $24, $25,
            $26, $27, $28)
          RETURNING id`,
-        [this.ctx.ownerId, e.kind, e.content, at.at, until.at, at.precision, e.time_expression ?? null, e.place ?? null,
+        [this.ctx.memoryId, e.kind, e.content, at.at, until.at, at.precision, e.time_expression ?? null, e.place ?? null,
           e.importance, e.valence ?? null, e.feelings, e.opinion ?? null, e.keywords, e.context ?? null, e.tags,
           e.kind === 'plan' ? 'open' : null, e.kind === 'plan' ? new Date() : null, corrects,
           origin, role, stance, stance === 'stated' ? 1 : 0.6, this.ctx.runId, this.audience, this.audienceUnverified,
           subject.kind, subject.personId, subject.candidates],
       );
       const id = row.id as string;
-      if (corrects) await this.tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1 AND owner_id = $2`, [corrects, this.ctx.ownerId]);
+      if (corrects) await this.tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1 AND memory_id = $2`, [corrects, this.ctx.memoryId]);
       for (const m of msgs) {
         await this.tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [id, m.id]);
       }
@@ -317,14 +317,14 @@ export class ExtractionWriter {
         // A confirmed plan always has the event that happened (D10): created from the plan if the
         // model did not provide one.
         if (!event) event = await this.eventFromPlan(planId, msgs);
-        await this.tx.query(`UPDATE episodes SET plan_status = 'confirmed', plan_status_at = $1, confirmed_by = $2 WHERE id = $3 AND owner_id = $4`,
-          [at, event, planId, this.ctx.ownerId]);
+        await this.tx.query(`UPDATE episodes SET plan_status = 'confirmed', plan_status_at = $1, confirmed_by = $2 WHERE id = $3 AND memory_id = $4`,
+          [at, event, planId, this.ctx.memoryId]);
       } else if (p.patch === 'cancel') {
-        await this.tx.query(`UPDATE episodes SET plan_status = 'cancelled', plan_status_at = $1 WHERE id = $2 AND owner_id = $3`, [at, planId, this.ctx.ownerId]);
+        await this.tx.query(`UPDATE episodes SET plan_status = 'cancelled', plan_status_at = $1 WHERE id = $2 AND memory_id = $3`, [at, planId, this.ctx.memoryId]);
       } else {
         newPlanId = await this.copyPlan(planId, p, msgs);
-        await this.tx.query(`UPDATE episodes SET plan_status = 'rescheduled', plan_status_at = $1, rescheduled_to = $2 WHERE id = $3 AND owner_id = $4`,
-          [at, newPlanId, planId, this.ctx.ownerId]);
+        await this.tx.query(`UPDATE episodes SET plan_status = 'rescheduled', plan_status_at = $1, rescheduled_to = $2 WHERE id = $3 AND memory_id = $4`,
+          [at, newPlanId, planId, this.ctx.memoryId]);
       }
       await this.tx.query(
         `INSERT INTO plan_events (plan_id, patch, evidence_message_id, new_plan_id, note, extraction_run_id) VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -337,22 +337,22 @@ export class ExtractionWriter {
    * embedded) it is similar enough. Guards against a model closing an old plan with an unrelated message.
    */
   private async speaksOfPlan(planId: string, msgs: WindowMessage[]): Promise<boolean> {
-    const [plan]: Array<{ content: string; keywords: string[] | null; place: string | null; people: string[] | null; owner: string | null; sim: number | null }> = await this.tx.query(
+    const [plan]: Array<{ content: string; keywords: string[] | null; place: string | null; people: string[] | null; memory: string | null; sim: number | null }> = await this.tx.query(
       `SELECT e.content, e.keywords, e.place,
          (SELECT array_agg(alias) FROM episode_people WHERE episode_id = e.id) AS people,
-         (SELECT display_name FROM persons WHERE id = e.owner_id) AS owner,
+         (SELECT display_name FROM persons WHERE id = e.memory_id) AS memory,
          (SELECT max(1 - (e.embedding <=> m.embedding)) FROM messages m WHERE m.id = ANY($2) AND m.embedding IS NOT NULL) AS sim
        FROM episodes e WHERE e.id = $1`, [planId, msgs.map((m) => m.id)]);
     if (!plan) return false;
-    const owner = new Set(words(plan.owner ?? '').map(stem));
+    const memory = new Set(words(plan.memory ?? '').map(stem));
     const names = (plan.content.match(/\p{Lu}[\p{L}'’-]{2,}/gu) ?? []); // proper names and places written in the plan
-    const anchors = [...(plan.keywords ?? []), ...(plan.people ?? []), plan.place ?? '', ...names].flatMap(words).map(stem).filter((w) => !owner.has(w));
+    const anchors = [...(plan.keywords ?? []), ...(plan.people ?? []), plan.place ?? '', ...names].flatMap(words).map(stem).filter((w) => !memory.has(w));
     const said = new Set(msgs.flatMap((m) => words(m.content)).map(stem));
     if (anchors.some((a) => said.has(a))) return true;
     return plan.sim === null || plan.sim >= PLAN_EVIDENCE_MIN_SIMILARITY;
   }
 
-  /** The plan starts after the day of its evidence (in the owner's timezone): it cannot have happened yet. */
+  /** The plan starts after the day of its evidence (in the memory's timezone): it cannot have happened yet. */
   private async startsAfter(planId: string, msgs: WindowMessage[]): Promise<boolean> {
     const [plan]: Array<{ occurred_at: Date | null; date_precision: Precision }> = await this.tx.query(
       `SELECT occurred_at, date_precision FROM episodes WHERE id = $1`, [planId]);
@@ -373,13 +373,13 @@ export class ExtractionWriter {
   /** The event of a confirmed plan, derived from the plan itself (same dates, people, place). */
   private async eventFromPlan(planId: string, msgs: WindowMessage[]): Promise<string> {
     const [row] = await this.tx.query(
-      `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence,
+      `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence,
          feelings, opinion, keywords, context, tags, origin, author_role, stance, confidence, extraction_run_id, disclosure,
          audience, audience_unverified, subject_kind, subject_person_id, subject_candidates)
-       SELECT owner_id, 'event', content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
-         opinion, keywords, context, tags, origin, $3, stance, confidence, $4, 'owner', $5, $6, subject_kind, subject_person_id, subject_candidates
-       FROM episodes WHERE id = $1 AND owner_id = $2 RETURNING id, content, place`,
-      [planId, this.ctx.ownerId, this.authorRole(msgs), this.ctx.runId, this.audience, this.audienceUnverified]);
+       SELECT memory_id, 'event', content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
+         opinion, keywords, context, tags, origin, $3, stance, confidence, $4, 'holder', $5, $6, subject_kind, subject_person_id, subject_candidates
+       FROM episodes WHERE id = $1 AND memory_id = $2 RETURNING id, content, place`,
+      [planId, this.ctx.memoryId, this.authorRole(msgs), this.ctx.runId, this.audience, this.audienceUnverified]);
     await this.tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, planId]);
     for (const m of msgs) {
       await this.tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, m.id]);
@@ -394,13 +394,13 @@ export class ExtractionWriter {
     const at = p.new_date ? toStored(p.new_date, p.date_precision as Precision | undefined, this.ctx.timezone) : { at: old.occurred_at, precision: old.date_precision };
     const until = p.new_until ? toStored(p.new_until, 'day', this.ctx.timezone).at : (p.new_date ? null : old.occurred_until);
     const [row] = await this.tx.query(
-      `INSERT INTO episodes (owner_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence,
+      `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence,
          feelings, opinion, keywords, context, tags, plan_status, plan_status_at, origin, author_role, stance, confidence,
          extraction_run_id, disclosure, audience, audience_unverified, subject_kind, subject_person_id, subject_candidates)
-       VALUES ($1, 'plan', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open', now(), $14, $15, $16, $17, $18, 'owner', $19, $20,
+       VALUES ($1, 'plan', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open', now(), $14, $15, $16, $17, $18, 'holder', $19, $20,
          $21, $22, $23)
        RETURNING id`,
-      [this.ctx.ownerId, this.planText(old.content, p), at.at, until, at.precision, old.place, old.importance, old.valence,
+      [this.ctx.memoryId, this.planText(old.content, p), at.at, until, at.precision, old.place, old.importance, old.valence,
         old.feelings, old.opinion, old.keywords, old.context, old.tags, old.origin, this.authorRole(msgs), old.stance, old.confidence,
         this.ctx.runId, this.audience, this.audienceUnverified, old.subject_kind, old.subject_person_id, old.subject_candidates],
     );
@@ -446,7 +446,7 @@ export class ExtractionWriter {
       if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
 
       if (f.verdict === 'keep') {
-        if (target) await this.tx.query(`UPDATE facts SET support_count = support_count + 1 WHERE id = $1 AND owner_id = $2`, [target.id, this.ctx.ownerId]);
+        if (target) await this.tx.query(`UPDATE facts SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [target.id, this.ctx.memoryId]);
         continue;
       }
       let verdict = f.verdict;
@@ -458,8 +458,8 @@ export class ExtractionWriter {
       if (!target && cardinality === 'single' && verdict !== 'corrects') {
         // A new value for a single-value slot that already has one is a replacement.
         const [cur] = await this.tx.query(
-          `SELECT id, valid_from FROM facts WHERE owner_id = $1 AND subject_person_id IS NOT DISTINCT FROM $3 AND key = $2 AND status IN ('current', 'unknown_current') AND deleted_at IS NULL`,
-          [this.ctx.ownerId, key, subjectId]);
+          `SELECT id, valid_from FROM facts WHERE memory_id = $1 AND subject_person_id IS NOT DISTINCT FROM $3 AND key = $2 AND status IN ('current', 'unknown_current') AND deleted_at IS NULL`,
+          [this.ctx.memoryId, key, subjectId]);
         if (cur) {
           target = { id: cur.id, key, validFrom: cur.valid_from, subjectId };
           if (verdict === 'new') verdict = 'replace';
@@ -485,25 +485,25 @@ export class ExtractionWriter {
           status = 'superseded';
           validTo = target.validFrom;
         } else {
-          await this.tx.query(`UPDATE facts SET status = 'superseded', valid_to = $1, expired_at = now() WHERE id = $2 AND owner_id = $3`,
-            [from.at, target.id, this.ctx.ownerId]);
+          await this.tx.query(`UPDATE facts SET status = 'superseded', valid_to = $1, expired_at = now() WHERE id = $2 AND memory_id = $3`,
+            [from.at, target.id, this.ctx.memoryId]);
           supersedes = target.id;
           status = value === null ? 'unknown_current' : 'current';
         }
       } else if (target && verdict === 'corrects') {
-        await this.tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1 AND owner_id = $2`, [target.id, this.ctx.ownerId]);
+        await this.tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1 AND memory_id = $2`, [target.id, this.ctx.memoryId]);
         correctsId = target.id;
       }
       // A fact without a subject is the self's: the person's (personal) or the agent's and its place's (entity, e.g. where the spare keys are).
       const subject: Subject = subjectId ? contact(subjectId) : SELF_SUBJECT;
       const [row] = await this.tx.query(
-        `INSERT INTO facts (owner_id, key, value, status, valid_from, valid_to, date_precision, supersedes, corrects, verdict, pending,
+        `INSERT INTO facts (memory_id, key, value, status, valid_from, valid_to, date_precision, supersedes, corrects, verdict, pending,
            origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_person_id,
            subject_kind, subject_candidates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'owner', $17, $18, $19, $20, $21)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'holder', $17, $18, $19, $20, $21)
          RETURNING id`,
-        [this.ctx.ownerId, key, value, status, from.at, validTo, from.precision, supersedes, correctsId, verdict, inferred,
-          role === 'assistant' ? 'assistant_stated' : 'owner_lived', role, inferred ? 'inferred' : 'stated', inferred ? 0.6 : 1,
+        [this.ctx.memoryId, key, value, status, from.at, validTo, from.precision, supersedes, correctsId, verdict, inferred,
+          role === 'assistant' ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated', inferred ? 0.6 : 1,
           this.ctx.runId, this.audience, this.audienceUnverified, subjectId, subject.kind, subject.candidates],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
@@ -534,7 +534,7 @@ export class ExtractionWriter {
       if (problem) { this.drop('note', problem); continue; }
       const target = n.target ? this.input.notes.get(n.target) : undefined;
       if (n.verdict === 'keep') {
-        if (target) await this.tx.query(`UPDATE notes SET support_count = support_count + 1 WHERE id = $1 AND owner_id = $2`, [target, this.ctx.ownerId]);
+        if (target) await this.tx.query(`UPDATE notes SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
         continue;
       }
       const role = this.authorRole(msgs);
@@ -547,25 +547,25 @@ export class ExtractionWriter {
       let supersedes: string | null = null;
       let correctsId: string | null = null;
       if (target && n.verdict === 'replace') {
-        await this.tx.query(`UPDATE notes SET status = 'superseded' WHERE id = $1 AND owner_id = $2`, [target, this.ctx.ownerId]);
+        await this.tx.query(`UPDATE notes SET status = 'superseded' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
         supersedes = target;
       } else if (target && n.verdict === 'corrects') {
-        await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND owner_id = $2`, [target, this.ctx.ownerId]);
+        await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
         correctsId = target;
       }
       const [row] = await this.tx.query(
-        `INSERT INTO notes (owner_id, category, content, keywords, context, tags, supersedes, corrects, pending, valid_from,
+        `INSERT INTO notes (memory_id, category, content, keywords, context, tags, supersedes, corrects, pending, valid_from,
            origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_kind, subject_candidates,
            subject_person_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'owner', $16, $17, $18, $19, $20)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'holder', $16, $17, $18, $19, $20)
          RETURNING id`,
-        [this.ctx.ownerId, n.category, n.content, n.keywords, n.context ?? null, n.tags, supersedes, correctsId, inferred,
-          msgs[0]?.sentAt ?? null, role === 'assistant' ? 'assistant_stated' : 'owner_lived', role, inferred ? 'inferred' : 'stated',
+        [this.ctx.memoryId, n.category, n.content, n.keywords, n.context ?? null, n.tags, supersedes, correctsId, inferred,
+          msgs[0]?.sentAt ?? null, role === 'assistant' ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated',
           inferred ? 0.6 : 1, this.ctx.runId, this.audience, this.audienceUnverified, subject.kind, subject.candidates, subject.personId],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
-      await this.tx.query(`INSERT INTO note_changes (owner_id, note_id, change) VALUES ($1, $2, $3)`,
-        [this.ctx.ownerId, row.id, correctsId ? 'corrected' : supersedes ? 'updated' : 'created']);
+      await this.tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, $3)`,
+        [this.ctx.memoryId, row.id, correctsId ? 'corrected' : supersedes ? 'updated' : 'created']);
       this.written.push({ table: 'notes', id: row.id, text: [n.content, n.keywords.join(' '), n.context].filter(Boolean).join(' | ') });
       this.countLeak('notes', n.content);
       await this.askIfUndecided({ table: 'notes', id: row.id }, who);
@@ -607,7 +607,7 @@ export class ExtractionWriter {
   private async askIfUndecided(item: { table: 'episodes' | 'notes'; id: string }, who: { subject: Subject; question?: string }): Promise<void> {
     if (who.subject.kind !== 'undecided' || !who.question) return;
     const last = this.input.messages[this.input.messages.length - 1] as WindowMessage;
-    await askClarification(this.tx, this.ctx.ownerId, item, who.question, who.subject.candidates, last.sentAt);
+    await askClarification(this.tx, this.ctx.memoryId, item, who.question, who.subject.candidates, last.sentAt);
     this.clarified.asked++;
   }
 
@@ -676,7 +676,7 @@ export class ExtractionWriter {
       const msgs = this.evidence(a.evidence).filter((m) => m.role !== 'assistant' && m.role !== 'tool');
       const problem = this.evidenceProblem(msgs, null, null);
       if (problem) { this.drop('answer', problem); continue; }
-      if (await resolveClarification(this.tx, this.ctx.ownerId, q.id, personId, (msgs[0] as WindowMessage).sentAt)) this.clarified.resolved++;
+      if (await resolveClarification(this.tx, this.ctx.memoryId, q.id, personId, (msgs[0] as WindowMessage).sentAt)) this.clarified.resolved++;
       else this.drop('answer', 'not_a_candidate');
     }
   }

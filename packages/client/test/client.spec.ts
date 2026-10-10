@@ -37,9 +37,9 @@ const client = (extra: Record<string, string> = {}) => new RecordareClient({ bas
 
 describe('RecordareClient', () => {
   it('sends the credential, the user and the host\'s trace context on every request', async () => {
-    reply = () => ({ status: 200, body: { ownerId: 'o1', displayName: 'Andrea', mode: 'personal', gender: 'masculine', via: 'client', scopes: ['read'] } });
+    reply = () => ({ status: 200, body: { memoryId: 'o1', displayName: 'Andrea', mode: 'personal', gender: 'masculine', via: 'client', scopes: ['read'] } });
     const me = await client({ traceparent: '00-abc-def-01' }).me('u1');
-    expect(me.ownerId).toBe('o1');
+    expect(me.memoryId).toBe('o1');
     expect(seen[0]).toMatchObject({ method: 'GET', path: '/api/v1/me' });
     expect(seen[0]?.headers).toMatchObject({ authorization: 'Bearer rk_test', 'x-recordare-user': 'u1', traceparent: '00-abc-def-01' });
   });
@@ -125,17 +125,17 @@ describe('PersonDirectory', () => {
   it('keeps the name in sync with the profile, caches the memory, mode and Atlas, and survives an outage', async () => {
     let shown = 'Andrea';
     reply = (s) => (s.method === 'GET'
-      ? { status: 200, body: { ownerId: 'o1', displayName: shown, mode: 'entity', gender: 'masculine', atlasUrl: 'http://atlas', via: 'client', scopes: [] } }
+      ? { status: 200, body: { memoryId: 'o1', displayName: shown, mode: 'entity', gender: 'masculine', atlasUrl: 'http://atlas', via: 'client', scopes: [] } }
       : { status: 204 });
     let profile = 'Andrea';
     const resolved: string[] = [];
     const people = new PersonDirectory(client(), {
       user: async (u) => (u === 'off' ? { enabled: false } : { enabled: true, name: profile }),
-      onResolved: (u, p) => { resolved.push(`${u}:${p.ownerId}`); },
+      onResolved: (u, p) => { resolved.push(`${u}:${p.memoryId}`); },
     });
     expect(people.peek('u1')).toBeUndefined(); // never waits; looks up in the background
-    expect(await people.refresh('u1')).toEqual({ ownerId: 'o1', mode: 'entity', atlasUrl: 'http://atlas' });
-    expect(people.peek('u1')).toEqual({ ownerId: 'o1', mode: 'entity', atlasUrl: 'http://atlas' });
+    expect(await people.refresh('u1')).toEqual({ memoryId: 'o1', mode: 'entity', atlasUrl: 'http://atlas' });
+    expect(people.peek('u1')).toEqual({ memoryId: 'o1', mode: 'entity', atlasUrl: 'http://atlas' });
     expect(seen.filter((s) => s.method === 'PATCH')).toHaveLength(0); // same name: no rename
 
     profile = 'Andrea G.';
@@ -144,15 +144,15 @@ describe('PersonDirectory', () => {
     shown = 'Andrea G.';
 
     reply = () => ({ status: 503 });
-    expect((await people.refresh('u1')).ownerId).toBe('o1');
-    expect(people.peek('u1')?.ownerId).toBe('o1'); // the last known person stays
+    expect((await people.refresh('u1')).memoryId).toBe('o1');
+    expect(people.peek('u1')?.memoryId).toBe('o1'); // the last known person stays
     expect(resolved).toEqual(['u1:o1', 'u1:o1']);
 
     // Not opted in on the platform: Recordare is never contacted; a stored person stays known.
     seen.length = 0;
     people.seed('off', 'o-stored');
-    expect(await people.refresh('off')).toEqual({ ownerId: 'o-stored', mode: null, atlasUrl: null });
-    expect(people.peek('off')?.ownerId).toBe('o-stored');
+    expect(await people.refresh('off')).toEqual({ memoryId: 'o-stored', mode: null, atlasUrl: null });
+    expect(people.peek('off')?.memoryId).toBe('o-stored');
     expect(seen).toHaveLength(0);
   });
 });

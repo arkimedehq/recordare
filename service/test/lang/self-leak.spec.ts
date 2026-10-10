@@ -18,7 +18,7 @@ describe('selfLeak: first-person memories that still speak of the self in the th
     ['Der Nutzer war beim Arzt.', 'stand_in'],
     ['用户去了北京。', 'stand_in'],
     ['Пользователь купил машину.', 'stand_in'],
-    // Not a leak: someone else's owner is not caught by a bare word, and a name inside another word is not the name.
+    // Not a leak: someone else's memory is not caught by a bare word, and a name inside another word is not the name.
     ['Ho parlato con Andreas, il vicino.', null],
     ['I booked the table myself.', null],
   ])('%s', (text, expected) => {
