@@ -239,15 +239,16 @@ export class ExtractionWriter {
       const msgs = this.evidence(e.evidence);
       const at = toStored(e.occurred_at, e.date_precision as Precision | undefined, this.ctx.timezone);
       const until = toStored(e.occurred_until, 'day', this.ctx.timezone);
+      const subjectText = this.subjectOrPerson(e.subject, e.people);
       const problem = this.evidenceProblem(msgs, at.at, e.content)
         ?? (this.ctx.entity && !e.people.every((p) => this.namedInWindow(p)) ? 'person_not_named' : null)
-        ?? (!this.subjectNamed(e.subject, e.candidates) ? 'person_not_named' : null);
+        ?? (!this.subjectNamed(subjectText, e.candidates) ? 'person_not_named' : null);
       if (problem) {
         this.drop('episode', problem);
         ids.push(null);
         continue;
       }
-      const who = await this.resolveSubject(this.itemSubject(e.subject), e.candidates, e.question);
+      const who = await this.resolveSubject(this.itemSubject(subjectText), e.candidates, e.question);
       if (!who) { this.drop('episode', 'unknown_contact'); ids.push(null); continue; }
       const role = this.authorRole(msgs);
       const origin = role === 'assistant' ? 'assistant_stated' : e.origin === 'lived' ? 'holder_lived' : e.origin === 'told' ? 'holder_told' : e.origin;
@@ -644,6 +645,18 @@ export class ExtractionWriter {
     const names = new Set((row?.names ?? []).filter(Boolean).map(fold));
     this.contactNames.set(personId, names);
     return names;
+  }
+
+  /**
+   * A listed contact as an item's subject while the window never names them, and the item's people name exactly one
+   * person who is in the window: the model took the wrong C-number (the list also holds people known from other
+   * conversations, e.g. staff listed by their facts; dev_gaps_entity, 8.11) — that person is the subject. Otherwise the
+   * subject stays as given (and an unnamed one is dropped).
+   */
+  private subjectOrPerson(subject: string | null | undefined, people: string[]): string | null | undefined {
+    if (!subject || !/^C\d+$/i.test(subject.trim()) || this.subjectNamed(subject, [])) return subject;
+    const named = people.filter((p) => !/^C\d+$/i.test(p.trim()) && this.namedInWindow(p));
+    return named.length === 1 ? (named[0] as string) : subject;
   }
 
   /**

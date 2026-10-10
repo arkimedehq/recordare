@@ -4,7 +4,7 @@
 /**
  * Prompt inputs are part of a measured version (evaluation rule 9): the personal prompts stay byte-identical to the ones
  * measured (`extract.v14`, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
- * `extract.v14+entity.v4`) — a change to any of them is a new version, measured before it ships.
+ * `extract.v14+entity.v5`) — a change to any of them is a new version, measured before it ships.
  */
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
@@ -77,7 +77,7 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-5', role: 'tool', toolName: 'web_search', content: 'Meteo: sole.', sentAt: '2026-06-08T09:04:00+02:00' },
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
-    expect(sha(second.system)).toBe('d545171d9822306d9465d83814af019f949bd147a9b94cd7cfbfd1ace509e2dd');
+    expect(sha(second.system)).toBe('613d29b517c9b6eabe4ff6075cfe9a2db4eb40662eb5b488430b6b6e874bdbb6');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

@@ -13,6 +13,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   (`spikes/memory-eval/RESULTS.md`).
 - `search_episodes`: a `search` with a period also returns up to 3 relevant episodes from outside it in `outsidePeriod`
   (before: only when the period had no match), ranked by relevance alone; chat excerpts behind a corrected episode carry `correctedBy`.
+- Entity prompt `entity.v5` (WORK_PLAN 8.11): what the shared agent did with what someone handed it or asked of it (a
+  booking taken, a payment recorded) is its own action, in the first person, with who asked — no longer "Benedetta
+  registered the booking"; a C-number only for the person the item is about. The extraction writer gives an episode
+  whose subject is a listed contact the conversation never names to the one person the episode names (before: the
+  episode was dropped). Blind entity set: 91.9 % (3 runs; the booking question 0/3 → 2/3 + 1 partial).
 
 ## [0.2.0] — 2026-10-10
 

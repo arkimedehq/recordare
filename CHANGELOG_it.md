@@ -13,6 +13,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   personale 81,6 % → 90,1 %, entità 89,8 % → 93,3 % (`spikes/memory-eval/RESULTS.md`).
 - `search_episodes`: una `search` con un periodo restituisce anche fino a 3 episodi pertinenti di fuori in `outsidePeriod`
   (prima: solo quando il periodo non aveva risultati), ordinati solo per pertinenza; gli estratti di chat dietro un episodio corretto portano `correctedBy`.
+- Prompt entità `entity.v5` (WORK_PLAN 8.11): ciò che l'agente condiviso ha fatto con quanto qualcuno gli ha passato o
+  chiesto (una prenotazione presa, un pagamento registrato) è una sua azione, in prima persona, con chi l'ha chiesta —
+  non più "Benedetta ha registrato la prenotazione"; un numero C solo per la persona di cui parla l'elemento. Il writer
+  dell'estrazione assegna un episodio il cui soggetto è un contatto elencato mai nominato nella conversazione all'unica
+  persona che l'episodio nomina (prima: l'episodio veniva scartato). Set cieco entità: 91,9 % (3 run; la domanda sulla
+  prenotazione da 0/3 a 2/3 + 1 parziale).
 
 ## [0.2.0] — 2026-10-10
 

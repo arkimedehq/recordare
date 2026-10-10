@@ -72,7 +72,7 @@ describe('entity memory (D48, D50 8.5)', () => {
       { about: null, key: 'spare_keys_location', value: 'cassetto blu', status: 'current' },
     ]);
     expect((await db.query(`SELECT DISTINCT prompt_version FROM extraction_runs WHERE memory_id = $1`, [home])))
-      .toEqual([{ prompt_version: 'extract.v14+entity.v4' }]);
+      .toEqual([{ prompt_version: 'extract.v14+entity.v5' }]);
 
     const found = await app.get(MemorySearchService).search(home, { query: 'macchina auto car' }, new Date('2026-06-08T10:00:00Z'));
     expect(found.facts.filter((f) => f.key === 'car').map((f) => [f.subject.kind === 'contact' ? f.subject.name : null, f.value]).sort())
@@ -89,6 +89,24 @@ describe('entity memory (D48, D50 8.5)', () => {
     const db = app.get(DataSource);
     expect(await db.query(`SELECT content FROM episodes WHERE memory_id = $1`, [home])).toEqual([{ content: 'Qualcuno in casa ha saputo che verrà promosso.' }]);
     expect(await db.query(`SELECT id FROM facts WHERE memory_id = $1`, [home])).toEqual([]);
+  });
+
+  it('a listed contact the window never names, given as a subject, yields to the one person the item names (8.11)', async () => {
+    const hut = await memory('Rifugio', 'entity');
+    await extract('Rifugio', 'h1', 'Sono Gianni: Elisa segue la cucina.', {
+      facts: [{ key: 'ruolo', value: 'cucina', verdict: 'new', subject: 'Elisa', evidence: [1] }],
+    });
+    await extract('Rifugio', 'h2', 'Hier ist Anna Hofer: ich vertrage keine Laktose.', {
+      episodes: [
+        { content: 'Anna Hofer mi ha detto che è intollerante al lattosio.', subject: 'C1', people: ['Anna Hofer'], evidence: [1] },
+        { content: 'Qualcuno ha chiesto della cucina.', subject: 'C1', people: [], evidence: [1] },
+      ],
+    });
+    const req = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1);
+    expect(req?.messages[1]?.content).toContain('C1: Elisa'); // known from another conversation, listed by her fact
+    expect(await app.get(DataSource).query(
+      `SELECT e.content, p.display_name AS subject FROM episodes e LEFT JOIN persons p ON p.id = e.subject_person_id WHERE e.memory_id = $1`, [hut]))
+      .toEqual([{ content: 'Anna Hofer mi ha detto che è intollerante al lattosio.', subject: 'Anna Hofer' }]);
   });
 
   it("a personal memory speaks as \"me\": the self's own name as a subject is the self (WORK_PLAN 8.4)", async () => {

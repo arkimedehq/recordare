@@ -123,6 +123,111 @@
      "content": "Fatto: pulmino Dolomitibus da 16 posti, sabato 14 novembre alle 9 dalla stazione di Canazei, prenotazione confermata."
     }
    ]
+  },
+  {
+   "id": "r08",
+   "user": "rifugio_cima",
+   "ts": "2026-11-11T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, sono Mauro, il gestore. Ti presento la squadra: Gianni segue le prenotazioni e i conti, Elisa la cucina, Paola l'accoglienza e le escursioni."
+    },
+    {
+     "role": "assistant",
+     "content": "Buongiorno Mauro, piacere. Segnato: Gianni prenotazioni e conti, Elisa cucina, Paola accoglienza ed escursioni."
+    }
+   ]
+  },
+  {
+   "id": "r09",
+   "user": "rifugio_cima",
+   "ts": "2026-11-12T16:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Gianni. Ti do gli orari dell'inverno: tienili tu come orari ufficiali."
+    },
+    {
+     "role": "assistant",
+     "content": "Ciao Gianni. Dimmi pure, li registro come i miei orari."
+    },
+    {
+     "role": "user",
+     "own": true,
+     "content": "ORARI INVERNO 2026-27. Colazione 7:30–9:30; cena 19:00–20:30; deposito sci aperto 7:00–22:00; il rifugio chiude alle 23:00. Arrivi dopo le 21: chiave nella cassetta accanto alla porta, codice inviato il giorno dell'arrivo."
+    },
+    {
+     "role": "assistant",
+     "content": "Orari dell'inverno registrati come miei: colazione 7:30–9:30, cena 19–20:30, deposito sci 7–22, chiusura alle 23; arrivi dopo le 21 con la chiave nella cassetta accanto alla porta."
+    },
+    {
+     "role": "user",
+     "content": "Ora una prenotazione: coniugi Hofer di Innsbruck, camera 5, da venerdì 20 a domenica 22 novembre, mezza pensione. Hanno già mandato 80 euro di acconto con bonifico, arrivato ieri."
+    },
+    {
+     "role": "assistant",
+     "content": "Prenotato: camera 5 per i coniugi Hofer (Innsbruck), da venerdì 20 a domenica 22 novembre 2026, due notti in mezza pensione; acconto di 80 € ricevuto con bonifico l'11 novembre."
+    },
+    {
+     "role": "user",
+     "content": "E la camera 3 mettila non prenotabile fino al 30 novembre: c'è da rifare il pavimento."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: camera 3 non prenotabile fino al 30 novembre per il pavimento da rifare."
+    }
+   ]
+  },
+  {
+   "id": "r10",
+   "user": "rifugio_cima",
+   "ts": "2026-11-15T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Grüß Gott, hier ist Anna Hofer aus Innsbruck. Wir haben Zimmer 5 vom 20. bis 22. November. Ist die Bettwäsche dabei?"
+    },
+    {
+     "role": "assistant",
+     "content": "Grüß Gott, Frau Hofer. Ja, Bettwäsche ist inklusive. Ihre Buchung für Zimmer 5 vom 20. bis 22. November mit 80 € Anzahlung ist bestätigt."
+    },
+    {
+     "role": "user",
+     "content": "Danke. Bitte notieren: ich vertrage keine Laktose. Und wir bringen unsere Skier mit, brauchen wir einen Platz im Skiraum?"
+    },
+    {
+     "role": "assistant",
+     "content": "Notiert: Laktoseintoleranz, ich gebe es an die Küche weiter. Im Skiraum habe ich Ihnen das Fach 7 reserviert."
+    },
+    {
+     "role": "user",
+     "content": "Ich gebe an meinen Mann weiter."
+    },
+    {
+     "role": "user",
+     "content": "Hallo, hier ist Peter Hofer. Wir kommen am Freitag erst gegen 22 Uhr an. Ist das ein Problem?"
+    },
+    {
+     "role": "assistant",
+     "content": "Hallo Herr Hofer. Kein Problem: ich habe die späte Ankunft am Freitag, 20. November gegen 22 Uhr notiert. Der Schlüssel liegt im Kästchen neben der Tür, den Code schicke ich Ihnen am Freitag."
+    }
+   ]
+  },
+  {
+   "id": "r11",
+   "user": "rifugio_cima",
+   "ts": "2026-11-20T22:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hallo, hier ist Peter Hofer: wir sind angekommen, der Schlüssel war im Kästchen. Danke!"
+    },
+    {
+     "role": "assistant",
+     "content": "Willkommen, Herr Hofer! Ankunft notiert. Frühstück gibt es ab 7:30."
+    }
+   ]
   }
  ]
 }

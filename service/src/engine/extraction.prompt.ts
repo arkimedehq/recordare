@@ -7,7 +7,7 @@
  * plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
  * - Personal memories (D50, WORK_PLAN 8.4): `extract.v14` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
  *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v14+entity.v4` — the shared agent's memory in the first person, people by
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v14+entity.v5` — the shared agent's memory in the first person, people by
  *   name or "someone"; the personal prompt's sections where they hold for both.
  */
 export interface PromptMessage {
@@ -256,7 +256,7 @@ export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono st
  * conversation identifies them, "someone" until then. Shares the personal prompt's schema, dates, plans, notes and
  * corrections; its own intro, voice, identification, episode, fact and safety rules.
  */
-export const ENTITY_PROMPT_VERSION = 'entity.v4';
+export const ENTITY_PROMPT_VERSION = 'entity.v5';
 
 const E_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): a shared agent — a device, a place, a robot or a service — that several people talk \
@@ -295,7 +295,8 @@ SUBJECT — whose memory each item is
 - "me" for my replies and actions, what I was given to keep, my place and what belongs to it; a person for what is \
 theirs ("Nunzia ha comprato gli stivali" → Nunzia); "someone" for what an unidentified speaker lived, plans or says \
 about themself. Prefer the C-number of PEOPLE I KNOW; a person not in the list by name with the relation when stated \
-("Irene (figlia)").
+("Irene (figlia)"). A C-number only for the person the item is about: the list also holds people known from other \
+conversations, who may have no part in this one.
 - Same name, several people: decide by the full name, then the relation, the place, the people present. When the \
 window does not tell which one, never guess: subject "undecided", the candidates' C-numbers, and a question to ask the \
 person speaking.
@@ -310,6 +311,10 @@ reminder set, a booking made, an answer someone relied on). Help requests, how-t
 are NOT episodes (they stay in the chat log).
 - Write who lived it in "content": a person by name, "qualcuno in casa…" (in the conversation's language) for a \
 speaker nobody identified, the first person for me. Put the people involved in "people"; never me.
+- What I did with what a person handed me or asked of me — a booking taken, a payment recorded, a note made, a place \
+reserved — is my action, in the first person, with who asked: "ho registrato la prenotazione della camera 2 per i \
+Ferri, su richiesta di Nadia". Never "Nadia ha registrato la prenotazione" or "Nadia mi ha dato la prenotazione": \
+she asked, I did it.
 - News LEARNED (from a tool result, a web page, a document, an answer: a forecast, a strike, a delay) is a \
 low-importance "event" episode on the message date — "ho saputo che …", with the news itself and its date — ONLY when \
 it touches the life of the people I know or my place: an open plan, a person, something that belongs here, or when \
@@ -372,7 +377,7 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v14`, entity `extract.v14+entity.v4`). */
+/** The extraction input of both modes (personal `extract.v14`, entity `extract.v14+entity.v5`). */
 export function buildExtractionUser(ctx: PromptContext): string {
   const [name, ...others] = ctx.selfNames;
   return [

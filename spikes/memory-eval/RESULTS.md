@@ -443,6 +443,49 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.11 gaps, step 3 — the entity agent's own actions (2026-10-11, DeepSeek direct, `fp813_runs.sh`)
+
+blind10 q04 ("what did you do for the Brandts before they arrived?", 0/3 in every earlier batch) had two causes:
+- **Attribution.** A booking dictated by a staff member ("Ora una prenotazione: …" → "Prenotato") was stored as
+  "Benedetta ha registrato la prenotazione" (every run since 8.11).
+- **Dropped episodes.** In 1 run of 3 the German session of the guests lost its 3 episodes and 3 facts
+  (`person_not_named`): the staff's role facts put Benedetta & co. in the window's PEOPLE I KNOW (C1…) although the
+  conversation never names them, and the model gave C1 as the subject of the guests' episodes, which the writer rightly
+  rejected.
+
+Dev case first, `dataset_dev_gaps_entity` e06 (sessions r08–r11: the manager introduces the staff, Gianni hands over
+the winter hours as own content and then a booking, the guests write in German). With entity.v4, over 4 runs:
+attribution "Gianni mi ha dato la prenotazione" 2/4; guests' episodes dropped 1/4 (logged once: subject C1 = Paola,
+people ["Anna Hofer"]).
+
+Fixes:
+- `entity.v5`: what I did with what a person handed me or asked of me is my action, in the first person, with who asked
+  ("ho registrato la prenotazione …, su richiesta di Nadia"); a C-number only for the person the item is about.
+- Writer: an episode whose subject is a listed contact the window never names, while its people name exactly one person
+  in the window, gets that person as subject. Facts have no people, so they are still dropped.
+
+| Set | r1 / r2 / r3 | **Mean** | Step 2 | Bar |
+|---|---|---|---|---|
+| `dataset_dev_gaps_entity` (dev, 6 q) | 100 / 100 / 100 | **100 %** | — | — |
+| `dataset_dev_gaps` (dev, 7 q, control) | 100 | **100 %** | 100 % | — |
+| `dataset_blind10` (entity, 35 q) | 88.6 / 95.7 / 91.4 | **91.9 %** | 93.3 % | 91.4 % (blind8) |
+| `dataset_blind9` (personal, 42 q, control) | 94.0 | **94.0 %** (1 run) | 90.1 % | 90.9 % (blind7) |
+
+One prompt version per kind in every run (`extract.v14+entity.v5`, `extract.v14`).
+
+On the dev set the booking is "ho registrato … su richiesta di Gianni" in 3/3 runs and the guests' episodes are kept in
+3/3. On blind10:
+- **Fixed:** q04 0/3 → 2 correct + 1 partial; the booking is "su richiesta di Benedetta ho registrato la prenotazione"
+  in 3/3, and the 27 March episodes are kept.
+- **Worse:**
+  - q06 ccc → www: "Su richiesta di Benedetta ho bloccato il B6 …: Nico deve sistemarla" now reads as a message to pass
+    to Nico; the answer lists it, plus once a veranda outcome not found.
+  - q33 ccc → wpw: the bike question is stored as "un ospite" in old and new runs alike; the answer named Katrin once,
+    recall missed it once — variance.
+- The rest is run-to-run variance.
+
+Net −1.4 on the mean, within noise. Facts are still dropped on a wrong C-number (1–2 a run on the dev set).
+
 ### WORK_PLAN 8.11 gaps, step 2 — out-of-period items ranked by relevance (2026-10-10, DeepSeek direct, `fp812r_runs.sh`)
 
 The next fix of the section below (blind9 q40): the out-of-period items of a period `search` are ranked by relevance
