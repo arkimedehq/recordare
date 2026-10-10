@@ -294,6 +294,29 @@ describe('MCP endpoint', () => {
     await client.close();
   });
 
+  it('items outside the period are ranked by relevance alone, not importance or recency (8.11: the wrong date)', async () => {
+    const db = app.get((await import('typeorm')).DataSource);
+    const ids: string[] = [];
+    const now = Date.now();
+    // The dinner the question names (cancelled, old, unimportant) and five big recent dinners elsewhere.
+    for (const [content, at, importance] of [
+      ['Ho disdetto la cena all\'Osteria dei Poeti di venerdì: Giulia ha l\'influenza', now - 40 * 86_400_000, 2],
+      ...[1, 2, 3, 4, 5].map((i) => [`Cena di festa numero ${i} al ristorante, serata indimenticabile`, now - i * 86_400_000, 9])]) {
+      const [r] = await db.query(
+        `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision, importance)
+         VALUES ($1, 'event', $2, 'holder_lived', 'holder', $3, $4, 'day', $5) RETURNING id`,
+        [memoryId, content, [memoryId], new Date(at as number), importance]);
+      ids.push(r.id);
+    }
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    const day = new Date(now - 20 * 86_400_000).toISOString().slice(0, 10); // nothing happened that day
+    const out = await search(client, { query: 'cena Osteria dei Poeti', from: day, to: day });
+    expect(out['episodes']).toEqual([]);
+    expect((out['outsidePeriod'] as Array<{ id: string }>)[0]?.id).toBe(ids[0]);
+    await db.query(`DELETE FROM episodes WHERE id = ANY($1)`, [ids]);
+    await client.close();
+  });
+
   it('marks a chat excerpt whose episode was corrected with the correction (8.11)', async () => {
     const db = app.get((await import('typeorm')).DataSource);
     const [msg] = await db.query(`SELECT id FROM messages WHERE external_id = 'nas-chat-1'`);

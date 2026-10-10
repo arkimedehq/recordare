@@ -66,6 +66,16 @@
    "must_not": [
     "la cena del 12 è andata bene"
    ]
+  },
+  {
+   "id": "d07",
+   "category": "premise",
+   "asked_at": "2026-12-03T09:00:00+01:00",
+   "q": "Com'è andata la cena all'Osteria dei Poeti di venerdì 27 novembre?",
+   "expected": "Non c'è stata nessuna cena all'Osteria dei Poeti il 27 novembre: il tavolo per due (con Giulia) era per venerdì 20 novembre alle 20, e l'ho disdetto il 19 novembre perché Giulia aveva l'influenza.",
+   "must_not": [
+    "la cena all'Osteria dei Poeti c'è stata"
+   ]
   }
  ]
 }

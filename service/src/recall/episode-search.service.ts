@@ -188,9 +188,13 @@ export class EpisodeSearchService {
       chosen = chosen.map((r, i) => ({ r, i })).sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i).map((x) => x.r);
     }
     // Relevant items outside the period come along, marked: a period names when something happens, while what was done
-    // about it may lie before it ("do I have a table booked for Thursday?" — booked on Monday; blind9, 8.11).
+    // about it may lie before it ("do I have a table booked for Thursday?" — booked on Monday; blind9, 8.11). They are
+    // ranked by relevance alone: importance and recency would let any big recent event push out the one the question
+    // names (a dinner asked on the wrong date lost to more important dinners; blind9, 8.11).
     const outside = hasPeriod && args.query && (mode === 'search' || chosen.length === 0)
-      ? rows.filter((r) => !inRange(r) && relevant(r)).sort((a, b) => score(b) - score(a)).slice(0, chosen.length ? OUTSIDE_HITS : 5)
+      ? rows.filter((r) => !inRange(r) && relevant(r))
+        .sort((a, b) => (relevance.get(b.id) ?? 0) - (relevance.get(a.id) ?? 0))
+        .slice(0, chosen.length ? OUTSIDE_HITS : 5)
       : [];
 
     const views = await this.views([...chosen, ...outside], tz, locale, now);

@@ -9,10 +9,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Changed
 - Extraction prompt `extract.v14` (both modes, WORK_PLAN 8.11): the agent's own slips are stored in the first person
   ("I got the dates wrong: I said X, it is Y"), the options compared stay next to the choice, and a step of an open plan
-  done before its date (a booking, tickets) amends the plan. Blind sets: personal 81.6 % → 88.8 %, entity 89.8 % → 91.4 %
+  done before its date (a booking, tickets) amends the plan. Blind sets: personal 81.6 % → 90.1 %, entity 89.8 % → 93.3 %
   (`spikes/memory-eval/RESULTS.md`).
 - `search_episodes`: a `search` with a period also returns up to 3 relevant episodes from outside it in `outsidePeriod`
-  (before: only when the period had no match); chat excerpts behind a corrected episode carry `correctedBy`.
+  (before: only when the period had no match), ranked by relevance alone; chat excerpts behind a corrected episode carry `correctedBy`.
 
 ## [0.2.0] — 2026-10-10
 

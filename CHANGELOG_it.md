@@ -10,9 +10,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - Prompt di estrazione `extract.v14` (entrambe le modalità, WORK_PLAN 8.11): gli errori dell'agente stesso sono salvati in
   prima persona ("ho sbagliato le date: avevo detto X, è Y"), le alternative confrontate restano accanto alla scelta, e un
   passo di un piano aperto fatto prima della sua data (una prenotazione, dei biglietti) aggiorna il piano. Set ciechi:
-  personale 81,6 % → 88,8 %, entità 89,8 % → 91,4 % (`spikes/memory-eval/RESULTS.md`).
+  personale 81,6 % → 90,1 %, entità 89,8 % → 93,3 % (`spikes/memory-eval/RESULTS.md`).
 - `search_episodes`: una `search` con un periodo restituisce anche fino a 3 episodi pertinenti di fuori in `outsidePeriod`
-  (prima: solo quando il periodo non aveva risultati); gli estratti di chat dietro un episodio corretto portano `correctedBy`.
+  (prima: solo quando il periodo non aveva risultati), ordinati solo per pertinenza; gli estratti di chat dietro un episodio corretto portano `correctedBy`.
 
 ## [0.2.0] — 2026-10-10
 

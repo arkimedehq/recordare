@@ -443,6 +443,31 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.11 gaps, step 2 — out-of-period items ranked by relevance (2026-10-10, DeepSeek direct, `fp812r_runs.sh`)
+
+The next fix of the section below (blind9 q40): the out-of-period items of a period `search` are ranked by relevance
+alone, no longer by the general score (relevance + importance + recency), where any big recent event pushed out the one
+the question names. Recall only; extraction unchanged (`extract.v14`).
+
+Dev case first: `dataset_dev_gaps` d07 (a cancelled booking at the Osteria dei Poeti asked on the wrong date, among
+eight bigger dinners, sessions g08–g15). With 5 distractor dinners the old ranking still let the booking in (5th of
+5, correct); with 8 it left it out (partial) — the mechanism of q40 reproduced. New ranking: d07 correct, the whole dev
+set 7/7. Control on the main set `dataset` (1 run, `fp812_dataset`, extract.v14 with the step-1 recall, before this
+change): **100 %** (fp84b 100, fp86 97.9, fp89 95.8): the out-of-period items do not hurt day questions.
+
+| Set | r1 / r2 / r3 | **Mean** | Step 1 | 8.11 (v0.2.0) | Bar |
+|---|---|---|---|---|---|
+| `dataset_dev_gaps` (dev, 7 q) | 100 | **100 %** | — | — | — |
+| `dataset_blind9` (personal, 42 q) | 89.3 / 91.7 / 89.3 | **90.1 %** | 88.8 % | 81.6 % | 90.9 % (blind7) |
+| `dataset_blind10` (entity, 35 q) | 94.3 / 91.4 / 94.3 | **93.3 %** | 91.4 % | 89.8 % | 91.4 % (blind8) |
+
+One prompt version per kind in every run. blind9 q40 fixed (0/3 → 3/3). The other changes against step 1 are not on
+period searches (no `PERIODO CERCATO` in their context), so they are run-to-run variance of extraction and answer:
+blind9 q05 (the second group of Michele's chats missing, pww → www), q35 (1 wrong of 3: "no actual use of the
+contract"); blind10 q09 (the Brandts' check-out payment not found in 1 run), q15 (the total paid not summed, 2
+partial), q24 (the aperitivo cancelled for rain not found, 2 partial); better: blind10 q12, q13, q25, q27, q33. Still
+failing as before: blind9 q20 (0/3), blind10 q04 (0/3, who acts when staff ask the entity agent).
+
 ### WORK_PLAN 8.11 gaps — fixes measured (2026-10-10, DeepSeek direct, `fp812_dev.sh`, `fp812_runs.sh`)
 
 Fixes of the gaps found on blind9 / blind10 (section below), checked first on two new dev sets written by the engine

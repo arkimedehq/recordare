@@ -123,6 +123,126 @@
      "content": "Corretto: Pirelli invernali, 360 euro."
     }
    ]
+  },
+  {
+   "id": "g08",
+   "user": "marco",
+   "ts": "2026-11-14T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prenotami all'Osteria dei Poeti per venerdì 20 novembre alle 20, due persone: io e Giulia."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: tavolo per due all'Osteria dei Poeti venerdì 20 novembre alle 20, a nome Marco."
+    }
+   ]
+  },
+  {
+   "id": "g09",
+   "user": "marco",
+   "ts": "2026-11-19T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Disdici l'Osteria dei Poeti di domani sera, Giulia ha l'influenza."
+    },
+    {
+     "role": "assistant",
+     "content": "Disdetta fatta: niente cena all'Osteria dei Poeti venerdì 20. Auguri di pronta guarigione a Giulia."
+    }
+   ]
+  },
+  {
+   "id": "g10",
+   "user": "marco",
+   "ts": "2026-11-22T23:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera c'è stata la cena di fidanzamento di mia sorella Chiara con Paolo al ristorante Il Cerchio. Ho fatto il discorso e mi sono commosso, mamma ha pianto. Serata indimenticabile."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello, Marco! Congratulazioni a Chiara e Paolo, e complimenti per il discorso."
+    }
+   ]
+  },
+  {
+   "id": "g11",
+   "user": "marco",
+   "ts": "2026-11-25T22:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi hanno nominato responsabile del reparto acquisti! Stasera cena da Diana con tutto il team per festeggiare, il direttore ha offerto lo champagne."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti per la promozione! Una serata meritata."
+    }
+   ]
+  },
+  {
+   "id": "g12",
+   "user": "marco",
+   "ts": "2026-11-28T23:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cena a sorpresa per i 60 anni di papà al Battibecco: c'erano tutti i parenti, papà non se l'aspettava e si è commosso. Il regalo, la bici elettrica, gli è piaciuto tantissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sorpresa riuscita! Auguri a tuo papà per i 60 anni."
+    }
+   ]
+  },
+  {
+   "id": "g13",
+   "user": "marco",
+   "ts": "2026-11-29T23:50:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera cena per i vent'anni dalla maturità con i compagni del liceo all'Antica Osteria del Ponte: c'erano quasi tutti, anche il professor Masi. Abbiamo riso fino all'una."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella rimpatriata! Vent'anni sono tanti, bello ritrovarsi quasi tutti."
+    }
+   ]
+  },
+  {
+   "id": "g14",
+   "user": "marco",
+   "ts": "2026-11-30T22:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cena di beneficenza per il reparto di pediatria al Savoia: ho vinto all'asta un quadro di un pittore bolognese per 450 euro, tutto va all'ospedale."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima causa, e un bel quadro per casa. Complimenti!"
+    }
+   ]
+  },
+  {
+   "id": "g15",
+   "user": "marco",
+   "ts": "2026-12-01T23:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Non ci credo: stasera a cena al Pappagallo ho chiesto a Giulia di sposarmi e ha detto sì! Matrimonio a giugno."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulazioni, Marco! Che notizia meravigliosa, auguri a te e Giulia!"
+    }
+   ]
   }
  ]
 }
