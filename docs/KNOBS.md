@@ -40,7 +40,6 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `CONTEXT_MIN_FACT_SIMILARITY`, `…_EPISODE_…`, `…_PLAN_…`, `…_PERIOD_…` | 0.50, 0.55, 0.45, 0.35 | Memory context (`POST api/v1/context`): minimum similarity for facts and notes, episodes, upcoming plans, episodes of a named period. Lower floors (0.45 / 0.48 / 0.42) measured: no gain (RESULTS 5.7) |
 | `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Memory context: minimum similarity for the one passage of a learned source it may hold (cut at 300 characters, `- learned (from «title»): …`; WORK_PLAN 8.9). First value, to measure |
 | `CONSOLIDATION_SCHEDULE` | on | Nightly consolidation on its own; off = only on demand (evaluations) |
-| `EXTRACTION_PREDICT` | off | Experiment (RESEARCH_NOTES H13 arm C): one more call per window predicts the window from what the memory knows (never its text), the extraction gets the prediction; runs record `+predict.v1` |
 | `CONSOLIDATION_HOUR` | 3 | Local hour (person's timezone) after which the night runs |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
 | `LOG_LLM_CALLS` | on | One `llm_calls` row per call (tokens, latency; never content) |

@@ -481,6 +481,27 @@ blind10 q35 rank 0 (all outside the top 10 before).
 - Cost: unchanged (no extra call; answer input 129,769 vs 130,820 tokens per blind9 run).
 - **R wins**: a search ranks by relevance alone, no knob (clean code over dual paths).
 
+**Arm C, predict then extract the gap (`predict.v1`, Nemori's predict-calibrate reimplemented; commit f62c026,
+`fp818_runs.sh`, 1 exploratory run each on top of R).** One more call per window sees what I know (open plans, facts,
+notes, known episodes, people) and who speaks when, never the text, and predicts what the window tells (3–8
+statements); the extraction gets the prediction after its input, with one rule: what only confirms it adds nothing,
+what differs (a plan moved, cancelled or done, a correction, a new person, place, number, group or event) is stored
+and linked to what it changes.
+
+| Set | Arm R | Arm C (1 run) |
+|---|---|---|
+| dev gaps (9 questions) | 88.9 % | 100 % (8 correct + d03 judge error) |
+| blind9 | 96.0 % (3 runs) | 95.2 % |
+| blind10 | 94.3 % (3 runs) | 95.7 % |
+
+- Failures are the ones R has: blind9 q05 (the second group's name, the extraction gap C was meant to help) partial,
+  q11 partial, q20 the third-person answer; blind10 q04 partial, q33.
+- Cost: extraction input +45 % on blind9 (prediction 88,084 input tokens and 10,788 output for 32 calls, barely
+  cached; extraction 212,108 vs 193,834), +49 % on blind10.
+- **C does not win** (within noise, much dearer); not run to 3 + 3, removed. The prediction mostly restates what the
+  extraction input already lists: our extraction already sees the known items, which Nemori's direct-extraction
+  baseline did not.
+
 ### WORK_PLAN 8.11 gaps, step 4 — the near-duplicate resolver keeps the outcome (2026-10-11, DeepSeek direct, `fp815_runs.sh`, `resolve_pairs.py`)
 
 blind9 q20 ("what was the deadline for the Porto abstract, and what happened with it?", 0/3 since 8.11): the morning

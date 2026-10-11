@@ -336,5 +336,9 @@ module length capped, per-module prompt version, maintainer review, no user traf
 prefix caching — **B does not win**, removed; the offline module learner is therefore not built. Since recall lost the
 most points, an arm R was added: a `search_episodes` search ranks by relevance alone (importance and recency had
 outweighed it and pushed small items out of the top 10): blind9 **96.0 %** (+5.8, 3 runs), blind10 **94.3 %** (+2.1,
-within noise), main set 100 %, no extra cost — **R wins**, now the behaviour. Arm C (Nemori) not run yet.
+within noise), main set 100 %, no extra cost — **R wins**, now the behaviour.
+Arm C (`predict.v1`, a call that predicts the window from what I know, never its text; the extraction gets the
+prediction): 1 exploratory run each, blind9 95.2 % and blind10 95.7 % against R's 96.0 / 94.3 %, the same failures,
++45–49 % extraction input — **C does not win**, removed. Our extraction already sees the known items (plans, facts,
+notes, related episodes), which Nemori's baseline did not, so the prediction adds little.
 

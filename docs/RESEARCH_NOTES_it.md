@@ -350,5 +350,9 @@ finestra) e meno cache del prefisso — **B non vince**, rimosso; l'apprendiment
 costruisce. Poiché il recall perdeva più punti, si è aggiunto un braccio R: una ricerca di `search_episodes` ordina per
 sola pertinenza (importanza e recenza pesavano di più e spingevano fuori dai primi 10 gli elementi piccoli): blind9
 **96,0 %** (+5,8, 3 run), blind10 **94,3 %** (+2,1, entro il rumore), set principale 100 %, nessun costo in più — **R
-vince**, ora è il comportamento. Braccio C (Nemori) non ancora provato.
+vince**, ora è il comportamento.
+Braccio C (`predict.v1`, una chiamata che prevede la finestra da ciò che so, mai dal testo; l'estrazione riceve la
+previsione): 1 run esplorativo ciascuno, blind9 95,2 % e blind10 95,7 % contro 96,0 / 94,3 % di R, gli stessi errori,
++45–49 % di token in ingresso all'estrazione — **C non vince**, rimosso. La nostra estrazione vede già gli elementi noti
+(piani, fatti, note, episodi collegati), che la base di confronto di Nemori non vedeva, quindi la previsione aggiunge poco.
 
