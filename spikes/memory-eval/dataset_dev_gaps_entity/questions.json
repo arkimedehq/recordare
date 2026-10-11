@@ -50,6 +50,17 @@
    "q": "Quanto costa la pensione completa per un bambino di 8 anni?",
    "expected": "36 euro: la pensione completa è 72 euro a persona e i bambini sotto i 10 anni pagano metà prezzo.",
    "must_not": []
+  },
+  {
+   "id": "e06",
+   "category": "agent-action",
+   "asked_at": "2026-11-25T09:00:00+01:00",
+   "q": "Che cosa hai fatto tu per i coniugi Hofer prima del loro arrivo?",
+   "expected": "Il 12 novembre ho prenotato la camera 5 per i coniugi Hofer di Innsbruck da venerdì 20 a domenica 22 novembre in mezza pensione, con l'acconto di 80 € arrivato con bonifico l'11 novembre (su richiesta di Gianni); il 15 novembre ho segnato l'intolleranza al lattosio di Anna Hofer da dire in cucina, le ho riservato il posto 7 nel deposito sci e ho segnato l'arrivo tardivo di Peter Hofer venerdì 20 verso le 22, con la chiave nella cassetta accanto alla porta.",
+   "must_not": [
+    "Gianni ha registrato la prenotazione",
+    "non ho fatto nulla per gli Hofer prima del loro arrivo"
+   ]
   }
  ]
 }

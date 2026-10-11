@@ -291,7 +291,9 @@ the same model as personal ones; the personal prompts stay byte-identical (`extr
   `memories.gender`. The people talking to it are never "I": whoever speaks through the account is `someone` until the
   conversation identifies them (a self-introduction or being addressed by name, for their following messages, never
   carried over from another conversation, never guessed); a participant with an identity is `Name [C3]`. A person's
-  "I" is written with their name ("Nunzia ha comprato…"), an unidentified speaker's as "qualcuno…".
+  "I" is written with their name ("Nunzia ha comprato…"), an unidentified speaker's as "qualcuno…". What the agent did
+  with what someone handed it or asked of it is its own action, with who asked ("ho registrato la prenotazione …, su
+  richiesta di Nadia"; `entity.v5`, 8.11).
 - *Prompt* — built from the personal prompt's sections where they hold for both (output schema, dates, plans, notes,
   corrections) plus its own intro, voice, identification, episode, fact and safety sections; the user message is the
   personal one (`ME`, `PEOPLE I KNOW`, `OPEN QUESTIONS`; facts listed `[me]` / `[Name]`).

@@ -309,7 +309,9 @@ entità seguono ora lo stesso modello di quelle personali; i prompt personali re
   prima persona con `memories.gender`. Le persone che gli parlano non sono mai "io": chi parla dall'account è `someone`
   finché la conversazione non lo identifica (una presentazione o essere chiamato per nome, per i suoi messaggi successivi,
   mai riportato da un'altra conversazione, mai indovinato); un partecipante con un'identità è `Nome [C3]`. L'"io" di una
-  persona si scrive con il suo nome ("Nunzia ha comprato…"), quello di chi non è identificato come "qualcuno…".
+  persona si scrive con il suo nome ("Nunzia ha comprato…"), quello di chi non è identificato come "qualcuno…". Ciò che
+  l'agente ha fatto con quanto qualcuno gli ha passato o chiesto è una sua azione, con chi l'ha chiesta ("ho registrato
+  la prenotazione …, su richiesta di Nadia"; `entity.v5`, 8.11).
 - *Prompt* — costruito con le sezioni del prompt personale valide per entrambi (schema di uscita, date, piani, note,
   correzioni) più le proprie sezioni di introduzione, voce, identificazione, episodi, fatti e sicurezza; il messaggio utente
   è quello personale (`ME`, `PEOPLE I KNOW`, `OPEN QUESTIONS`; fatti elencati `[me]` / `[Nome]`).
