@@ -27,6 +27,7 @@ twin, holder vs twin provenance, and unresolved user plans.
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis); the gap is now measured (below) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the holder's own messages | To test | 2 |
+| H13 | Classify-and-compose extraction (a message-type router picks rule modules for one extraction call) and failure-driven module growth ("learning from surprise"), compared with the monolithic prompt on blind sets, with cost | Known, partially novel (narrow): the controlled monolithic-vs-composed comparison | 1 / R |
 | H12 | Resting-state thinking ("default mode"): a budgeted background process that replays recent episodes, links them, keeps open loops (unresolved plans, promises), prepares questions / proposals and updates the self-model improves recall and initiative without confabulation | To design with M5 / track R | 5 / R |
 | H11 | Retrieval beyond a single embedding: cross-encoder reranking, bge-m3 sparse vectors, a people / entity index improve recall on negations, exact details and "everything about X" | To test (engineering); recall fixes and a people-aware leg measured, reranker / sparse vectors not yet | 1 / 3 |
 | H10 | Autonomous evolution: a twin free in thought and action drifts from its holder in measurable ways; lives from the same start diverge | To review (literature not yet searched) | R |
@@ -277,3 +278,56 @@ Guardrails: every reflection is `inferred` with its source memories; never rewri
 cost per day, false-reflection rate. **Prior work to review:** Letta sleep-time compute
 (arXiv:2504.13171), Generative Agents reflection (Park et al. 2023), default mode network /
 awake replay literature.
+
+## H13 — Classify-and-compose extraction, learning from surprise
+
+**Inspiration (maintainer, 2026-10-11).** Human understanding improves through schemas that assimilate the familiar and
+change on the unfamiliar (Piaget), prediction-error learning, fast episodic and slow statistical memory with replay
+(complementary learning systems), and chunking with practice. Proposal: (a) classify the message / window and use
+prompts specialised for the matched types instead of one monolithic prompt; (b) messages outside the known types, or
+got wrong, drive the generation of new prompt modules.
+
+**Where it stands in Recordare.** One extraction call per window (D32; the round-2 spike: single-call D beat Graphiti's
+multi-prompt pipeline); the prompt is already written in sections (`extraction.prompt.ts`) but always sent whole
+(~4,000 fixed tokens); entity memories add a module chosen by metadata. The blind set → failure analysis → dev case →
+`extract.vN` cycle is a manual, failure-driven prompt optimisation; (b) would automate part of it.
+
+**Failure analysis first (2026-10-11, blind9 fp815 ×3, blind10 fp813 ×3 + fp815 ×1, lost points):** recall 50 % /
+41 %, extraction 29 % / 36 %, resolver 12 % / 0, answer 0 / 23 %, judge 8 % / 0. Of 10 extraction failures, 7 would
+plausibly be helped by a message type (group chat folded into the holder's plan, a reschedule read as a correction, a
+cancellation not linked to its plan, a foreign-language request dropped); 3 need per-message speaker tracking instead.
+Upper bound for (a) with the current model: about 2 points.
+
+**Literature (verified; [A] abstract read, [S] snippet only).**
+- Decomposition / routing: Decomposed Prompting (Khot et al., ICLR 2023, arXiv:2210.02406) [A]; Mixture-of-Prompts
+  (Wang et al., ICML 2024, arXiv:2407.00256: demos clustered into experts, inputs routed) [A]; IFScale (Jaroslawicz et
+  al., arXiv:2507.11538: instruction following falls with instruction density, more for small models) [A].
+- Automatic prompt optimisation: ProTeGi (Pryzant et al., EMNLP 2023, arXiv:2305.03495, failure critiques as textual
+  gradients) [A]; OPRO (Yang et al., ICLR 2024, arXiv:2309.03409) [A]; Promptbreeder (Fernando et al., ICML 2024,
+  arXiv:2309.16797) [A]; MIPRO / DSPy (Opsahl-Ong et al., EMNLP 2024, arXiv:2406.11695) [A]; TextGrad (Yuksekgonul et
+  al., Nature 2025, arXiv:2406.07496) [A]; GEPA (Agrawal et al., arXiv:2507.19457) [A]; ACE (Zhang et al.,
+  arXiv:2510.04618: brevity bias and context collapse of rewritten prompts) [A]. Risks: overfitting of optimised prompts
+  (TextReg, arXiv:2605.21318) [A]; memory poisoning through ordinary queries (MINJA, NeurIPS 2025, arXiv:2503.03704) [A].
+- Memory systems: Mem0 (extract, then ADD / UPDATE / DELETE); Memory-R1 (arXiv:2508.19828) [A]; MIRIX (arXiv:2507.07957:
+  a meta manager routes input to six type managers; no routing ablation) [A]; **MemSkill** (Zhang et al.,
+  arXiv:2602.02474) [A] — the closest prior work to both parts: a controller selects memory skills per span for one
+  executor call, a designer clusters hard cases and proposes ≤ 3 skill edits per round with rollback; AutoMem
+  (arXiv:2607.01224) [A]; MemEvolve (arXiv:2512.18746) [A]; LangMem's prompt optimiser [S].
+- Surprise and schemas: **Nemori** (Ma et al., arXiv:2508.03341) [A] predicts an episode from existing knowledge and
+  extracts only the gap (LoCoMo 52.0 → 65.0 against direct extraction, ~39 % fewer tokens) — the strongest measured
+  surprise mechanism; SAGE (arXiv:2605.30711, novelty-gated adds) [A]; EM-LLM (ICLR 2025, arXiv:2407.09450, surprise
+  segmentation) [A]; SCG-MEM (arXiv:2604.20117) and CAM (NeurIPS 2025, arXiv:2510.05520), schema memories [A];
+  Auto-Dreamer (arXiv:2605.20616, learned offline consolidation) [A]; HippoRAG (NeurIPS 2024, arXiv:2405.14831) [A].
+
+**Verdict.** Known (MoP, MIRIX, MemSkill for (a); MemSkill, AutoMem, ProTeGi / GEPA / ACE for (b); Nemori, SAGE, EM-LLM
+for surprise at write time). Narrow open ground: a controlled monolithic-vs-composed comparison (same model, same rules,
+blind sets, cost per window, strong and local models); surprise defined as type novelty or extraction failure feeding
+an offline, human-gated module generator; composing while keeping one call. Methods / engineering, not a headline.
+
+**Test plan.** Arm A: `extract.v14` (existing measurements). Arm B: base + modules chosen by a deterministic router, one
+call (D32 kept; base as a cacheable prefix), with the router's miss rate. Arm C: Nemori-style predict-then-extract-the-
+gap (a second call: `full` profile, D35). 3 runs per arm on blind9 and blind10 with `deepseek-flash`, 1 run of B vs A
+with a local model (where IFScale predicts the gain). Offline module learning (GEPA / ProTeGi style, dev cases only,
+module length capped, per-module prompt version, maintainer review, no user traffic) only if B wins. Results in
+`spikes/memory-eval/RESULTS.md`.
+

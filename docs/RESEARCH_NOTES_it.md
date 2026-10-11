@@ -29,6 +29,7 @@ provenienza titolare vs twin e piani utente irrisolti.
 | H6 | Metodo di valutazione: set held-out cieco scritto da un agente separato; artefatti di giudice troppo severo | Parzialmente nuova, modesta (appendice metodi) | 1 |
 | H7 | Distillare il motore di estrazione in un piccolo modello locale chiude gran parte del divario dei modelli locali | Da testare (ipotesi di ingegneria); il divario ora è misurato (sotto) | dopo M4 |
 | H8 | Stile del twin: fine-tuning per persona vs recupero few-shot dei messaggi del titolare | Da testare | 2 |
+| H13 | Estrazione "classifica e componi" (un instradatore per tipo di messaggio sceglie i moduli di regole per un'unica chiamata di estrazione) e crescita dei moduli guidata dagli errori ("imparare dalla sorpresa"), confrontate con il prompt unico sui set ciechi, con i costi | Nota, parzialmente nuova (ristretta): il confronto controllato prompt unico vs composto | 1 / R |
 | H12 | Pensiero a riposo ("default mode"): un processo in background con budget che rivede gli episodi recenti, li collega, mantiene i cicli aperti (piani irrisolti, promesse), prepara domande / proposte e aggiorna il self-model migliora recall e iniziativa senza confabulazione | Da progettare con M5 / traccia R | 5 / R |
 | H11 | Retrieval oltre il singolo embedding: reranking con cross-encoder, vettori sparsi bge-m3, un indice persone / entità migliorano il recall su negazioni, dettagli esatti e "tutto su X" | Da testare (ingegneria); misurate correzioni del recall e un ramo per le persone, reranker / vettori sparsi non ancora | 1 / 3 |
 | H10 | Evoluzione autonoma: un twin libero nel pensiero e nell'azione si allontana dal titolare in modi misurabili; vite partite dallo stesso inizio divergono | Da rivedere (letteratura non ancora cercata) | R |
@@ -284,3 +285,62 @@ Salvaguardie: ogni riflessione è `inferred` con i ricordi di origine; non riscr
 costo giornaliero, tasso di false riflessioni. **Lavoro precedente da rivedere:** sleep-time compute di Letta
 (arXiv:2504.13171), riflessione di Generative Agents (Park et al. 2023), letteratura su default mode network /
 replay da svegli.
+
+## H13 — Estrazione "classifica e componi", imparare dalla sorpresa
+
+**Ispirazione (maintainer, 2026-10-11).** La comprensione umana migliora con schemi che assimilano il familiare e
+cambiano davanti al nuovo (Piaget), con l'apprendimento dall'errore di previsione, con una memoria episodica veloce e una
+statistica lenta legate dal ripasso (complementary learning systems), e con il chunking che viene dalla pratica.
+Proposta: (a) classificare il messaggio / la finestra e usare prompt specializzati per i tipi riconosciuti invece di un
+unico prompt; (b) i messaggi fuori dai tipi noti, o sbagliati, guidano la generazione di nuovi moduli di prompt.
+
+**Dove si trova Recordare.** Una chiamata di estrazione per finestra (D32; spike del round 2: D a chiamata singola ha
+battuto la pipeline multi-prompt di Graphiti); il prompt è già scritto a sezioni (`extraction.prompt.ts`) ma inviato
+sempre intero (~4.000 token fissi); le memorie di entità aggiungono un modulo scelto dai metadati. Il ciclo set cieco →
+analisi dei fallimenti → caso di sviluppo → `extract.vN` è un'ottimizzazione del prompt manuale e guidata dagli errori;
+(b) ne automatizzerebbe una parte.
+
+**Prima l'analisi dei fallimenti (2026-10-11, blind9 fp815 ×3, blind10 fp813 ×3 + fp815 ×1, punti persi):** recupero
+50 % / 41 %, estrazione 29 % / 36 %, resolver 12 % / 0, risposta 0 / 23 %, giudice 8 % / 0. Dei 10 errori di estrazione,
+7 sarebbero plausibilmente aiutati da un tipo di messaggio (chat di gruppo assorbita nel piano della titolare, uno
+spostamento letto come correzione, un annullamento non collegato al suo piano, una richiesta in lingua straniera persa);
+3 richiedono invece di tracciare chi parla messaggio per messaggio. Tetto per (a) con il modello attuale: circa 2 punti.
+
+**Letteratura (verificata; [A] abstract letto, [S] solo snippet).**
+- Scomposizione / instradamento: Decomposed Prompting (Khot et al., ICLR 2023, arXiv:2210.02406) [A]; Mixture-of-Prompts
+  (Wang et al., ICML 2024, arXiv:2407.00256: esempi raggruppati in esperti, input instradati) [A]; IFScale (Jaroslawicz
+  et al., arXiv:2507.11538: il rispetto delle istruzioni cala con la loro densità, di più per i modelli piccoli) [A].
+- Ottimizzazione automatica dei prompt: ProTeGi (Pryzant et al., EMNLP 2023, arXiv:2305.03495, critiche degli errori
+  come gradienti testuali) [A]; OPRO (Yang et al., ICLR 2024, arXiv:2309.03409) [A]; Promptbreeder (Fernando et al.,
+  ICML 2024, arXiv:2309.16797) [A]; MIPRO / DSPy (Opsahl-Ong et al., EMNLP 2024, arXiv:2406.11695) [A]; TextGrad
+  (Yuksekgonul et al., Nature 2025, arXiv:2406.07496) [A]; GEPA (Agrawal et al., arXiv:2507.19457) [A]; ACE (Zhang et
+  al., arXiv:2510.04618: brevity bias e collasso del contesto dei prompt riscritti) [A]. Rischi: sovradattamento dei
+  prompt ottimizzati (TextReg, arXiv:2605.21318) [A]; avvelenamento della memoria con domande normali (MINJA, NeurIPS
+  2025, arXiv:2503.03704) [A].
+- Sistemi di memoria: Mem0 (estrae, poi ADD / UPDATE / DELETE); Memory-R1 (arXiv:2508.19828) [A]; MIRIX
+  (arXiv:2507.07957: un meta-gestore instrada l'input a sei gestori per tipo; nessuna ablazione dell'instradamento) [A];
+  **MemSkill** (Zhang et al., arXiv:2602.02474) [A] — il lavoro più vicino a entrambe le parti: un controllore sceglie
+  per ogni frammento le abilità di memoria per un'unica chiamata esecutrice, un progettista raggruppa i casi difficili e
+  propone ≤ 3 modifiche di abilità per giro, con rollback; AutoMem (arXiv:2607.01224) [A]; MemEvolve (arXiv:2512.18746)
+  [A]; l'ottimizzatore di prompt di LangMem [S].
+- Sorpresa e schemi: **Nemori** (Ma et al., arXiv:2508.03341) [A] prevede un episodio da ciò che sa già ed estrae solo
+  la differenza (LoCoMo da 52,0 a 65,0 rispetto all'estrazione diretta, ~39 % di token in meno) — il meccanismo di
+  sorpresa misurato meglio; SAGE (arXiv:2605.30711, aggiunte filtrate per novità) [A]; EM-LLM (ICLR 2025,
+  arXiv:2407.09450, segmentazione per sorpresa) [A]; SCG-MEM (arXiv:2604.20117) e CAM (NeurIPS 2025, arXiv:2510.05520),
+  memorie a schemi [A]; Auto-Dreamer (arXiv:2605.20616, consolidamento offline appreso) [A]; HippoRAG (NeurIPS 2024,
+  arXiv:2405.14831) [A].
+
+**Verdetto.** Nota (MoP, MIRIX, MemSkill per (a); MemSkill, AutoMem, ProTeGi / GEPA / ACE per (b); Nemori, SAGE, EM-LLM
+per la sorpresa in scrittura). Terreno aperto ristretto: un confronto controllato prompt unico vs composto (stesso
+modello, stesse regole, set ciechi, costo per finestra, modelli forti e locali); la sorpresa definita come tipo nuovo o
+errore di estrazione, che alimenta un generatore di moduli offline e approvato da una persona; comporre mantenendo una
+sola chiamata. Contributo di metodo / ingegneria, non un titolo di ricerca.
+
+**Piano di prova.** Braccio A: `extract.v14` (misure esistenti). Braccio B: base + moduli scelti da un instradatore
+deterministico, una chiamata (D32 mantenuta; la base come prefisso in cache), con il tasso di moduli mancati
+dall'instradatore. Braccio C: "prevedi, poi estrai la differenza" alla Nemori (una seconda chiamata: profilo `full`,
+D35). 3 run per braccio su blind9 e blind10 con `deepseek-flash`, 1 run di B contro A con un modello locale (dove IFScale
+prevede il guadagno). Apprendimento offline dei moduli (alla GEPA / ProTeGi, solo casi di sviluppo, lunghezza dei moduli
+limitata, versione per modulo, revisione del maintainer, nessun traffico utente) solo se B vince. Risultati in
+`spikes/memory-eval/RESULTS.md`.
+
