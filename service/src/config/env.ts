@@ -51,8 +51,13 @@ const baseSchema = z.object({
   FACTS_PASS: z.enum(['inline', 'separate']).optional(),
   /** Nightly consolidation on its own schedule (M5); off = only on demand (admin endpoint), e.g. evaluation setups. */
   CONSOLIDATION_SCHEDULE: bool.default(true),
+  /** Experiment (H13): compose the extraction prompt from the parts the window can use, same rules (`compose.v1`). */
+  EXTRACTION_COMPOSE: bool.default(false),
   /** Give the nightly diary to period overviews in recall; set = overrides the quality profile (measured: no gain yet). */
   RECALL_DIGESTS: bool.optional(),
+  /** Experiment (H13, the question's type picks the ranking): a "search" ranks by relevance, importance and recency only
+   * breaking ties; "blend" = the M4 score for every mode. */
+  RECALL_SEARCH_RANKING: z.enum(['blend', 'relevance']).default('blend'),
   /** Memory context (WORK_PLAN 5.7): minimum similarity for facts and notes, episodes, upcoming plans, episodes of a named period. */
   CONTEXT_MIN_FACT_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   CONTEXT_MIN_EPISODE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),

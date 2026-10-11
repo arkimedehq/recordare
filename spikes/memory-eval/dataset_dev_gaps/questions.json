@@ -87,6 +87,17 @@
     "la domanda non è stata inviata",
     "il protocollo non è noto"
    ]
+  },
+  {
+   "id": "d09",
+   "category": "detail",
+   "asked_at": "2026-12-15T09:00:00+01:00",
+   "q": "Tommaso è stato assunto in Ducati?",
+   "expected": "No, non ancora: il 5 dicembre 2026 Tommaso mi ha detto di aver fatto solo il colloquio in Ducati, e la risposta arriva a febbraio; è la mamma che racconta in giro che è stato assunto.",
+   "must_not": [
+    "Tommaso è stato assunto in Ducati",
+    "non ho informazioni sulla Ducati"
+   ]
   }
  ]
 }

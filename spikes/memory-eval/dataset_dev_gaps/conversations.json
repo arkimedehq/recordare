@@ -1,5 +1,5 @@
 {
- "_note": "Dev set for the 8.11 gaps (NOT blind, written by the engine developer): a plan's step done before its date, the agent's own slip, options compared, a raw message behind a correction, a later shorter telling that adds the outcome.",
+ "_note": "Dev set for the 8.11 gaps (NOT blind, written by the engine developer): a plan's step done before its date, the agent's own slip, options compared, a raw message behind a correction, a later shorter telling that adds the outcome, a small detail about a person among their big events.",
  "users": {
   "marco": "Marco, Bologna"
  },
@@ -271,6 +271,186 @@
     {
      "role": "assistant",
      "content": "Perfetto, tengo il protocollo 2026/0871-B. In bocca al lupo!"
+    }
+   ]
+  },
+  {
+   "id": "g18",
+   "user": "marco",
+   "ts": "2026-12-03T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mio fratello Tommaso ha vinto la Granfondo di Bologna nella sua categoria! Tre ore e dodici, primo su 240. È al settimo cielo."
+    },
+    {
+     "role": "assistant",
+     "content": "Fantastico! Complimenti a Tommaso, primo su 240 è un risultato enorme."
+    }
+   ]
+  },
+  {
+   "id": "g19",
+   "user": "marco",
+   "ts": "2026-12-04T22:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Grande notizia in famiglia: Tommaso e Irene si sposano a maggio, a San Luca. Io faccio da testimone!"
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Auguri a Tommaso e Irene, e che onore fare da testimone."
+    }
+   ]
+  },
+  {
+   "id": "g20",
+   "user": "marco",
+   "ts": "2026-12-05T13:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pranzo dai miei. Mamma racconta a tutti che Tommaso è stato assunto in Ducati, ma lui mi ha detto che ha fatto solo il colloquio: la risposta arriva a febbraio."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito: per ora solo il colloquio in Ducati, la risposta a febbraio."
+    }
+   ]
+  },
+  {
+   "id": "g21",
+   "user": "marco",
+   "ts": "2026-12-06T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tommaso ha trovato casa a Milano, in zona Isola: si trasferisce a gennaio con Irene. Mi mancherà averlo qui a Bologna."
+    },
+    {
+     "role": "assistant",
+     "content": "Un bel passo per loro. Milano è vicina, vi vedrete spesso."
+    }
+   ]
+  },
+  {
+   "id": "g22",
+   "user": "marco",
+   "ts": "2026-12-07T19:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Brutta caduta di Tommaso in bici sui colli: polso rotto, è al Rizzoli, lo operano domani. Che spavento."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi dispiace molto, che spavento. Fammi sapere com'è andata l'operazione."
+    }
+   ]
+  },
+  {
+   "id": "g23",
+   "user": "marco",
+   "ts": "2026-12-08T18:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Operazione al polso di Tommaso andata bene: placca e sei settimane di gesso. Il chirurgo è ottimista."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sollievo! Sei settimane passano, l'importante è che sia andata bene."
+    }
+   ]
+  },
+  {
+   "id": "g24",
+   "user": "marco",
+   "ts": "2026-12-09T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera festa a sorpresa per i trent'anni di Tommaso, all'Osteria del Sole: c'erano una quarantina di amici, si è commosso."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella sorpresa! Trent'anni festeggiati alla grande."
+    }
+   ]
+  },
+  {
+   "id": "g25",
+   "user": "marco",
+   "ts": "2026-12-10T20:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tommaso e Irene hanno adottato una cagnolina al canile di Trebbo, si chiama Nebbia. Irene è innamorata."
+    },
+    {
+     "role": "assistant",
+     "content": "Benvenuta Nebbia! Che bella scelta adottarla."
+    }
+   ]
+  },
+  {
+   "id": "g26",
+   "user": "marco",
+   "ts": "2026-12-11T19:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tommaso ha comprato la macchina nuova, una Panda ibrida verde, per Milano. Gliel'ho accompagnato a ritirarla."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima per la città! Bello che l'abbia ritirata con te."
+    }
+   ]
+  },
+  {
+   "id": "g27",
+   "user": "marco",
+   "ts": "2026-12-12T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tommaso ha prenotato il viaggio di nozze: tre settimane in Giappone a giugno, Tokyo, Kyoto e Hokkaido."
+    },
+    {
+     "role": "assistant",
+     "content": "Un viaggio di nozze da sogno!"
+    }
+   ]
+  },
+  {
+   "id": "g28",
+   "user": "marco",
+   "ts": "2026-12-13T17:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tommaso ha discusso la tesi del master in ingegneria meccanica: 110 e lode, eravamo tutti lì."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti a Tommaso, 110 e lode è un traguardo bellissimo!"
+    }
+   ]
+  },
+  {
+   "id": "g29",
+   "user": "marco",
+   "ts": "2026-12-14T20:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tommaso e Irene hanno scelto il ristorante del matrimonio: Villa Aldrovandi, 120 invitati."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella scelta, Villa Aldrovandi è splendida."
     }
    ]
   }
