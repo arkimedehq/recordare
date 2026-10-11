@@ -479,7 +479,11 @@ On the dev set the booking is "ho registrato … su richiesta di Gianni" in 3/3 
   in 3/3, and the 27 March episodes are kept.
 - **Worse:**
   - q06 ccc → www: "Su richiesta di Benedetta ho bloccato il B6 …: Nico deve sistemarla" now reads as a message to pass
-    to Nico; the answer lists it, plus once a veranda outcome not found.
+    to Nico; the answer lists it, plus once a veranda outcome not found. A closer look: the stored episodes are right
+    and equivalent in old and new runs (both Marta messages, the veranda check, the B6 block with who asked), and an
+    old run (fp812r r1) also listed B6 as a message and was judged correct. The miss is in the answer (B6 counted
+    twice, a date, once the outcome and Marta's name not used) and the judge's strictness, not in extraction; no
+    change made (an answer-prompt rule for it would be tuned on the blind set).
   - q33 ccc → wpw: the bike question is stored as "un ospite" in old and new runs alike; the answer named Katrin once,
     recall missed it once — variance.
 - The rest is run-to-run variance.
