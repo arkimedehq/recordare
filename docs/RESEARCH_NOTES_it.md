@@ -344,3 +344,11 @@ prevede il guadagno). Apprendimento offline dei moduli (alla GEPA / ProTeGi, sol
 limitata, versione per modulo, revisione del maintainer, nessun traffico utente) solo se B vince. Risultati in
 `spikes/memory-eval/RESULTS.md`.
 
+**Risultati (2026-10-11, `spikes/memory-eval/RESULTS.md` "H13").** Braccio B (`compose.v1`, 1 run esplorativo): blind9
+91,7 % contro 90,2 %, le stesse domande sbagliate, nessun risparmio di token (i moduli sono attivi quasi in ogni
+finestra) e meno cache del prefisso — **B non vince**, rimosso; l'apprendimento offline dei moduli quindi non si
+costruisce. Poiché il recall perdeva più punti, si è aggiunto un braccio R: una ricerca di `search_episodes` ordina per
+sola pertinenza (importanza e recenza pesavano di più e spingevano fuori dai primi 10 gli elementi piccoli): blind9
+**96,0 %** (+5,8, 3 run), blind10 **94,3 %** (+2,1, entro il rumore), set principale 100 %, nessun costo in più — **R
+vince**, ora è il comportamento. Braccio C (Nemori) non ancora provato.
+

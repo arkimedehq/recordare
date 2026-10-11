@@ -23,6 +23,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   per intero, come indica il modello (prima: sempre il più corto, così un messaggio successivo breve con l'esito —
   "inviato alle 16:10, numero di conferma …" — veniva nascosto); quando ognuno ha qualcosa di suo, restano visibili
   entrambi.
+- `search_episodes`: una ricerca (`search`) ordina per sola pertinenza; importanza e recenza decidono solo i pari
+  merito (prima pesavano più della pertinenza, così i grandi eventi di una persona spingevano fuori dai risultati il
+  piccolo elemento che la domanda nomina). Gli elenchi e `latest` tengono l'ordine di prima. Set ciechi: personale
+  90,2 % → 96,0 %, entità 92,2 % → 94,3 % (3 run ciascuno).
 
 ## [0.2.0] — 2026-10-10
 

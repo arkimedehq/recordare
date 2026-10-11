@@ -8,7 +8,7 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
 
-describe('search_episodes ranking by the question type (H13, RECALL_SEARCH_RANKING=relevance)', () => {
+describe('search_episodes ranking by the question type (H13)', () => {
   let app: INestApplication;
   let url: string;
   let emb: Server;
@@ -20,7 +20,7 @@ describe('search_episodes ranking by the question type (H13, RECALL_SEARCH_RANKI
   beforeAll(async () => {
     const fake = await startFakeEmbeddings();
     emb = fake.server;
-    testEnv({ EMBEDDING_BASE_URL: fake.url, RECALL_SEARCH_RANKING: 'relevance' });
+    testEnv({ EMBEDDING_BASE_URL: fake.url });
     await resetSchema();
     ({ app, url } = await startApp());
     const c = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } });

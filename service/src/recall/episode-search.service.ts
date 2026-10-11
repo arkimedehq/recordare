@@ -110,7 +110,6 @@ export class EpisodeSearchService {
   private readonly log = new Logger(EpisodeSearchService.name);
   private readonly defaultProfile: QualityProfileName;
   private readonly recallDigests: boolean | undefined;
-  private readonly searchRanking: 'blend' | 'relevance';
 
   constructor(
     private readonly db: DataSource,
@@ -121,7 +120,6 @@ export class EpisodeSearchService {
   ) {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
     this.recallDigests = config.get('RECALL_DIGESTS', { infer: true });
-    this.searchRanking = config.get('RECALL_SEARCH_RANKING', { infer: true });
   }
 
   async search(memoryId: string, clientId: string | null, args: EpisodeSearchArgs, now: Date): Promise<EpisodeSearchResult> {
@@ -167,10 +165,10 @@ export class EpisodeSearchService {
       const own = speaker.kind === 'contact' ? (r.subject_person_id === speaker.id ? SPEAKER_BONUS : theirs.has(r.id) ? SPEAKER_BONUS / 2 : 0) : 0;
       return (relevance.get(r.id) ?? 0) + 0.01 * r.importance + 0.03 * Math.exp(-ageDays / 90) + own;
     };
-    // A search asks for one thing: importance and recency (up to 0.13) outweigh relevance (RRF: ~0.025 at most, nearly
-    // flat across the top ranks) and let the big events of a person push out the small item the question names (blind9,
-    // H13). With "relevance" a search ranks by relevance alone, the blend only breaking ties; lists and "latest" keep it.
-    const byRelevance = mode === 'search' && this.searchRanking === 'relevance';
+    // A search asks for one thing, so it ranks by relevance alone and the blend only breaks ties: in the blend importance
+    // and recency (up to 0.13) outweigh relevance (RRF: ~0.025 at most, nearly flat across the top ranks) and let the big
+    // events of a person push out the small item the question names (RESEARCH_NOTES H13, arm R). Lists and "latest" keep it.
+    const byRelevance = mode === 'search';
     const order = (a: Row, b: Row) => (byRelevance ? (relevance.get(b.id) ?? 0) - (relevance.get(a.id) ?? 0) : 0) || score(b) - score(a);
     const limit = args.limit ?? (mode === 'list' ? 30 : mode === 'latest' ? 5 : 10);
     const candidates = rows.filter(inRange);

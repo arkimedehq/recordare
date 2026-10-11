@@ -331,3 +331,10 @@ with a local model (where IFScale predicts the gain). Offline module learning (G
 module length capped, per-module prompt version, maintainer review, no user traffic) only if B wins. Results in
 `spikes/memory-eval/RESULTS.md`.
 
+**Results (2026-10-11, `spikes/memory-eval/RESULTS.md` "H13").** Arm B (`compose.v1`, 1 exploratory run): blind9
+91.7 % vs 90.2 %, the same failing questions, no token saving (the modules are on in almost every window) and less
+prefix caching — **B does not win**, removed; the offline module learner is therefore not built. Since recall lost the
+most points, an arm R was added: a `search_episodes` search ranks by relevance alone (importance and recency had
+outweighed it and pushed small items out of the top 10): blind9 **96.0 %** (+5.8, 3 runs), blind10 **94.3 %** (+2.1,
+within noise), main set 100 %, no extra cost — **R wins**, now the behaviour. Arm C (Nemori) not run yet.
+

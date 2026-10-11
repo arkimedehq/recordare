@@ -13,8 +13,7 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { type ExtractionRunner } from '../queue/queue.port';
 import { buildInput, pendingWindows, type Memory, type WindowMessage } from './extraction.context';
-import { buildExtractionUser, COMPOSE_VERSION, composedSystem, ENTITY_PROMPT_VERSION, ENTITY_SYSTEM, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM,
-  promptModules } from './extraction.prompt';
+import { buildExtractionUser, ENTITY_PROMPT_VERSION, ENTITY_SYSTEM, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
 import { extractionSchema } from './extraction.schema';
 import { ConcurrentExtractionError, ExtractionWriter, type WrittenRow } from './extraction.writer';
 import { resolveNearDuplicates } from './episode-resolver';
@@ -32,7 +31,6 @@ export class EngineExtractionRunner implements ExtractionRunner {
   private readonly defaultProfile: QualityProfileName;
   private readonly windowCharsOverride: number | undefined;
   private readonly factsPassOverride: QualityProfile['factsPass'] | undefined;
-  private readonly compose: boolean;
 
   constructor(
     private readonly db: DataSource,
@@ -44,7 +42,6 @@ export class EngineExtractionRunner implements ExtractionRunner {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
     this.windowCharsOverride = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
     this.factsPassOverride = config.get('FACTS_PASS', { infer: true });
-    this.compose = config.get('EXTRACTION_COMPOSE', { infer: true });
   }
 
   async runForConversation(conversationId: string): Promise<void> {
@@ -104,8 +101,8 @@ export class EngineExtractionRunner implements ExtractionRunner {
       // transaction applies both (same numbered lists, so references stay valid).
       const [episodesOut, factsOut] = await Promise.all([
         this.llm.completeJson({
-          promptId: this.version(memory),
-          system: this.compose ? composedSystem(!!memory.entity, promptModules(input.prompt)) : memory.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
+          promptId: extractionVersion(memory),
+          system: memory.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
           user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
           schema: extractionSchema,
           maxTokens: 6000,
@@ -154,16 +151,11 @@ export class EngineExtractionRunner implements ExtractionRunner {
     }
   }
 
-  /** The prompt version of a run: a composed prompt (H13) is its own version, so a run never mixes the two (rule 9). */
-  private version(memory: Memory): string {
-    return this.compose ? `${extractionVersion(memory)}+${COMPOSE_VERSION}` : extractionVersion(memory);
-  }
-
   private async startRun(memory: Memory, conversationId: string, window: WindowMessage[]): Promise<string> {
     const [run] = await this.db.query(
       `INSERT INTO extraction_runs (memory_id, conversation_id, kind, window_from, window_to, model, provider, prompt_version)
        VALUES ($1, $2, 'extraction', $3, $4, 'pending', 'configured', $5) RETURNING id`,
-      [memory.id, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, this.version(memory)]);
+      [memory.id, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, extractionVersion(memory)]);
     return run.id as string;
   }
 

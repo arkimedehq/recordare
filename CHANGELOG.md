@@ -21,6 +21,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - Near-duplicate resolver `resolve.v2`: of two tellings of the same event it hides the one the other fully covers, as
   the model names it (before: always the shorter one, so a later short message with the outcome — "sent at 16:10,
   confirmation number …" — was hidden); when each telling has something of its own, both stay visible.
+- `search_episodes`: a `search` ranks by relevance alone; importance and recency only break ties (before: they
+  outweighed relevance, so a person's big events pushed the small item the question names out of the results). Lists
+  and `latest` keep the old order. Blind sets: personal 90.2 % → 96.0 %, entity 92.2 % → 94.3 % (3 runs each).
 
 ## [0.2.0] — 2026-10-10
 
