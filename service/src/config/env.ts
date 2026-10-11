@@ -51,6 +51,8 @@ const baseSchema = z.object({
   FACTS_PASS: z.enum(['inline', 'separate']).optional(),
   /** Nightly consolidation on its own schedule (M5); off = only on demand (admin endpoint), e.g. evaluation setups. */
   CONSOLIDATION_SCHEDULE: bool.default(true),
+  /** Experiment (H13 arm C): predict the window from what the memory knows, then extract with the prediction (`predict.v1`). */
+  EXTRACTION_PREDICT: bool.default(false),
   /** Give the nightly diary to period overviews in recall; set = overrides the quality profile (measured: no gain yet). */
   RECALL_DIGESTS: bool.optional(),
   /** Memory context (WORK_PLAN 5.7): minimum similarity for facts and notes, episodes, upcoming plans, episodes of a named period. */

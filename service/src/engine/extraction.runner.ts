@@ -24,6 +24,7 @@ import { qualityProfile, type QualityProfile, type QualityProfileName } from './
 import { EPISODES_ONLY_NOTE, ENTITY_FACTS_SYSTEM, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { writeLearnedEpisode } from '../knowledge/learned-episode';
+import { buildPredictUser, calibrationBlock, PREDICT_PROMPT_VERSION, PREDICT_SYSTEM, predictSchema } from './predict.prompt';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
@@ -31,6 +32,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
   private readonly defaultProfile: QualityProfileName;
   private readonly windowCharsOverride: number | undefined;
   private readonly factsPassOverride: QualityProfile['factsPass'] | undefined;
+  private readonly predict: boolean;
 
   constructor(
     private readonly db: DataSource,
@@ -42,6 +44,12 @@ export class EngineExtractionRunner implements ExtractionRunner {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
     this.windowCharsOverride = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
     this.factsPassOverride = config.get('FACTS_PASS', { infer: true });
+    this.predict = config.get('EXTRACTION_PREDICT', { infer: true });
+  }
+
+  /** The prompt version a run records: `+predict.v1` with the prediction step (H13 arm C). */
+  private version(memory: Memory): string {
+    return this.predict ? `${extractionVersion(memory)}+${PREDICT_PROMPT_VERSION}` : extractionVersion(memory);
   }
 
   async runForConversation(conversationId: string): Promise<void> {
@@ -95,13 +103,19 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const input = await this.telemetry.track('context', memory.id, async () =>
         buildInput(this.db.manager, memory, window, slots.map((s) => s.key), await this.windowVector(window), profile));
       const ctx = { memoryId: memory.id, clientId, runId };
-      const user = buildExtractionUser(input.prompt);
+      let user = buildExtractionUser(input.prompt);
+      if (this.predict) {
+        // H13 arm C: predict the window from what I know (never its text), then extract with the prediction beside it.
+        const { expected } = await this.llm.completeJson({ promptId: PREDICT_PROMPT_VERSION, system: PREDICT_SYSTEM,
+          user: buildPredictUser(input.prompt), schema: predictSchema, maxTokens: 1200, task: profile.extractionTask, reasoning: profile.reasoning }, ctx);
+        user = `${user}\n\n${calibrationBlock(expected)}`;
+      }
       const separate = profile.factsPass === 'separate';
       // With a separate facts pass the two calls run side by side on their own task models; one writer
       // transaction applies both (same numbered lists, so references stay valid).
       const [episodesOut, factsOut] = await Promise.all([
         this.llm.completeJson({
-          promptId: extractionVersion(memory),
+          promptId: this.version(memory),
           system: memory.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
           user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
           schema: extractionSchema,
@@ -155,7 +169,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
     const [run] = await this.db.query(
       `INSERT INTO extraction_runs (memory_id, conversation_id, kind, window_from, window_to, model, provider, prompt_version)
        VALUES ($1, $2, 'extraction', $3, $4, 'pending', 'configured', $5) RETURNING id`,
-      [memory.id, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, extractionVersion(memory)]);
+      [memory.id, conversationId, window[0]?.sentAt, window[window.length - 1]?.sentAt, this.version(memory)]);
     return run.id as string;
   }
 
