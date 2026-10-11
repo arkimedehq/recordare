@@ -205,6 +205,20 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(rows).toEqual([{ d: '2026-11-01', inval: true, corr: false }, { d: '2026-11-02', inval: false, corr: true }]);
   });
 
+  it('hides, of two duplicate tellings, the one the model says the other covers, not the shorter one', async () => {
+    const long = 'Domanda per il concorso del Comune inviata oggi, 12 pagine con curriculum e lettera di motivazione.';
+    const a = await ingest('dup1', [{ id: 'd1', role: 'user', content: 'Oggi mando la domanda per il concorso, 12 pagine.', at: '2026-12-02T09:10:00+01:00' }]);
+    llm.queue.push({ episodes: [{ content: long, occurred_at: '2026-12-02', evidence: [1] }] });
+    await runner.runForConversation(a);
+    const b = await ingest('dup2', [{ id: 'd2', role: 'user', content: 'Inviata alle 15:40, protocollo 2026/0871-B.', at: '2026-12-02T17:40:00+01:00' }]);
+    // Identical texts → identical fake embeddings → a candidate pair; the shorter NEW telling holds the outcome.
+    llm.queue.push({ episodes: [{ content: long, occurred_at: '2026-12-02', evidence: [1] }] });
+    llm.queue.push({ decisions: [{ pair: 1, relation: 'duplicate', keep: 'NEW' }] });
+    await runner.runForConversation(b);
+    const rows = await db.query(`SELECT duplicate_of IS NOT NULL AS hidden FROM episodes WHERE content = $1 ORDER BY recorded_at`, [long]);
+    expect(rows).toEqual([{ hidden: true }, { hidden: false }]);
+  });
+
   it('replaces single-value facts forward-only and keeps history', async () => {
     const c4 = await ingest('c4', [{ id: 'f1', role: 'user', content: 'Mi sono preso una Golf usata del 2019.', at: '2026-01-12T20:10:00+01:00' }]);
     llm.queue.push({ facts: [{ key: 'car', value: 'Golf usata del 2019', verdict: 'new', evidence: [1] }] });

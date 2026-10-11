@@ -443,6 +443,40 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.11 gaps, step 4 — the near-duplicate resolver keeps the outcome (2026-10-11, DeepSeek direct, `fp815_runs.sh`, `resolve_pairs.py`)
+
+blind9 q20 ("what was the deadline for the Porto abstract, and what happened with it?", 0/3 since 8.11): the morning
+telling ("submitting now: 298 words, title …, I'll send the confirmation number") and the afternoon one ("submitted at
+16:10, confirmation number PC35-0412") were judged the same event by the resolver (`resolve.v1`), which hid the
+shorter one — the one holding the outcome. The confirmation episode reached the answer's context in 2 of 10 earlier
+runs. On top of that the answer names the holder in the third person ("Beatrice ha inviato"), which the judge reads as
+someone else submitting.
+
+Dev case d08 (`dataset_dev_gaps`, sessions g16–g17: "sending the application today, 12 pages, I'll pass you the
+protocol number" → "sent at 15:40, protocol 2026/0871-B"). Through the full harness the old resolver kept both in 2
+runs (the pair was not its candidate or was called distinct); called directly on the stored pair, `resolve.v1` says
+"duplicate" 10/10, so the old code hides the protocol telling.
+
+Fix, `resolve.v2`: "duplicate" names the telling to keep (`keep`: NEW / EXISTING, the one that says everything the
+other says; length only as a fallback); the same event where each telling has something of its own is "distinct" and
+both stay visible. Direct calls on dev pairs, v1 → v2: the d08 pair duplicate 10/10 → distinct 10/10; a plain
+duplicate (one covers the other) duplicate → duplicate, keep the fuller one, whether NEW or EXISTING; a correction
+corrects → corrects; plan and outcome, the same run on two days: distinct → distinct; a duplicate across languages
+duplicate → duplicate.
+
+| Set | Runs | Mean | Before |
+|---|---|---|---|
+| dev gaps (8 questions) | 100 | 100 % | — |
+| blind9 (personal) | 90.5 / 91.2 / 89.0 | **90.2 %** | 90.1 % (step 2) |
+| blind10 (entity, control) | 92.9 | 92.9 % | 91.9 % (step 3) |
+
+- **q20:** the confirmation episode is visible and in the context in 3/3 runs (was 2/10); every answer has the
+  deadlines, the date and PC35-0412. Verdicts: correct, wrong ("Beatrice ha inviato"), judge error (the same third
+  person). The rest of the miss is the voice of the answer, and a judge that does not know the holder's name.
+- Other changes (q01 c→w once: the moved vet booking, stored the same way as in the old runs; q08, q23) are answer
+  variance, not resolver links.
+- blind9 r1 stopped on a connection error after 2 questions (`fp815_blind9_r1_connerr.log`) and was run again.
+
 ### WORK_PLAN 8.11 gaps, step 3 — the entity agent's own actions (2026-10-11, DeepSeek direct, `fp813_runs.sh`)
 
 blind10 q04 ("what did you do for the Brandts before they arrived?", 0/3 in every earlier batch) had two causes:

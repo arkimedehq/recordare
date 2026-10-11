@@ -1,5 +1,5 @@
 {
- "_note": "Dev set for the 8.11 gaps (NOT blind, written by the engine developer): a plan's step done before its date, the agent's own slip, options compared, a raw message behind a correction.",
+ "_note": "Dev set for the 8.11 gaps (NOT blind, written by the engine developer): a plan's step done before its date, the agent's own slip, options compared, a raw message behind a correction, a later shorter telling that adds the outcome.",
  "users": {
   "marco": "Marco, Bologna"
  },
@@ -241,6 +241,36 @@
     {
      "role": "assistant",
      "content": "Congratulazioni, Marco! Che notizia meravigliosa, auguri a te e Giulia!"
+    }
+   ]
+  },
+  {
+   "id": "g16",
+   "user": "marco",
+   "ts": "2026-12-02T09:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi mando la domanda per il concorso da istruttore tecnico del Comune di Bologna: 12 pagine con curriculum e lettera di motivazione, oggetto «Domanda di partecipazione – istruttore tecnico, cat. C». Scade venerdì 4, ma voglio stare tranquillo. Ti giro il numero di protocollo quando arriva."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, segnato: la domanda per il concorso del Comune parte oggi, mercoledì 2 dicembre. Quando hai il protocollo me lo dici e lo tengo."
+    }
+   ]
+  },
+  {
+   "id": "g17",
+   "user": "marco",
+   "ts": "2026-12-02T17:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatto: domanda inviata alle 15:40, protocollo 2026/0871-B."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, tengo il protocollo 2026/0871-B. In bocca al lupo!"
     }
    ]
   }

@@ -76,6 +76,17 @@
    "must_not": [
     "la cena all'Osteria dei Poeti c'è stata"
    ]
+  },
+  {
+   "id": "d08",
+   "category": "plan",
+   "asked_at": "2026-12-03T10:00:00+01:00",
+   "q": "L'ho poi mandata la domanda per il concorso del Comune? Quando, e con che protocollo?",
+   "expected": "Sì: mercoledì 2 dicembre 2026 alle 15:40, protocollo 2026/0871-B (la scadenza era venerdì 4 dicembre; dettagli secondari: 12 pagine con curriculum e lettera di motivazione, concorso da istruttore tecnico del Comune di Bologna).",
+   "must_not": [
+    "la domanda non è stata inviata",
+    "il protocollo non è noto"
+   ]
   }
  ]
 }

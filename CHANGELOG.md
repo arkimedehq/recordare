@@ -18,6 +18,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   registered the booking"; a C-number only for the person the item is about. The extraction writer gives an episode
   whose subject is a listed contact the conversation never names to the one person the episode names (before: the
   episode was dropped). Blind entity set: 91.9 % (3 runs; the booking question 0/3 → 2/3 + 1 partial).
+- Near-duplicate resolver `resolve.v2`: of two tellings of the same event it hides the one the other fully covers, as
+  the model names it (before: always the shorter one, so a later short message with the outcome — "sent at 16:10,
+  confirmation number …" — was hidden); when each telling has something of its own, both stay visible.
 
 ## [0.2.0] — 2026-10-10
 
