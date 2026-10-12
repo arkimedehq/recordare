@@ -149,7 +149,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
 
   server.registerTool('log_episode', {
     title: 'Note something that happened or is planned',
-    description: 'Explicit capture ("note that today I serviced the car"). Resolve the date yourself (ISO).',
+    description: 'Explicit capture ("note that today I serviced the car"). Resolve the date yourself (ISO).'
+      + ' Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something.',
     inputSchema: {
       content: z.string(),
       kind: z.enum(['event', 'plan']).optional(),
@@ -171,7 +172,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
 
   server.registerTool('remember', {
     title: 'Remember something',
-    description: 'Explicit "remember that…" about preferences, habits, values, knowledge.',
+    description: 'Explicit "remember that…" about preferences, habits, values, knowledge.'
+      + ' Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something.',
     inputSchema: {
       content: z.string(),
       category: z.enum(['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint']).optional(),

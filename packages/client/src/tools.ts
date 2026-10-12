@@ -101,7 +101,7 @@ export const TOOLS = [
   {
     "name": "log_episode",
     "title": "Note something that happened or is planned",
-    "description": "Explicit capture (\"note that today I serviced the car\"). Resolve the date yourself (ISO).",
+    "description": "Explicit capture (\"note that today I serviced the car\"). Resolve the date yourself (ISO). Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -151,7 +151,7 @@ export const TOOLS = [
   {
     "name": "remember",
     "title": "Remember something",
-    "description": "Explicit \"remember that…\" about preferences, habits, values, knowledge.",
+    "description": "Explicit \"remember that…\" about preferences, habits, values, knowledge. Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something.",
     "inputSchema": {
       "type": "object",
       "properties": {
