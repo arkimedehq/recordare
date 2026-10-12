@@ -368,7 +368,8 @@ joined_at` — source of every row's `audience` (recorded; no read filters on it
 | `confirmed_by` | uuid null → episodes (`SET NULL`) | |
 | `corrects` | uuid null → episodes (`SET NULL`) | This row corrects an earlier one |
 | `invalidated_at` | timestamptz null | **Only for corrections**: set on the row that was wrong |
-| `duplicate_of` | uuid null → episodes (`SET NULL`) | Consolidation dedup link (same event in several chats); duplicates are hidden from recall |
+| `duplicate_of` | uuid null → episodes (`SET NULL`) | Dedup link (same event in several chats; the near-duplicate check at extraction and the nightly pass); duplicates are hidden from recall |
+| `resolved_at` | timestamptz null | When the near-duplicate check last looked at it (null: never — `log_episode`, a correction, a failed check); the nightly pass asks only about pairs no check could see (WORK_PLAN 5.3) |
 | `linked_notes` | text[] | External refs to semantic notes (A-MEM ids while it lives in the client — D19, D31) |
 | *subject* | | `subject_kind` enum `self \| contact \| someone \| undecided` (default `self`), `subject_person_id` uuid null → persons (`SET NULL`), `subject_candidates` uuid[] (the candidate contacts of an `undecided` row) — whose memory it is (D50, rules in "Agent memory"); same three columns on facts and notes |
 | `access_count`, `last_accessed_at` | int, timestamptz | Ranking only |

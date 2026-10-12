@@ -61,6 +61,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   più un fatto o una nota dichiarati della persona: resta in sospeso finché non viene confermato, e un episodio che ne
   deriva è il resoconto dell'assistente (taint del turno, WORK_PLAN 5.7). Prima, una pagina web che diceva "X è
   allergico alle noci", ripetuta dall'assistente, poteva essere salvata come della persona.
+- Lo stesso evento raccontato in due conversazioni estratte nello stesso momento, o registrato con `log_episode`, non
+  resta più doppio: il consolidamento notturno controlla le coppie che nessun controllo dei quasi-duplicati poteva
+  vedere, prima di scrivere il diario (WORK_PLAN 5.3; migrazione `EpisodeResolvedAt1791120000000`; il riepilogo del
+  consolidamento conta `duplicates`).
 
 ## [0.2.0] — 2026-10-10
 

@@ -204,6 +204,8 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     const rows = await db.query(`SELECT occurred_at::date::text AS d, invalidated_at IS NOT NULL AS inval, corrects IS NOT NULL AS corr
       FROM episodes WHERE content LIKE 'Visita dall%' ORDER BY recorded_at`);
     expect(rows).toEqual([{ d: '2026-11-01', inval: true, corr: false }, { d: '2026-11-02', inval: false, corr: true }]);
+    // Both were checked (the nightly pass asks only about pairs no check could see).
+    expect(await db.query(`SELECT count(*)::int AS n FROM episodes WHERE content LIKE 'Visita dall%' AND resolved_at IS NULL`)).toEqual([{ n: 0 }]);
   });
 
   it('hides, of two duplicate tellings, the one the model says the other covers, not the shorter one', async () => {

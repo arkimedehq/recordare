@@ -7,6 +7,10 @@
  * such candidates exist. Outcomes: `duplicate` (the telling the other one fully covers is hidden as duplicate_of), `corrects`
  * (the new one fixes the old, which is invalidated — corrections the extractor did not link),
  * `distinct` (nothing changes). Never rewrites content.
+ *
+ * Each check stamps the episodes it looked at (`resolved_at`). The nightly pass (`unseen`) asks only about the pairs no
+ * check could see: two extractions running at the same time (two conversations told the same evening), a check that
+ * failed, an episode written by `log_episode` or a correction (never checked).
  */
 import { z } from 'zod';
 import { type DataSource } from 'typeorm';
@@ -46,15 +50,29 @@ interface Candidate {
   old_content: string;
 }
 
+/** A check may have missed an episode written up to this long before it (written, not yet committed). */
+const COMMIT_MARGIN = `interval '10 minutes'`;
+
+/**
+ * `unseen` (the nightly pass): the episodes may pair with each other and with any episode, but only where neither
+ * check saw the other — otherwise (at extraction) they pair with episodes written before, never with each other.
+ * `onCall` is told when the LLM call is made (the caller's accounting).
+ */
 export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, memoryId: string, newIds: string[], ctx: LlmCallContext,
-  profile: Pick<QualityProfile, 'resolverWindowDays' | 'resolverSimilarity'>): Promise<ResolvedLink[]> {
+  profile: Pick<QualityProfile, 'resolverWindowDays' | 'resolverSimilarity'>, opts: { unseen?: boolean; onCall?: () => void } = {}): Promise<ResolvedLink[]> {
   const links: ResolvedLink[] = [];
   if (newIds.length === 0) return links;
-  const pairs: Candidate[] = await db.query(
+  const checked: Date = (await db.query(`SELECT now() AS checked`))[0].checked;
+  const scope = !opts.unseen ? `NOT (o.id = ANY($2))`
+    : `(n.resolved_at IS NULL OR o.recorded_at > n.resolved_at - ${COMMIT_MARGIN})
+       AND (o.resolved_at IS NULL OR n.recorded_at > o.resolved_at - ${COMMIT_MARGIN})
+       AND (n.extraction_run_id IS NULL OR o.extraction_run_id IS DISTINCT FROM n.extraction_run_id)`;
+  const found: Candidate[] = await db.query(
     `SELECT DISTINCT ON (n.id) n.id AS new_id, n.content AS new_content, o.id AS old_id, o.content AS old_content
      FROM episodes n JOIN episodes o
-       ON o.memory_id = n.memory_id AND o.id <> n.id AND NOT (o.id = ANY($2))
+       ON o.memory_id = n.memory_id AND o.id <> n.id AND ${scope}
       AND o.kind = n.kind AND o.deleted_at IS NULL AND o.invalidated_at IS NULL AND o.duplicate_of IS NULL
+      AND n.deleted_at IS NULL AND n.invalidated_at IS NULL AND n.duplicate_of IS NULL
       AND n.occurred_at IS NOT NULL AND o.occurred_at IS NOT NULL
       AND abs(extract(epoch FROM n.occurred_at - o.occurred_at)) <= $4 * 86400
       AND ((n.embedding IS NOT NULL AND o.embedding IS NOT NULL AND 1 - (o.embedding <=> n.embedding) >= $3)
@@ -62,8 +80,19 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, memory
      WHERE n.memory_id = $1 AND n.id = ANY($2)
      ORDER BY n.id, similarity(o.content, n.content) DESC`,
     [memoryId, newIds, profile.resolverSimilarity, profile.resolverWindowDays, TRIGRAM]);
-  if (pairs.length === 0) return links;
+  // Two episodes of the pass may each pick the other: ask once.
+  const asked = new Set<string>();
+  const pairs = found.filter((p) => {
+    const key = [p.new_id, p.old_id].sort().join();
+    return !asked.has(key) && !!asked.add(key);
+  });
+  const stamp = () => db.query(`UPDATE episodes SET resolved_at = $1 WHERE id = ANY($2) AND memory_id = $3`, [checked, newIds, memoryId]);
+  if (pairs.length === 0) {
+    await stamp();
+    return links;
+  }
 
+  opts.onCall?.();
   const out = await llm.completeJson({
     promptId: RESOLVE_PROMPT_VERSION,
     system: RESOLVE_SYSTEM,
@@ -89,5 +118,6 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, memory
       links.push({ relation: 'corrects', from: p.new_id, to: p.old_id });
     }
   }
+  await stamp();
   return links;
 }

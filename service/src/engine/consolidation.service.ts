@@ -25,7 +25,8 @@ import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { FactsReviewService } from './facts-review.service';
 import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
-import { qualityProfile, type QualityProfileName } from './quality-profile';
+import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
+import { resolveNearDuplicates } from './episode-resolver';
 import { expireClarifications } from './clarifications';
 import { subjectLabel } from './subjects';
 
@@ -38,6 +39,8 @@ interface DigestRow { id: string; level: 'day' | 'month'; period_start: string; 
 
 /** `failed`: digests whose call failed — left as they were and retried at the next consolidation. */
 export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number; failed: number; facts: number;
+  /** Episodes linked by the nightly near-duplicate pass (hidden duplicates, corrections). */
+  duplicates: number;
   /** Digests still naming the self in the third person (counts only, like the extraction's). */
   leaks: number }
 
@@ -59,7 +62,7 @@ export class ConsolidationService {
 
   /** Consolidate every complete day (in the memory's timezone) before `now`. Idempotent; one run per memory at a time. */
   async consolidateMemory(memoryId: string, now: Date): Promise<ConsolidationReport> {
-    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0 };
+    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
@@ -92,38 +95,42 @@ export class ConsolidationService {
     await expireClarifications(this.db, memoryId, now);
     const tz: string = memory.timezone;
     const today = localDate(now, tz);
-    const episodes: EpisodeRow[] = await this.db.query(
-      `SELECT e.id, e.kind, e.content, e.occurred_at, e.occurred_until, e.date_precision, e.plan_status,
-              (SELECT (r.occurred_at AT TIME ZONE $2)::date::text FROM episodes r WHERE r.id = e.rescheduled_to) AS rescheduled_to_day,
-              (SELECT array_agg(alias ORDER BY alias) FROM episode_people p WHERE p.episode_id = e.id) AS people, e.feelings,
-              e.subject_kind, (SELECT display_name FROM persons WHERE id = e.subject_person_id) AS subject,
-              (SELECT array_agg(COALESCE(full_name, display_name) ORDER BY created_at) FROM persons WHERE id = ANY(e.subject_candidates)) AS candidates
-       FROM episodes e
-       WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
-         AND NOT (e.author_role = 'other' AND e.stance = 'inferred') AND e.occurred_at IS NOT NULL AND e.occurred_at < $3
-         AND e.date_precision IN ('day', 'approximate', 'month')
-       ORDER BY e.occurred_at, e.id`, [memoryId, tz, now]);
-
-    // Group by local day (multi-day items on each day) and month-only items by month.
-    const byDay = new Map<string, EpisodeRow[]>();
-    const monthOnly = new Map<string, EpisodeRow[]>();
-    for (const e of episodes) {
-      const first = localDate(e.occurred_at, tz);
-      if (e.date_precision === 'month') { push(monthOnly, first.slice(0, 7), e); continue; }
-      const last = e.occurred_until ? localDate(e.occurred_until, tz) : first;
-      for (let d = first, i = 0; d <= last && i < MAX_SPAN_DAYS; d = addDays(d, 1), i++) if (d < today) push(byDay, d, e);
-    }
-
-    const current: DigestRow[] = await this.db.query(
-      `SELECT id, level, period_start::text, version, source_hash, content FROM digests WHERE memory_id = $1 AND superseded_at IS NULL`, [memoryId]);
-    const currentDay = new Map(current.filter((d) => d.level === 'day').map((d) => [d.period_start, d]));
-    const currentMonth = new Map(current.filter((d) => d.level === 'month').map((d) => [d.period_start.slice(0, 7), d]));
-
     const [run] = await this.db.query(
       `INSERT INTO extraction_runs (memory_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:digest', 'configured', $3) RETURNING id`,
       [memoryId, now, dayVersion]);
     const ctx = { memoryId, runId: run.id as string };
     try {
+      const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
+        undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }));
+      // Same event told twice where no check could see both (5.3): resolved before the diary is written from them.
+      report.duplicates = await this.resolveUnseen(memoryId, ctx, profile, report);
+      const episodes: EpisodeRow[] = await this.db.query(
+        `SELECT e.id, e.kind, e.content, e.occurred_at, e.occurred_until, e.date_precision, e.plan_status,
+                (SELECT (r.occurred_at AT TIME ZONE $2)::date::text FROM episodes r WHERE r.id = e.rescheduled_to) AS rescheduled_to_day,
+                (SELECT array_agg(alias ORDER BY alias) FROM episode_people p WHERE p.episode_id = e.id) AS people, e.feelings,
+                e.subject_kind, (SELECT display_name FROM persons WHERE id = e.subject_person_id) AS subject,
+                (SELECT array_agg(COALESCE(full_name, display_name) ORDER BY created_at) FROM persons WHERE id = ANY(e.subject_candidates)) AS candidates
+         FROM episodes e
+         WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
+           AND NOT (e.author_role = 'other' AND e.stance = 'inferred') AND e.occurred_at IS NOT NULL AND e.occurred_at < $3
+           AND e.date_precision IN ('day', 'approximate', 'month')
+         ORDER BY e.occurred_at, e.id`, [memoryId, tz, now]);
+
+      // Group by local day (multi-day items on each day) and month-only items by month.
+      const byDay = new Map<string, EpisodeRow[]>();
+      const monthOnly = new Map<string, EpisodeRow[]>();
+      for (const e of episodes) {
+        const first = localDate(e.occurred_at, tz);
+        if (e.date_precision === 'month') { push(monthOnly, first.slice(0, 7), e); continue; }
+        const last = e.occurred_until ? localDate(e.occurred_until, tz) : first;
+        for (let d = first, i = 0; d <= last && i < MAX_SPAN_DAYS; d = addDays(d, 1), i++) if (d < today) push(byDay, d, e);
+      }
+
+      const current: DigestRow[] = await this.db.query(
+        `SELECT id, level, period_start::text, version, source_hash, content FROM digests WHERE memory_id = $1 AND superseded_at IS NULL`, [memoryId]);
+      const currentDay = new Map(current.filter((d) => d.level === 'day').map((d) => [d.period_start, d]));
+      const currentMonth = new Map(current.filter((d) => d.level === 'month').map((d) => [d.period_start.slice(0, 7), d]));
+
       // Days: rewrite only when the fingerprint of their items changed; drop digests of days that emptied.
       for (const [day, items] of byDay) {
         const lines = items.map((e) => this.line(e, tz, now));
@@ -165,14 +172,13 @@ export class ConsolidationService {
         report.months++;
       }
       // Facts: checked against the episodes recorded since the last review (quality-profile knob, off by default).
-      const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
-        undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }));
       if (profile.factsReview) {
         const r = await this.factsReview.review(memoryId, now, ctx.runId);
         report.facts += r.changed; report.llmCalls += r.calls; report.failed += r.failed;
       }
       await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), summary = $2 WHERE id = $1`, [ctx.runId,
-        { days: report.days, months: report.months, superseded: report.superseded, failed: report.failed, facts: report.facts, leaks: report.leaks }]);
+        { days: report.days, months: report.months, superseded: report.superseded, failed: report.failed, facts: report.facts, leaks: report.leaks,
+          duplicates: report.duplicates }]);
       await this.db.query(`UPDATE memories SET consolidated_at = $2 WHERE person_id = $1`, [memoryId, now]);
       this.telemetry.emit({ type: 'consolidation.finished', memoryId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
     } catch (err) {
@@ -207,6 +213,23 @@ export class ConsolidationService {
   }
 
   /** A failed digest call does not stop the night: that day / month keeps its old digest and is retried next time. */
+  /**
+   * The nightly near-duplicate pass (WORK_PLAN 5.3): the episodes never checked, or recorded since the last
+   * consolidation, against the episodes their check could not see. One call, only when such pairs exist.
+   */
+  private async resolveUnseen(memoryId: string, ctx: { memoryId: string; runId: string }, profile: QualityProfile, report: ConsolidationReport): Promise<number> {
+    const rows: Array<{ id: string }> = await this.db.query(
+      `SELECT e.id FROM episodes e JOIN memories o ON o.person_id = e.memory_id
+       WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
+         AND (e.resolved_at IS NULL OR o.consolidated_at IS NULL OR e.recorded_at > o.consolidated_at)`, [memoryId]);
+    if (!rows.length) return 0;
+    const links = await resolveNearDuplicates(this.db, this.llm, memoryId, rows.map((r) => r.id), ctx, profile,
+      { unseen: true, onCall: () => report.llmCalls++ })
+      .catch((err: unknown) => { report.failed++; this.log.warn(`near-duplicate pass skipped: ${(err as Error).name}`); return []; });
+    for (const l of links) this.telemetry.emit({ type: 'episode.linked', memoryId, ...l });
+    return links.length;
+  }
+
   private skip(report: ConsolidationReport, what: string, err: unknown): null {
     report.failed++;
     this.log.warn(`digest skipped (${what}): ${(err as Error).name}`);

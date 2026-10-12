@@ -200,13 +200,13 @@ fresh blind7 / blind8 of 4.8 (91.3 % person memory, 82.1 % entity memory).
 Status (2026-10-07): 5.1, 5.2 done; 5.3, 5.5 partial; 5.4 TODO; 5.6 built and off; 5.7 one idea done (extract.v8).
 Status (2026-10-08): 5.1, 5.2 done; 5.3, 5.5 partial; 5.4 TODO; 5.6 built and off; 5.7 partial (memory-context work done 2026-10-08)
 (extract.v8 and the pre-turn memory context built; now its misses from 6.6b (8)); 5.8 TODO (idea).
-Status (2026-10-12): 5.5 done (forget a period, what forgetting takes with it).
+Status (2026-10-12): 5.3, 5.5 done; 5.7 turn taint done.
 
 | # | Task |
 |---|---|
 | 5.1 | Nightly job per person with new episodes (zero LLM calls if nothing new) — **done** |
 | 5.2 | Daily digests + monthly roll-up (D8); period questions read digests first — **done**; digests in recall behind the knob `recallDigests`, off (measured −1.9 pt) |
-| 5.3 | Dedup of the same event across conversations (link, never rewrite) — **partial**: near-duplicate resolver at extraction; no consolidation dedup pass |
+| 5.3 | Dedup of the same event across conversations (link, never rewrite) — **done 2026-10-12**: near-duplicate resolver at extraction, and a nightly pass in the consolidation (before the diary) for the pairs no check could see — extractions of two conversations running at the same time, a failed check, `log_episode` and corrections (never checked); `episodes.resolved_at` (migration `EpisodeResolvedAt1791120000000`) stamps each check; one call only when such pairs exist. Not measured on the eval sets (they do not run the consolidation; the extraction path is unchanged) |
 | 5.4 | Pattern promotions with `episode_promotions` (D20) — destination depends on **D26** — **TODO** (table created, unused) |
 | 5.5 | User-driven deletion: episode, period; digests recomputed; vectors removed (D16) — **done 2026-10-12**: forget one episode (2026-10-08); forget a period (`POST api/v1/forget {from, to, keepRaw?}`, client `forgetPeriod`; episodes by overlap with their chains, raw messages by `sent_at`, deleted or kept hidden, `period` tombstone); what forgetting takes with it (`service/src/recall/forgetting.ts`, for a message, a conversation, an episode or a period): episodes, facts and notes left without evidence are deleted, a plan whose status came from a message that went gets back its earlier one, a fact or note that replaced an older one makes it current again (a correction does not), digests superseded. Choice: forgetting an episode does not take the facts drawn from the same message (only those drawn from the episode) — one message often tells several things |
 | 5.6 | **Nightly facts review** (2026-10-07) — **built, off**: built (`facts_review.v1`, task `facts`, admin `POST memories/:id/review-facts`), measured on blind5 — no gain on current facts (0.769 ×3), history +1 fact in 1/3, rewording churn → knob `factsReview` off. Facts work moves to the extraction prompt |
