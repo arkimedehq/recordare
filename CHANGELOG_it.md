@@ -19,6 +19,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   dell'estrazione assegna un episodio il cui soggetto è un contatto elencato mai nominato nella conversazione all'unica
   persona che l'episodio nomina (prima: l'episodio veniva scartato). Set cieco entità: 91,9 % (3 run; la domanda sulla
   prenotazione da 0/3 a 2/3 + 1 parziale).
+- Risolutore dei quasi-duplicati `resolve.v2`: di due racconti dello stesso evento nasconde quello che l'altro contiene
+  per intero, come indica il modello (prima: sempre il più corto, così un messaggio successivo breve con l'esito —
+  "inviato alle 16:10, numero di conferma …" — veniva nascosto); quando ognuno ha qualcosa di suo, restano visibili
+  entrambi.
+- `search_episodes`: una ricerca (`search`) ordina per sola pertinenza; importanza e recenza decidono solo i pari
+  merito (prima pesavano più della pertinenza, così i grandi eventi di una persona spingevano fuori dai risultati il
+  piccolo elemento che la domanda nomina). Gli elenchi e `latest` tengono l'ordine di prima. Set ciechi: personale
+  90,2 % → 96,0 %, entità 92,2 % → 94,3 % (3 run ciascuno).
 
 ## [0.2.0] — 2026-10-10
 

@@ -4,7 +4,7 @@
 /**
  * Near-duplicate resolution (D32 second call, Graphiti dedupe idea, WORK_PLAN 5.3): a new episode
  * that is very similar to an existing one close in time is checked by one small call, only when
- * such candidates exist. Outcomes: `duplicate` (the less complete version is hidden as duplicate_of), `corrects`
+ * such candidates exist. Outcomes: `duplicate` (the telling the other one fully covers is hidden as duplicate_of), `corrects`
  * (the new one fixes the old, which is invalidated — corrections the extractor did not link),
  * `distinct` (nothing changes). Never rewrites content.
  */
@@ -16,17 +16,25 @@ import { type QualityProfile } from './quality-profile';
 /** Candidates: same kind, within ± profile days, and similar by embedding (profile threshold) or by trigrams. */
 const TRIGRAM = 0.3;
 
-export const RESOLVE_PROMPT_VERSION = 'resolve.v1';
+export const RESOLVE_PROMPT_VERSION = 'resolve.v2';
 
 export const RESOLVE_SYSTEM = `You compare memories of a personal memory service. For each pair (NEW, EXISTING) decide:
-- "duplicate": the same event with no contradiction (one may have more detail);
+- "duplicate": the same event with no contradiction, told twice; give "keep": "NEW" or "EXISTING", the telling that \
+says everything the other says (more detail is fine);
 - "corrects": the same event, and NEW states that a detail of EXISTING was wrong (date, place, person, amount) — \
 the owner corrected it;
-- "distinct": different events (e.g. the same activity on different days), or a plan and its later outcome.
-Reply with JSON {"decisions": [{"pair": <number>, "relation": "duplicate" | "corrects" | "distinct"}]}.`;
+- "distinct": different events (e.g. the same activity on different days), a plan and its later outcome — or the same \
+event when each telling has something of its own the other lacks (one the pages sent, the other the time and the \
+receipt number): hiding either would lose it.
+Reply with JSON {"decisions": [{"pair": <number>, "relation": "duplicate" | "corrects" | "distinct", "keep": "NEW" | \
+"EXISTING"}]}.`;
 
 const schema = z.object({
-  decisions: z.array(z.object({ pair: z.number().int().positive(), relation: z.enum(['duplicate', 'corrects', 'distinct']) })).default([]),
+  decisions: z.array(z.object({
+    pair: z.number().int().positive(),
+    relation: z.enum(['duplicate', 'corrects', 'distinct']),
+    keep: z.enum(['NEW', 'EXISTING']).optional().catch(undefined),
+  })).default([]),
 });
 
 export interface ResolvedLink { relation: 'duplicate' | 'corrects'; from: string; to: string }
@@ -69,8 +77,10 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, memory
     const p = pairs[d.pair - 1];
     if (!p) continue;
     if (d.relation === 'duplicate') {
-      // Keep the more complete telling visible (a later mention often carries the outcome).
-      const [keep, hide] = p.new_content.length > p.old_content.length ? [p.new_id, p.old_id] : [p.old_id, p.new_id];
+      // Keep the telling that holds every detail: the model says which; length only when it does not (a later, shorter
+      // mention often carries the outcome, so length alone hid it).
+      const keepNew = d.keep ? d.keep === 'NEW' : p.new_content.length > p.old_content.length;
+      const [keep, hide] = keepNew ? [p.new_id, p.old_id] : [p.old_id, p.new_id];
       await db.query(`UPDATE episodes SET duplicate_of = $1 WHERE id = $2 AND memory_id = $3`, [keep, hide, memoryId]);
       links.push({ relation: 'duplicate', from: hide, to: keep });
     } else if (d.relation === 'corrects') {

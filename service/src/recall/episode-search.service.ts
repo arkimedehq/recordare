@@ -165,12 +165,17 @@ export class EpisodeSearchService {
       const own = speaker.kind === 'contact' ? (r.subject_person_id === speaker.id ? SPEAKER_BONUS : theirs.has(r.id) ? SPEAKER_BONUS / 2 : 0) : 0;
       return (relevance.get(r.id) ?? 0) + 0.01 * r.importance + 0.03 * Math.exp(-ageDays / 90) + own;
     };
+    // A search asks for one thing, so it ranks by relevance alone and the blend only breaks ties: in the blend importance
+    // and recency (up to 0.13) outweigh relevance (RRF: ~0.025 at most, nearly flat across the top ranks) and let the big
+    // events of a person push out the small item the question names (RESEARCH_NOTES H13, arm R). Lists and "latest" keep it.
+    const byRelevance = mode === 'search';
+    const order = (a: Row, b: Row) => (byRelevance ? (relevance.get(b.id) ?? 0) - (relevance.get(a.id) ?? 0) : 0) || score(b) - score(a);
     const limit = args.limit ?? (mode === 'list' ? 30 : mode === 'latest' ? 5 : 10);
     const candidates = rows.filter(inRange);
 
     // Relevant items first; free places are filled (M4b blind set 4: an over-strict relevance gate left the answer
     // model with half the episodes D gave it). Search fills by raw similarity; a period list by importance.
-    const ranked = candidates.filter(relevant).sort((a, b) => score(b) - score(a));
+    const ranked = candidates.filter(relevant).sort(order);
     const rest = (by: (r: Row) => number) => candidates.filter((r) => !relevant(r)).sort((a, b) => by(b) - by(a));
     let chosen: Row[];
     if (mode === 'list') {

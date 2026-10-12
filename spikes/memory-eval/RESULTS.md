@@ -443,6 +443,99 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### H13 — classify-and-compose extraction vs ranking by the question type (2026-10-11, DeepSeek direct, `fp816_runs.sh`, `fp817_runs.sh`)
+
+RESEARCH_NOTES H13. Lost points on blind9 / blind10 (step 4 runs) by stage: recall 50 % / 41 %, extraction 29 % / 36 %,
+resolver 12 % / 0, answer 0 / 23 %, judge 8 % / 0. Two arms against arm A (`extract.v14`, M4 blend ranking), the code of
+both in commit 28d3835 as knobs (`EXTRACTION_COMPOSE`, `RECALL_SEARCH_RANKING`).
+
+**Arm B, classify-and-compose (`compose.v1`, 1 exploratory run, budget agreed with the maintainer).** A deterministic
+router keeps only the prompt parts the window can use (plan patches when plans are open, answers when questions are
+open, corrections of known items, others' claims about me when others speak), same rules, one call. blind9 **91.7 %**
+(arm A 90.2 %, 3 runs): the same failing questions (q02, q05, q07, q23), within noise. No saving: extraction input
+200,238 tokens for 32 calls (arm A 196,497) — the modules are on in almost every window — and fewer cached tokens
+(99,328 vs 123,392), because a composed prompt breaks the shared prefix. **B does not win**; removed.
+
+**Arm R, the question's type picks the ranking.** `search_episodes` scored every mode with relevance (RRF, ~0.025 at
+most and nearly flat across the top ranks) + 0.01 · importance + 0.03 · recency: importance and recency (up to 0.13)
+decided, and a person's big events pushed the small item the question names out of the top 10. With R a `search` ranks
+by relevance alone, the blend only breaking ties; `list` and `latest` keep the blend. Dev case d09 (`dataset_dev_gaps`,
+g18–g29: a brother's 11 big events and one interview, the answer due in February): with the blend the interview episode
+is 11th of 34 for the planned query, with R 1st. On the stored blind memories: blind9 q08 target rank 0–1, q35 rank 3,
+blind10 q35 rank 0 (all outside the top 10 before).
+
+| Set | Arm A | Arm R (r1 / r2 / r3) | **Arm R mean** |
+|---|---|---|---|
+| dev gaps (9 questions) | — | 88.9 | 88.9 % |
+| blind9 (personal) | 90.2 % (fp815, 3 runs) | 95.2 / 95.1 / 97.6 | **96.0 %** |
+| blind10 (entity) | 92.2 % (fp813 ×3 + fp815 ×1) | 95.7 / 98.6 / 88.6 | **94.3 %** |
+| main set (control) | 100 % | 100 | 100 % |
+
+- blind9: q02, q07, q08, q20, q35 go from failing (2–3/3 for q02, q07, q08) to correct 3/3; failures left: q05 (3/3,
+  the group names, an extraction gap), q06, q13, q14, q23, q39 once each (q23 once is a judge error). +5.8 points,
+  above noise.
+- blind10: +2.1 points, within noise; r3 (88.6 %) misses q04, q06, q33, which also fail in arm A runs, and q07 / q13
+  partial. No question fails more often than in arm A.
+- dev: d09 correct; d03 wrong with the same context as the earlier dev run (the slip episode "avevo detto venerdì 13" is
+  there, the answer says it is not known who was wrong): answer variance, not ranking.
+- Cost: unchanged (no extra call; answer input 129,769 vs 130,820 tokens per blind9 run).
+- **R wins**: a search ranks by relevance alone, no knob (clean code over dual paths).
+
+**Arm C, predict then extract the gap (`predict.v1`, Nemori's predict-calibrate reimplemented; commit f62c026,
+`fp818_runs.sh`, 1 exploratory run each on top of R).** One more call per window sees what I know (open plans, facts,
+notes, known episodes, people) and who speaks when, never the text, and predicts what the window tells (3–8
+statements); the extraction gets the prediction after its input, with one rule: what only confirms it adds nothing,
+what differs (a plan moved, cancelled or done, a correction, a new person, place, number, group or event) is stored
+and linked to what it changes.
+
+| Set | Arm R | Arm C (1 run) |
+|---|---|---|
+| dev gaps (9 questions) | 88.9 % | 100 % (8 correct + d03 judge error) |
+| blind9 | 96.0 % (3 runs) | 95.2 % |
+| blind10 | 94.3 % (3 runs) | 95.7 % |
+
+- Failures are the ones R has: blind9 q05 (the second group's name, the extraction gap C was meant to help) partial,
+  q11 partial, q20 the third-person answer; blind10 q04 partial, q33.
+- Cost: extraction input +45 % on blind9 (prediction 88,084 input tokens and 10,788 output for 32 calls, barely
+  cached; extraction 212,108 vs 193,834), +49 % on blind10.
+- **C does not win** (within noise, much dearer); not run to 3 + 3, removed. The prediction mostly restates what the
+  extraction input already lists: our extraction already sees the known items, which Nemori's direct-extraction
+  baseline did not.
+
+### WORK_PLAN 8.11 gaps, step 4 — the near-duplicate resolver keeps the outcome (2026-10-11, DeepSeek direct, `fp815_runs.sh`, `resolve_pairs.py`)
+
+blind9 q20 ("what was the deadline for the Porto abstract, and what happened with it?", 0/3 since 8.11): the morning
+telling ("submitting now: 298 words, title …, I'll send the confirmation number") and the afternoon one ("submitted at
+16:10, confirmation number PC35-0412") were judged the same event by the resolver (`resolve.v1`), which hid the
+shorter one — the one holding the outcome. The confirmation episode reached the answer's context in 2 of 10 earlier
+runs. On top of that the answer names the holder in the third person ("Beatrice ha inviato"), which the judge reads as
+someone else submitting.
+
+Dev case d08 (`dataset_dev_gaps`, sessions g16–g17: "sending the application today, 12 pages, I'll pass you the
+protocol number" → "sent at 15:40, protocol 2026/0871-B"). Through the full harness the old resolver kept both in 2
+runs (the pair was not its candidate or was called distinct); called directly on the stored pair, `resolve.v1` says
+"duplicate" 10/10, so the old code hides the protocol telling.
+
+Fix, `resolve.v2`: "duplicate" names the telling to keep (`keep`: NEW / EXISTING, the one that says everything the
+other says; length only as a fallback); the same event where each telling has something of its own is "distinct" and
+both stay visible. Direct calls on dev pairs, v1 → v2: the d08 pair duplicate 10/10 → distinct 10/10; a plain
+duplicate (one covers the other) duplicate → duplicate, keep the fuller one, whether NEW or EXISTING; a correction
+corrects → corrects; plan and outcome, the same run on two days: distinct → distinct; a duplicate across languages
+duplicate → duplicate.
+
+| Set | Runs | Mean | Before |
+|---|---|---|---|
+| dev gaps (8 questions) | 100 | 100 % | — |
+| blind9 (personal) | 90.5 / 91.2 / 89.0 | **90.2 %** | 90.1 % (step 2) |
+| blind10 (entity, control) | 92.9 | 92.9 % | 91.9 % (step 3) |
+
+- **q20:** the confirmation episode is visible and in the context in 3/3 runs (was 2/10); every answer has the
+  deadlines, the date and PC35-0412. Verdicts: correct, wrong ("Beatrice ha inviato"), judge error (the same third
+  person). The rest of the miss is the voice of the answer, and a judge that does not know the holder's name.
+- Other changes (q01 c→w once: the moved vet booking, stored the same way as in the old runs; q08, q23) are answer
+  variance, not resolver links.
+- blind9 r1 stopped on a connection error after 2 questions (`fp815_blind9_r1_connerr.log`) and was run again.
+
 ### WORK_PLAN 8.11 gaps, step 3 — the entity agent's own actions (2026-10-11, DeepSeek direct, `fp813_runs.sh`)
 
 blind10 q04 ("what did you do for the Brandts before they arrived?", 0/3 in every earlier batch) had two causes:
