@@ -316,7 +316,7 @@ the same model as personal ones; the personal prompts stay byte-identical (`extr
 | `id`, `memory_id`, `client_id` | uuid | Unique `(client_id, memory_id, external_id)` |
 | `external_id` | text | |
 | `source` | enum `chat \| voice \| mcp_tool \| import_chat \| import_social \| import_email \| import_notes \| interview \| document \| perception \| ambient` | `mcp_tool` = synthetic conversation holding basic-level tool calls; `document` / `perception` / `ambient` (D50): a document given to the agent, what a device perceives, continuous listening |
-| `channel`, `title` | text null | |
+| `channel`, `title` | text null | `title`: a group chat's name; the extraction sees it when the conversation has another participant (`extract.v15`) |
 | `started_at`, `last_message_at` | timestamptz | |
 | `idle_job_at` | timestamptz null | When the idle extraction is due |
 | `deleted_at` | timestamptz null | |

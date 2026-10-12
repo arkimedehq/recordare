@@ -1,5 +1,6 @@
 {
   "_note": "Questions asked as user 'luca' at asked_at. expected = reference answer for the judge; must_not = content that indicates a failure (wrong fact or leak from another user).",
+  "holder": "Luca",
   "questions": [
     { "id": "q01", "category": "point-temporal", "asked_at": "2026-04-01T10:00:00+02:00",
       "q": "Quando sono andato a sciare l'ultima volta?",

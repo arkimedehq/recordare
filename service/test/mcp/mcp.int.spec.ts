@@ -287,9 +287,12 @@ describe('MCP endpoint', () => {
     const out = await search(client, { query: 'tavolo Osteria del Grillo', from: '2026-01-22', to: '2026-01-22' });
     expect((out['episodes'] as Array<{ id: string }>).map((e) => e.id)).toEqual([ids[0]]);
     expect((out['outsidePeriod'] as Array<{ id: string }>).map((e) => e.id)).toEqual([ids[1]]);
-    // A list of the period stays the period's own.
+    // A list about something gets them too (what was said in the period is dated by what it tells); a list without a
+    // query stays the period's own.
     const listed = await search(client, { query: 'tavolo Osteria del Grillo', mode: 'list', from: '2026-01-22', to: '2026-01-22' });
-    expect(listed['outsidePeriod']).toEqual([]);
+    expect((listed['outsidePeriod'] as Array<{ id: string }>).map((e) => e.id)).toEqual([ids[1]]);
+    const all = await search(client, { mode: 'list', from: '2026-01-22', to: '2026-01-22' });
+    expect(all['outsidePeriod']).toEqual([]);
     await db.query(`DELETE FROM episodes WHERE id = ANY($1)`, [ids]);
     await client.close();
   });

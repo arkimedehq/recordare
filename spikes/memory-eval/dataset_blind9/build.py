@@ -26,6 +26,8 @@ def message(t: tuple) -> dict:
 
 def session(s: dict) -> dict:
     out = {"id": s["id"], "user": USER, "ts": s["ts"]}
+    if "group" in s:
+        out["group"] = s["group"]
     if "participants" in s:
         out["participants"] = s["participants"]
     out["messages"] = [message(m) for m in s["messages"]]
@@ -74,6 +76,7 @@ def main() -> None:
                   "be asserted. Claims by others never confirmed by the holder are reported as such; the forgotten "
                   "source's content must not be recalled."),
         "user": USER,
+        "holder": "Beatrice",
         "questions": questions(),
     }
     (HERE / "questions.json").write_text(json.dumps(q, ensure_ascii=False, indent=1) + "\n")

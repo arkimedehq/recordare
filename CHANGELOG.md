@@ -24,6 +24,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - `search_episodes`: a `search` ranks by relevance alone; importance and recency only break ties (before: they
   outweighed relevance, so a person's big events pushed the small item the question names out of the results). Lists
   and `latest` keep the old order. Blind sets: personal 90.2 % → 96.0 %, entity 92.2 % → 94.3 % (3 runs each).
+- Extraction prompt `extract.v15`: the extraction input of a group chat carries the group's name (the conversation
+  `title`), so an episode told there says it was in that group. The system prompt is unchanged.
+- `search_episodes`: a `list` with a query also returns up to 3 relevant episodes from outside the period in
+  `outsidePeriod` (before: `search` only): what was said in the period is dated by what it tells (a move next month).
 
 ## [0.2.0] — 2026-10-10
 

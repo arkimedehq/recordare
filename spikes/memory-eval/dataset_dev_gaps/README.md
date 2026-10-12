@@ -1,8 +1,8 @@
 # Dev sets — the 8.11 gaps (NOT blind)
 
 Written by the engine developer after the blind9 / blind10 measurement (WORK_PLAN 8.11), to check the fixes of the gaps
-found there without tuning on the blind sets. `dataset_dev_gaps` (personal: Marco, Bologna, November 2026; 29 sessions,
-9 questions) and `dataset_dev_gaps_entity` (entity: a mountain hut's shared agent; 11 sessions, 6 questions).
+found there without tuning on the blind sets. `dataset_dev_gaps` (personal: Marco, Bologna, November 2026; 31 sessions,
+10 questions) and `dataset_dev_gaps_entity` (entity: a mountain hut's shared agent; 11 sessions, 6 questions).
 
 What they exercise:
 - a step of a plan done before its date, asked about the plan's day ("Ho un tavolo prenotato per giovedì?", "C'è un
@@ -23,6 +23,9 @@ What they exercise:
   wrist, a party, a dog, a car, a honeymoon, a degree — and, in passing, "only the interview at Ducati, the answer in
   February"): a search must rank by relevance, not
   importance (H13);
+- a group chat's name (d10, sessions g30–g31, groups «Cugini Rinaldi» and «Festa nonna Ada», the same identified cousin
+  writing in both): "in which groups did Federica write, and what?" needs the group names, which only the conversation
+  title carries (extract.v15, GROUP CHAT);
 - controls: a day question (d05: out-of-period items must not leak into it), a premise trap, own content.
 
 Not blind: never use them to confirm a decision.

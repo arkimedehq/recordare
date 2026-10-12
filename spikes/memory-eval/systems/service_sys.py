@@ -112,7 +112,7 @@ class ServiceSystem:
                 "content": m["content"],
                 "sentAt": (base + timedelta(seconds=i)).isoformat(),
             } for i, m in enumerate(s["messages"])]
-            conversation = {"externalId": s["id"],
+            conversation = {"externalId": s["id"], **({"title": s["group"]} if s.get("group") else {}),
                             "participants": [{"ref": a, "role": "other", "displayName": a,
                                               **({"identity": {"externalUserId": declared[a]}} if a in declared else {})}
                                              for a in authors]}

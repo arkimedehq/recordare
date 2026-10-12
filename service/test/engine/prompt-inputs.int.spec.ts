@@ -3,8 +3,8 @@
 
 /**
  * Prompt inputs are part of a measured version (evaluation rule 9): the personal prompts stay byte-identical to the ones
- * measured (`extract.v14`, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
- * `extract.v14+entity.v5`) — a change to any of them is a new version, measured before it ships.
+ * measured (`extract.v15`: v14's system prompt, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
+ * `extract.v15+entity.v5`) — a change to any of them is a new version, measured before it ships.
  */
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
@@ -47,7 +47,7 @@ describe('prompt inputs of the measured versions', () => {
     return { system: req?.messages[0]?.content ?? '', user: req?.messages[1]?.content ?? '' };
   }
 
-  it('personal prompts are the measured extract.v14 and facts.v2', () => {
+  it('personal prompts are the measured extract.v15 (v14 system prompt) and facts.v2', () => {
     expect(sha(EXTRACTION_SYSTEM)).toBe('d0742a4e7114ed4b66b4968c83010f8a88913c29735c25b01b5ad6b078618b53');
     expect(sha(FACTS_SYSTEM)).toBe('309707b0c33d7fb2b05cce9fe88d434185180cf5c195135070e6f37509924d7c');
   });
@@ -151,5 +151,16 @@ describe('prompt inputs of the measured versions', () => {
       "[5] lunedì 2026-06-08 09:04 tool:web_search: Meteo: sole.",
       "[6] lunedì 2026-06-08 09:05 me (own): Manuale della caldaia: reset con il tasto rosso.",
     ].join('\n'));
+  });
+
+  it('a group chat with a name on its platform gives it to the extraction; a titled chat without others does not (extract.v15)', async () => {
+    const group = await run({ externalId: 'u3', title: 'Trasloco cantina', participants: [{ ref: 'marta', role: 'other', displayName: 'Marta' }] }, [
+      { externalId: 'u3-1', role: 'other', authorRef: 'marta', content: 'Sabato porto io i guanti.', sentAt: '2026-06-09T09:00:00+02:00' },
+    ], {});
+    expect(group.user).toContain('GROUP CHAT: «Trasloco cantina» (the group\'s name: an episode told here says it was in the group «Trasloco cantina»)\n\nCONVERSATION WINDOW:');
+    const alone = await run({ externalId: 'u4', title: 'Idee per la cena' }, [
+      { externalId: 'u4-1', role: 'user', content: 'Venerdì faccio la pizza.', sentAt: '2026-06-09T10:00:00+02:00' },
+    ], {});
+    expect(alone.user).not.toContain('GROUP CHAT');
   });
 });

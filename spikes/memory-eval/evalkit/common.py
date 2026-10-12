@@ -182,10 +182,20 @@ JUDGE_SYSTEM = (
 )
 
 
+def holder() -> str | None:
+    """The memory holder's name (questions.json `holder`, personal sets): the one who asks when no `asker` is given."""
+    return json.loads((DATASET / "questions.json").read_text()).get("holder")
+
+
 def judge(question: dict, given: str) -> dict:
+    # Who asks, when the set names them: an answer may say "you" or name that person in the third person ("Beatrice
+    # sent it") — the same person (blind9 q20). Sets without a name keep the judge input they were validated with.
+    asker = (question.get("asker") or {}).get("name") or holder()
     user = (
         f"QUESTION: {question['q']}\n"
-        f"REFERENCE: {question['expected']}\n"
+        + (f"ASKED BY: {asker} (the answer may address {asker} as 'you' or name {asker} in the third person: "
+           f"the same person)\n" if asker else "")
+        + f"REFERENCE: {question['expected']}\n"
         f"MUST_NOT: {json.dumps(question.get('must_not', []), ensure_ascii=False)}\n"
         f"ANSWER: {given}"
     )

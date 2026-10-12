@@ -92,6 +92,7 @@
    "id": "s04",
    "user": "beatrice",
    "ts": "2034-09-23T10:40:00+02:00",
+   "group": "Famiglia Sartori",
    "participants": [
     {
      "name": "Michele",
@@ -166,6 +167,7 @@
    "id": "s06",
    "user": "beatrice",
    "ts": "2034-09-26T19:20:00+02:00",
+   "group": "Trasloco studio",
    "participants": [
     {
      "name": "Michele",
@@ -298,6 +300,7 @@
    "id": "s10",
    "user": "beatrice",
    "ts": "2034-10-04T17:00:00+02:00",
+   "group": "Rehab Research Group",
    "participants": [
     {
      "name": "Priya",
@@ -339,6 +342,7 @@
    "id": "s11",
    "user": "beatrice",
    "ts": "2034-10-05T21:40:00+02:00",
+   "group": "Compagnia del giovedì",
    "participants": [
     {
      "name": "Stefano",
@@ -416,6 +420,7 @@
    "id": "s13",
    "user": "beatrice",
    "ts": "2034-10-09T13:20:00+02:00",
+   "group": "Studio Suffragio",
    "participants": [
     {
      "name": "Greta",
@@ -541,6 +546,7 @@
    "id": "s16",
    "user": "beatrice",
    "ts": "2034-10-17T14:05:00+02:00",
+   "group": "Pilates Valencia 2033",
    "participants": [
     {
      "name": "Inés",
@@ -648,6 +654,7 @@
    "id": "s19",
    "user": "beatrice",
    "ts": "2034-10-20T18:50:00+02:00",
+   "group": "Famiglia Sartori",
    "participants": [
     {
      "name": "Michele",
@@ -735,6 +742,7 @@
    "id": "s22",
    "user": "beatrice",
    "ts": "2034-10-25T16:30:00+02:00",
+   "group": "Rehab Research Group",
    "participants": [
     {
      "name": "Priya",
@@ -776,6 +784,7 @@
    "id": "s23",
    "user": "beatrice",
    "ts": "2034-10-26T13:10:00+02:00",
+   "group": "Famiglia Sartori",
    "participants": [
     {
      "name": "Michele",
@@ -859,6 +868,7 @@
    "id": "s26",
    "user": "beatrice",
    "ts": "2034-10-30T09:30:00+01:00",
+   "group": "Rehab Research Group",
    "participants": [
     {
      "name": "Priya",
@@ -936,6 +946,7 @@
    "id": "s29",
    "user": "beatrice",
    "ts": "2034-11-02T16:30:00+01:00",
+   "group": "Rehab Research Group",
    "participants": [
     {
      "name": "Priya",
@@ -963,6 +974,7 @@
    "id": "s30",
    "user": "beatrice",
    "ts": "2034-11-03T17:50:00+01:00",
+   "group": "Pilates Valencia 2033",
    "participants": [
     {
      "name": "Inés",

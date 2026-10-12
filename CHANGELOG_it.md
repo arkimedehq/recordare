@@ -27,6 +27,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   merito (prima pesavano più della pertinenza, così i grandi eventi di una persona spingevano fuori dai risultati il
   piccolo elemento che la domanda nomina). Gli elenchi e `latest` tengono l'ordine di prima. Set ciechi: personale
   90,2 % → 96,0 %, entità 92,2 % → 94,3 % (3 run ciascuno).
+- Prompt di estrazione `extract.v15`: l'input dell'estrazione di una chat di gruppo porta il nome del gruppo (il `title`
+  della conversazione), così un episodio raccontato lì dice che era in quel gruppo. Il prompt di sistema non cambia.
+- `search_episodes`: anche un `list` con una query restituisce fino a 3 episodi pertinenti di fuori periodo in
+  `outsidePeriod` (prima: solo `search`): ciò che è stato detto nel periodo è datato da ciò che racconta (un trasloco il
+  mese dopo).
 
 ## [0.2.0] — 2026-10-10
 
