@@ -37,6 +37,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   agli agenti che un intervallo vago ("ultimamente", "in queste settimane") non è un periodo. Set cieco personale
   96,0 % → 97,2 % (3 run; la domanda sui messaggi di un fratello in due gruppi corretta 3 su 3).
 
+### Corretto
+- Cancellare un fatto o una nota (`DELETE api/v1/facts|notes/{id}`, o rifiutarne uno in sospeso) lascia un tombstone
+  (solo id: chiave dello slot o categoria della nota, soggetto, messaggi di evidenza), così una ri-estrazione degli
+  stessi messaggi non lo riscrive più; raccontato di nuovo in un messaggio nuovo, viene imparato (WORK_PLAN 4.13;
+  migrazione `FactNoteTombstones1791110000000`).
+- Le ricerche vettoriali filtrate per memoria scandiscono gli indici HNSW in modo iterativo (`hnsw.iterative_scan =
+  strict_order`, pgvector ≥ 0.8): su un'installazione grande una ricerca poteva restituire meno righe di quelle chieste
+  quando altre memorie riempivano l'indice (WORK_PLAN 4.14).
+
 ## [0.2.0] — 2026-10-10
 
 La **memoria dell'agente** (D50): ogni memoria appartiene a un agente ed è scritta in prima persona — l'assistente di

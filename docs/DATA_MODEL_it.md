@@ -75,9 +75,12 @@ l'intervallo richiesto.
 
 **Embedding**: `embedding vector(N)`, `embedding_model text`, `embedding_text text`. N è fisso per
 installazione (D27). HNSW (`vector_cosine_ops`) interrogato con filtro `memory_id` e scansione
-iterativa di pgvector (`hnsw.iterative_scan = relaxed_order`) così che il recall per memoria regga nelle
-installazioni multi-memoria; partizionare per memoria se un'installazione diventa grande. <!-- verify: hnsw.iterative_scan
-non è impostato da nessuna parte in service/src (main) — non ancora costruito? -->
+iterativa di pgvector (`hnsw.iterative_scan = strict_order`, impostata all'apertura della connessione — pgvector ≥ 0.8;
+uno più vecchio la scarta con un avviso; WORK_PLAN 4.14) così che il recall per memoria regga nelle installazioni
+multi-memoria: senza, una ricerca HNSW filtrata si ferma a `hnsw.ef_search` candidati dell'intera tabella (3 righe su 10
+per una memoria che ha lo 0,5 % di 20.000). Ogni tabella con indice HNSW ha anche un btree su `memory_id`, che il
+pianificatore preferisce per le memorie piccole; `strict_order` mantiene l'ordine esatto per distanza su cui si basa la
+fusione dei ranghi. Partizionare per memoria se un'installazione diventa grande.
 
 ## Identità
 
@@ -592,10 +595,15 @@ turno: `memory_context`), solo metadati: mai la query, mai i ricordi;
 `read_audit` del profilo public (sotto) lo estende con client, visualizzatori e id delle righe restituite.
 
 ### forget_tombstones (D16)
-`id, memory_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,
+`id, memory_id, scope enum (episode|period|conversation|message|fact|note), episode_fingerprint bytea null,
 message_ids uuid[] (i messaggi di evidenza dimenticati, nascosti dalla ricerca nelle chat), period_from, period_to,
-conversation_id null, created_at` — controllato **prima di inserire qualsiasi
-episodio o fatto** (sweep notturno, ri-estrazione, dedup), così il contenuto dimenticato non ritorna mai.
+conversation_id null, item_key text null, subject_person_id uuid null → persons (CASCADE), created_at` — controllato
+**prima di inserire qualsiasi episodio o fatto** (sweep notturno, ri-estrazione, dedup), così il contenuto dimenticato
+non ritorna mai. `fact` / `note` (WORK_PLAN 4.13, migrazione `FactNoteTombstones1791110000000`): un fatto o una nota
+cancellati — la chiave dello slot o la categoria della nota (`item_key`), il soggetto (null = la memoria stessa) e i
+messaggi di evidenza (anche quelli dietro gli episodi di evidenza); l'estrazione non riscrive un fatto di quello slot /
+una nota di quella categoria per quel soggetto da nessuno di quei messaggi, mentre un messaggio nuovo che lo racconta è
+una novità. Solo id; questi messaggi restano nella ricerca nelle chat.
 
 ### clarifications (D50, visione L1; comportamento WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contatti), episode_id / fact_id / note_id null
@@ -618,8 +626,8 @@ configurabile.
 
 Costruito (2026-10-08): dimenticare un episodio (MCP `forget_episode`, `DELETE api/v1/episodes/{id}`), la purge
 sincrona di messaggio / conversazione, e cancellare un fatto o una nota dal diario (`DELETE api/v1/facts/{id}` /
-`notes/{id}`, anche uno in sospeso rifiutato: la riga e le sue evidenze sono cancellate, nessun tombstone — <!-- verify:
-un fatto / una nota cancellati possono essere estratti di nuovo dagli stessi messaggi; voluto? -->). Non ancora
+`notes/{id}`, anche uno in sospeso rifiutato: la riga e le sue evidenze sono cancellate e resta un tombstone `fact` / `note`,
+così una ri-estrazione degli stessi messaggi non lo riscrive — 4.13). Non ancora
 costruito (WORK_PLAN 5.5): dimenticare un periodo, ri-verdetto dei fatti sull'evidenza dimenticata, cancellazione degli episodi rimasti
 senza evidenza.
 

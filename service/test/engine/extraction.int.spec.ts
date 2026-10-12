@@ -6,6 +6,7 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
 import { EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
+import { ReadService } from '../../src/read/read.service';
 import { ADMIN_KEY, call, fakeVector, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 describe('extraction engine (fake LLM: code-side rules)', () => {
@@ -396,5 +397,37 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     llm.queue.push({ episodes: [{ content: 'Cosa da dimenticare', occurred_at: '2026-03-07', evidence: [1] }] });
     await runner.runForConversation(c9);
     expect(await db.query(`SELECT count(*)::int AS n FROM episodes WHERE content = 'Cosa da dimenticare'`)).toEqual([{ n: 0 }]);
+  });
+
+  it('does not write a deleted fact or note again from the same messages, but learns it when told again (4.13)', async () => {
+    const said = { facts: [{ key: 'allergy', value: 'noci', verdict: 'new', evidence: [1] }],
+      notes: [{ category: 'preference', content: 'Evito i dolci con la frutta secca.', evidence: [1] }] };
+    const c10 = await ingest('c10', [{ id: 'n1', role: 'user', content: 'Sono allergico alle noci, evito i dolci con la frutta secca.', at: '2026-03-08T10:00:00+01:00' }]);
+    llm.queue.push(said);
+    await runner.runForConversation(c10);
+    const [fact] = await db.query(`SELECT id FROM facts WHERE key = 'allergy'`);
+    const [note] = await db.query(`SELECT id FROM notes WHERE content = $1`, [said.notes[0]?.content]);
+    const read = app.get(ReadService);
+    await read.deleteRow(memoryId, 'facts', fact.id);
+    await read.deleteRow(memoryId, 'notes', note.id);
+    // Ids only; the messages stay in the chat search (one memory drawn from them was removed, not the conversation).
+    expect(await db.query(`SELECT scope::text, item_key FROM forget_tombstones WHERE scope::text IN ('fact', 'note') ORDER BY scope`))
+      .toEqual([{ scope: 'fact', item_key: 'allergy' }, { scope: 'note', item_key: 'preference' }]);
+
+    // A re-run of the same messages (an edit, a re-extraction) writes neither again.
+    await db.query(`UPDATE messages SET extracted_run_id = NULL WHERE conversation_id = $1`, [c10]);
+    llm.queue.push(said);
+    await runner.runForConversation(c10);
+    const count = async () => (await db.query(`SELECT (SELECT count(*)::int FROM facts WHERE key = 'allergy') AS f,
+      (SELECT count(*)::int FROM notes WHERE category = 'preference' AND content = $1) AS n`, [said.notes[0]?.content]))[0];
+    expect(await count()).toEqual({ f: 0, n: 0 });
+    const [run] = await db.query(`SELECT summary FROM extraction_runs WHERE conversation_id = $1 ORDER BY started_at DESC LIMIT 1`, [c10]);
+    expect(run.summary.dropped).toMatchObject({ fact: { deleted: 1 }, note: { deleted: 1 } });
+
+    // Told again in a new message, it is news.
+    const c11 = await ingest('c11', [{ id: 'n2', role: 'user', content: 'Ricordati: sono allergico alle noci.', at: '2026-03-09T10:00:00+01:00' }]);
+    llm.queue.push({ facts: said.facts });
+    await runner.runForConversation(c11);
+    expect((await count()).f).toBe(1);
   });
 });

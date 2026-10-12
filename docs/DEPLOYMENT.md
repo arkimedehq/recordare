@@ -4,7 +4,8 @@ How Recordare's infrastructure is laid out. (Not to be confused with the **trust
 `API.md` §0, D33.) Recordare's code never depends on another product: sharing infrastructure is configuration only.
 
 Recordare needs:
-- **Postgres ≥ 16** with the `vector` (pgvector) and `pg_trgm` extensions;
+- **Postgres ≥ 16** with the `vector` (pgvector, ≥ 0.8 for iterative index scans — an older one works, but a search
+  filtered by memory can return fewer rows on a large install) and `pg_trgm` extensions;
 - **Redis** (BullMQ queues);
 - an **OpenAI-compatible embedding endpoint** (`/v1/embeddings`), the model fixed per installation (`EMBEDDING_DIM`);
 - an LLM provider (D27).

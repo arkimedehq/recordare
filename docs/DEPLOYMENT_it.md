@@ -7,7 +7,8 @@ Come è organizzata l'infrastruttura di Recordare. (Da non confondere con i prof
 configurazione.
 
 Recordare richiede:
-- **Postgres ≥ 16** con le estensioni `vector` (pgvector) e `pg_trgm`;
+- **Postgres ≥ 16** con le estensioni `vector` (pgvector, ≥ 0.8 per le scansioni iterative degli indici — una versione più
+  vecchia funziona, ma una ricerca filtrata per memoria può restituire meno righe su un'installazione grande) e `pg_trgm`;
 - **Redis** (code BullMQ);
 - un **endpoint di embedding compatibile con OpenAI** (`/v1/embeddings`), con il modello fissato per installazione (`EMBEDDING_DIM`);
 - un provider LLM (D27).

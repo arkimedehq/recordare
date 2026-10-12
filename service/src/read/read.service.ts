@@ -272,9 +272,31 @@ export class ReadService {
   }
 
   /** Deleting a note or a fact removes that row (its evidence goes with it); the history around it stays. */
+  /**
+   * Deletes a fact or a note and leaves a tombstone (WORK_PLAN 4.13): a re-extraction of the same messages (an edit, a
+   * re-run) must not write it again. Ids only: the slot key or note category, the subject and the evidence messages
+   * (also those behind evidence episodes). Without evidence messages (a note the agent was told to remember) none.
+   */
   async deleteRow(memoryId: string, table: 'notes' | 'facts', id: string): Promise<void> {
-    const [, n] = await this.db.query(`DELETE FROM ${table} WHERE id = $1 AND memory_id = $2`, [id, memoryId]);
-    if (!n) throw new NotFoundException();
+    await this.db.transaction(async (tx) => {
+      const [item]: Array<{ item_key: string; subject_person_id: string | null }> = await tx.query(
+        `SELECT ${table === 'facts' ? 'key' : 'category::text'} AS item_key, subject_person_id FROM ${table} WHERE id = $1 AND memory_id = $2`,
+        [id, memoryId]);
+      if (!item) throw new NotFoundException();
+      const evidence = table === 'facts' ? 'fact_evidence' : 'note_evidence';
+      const owner = table === 'facts' ? 'fact_id' : 'note_id';
+      const [row]: Array<{ ids: string[] }> = await tx.query(
+        `SELECT coalesce(array_agg(DISTINCT m), '{}') AS ids FROM (
+           SELECT message_id AS m FROM ${evidence} WHERE ${owner} = $1 AND message_id IS NOT NULL
+           UNION SELECT ee.message_id FROM ${evidence} x JOIN episode_evidence ee ON ee.episode_id = x.episode_id WHERE x.${owner} = $1) s`,
+        [id]);
+      const ids = row?.ids ?? [];
+      if (ids.length) {
+        await tx.query(`INSERT INTO forget_tombstones (memory_id, scope, item_key, subject_person_id, message_ids) VALUES ($1, $2, $3, $4, $5)`,
+          [memoryId, table === 'facts' ? 'fact' : 'note', item.item_key, item.subject_person_id, ids]);
+      }
+      await tx.query(`DELETE FROM ${table} WHERE id = $1 AND memory_id = $2`, [id, memoryId]);
+    });
   }
 
   /** A pending (inferred) fact or note the person confirms becomes theirs; rejected, it is removed. */

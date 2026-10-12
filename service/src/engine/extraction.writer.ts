@@ -7,7 +7,8 @@
  * - evidence: message numbers are mapped to ids in code; items without valid evidence are dropped;
  * - provenance: author_role from the evidence messages; items backed only by other people or tool
  *   output are `inferred` (facts / notes pending) — poisoning guard;
- * - forgetting: items whose evidence or date hits a tombstone are not recreated (D16);
+ * - forgetting: items whose evidence or date hits a tombstone are not recreated (D16); a deleted fact or note is not
+ *   written again from the messages it came from (same slot or category, same subject; 4.13);
  * - plans: confirm / cancel / reschedule / amend change status in code, with a plan_events log; a patch needs evidence
  *   that speaks of that plan (a shared name / place / keyword, or a similar embedding), and a reschedule must move it;
  * - facts: verdicts with world + knowledge time, forward-only supersession (imports never
@@ -60,6 +61,8 @@ export interface WrittenRow {
 interface Tombstones {
   messageIds: Set<string>;
   periods: Array<{ from: Date; to: Date }>;
+  /** Deleted facts and notes (4.13): slot key or note category, subject (null = the memory itself), evidence messages. */
+  items: Array<{ scope: 'fact' | 'note'; key: string; subjectId: string | null; messageIds: Set<string> }>;
 }
 
 export class ConcurrentExtractionError extends Error {
@@ -73,7 +76,7 @@ export class ExtractionWriter {
   private readonly written: WrittenRow[] = [];
   private audience: string[] = [];
   private audienceUnverified: string[] = [];
-  private tombstones: Tombstones = { messageIds: new Set(), periods: [] };
+  private tombstones: Tombstones = { messageIds: new Set(), periods: [], items: [] };
   /** What the model returned but the code-side rules did not write, by kind and reason (WORK_PLAN 4.12; no content). */
   private readonly dropped: Record<string, Record<string, number>> = {};
   /** Items still naming the self in the third person, and clarifications asked / answered. */
@@ -166,9 +169,15 @@ export class ExtractionWriter {
   }
 
   private async loadTombstones(): Promise<void> {
-    const rows: Array<{ message_ids: string[]; period_from: Date | null; period_to: Date | null }> = await this.tx.query(
-      `SELECT message_ids, period_from, period_to FROM forget_tombstones WHERE memory_id = $1`, [this.ctx.memoryId]);
+    const rows: Array<{ scope: string; item_key: string | null; subject_person_id: string | null; message_ids: string[];
+      period_from: Date | null; period_to: Date | null }> = await this.tx.query(
+      `SELECT scope::text, item_key, subject_person_id, message_ids, period_from, period_to FROM forget_tombstones WHERE memory_id = $1`,
+      [this.ctx.memoryId]);
     for (const r of rows) {
+      if (r.scope === 'fact' || r.scope === 'note') {
+        this.tombstones.items.push({ scope: r.scope, key: r.item_key ?? '', subjectId: r.subject_person_id, messageIds: new Set(r.message_ids) });
+        continue;
+      }
       for (const id of r.message_ids) this.tombstones.messageIds.add(id);
       if (r.period_from && r.period_to) this.tombstones.periods.push({ from: r.period_from, to: r.period_to });
     }
@@ -219,6 +228,12 @@ export class ExtractionWriter {
     if (msgs.some((m) => m.role === 'assistant')) return 'assistant';
     if (msgs.some((m) => m.role === 'tool')) return 'tool';
     return 'other';
+  }
+
+  /** A deleted fact or note told again by the messages it came from (4.13); a new message telling it is news. */
+  private deleted(scope: 'fact' | 'note', key: string, subjectId: string | null, msgs: WindowMessage[]): boolean {
+    return this.tombstones.items.some((t) => t.scope === scope && t.key === key && t.subjectId === subjectId
+      && msgs.some((m) => t.messageIds.has(m.id)));
   }
 
   private forgotten(msgs: WindowMessage[], at: Date | null): boolean {
@@ -442,6 +457,7 @@ export class ExtractionWriter {
       // A slot of "someone" means nothing; an undecided person's fact waits for nobody (only items ask).
       if (r.subject.kind === 'someone' || r.subject.kind === 'undecided') { this.drop('fact', `${r.subject.kind}_subject`); continue; }
       const subjectId = r.subject.personId;
+      if (this.deleted('fact', key, subjectId, msgs)) { this.drop('fact', 'deleted'); continue; }
       const inferred = await this.inferred(role, msgs, subjectId ? contact(subjectId) : SELF_SUBJECT);
       let target = f.target ? this.input.facts.get(f.target) : undefined;
       if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
@@ -544,6 +560,7 @@ export class ExtractionWriter {
       if (!who) { this.drop('note', 'unknown_contact'); continue; }
       if (who.subject.kind === 'someone') { this.drop('note', 'someone_subject'); continue; }
       const subject = who.subject;
+      if (this.deleted('note', n.category, subject.personId, msgs)) { this.drop('note', 'deleted'); continue; }
       const inferred = n.stance === 'inferred' || (await this.inferred(role, msgs, subject));
       let supersedes: string | null = null;
       let correctsId: string | null = null;

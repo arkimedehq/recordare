@@ -73,9 +73,11 @@ requested range.
 
 **Embeddings**: `embedding vector(N)`, `embedding_model text`, `embedding_text text`. N fixed per
 installation (D27). HNSW (`vector_cosine_ops`) queried with `memory_id` filter and pgvector
-iterative scan (`hnsw.iterative_scan = relaxed_order`) so per-memory recall holds in multi-memory
-installs; partition by memory if an install grows large. <!-- verify: hnsw.iterative_scan is not set anywhere in
-service/src (main) — not built yet? -->
+iterative scan (`hnsw.iterative_scan = strict_order`, set at connection start — pgvector ≥ 0.8; an older one drops it
+with a warning; WORK_PLAN 4.14) so per-memory recall holds in multi-memory installs: without it a filtered HNSW search
+stops at `hnsw.ef_search` candidates of the whole table (3 rows of 10 for a memory holding 0.5 % of 20,000). Every
+table with an HNSW index also has a `memory_id` btree, which the planner prefers for small memories; `strict_order`
+keeps the exact distance order the rank fusion uses. Partition by memory if an install grows large.
 
 ## Identity
 
@@ -570,10 +572,14 @@ served_at` — one row per recall served (`search_episodes`, `search_memory`, `s
 the public profile's `read_audit` (below) extends it with client, viewers and returned row ids.
 
 ### forget_tombstones (D16)
-`id, memory_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,
+`id, memory_id, scope enum (episode|period|conversation|message|fact|note), episode_fingerprint bytea null,
 message_ids uuid[] (the forgotten evidence messages, hidden from chat search), period_from, period_to,
-conversation_id null, created_at` — checked **before inserting any
-episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
+conversation_id null, item_key text null, subject_person_id uuid null → persons (CASCADE), created_at` — checked
+**before inserting any episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
+`fact` / `note` (WORK_PLAN 4.13, migration `FactNoteTombstones1791110000000`): a deleted fact or note — its slot key or
+note category (`item_key`), its subject (null = the memory itself) and its evidence messages (also those behind evidence
+episodes); the extraction does not write a fact of that slot / a note of that category for that subject again from any
+of those messages, while a new message telling it is news. Ids only; these messages stay in the chat search.
 
 ### clarifications (D50, vision L1; behaviour WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null
@@ -595,8 +601,8 @@ configurable.
 
 Built (2026-10-08): forget an episode (MCP `forget_episode`, `DELETE api/v1/episodes/{id}`), the synchronous message
 / conversation purge, and deleting a fact or a note from the diary (`DELETE api/v1/facts/{id}` / `notes/{id}`, also a
-rejected pending one: the row and its evidence are deleted, no tombstone — <!-- verify: a deleted fact / note can be
-extracted again from the same messages; intended? -->). Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of
+rejected pending one: the row and its evidence are deleted and a `fact` / `note` tombstone is left, so a re-extraction of
+the same messages does not write it again — 4.13). Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of
 facts on forgotten evidence, deletion of episodes left without evidence.
 
 - **Forget an episode**: tombstone + delete the episode, its evidence rows, people, plan events,

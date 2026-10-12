@@ -55,9 +55,11 @@ export class RawLogSearchService {
   async search(memoryId: string, clientId: string | null, opts: RawSearchOptions): Promise<RawHit[]> {
     const scope = await this.scopeClause(clientId);
     const params: unknown[] = [memoryId, opts.from ?? null, opts.to ?? null];
-    // Messages behind forgotten memories never come back through the chat search (D16).
+    // Messages behind forgotten memories never come back through the chat search (D16); a deleted fact or note leaves
+    // its messages there (4.13: one memory drawn from them was removed, not the conversation).
     const base = `m.memory_id = $1 AND m.role <> 'assistant' AND c.deleted_at IS NULL
-      AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.memory_id = $1 AND m.id = ANY(t.message_ids))
+      AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.memory_id = $1 AND t.scope::text NOT IN ('fact', 'note')
+        AND m.id = ANY(t.message_ids))
       AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}
       ${opts.conversationId ? `AND NOT (m.conversation_id = $${params.push(opts.conversationId)} AND m.sent_at > COALESCE(
         (SELECT max(a.sent_at) FROM messages a WHERE a.conversation_id = $${params.length} AND a.role = 'assistant'), '-infinity'::timestamptz))` : ''}

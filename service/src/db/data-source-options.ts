@@ -19,6 +19,7 @@ import { MemoryIdentity1791070000000 } from './migrations/1791070000000-MemoryId
 import { ContactClarification1791080000000 } from './migrations/1791080000000-ContactClarification';
 import { Sources1791090000000 } from './migrations/1791090000000-Sources';
 import { Memories1791100000000 } from './migrations/1791100000000-Memories';
+import { FactNoteTombstones1791110000000 } from './migrations/1791110000000-FactNoteTombstones';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -29,8 +30,18 @@ import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog
 export const ENTITIES = [Person, Memory, Client, ApiKey, AccessToken, ExternalIdentity, Clarification, Conversation, ConversationParticipant, Message];
 export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, MessageAuthorRef1790970000000, MemoryQualityProfile1790980000000, Consolidation1790990000000, RecallLog1791000000000, RecallLogConversation1791010000000, FactsReview1791020000000,
   EntityMemory1791030000000, ConsentWaiting1791040000000, RunSummary1791050000000, NoConsent1791060000000,
-  MemoryIdentity1791070000000, ContactClarification1791080000000, Sources1791090000000, Memories1791100000000];
+  MemoryIdentity1791070000000, ContactClarification1791080000000, Sources1791090000000, Memories1791100000000,
+  FactNoteTombstones1791110000000];
+
+/**
+ * Every session scans HNSW indexes iteratively (pgvector ≥ 0.8, WORK_PLAN 4.14): a vector search filtered by memory
+ * otherwise stops at `hnsw.ef_search` candidates (40) of the whole table and returns fewer rows than asked once other
+ * memories fill it (3 of 10 with one memory holding 0.5 % of 20,000 rows). `strict_order` keeps the exact distance
+ * order the rank fusion relies on. Set at connection start: an older pgvector drops the unknown setting with a warning.
+ */
+const SESSION_OPTIONS = '-c hnsw.iterative_scan=strict_order';
 
 export function dataSourceOptions(url: string): DataSourceOptions {
-  return { type: 'postgres', url, entities: ENTITIES, migrations: MIGRATIONS, migrationsRun: false, synchronize: false };
+  return { type: 'postgres', url, entities: ENTITIES, migrations: MIGRATIONS, migrationsRun: false, synchronize: false,
+    extra: { options: SESSION_OPTIONS } };
 }
