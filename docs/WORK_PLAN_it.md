@@ -143,10 +143,11 @@ Stato (2026-10-08): completata tranne 4.1 (partial: sweep notturno dei messaggi 
 cambiamenti delle note è registrato in `note_changes` ma non ha ancora un endpoint), 4.4c (TODO), 4.5b (partial), 4.5c
 (partial) e 4.7 (partial: la parte per il diario è realizzata); 4.4b e 4.6 completate in M4b; 4.8, 4.9, 4.11 done; 4.10
 e 4.12 TODO.
+Stato (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done.
 
 | # | Compito |
 |---|---|
-| 4.1 | Debounce idle per conversazione (D1/D5) + cursore lato servizio (D22) + sweep notturno — **partial**: lo sweep notturno dei messaggi in attesa (non estratti) è TODO (lo sweep orario si limita a consolidare) |
+| 4.1 | Debounce idle per conversazione (D1/D5) + cursore lato servizio (D22) + sweep notturno — **done 2026-10-12**: quando tocca al consolidamento notturno di una memoria, lo sweep orario prima estrae le sue conversazioni con messaggi in attesa (non estratti) in cui non arriva nulla da più del ritardo di inattività (una chiamata fallita, un job di inattività perso), poi consolida; una volta al giorno per memoria, quindi una finestra che continua a fallire costa un tentativo al giorno |
 | 4.2 | Estrazione degli episodi (D2, D9, D10, D21): bi-temporale, `datePrecision`, piani con `validUntil` / `invalidatedAt`, valenza / sentimenti / opinione, `people`, provenienza fino al messaggio grezzo |
 | 4.3 | `log_episode` (cattura esplicita, importanza massima); note semantiche (D34): estrazione nella stessa chiamata, tabelle `notes`, `remember` / `search_memory`, feed dei cambiamenti delle note — **partial**: tutto realizzato tranne l'endpoint del feed (`GET api/v1/notes/changes`, con la 4.7; i cambiamenti sono già registrati in `note_changes`) |
 | 4.4 | `search_episodes` completo: filtro per intervallo di date, `mode: search \| list`, ranking rilevanza + recenza + importanza + boost di accesso (D14), fallback automatico al log grezzo (D13); risolutore deterministico per le espressioni di periodo comuni (questa / scorsa settimana, nomi dei mesi) |

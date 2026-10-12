@@ -48,6 +48,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   episode, deletes the episodes, facts and notes left without evidence (before: they stayed, backed by nothing); a plan
   confirmed, cancelled or rescheduled by a deleted message gets its earlier status back; a fact or a note that replaced
   an older one makes it current again; the digests built on what went are rewritten.
+- Messages left unextracted (a failed extraction call, a lost idle job) no longer wait for the next message in their
+  conversation: the nightly sweep extracts them before consolidating (WORK_PLAN 4.1).
 
 ## [0.2.0] — 2026-10-10
 

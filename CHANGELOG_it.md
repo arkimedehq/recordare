@@ -55,6 +55,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   nulla dietro); un piano confermato, annullato o ripianificato da un messaggio cancellato riprende lo stato precedente;
   un fatto o una nota che ne sostituiva uno più vecchio lo fa tornare attuale; i digest costruiti su ciò che sparisce
   vengono riscritti.
+- I messaggi rimasti senza estrazione (una chiamata di estrazione fallita, un job di inattività perso) non aspettano più
+  il messaggio successivo nella loro conversazione: lo sweep notturno li estrae prima di consolidare (WORK_PLAN 4.1).
 
 ## [0.2.0] — 2026-10-10
 

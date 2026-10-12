@@ -139,10 +139,11 @@ Status (2026-10-07): done except 4.1 (nightly sweep of pending messages TODO), 4
 Status (2026-10-08): done except 4.1 (partial: nightly sweep of pending messages TODO), 4.3 (partial: the notes change
 feed is recorded in `note_changes` but has no endpoint yet), 4.4c (TODO), 4.5b (partial), 4.5c (partial) and 4.7
 (partial: the diary part is built); 4.4b and 4.6 done in M4b; 4.8, 4.9, 4.11 done; 4.10 and 4.12 TODO.
+Status (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done.
 
 | # | Task |
 |---|---|
-| 4.1 | Per-conversation idle debounce (D1/D5) + service-side cursor (D22) + nightly sweep — **partial**: the nightly sweep of pending (unextracted) messages is TODO (the hourly sweep only consolidates) |
+| 4.1 | Per-conversation idle debounce (D1/D5) + service-side cursor (D22) + nightly sweep — **done 2026-10-12**: when a memory's nightly consolidation is due, the hourly sweep first extracts its conversations with pending (unextracted) messages where nothing arrived for longer than the idle delay (a failed call, a lost idle job), then consolidates; once a day per memory, so a window that keeps failing costs one retry a day |
 | 4.2 | Episode extraction (D2, D9, D10, D21): bi-temporal, `datePrecision`, plans with `validUntil` / `invalidatedAt`, valence / feelings / opinion, `people`, provenance to raw message |
 | 4.3 | `log_episode` (explicit capture, max importance); semantic notes (D34): extraction in the same call, `notes` tables, `remember` / `search_memory`, notes change feed — **partial**: all built except the change feed's endpoint (`GET api/v1/notes/changes`, with 4.7; changes are already recorded in `note_changes`) |
 | 4.4 | `search_episodes` full: date-range filter, `mode: search \| list`, ranking relevance + recency + importance + access boost (D14), automatic raw-log fallback (D13); deterministic resolver for common period expressions (this / last week, month names) |
