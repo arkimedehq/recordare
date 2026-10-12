@@ -10,7 +10,7 @@ into deployment profiles (§0) so v1 stays focused on the twin.
 client library, the admin API and console, live telemetry and the atlas snapshot; `GET api/v1/health` (no auth:
 liveness and database reachability). **Built (2026-10-10, WORK_PLAN 8.9, D49)**: learned sources — §2 source ingest,
 §3 `search_knowledge` / `learn_source`, the §4 source rows. Sections or rows marked **not built yet (v1 plan)** are the contract still to
-build (the other §4 rows, OpenAPI, `Idempotency-Key`).
+build (the public-profile `me/identities` rows, OpenAPI, `Idempotency-Key`; the rest of §4 built 2026-10-12).
 Client-neutral: nothing here is specific to Arkimede. Data model: `DATA_MODEL.md`. Two integration
 levels (vision → Architecture): **basic** = MCP tools only; **full** = REST ingest + MCP + read API
 + SDK.
@@ -88,8 +88,8 @@ self-service diary.
 | `mcp` | §3 tools (reads + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
 | `read` | §4 GET endpoints (`GET api/v1/sources` included), `GET api/v1/me`, `POST api/v1/context` |
 | `write` | §4 manual entries, corrections, forgetting (a learned source included), fact / note edits |
-| `memory_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: admin key or the memory's personal token; public profile: holder sessions / holder-created tokens. As built no route uses it yet: these settings are set by the admin (`PATCH api/v1/admin/memories/:id`) |
-| `export` | §4 export jobs — v1: admin key or the memory's personal token; public profile: holder sessions only, expiring download. Not built yet |
+| `memory_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: the memory's personal token (the admin uses `PATCH api/v1/admin/memories/:id`); public profile: holder sessions / holder-created tokens |
+| `export` | §4 export jobs — v1: the memory's personal token; public profile: holder sessions only, expiring download |
 | `admin` | `api/v1/admin/…` (as built: only the `ADMIN_API_KEY` credential; a key or token listing `admin` gets no admin route) |
 
 Client keys are created with `ingest`, `mcp`, `read`, `write` only (`POST api/v1/admin/clients/:id/keys {scopes}`);
@@ -152,7 +152,7 @@ channel (exactly one), externalId, verified?}`, `DELETE identities/:id`,
 `POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/consolidate`,
 `POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; the console routes are described there). Revocations take effect at once (the credential
-cache is cleared). Not built yet: memory export / full erasure jobs.
+cache is cleared). Not built yet: full erasure (the memory export is §4).
 
 ## 2. REST ingest (task 1.2) — full integration
 
@@ -460,14 +460,26 @@ entries, newest first), `GET facts` (slots with `history`, `asOf`, per person in
 `POST notes/{id}/confirm | reject`, `GET plans` (open and unresolved by default, soonest first), `POST forget {from, to,
 keepRaw?}` (days or months, inclusive, in the memory's time zone; synchronous, `200` with
 `{episodes, messages, facts, notes}` forgotten; `400` when `from` is after `to`); plus the
-`GET / PATCH api/v1/me` rows. Edits answer `204` (`404` for an id that is not this memory's); only `GET episodes` pages
+`GET / PATCH api/v1/me` rows. **Built 2026-10-12 (the rest of 4.7)**: manual entry (`POST episodes {content, kind?,
+occurredAt?, occurredUntil?, datePrecision?, place?, people?}`, `POST notes {content, category?}` → `{id}`: written by the
+person in the host's UI — stated, theirs, no message behind them), corrections (`POST facts/{id}/corrections {value |
+null, validFrom?, datePrecision?}`, `POST notes/{id}/corrections {content, category?}` → `{id}`: a new row that
+`corrects` the current one, kept as `corrected`; `404` unless current), details (`GET facts/{id}` with the slot's
+`history`; `GET notes/{id}` with `status`; both with `evidence` — message text filtered as for episodes — and
+`episodeIds`), the notes change feed (`GET notes/changes?since&limit` → `{items: [{seq, noteId, change, at, note | null}],
+next, more}`: oldest first, `note` as it is now, null once forgotten; ask again with `since=next`), settings
+(`GET settings` → `{locale, timezone, qualityProfile | null, effectiveQualityProfile}`; `PATCH settings` with
+`memory_settings`, `400` for an unknown time zone or locale), usage (`GET usage?from&to` local days, default the last 30
+→ totals, `byPrompt`, `byDay`), exports (`POST exports` → `202 {id, status: running, …}`; `GET exports/{id}` → status;
+`GET exports/{id}/archive` → the JSON archive `format: "recordare-export/1"`, sent gzipped, `404` until done; kept 7
+days; scope `export`). Edits answer `204` (`404` for an id that is not this memory's); only `GET episodes` pages
 (`{items, nextCursor}`, default 50), the other lists are arrays. `GET notes` items: `{id, category, content, pinned,
 pending, inferred, pattern, authorRole, supportCount, recordedAt}` (`pattern`: a recurring pattern, WORK_PLAN 5.4). As built, deleting a fact or a note (and rejecting a
 pending one) removes the row with its evidence and leaves a `fact` / `note` tombstone (4.13) — a note also a
-`forgotten` entry in `note_changes`; confirming makes it stated (`pending` false). **Not built yet**: manual entry,
-fact / note corrections, settings, usage, exports, the notes change feed, `GET facts/{id}` / `GET notes/{id}`. Client library:
-`packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`, `correctEpisode`, `forgetEpisode`,
-`forgetPeriod`, `pinNote`, `delete`, `decide`).
+`forgotten` entry in `note_changes`; confirming makes it stated (`pending` false). Client library: `packages/client`
+(`episodes`, `episode`, `digests`, `facts`, `fact`, `notes`, `note`, `plans`, `addEpisode`, `addNote`, `correctEpisode`,
+`correctFact`, `correctNote`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide`, `noteChanges`, `settings`,
+`updateSettings`, `usage`, `startExport`, `exportJob`, `exportArchive`).
 
 Scoped to the memory, and the reader is the holder themself in the host's UI (memory-direct): a client key names the person
 with `X-Recordare-User` (scope `read` to read, `write` to edit), a personal token is the person; no conversation header,
@@ -492,7 +504,7 @@ account sees all of it (D48).
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed for clients keeping copies (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | locale, timezone, quality profile |
 | `GET api/v1/usage?from&to` | read | LLM calls and tokens for this memory |
-| `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Async full export (JSON archive) |
+| `POST api/v1/exports` → `GET api/v1/exports/{id}` → `GET …/{id}/archive` | export | Async full export (JSON archive, gzipped; built) |
 | `GET api/v1/sources` | read | What the agent learned, newest first: `[{id, externalId, title, kind, author, uri, providedBy, learnedAt, status, chars, passages, episodeIds}]` (built, 8.9) |
 | `GET api/v1/sources/{id}` | read | The same with its text, passage by passage: `text: [{ordinal, heading, content}]` (built) |
 | `DELETE api/v1/sources/{id}` | write | Forget a source (as `DELETE api/v1/ingest/sources/{externalId}`; `404` for an id that is not this memory's) (built) |

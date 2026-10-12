@@ -13,8 +13,8 @@ memoria prima del turno (`POST api/v1/context`, con `ingest`), le righe della §
 snapshot dell'atlas; `GET api/v1/health` (senza autenticazione: il servizio è vivo e raggiunge il database).
 **Costruito (2026-10-10, WORK_PLAN 8.9, D49)**: le fonti apprese — §2 ingest delle fonti, §3 `search_knowledge` /
 `learn_source`, le righe delle fonti nella §4. Le sezioni o
-righe contrassegnate **not built yet (v1 plan)** sono il contratto ancora da costruire (le altre righe della §4, OpenAPI,
-`Idempotency-Key`).
+righe contrassegnate **not built yet (v1 plan)** sono il contratto ancora da costruire (le righe `me/identities` del public profile, OpenAPI,
+`Idempotency-Key`; il resto della §4 costruito il 2026-10-12).
 Neutrale rispetto al client: nulla qui è specifico di Arkimede. Modello dati: `DATA_MODEL.md`. Due livelli di
 integrazione (visione → Architecture): **basic** = solo strumenti MCP; **full** = ingest REST + MCP + API di lettura
 + SDK.
@@ -94,8 +94,8 @@ diario self-service.
 | `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
 | `read` | §4 endpoint GET (compreso `GET api/v1/sources`), `GET api/v1/me`, `POST api/v1/context` |
 | `write` | §4 inserimenti manuali, correzioni, oblio (anche di una fonte appresa), modifiche di fatti / note |
-| `memory_settings` | `PATCH settings` (lingua, fuso orario, profilo di qualità) — mai le chiavi API dei client. v1: chiave admin o token personale della memoria; public profile: sessioni del titolare / token creati dal titolare. Come costruito nessuna rotta lo usa ancora: queste impostazioni le imposta l'admin (`PATCH api/v1/admin/memories/:id`) |
-| `export` | §4 job di export — v1: chiave admin o token personale della memoria; public profile: solo sessioni del titolare, download con scadenza. Non ancora costruito |
+| `memory_settings` | `PATCH settings` (lingua, fuso orario, profilo di qualità) — mai le chiavi API dei client. v1: il token personale della memoria (l'admin usa `PATCH api/v1/admin/memories/:id`); public profile: sessioni del titolare / token creati dal titolare |
+| `export` | §4 job di export — v1: il token personale della memoria; public profile: solo sessioni del titolare, download con scadenza |
 | `admin` | `api/v1/admin/…` (come costruito: solo la credenziale `ADMIN_API_KEY`; una chiave o un token che elenca `admin` non ottiene alcuna rotta admin) |
 
 Le chiavi client si creano solo con `ingest`, `mcp`, `read`, `write` (`POST api/v1/admin/clients/:id/keys {scopes}`);
@@ -160,7 +160,7 @@ channel (esattamente uno), externalId, verified?}`, `DELETE identities/:id`,
 `POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/consolidate`,
 `POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; le rotte della console sono descritte lì). Le revoche hanno effetto subito (la cache delle
-credenziali viene svuotata). Non ancora costruiti: job di export della memoria / cancellazione totale.
+credenziali viene svuotata). Non ancora costruita: la cancellazione totale (l'export della memoria è §4).
 
 ## 2. Ingest REST (task 1.2) — integrazione full
 
@@ -472,15 +472,28 @@ di entità), `DELETE facts/{id}`, `POST facts/{id}/confirm | reject`, `GET notes
 `DELETE notes/{id}`, `POST notes/{id}/confirm | reject`, `GET plans` (aperti e irrisolti per default, dal più vicino),
 `POST forget {from, to, keepRaw?}` (giorni o mesi, inclusi, nel fuso orario della memoria; sincrono, `200` con
 `{episodes, messages, facts, notes}` dimenticati; `400` se `from` è dopo `to`);
-più le righe `GET / PATCH api/v1/me`. Le modifiche rispondono `204` (`404` per un id che non è di questa memoria); pagina solo
+più le righe `GET / PATCH api/v1/me`. **Costruiti il 2026-10-12 (il resto del 4.7)**: inserimento manuale (`POST episodes
+{content, kind?, occurredAt?, occurredUntil?, datePrecision?, place?, people?}`, `POST notes {content, category?}` →
+`{id}`: scritti dalla persona nell'interfaccia dell'host — dichiarati, suoi, senza un messaggio dietro), correzioni
+(`POST facts/{id}/corrections {value | null, validFrom?, datePrecision?}`, `POST notes/{id}/corrections {content,
+category?}` → `{id}`: una nuova riga che `corrects` quella attuale, conservata come `corrected`; `404` se non è attuale),
+dettagli (`GET facts/{id}` con la `history` dello slot; `GET notes/{id}` con `status`; entrambi con `evidence` — testo
+dei messaggi filtrato come per gli episodi — ed `episodeIds`), il feed delle modifiche delle note (`GET
+notes/changes?since&limit` → `{items: [{seq, noteId, change, at, note | null}], next, more}`: dalla più vecchia, `note`
+com'è ora, null una volta dimenticata; si richiede con `since=next`), impostazioni (`GET settings` → `{locale, timezone,
+qualityProfile | null, effectiveQualityProfile}`; `PATCH settings` con `memory_settings`, `400` per un fuso orario o una
+lingua sconosciuti), uso (`GET usage?from&to` giorni locali, default gli ultimi 30 → totali, `byPrompt`, `byDay`), export
+(`POST exports` → `202 {id, status: running, …}`; `GET exports/{id}` → stato; `GET exports/{id}/archive` → l'archivio
+JSON `format: "recordare-export/1"`, inviato compresso gzip, `404` finché non è pronto; conservato 7 giorni; scope
+`export`). Le modifiche rispondono `204` (`404` per un id che non è di questa memoria); pagina solo
 `GET episodes` (`{items, nextCursor}`, default 50), le altre liste sono array. Elementi di `GET notes`: `{id, category,
 content, pinned, pending, inferred, pattern, authorRole, supportCount, recordedAt}` (`pattern`: un pattern ricorrente,
 WORK_PLAN 5.4). Come costruito, cancellare un fatto o una
 nota (e rifiutarne uno in sospeso) rimuove la riga con le sue evidenze e lascia un tombstone `fact` / `note` (4.13) —
-una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichiarata (`pending` false). **Non ancora
-costruite**: inserimento manuale, correzioni di fatti / note, impostazioni, uso, export, il feed delle modifiche delle note, `GET facts/{id}` /
-`GET notes/{id}`. Libreria client: `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`,
-`correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide`).
+una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichiarata (`pending` false). Libreria client:
+`packages/client` (`episodes`, `episode`, `digests`, `facts`, `fact`, `notes`, `note`, `plans`, `addEpisode`, `addNote`,
+`correctEpisode`, `correctFact`, `correctNote`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide`,
+`noteChanges`, `settings`, `updateSettings`, `usage`, `startExport`, `exportJob`, `exportArchive`).
 
 Con ambito limitato alla memoria, e chi legge è il titolare stesso nell'interfaccia dell'host (memory-direct): una chiave
 client indica la persona con `X-Recordare-User` (scope `read` per leggere, `write` per modificare), un token personale è
@@ -504,7 +517,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed per i client che tengono copie (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | lingua, fuso orario, profilo di qualità |
 | `GET api/v1/usage?from&to` | read | Chiamate LLM e token per questa memoria |
-| `POST api/v1/exports` → `GET api/v1/exports/{id}` | export | Export completo asincrono (archivio JSON) |
+| `POST api/v1/exports` → `GET api/v1/exports/{id}` → `GET …/{id}/archive` | export | Export completo asincrono (archivio JSON, compresso gzip; costruito) |
 | `GET api/v1/sources` | read | Ciò che l'agente ha imparato, dal più recente: `[{id, externalId, title, kind, author, uri, providedBy, learnedAt, status, chars, passages, episodeIds}]` (costruito, 8.9) |
 | `GET api/v1/sources/{id}` | read | Lo stesso con il testo, passaggio per passaggio: `text: [{ordinal, heading, content}]` (costruito) |
 | `DELETE api/v1/sources/{id}` | write | Dimenticare una fonte (come `DELETE api/v1/ingest/sources/{externalId}`; `404` per un id che non è di questa memoria) (costruito) |

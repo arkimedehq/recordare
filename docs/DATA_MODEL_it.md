@@ -592,7 +592,15 @@ scartato e perché (`no_evidence`, `forgotten`, `recall_echo`, `person_not_named
 ### llm_calls
 `id, memory_id null, client_id null, run_id null, prompt_id, provider, model, input_tokens,
 cached_input_tokens, output_tokens, latency_ms, status, created_at` — nessun testo di prompt o di completamento
-memorizzato. Aggregato per memoria / client / giorno per i budget e il cost gate della CI.
+memorizzato. Aggregato per memoria / client / giorno per i budget e il cost gate della CI; per memoria, per prompt e per
+giorno, per la persona (`GET api/v1/usage`, WORK_PLAN 4.7).
+
+### exports (WORK_PLAN 4.7, migrazione `Exports1791140000000`)
+`id, memory_id → memories (CASCADE), client_id null, status enum (running|done|failed), archive bytea null (l'archivio
+JSON compresso gzip), bytes, error, created_at, finished_at` — gli export completi (`POST api/v1/exports`), costruiti in
+background, eliminati dopo 7 giorni; una costruzione non finita entro un'ora (un riavvio) conta come fallita.
+L'archivio (`format: "recordare-export/1"`) contiene ogni tabella della memoria com'è memorizzata, senza vettori e
+indici di ricerca, e senza i messaggi grezzi che un periodo dimenticato nasconde.
 
 ### recall_log
 `id bigserial, memory_id → persons (CASCADE), tool, mode null, items, conversation_id null → conversations (SET NULL),

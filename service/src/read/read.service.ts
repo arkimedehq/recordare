@@ -73,6 +73,13 @@ interface NoteRow {
   support_count: number; recorded_at: Date;
 }
 
+const NOTE_COLUMNS = `id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, support_count, recorded_at`;
+
+function noteView(r: NoteRow) {
+  return { id: r.id, category: r.category, content: r.content, pinned: r.pinned, pending: r.pending, inferred: r.stance === 'inferred',
+    pattern: r.pattern, authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString() };
+}
+
 const VISIBLE = `e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL`;
 
 /** Keyset cursor: the last item's (occurred_at or recorded_at, id). Opaque to clients. */
@@ -247,11 +254,10 @@ export class ReadService {
       query.pinned !== undefined ? `AND pinned = $${params.push(query.pinned)}` : '',
     ].join(' ');
     const rows: NoteRow[] = await this.db.query(
-      `SELECT id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, support_count, recorded_at FROM notes
+      `SELECT ${NOTE_COLUMNS} FROM notes
        WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($2::boolean OR NOT pending) ${extra}
        ORDER BY pinned DESC, recorded_at DESC`, params);
-    return rows.map((r) => ({ id: r.id, category: r.category, content: r.content, pinned: r.pinned, pending: r.pending,
-      inferred: r.stance === 'inferred', pattern: r.pattern, authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString() }));
+    return rows.map(noteView);
   }
 
   /** Plans, soonest first (open and unresolved by default). */
@@ -305,5 +311,85 @@ export class ReadService {
     const [, n] = await this.db.query(
       `UPDATE ${table} SET pending = false, stance = 'stated', confidence = 1 WHERE id = $1 AND memory_id = $2 AND pending AND deleted_at IS NULL`, [id, memoryId]);
     if (!n) throw new NotFoundException();
+  }
+
+  /**
+   * One fact with its slot's history and its evidence (WORK_PLAN 4.7): the messages behind it (text only from the
+   * client's own conversations unless its `raw_log_scope` is `all`, as for episodes) and the episodes it was drawn from.
+   */
+  async fact(memoryId: string, clientId: string, id: string) {
+    const o = await this.memory(memoryId);
+    const [f]: Array<FactRow & { subject_person_id: string | null; corrects: string | null; recorded_at: Date }> = await this.db.query(
+      `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, f.stance, f.author_role, f.subject_person_id, f.corrects,
+         f.recorded_at, s.display_name AS about
+       FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id WHERE f.id = $1 AND f.memory_id = $2 AND f.deleted_at IS NULL`, [id, memoryId]);
+    if (!f) throw new NotFoundException();
+    const history: FactRow[] = await this.db.query(
+      `SELECT id, key, value, status, valid_from, valid_to, pending, stance, author_role FROM facts
+       WHERE memory_id = $1 AND key = $2 AND subject_person_id IS NOT DISTINCT FROM $3 AND deleted_at IS NULL
+       ORDER BY valid_from NULLS FIRST, recorded_at`, [memoryId, f.key, f.subject_person_id]);
+    const day = (d: Date | null) => (d ? localDate(d, o.tz) : null);
+    return {
+      id: f.id, ...(f.about ? { about: f.about } : {}), key: f.key, value: f.value,
+      status: f.status === 'unknown_current' ? 'unknown' : f.status, validFrom: day(f.valid_from), validTo: day(f.valid_to),
+      pending: f.pending, inferred: f.stance === 'inferred', authorRole: f.author_role, corrects: f.corrects,
+      recordedAt: f.recorded_at.toISOString(),
+      history: history.map((r) => ({ id: r.id, value: r.value, from: day(r.valid_from), to: day(r.valid_to), status: r.status })),
+      ...(await this.itemEvidence('facts', id, clientId)),
+    };
+  }
+
+  /** One note (any status) with its evidence, as `fact`. */
+  async note(memoryId: string, clientId: string, id: string) {
+    await this.memory(memoryId);
+    const [n]: Array<NoteRow & { status: string; supersedes: string | null; corrects: string | null }> = await this.db.query(
+      `SELECT ${NOTE_COLUMNS}, status::text, supersedes, corrects FROM notes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL`, [id, memoryId]);
+    if (!n) throw new NotFoundException();
+    return { ...noteView(n), status: n.status, supersedes: n.supersedes, corrects: n.corrects, ...(await this.itemEvidence('notes', id, clientId)) };
+  }
+
+  private async itemEvidence(table: 'facts' | 'notes', id: string, clientId: string) {
+    const [client] = await this.db.query(`SELECT raw_log_scope FROM clients WHERE id = $1`, [clientId]);
+    const showAll = client?.raw_log_scope === 'all';
+    const x = table === 'facts' ? 'fact_evidence' : 'note_evidence';
+    const owner = table === 'facts' ? 'fact_id' : 'note_id';
+    const messages: Array<Omit<EvidenceRow, 'evidence_kind'>> = await this.db.query(
+      `SELECT m.id AS message_id, m.role, m.content, m.sent_at, c.external_id AS conversation,
+              COALESCE(p.display_name, cp.display_name) AS author, (c.client_id = $2) AS own
+       FROM ${x} ev JOIN messages m ON m.id = ev.message_id JOIN conversations c ON c.id = m.conversation_id
+       LEFT JOIN persons p ON p.id = m.author_person_id
+       LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
+       WHERE ev.${owner} = $1 ORDER BY m.sent_at`, [id, clientId]);
+    const episodes: Array<{ episode_id: string }> = await this.db.query(
+      `SELECT episode_id FROM ${x} WHERE ${owner} = $1 AND episode_id IS NOT NULL`, [id]);
+    return {
+      evidence: messages.map((e) => (e.own || showAll
+        ? { messageId: e.message_id, conversation: e.conversation, role: e.role, author: e.author, sentAt: (e.sent_at as Date).toISOString(), text: e.content }
+        : { role: e.role, sentAt: (e.sent_at as Date).toISOString(), otherClient: true })),
+      episodeIds: episodes.map((e) => e.episode_id),
+    };
+  }
+
+  /**
+   * The notes change feed (D34, WORK_PLAN 4.3): every change after `since`, oldest first, for clients keeping a copy
+   * (Arkimede → A-MEM). Each entry carries the note as it is now — null once it is forgotten (only its id is kept).
+   */
+  async noteChanges(memoryId: string, query: { since?: number; limit?: number }) {
+    await this.memory(memoryId);
+    const limit = query.limit ?? 100;
+    const rows: Array<{ seq: string; note_id: string; change: string; at: Date }> = await this.db.query(
+      `SELECT seq::text, note_id, change::text, at FROM note_changes WHERE memory_id = $1 AND seq > $2 ORDER BY seq LIMIT $3`,
+      [memoryId, query.since ?? 0, limit]);
+    const notes: Array<NoteRow & { status: string }> = rows.length ? await this.db.query(
+      `SELECT ${NOTE_COLUMNS}, status::text FROM notes WHERE id = ANY($1) AND memory_id = $2 AND deleted_at IS NULL`,
+      [[...new Set(rows.map((r) => r.note_id))], memoryId]) : [];
+    const byId = new Map(notes.map((n) => [n.id, { ...noteView(n), status: n.status }]));
+    const last = rows.at(-1);
+    return {
+      items: rows.map((r) => ({ seq: Number(r.seq), noteId: r.note_id, change: r.change, at: r.at.toISOString(), note: byId.get(r.note_id) ?? null })),
+      // Ask again from here; equal to `since` when nothing new.
+      next: last ? Number(last.seq) : (query.since ?? 0),
+      more: rows.length === limit,
+    };
   }
 }

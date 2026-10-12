@@ -70,7 +70,12 @@ await rc.learnSource('user-42', { externalId: 'boiler-manual', title: 'Manuale d
 ## Il diario
 `episodes`, `episode`, `digests`, `facts`, `notes`, `plans` leggono ciò che Recordare ricorda, per la vista della persona
 nell'interfaccia della piattaforma; `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide` sono le modifiche
-della persona (API.md §4).
+della persona (API.md §4). `fact`, `note` danno un elemento con le sue prove; `addEpisode`, `addNote` sono scritti dalla
+persona (dichiarati, suoi); `correctFact`, `correctNote` tengono la versione sbagliata come cronologia. `noteChanges` è il
+feed delle modifiche per una piattaforma che tiene una copia delle note (si ripassa `next` come `since`). `settings`,
+`usage` leggono le impostazioni della memoria e le chiamate LLM spese per essa; `updateSettings` e l'export
+(`startExport` → `exportJob` → `exportArchive`) richiedono il token personale della memoria (scope `memory_settings`,
+`export`; `user` vuoto).
 
 ## Cosa resta all'host
 Come conserva la sua outbox (il suo database, la sua transazione) e come trasforma le sue chat nel contratto di

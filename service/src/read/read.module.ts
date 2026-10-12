@@ -3,8 +3,10 @@
 
 /** Routes of the read / write API for host UIs (API.md §4, WORK_PLAN 4.7). */
 import {
-  Body, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, Inject, Module, Param, ParseUUIDPipe, Patch, Post, Query,
+  Body, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, Inject, Module, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query,
+  Res, StreamableFile,
 } from '@nestjs/common';
+import { type Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
@@ -15,7 +17,10 @@ import { ZodBody } from '../common/zod-body.pipe';
 import { type Env } from '../config/env';
 import { NOW_HEADER } from '../mcp/mcp-tools';
 import { MemoryWriteService } from '../recall/memory-write.service';
+import { QUALITY_PROFILES } from '../engine/quality-profile';
+import { ExportsService } from './exports.service';
 import { ReadService } from './read.service';
+import { SettingsService } from './settings.service';
 
 const isoDay = z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/);
 const bool = z.enum(['true', 'false']).transform((v) => v === 'true');
@@ -41,6 +46,28 @@ const correctionBody = z.object({
   datePrecision: z.enum(['day', 'month', 'year', 'approximate']).optional(),
 }).refine((b) => b.content !== undefined || b.occurredAt !== undefined, { message: 'nothing to correct' });
 const pinBody = z.object({ pinned: z.boolean() });
+const CATEGORIES = ['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint'] as const;
+const episodeBody = z.object({
+  content: z.string().trim().min(1).max(4_000),
+  kind: z.enum(['event', 'plan']).optional(),
+  occurredAt: isoDay.optional(), occurredUntil: isoDay.optional(),
+  datePrecision: z.enum(['day', 'month', 'year', 'approximate']).optional(),
+  place: z.string().trim().max(200).optional(),
+  people: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
+});
+const noteBody = z.object({ content: z.string().trim().min(1).max(2_000), category: z.enum(CATEGORIES).optional() });
+const factCorrectionBody = z.object({
+  value: z.string().trim().min(1).max(500).nullable(),
+  validFrom: isoDay.optional(),
+  datePrecision: z.enum(['day', 'month', 'year', 'approximate']).optional(),
+});
+const changesQuery = z.object({ since: z.coerce.number().int().min(0).optional(), limit: z.coerce.number().int().min(1).max(500).optional() });
+const settingsBody = z.object({
+  locale: z.string().trim().min(2).max(35).optional(),
+  timezone: z.string().trim().min(1).max(64).optional(),
+  qualityProfile: z.enum(QUALITY_PROFILES).nullable().optional(),
+});
+const usageQuery = z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() });
 const forgetBody = z.object({ from: isoDay, to: isoDay, keepRaw: z.boolean().optional() })
   // A month (YYYY-MM) counts from its first day to its last one.
   .refine((b) => (b.from.length === 7 ? `${b.from}-01` : b.from) <= (b.to.length === 7 ? `${b.to}-31` : b.to), { message: 'from after to' });
@@ -58,6 +85,8 @@ export class ReadController {
   constructor(
     private readonly read: ReadService,
     private readonly writes: MemoryWriteService,
+    private readonly settings: SettingsService,
+    private readonly exports: ExportsService,
     private readonly memories: MemoryResolver,
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
@@ -87,6 +116,15 @@ export class ReadController {
     @Param('id', ParseUUIDPipe) id: string) {
     const { memoryId, clientId } = await this.who(p, user);
     return this.read.episode(memoryId, clientId, id, this.now(at));
+  }
+
+  /** Manual entry from the host's UI: written by the person, stated (API.md §4). */
+  @Post('episodes')
+  @RequireScopes('write')
+  async addEpisode(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
+    @Body(new ZodBody(episodeBody)) body: z.infer<typeof episodeBody>) {
+    const { memoryId } = await this.who(p, user);
+    return { id: await this.writes.logEpisode(memoryId, null, body) };
   }
 
   @Post('episodes/:id/corrections')
@@ -130,6 +168,21 @@ export class ReadController {
     return this.read.facts(memoryId, parse(factsQuery, q), this.now(at));
   }
 
+  @Get('facts/:id')
+  @RequireScopes('read')
+  async fact(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
+    const { memoryId, clientId } = await this.who(p, user);
+    return this.read.fact(memoryId, clientId, id);
+  }
+
+  @Post('facts/:id/corrections')
+  @RequireScopes('write')
+  async correctFact(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(factCorrectionBody)) body: z.infer<typeof factCorrectionBody>) {
+    const { memoryId } = await this.who(p, user);
+    return { id: await this.writes.correctFact(memoryId, { id, ...body }) };
+  }
+
   @Delete('facts/:id')
   @HttpCode(204)
   @RequireScopes('write')
@@ -159,6 +212,38 @@ export class ReadController {
   async notes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query() q: Record<string, string>) {
     const { memoryId } = await this.who(p, user);
     return this.read.notes(memoryId, parse(notesQuery, q));
+  }
+
+  /** The notes change feed (D34): declared before `notes/:id`. */
+  @Get('notes/changes')
+  @RequireScopes('read')
+  async noteChanges(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query() q: Record<string, string>) {
+    const { memoryId } = await this.who(p, user);
+    return this.read.noteChanges(memoryId, parse(changesQuery, q));
+  }
+
+  @Get('notes/:id')
+  @RequireScopes('read')
+  async note(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
+    const { memoryId, clientId } = await this.who(p, user);
+    return this.read.note(memoryId, clientId, id);
+  }
+
+  /** Manual entry from the host's UI: written by the person, stated. */
+  @Post('notes')
+  @RequireScopes('write')
+  async addNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
+    @Body(new ZodBody(noteBody)) body: z.infer<typeof noteBody>) {
+    const { memoryId } = await this.who(p, user);
+    return { id: await this.writes.remember(memoryId, null, body) };
+  }
+
+  @Post('notes/:id/corrections')
+  @RequireScopes('write')
+  async correctNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBody(noteBody)) body: z.infer<typeof noteBody>) {
+    const { memoryId } = await this.who(p, user);
+    return { id: await this.writes.correctNote(memoryId, { id, ...body }) };
   }
 
   @Patch('notes/:id')
@@ -201,7 +286,59 @@ export class ReadController {
     const { memoryId } = await this.who(p, user);
     return this.read.plans(memoryId, parse(plansQuery, q), this.now(at));
   }
+
+  @Get('settings')
+  @RequireScopes('read')
+  async getSettings(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined) {
+    const { memoryId } = await this.who(p, user);
+    return this.settings.get(memoryId);
+  }
+
+  @Patch('settings')
+  @RequireScopes('memory_settings')
+  async patchSettings(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
+    @Body(new ZodBody(settingsBody)) body: z.infer<typeof settingsBody>) {
+    const { memoryId } = await this.who(p, user);
+    return this.settings.update(memoryId, body);
+  }
+
+  @Get('usage')
+  @RequireScopes('read')
+  async usage(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
+    @Query() q: Record<string, string>) {
+    const { memoryId } = await this.who(p, user);
+    return this.settings.usage(memoryId, parse(usageQuery, q), this.now(at));
+  }
+
+  /** A full export, built in the background: poll `GET exports/{id}`, then download `GET exports/{id}/archive`. */
+  @Post('exports')
+  @HttpCode(202)
+  @RequireScopes('export')
+  async startExport(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined) {
+    const { memoryId, clientId } = await this.who(p, user);
+    return this.exports.start(memoryId, clientId);
+  }
+
+  @Get('exports/:id')
+  @RequireScopes('export')
+  async exportStatus(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
+    const { memoryId } = await this.who(p, user);
+    return this.exports.status(memoryId, id);
+  }
+
+  /** The archive: JSON, sent gzipped (`Content-Encoding: gzip`); 404 until the export is done. */
+  @Get('exports/:id/archive')
+  @RequireScopes('export')
+  async exportArchive(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
+    @Res({ passthrough: true }) res: Response) {
+    const { memoryId } = await this.who(p, user);
+    const archive = await this.exports.archive(memoryId, id);
+    if (!archive) throw new NotFoundException();
+    res.set({ 'Content-Type': 'application/json', 'Content-Encoding': 'gzip',
+      'Content-Disposition': `attachment; filename="recordare-export-${id}.json"` });
+    return new StreamableFile(archive);
+  }
 }
 
-@Module({ controllers: [ReadController], providers: [ReadService, MemoryWriteService] })
+@Module({ controllers: [ReadController], providers: [ReadService, MemoryWriteService, SettingsService, ExportsService] })
 export class ReadModule {}

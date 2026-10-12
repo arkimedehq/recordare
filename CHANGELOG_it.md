@@ -7,6 +7,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Il resto dell'API di lettura** (WORK_PLAN 4.7, API.md §4): inserimento manuale (`POST api/v1/episodes`,
+  `POST api/v1/notes` — scritti dalla persona, dichiarati), correzioni di fatti e note (`POST …/{id}/corrections`,
+  cronologia conservata), un fatto o una nota con le sue prove (`GET api/v1/facts/{id}`, `GET api/v1/notes/{id}`), il
+  feed delle modifiche delle note (`GET api/v1/notes/changes?since`, per le piattaforme che ne tengono una copia),
+  impostazioni (`GET` / `PATCH api/v1/settings`: lingua, fuso orario, profilo di qualità; cambiarle richiede il token
+  personale della memoria), uso (`GET api/v1/usage`: chiamate LLM e token per prompt e per giorno) ed export completi
+  (`POST api/v1/exports` → `GET …/{id}` → `GET …/{id}/archive`: un archivio JSON, costruito in background, conservato 7
+  giorni; token personale). Metodi del client per tutti; migrazione `Exports1791140000000`.
 - **Dimenticare un periodo**: `POST api/v1/forget {from, to, keepRaw?}` (client `forgetPeriod`) dimentica gli episodi
   avvenuti nel periodo e i messaggi grezzi inviati in esso (`keepRaw`: conservati ma nascosti e mai più estratti), con
   ciò che solo loro sostenevano; restituisce quanto è stato dimenticato (WORK_PLAN 5.5). Dimenticare un episodio ora

@@ -189,6 +189,55 @@ export interface Note {
   recordedAt: string;
 }
 
+/** The messages behind a fact or a note; text only from the client's own conversations (`otherClient` otherwise). */
+export type ItemEvidence = Array<{ messageId?: string; conversation?: string; role: string; author?: string | null; sentAt: string; text?: string; otherClient?: true }>;
+
+export interface FactDetail extends Fact {
+  authorRole: string;
+  /** The fact this one corrected (a correction by the person). */
+  corrects: string | null;
+  recordedAt: string;
+  evidence: ItemEvidence;
+  /** Episodes the fact was drawn from. */
+  episodeIds: string[];
+}
+
+export interface NoteDetail extends Note {
+  status: 'current' | 'superseded' | 'corrected';
+  supersedes: string | null;
+  corrects: string | null;
+  evidence: ItemEvidence;
+  episodeIds: string[];
+}
+
+/** One entry of the notes change feed; `note` is the note as it is now, null once forgotten. */
+export interface NoteChange {
+  seq: number;
+  noteId: string;
+  change: 'created' | 'updated' | 'corrected' | 'confirmed' | 'forgotten' | 'retired';
+  at: string;
+  note: (Note & { status: string }) | null;
+}
+
+export interface MemorySettings {
+  locale: string;
+  timezone: string;
+  /** null: the installation default (`effectiveQualityProfile`). */
+  qualityProfile: 'economy' | 'balanced' | 'full' | null;
+  effectiveQualityProfile: 'economy' | 'balanced' | 'full';
+}
+
+export interface UsageTotals { calls: number; inputTokens: number; cachedInputTokens: number; outputTokens: number; failed: number }
+
+export interface Usage extends UsageTotals {
+  from: string;
+  to: string;
+  byPrompt: Array<UsageTotals & { prompt: string }>;
+  byDay: Array<UsageTotals & { day: string }>;
+}
+
+export interface ExportJob { id: string; status: 'running' | 'done' | 'failed'; createdAt: string; finishedAt: string | null; bytes: number | null }
+
 /** Size of the parts `learnSource` sends a big text in (UTF-8 bytes; the service's default request limit is 16 MB). */
 export const SOURCE_PART_BYTES = 4 * 1024 * 1024;
 
