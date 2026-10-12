@@ -18,6 +18,7 @@ import { TelemetryService } from '../telemetry/telemetry.service';
 import { type MemoryMode } from '../identity/identity.entities';
 import { type Attribution, SOMEONE } from './attribution';
 import { askSameContact, matchUnboundContacts, sameContactQuestion } from '../engine/contacts';
+import { dropUnsupported, supportedBy } from '../recall/forgetting';
 
 type Participant = IngestRequest['conversation']['participants'][number];
 interface MemoryInfo { mode: MemoryMode; locale: string; timezone: string }
@@ -148,21 +149,16 @@ export class IngestService {
     await this.queue.scheduleIdleExtraction(conversationId, this.idleDelayMs);
   }
 
-  /** Physical purge of one message (derived memories are re-evaluated by the engine, M4). */
+  /** Physical purge of one message; what only it supported goes too (`forgetting.ts`, WORK_PLAN 5.5). */
   async deleteMessage(clientId: string, memoryId: string, conversationExternalId: string, messageExternalId: string): Promise<void> {
-    // WITH … SELECT: plain rows back (a bare DELETE … RETURNING comes back as [rows, count]).
-    const [row] = await this.db.query(
-      `WITH d AS (
-         DELETE FROM messages m USING conversations c
-         WHERE c.id = m.conversation_id AND c.client_id = $1 AND c.memory_id = $2 AND c.external_id = $3 AND m.external_id = $4
-         RETURNING m.id)
-       SELECT id FROM d`,
-      [clientId, memoryId, conversationExternalId, messageExternalId],
-    );
-    if (!row) throw new NotFoundException();
+    const [msg] = await this.db.query(
+      `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
+       WHERE c.client_id = $1 AND c.memory_id = $2 AND c.external_id = $3 AND m.external_id = $4`,
+      [clientId, memoryId, conversationExternalId, messageExternalId]);
+    if (!msg) throw new NotFoundException();
+    await this.purge(memoryId, [msg.id], (tx) => tx.query(`DELETE FROM messages WHERE id = $1`, [msg.id]));
   }
 
-  /** Physical purge of a conversation and its messages (cascade). */
   /** Ends a conversation without a message: schedules its extraction now (404 when unknown). */
   async end(clientId: string, memoryId: string, conversationExternalId: string): Promise<void> {
     const [conv] = await this.db.query(
@@ -174,13 +170,24 @@ export class IngestService {
     await this.queue.scheduleIdleExtraction(conv.id, 0);
   }
 
+  /** Physical purge of a conversation and its messages (cascade); what only they supported goes too. */
   async deleteConversation(clientId: string, memoryId: string, conversationExternalId: string): Promise<void> {
-    const [row] = await this.db.query(
-      `WITH d AS (DELETE FROM conversations WHERE client_id = $1 AND memory_id = $2 AND external_id = $3 RETURNING id)
-       SELECT id FROM d`,
-      [clientId, memoryId, conversationExternalId],
-    );
-    if (!row) throw new NotFoundException();
+    const [conv] = await this.db.query(
+      `SELECT id FROM conversations WHERE client_id = $1 AND memory_id = $2 AND external_id = $3`, [clientId, memoryId, conversationExternalId]);
+    if (!conv) throw new NotFoundException();
+    const messages: Array<{ id: string }> = await this.db.query(`SELECT id FROM messages WHERE conversation_id = $1`, [conv.id]);
+    await this.purge(memoryId, messages.map((m) => m.id), (tx) => tx.query(`DELETE FROM conversations WHERE id = $1`, [conv.id]));
+  }
+
+  /** Deletes messages (`remove`) and drops the episodes, facts, notes and plan states only they supported. */
+  private async purge(memoryId: string, ids: string[], remove: (tx: EntityManager) => Promise<unknown>): Promise<void> {
+    let forgotten: string[] = [];
+    await this.db.transaction(async (tx) => {
+      const support = await supportedBy(tx, memoryId, { messageIds: ids });
+      await remove(tx);
+      forgotten = (await dropUnsupported(tx, memoryId, support)).episodes;
+    });
+    if (forgotten.length) this.telemetry.emit({ type: 'episode.forgotten', memoryId, ids: forgotten });
   }
 
   private async applyEdit(tx: EntityManager, messageId: string, previous: string, content: string): Promise<void> {

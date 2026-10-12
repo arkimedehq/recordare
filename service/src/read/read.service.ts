@@ -271,7 +271,6 @@ export class ReadService {
     if (!n) throw new NotFoundException();
   }
 
-  /** Deleting a note or a fact removes that row (its evidence goes with it); the history around it stays. */
   /**
    * Deletes a fact or a note and leaves a tombstone (WORK_PLAN 4.13): a re-extraction of the same messages (an edit, a
    * re-run) must not write it again. Ids only: the slot key or note category, the subject and the evidence messages
@@ -296,6 +295,7 @@ export class ReadService {
           [memoryId, table === 'facts' ? 'fact' : 'note', item.item_key, item.subject_person_id, ids]);
       }
       await tx.query(`DELETE FROM ${table} WHERE id = $1 AND memory_id = $2`, [id, memoryId]);
+      if (table === 'notes') await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'forgotten')`, [memoryId, id]);
     });
   }
 

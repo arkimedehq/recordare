@@ -627,22 +627,33 @@ configurabile.
 Costruito (2026-10-08): dimenticare un episodio (MCP `forget_episode`, `DELETE api/v1/episodes/{id}`), la purge
 sincrona di messaggio / conversazione, e cancellare un fatto o una nota dal diario (`DELETE api/v1/facts/{id}` /
 `notes/{id}`, anche uno in sospeso rifiutato: la riga e le sue evidenze sono cancellate e resta un tombstone `fact` / `note`,
-così una ri-estrazione degli stessi messaggi non lo riscrive — 4.13). Non ancora
-costruito (WORK_PLAN 5.5): dimenticare un periodo, ri-verdetto dei fatti sull'evidenza dimenticata, cancellazione degli episodi rimasti
-senza evidenza.
+così una ri-estrazione degli stessi messaggi non lo riscrive — 4.13), e dal 2026-10-12 (WORK_PLAN 5.5) dimenticare un
+periodo (`POST api/v1/forget`) e ciò che l'oblio porta con sé (`service/src/recall/forgetting.ts`): quando spariscono
+messaggi (un messaggio, una conversazione, un periodo) o si dimenticano episodi, un episodio, un fatto o una nota rimasti
+senza evidenza vengono cancellati; un piano la cui conferma, annullamento o ripianificazione veniva da un messaggio
+sparito riprende lo stato dato dagli eventi rimasti (aperto se non ne resta nessuno), e la copia ripianificata creata da
+quell'evento sparisce con esso; un fatto o una nota che ne sostituiva uno più vecchio gli restituisce il posto (il più
+vecchio torna attuale: ciò che lo rendeva superato non c'è più), mentre una correzione no (l'elemento corretto resta
+corretto: era stato detto sbagliato); i digest costruiti sugli episodi che spariscono sono superati. Un fatto o una nota
+conserva l'evidenza che ha altrove.
 
 - **Dimenticare un episodio**: tombstone + cancellazione dell'episodio, delle sue righe di evidenza, persone, eventi di piano,
   promozioni che lo referenziano; la catena di correzioni (`corrects` in entrambe le direzioni) viene dimenticata
   con esso (come costruito: anche duplicati, l'evento di conferma e le ripianificazioni); i **digest giornalieri e mensili che lo hanno
   usato sono superati** e riscritti dal consolidamento successivo;
-  **i fatti la cui evidenza interseca i suoi messaggi vengono ri-verdettati o cancellati** (non ancora costruito); i suoi messaggi
+  fatti e note tratti da esso (evidenza sull'episodio) perdono quel supporto e sono cancellati quando non ne resta;
+  come costruito, non quelli tratti dagli stessi messaggi (un messaggio racconta spesso più cose; restano); i suoi messaggi
   di evidenza sono **esclusi dal fallback sul log grezzo per id del messaggio** (non per impronta fuzzy) e
   eliminati se il titolare sceglie "dimentica anche la conversazione".
 - **Dimenticare un periodo** `[from, to]`: tombstone; abbina gli episodi per `occurred_at` **e** i messaggi
   grezzi per `sent_at`; i messaggi grezzi nel periodo sono **eliminati per default** (`keepRaw: true`
-  per conservarli); i digest del periodo sono ricalcolati o rimossi.
+  per conservarli); i digest del periodo sono ricalcolati o rimossi. Come costruito (sincrono, `200` con i conteggi):
+  episodi per sovrapposizione come una ricerca per periodo, con le loro catene di correzioni; messaggi grezzi per
+  `sent_at`; con `keepRaw` i messaggi restano ma sono nascosti alla ricerca nelle chat, mai più estratti e non sostengono
+  nulla (un episodio raccontato solo da loro sparisce); il tombstone `period` impedisce a un'estrazione successiva di
+  scrivere un episodio datato in esso.
 - **Cancellare un messaggio / conversazione** (richiesta del client): purge delle righe grezze e delle revisioni; per ogni
-  episodio / fatto che lo cita, **si elimina la riga di evidenza**; una riga rimasta senza evidenza viene cancellata (non ancora costruito);
+  episodio / fatto / nota che lo cita, **si elimina la riga di evidenza**; una riga rimasta senza evidenza viene cancellata (costruito 2026-10-12);
   nessuna ri-estrazione (potrebbe riscrivere i ricordi).
 - Il job di purge rimuove anche: `messages.embedding`, `message_revisions` (anche nel forget-period),
   `embedding_text`, citazioni, righe `run_outputs`. I job in coda portano **solo id, mai contenuto**;

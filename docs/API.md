@@ -210,7 +210,8 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
 - `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` when
   unknown); the previous text goes to `message_revisions` and the message is extracted again.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
-  purge (`DATA_MODEL.md` → Forgetting and deletion). As built: the purge runs synchronously and returns `202` with no
+  purge (`DATA_MODEL.md` → Forgetting and deletion: the episodes, facts, notes and plan states only those messages
+  supported go too). As built: the purge runs synchronously and returns `202` with no
   body (plan: `202` + job id); `404` when unknown (the client library treats it as done).
 - `POST api/v1/ingest/conversations/{externalId}/end` → `202`: the conversation ended on the client (session closed,
   /new) — extraction runs now instead of after the idle delay; `404` for a conversation never ingested. Same effect as `hints.conversationEnded` (honoured also on a batch whose
@@ -454,14 +455,16 @@ appends it at the end of its system prompt and never stores it as a message).
 `{id}`, `DELETE episodes/{id}` (forgetting that sticks, as `forget_episode`), `GET digests` (current day / month
 entries, newest first), `GET facts` (slots with `history`, `asOf`, per person in an entity memory), `DELETE facts/{id}`,
 `POST facts/{id}/confirm | reject`, `GET notes`, `PATCH notes/{id} {pinned}`, `DELETE notes/{id}`,
-`POST notes/{id}/confirm | reject`, `GET plans` (open and unresolved by default, soonest first); plus the
+`POST notes/{id}/confirm | reject`, `GET plans` (open and unresolved by default, soonest first), `POST forget {from, to,
+keepRaw?}` (days or months, inclusive, in the memory's time zone; synchronous, `200` with
+`{episodes, messages, facts, notes}` forgotten; `400` when `from` is after `to`); plus the
 `GET / PATCH api/v1/me` rows. Edits answer `204` (`404` for an id that is not this memory's); only `GET episodes` pages
 (`{items, nextCursor}`, default 50), the other lists are arrays. As built, deleting a fact or a note (and rejecting a
-pending one) removes the row with its evidence — no tombstone, no `note_changes` entry; confirming makes it stated
-(`pending` false). **Not built yet**: manual entry, fact / note corrections, promotions (5.4), forgetting a period
-(5.5), settings, usage, exports, the notes change feed, `GET facts/{id}` / `GET notes/{id}`. Client library:
+pending one) removes the row with its evidence and leaves a `fact` / `note` tombstone (4.13) — a note also a
+`forgotten` entry in `note_changes`; confirming makes it stated (`pending` false). **Not built yet**: manual entry,
+fact / note corrections, promotions (5.4), settings, usage, exports, the notes change feed, `GET facts/{id}` / `GET notes/{id}`. Client library:
 `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`, `correctEpisode`, `forgetEpisode`,
-`pinNote`, `delete`, `decide`).
+`forgetPeriod`, `pinNote`, `delete`, `decide`).
 
 Scoped to the memory, and the reader is the holder themself in the host's UI (memory-direct): a client key names the person
 with `X-Recordare-User` (scope `read` to read, `write` to edit), a personal token is the person; no conversation header,
@@ -475,7 +478,7 @@ account sees all of it (D48).
 | `POST api/v1/episodes` | write | Manual entry |
 | `POST api/v1/episodes/{id}/corrections` | write | Correction (new row, `corrects`) |
 | `DELETE api/v1/episodes/{id}` | write | Forget one episode |
-| `POST api/v1/forget {from, to, keepRaw?}` | write | Forget a period (async job) |
+| `POST api/v1/forget {from, to, keepRaw?}` | write | Forget a period (built 2026-10-12: synchronous, counts) |
 | `GET api/v1/digests?level&from&to` | read | Diary entries (`level` `day \| month`) |
 | `GET api/v1/facts?key&asOf&status&includePending` / `GET …/{id}` | read | Facts with history (as built: `key`, `asOf`, `includePending`; no `status` filter) |
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Fix or forget a fact |
@@ -501,7 +504,7 @@ account sees all of it (D48).
 into requests of 500, `context` / `contextWithTurn` (§3 pre-turn memory context, with `ingest`), `endConversation`,
 `editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, `learnSource` (§2 learned sources, a big text sent
 in parts of `SOURCE_PART_BYTES` = 4 MB at paragraph boundaries) / `forgetSource` / `sources`, the §4 wrappers `episodes`, `episode`,
-`correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`, `mcp.listTools` /
+`correctEpisode`, `forgetEpisode`, `forgetPeriod`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`, `mcp.listTools` /
 `mcp.callTool` over the official MCP SDK with one session per user + conversation), `TOOLS` (the published MCP tool
 schemas), `PersonDirectory` (cached memory, mode and Atlas address; the platform's opt-in; name sync),
 `afterFailure` (outbox delivery policy: back-off with jitter, `Retry-After`, park on 400 / 413 / 422), typed errors

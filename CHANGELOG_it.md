@@ -6,6 +6,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Dimenticare un periodo**: `POST api/v1/forget {from, to, keepRaw?}` (client `forgetPeriod`) dimentica gli episodi
+  avvenuti nel periodo e i messaggi grezzi inviati in esso (`keepRaw`: conservati ma nascosti e mai più estratti), con
+  ciò che solo loro sostenevano; restituisce quanto è stato dimenticato (WORK_PLAN 5.5).
+
 ### Modificato
 - Prompt di estrazione `extract.v14` (entrambe le modalità, WORK_PLAN 8.11): gli errori dell'agente stesso sono salvati in
   prima persona ("ho sbagliato le date: avevo detto X, è Y"), le alternative confrontate restano accanto alla scelta, e un
@@ -45,6 +50,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - Le ricerche vettoriali filtrate per memoria scandiscono gli indici HNSW in modo iterativo (`hnsw.iterative_scan =
   strict_order`, pgvector ≥ 0.8): su un'installazione grande una ricerca poteva restituire meno righe di quelle chieste
   quando altre memorie riempivano l'indice (WORK_PLAN 4.14).
+- L'oblio porta con sé ciò che solo esso sosteneva (WORK_PLAN 5.5): cancellare un messaggio o una conversazione, o
+  dimenticare un episodio, cancella gli episodi, i fatti e le note rimasti senza evidenza (prima restavano, senza più
+  nulla dietro); un piano confermato, annullato o ripianificato da un messaggio cancellato riprende lo stato precedente;
+  un fatto o una nota che ne sostituiva uno più vecchio lo fa tornare attuale; i digest costruiti su ciò che sparisce
+  vengono riscritti.
 
 ## [0.2.0] — 2026-10-10
 

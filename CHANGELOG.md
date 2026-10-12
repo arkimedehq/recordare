@@ -6,6 +6,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Forget a period**: `POST api/v1/forget {from, to, keepRaw?}` (client `forgetPeriod`) forgets the episodes that took
+  place in it and the raw messages sent in it (`keepRaw`: kept but hidden and never extracted again), with what only
+  they supported; returns how much went (WORK_PLAN 5.5).
+
 ### Changed
 - Extraction prompt `extract.v14` (both modes, WORK_PLAN 8.11): the agent's own slips are stored in the first person
   ("I got the dates wrong: I said X, it is Y"), the options compared stay next to the choice, and a step of an open plan
@@ -39,6 +44,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   it again; told again in a new message, it is learned (WORK_PLAN 4.13; migration `FactNoteTombstones1791110000000`).
 - Vector searches filtered by memory scan HNSW indexes iteratively (`hnsw.iterative_scan = strict_order`, pgvector ≥ 0.8):
   on a large install a search could return fewer rows than asked once other memories filled the index (WORK_PLAN 4.14).
+- Forgetting takes what only it supported (WORK_PLAN 5.5): deleting a message or a conversation, or forgetting an
+  episode, deletes the episodes, facts and notes left without evidence (before: they stayed, backed by nothing); a plan
+  confirmed, cancelled or rescheduled by a deleted message gets its earlier status back; a fact or a note that replaced
+  an older one makes it current again; the digests built on what went are rewritten.
 
 ## [0.2.0] — 2026-10-10
 
