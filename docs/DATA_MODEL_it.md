@@ -648,8 +648,9 @@ conserva l'evidenza che ha altrove.
   promozioni che lo referenziano; la catena di correzioni (`corrects` in entrambe le direzioni) viene dimenticata
   con esso (come costruito: anche duplicati, l'evento di conferma e le ripianificazioni); i **digest giornalieri e mensili che lo hanno
   usato sono superati** e riscritti dal consolidamento successivo;
-  fatti e note tratti da esso (evidenza sull'episodio) perdono quel supporto e sono cancellati quando non ne resta;
-  come costruito, non quelli tratti dagli stessi messaggi (un messaggio racconta spesso più cose; restano); i suoi messaggi
+  fatti e note tratti da esso (evidenza sull'episodio) o dai suoi messaggi perdono quel supporto e sono cancellati quando
+  non ne resta — un fatto o una nota sostenuti anche da un altro messaggio restano, così come gli altri episodi
+  raccontati da quei messaggi (scelta del maintainer, 2026-10-12); i suoi messaggi
   di evidenza sono **esclusi dal fallback sul log grezzo per id del messaggio** (non per impronta fuzzy) e
   eliminati se il titolare sceglie "dimentica anche la conversazione".
 - **Dimenticare un periodo** `[from, to]`: tombstone; abbina gli episodi per `occurred_at` **e** i messaggi

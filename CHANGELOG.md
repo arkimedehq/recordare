@@ -9,7 +9,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Added
 - **Forget a period**: `POST api/v1/forget {from, to, keepRaw?}` (client `forgetPeriod`) forgets the episodes that took
   place in it and the raw messages sent in it (`keepRaw`: kept but hidden and never extracted again), with what only
-  they supported; returns how much went (WORK_PLAN 5.5).
+  they supported; returns how much went (WORK_PLAN 5.5). Forgetting an episode now also takes the facts and notes its
+  messages alone supported (not those another message also supports).
 - **Recurring patterns** (WORK_PLAN 5.4, D26): the nightly consolidation draws the habits that show in the episodes of
   the last months ("I run at the park on Saturday mornings") and keeps them as the memory's own notes — inferred, never
   pending, nobody confirms them — backed by at least three episodes on different days; it strengthens, updates and

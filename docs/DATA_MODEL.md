@@ -622,8 +622,9 @@ superseded. A fact or a note keeps the evidence it has elsewhere.
   promotions referencing it; the correction chain (`corrects` in both directions) is forgotten
   with it (as built: also duplicates, the confirming event and reschedules); the day and month **digests that used
   it are superseded** and rewritten by the next consolidation;
-  facts and notes drawn from it (evidence on the episode) lose that support and are deleted when none is left — as
-  built, not those drawn from the same messages (one message often tells several things; they stay); its evidence
+  facts and notes drawn from it (evidence on the episode) or from its messages lose that support and are deleted when
+  none is left — a fact or a note another message also supports stays, and so do the other episodes those messages
+  told (maintainer's choice, 2026-10-12); its evidence
   messages are **excluded from the raw-log fallback by message id** (not by fuzzy fingerprint) and
   purged if the holder chooses "forget the conversation too".
 - **Forget a period** `[from, to]`: tombstone; matches episodes by `occurred_at` **and** raw

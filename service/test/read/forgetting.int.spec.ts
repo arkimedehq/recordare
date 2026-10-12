@@ -104,14 +104,21 @@ describe('forgetting takes what only it supported (D16, WORK_PLAN 5.5)', () => {
     expect(await m.exists('episodes', sea)).toBe(false);
   });
 
-  it('a forgotten episode takes the facts drawn from it, not those drawn from the same message', async () => {
-    const m = await memory('u3', [['a', 'Mi sono trasferita a Milano per il nuovo lavoro', '2026-10-02']]);
+  it('a forgotten episode takes the facts and notes its messages alone supported; the other episodes they told stay', async () => {
+    const m = await memory('u3', [
+      ['a', 'Mi sono trasferita a Milano per il nuovo lavoro, e ho salutato Anna', '2026-10-02'],
+      ['b', 'Il nuovo lavoro mi piace tantissimo', '2026-10-05'],
+    ]);
     const move = await m.episode('Trasloco a Milano', '2026-10-02', ['a']);
+    const goodbye = await m.episode('Saluto ad Anna', '2026-10-02', ['a']);
     const fromEpisode = await m.fact('Milano', { episodes: [move] });
-    const fromMessage = await m.note('Nuovo lavoro', ['a']);
+    const fromMessage = await m.note('Si è trasferita per lavoro', ['a']);
+    const toldAgain = await m.note('Nuovo lavoro', ['a', 'b']);
     expect((await call(url, 'DELETE', `/api/v1/episodes/${move}`, as('u3'))).status).toBe(204);
     expect(await m.exists('facts', fromEpisode)).toBe(false);
-    expect(await m.exists('notes', fromMessage)).toBe(true);
+    expect(await m.exists('notes', fromMessage)).toBe(false);
+    expect(await m.exists('notes', toldAgain)).toBe(true); // also said in another message
+    expect(await m.exists('episodes', goodbye)).toBe(true);
   });
 
   it('forgets a period: its episodes, its messages and what only they supported, behind a period tombstone', async () => {

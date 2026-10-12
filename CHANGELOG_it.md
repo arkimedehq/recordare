@@ -9,7 +9,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ### Aggiunto
 - **Dimenticare un periodo**: `POST api/v1/forget {from, to, keepRaw?}` (client `forgetPeriod`) dimentica gli episodi
   avvenuti nel periodo e i messaggi grezzi inviati in esso (`keepRaw`: conservati ma nascosti e mai più estratti), con
-  ciò che solo loro sostenevano; restituisce quanto è stato dimenticato (WORK_PLAN 5.5).
+  ciò che solo loro sostenevano; restituisce quanto è stato dimenticato (WORK_PLAN 5.5). Dimenticare un episodio ora
+  porta via anche i fatti e le note sostenuti solo dai suoi messaggi (non quelli sostenuti anche da un altro messaggio).
 - **Pattern ricorrenti** (WORK_PLAN 5.4, D26): il consolidamento notturno deduce le abitudini che emergono dagli episodi
   degli ultimi mesi ("corro al parco il sabato mattina") e le tiene come note della memoria stessa — inferite, mai in
   attesa, nessuno le conferma — sostenute da almeno tre episodi in giorni diversi; le rafforza, aggiorna e ritira da

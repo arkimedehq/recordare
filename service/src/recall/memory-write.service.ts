@@ -134,13 +134,14 @@ export class MemoryWriteService {
       await tx.query(
         `INSERT INTO forget_tombstones (memory_id, scope, episode_fingerprint, message_ids) VALUES ($1, 'episode', $2, $3)`,
         [memoryId, createHash('sha256').update(chain.map((c) => c.content).join('\n')).digest(), msgs]);
-      const support = await supportedBy(tx, memoryId, { episodeIds: ids });
+      // The facts and notes drawn from the same messages go too when nothing else supports them (5.5).
+      const support = await supportedBy(tx, memoryId, { episodeIds: ids, claimMessageIds: msgs });
       // Digests written from these episodes are superseded now (no stale diary text); the next consolidation
       // rewrites the day / month from what is left (D16).
       await supersedeDigests(tx, memoryId, ids);
       await tx.query(`DELETE FROM episodes WHERE id = ANY($1) AND memory_id = $2`, [ids, memoryId]);
       forgotten = ids;
-      await dropUnsupported(tx, memoryId, support);
+      await dropUnsupported(tx, memoryId, support, msgs);
     });
     this.telemetry.emit({ type: 'episode.forgotten', memoryId, ids: forgotten });
   }

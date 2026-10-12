@@ -10,8 +10,9 @@
  * - a fact or a note that replaced an older one hands its place back: the older one is current again (what made it
  *   outdated is gone). A correction does not: the item it corrected stays corrected (it was said to be wrong);
  * - the day and month digests built on the episodes that go are superseded, rewritten by the next consolidation.
- * A fact or a note keeps the evidence it has elsewhere: forgetting one episode does not take a fact drawn from the
- * same message (one message often tells several things).
+ * A fact or a note keeps the evidence it has elsewhere. Forgetting an episode also takes the facts and notes its messages
+ * alone supported (maintainer, 2026-10-12: what the person forgot goes with what was drawn from the same words); the
+ * other episodes told by those messages stay (they are memories of their own, forgotten one by one).
  */
 import { type EntityManager } from 'typeorm';
 
@@ -29,9 +30,14 @@ export interface Dropped {
   notes: number;
 }
 
-/** What may lose its support when these messages and / or episodes go. */
-export async function supportedBy(tx: EntityManager, memoryId: string, gone: { messageIds?: string[]; episodeIds?: string[] }): Promise<Support> {
+/**
+ * What may lose its support when these messages and / or episodes go. `claimMessageIds`: messages that stay stored but
+ * no longer support facts and notes (a forgotten episode's evidence) — their episodes and plan events are not touched.
+ */
+export async function supportedBy(tx: EntityManager, memoryId: string,
+  gone: { messageIds?: string[]; episodeIds?: string[]; claimMessageIds?: string[] }): Promise<Support> {
   const messageIds = gone.messageIds ?? [];
+  const claimMessageIds = [...messageIds, ...(gone.claimMessageIds ?? [])];
   const ids = (rows: Array<{ id: string }>) => rows.map((r) => r.id);
   const episodes = ids(await tx.query(
     `SELECT DISTINCT e.id FROM episode_evidence ee JOIN episodes e ON e.id = ee.episode_id WHERE e.memory_id = $1 AND ee.message_id = ANY($2)`,
@@ -40,7 +46,7 @@ export async function supportedBy(tx: EntityManager, memoryId: string, gone: { m
   const items = async (table: 'facts' | 'notes') => ids(await tx.query(
     `SELECT DISTINCT t.id FROM ${table === 'facts' ? 'fact_evidence' : 'note_evidence'} x JOIN ${table} t ON t.id = x.${table === 'facts' ? 'fact_id' : 'note_id'}
      WHERE t.memory_id = $1 AND (x.message_id = ANY($2) OR x.episode_id = ANY($3))`,
-    [memoryId, messageIds, episodeIds]));
+    [memoryId, claimMessageIds, episodeIds]));
   const planEvents = ids(await tx.query(
     `SELECT pe.id FROM plan_events pe JOIN episodes e ON e.id = pe.plan_id WHERE e.memory_id = $1 AND pe.evidence_message_id = ANY($2)`,
     [memoryId, messageIds]));
