@@ -109,6 +109,16 @@
    "must_not": [
     "Federica ha scritto in un solo gruppo"
    ]
+  },
+  {
+   "id": "d11",
+   "category": "group",
+   "asked_at": "2026-12-18T09:30:00+01:00",
+   "q": "Cosa ha scritto Paolo nelle chat in queste settimane, e in quali gruppi?",
+   "expected": "In due gruppi. Nel gruppo «Calcetto del giovedì» (4 novembre): giovedì 12 novembre non può perché c'è la partita di suo figlio, c'è dal 19 e porta lui il pallone nuovo. Nel gruppo «Cugini Rinaldi» (16 dicembre): alla notizia del trasferimento di Federica a Lione ha chiesto se ci sarà una festa di saluto.",
+   "must_not": [
+    "Paolo ha scritto in un solo gruppo"
+   ]
   }
  ]
 }

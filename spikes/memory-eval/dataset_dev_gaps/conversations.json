@@ -80,6 +80,37 @@
    ]
   },
   {
+   "id": "g32",
+   "user": "marco",
+   "ts": "2026-11-04T21:15:00+01:00",
+   "group": "Calcetto del giovedì",
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-rinaldi"
+    },
+    {
+     "name": "Dario"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Dario",
+     "content": "Giovedì 12 campo prenotato alle 21 al centro sportivo Barca, chi c'è?"
+    },
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Il 12 non posso, c'è la partita di mio figlio. Ci sono dal 19, e porto io il pallone nuovo."
+    },
+    {
+     "role": "user",
+     "content": "Io ci sono il 12."
+    }
+   ]
+  },
+  {
    "id": "g05",
    "user": "marco",
    "ts": "2026-11-05T12:40:00+01:00",

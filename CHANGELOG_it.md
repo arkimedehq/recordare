@@ -32,6 +32,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - `search_episodes`: anche un `list` con una query restituisce fino a 3 episodi pertinenti di fuori periodo in
   `outsidePeriod` (prima: solo `search`): ciò che è stato detto nel periodo è datato da ciò che racconta (un trasloco il
   mese dopo).
+- `search_episodes`: gli estratti di chat (`fromChats`) portano `group`, il nome della chat di gruppo, così ciò che
+  qualcuno ha scritto e che nessun episodio racconta dice comunque in quale gruppo; la descrizione dello strumento dice
+  agli agenti che un intervallo vago ("ultimamente", "in queste settimane") non è un periodo. Set cieco personale
+  96,0 % → 97,2 % (3 run; la domanda sui messaggi di un fratello in due gruppi corretta 3 su 3).
 
 ## [0.2.0] — 2026-10-10
 

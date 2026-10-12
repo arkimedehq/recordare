@@ -16,6 +16,9 @@ export interface RawHit {
   conversationId: string;
   /** The client's own id of the conversation, to link back to its chat. */
   conversation: string;
+  /** The group chat's name, when the conversation has one and other people take part: what someone wrote in which group
+   * (8.11 gaps, dev d11: a message no episode tells of keeps its group). */
+  group?: string;
   messageId: string;
   at: string;
   authorRole: 'holder' | 'other' | 'tool';
@@ -92,10 +95,12 @@ export class RawLogSearchService {
     const top = [...scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, opts.limit ?? 5);
     if (top.length === 0) return [];
 
-    const rows: { id: string; conversation_id: string; external_id: string; sent_at: Date; role: string; account_speaker: boolean;
+    const rows: { id: string; conversation_id: string; external_id: string; grp: string | null; sent_at: Date; role: string; account_speaker: boolean;
       author_name: string | null; tool_name: string | null; content: string }[] =
       await this.db.query(
-        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at, m.role, ${memorySpeaker('m')} AS account_speaker, m.tool_name, m.content,
+        `SELECT m.id, m.conversation_id, c.external_id, m.sent_at,
+                CASE WHEN EXISTS (SELECT 1 FROM conversation_participants o WHERE o.conversation_id = c.id AND o.role = 'other')
+                  THEN c.title END AS grp, m.role, ${memorySpeaker('m')} AS account_speaker, m.tool_name, m.content,
                 COALESCE(p.display_name, cp.display_name) AS author_name
          FROM messages m JOIN conversations c ON c.id = m.conversation_id
            LEFT JOIN persons p ON p.id = m.author_person_id
@@ -109,7 +114,8 @@ export class RawLogSearchService {
       const authorRole = r.role === 'tool' ? 'tool' : r.account_speaker ? 'holder' : 'other';
       const author = authorRole === 'tool' ? r.tool_name : authorRole === 'other' ? r.author_name : null;
       return [{
-        conversationId: r.conversation_id, conversation: r.external_id, messageId: r.id, at: r.sent_at.toISOString(), authorRole,
+        conversationId: r.conversation_id, conversation: r.external_id, ...(r.grp ? { group: r.grp } : {}), messageId: r.id,
+        at: r.sent_at.toISOString(), authorRole,
         ...(author ? { author } : {}),
         excerpt: r.content.length > EXCERPT_CHARS ? `${r.content.slice(0, EXCERPT_CHARS)}…` : r.content, score,
       } satisfies RawHit];

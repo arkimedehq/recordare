@@ -333,7 +333,8 @@ Restituisce (come costruito):
                                                       // or a `list` with a query
                                                       // (what was done about the period may lie before it), 5 when the period has no match;
                                                       // ranked by relevance alone (not importance or recency)
-  fromChats: Array<{ conversationId: string; conversation: string; messageId: string; at: string;
+  fromChats: Array<{ conversationId: string; conversation: string; group?: string;  // group: the group chat's name
+                     messageId: string; at: string;
                      authorRole: "holder" | "other" | "tool"; author?: string; excerpt: string;
                      correctedBy?: string }>;                // the episode that corrected a memory drawn from this message
   notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice, who is asking

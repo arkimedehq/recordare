@@ -443,6 +443,40 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.11 gaps, step 6 — a vague span is not a period; chat excerpts name their group (2026-10-12, DeepSeek direct, `fp820_runs.sh`)
+
+blind9 q05's other half ("what did Michele write in the chats these weeks, and in which groups?"): the planner read
+"in queste settimane" as the last three weeks (16 October → 6 November) and the «Trasloco studio» messages of 26
+September fell outside; with no period the list finds Michele's episode there 5th. Dev case d11 first (`dataset_dev_gaps`
+g32: cousin Paolo in «Calcetto del giovedì» six weeks before the question, and in «Cugini Rinaldi» two days before;
+"Paolo" is also the sister's fiancé, by chance): with step 5 the period was 27 November → 18 December and the answer
+called the football group "not these weeks" (partial).
+
+- **A vague span is not a period.** The `search_episodes` description tells agents so ("lately", "these weeks": leave
+  `from`/`to` out); the harness planner (the agent's stand-in) has the same rule. The deterministic `resolve_period` is
+  unchanged.
+- **Chat excerpts name their group.** With the period gone d11 was wrong once: Paolo's line in «Cugini Rinaldi» ("Wow!
+  Festa di saluto?") has no episode of its own, and its excerpt showed only the conversation id. `fromChats` items now
+  carry `group`, the conversation title when other people take part (the same rule as the extraction's GROUP CHAT).
+- Dev: 95.5 % (d11 correct, d05 the day question correct, d10 partial — the cake's occasion omitted).
+
+| Set | Step 5 (fp819) | Step 6 r1 / r2 / r3 | **Mean** |
+|---|---|---|---|
+| dev gaps (11 questions) | — | 95.5 (1 run) | 95.5 % |
+| blind9 (personal) | 96.0 % | 96.4 / 97.5 / 97.6 | **97.2 %** |
+| blind10 (entity) | 96.7 % | 97.1 / 98.6 / 94.3 | **96.7 %** |
+| main set (control) | 100 % | 100 | 100 % |
+
+- One prompt version per run (`extract.v15`, `extract.v15+entity.v5`). The DeepSeek balance ran out during r3; the
+  failed runs were discarded and run again after the top-up.
+- blind9 q05: partial 3/3 → **correct 3/3** (both groups, the 26 September messages). Failures left: q02 partial twice
+  (the three quotes compared not listed), q11 partial twice (the city omitted: the same answers were judged correct in
+  step 5 — judge noise), q06 wrong once, q20 partial once; r2 had two judge errors (empty completions, q11 and q37),
+  excluded.
+- blind10: unchanged mean; q06 (wrong + partial) and q33 (partial + wrong) as before, q04 partial once.
+- Cost: unchanged (no extra call; an excerpt carries one more short field).
+- **Kept.**
+
 ### WORK_PLAN 8.11 gaps, step 5 — group names, lists with a query, a judge that knows who asks (2026-10-12, DeepSeek direct, `fp819_runs.sh`, `rejudge.py`)
 
 Three changes, measured together on arm R (H13).
