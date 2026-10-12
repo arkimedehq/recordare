@@ -11,10 +11,11 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { DataSource, type EntityManager } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
-import { toStored, type Precision } from '../engine/time';
+import { addDays, periodEnd, toStored, zonedMidnight, type Precision } from '../engine/time';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { memorySpeaker } from '../rawlog/attribution';
 import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
+import { dropUnsupported, supersedeDigests, supportedBy } from './forgetting';
 
 /**
  * The agent's text is backed by a message of the holder when the two overlap as a whole (trigram similarity ≥ 0.2) or
@@ -23,6 +24,12 @@ import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subject
  */
 const OVERLAP = (col: string) => `(similarity(${col}, $3) >= 0.2 OR word_similarity($3, ${col}) >= 0.6)`;
 const SCORE = (col: string) => `GREATEST(similarity(${col}, $3), word_similarity($3, ${col}))`;
+
+/** The month after a YYYY-MM month, as YYYY-MM. */
+function nextMonth(month: string): string {
+  const [y = 0, m = 1] = month.split('-').map(Number);
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+}
 
 export interface Evidence {
   /** Conversation the tool was called from (resolved by Recordare), if any. */
@@ -120,37 +127,90 @@ export class MemoryWriteService {
   async forgetEpisode(memoryId: string, id: string): Promise<void> {
     let forgotten: string[] = [];
     await this.db.transaction(async (tx) => {
-      const chain: Array<{ id: string; content: string }> = await tx.query(
-        // Everything that tells the same memory: corrections, hidden duplicates, the event of a
-        // confirmed plan and rescheduled plans — otherwise a forgotten memory would resurface.
-        `WITH RECURSIVE chain AS (
-           SELECT id, content, corrects, duplicate_of, confirmed_by, rescheduled_to FROM episodes WHERE id = $1 AND memory_id = $2
-           UNION
-           SELECT e.id, e.content, e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to FROM episodes e JOIN chain c
-             ON e.id IN (c.corrects, c.duplicate_of, c.confirmed_by, c.rescheduled_to)
-             OR c.id IN (e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to)
-           WHERE e.memory_id = $2)
-         SELECT id, content FROM chain`, [id, memoryId]);
+      const chain = await this.chainOf(tx, memoryId, [id]);
       if (chain.length === 0) throw new NotFoundException();
       const ids = chain.map((c) => c.id);
-      // Only real evidence is hidden from the chat search (agent paraphrases are tool messages).
-      const msgs: Array<{ message_id: string }> = await tx.query(
-        `SELECT DISTINCT message_id FROM episode_evidence WHERE episode_id = ANY($1) AND evidence_kind = 'message'`, [ids]);
+      const msgs = await this.evidenceOf(tx, ids);
       await tx.query(
         `INSERT INTO forget_tombstones (memory_id, scope, episode_fingerprint, message_ids) VALUES ($1, 'episode', $2, $3)`,
-        [memoryId, createHash('sha256').update(chain.map((c) => c.content).join('\n')).digest(), msgs.map((m) => m.message_id)]);
+        [memoryId, createHash('sha256').update(chain.map((c) => c.content).join('\n')).digest(), msgs]);
+      const support = await supportedBy(tx, memoryId, { episodeIds: ids });
       // Digests written from these episodes are superseded now (no stale diary text); the next consolidation
       // rewrites the day / month from what is left (D16).
-      await tx.query(
-        `WITH days AS (SELECT DISTINCT digest_id FROM digest_sources WHERE episode_id = ANY($1)),
-              months AS (SELECT DISTINCT s.digest_id FROM digest_sources s JOIN days d ON s.source_digest_id = d.digest_id)
-         UPDATE digests SET superseded_at = now()
-         WHERE memory_id = $2 AND superseded_at IS NULL AND id IN (SELECT digest_id FROM days UNION SELECT digest_id FROM months)`,
-        [ids, memoryId]);
+      await supersedeDigests(tx, memoryId, ids);
       await tx.query(`DELETE FROM episodes WHERE id = ANY($1) AND memory_id = $2`, [ids, memoryId]);
       forgotten = ids;
+      await dropUnsupported(tx, memoryId, support);
     });
     this.telemetry.emit({ type: 'episode.forgotten', memoryId, ids: forgotten });
+  }
+
+  /**
+   * Forgets a period (D16, WORK_PLAN 5.5): the episodes that took place in it (by overlap, as a period search) with
+   * their correction chains, and the raw messages sent in it — deleted, or with `keepRaw` kept but hidden from the chat
+   * search and never extracted again. What only they supported goes too (`forgetting.ts`), the period's digests are
+   * superseded, and a `period` tombstone keeps a later extraction from writing an episode dated in it. `from` / `to`:
+   * days (or months) in the memory's time zone, inclusive.
+   */
+  async forgetPeriod(memoryId: string, input: { from: string; to: string; keepRaw?: boolean }): Promise<{ episodes: number; messages: number; facts: number; notes: number }> {
+    const [memory]: Array<{ timezone: string }> = await this.db.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
+    if (!memory) throw new NotFoundException();
+    const fromDay = input.from.length === 7 ? `${input.from}-01` : input.from;
+    const toDay = input.to.length === 7 ? addDays(`${nextMonth(input.to)}-01`, -1) : input.to;
+    const from = zonedMidnight(fromDay, memory.timezone);
+    const to = zonedMidnight(addDays(toDay, 1), memory.timezone); // exclusive
+    let forgotten: string[] = [];
+    const counts = { episodes: 0, messages: 0, facts: 0, notes: 0 };
+    await this.db.transaction(async (tx) => {
+      const dated: Array<{ id: string; occurred_at: Date; occurred_until: Date | null; date_precision: Precision }> = await tx.query(
+        `SELECT id, occurred_at, occurred_until, date_precision FROM episodes WHERE memory_id = $1 AND occurred_at < $2`, [memoryId, to]);
+      const inPeriod = dated.filter((e) => (e.occurred_until ? periodEnd(e.occurred_until, 'day', memory.timezone)
+        : periodEnd(e.occurred_at, e.date_precision, memory.timezone)) > from).map((e) => e.id);
+      const chain = inPeriod.length ? await this.chainOf(tx, memoryId, inPeriod) : [];
+      const ids = chain.map((c) => c.id);
+      const sent: string[] = (await tx.query(
+        `SELECT id FROM messages WHERE memory_id = $1 AND sent_at >= $2 AND sent_at < $3`, [memoryId, from, to])).map((r: { id: string }) => r.id);
+      const evidence = await this.evidenceOf(tx, ids);
+      await tx.query(
+        `INSERT INTO forget_tombstones (memory_id, scope, message_ids, period_from, period_to) VALUES ($1, 'period', $2, $3, $4)`,
+        [memoryId, [...new Set([...evidence, ...(input.keepRaw ? sent : [])])], from, to]);
+      const support = await supportedBy(tx, memoryId, { episodeIds: ids, messageIds: sent });
+      await supersedeDigests(tx, memoryId, ids);
+      await tx.query(
+        `UPDATE digests SET superseded_at = now() WHERE memory_id = $1 AND superseded_at IS NULL AND period_start <= $3 AND period_end >= $2`,
+        [memoryId, fromDay, toDay]);
+      if (ids.length) await tx.query(`DELETE FROM episodes WHERE id = ANY($1) AND memory_id = $2`, [ids, memoryId]);
+      if (!input.keepRaw && sent.length) await tx.query(`DELETE FROM messages WHERE id = ANY($1) AND memory_id = $2`, [sent, memoryId]);
+      const dropped = await dropUnsupported(tx, memoryId, support, input.keepRaw ? sent : []);
+      forgotten = [...ids, ...dropped.episodes];
+      Object.assign(counts, { episodes: forgotten.length, messages: sent.length, facts: dropped.facts, notes: dropped.notes });
+    });
+    if (forgotten.length) this.telemetry.emit({ type: 'episode.forgotten', memoryId, ids: forgotten });
+    return counts;
+  }
+
+  /**
+   * Everything that tells the same memory as these episodes: corrections, hidden duplicates, the event of a confirmed
+   * plan and rescheduled plans — otherwise a forgotten memory would resurface.
+   */
+  private chainOf(tx: EntityManager, memoryId: string, ids: string[]): Promise<Array<{ id: string; content: string }>> {
+    return tx.query(
+      `WITH RECURSIVE chain AS (
+         SELECT id, content, corrects, duplicate_of, confirmed_by, rescheduled_to FROM episodes WHERE id = ANY($1) AND memory_id = $2
+         UNION
+         SELECT e.id, e.content, e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to FROM episodes e JOIN chain c
+           ON e.id IN (c.corrects, c.duplicate_of, c.confirmed_by, c.rescheduled_to)
+           OR c.id IN (e.corrects, e.duplicate_of, e.confirmed_by, e.rescheduled_to)
+         WHERE e.memory_id = $2)
+       SELECT id, content FROM chain`, [ids, memoryId]);
+  }
+
+  /** The messages behind these episodes; only real evidence is hidden from the chat search (agent paraphrases are tool messages). */
+  private async evidenceOf(tx: EntityManager, ids: string[]): Promise<string[]> {
+    if (!ids.length) return [];
+    const rows: Array<{ message_id: string }> = await tx.query(
+      `SELECT DISTINCT message_id FROM episode_evidence WHERE episode_id = ANY($1) AND evidence_kind = 'message'`, [ids]);
+    return rows.map((m) => m.message_id);
   }
 
   /**

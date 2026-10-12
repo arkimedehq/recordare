@@ -602,21 +602,31 @@ configurable.
 Built (2026-10-08): forget an episode (MCP `forget_episode`, `DELETE api/v1/episodes/{id}`), the synchronous message
 / conversation purge, and deleting a fact or a note from the diary (`DELETE api/v1/facts/{id}` / `notes/{id}`, also a
 rejected pending one: the row and its evidence are deleted and a `fact` / `note` tombstone is left, so a re-extraction of
-the same messages does not write it again — 4.13). Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of
-facts on forgotten evidence, deletion of episodes left without evidence.
+the same messages does not write it again — 4.13), and since 2026-10-12 (WORK_PLAN 5.5) forgetting a period
+(`POST api/v1/forget`) and what forgetting takes with it (`service/src/recall/forgetting.ts`): when messages go (a message,
+a conversation, a period) or episodes are forgotten, an episode, a fact or a note left without evidence is deleted; a
+plan whose confirmation, cancellation or reschedule came from a message that went gets back the status its remaining
+events give (open when none), and the rescheduled copy that event created goes with it; a fact or a note that replaced
+an older one hands its place back (the older one is current again: what made it outdated is gone), while a correction
+does not (the corrected item stays corrected: it was said to be wrong); the digests built on the episodes that go are
+superseded. A fact or a note keeps the evidence it has elsewhere.
 
 - **Forget an episode**: tombstone + delete the episode, its evidence rows, people, plan events,
   promotions referencing it; the correction chain (`corrects` in both directions) is forgotten
   with it (as built: also duplicates, the confirming event and reschedules); the day and month **digests that used
   it are superseded** and rewritten by the next consolidation;
-  **facts whose evidence intersects its messages are re-verdicted or deleted** (not built yet); its evidence
+  facts and notes drawn from it (evidence on the episode) lose that support and are deleted when none is left — as
+  built, not those drawn from the same messages (one message often tells several things; they stay); its evidence
   messages are **excluded from the raw-log fallback by message id** (not by fuzzy fingerprint) and
   purged if the holder chooses "forget the conversation too".
 - **Forget a period** `[from, to]`: tombstone; matches episodes by `occurred_at` **and** raw
   messages by `sent_at`; raw messages in the period are **purged by default** (`keepRaw: true`
-  to keep them); digests of the period are recomputed or removed.
+  to keep them); digests of the period are recomputed or removed. As built (synchronous, `200` with counts): episodes
+  by overlap as a period search, with their correction chains; raw messages by `sent_at`; with `keepRaw` the messages
+  stay but are hidden from the chat search, never extracted again and support nothing (an episode they alone told goes);
+  the `period` tombstone keeps a later extraction from writing an episode dated in it.
 - **Delete a message / conversation** (client request): purge raw rows and revisions; for every
-  episode / fact citing it, **drop the evidence row**; a row left without evidence is deleted (not built yet);
+  episode / fact / note citing it, **drop the evidence row**; a row left without evidence is deleted (built 2026-10-12);
   no re-extraction (it could rewrite memories).
 - The purge job also removes: `messages.embedding`, `message_revisions` (also on forget-period),
   `embedding_text`, quotes, `run_outputs` rows. Queued jobs carry **ids only, never content**;

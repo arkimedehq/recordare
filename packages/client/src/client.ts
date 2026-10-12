@@ -159,6 +159,14 @@ export class RecordareClient {
     await this.http.request('DELETE', `api/v1/episodes/${enc(id)}`, { user });
   }
 
+  /**
+   * The person forgets a period (days or months, inclusive): its episodes and raw messages (`keepRaw`: kept but hidden
+   * and never extracted again), with what only they supported. Returns how much went.
+   */
+  forgetPeriod(user: string, period: { from: string; to: string; keepRaw?: boolean }): Promise<{ episodes: number; messages: number; facts: number; notes: number }> {
+    return this.http.request('POST', 'api/v1/forget', { user, body: period });
+  }
+
   digests(user: string, query: { level?: 'day' | 'month'; from?: string; to?: string } = {}): Promise<Digest[]> {
     return this.http.request('GET', `api/v1/digests${qs(query)}`, { user });
   }

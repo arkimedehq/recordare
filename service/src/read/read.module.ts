@@ -41,6 +41,9 @@ const correctionBody = z.object({
   datePrecision: z.enum(['day', 'month', 'year', 'approximate']).optional(),
 }).refine((b) => b.content !== undefined || b.occurredAt !== undefined, { message: 'nothing to correct' });
 const pinBody = z.object({ pinned: z.boolean() });
+const forgetBody = z.object({ from: isoDay, to: isoDay, keepRaw: z.boolean().optional() })
+  // A month (YYYY-MM) counts from its first day to its last one.
+  .refine((b) => (b.from.length === 7 ? `${b.from}-01` : b.from) <= (b.to.length === 7 ? `${b.to}-31` : b.to), { message: 'from after to' });
 
 function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
   return new ZodBody(schema).transform(raw);
@@ -100,6 +103,16 @@ export class ReadController {
   async forget(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
     const { memoryId } = await this.who(p, user);
     await this.writes.forgetEpisode(memoryId, id);
+  }
+
+  /** Forgets a period (D16): its episodes and raw messages (kept, hidden, with `keepRaw`), and what only they supported. */
+  @Post('forget')
+  @HttpCode(200)
+  @RequireScopes('write')
+  async forgetPeriod(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
+    @Body(new ZodBody(forgetBody)) body: z.infer<typeof forgetBody>) {
+    const { memoryId } = await this.who(p, user);
+    return this.writes.forgetPeriod(memoryId, body);
   }
 
   @Get('digests')

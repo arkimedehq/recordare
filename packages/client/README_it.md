@@ -69,7 +69,7 @@ await rc.learnSource('user-42', { externalId: 'boiler-manual', title: 'Manuale d
 
 ## Il diario
 `episodes`, `episode`, `digests`, `facts`, `notes`, `plans` leggono ciò che Recordare ricorda, per la vista della persona
-nell'interfaccia della piattaforma; `correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide` sono le modifiche
+nell'interfaccia della piattaforma; `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide` sono le modifiche
 della persona (API.md §4).
 
 ## Cosa resta all'host

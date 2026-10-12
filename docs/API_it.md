@@ -218,7 +218,8 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
 - `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` se
   sconosciuto); il testo precedente va in `message_revisions` e il messaggio viene estratto di nuovo.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
-  purge (`DATA_MODEL.md` → Forgetting and deletion). Come costruito: la purge viene eseguita in modo sincrono e restituisce `202` senza
+  purge (`DATA_MODEL.md` → Forgetting and deletion: spariscono anche gli episodi, i fatti, le note e gli stati dei piani
+  sostenuti solo da quei messaggi). Come costruito: la purge viene eseguita in modo sincrono e restituisce `202` senza
   corpo (piano: `202` + id del job); `404` se sconosciuto (la libreria client lo tratta come fatto).
 - `POST api/v1/ingest/conversations/{externalId}/end` → `202`: la conversazione è finita sul client (sessione chiusa,
   /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta. Stesso effetto di `hints.conversationEnded`
@@ -466,14 +467,16 @@ corretto; per un piano `planEvents`, `confirmedBy`, `rescheduledTo`), `POST epis
 occurredAt?, datePrecision?}` → `{id}`, `DELETE episodes/{id}` (oblio che resta, come `forget_episode`), `GET digests`
 (voci attuali di giorni / mesi, dalla più recente), `GET facts` (slot con `history`, `asOf`, per persona in una memoria
 di entità), `DELETE facts/{id}`, `POST facts/{id}/confirm | reject`, `GET notes`, `PATCH notes/{id} {pinned}`,
-`DELETE notes/{id}`, `POST notes/{id}/confirm | reject`, `GET plans` (aperti e irrisolti per default, dal più vicino);
+`DELETE notes/{id}`, `POST notes/{id}/confirm | reject`, `GET plans` (aperti e irrisolti per default, dal più vicino),
+`POST forget {from, to, keepRaw?}` (giorni o mesi, inclusi, nel fuso orario della memoria; sincrono, `200` con
+`{episodes, messages, facts, notes}` dimenticati; `400` se `from` è dopo `to`);
 più le righe `GET / PATCH api/v1/me`. Le modifiche rispondono `204` (`404` per un id che non è di questa memoria); pagina solo
 `GET episodes` (`{items, nextCursor}`, default 50), le altre liste sono array. Come costruito, cancellare un fatto o una
-nota (e rifiutarne uno in sospeso) rimuove la riga con le sue evidenze — nessun tombstone, nessuna voce in
-`note_changes`; confermare la rende dichiarata (`pending` false). **Non ancora costruite**: inserimento manuale, correzioni di fatti / note, promozioni (5.4),
-oblio di un periodo (5.5), impostazioni, uso, export, il feed delle modifiche delle note, `GET facts/{id}` /
+nota (e rifiutarne uno in sospeso) rimuove la riga con le sue evidenze e lascia un tombstone `fact` / `note` (4.13) —
+una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichiarata (`pending` false). **Non ancora
+costruite**: inserimento manuale, correzioni di fatti / note, promozioni (5.4), impostazioni, uso, export, il feed delle modifiche delle note, `GET facts/{id}` /
 `GET notes/{id}`. Libreria client: `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`,
-`correctEpisode`, `forgetEpisode`, `pinNote`, `delete`, `decide`).
+`correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide`).
 
 Con ambito limitato alla memoria, e chi legge è il titolare stesso nell'interfaccia dell'host (memory-direct): una chiave
 client indica la persona con `X-Recordare-User` (scope `read` per leggere, `write` per modificare), un token personale è
@@ -486,7 +489,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `POST api/v1/episodes` | write | Inserimento manuale |
 | `POST api/v1/episodes/{id}/corrections` | write | Correzione (nuova riga, `corrects`) |
 | `DELETE api/v1/episodes/{id}` | write | Dimenticare un episodio |
-| `POST api/v1/forget {from, to, keepRaw?}` | write | Dimenticare un periodo (job asincrono) |
+| `POST api/v1/forget {from, to, keepRaw?}` | write | Dimenticare un periodo (costruito 2026-10-12: sincrono, conteggi) |
 | `GET api/v1/digests?level&from&to` | read | Voci del diario (`level` `day \| month`) |
 | `GET api/v1/facts?key&asOf&status&includePending` / `GET …/{id}` | read | Fatti con cronologia (come costruito: `key`, `asOf`, `includePending`; nessun filtro `status`) |
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Correggere o dimenticare un fatto |
@@ -513,7 +516,7 @@ diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memor
 `endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, `learnSource` (§2 fonti apprese:
 un testo grande inviato a parti di `SOURCE_PART_BYTES` = 4 MB ai confini dei paragrafi) / `forgetSource` / `sources`,
 i wrapper della §4 `episodes`,
-`episode`, `correctEpisode`, `forgetEpisode`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`,
+`episode`, `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`,
 `mcp.listTools` / `mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `TOOLS` (gli schemi
 pubblicati degli strumenti MCP), `PersonDirectory` (memoria in cache, modo e indirizzo di Atlas; l'opt-in della
 piattaforma; sincronizzazione del nome), `afterFailure` (politica di consegna dell'outbox: back-off con jitter,
