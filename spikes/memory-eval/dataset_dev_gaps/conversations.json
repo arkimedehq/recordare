@@ -453,6 +453,74 @@
      "content": "Bella scelta, Villa Aldrovandi è splendida."
     }
    ]
+  },
+  {
+   "id": "g30",
+   "user": "marco",
+   "ts": "2026-12-16T19:00:00+01:00",
+   "group": "Cugini Rinaldi",
+   "participants": [
+    {
+     "name": "Federica",
+     "identity": "federica-rinaldi"
+    },
+    {
+     "name": "Paolo",
+     "identity": "paolo-rinaldi"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Federica",
+     "content": "Ragazzi, a gennaio mi trasferisco a Lione per lavoro: parto il 10."
+    },
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Wow! Festa di saluto?"
+    },
+    {
+     "role": "user",
+     "content": "Grande Fede! Io ci sono per la festa."
+    },
+    {
+     "role": "other",
+     "author": "Federica",
+     "content": "Facciamo sabato 9 gennaio da me, alle 20."
+    }
+   ]
+  },
+  {
+   "id": "g31",
+   "user": "marco",
+   "ts": "2026-12-17T21:30:00+01:00",
+   "group": "Festa nonna Ada",
+   "participants": [
+    {
+     "name": "Federica",
+     "identity": "federica-rinaldi"
+    },
+    {
+     "name": "Zia Rosa"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Zia Rosa",
+     "content": "Per i 90 anni della nonna, domenica 20 dicembre al ristorante Da Nello: chi porta la torta?"
+    },
+    {
+     "role": "other",
+     "author": "Federica",
+     "content": "La torta la porto io, la ordino alla pasticceria Regina."
+    },
+    {
+     "role": "user",
+     "content": "Io porto i fiori."
+    }
+   ]
   }
  ]
 }

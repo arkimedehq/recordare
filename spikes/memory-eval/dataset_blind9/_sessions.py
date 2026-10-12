@@ -5,7 +5,7 @@ physiotherapist in Trento, 18 Sep – 5 Nov 2034. Fictional people, places and b
 
 Message tuples: ("u", text) = the holder, ("a", text) = the agent, ("o", author, text) = someone else in a
 group chat. Session keys written to conversations.json: id, ts, messages, participants (declared group-chat
-authors). Keys for README / check.py only: group, lang.
+authors), group (the group chat's name, sent as the conversation title). Key for README / check.py only: lang.
 
 SOURCES are the learned sources (and the one forget entry), interleaved with the sessions by `ts` at build time.
 Facts that must be answerable ONLY from a source (notice period, deposit, E3 code, protocol weeks, oven time,

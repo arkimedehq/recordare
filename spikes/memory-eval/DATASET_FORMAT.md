@@ -36,6 +36,9 @@ Optional session field `participants: [{"name": "Giulia", "identity": "giulia-r"
 **declares** who these group-chat authors are (their account on the platform). Authors not listed are known by display
 name only. An identified person is the same contact of the memory in every session with the same `identity`.
 
+Optional session field `group: "Famiglia Rossi"`: the group chat's name on its platform, sent as the conversation
+`title`.
+
 ## Learned sources
 A text the agent learns (a manual, a recipe, a contract, notes), as its own entry in `sessions`, in time order with the
 conversations:

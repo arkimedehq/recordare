@@ -1,6 +1,7 @@
 {
  "_note": "NOT blind.",
  "user": "marco",
+ "holder": "Marco",
  "questions": [
   {
    "id": "d01",
@@ -97,6 +98,16 @@
    "must_not": [
     "Tommaso è stato assunto in Ducati",
     "non ho informazioni sulla Ducati"
+   ]
+  },
+  {
+   "id": "d10",
+   "category": "group",
+   "asked_at": "2026-12-18T09:00:00+01:00",
+   "q": "In quali gruppi ha scritto Federica in questi giorni, e cosa?",
+   "expected": "In due gruppi. Nel gruppo «Cugini Rinaldi» (16 dicembre): a gennaio si trasferisce a Lione per lavoro, parte il 10, e la festa di saluto è sabato 9 gennaio da lei alle 20. Nel gruppo «Festa nonna Ada» (17 dicembre): porta lei la torta per i 90 anni della nonna, ordinata alla pasticceria Regina.",
+   "must_not": [
+    "Federica ha scritto in un solo gruppo"
    ]
   }
  ]

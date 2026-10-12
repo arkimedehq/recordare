@@ -194,6 +194,11 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
     `SELECT s.id, s.title, s.author, s.kind, p.display_name AS provider, s.provided_by_kind FROM sources s LEFT JOIN persons p ON p.id = s.provided_by_person_id
      WHERE s.conversation_id = (SELECT conversation_id FROM messages WHERE id = $1) AND s.learned_episode_id IS NULL AND s.status <> 'receiving'
      ORDER BY s.learned_at LIMIT 10`, [first.id]);
+  // A group chat's name on its platform (the conversation's title, when other people take part): episodes told there
+  // name the group (WORK_PLAN 8.11 gaps, blind9 q05: "in which groups did Michele write?").
+  const [chat]: Array<{ title: string | null }> = await tx.query(
+    `SELECT c.title FROM conversations c WHERE c.id = (SELECT conversation_id FROM messages WHERE id = $1)
+       AND EXISTS (SELECT 1 FROM conversation_participants p WHERE p.conversation_id = c.id AND p.role = 'other')`, [first.id]);
   const sourceMap = new Map<string, string>();
   const messages: PromptMessage[] = window.map((m, i) => ({
     n: i + 1,
@@ -223,6 +228,7 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
       contacts: people.list,
       openQuestions: people.lines,
       locale: memory.locale,
+      groupChat: chat?.title?.trim() || null,
       messageDay,
       calendar: calendar(messageDay, 14, 21, memory.locale),
       openPlans: plans.map((p, i) => {

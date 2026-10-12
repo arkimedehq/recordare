@@ -5,9 +5,10 @@
  * Extraction prompts. The system prompt is constant (provider prefix caching); everything variable goes in the user
  * message. Rules come from the prototype that passed the blind held-out check (spikes/memory-eval/systems/d_sys.py)
  * plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
- * - Personal memories (D50, WORK_PLAN 8.4): `extract.v14` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
- *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v14+entity.v5` — the shared agent's memory in the first person, people by
+ * - Personal memories (D50, WORK_PLAN 8.4): `extract.v15` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
+ *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date; v15: a group
+ *   chat's name in the input, GROUP CHAT, only for group chats with one — the system prompt is v14's).
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v15+entity.v5` — the shared agent's memory in the first person, people by
  *   name or "someone"; the personal prompt's sections where they hold for both.
  */
 export interface PromptMessage {
@@ -27,6 +28,8 @@ export interface PromptContext {
   openQuestions: string[];
   /** Sources learned in this conversation with no episode yet (WORK_PLAN 8.9): "S1: «Manuale della caldaia» — …". */
   learnedSources: string[];
+  /** The group chat's name on its platform, when the window is a group chat with one (extract.v15). */
+  groupChat: string | null;
   locale: string;
   messageDay: string;
   calendar: string;
@@ -46,7 +49,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v14';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v15';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -377,7 +380,7 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v14`, entity `extract.v14+entity.v5`). */
+/** The extraction input of both modes (personal `extract.v15`, entity `extract.v15+entity.v5`). */
 export function buildExtractionUser(ctx: PromptContext): string {
   const [name, ...others] = ctx.selfNames;
   return [
@@ -393,6 +396,7 @@ export function buildExtractionUser(ctx: PromptContext): string {
     `KNOWN SLOTS: ${ctx.knownSlots.join(', ') || NONE}`,
     `CURRENT NOTES:\n${ctx.currentNotes.join('\n') || NONE}`,
     `KNOWN EPISODES (recent, and older ones related to these messages):\n${ctx.knownEpisodes.join('\n') || NONE}`,
+    ...(ctx.groupChat ? [`GROUP CHAT: «${ctx.groupChat}» (the group's name: an episode told here says it was in the group «${ctx.groupChat}»)`] : []),
     `CONVERSATION WINDOW:\n${ctx.messages.map((m) => `[${m.n}] ${m.sentAt} ${m.speaker}: ${m.content}`).join('\n')}`,
   ].join('\n\n');
 }

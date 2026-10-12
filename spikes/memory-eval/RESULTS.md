@@ -443,6 +443,63 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 8.11 gaps, step 5 — group names, lists with a query, a judge that knows who asks (2026-10-12, DeepSeek direct, `fp819_runs.sh`, `rejudge.py`)
+
+Three changes, measured together on arm R (H13).
+
+**The judge is told who asks.** blind9 q20 was judged wrong when the answer named the holder in the third person
+("Beatrice sent it") instead of "you". `judge()` now adds `ASKED BY: X (the answer may address X as 'you' or name X in
+the third person: the same person)`, X = the question's `asker.name`, else the set's new optional `holder`
+(`questions.json`: Luca for the main set, Beatrice for blind9, Marco for the dev gaps set). The judge's system prompt is
+unchanged; sets with no name keep the input they were validated with. `judge_eval.py` on the main set: agreement
+92.4 % → **93.1 %**, false accept 0, false reject 0. `rejudge.py` grades stored answers again:
+
+| Stored run | Recorded | Old judge again | New judge |
+|---|---|---|---|
+| fp815 blind9 r2 | 91.2 | 89.3 | 86.9 |
+| fp815 blind9 r3 | 89.0 | 85.7 | 84.5 |
+| fp817 blind9 r3 | 97.6 | 95.2 (q20 wrong) | 95.2 (q20 correct) |
+| fp817 blind9 r1 / r2 | 95.2 / 95.1 | — | 95.2 / 95.1 |
+
+The judge (deepseek-flash, thinking on) is not deterministic: the old judge alone moves a stored run by 2–4 points.
+q20 on the same answers: correct 1/3 with the old judge, 3/3 with the new one; the other flips are judge noise. Kept.
+Arm R under the new judge: blind9 95.2 / 95.1 / 95.2 = **95.2 %** (the baseline for this step).
+
+**A group chat's name reaches the extraction (`extract.v15`).** blind9 q05 asks what Michele wrote in the groups and
+the reference names them («Famiglia Sartori», «Trasloco studio»): the generator (`_sessions.py`) had a `group` per
+session, but `build.py` did not export it, so no system ever saw it. Now `build.py` exports `group`
+(`DATASET_FORMAT.md`), the service harness sends it as the conversation `title`, and the extraction input carries
+`GROUP CHAT: «X» (the group's name: …)` before the window when the conversation has another participant (the system
+prompt is the same text). Dev case d10 (`dataset_dev_gaps` g30–g31: cousin Federica writes in «Cugini Rinaldi» and
+«Festa nonna Ada»; question asked 2026-12-18).
+
+**A list with a query brings relevant out-of-period items.** With `extract.v15` alone d10 was partial: the episodes
+named the groups, but the planner made a `list` over "questi giorni" and the group episodes are dated by what they
+tell (a move in January, a party on 9 January), so they fell outside the period and the answer saw only raw excerpts.
+`outsidePeriod` is now filled for every mode except `latest` (before: `search` only, or any mode with an empty period).
+d10 then names both groups; d05 (a day question) gets nothing extra.
+
+| Set | Arm R (fp817) | Step 5 r1 / r2 / r3 | **Mean** |
+|---|---|---|---|
+| dev gaps (10 questions) | 88.9 % (9 q) | 90 (1 run) | 90 % |
+| blind9 (personal) | 96.0 % (95.2 % rejudged) | 95.2 / 95.2 / 97.6 | **96.0 %** |
+| blind10 (entity) | 94.3 % | 94.3 / 98.6 / 97.1 | **96.7 %** |
+| main set (control) | 100 % | 100 | 100 % |
+
+- One prompt version per run (`extract.v15`, `extract.v15+entity.v5` on blind10).
+- blind9 q05: wrong / partial / partial → **partial 3/3**: «Famiglia Sartori» named every run; the «Trasloco studio»
+  message (26 September) is still missing — the period read for "in queste settimane" is short and excludes it (open).
+  q20: correct / partial / partial (each partial omits one of the dates or the time: answer variance; no longer the
+  third-person verdict). q08 wrong once (a parenthesis says Michele has the post), q23 wrong once, q33 partial once.
+  q06, q13, q14, q39 correct 3/3. +0.8 points against the rejudged baseline: within noise.
+- blind10: +2.4 points (judge change included: some questions have an asker), within noise; q04, q11, q13, q31
+  correct 3/3; q06 still fails (2 wrong + 1 partial).
+- dev: d10 partial (both groups named, the 9 January party omitted though in the episodes), d06 partial (answer
+  variance), d05 correct.
+- Cost: unchanged (one short line in the extraction input of group windows, no extra call).
+- **Kept**: the group name is a fact of the input the extraction could not see; the out-of-period items are the step
+  2 mechanism extended to lists.
+
 ### H13 — classify-and-compose extraction vs ranking by the question type (2026-10-11, DeepSeek direct, `fp816_runs.sh`, `fp817_runs.sh`)
 
 RESEARCH_NOTES H13. Lost points on blind9 / blind10 (step 4 runs) by stage: recall 50 % / 41 %, extraction 29 % / 36 %,

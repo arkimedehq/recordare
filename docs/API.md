@@ -166,7 +166,7 @@ connectors for one person). The admin credential cannot ingest (403).
     source?: "chat" | "voice" | "import_chat" | "import_social" | "import_email"
            | "import_notes" | "interview"
            | "document" | "perception" | "ambient";       // default "chat"
-    channel?: string; title?: string;
+    channel?: string; title?: string;              // title: a group chat's name, given to the extraction
     participants?: Array<{
       ref: string; role: "holder" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
@@ -318,6 +318,7 @@ Returns (as built):
   episodes: Episode[];                                // in period / matching; lived, done, planned or learned (each with its subject)
   claims: Episode[];                                  // others' statements about the self or someone else (other, inferred) — kept apart
   outsidePeriod: Episode[];                           // same shape; relevant items outside the period: up to 3 with a `search`
+                                                      // or a `list` with a query
                                                       // (what was done about the period may lie before it), 5 when the period has no match;
                                                       // ranked by relevance alone (not importance or recency)
   fromChats: Array<{ conversationId: string; conversation: string; messageId: string; at: string;
