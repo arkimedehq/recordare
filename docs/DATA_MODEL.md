@@ -570,10 +570,14 @@ served_at` — one row per recall served (`search_episodes`, `search_memory`, `s
 the public profile's `read_audit` (below) extends it with client, viewers and returned row ids.
 
 ### forget_tombstones (D16)
-`id, memory_id, scope enum (episode|period|conversation|message), episode_fingerprint bytea null,
+`id, memory_id, scope enum (episode|period|conversation|message|fact|note), episode_fingerprint bytea null,
 message_ids uuid[] (the forgotten evidence messages, hidden from chat search), period_from, period_to,
-conversation_id null, created_at` — checked **before inserting any
-episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
+conversation_id null, item_key text null, subject_person_id uuid null → persons (CASCADE), created_at` — checked
+**before inserting any episode or fact** (nightly sweep, re-extraction, dedup), so forgotten content never comes back.
+`fact` / `note` (WORK_PLAN 4.13, migration `FactNoteTombstones1791110000000`): a deleted fact or note — its slot key or
+note category (`item_key`), its subject (null = the memory itself) and its evidence messages (also those behind evidence
+episodes); the extraction does not write a fact of that slot / a note of that category for that subject again from any
+of those messages, while a new message telling it is news. Ids only; these messages stay in the chat search.
 
 ### clarifications (D50, vision L1; behaviour WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null
@@ -595,8 +599,8 @@ configurable.
 
 Built (2026-10-08): forget an episode (MCP `forget_episode`, `DELETE api/v1/episodes/{id}`), the synchronous message
 / conversation purge, and deleting a fact or a note from the diary (`DELETE api/v1/facts/{id}` / `notes/{id}`, also a
-rejected pending one: the row and its evidence are deleted, no tombstone — <!-- verify: a deleted fact / note can be
-extracted again from the same messages; intended? -->). Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of
+rejected pending one: the row and its evidence are deleted and a `fact` / `note` tombstone is left, so a re-extraction of
+the same messages does not write it again — 4.13). Not built yet (WORK_PLAN 5.5): forget a period, re-verdict of
 facts on forgotten evidence, deletion of episodes left without evidence.
 
 - **Forget an episode**: tombstone + delete the episode, its evidence rows, people, plan events,

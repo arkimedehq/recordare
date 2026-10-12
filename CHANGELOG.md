@@ -33,6 +33,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   not a period. Blind personal set 96.0 % → 97.2 % (3 runs; the question on a brother's messages in two groups correct
   3/3).
 
+### Fixed
+- Deleting a fact or a note (`DELETE api/v1/facts|notes/{id}`, or rejecting a pending one) leaves a tombstone (ids
+  only: slot key or note category, subject, evidence messages), so a re-extraction of the same messages no longer writes
+  it again; told again in a new message, it is learned (WORK_PLAN 4.13; migration `FactNoteTombstones1791110000000`).
+
 ## [0.2.0] — 2026-10-10
 
 The **agent memory** (D50): every memory belongs to an agent and is written in its first person — a person's own
