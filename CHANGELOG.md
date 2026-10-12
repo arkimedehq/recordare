@@ -28,6 +28,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `title`), so an episode told there says it was in that group. The system prompt is unchanged.
 - `search_episodes`: a `list` with a query also returns up to 3 relevant episodes from outside the period in
   `outsidePeriod` (before: `search` only): what was said in the period is dated by what it tells (a move next month).
+- `search_episodes`: chat excerpts (`fromChats`) carry `group`, the group chat's name, so what someone wrote no episode
+  tells of still says in which group; the tool description tells agents that a vague span ("lately", "these weeks") is
+  not a period. Blind personal set 96.0 % → 97.2 % (3 runs; the question on a brother's messages in two groups correct
+  3/3).
 
 ## [0.2.0] — 2026-10-10
 

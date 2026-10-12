@@ -197,7 +197,7 @@ export const TOOLS = [
   {
     "name": "search_episodes",
     "title": "Search what happened",
-    "description": "Search your memory of what happened: what you lived, did, planned or learned, and what happened to the people you know (events, plans, changes), with dates and status. Each item has a subject: you (written in the first person), a person by name, someone, or undecided. Use `from`/`to` (ISO dates, inclusive; see resolve_period) for questions about a period. mode: \"search\" = most relevant, \"list\" = chronological in the period (overviews, counting), \"latest\" = most recent first (\"when did I last…\").",
+    "description": "Search your memory of what happened: what you lived, did, planned or learned, and what happened to the people you know (events, plans, changes), with dates and status. Each item has a subject: you (written in the first person), a person by name, someone, or undecided. Use `from`/`to` (ISO dates, inclusive; see resolve_period) for questions about a period; a vague span (\"lately\", \"these weeks\") is not a period: leave them out. mode: \"search\" = most relevant, \"list\" = chronological in the period (overviews, counting), \"latest\" = most recent first (\"when did I last…\").",
     "inputSchema": {
       "type": "object",
       "properties": {

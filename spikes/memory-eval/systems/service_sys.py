@@ -39,7 +39,11 @@ from systems.d_sys import PLAN_SYSTEM as D_PLAN_SYSTEM, calendar
 PLAN_SYSTEM = D_PLAN_SYSTEM.replace(
     '"mode": "search" | "list"', '"mode": "search" | "list" | "latest"').replace(
     '"search" for a specific fact or event.',
-    '"latest" for "when did I last…" / "the most recent time" questions; "search" for a specific fact or event.')
+    '"latest" for "when did I last…" / "the most recent time" questions; "search" for a specific fact or event.').replace(
+    '- from/to: the period the question is about, inclusive; null when no period is implied.',
+    # As the search_episodes description says: a vague span is not a period (dev d11, 8.11 gaps step 6).
+    '- from/to: the period the question is about, inclusive; null when no period is implied. A vague span '
+    '("in queste settimane", "ultimamente", "di recente", "lately") is not a period: null.')
 
 URL = os.getenv("RECORDARE_URL", "http://localhost:8080")
 ADMIN = os.environ.get("RECORDARE_ADMIN_KEY", "")
@@ -370,7 +374,8 @@ def format_context(args: dict, episodes: dict, memory: dict, knowledge: dict | N
             mine = f" · scritto da qualcuno che usa {self_name}" if entity else f" · scritto da {self_name}" if personal else " · scritto dal proprietario"
             who = f" · scritto da {h['author']}" if h.get("author") else (mine if h.get("authorRole") == "holder" else "")
             fix = f" (poi corretto: {h['correctedBy']})" if h.get("correctedBy") else ""
-            lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}{who}] {h['excerpt']}{fix}")
+            grp = f" · gruppo «{h['group']}»" if h.get("group") else ""
+            lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}{grp}{who}] {h['excerpt']}{fix}")
     if knowledge and knowledge.get("passages"):
         lines.append("CONOSCENZA APPRESA (brani delle fonti imparate: il loro testo, non ricordi di fatti accaduti):")
         for p in knowledge["passages"]:
