@@ -443,6 +443,24 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 5.7 — turn taint from tools (2026-10-12, DeepSeek direct, `taint_runs.sh`)
+
+Code rule, no prompt change: an assistant reply given after the output of a tool that is not Recordare's (web search,
+page, calendar) in its turn counts as the tool — its facts and notes are pending (`inferred`), its episodes
+`assistant_stated` / `inferred`; the next person's message clears it. Only the dev sets with such tools are touched
+(the blind sets have no tool messages), 1 run each, single prompt version (`extract.v15`):
+
+| Set | Before | Taint |
+|---|---|---|
+| `dataset_dev_agent_personal` (19 q, web weather p05) | 94.7 % (v13) | **100 %** |
+| `dataset_dev_echo` (9 q, web bus times) | 100 % | **100 %** |
+
+No row was written with the tool's role in either run: the weather and bus items are also backed by the person's own
+message ("then lunch inside", "I'll take that one"), so they stay theirs. The rule itself is checked by the
+integration test (a web page's "allergic to nuts" relayed by the assistant stays pending; "allergic to cats" said by
+the person is stated). No harm measured; a poisoning-through-tool dev set is still to write (with the planned blind
+poisoning set).
+
 ### WORK_PLAN 8.11 gaps, step 6 — a vague span is not a period; chat excerpts name their group (2026-10-12, DeepSeek direct, `fp820_runs.sh`)
 
 blind9 q05's other half ("what did Michele write in the chats these weeks, and in which groups?"): the planner read

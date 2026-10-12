@@ -50,6 +50,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   an older one makes it current again; the digests built on what went are rewritten.
 - Messages left unextracted (a failed extraction call, a lost idle job) no longer wait for the next message in their
   conversation: the nightly sweep extracts them before consolidating (WORK_PLAN 4.1).
+- What the assistant relays from a tool (a web search, a page, a calendar) in that turn no longer becomes the person's
+  stated fact or note: it is pending until confirmed, and an episode from it is the assistant's report (turn taint,
+  WORK_PLAN 5.7). Before, a web page saying "X is allergic to nuts", repeated by the assistant, could be stored as the
+  person's own.
 
 ## [0.2.0] — 2026-10-10
 

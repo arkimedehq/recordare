@@ -39,7 +39,7 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 |---|---|---|
 | `origin` | enum `holder_lived \| holder_told \| assistant_stated` | Chi l'ha vissuto / detto (D28, D30, H3). `holder_told` = ciò che il titolare riferisce sugli altri, e i messaggi scritti da altri all'interno degli import del titolare. `twin_experienced` viene aggiunto con le fasi del twin |
 | `stance` | enum `stated \| inferred` | Gli elementi inferiti restano a bassa confidenza / pending (D29) |
-| `author_role` | enum `holder \| assistant \| other \| tool` | Chi ha scritto l'evidenza. Gli elementi la cui unica evidenza proviene da messaggi `other` / `tool` (membri di un gruppo, output di strumenti, corpi di mail importate) sono contesto di estrazione, mai `stance: stated`: al massimo `inferred` (fatti: `pending`) — protezione contro l'avvelenamento; il recall li etichetta |
+| `author_role` | enum `holder \| assistant \| other \| tool` | Chi ha scritto l'evidenza. Gli elementi la cui unica evidenza proviene da messaggi `other` / `tool` (membri di un gruppo, output di strumenti, corpi di mail importate) sono contesto di estrazione, mai `stance: stated`: al massimo `inferred` (fatti: `pending`) — protezione contro l'avvelenamento; il recall li etichetta. Una risposta dell'assistente dopo l'output di uno strumento non di Recordare, nel suo turno, conta come `tool` (taint del turno, WORK_PLAN 5.7; origine `assistant_stated`) |
 | `confidence` | real 0–1 | |
 | `extraction_run_id` | uuid null → extraction_runs (`SET NULL`) | null per gli inserimenti manuali |
 
