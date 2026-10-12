@@ -54,7 +54,7 @@ def judge(user: str, gold: dict, patterns: list[dict]) -> list[str]:
     items = [*gold.get("expected", []), *gold.get("traps", [])]
     msg = ("GOLD:\n" + "\n".join(f"- {g['id']}: {g['desc']}" for g in items) + "\n\nPATTERNS (memory of " + user + "):\n"
            + "\n".join(f"{i + 1}. {('[' + p['subject'] + '] ') if p['subject'] else ''}{p['pattern']}" for i, p in enumerate(patterns)))
-    out = json.loads(chat([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": msg}], "judge", json_mode=True))
+    out = json.loads(chat([{"role": "system", "content": JUDGE_SYSTEM}, {"role": "user", "content": msg}], "judge", json_mode=True, max_tokens=3000))
     by_n = {m.get("n"): m.get("gold", "none") for m in out.get("matches", [])}
     return [by_n.get(i + 1, "none") for i in range(len(patterns))]
 

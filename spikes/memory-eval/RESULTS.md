@@ -505,6 +505,22 @@ habit twice, once as hers and once as its own ("on Saturdays I register Teresa's
 calls, ≈ 25k input tokens. To follow up on the dev set (not here): the duplicate-of-a-note threshold and the
 self-vs-person restatement in entity memories.
 
+**Follow-up on the dev set (2026-10-12): not fixed, v2 kept.** Two cases added to `dataset_dev_patterns` (82 sessions):
+Nadia states her Thursday cinema once, then lives it (a pattern restating it is a duplicate), and an entity memory
+whose own part in Teresa's Saturday returns ("I registered the return") must not become a second pattern. v2 × 1:
+9 / 9 habits, 1 false (Nadia's cinema). Measured why: note and pattern are paraphrases at cosine ≈ 0.73 (bge-m3), far
+below the 0.88 check, and the model ignores the KNOW list. Tried:
+
+| Version | Change | Habits found | False | Pool retired |
+|---|---|---|---|---|
+| v3 (1 run; 2 runs lost to judge errors) | KNOW numbered + a `known` verdict (its episodes back the note) + the code check at 0.7 | 5 / 9 | 1 | no |
+| v4 (3 runs) | `known` only for notes that already say it is regular; code check back at 0.88 | 5–8 / 9 | 0–2 | not always |
+
+At 0.7 the check absorbed real habits into notes the extraction drew from one occasion ("I cycle in the hills"),
+losing their regularity; the `known` option confused the model (habits missed, the pool not retired). Both reverted:
+`patterns.v2` stays. Known limit: a habit the person already stated in words may come back once as a pattern (a
+duplicate, not a wrong fact). The judge now has 3000 output tokens (an empty completion stopped two v3 runs).
+
 ### WORK_PLAN 5.7 — turn taint from tools (2026-10-12, DeepSeek direct, `taint_runs.sh`)
 
 Code rule, no prompt change: an assistant reply given after the output of a tool that is not Recordare's (web search,

@@ -135,5 +135,6 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connectors last): the 5.4 follow-ups
-(restated-note threshold, entity restating a person's habit; 5.8 parked, blind11 entity set 98.8 % — 2026-10-12); then 6.6b ((5), (6), (10)), D34 A-MEM toggle split.
+Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connectors last). Done 2026-10-12: 5.3, 5.4 (+ blind),
+5.5, 4.1, 4.7, 5.7 taint; 5.8 parked; blind11 entity set 98.8 %; 5.4 follow-ups tried and reverted (known limit). Next:
+D34 A-MEM toggle split (Arkimede), then 6.6b ((5), (6), (10)).

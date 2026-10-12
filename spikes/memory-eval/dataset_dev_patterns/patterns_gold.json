@@ -119,6 +119,36 @@
     }
    ]
   },
+  "nadia": {
+   "expected": [
+    {
+     "id": "n-bike",
+     "desc": "Nadia rides her bike in the hills on Saturday mornings"
+    }
+   ],
+   "traps": [
+    {
+     "id": "n-cinema",
+     "desc": "Nadia goes to the cinema on Thursday evenings",
+     "why": "she stated it herself, already a note: restating it as a pattern is a duplicate"
+    }
+   ]
+  },
+  "bottega_libri": {
+   "expected": [
+    {
+     "id": "b-teresa",
+     "desc": "Teresa returns a book and borrows another on Saturday mornings"
+    }
+   ],
+   "traps": [
+    {
+     "id": "b-self",
+     "desc": "I (the shop) register a return and a loan on Saturdays — the shop's own pattern",
+     "why": "only my part in Teresa's habit: one pattern, under Teresa"
+    }
+   ]
+  },
   "casa_neri": {
    "expected": [
     {

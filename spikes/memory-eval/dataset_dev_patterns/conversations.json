@@ -7,7 +7,9 @@
   "tom": "Tom, Bristol",
   "elena": "Elena, Padova",
   "luis": "Luis, Valencia",
-  "casa_neri": "Casa Neri, Torino"
+  "casa_neri": "Casa Neri, Torino",
+  "nadia": "Nadia, Torino",
+  "bottega_libri": "Bottega Libri, Torino"
  },
  "genders": {
   "giulia": "feminine",
@@ -15,10 +17,12 @@
   "sara": "feminine",
   "tom": "masculine",
   "elena": "feminine",
-  "luis": "masculine"
+  "luis": "masculine",
+  "nadia": "feminine"
  },
  "entities": [
-  "casa_neri"
+  "casa_neri",
+  "bottega_libri"
  ],
  "sessions": [
   {
@@ -37,6 +41,21 @@
    ]
   },
   {
+   "id": "nadia-2026-07-03-2000",
+   "user": "nadia",
+   "ts": "2026-07-03T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il giovedì è la mia serata al cinema d'essai, non la salto quasi mai: è il mio momento."
+    },
+    {
+     "role": "assistant",
+     "content": "Bellissima abitudine!"
+    }
+   ]
+  },
+  {
    "id": "casa_neri-2026-07-04-0900",
    "user": "casa_neri",
    "ts": "2026-07-04T09:00:00+02:00",
@@ -48,6 +67,21 @@
     {
      "role": "assistant",
      "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "bottega_libri-2026-07-04-1030",
+   "user": "bottega_libri",
+   "ts": "2026-07-04T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Teresa, ti riporto il giallo di Simenon e prendo il nuovo di Camilleri."
+    },
+    {
+     "role": "assistant",
+     "content": "Registrato il reso del Simenon e il prestito del Camilleri, Teresa."
     }
    ]
   },
@@ -108,6 +142,21 @@
     {
      "role": "assistant",
      "content": "Grazie, segnato."
+    }
+   ]
+  },
+  {
+   "id": "nadia-2026-07-11-1200",
+   "user": "nadia",
+   "ts": "2026-07-11T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina giro in bici sulle colline, 40 km."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
     }
    ]
   },
@@ -191,6 +240,21 @@
    ]
   },
   {
+   "id": "nadia-2026-07-16-2330",
+   "user": "nadia",
+   "ts": "2026-07-16T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera al cinema Massimo ho visto un film coreano bellissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata!"
+    }
+   ]
+  },
+  {
    "id": "sara-2026-07-17-2100",
    "user": "sara",
    "ts": "2026-07-17T21:00:00+02:00",
@@ -221,6 +285,21 @@
    ]
   },
   {
+   "id": "bottega_libri-2026-07-18-1030",
+   "user": "bottega_libri",
+   "ts": "2026-07-18T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Teresa: restituisco il Camilleri, mi consigli un altro giallo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Registrato il reso. Ti consiglio Vargas: prestito registrato."
+    }
+   ]
+  },
+  {
    "id": "marco-2026-07-18-2330",
    "user": "marco",
    "ts": "2026-07-18T23:30:00+02:00",
@@ -247,6 +326,21 @@
     {
      "role": "assistant",
      "content": "Mi fa piacere sentirlo."
+    }
+   ]
+  },
+  {
+   "id": "bottega_libri-2026-07-22-1700",
+   "user": "bottega_libri",
+   "ts": "2026-07-22T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Franco, avete il giornale di oggi?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, è sul tavolo all'ingresso."
     }
    ]
   },
@@ -371,6 +465,21 @@
    ]
   },
   {
+   "id": "nadia-2026-07-30-2330",
+   "user": "nadia",
+   "ts": "2026-07-30T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Film francese stasera al Massimo, un po' lento ma bello."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata!"
+    }
+   ]
+  },
+  {
    "id": "sara-2026-07-31-2100",
    "user": "sara",
    "ts": "2026-07-31T21:00:00+02:00",
@@ -397,6 +506,36 @@
     {
      "role": "assistant",
      "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "bottega_libri-2026-08-01-1030",
+   "user": "bottega_libri",
+   "ts": "2026-08-01T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Teresa qui, ecco il Vargas. Ne prendo un altro della stessa autrice."
+    },
+    {
+     "role": "assistant",
+     "content": "Reso registrato e nuovo prestito segnato, Teresa."
+    }
+   ]
+  },
+  {
+   "id": "nadia-2026-08-01-1200",
+   "user": "nadia",
+   "ts": "2026-08-01T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giro in bici sulle colline stamattina, faceva fresco."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
     }
    ]
   },
@@ -521,6 +660,21 @@
    ]
   },
   {
+   "id": "bottega_libri-2026-08-12-1600",
+   "user": "bottega_libri",
+   "ts": "2026-08-12T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, posso usare il bagno?"
+    },
+    {
+     "role": "assistant",
+     "content": "Certo, in fondo a destra."
+    }
+   ]
+  },
+  {
    "id": "marco-2026-08-12-2000",
    "user": "marco",
    "ts": "2026-08-12T20:00:00+02:00",
@@ -639,6 +793,21 @@
    ]
   },
   {
+   "id": "nadia-2026-08-22-1200",
+   "user": "nadia",
+   "ts": "2026-08-22T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina 50 km in bici in collina con Ivo."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
+    }
+   ]
+  },
+  {
    "id": "giulia-2026-08-22-1230",
    "user": "giulia",
    "ts": "2026-08-22T12:30:00+02:00",
@@ -684,6 +853,21 @@
    ]
   },
   {
+   "id": "nadia-2026-08-27-2330",
+   "user": "nadia",
+   "ts": "2026-08-27T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera al cinema ho rivisto un classico di Fellini restaurato."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata!"
+    }
+   ]
+  },
+  {
    "id": "sara-2026-08-28-2100",
    "user": "sara",
    "ts": "2026-08-28T21:00:00+02:00",
@@ -710,6 +894,21 @@
     {
      "role": "assistant",
      "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "bottega_libri-2026-08-29-1030",
+   "user": "bottega_libri",
+   "ts": "2026-08-29T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Teresa, riporto il libro di Vargas e prendo un Agatha Christie."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: reso e prestito registrati."
     }
    ]
   },
@@ -879,6 +1078,36 @@
    ]
   },
   {
+   "id": "nadia-2026-09-10-2330",
+   "user": "nadia",
+   "ts": "2026-09-10T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Al Massimo stasera c'era anche il regista in sala."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata!"
+    }
+   ]
+  },
+  {
+   "id": "nadia-2026-09-12-1200",
+   "user": "nadia",
+   "ts": "2026-09-12T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bici in collina stamattina, ho provato la salita di Superga."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
+    }
+   ]
+  },
+  {
    "id": "giulia-2026-09-13-2100",
    "user": "giulia",
    "ts": "2026-09-13T21:00:00+02:00",
@@ -1010,6 +1239,21 @@
     {
      "role": "assistant",
      "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "bottega_libri-2026-09-26-1030",
+   "user": "bottega_libri",
+   "ts": "2026-09-26T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Teresa, ecco la Christie; oggi prendo un giallo svedese."
+    },
+    {
+     "role": "assistant",
+     "content": "Reso registrato, prestito del giallo svedese segnato."
     }
    ]
   },

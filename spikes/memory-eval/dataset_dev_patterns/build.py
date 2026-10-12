@@ -123,14 +123,39 @@ for d, t in [("2026-07-09", "Sono Anna, ho annaffiato le piante del balcone."),
              ("2026-08-13", "Sono Paolo, ho annaffiato le piante del balcone, erano secchissime.")]:
     s("casa_neri", d, "19:00", u(t), a("Grazie, segnato."))
 
+# ── nadia (it): a habit she states once in her own words, then lives — a pattern restating it is a duplicate ──
+s("nadia", "2026-07-03", "20:00", u("Il giovedì è la mia serata al cinema d'essai, non la salto quasi mai: è il mio momento."), a("Bellissima abitudine!"))
+for d, t in [("2026-07-16", "Stasera al cinema Massimo ho visto un film coreano bellissimo."),
+             ("2026-07-30", "Film francese stasera al Massimo, un po' lento ma bello."),
+             ("2026-08-27", "Stasera al cinema ho rivisto un classico di Fellini restaurato."),
+             ("2026-09-10", "Al Massimo stasera c'era anche il regista in sala.")]:
+    s("nadia", d, "23:30", u(t), a("Che serata!"))
+for d, t in [("2026-07-11", "Stamattina giro in bici sulle colline, 40 km."),
+             ("2026-08-01", "Giro in bici sulle colline stamattina, faceva fresco."),
+             ("2026-08-22", "Stamattina 50 km in bici in collina con Ivo."),
+             ("2026-09-12", "Bici in collina stamattina, ho provato la salita di Superga.")]:
+    s("nadia", d, "12:00", u(t), a("Brava!"))
+
+# ── bottega_libri (entity, it): Teresa returns a book every Saturday; the shop's own part each time ("I registered it")
+# is her habit, not a second pattern of mine ──
+for d, t, r in [("2026-07-04", "Sono Teresa, ti riporto il giallo di Simenon e prendo il nuovo di Camilleri.", "Registrato il reso del Simenon e il prestito del Camilleri, Teresa."),
+                ("2026-07-18", "Ciao, sono Teresa: restituisco il Camilleri, mi consigli un altro giallo?", "Registrato il reso. Ti consiglio Vargas: prestito registrato."),
+                ("2026-08-01", "Teresa qui, ecco il Vargas. Ne prendo un altro della stessa autrice.", "Reso registrato e nuovo prestito segnato, Teresa."),
+                ("2026-08-29", "Sono Teresa, riporto il libro di Vargas e prendo un Agatha Christie.", "Fatto: reso e prestito registrati."),
+                ("2026-09-26", "Sono Teresa, ecco la Christie; oggi prendo un giallo svedese.", "Reso registrato, prestito del giallo svedese segnato.")]:
+    s("bottega_libri", d, "10:30", u(t), a(r))
+s("bottega_libri", "2026-07-22", "17:00", u("Sono Franco, avete il giornale di oggi?"), a("Sì, è sul tavolo all'ingresso."))
+s("bottega_libri", "2026-08-12", "16:00", u("Buongiorno, posso usare il bagno?"), a("Certo, in fondo a destra."))
+
 sessions.sort(key=lambda x: x["ts"])
 conversations = {
     "_note": "dev_patterns (WORK_PLAN 5.4): recurring patterns — true habits shown by repeated episodes, and traps. Fictional.",
     "users": {"giulia": "Giulia, Torino", "marco": "Marco, Torino", "sara": "Sara, Bologna", "tom": "Tom, Bristol",
-              "elena": "Elena, Padova", "luis": "Luis, Valencia", "casa_neri": "Casa Neri, Torino"},
+              "elena": "Elena, Padova", "luis": "Luis, Valencia", "casa_neri": "Casa Neri, Torino",
+              "nadia": "Nadia, Torino", "bottega_libri": "Bottega Libri, Torino"},
     "genders": {"giulia": "feminine", "marco": "masculine", "sara": "feminine", "tom": "masculine", "elena": "feminine",
-                "luis": "masculine"},
-    "entities": ["casa_neri"],
+                "luis": "masculine", "nadia": "feminine"},
+    "entities": ["casa_neri", "bottega_libri"],
     "sessions": sessions,
 }
 gold = {
@@ -155,6 +180,10 @@ gold = {
                   "checkpoint_expected": {"2026-08-31T22:00:00+02:00": ["e-swim"]}},
         "luis": {"expected": [{"id": "l-paella", "desc": "Luis cooks paella for his family on Sundays"}],
                  "traps": [{"id": "l-concert", "desc": "Luis goes to concerts regularly", "why": "once"}]},
+        "nadia": {"expected": [{"id": "n-bike", "desc": "Nadia rides her bike in the hills on Saturday mornings"}],
+                  "traps": [{"id": "n-cinema", "desc": "Nadia goes to the cinema on Thursday evenings", "why": "she stated it herself, already a note: restating it as a pattern is a duplicate"}]},
+        "bottega_libri": {"expected": [{"id": "b-teresa", "desc": "Teresa returns a book and borrows another on Saturday mornings"}],
+                          "traps": [{"id": "b-self", "desc": "I (the shop) register a return and a loan on Saturdays — the shop's own pattern", "why": "only my part in Teresa's habit: one pattern, under Teresa"}]},
         "casa_neri": {"expected": [{"id": "c-market", "desc": "Paolo goes to the market of piazza Madama on Saturday mornings"}],
                       "traps": [{"id": "c-plants", "desc": "someone / the house waters the balcony plants regularly", "why": "three different people, once each"}]},
     },
