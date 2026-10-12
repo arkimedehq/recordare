@@ -135,5 +135,5 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connectors last): 5.8 decision model, entity memory on a new blind set, the 5.4 follow-ups
+Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connectors last): entity memory on a new blind set (5.8 measured and parked 2026-10-12), the 5.4 follow-ups
 (restated-note threshold, entity restating a person's habit); then 6.6b ((5), (6), (10)), D34 A-MEM toggle split.
