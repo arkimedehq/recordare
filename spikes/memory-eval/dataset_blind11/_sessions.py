@@ -1,0 +1,389 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
+"""Conversations and learned sources of blind set #11 (entity memory): the counter assistant of Ciclofficina Raggio,
+a neighbourhood bike repair shop in Trento (fictional people and business). Europe/Rome, October–November 2032
+(DST ends Sunday 31 October 2032: +02:00 before, +01:00 after).
+
+Session fields used by build.py / check.py only: `speakers` (who speaks, in order; None = never identified; "Marco" =
+a Marco who never gave his surname) and `lang`. Message tuples: ("u", text) a person, ("o", text) a person handing the
+agent content to keep as its own (`own: true`), ("a", text) the agent.
+"""
+
+SESSIONS = [
+    {"id": "s01", "ts": "2032-10-04T15:05:00+02:00", "speakers": ["Ettore"], "lang": "it", "messages": [
+        ("u", "Ciao! Sono Ettore Zanella, il titolare della Ciclofficina Raggio, in via Santa Croce 41 a Trento. Da oggi "
+              "sei l'assistente sul bancone: parlerai con me, con Giada che lavora con me in officina e con i clienti. "
+              "Ti do il listino e gli orari: tienili come cosa tua, sono le informazioni ufficiali della bottega."),
+        ("o", "LISTINO CICLOFFICINA RAGGIO (ottobre 2032)\n"
+              "- Tagliando base (pulizia della trasmissione, regolazione di cambio e freni, controllo pressione): 45 €\n"
+              "- Tagliando completo (tagliando base + smontaggio e ingrassaggio di movimento centrale e serie sterzo): 80 €\n"
+              "- Sostituzione camera d'aria (camera compresa): 12 €\n"
+              "- Regolazione freni meccanici: 15 €\n"
+              "- Spurgo freni idraulici (per impianto): 25 €\n"
+              "- Regolazione cambio: 15 €\n"
+              "- Diagnosi e-bike (motore e batteria): 60 €\n"
+              "- Ricambi a parte, a prezzo di listino.\n"
+              "- Deposito: le bici non ritirate entro 10 giorni dall'avviso di fine lavoro pagano 2 € al giorno."),
+        ("o", "ORARI\n"
+              "- Lunedì: 15:00–19:00 (mattina chiuso)\n"
+              "- Da martedì a sabato: 9:00–12:30 e 15:00–19:00\n"
+              "- Domenica: chiuso"),
+        ("a", "Ciao Ettore, piacere! Ho salvato il listino e gli orari della Ciclofficina Raggio come informazioni "
+              "ufficiali della bottega. Posso anche prendere appuntamenti, segnare promemoria e lasciare messaggi tra "
+              "te, Giada e i clienti."),
+        ("u", "Perfetto. Gli appuntamenti: uno slot ogni mezz'ora, solo negli orari di apertura. Per i lavori lunghi, "
+              "tipo il tagliando completo, la bici resta da noi almeno un giorno."),
+        ("a", "Chiaro: slot di mezz'ora negli orari di apertura; per il tagliando completo la bici resta in officina "
+              "almeno un giorno."),
+    ]},
+    {"id": "s02", "ts": "2032-10-05T09:40:00+02:00", "speakers": ["Giada"], "lang": "it", "messages": [
+        ("u", "Buongiorno, sono Giada Pedrotti, la meccanica. Lavoro qui dal martedì al sabato."),
+        ("a", "Buongiorno Giada! Ettore mi ha parlato di te. Come posso aiutarti?"),
+        ("u", "Ti carico il manuale di assistenza del motore Volta M3: ne abbiamo parecchi in giro, tra cui l'e-bike "
+              "della signora Bruna Ioriatti, una cliente affezionata. Se un cliente ti dice un codice d'errore, guarda lì."),
+        ("a", "Va bene, appena lo ricevo lo studio. Quando un cliente mi riferisce un codice d'errore del Volta M3 lo "
+              "cerco nel manuale."),
+    ]},
+    {"id": "s03", "ts": "2032-10-05T11:15:00+02:00", "speakers": ["Marco Tomasi"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Marco Tomasi. Ho una bici da corsa grigia e vorrei un tagliando base prima dell'inverno."),
+        ("a", "Ciao Marco! Il tagliando base costa 45 €. Quando ti farebbe comodo?"),
+        ("u", "Mercoledì 13 ottobre alle 9:00, prima di andare in ufficio. Pago al ritiro."),
+        ("a", "Fatto: ti ho segnato per mercoledì 13 ottobre alle 9:00, tagliando base sulla bici da corsa grigia, "
+              "pagamento al ritiro."),
+        ("u", "Grazie, a mercoledì."),
+    ]},
+    # carry-over trap: a new conversation minutes after Marco Tomasi's, the speaker never identifies
+    {"id": "s04", "ts": "2032-10-05T11:31:00+02:00", "speakers": [None], "lang": "it", "messages": [
+        ("u", "Scusa, ancora una cosa che mi ero dimenticato: il cambio della mia bici salta quando sono sul pignone "
+              "più grande. Potete guardarlo?"),
+        ("a", "Certo. Per segnarlo devo sapere a nome di chi: come ti chiami?"),
+        ("u", "Lascia stare il nome, passo io in settimana con la bici e ne parlo direttamente con il meccanico."),
+        ("a", "D'accordo: ho annotato che un cliente segnala il cambio che salta sul pignone più grande e passerà in "
+              "settimana con la bici. La regolazione del cambio costa 15 €."),
+    ]},
+    {"id": "s05", "ts": "2032-10-07T17:20:00+02:00", "speakers": ["Rhys"], "lang": "en", "messages": [
+        ("u", "Hi there, I'm Rhys Morgan. I'm a postdoc up at the university in Povo and I commute on a gravel bike "
+              "every day. It needs a full service before winter."),
+        ("a", "Hi Rhys! The full service (tagliando completo) is 80 €, and the bike stays in the workshop at least one "
+              "day. When would you like to bring it?"),
+        ("u", "Thursday 14 October, 10 in the morning? I'll take the bus that day."),
+        ("a", "Booked: full service on your gravel bike, Thursday 14 October at 10:00."),
+        ("u", "Great. Oh, and I'll pay by card. Do you also sell winter tyres?"),
+        ("a", "Card is fine. Winter tyres aren't on our price list, so Ettore will have to give you a quote."),
+    ]},
+    {"id": "s06", "ts": "2032-10-08T16:45:00+02:00", "speakers": ["Ettore"], "lang": "it", "messages": [
+        ("u", "Sono Ettore. Due cose. Primo: domenica 24 ottobre facciamo il giro sociale della bottega, partenza alle "
+              "8:30 da qui, fino al lago di Caldonazzo e ritorno, una cinquantina di chilometri. Raccogli tu le "
+              "iscrizioni dei clienti."),
+        ("a", "Segnato: giro sociale domenica 24 ottobre, partenza 8:30 dalla ciclofficina, lago di Caldonazzo e "
+              "ritorno, circa 50 km. Raccolgo io le iscrizioni."),
+        ("u", "Secondo: ti passo la pagina del bonus per le cargo bike, così rispondi tu a chi chiede. E ricordami "
+              "martedì 12 di ordinare le pastiglie per freni a disco, siamo quasi a zero."),
+        ("a", "Ricevo la pagina del bonus cargo e ti metto un promemoria per martedì 12 ottobre: ordinare le pastiglie "
+              "per freni a disco."),
+    ]},
+    {"id": "s07", "ts": "2032-10-09T10:10:00+02:00", "speakers": ["Marco Dallapiccola"], "lang": "it", "messages": [
+        ("u", "Buongiorno, sono Marco Dallapiccola, quello della cargo bike verde con cui porto a scuola i miei due "
+              "figli, Greta e Pietro. Il freno anteriore idraulico è diventato spugnoso."),
+        ("a", "Buongiorno Marco! Per un freno idraulico spugnoso serve lo spurgo: 25 € per impianto. Vuoi prenotare?"),
+        ("u", "Sì, martedì 19 ottobre alle 15:00. E un'altra cosa: sto pensando di prendere una cargo elettrica nuova, "
+              "per mia moglie. C'è un bonus, giusto?"),
+        ("a", "Ti ho segnato per martedì 19 ottobre alle 15:00, spurgo del freno anteriore della cargo. Per il bonus "
+              "«Cargo in città»: il 30 % del prezzo fino a un massimo di 300 €, solo cargo nuove comprate tra il 1° "
+              "settembre e il 30 novembre 2032 in un negozio con sede in Trentino, per residenti a Trento, uno per "
+              "famiglia; domanda online entro il 15 dicembre con la fattura intestata."),
+        ("u", "Ottimo. Iscrivimi anche al giro sociale del 24."),
+        ("a", "Fatto, sei iscritto al giro sociale di domenica 24 ottobre."),
+    ]},
+    # carry-over trap: right after Marco Dallapiccola's conversation, a speaker who never identifies
+    {"id": "s08", "ts": "2032-10-09T10:21:00+02:00", "speakers": [None], "lang": "it", "messages": [
+        ("u", "Buongiorno, vi lascio la city bike rossa col cestino qui fuori: ha la ruota dietro a terra, credo sia "
+              "una foratura."),
+        ("a", "Buongiorno! Sostituzione della camera d'aria, 12 € camera compresa. A che nome la segno?"),
+        ("u", "Non serve, è l'unica rossa col cestino. Passo a ritirarla venerdì 15."),
+        ("a", "Va bene: city bike rossa col cestino, foratura alla ruota posteriore, ritiro previsto venerdì 15 "
+              "ottobre. Se vuoi lasciarmi un numero, ti avviso quando è pronta."),
+        ("u", "No, grazie, passo io. Buona giornata!"),
+    ]},
+    {"id": "s09", "ts": "2032-10-12T09:05:00+02:00", "speakers": ["Giada"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Giada. Ettore ti aveva chiesto di ricordargli le pastiglie dei freni a disco?"),
+        ("a", "Sì, ciao Giada: il promemoria è per oggi, martedì 12 ottobre — ordinare le pastiglie per freni a disco."),
+        ("u", "Cancellalo pure: le ho già ordinate io ieri da Ricambi Adige, arrivano giovedì. Diglielo tu quando lo "
+              "senti."),
+        ("a", "Fatto: promemoria cancellato. Riferirò a Ettore che hai ordinato le pastiglie lunedì 11 ottobre da "
+              "Ricambi Adige e che arrivano giovedì."),
+        ("u", "E iscrivimi al giro del 24, vengo anch'io."),
+        ("a", "Iscritta: sei nella lista del giro sociale di domenica 24 ottobre."),
+    ]},
+    {"id": "s10", "ts": "2032-10-12T16:20:00+02:00", "speakers": ["Bruna"], "lang": "it", "messages": [
+        ("u", "Buonasera, sono Bruna Ioriatti. La mia bici elettrica ogni tanto si spegne e sul display compare E07. "
+              "Cosa vuol dire?"),
+        ("a", "Buonasera signora Bruna. Sul motore Volta M3, E07 significa che manca il segnale del sensore di "
+              "velocità: di solito il magnete sul raggio si è spostato e non è più allineato al sensore, o è a più di "
+              "15 mm. Finché il segnale non torna l'assistenza si interrompe."),
+        ("u", "Ah, ecco. Allora la porto da voi. Dica a Ettore che passo giovedì 14 nel pomeriggio a lasciargliela."),
+        ("a", "Le ho prenotato una diagnosi e-bike giovedì 14 ottobre alle 15:30 (60 €) e lascio il messaggio a "
+              "Ettore: passerà giovedì pomeriggio a lasciare l'e-bike con il codice E07."),
+        ("u", "Grazie, gentilissimo."),
+    ]},
+    {"id": "s11", "ts": "2032-10-13T18:40:00+02:00", "speakers": ["Ettore"], "lang": "it", "messages": [
+        ("u", "Sono Ettore, ci sono messaggi per me?"),
+        ("a", "Sì, due. La signora Bruna Ioriatti passa domani, giovedì 14, nel pomeriggio a lasciare l'e-bike: il "
+              "display del motore Volta M3 dà E07; le ho prenotato la diagnosi alle 15:30. E Giada ti fa sapere che "
+              "le pastiglie per freni a disco le ha già ordinate lei lunedì 11 da Ricambi Adige, arrivano giovedì: ho "
+              "cancellato il tuo promemoria."),
+        ("u", "Perfetto. Stamattina Marco Tomasi ha portato la bici da corsa: tagliando fatto, ma la cassetta è "
+              "consumata, gliela cambio con una 11-32 appena arriva. Ti passo anche il catalogo d'autunno di Ricambi "
+              "Adige, il nostro fornitore."),
+        ("a", "Annotato: tagliando base di Marco Tomasi fatto, cassetta da sostituire con una 11-32. Ricevo il "
+              "catalogo di Ricambi Adige."),
+    ]},
+    {"id": "s12", "ts": "2032-10-14T08:15:00+02:00", "speakers": ["Rhys"], "lang": "en", "messages": [
+        ("u", "Morning, it's Rhys again. Bad news: I've got a seminar at 10 today, so I can't bring the gravel bike for "
+              "the service. Could we move it to Saturday 16 October, 9:30?"),
+        ("a", "Morning Rhys! Done: your full service moves from today, Thursday 14 October at 10:00, to Saturday 16 "
+              "October at 9:30."),
+        ("u", "Brilliant. And I saw the poster for the group ride on the 24th: put me down too, it sounds fun."),
+        ("a", "You're on the list for the group ride on Sunday 24 October, leaving the shop at 8:30."),
+    ]},
+    # hand-over: Giada passes the tablet to a customer who never says her name
+    {"id": "s13", "ts": "2032-10-15T17:50:00+02:00", "speakers": ["Giada", None], "lang": "it", "messages": [
+        ("u", "Ciao, sono Giada. La foratura della city bike rossa è sistemata. Ti passo la signora che è venuta a "
+              "ritirarla, così le dici quanto paga."),
+        ("a", "Ciao Giada, va bene."),
+        ("u", "Buonasera! Sì, è la mia, quella rossa col cestino. Quanto le devo?"),
+        ("a", "Buonasera! Sostituzione della camera d'aria posteriore, camera compresa: 12 €."),
+        ("u", "Ecco, pago in contanti. Già che ci sono: mio figlio ha la bici coi freni che non frenano quasi più. "
+              "Potete guardarli martedì 26 alle 10?"),
+        ("a", "Pagamento di 12 € in contanti registrato. Per martedì 26 ottobre alle 10:00 regolazione freni (15 €) "
+              "sulla bici di suo figlio: a che nome segno l'appuntamento?"),
+        ("u", "Metta «la signora della bici rossa», tanto mi conoscete."),
+        ("a", "Segnato: martedì 26 ottobre alle 10:00, regolazione freni sulla bici del figlio della signora della "
+              "bici rossa."),
+    ]},
+    {"id": "s14", "ts": "2032-10-16T12:10:00+02:00", "speakers": ["Ettore"], "lang": "it", "messages": [
+        ("u", "Sono Ettore. Il gravel di Rhys è pronto: tagliando completo fatto, ha pagato 80 € con la carta e l'ha "
+              "già ripreso. Gli ho consigliato di cambiare la catena in primavera."),
+        ("a", "Registrato: tagliando completo di Rhys Morgan fatto oggi, sabato 16 ottobre, 80 € pagati con carta; "
+              "consiglio di cambiare la catena in primavera."),
+        ("u", "E Marco Tomasi ha ritirato la bici da corsa giovedì: tagliando 45 più la cassetta 11-32 a 38, totale "
+              "83 euro, pagati."),
+        ("a", "Annotato: Marco Tomasi ha ritirato la bici da corsa giovedì 14 ottobre e ha pagato 83 € (tagliando "
+              "base 45 € + cassetta 11-32 38 €)."),
+        ("u", "Ah, e la signora Bruna l'e-bike l'ha lasciata giovedì, se ne occupa Giada."),
+        ("a", "Ok, l'e-bike della signora Bruna è in officina dal 14 ottobre, la segue Giada."),
+    ]},
+    {"id": "s15", "ts": "2032-10-18T15:30:00+02:00", "speakers": ["Marco Dallapiccola"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Marco Dallapiccola. Puoi cancellare l'appuntamento di domani per il freno della cargo? Me "
+              "l'ha spurgato un amico che fa il meccanico, ora frena benissimo."),
+        ("a", "Ciao Marco. Fatto: ho cancellato lo spurgo del freno anteriore della cargo di martedì 19 ottobre alle "
+              "15:00."),
+        ("u", "Grazie. Per la cargo elettrica nuova invece ne parlo con Ettore in settimana. Resto iscritto al giro."),
+        ("a", "Va bene. Rimani nella lista del giro sociale di domenica 24 ottobre."),
+    ]},
+    {"id": "s16", "ts": "2032-10-19T10:05:00+02:00", "speakers": ["Katharina"], "lang": "de", "messages": [
+        ("u", "Hallo! Ich bin Katharina Moser, ich wohne seit September in Trento und spreche noch nicht so gut "
+              "Italienisch. Bei meinem Trekkingrad muss man die Bremsen … nein, eigentlich die Schaltung einstellen: "
+              "die Gänge springen nicht richtig."),
+        ("a", "Hallo Katharina, willkommen! Die Einstellung der Schaltung kostet 15 €. Wann möchten Sie kommen?"),
+        ("u", "Freitag, 22. Oktober, um 16 Uhr — nein, Moment, ich arbeite bis halb fünf. Lieber um 17 Uhr."),
+        ("a", "Gebucht: Einstellung der Schaltung an Ihrem Trekkingrad, Freitag, 22. Oktober, um 17:00."),
+        ("u", "Danke! Und sagen Sie bitte Giada, dass ich den Fahrradkorb, den sie für mich reserviert hat, am Freitag "
+              "mitnehme."),
+        ("a", "Mache ich: Ich sage Giada, dass Sie den reservierten Fahrradkorb am Freitag abholen."),
+    ]},
+    {"id": "s17", "ts": "2032-10-20T18:10:00+02:00", "speakers": ["Ettore"], "lang": "it", "messages": [
+        ("u", "Sono Ettore. Per domenica danno pioggia tutto il giorno: il giro sociale lo spostiamo a domenica 7 "
+              "novembre, stesso orario, stesso percorso. Avvisa tu gli iscritti quando passano o ti scrivono."),
+        ("a", "Fatto: giro sociale spostato da domenica 24 ottobre a domenica 7 novembre, partenza 8:30 dalla "
+              "ciclofficina, lago di Caldonazzo e ritorno. Gli iscritti finora sono Marco Dallapiccola, Giada e Rhys: "
+              "li avviso appena li sento."),
+        ("u", "Poi il listino nuovo dal 1° novembre: aumentano solo due voci."),
+        ("o", "AGGIORNAMENTO LISTINO dal 1° novembre 2032: tagliando base 50 € (prima 45 €); sostituzione camera "
+              "d'aria, camera compresa, 14 € (prima 12 €). Tutte le altre voci restano invariate."),
+        ("a", "Aggiornato: dal 1° novembre 2032 il tagliando base costa 50 € e la sostituzione della camera d'aria "
+              "14 €; il resto del listino non cambia."),
+    ]},
+    # the agent misrecalls Katharina's time (16:00, the time she corrected) and is corrected by Giada
+    {"id": "s18", "ts": "2032-10-21T09:30:00+02:00", "speakers": ["Giada"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Giada. Chi c'è domani in agenda?"),
+        ("a", "Ciao Giada! Domani, venerdì 22 ottobre: Katharina Moser alle 16:00, regolazione del cambio sul suo "
+              "trekking. Ha lasciato anche un messaggio per te: venerdì passa a prendere il cestino che le hai "
+              "riservato. E il giro sociale è spostato a domenica 7 novembre, per la pioggia."),
+        ("u", "Alle 16? Mi pareva che lavorasse fino alle quattro e mezza."),
+        ("a", "Hai ragione, ho sbagliato: nella conversazione Katharina aveva detto prima le 16 e poi si è corretta, "
+              "l'appuntamento è venerdì 22 ottobre alle 17:00."),
+        ("u", "Meglio. Ah, l'e-bike della signora Bruna: era il magnete del sensore di velocità spostato, come diceva "
+              "il manuale. L'ho riallineato io lunedì, lei ha pagato i 60 € della diagnosi e se l'è già ripresa."),
+        ("a", "Annotato: e-bike di Bruna Ioriatti riparata da te lunedì 18 ottobre (magnete del sensore di velocità "
+              "riallineato, errore E07), 60 € di diagnosi pagati, già ritirata."),
+        ("u", "Ultima cosa: mercoledì 27 ottobre alle 17 faccio un corso gratuito per bambini su come riparare una "
+              "foratura, massimo otto bambini. Raccogli tu le iscrizioni."),
+        ("a", "Segnato: corso gratuito di riparazione forature per bambini, mercoledì 27 ottobre alle 17:00, massimo "
+              "8 posti. Raccolgo io le iscrizioni."),
+    ]},
+    {"id": "s19", "ts": "2032-10-21T17:45:00+02:00", "speakers": [None], "lang": "it", "messages": [
+        ("u", "Buonasera, ho visto il cartello del corso sulle forature per i bambini. Vorrei iscrivere i miei due "
+              "figli, Leo di 8 anni e Mia di 10."),
+        ("a", "Buonasera! Iscritti Leo (8 anni) e Mia (10 anni) al corso di mercoledì 27 ottobre alle 17:00. Mi lascia "
+              "un nome o un numero per avvisarla in caso di cambiamenti?"),
+        ("u", "Ripasso io in bottega prima di mercoledì, grazie."),
+        ("a", "Va bene, a presto."),
+    ]},
+    # a Marco who never gives his surname: Marco Tomasi or Marco Dallapiccola?
+    {"id": "s20", "ts": "2032-10-23T10:20:00+02:00", "speakers": ["Marco"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Marco. La settimana scorsa ho dimenticato qui un casco blu, l'avete trovato?"),
+        ("a", "Ciao Marco! Tra i clienti conosco due Marco, Marco Tomasi e Marco Dallapiccola: tu quale sei? Non ho "
+              "annotazioni di un casco blu ritrovato, ma lo chiedo a Ettore e Giada."),
+        ("u", "Scusa, vado di fretta, ripasso la settimana prossima. È blu con una striscia gialla."),
+        ("a", "Va bene: casco blu con striscia gialla, dimenticato da Marco la settimana scorsa. Lo segnalo a Ettore "
+              "e Giada."),
+    ]},
+    {"id": "s21", "ts": "2032-10-25T15:10:00+02:00", "speakers": ["Ettore"], "lang": "it", "messages": [
+        ("u", "Sono Ettore. Novità: Marco Dallapiccola ha ordinato da noi la cargo elettrica per la moglie, 3.900 "
+              "euro, arriva mercoledì 10 novembre. Gli faccio la fattura intestata per il bonus."),
+        ("a", "Annotato: Marco Dallapiccola ha ordinato una cargo elettrica (3.900 €), consegna prevista mercoledì 10 "
+              "novembre, con fattura intestata per il bonus «Cargo in città», che gli vale 300 € (il 30 % arriverebbe "
+              "a 1.170 €, ma il massimo è 300 €)."),
+        ("u", "Esatto. Poi Ricambi Adige ha cambiato listino e condizioni da cima a fondo: il catalogo che ti ho dato "
+              "è da buttare. Dimenticalo, ti porterò il nuovo quando arriva."),
+        ("a", "D'accordo, elimino il catalogo d'autunno di Ricambi Adige."),
+        ("u", "E gli orari d'inverno, dal 2 novembre: chiudiamo alle 18:30 invece che alle 19. Anzi no, il sabato "
+              "alle 18:00. Te li scrivo bene."),
+        ("o", "ORARI INVERNALI dal 2 novembre 2032\n"
+              "- Lunedì: 15:00–18:30 (mattina chiuso)\n"
+              "- Da martedì a venerdì: 9:00–12:30 e 15:00–18:30\n"
+              "- Sabato: 9:00–12:30 e 15:00–18:00\n"
+              "- Domenica: chiuso"),
+        ("a", "Salvati gli orari invernali dal 2 novembre: lunedì 15:00–18:30, da martedì a venerdì 9:00–12:30 e "
+              "15:00–18:30, sabato 9:00–12:30 e 15:00–18:00, domenica chiuso. Fino ad allora valgono quelli di "
+              "adesso. Un'altra cosa: un cliente che si è presentato solo come Marco, senza cognome, ha dimenticato "
+              "qui un casco blu con una striscia gialla. L'avete trovato?"),
+        ("u", "Sì, è nel retro. Quando ripassa glielo diamo."),
+    ]},
+    {"id": "s22", "ts": "2032-10-26T18:30:00+02:00", "speakers": ["Giada"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Giada. Quanti iscritti al corso di domani?"),
+        ("a", "Ciao Giada! Due: Leo (8 anni) e Mia (10 anni), iscritti giovedì da un genitore che non ha lasciato il "
+              "nome."),
+        ("u", "Troppo pochi. Il corso lo annullo, magari lo rifacciamo in primavera. Se passa il genitore, diglielo tu."),
+        ("a", "Va bene: corso per bambini di mercoledì 27 ottobre annullato; avviso il genitore di Leo e Mia appena "
+              "passa."),
+        ("u", "Un'altra cosa: Ettore ti ha detto che la cassetta di Marco Tomasi costava 38 euro? Ha sbagliato, lo "
+              "scontrino l'ho fatto io: era 34. Marco ha pagato 79 euro in tutto."),
+        ("a", "Corretto: la cassetta 11-32 di Marco Tomasi era 34 €, non 38; ha pagato 79 € in totale (45 € di "
+              "tagliando + 34 € di cassetta)."),
+        ("u", "E Katharina è passata venerdì alle 17: cambio regolato e cestino ritirato."),
+        ("a", "Annotato: venerdì 22 ottobre Katharina Moser ha fatto regolare il cambio e ha ritirato il cestino."),
+    ]},
+    {"id": "s23", "ts": "2032-10-28T11:00:00+02:00", "speakers": ["Rhys"], "lang": "en", "messages": [
+        ("u", "Hi, it's Rhys. Is the group ride still on Sunday?"),
+        ("a", "Hi Rhys! It was moved because of the rain forecast: it's now on Sunday 7 November, same time (8:30 from "
+              "the shop) and same route."),
+        ("u", "Ah, that's a shame, on the 7th I'll be in Cardiff visiting my parents. Please take me off the list."),
+        ("a", "Done, I've taken you off the group ride list."),
+        ("u", "By the way, Ettore quoted me 70 euros for a pair of winter tyres, fitted. I'll think about it."),
+        ("a", "Noted. Winter tyres aren't on the shop's price list, so I'll keep that as the quote Ettore gave you."),
+    ]},
+    {"id": "s24", "ts": "2032-10-30T16:40:00+02:00", "speakers": ["Katharina"], "lang": "de", "messages": [
+        ("u", "Hallo, ich bin's, Katharina. Die Schaltung funktioniert jetzt perfekt, danke! Kann ich beim Ausflug am "
+              "7. November mitfahren?"),
+        ("a", "Hallo Katharina, das freut mich! Ja, Sie stehen jetzt auf der Liste für die Ausfahrt am Sonntag, 7. "
+              "November: Abfahrt um 8:30 an der Werkstatt, zum Caldonazzo-See und zurück, etwa 50 km."),
+        ("u", "Super. Und wie sind im November die Öffnungszeiten?"),
+        ("a", "Ab Dienstag, 2. November, gelten die Winterzeiten: Montag 15:00–18:30; Dienstag bis Freitag "
+              "9:00–12:30 und 15:00–18:30; Samstag 9:00–12:30 und 15:00–18:00; Sonntag geschlossen."),
+    ]},
+    # after the DST change (+01:00); hand-over: Ettore passes the tablet to a man who never says his name
+    {"id": "s25", "ts": "2032-11-02T09:20:00+01:00", "speakers": ["Ettore", None], "lang": "it", "messages": [
+        ("u", "Buongiorno, sono Ettore. Ti passo un signore che ha delle domande sul bonus delle cargo."),
+        ("a", "Buongiorno! Mi dica pure."),
+        ("u", "Salve. Ho visto una cargo usata in vendita su internet, quasi nuova. Con il bonus mi danno qualcosa?"),
+        ("a", "Purtroppo no: il bonus «Cargo in città» vale solo per cargo bike nuove, comprate tra il 1° settembre e "
+              "il 30 novembre 2032 in un negozio con sede in Trentino. Le cargo usate non sono ammesse."),
+        ("u", "Peccato. Allora lascio perdere, grazie lo stesso."),
+        ("a", "Prego, buona giornata!"),
+    ]},
+    {"id": "s26", "ts": "2032-11-03T17:30:00+01:00", "speakers": ["Marco Tomasi"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Marco Tomasi. Vorrei un tagliando base anche per la mia mountain bike: sabato 13 novembre "
+              "alle 10:00 va bene?"),
+        ("a", "Ciao Marco! Sì: tagliando base sulla mountain bike, sabato 13 novembre alle 10:00. Dal 1° novembre il "
+              "tagliando base costa 50 €."),
+        ("u", "Ah, è aumentato. Va bene lo stesso."),
+        ("a", "Perfetto, ti aspettiamo sabato 13 novembre."),
+    ]},
+    {"id": "s27", "ts": "2032-11-06T12:30:00+01:00", "speakers": ["Giada"], "lang": "it", "messages": [
+        ("u", "Ciao, sono Giada. Chi c'è domani al giro?"),
+        ("a", "Ciao Giada! Per il giro sociale di domani, domenica 7 novembre (partenza 8:30): Marco Dallapiccola, tu "
+              "e Katharina Moser. Rhys Morgan si è cancellato, il 7 è a Cardiff."),
+        ("u", "Aggiungi anche la signora Bruna: viene con l'e-bike, le ho detto io di venire."),
+        ("a", "Aggiunta Bruna Ioriatti, con l'e-bike. Siete in quattro iscritti tramite me, più Ettore che guida il "
+              "giro."),
+    ]},
+    {"id": "s28", "ts": "2032-11-07T18:00:00+01:00", "speakers": ["Ettore"], "lang": "it", "messages": [
+        ("u", "Sono Ettore. Giro fatto! Eravamo in nove, tempo bellissimo, rientrati alle due. Marco Dallapiccola ha "
+              "forato a Pergine e Giada gliel'ha sistemata in cinque minuti."),
+        ("a", "Che bello! Annotato: giro sociale fatto oggi, domenica 7 novembre, nove partecipanti, rientro verso le "
+              "14:00; foratura di Marco Dallapiccola a Pergine riparata da Giada."),
+        ("u", "Ricordati che lunedì 15 e martedì 16 novembre siamo chiusi per l'inventario. E mercoledì arriva la "
+              "cargo di Marco Dallapiccola, confermato."),
+        ("a", "Segnato: chiusura per inventario lunedì 15 e martedì 16 novembre; consegna della cargo elettrica di "
+              "Marco Dallapiccola confermata per mercoledì 10 novembre."),
+    ]},
+]
+
+SOURCES = [
+    {"type": "source", "id": "k-volta-m3", "ts": "2032-10-05T09:50:00+02:00",
+     "title": "Motore Volta M3 — guida rapida all'assistenza", "kind": "document", "author": "Volta Drive Systems",
+     "provided_by": "Giada", "conversation": "s02",
+     "text": (
+         "# Motore Volta M3 — guida rapida all'assistenza\n\n"
+         "## Display e reset\n"
+         "Il display mostra la lettera E seguita da due cifre. Dopo aver risolto la causa, tenere premuti insieme i "
+         "tasti + e − per 5 secondi per cancellare il codice.\n\n"
+         "## Codici d'errore\n"
+         "- **E03** — batteria sotto il 10 % o temperatura della batteria fuori intervallo (sotto 0 °C o sopra 45 °C): "
+         "l'assistenza si riduce, poi si spegne.\n"
+         "- **E05** — sensore di coppia con valore anomalo a riposo: non appoggiare i piedi sui pedali durante "
+         "l'accensione; se l'errore resta, il sensore va sostituito (solo centri autorizzati).\n"
+         "- **E07** — segnale del sensore di velocità assente: controllare che il magnete sul raggio sia allineato al "
+         "sensore sul fodero e a non più di 15 mm. L'assistenza si interrompe finché il segnale non torna.\n"
+         "- **E11** — comunicazione con il display assente: controllare il connettore a 5 poli sotto il manubrio.\n\n"
+         "## Manutenzione\n"
+         "- Aggiornare il firmware ogni 12 mesi con l'interfaccia di officina.\n"
+         "- Rimessaggio invernale: conservare la batteria carica tra il 50 e il 70 %, in un locale tra 10 e 20 °C, e "
+         "ricaricarla ogni 2 mesi.\n"
+         "- L'assistenza si ferma a 25 km/h.\n")},
+    {"type": "source", "id": "k-bonus-cargo", "ts": "2032-10-08T16:55:00+02:00",
+     "title": "Bonus «Cargo in città» 2032", "kind": "page", "provided_by": "Ettore", "conversation": "s06",
+     "text": (
+         "# Bonus «Cargo in città» 2032\n\n"
+         "Contributo per l'acquisto di una cargo bike.\n\n"
+         "## Chi può chiederlo\n"
+         "Persone maggiorenni residenti nel comune di Trento; un solo contributo per nucleo familiare.\n\n"
+         "## Cosa copre\n"
+         "- Cargo bike **nuove**, a pedalata muscolare o assistita, acquistate tra il 1° settembre e il 30 novembre "
+         "2032 in un negozio con sede in Trentino.\n"
+         "- Non sono ammessi le cargo bike usate e i kit di conversione.\n\n"
+         "## Importo\n"
+         "Il 30 % del prezzo d'acquisto, fino a un massimo di 300 €.\n\n"
+         "## Come si chiede\n"
+         "Domanda online entro il 15 dicembre 2032, allegando la fattura intestata al richiedente (lo scontrino non "
+         "basta). Il contributo arriva con bonifico entro 90 giorni.\n")},
+    {"type": "source", "id": "k-ricambi-adige", "ts": "2032-10-13T18:50:00+02:00",
+     "title": "Ricambi Adige — listino autunno 2032 (estratto)", "kind": "document", "author": "Ricambi Adige",
+     "provided_by": "Ettore", "conversation": "s11",
+     "text": (
+         "# Ricambi Adige — listino autunno 2032 (estratto)\n\n"
+         "Codice cliente Ciclofficina Raggio: RA-2291.\n\n"
+         "## Condizioni\n"
+         "- Ordini sul portale entro le 12:00: consegna in 2 giorni lavorativi.\n"
+         "- Spedizione gratuita sopra i 150 € d'ordine, altrimenti 9 €.\n"
+         "- Resi entro 30 giorni, solo merce non montata.\n\n"
+         "## Prezzi al rivenditore (IVA esclusa)\n"
+         "- Pastiglie freno a disco in resina: 9 € la coppia; sinterizzate: 12 € la coppia\n"
+         "- Camera d'aria 700x32: 4,50 €\n"
+         "- Cassetta 11-32 a 11 velocità: 26 €\n"
+         "- Catena 11 velocità: 21 €\n")},
+    {"type": "forget_source", "id": "forget-k-ricambi-adige", "ts": "2032-10-25T15:20:00+02:00",
+     "source": "k-ricambi-adige"},
+]

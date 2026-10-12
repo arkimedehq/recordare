@@ -443,6 +443,25 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### A fresh blind entity-memory set — blind11 (2026-10-12, DeepSeek direct, `b11_runs.sh`)
+
+`dataset_blind11`, written blind by a separate agent and gold-audited by a second one (2 small fixes, `GOLD_AUDIT.md`):
+the counter tablet of a bike repair shop in Trento (Oct–Nov 2032, DST ends inside it), 28 conversations (it / en / de)
+with own content changed over time, two Marcos and a Marco without surname, 5 unidentified speakers (2 hand-overs, 2
+carry-over traps), 3 learned sources (one forgotten), 40 questions in 13 categories. Current engine
+(`extract.v15+entity.v5`, the pattern pass on as in `balanced`), single prompt version per run:
+
+| Run | Accuracy | Misses |
+|---|---|---|
+| 1 | 100 % | — |
+| 2 | 97.5 % | q11 (upcoming workshop appointments) wrong |
+| 3 | 98.8 % | q37 (Katharina's e-bike error code) partial |
+| **mean** | **98.8 %** | every category ≥ 0.83 in each run |
+
+Against blind8 (82.1 %, 2026-10-08) and blind10 (94.3 %): the entity memory holds on a set it never saw — attribution,
+unidentified speakers, hand-overs and carry-over traps all 1.0 in all three runs. Cost per run ≈ 29 extraction calls
+(≈ 190k input tokens), ~18 resolver calls, 3 pattern calls.
+
 ### WORK_PLAN 5.4 — recurring patterns, the memory's own conclusions (2026-10-12, DeepSeek direct, `patterns_runs.sh`)
 
 D26 decided by the maintainer: no proposals, no confirmation — the nightly pattern pass writes a pattern as the memory's
