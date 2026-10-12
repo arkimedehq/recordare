@@ -9,11 +9,14 @@ import { DataSource } from 'typeorm';
 import { type Env } from '../config/env';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { ConsolidationService } from '../engine/consolidation.service';
-import { CONSOLIDATION_QUEUE } from './queue.port';
+import { CONSOLIDATION_QUEUE, EXTRACTION_RUNNER, type ExtractionRunner } from './queue.port';
 
 /**
  * The nightly "sleep" (M5): an hourly sweep consolidates every memory for whom, in their own timezone, the
  * consolidation hour has passed and today's run has not happened yet. Memories with nothing new cost no LLM call.
+ * Before consolidating, it extracts the messages still pending in conversations idle for longer than the idle delay
+ * (WORK_PLAN 4.1): a failed call or a lost idle job leaves them behind, and they would otherwise wait for the next
+ * message in that conversation. Once a day per memory, so a window that keeps failing costs one retry a day.
  */
 @Processor(CONSOLIDATION_QUEUE)
 export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
@@ -25,6 +28,7 @@ export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
     private readonly consolidation: ConsolidationService,
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
+    @Inject(EXTRACTION_RUNNER) private readonly extraction: ExtractionRunner,
   ) {
     super();
   }
@@ -45,13 +49,34 @@ export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
       `SELECT o.person_id FROM memories o
        WHERE extract(hour FROM ($1::timestamptz AT TIME ZONE o.timezone)) >= $2
          AND (o.consolidated_at IS NULL OR (o.consolidated_at AT TIME ZONE o.timezone)::date < ($1::timestamptz AT TIME ZONE o.timezone)::date)
-         AND EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = o.person_id)`, [now, hour]);
+         AND (EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = o.person_id)
+              OR EXISTS (SELECT 1 FROM messages m WHERE m.memory_id = o.person_id AND m.extracted_run_id IS NULL))`, [now, hour]);
     for (const { person_id } of due) {
+      await this.extractPending(person_id, now);
       try {
         const r = await this.consolidation.consolidateMemory(person_id, now);
         this.log.debug(`consolidated ${person_id}: ${r.days} days, ${r.months} months, ${r.llmCalls} calls`);
       } catch (err) {
         this.log.warn(`consolidation failed for ${person_id}: ${(err as Error).name}`);
+      }
+    }
+  }
+
+  /** Extracts the pending messages of this memory's conversations where nothing arrived for longer than the idle delay. */
+  private async extractPending(memoryId: string, now: Date): Promise<void> {
+    const idle = this.config.get('IDLE_DELAY_SECONDS', { infer: true });
+    const conversations: Array<{ id: string }> = await this.db.query(
+      `SELECT c.id FROM conversations c
+       WHERE c.memory_id = $1 AND c.deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM messages m WHERE m.conversation_id = c.id AND m.extracted_run_id IS NULL)
+         -- idle by arrival, not by sent_at: an import of old messages still arriving is left to its idle job
+         AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.conversation_id = c.id AND m.received_at > $2::timestamptz - make_interval(secs => $3))
+       ORDER BY c.last_message_at`, [memoryId, now, idle]);
+    for (const { id } of conversations) {
+      try {
+        await this.extraction.runForConversation(id);
+      } catch (err) {
+        this.log.warn(`sweep extraction failed for conversation ${id}: ${(err as Error).name}`);
       }
     }
   }

@@ -223,11 +223,17 @@ export class ExtractionWriter {
       && (m.content.match(/[^.!?\n]+[.!?\n]*/g) ?? []).some((s) => !s.trim().endsWith('?') && words(s).map(stem).some((w) => topic.has(w))));
   }
 
+  /** Who backs an item; an assistant reply relaying a tool's output counts as the tool (turn taint, 5.7). */
   private authorRole(msgs: WindowMessage[]): AuthorRole {
-    if (msgs.some((m) => m.accountSpeaker)) return 'holder';
-    if (msgs.some((m) => m.role === 'assistant')) return 'assistant';
-    if (msgs.some((m) => m.role === 'tool')) return 'tool';
+    if (msgs.some((m) => m.accountSpeaker && !m.toolDerived)) return 'holder';
+    if (msgs.some((m) => m.role === 'assistant' && !m.toolDerived)) return 'assistant';
+    if (msgs.some((m) => m.role === 'tool' || m.toolDerived)) return 'tool';
     return 'other';
+  }
+
+  /** Said by the assistant: its own words, or what it relayed from a tool ("I found the bus times"), never lived by the holder. */
+  private assistantSaid(role: AuthorRole, msgs: WindowMessage[]): boolean {
+    return role === 'assistant' || (role === 'tool' && msgs.some((m) => m.toolDerived));
   }
 
   /** A deleted fact or note told again by the messages it came from (4.13); a new message telling it is news. */
@@ -266,7 +272,7 @@ export class ExtractionWriter {
       const who = await this.resolveSubject(this.itemSubject(subjectText), e.candidates, e.question);
       if (!who) { this.drop('episode', 'unknown_contact'); ids.push(null); continue; }
       const role = this.authorRole(msgs);
-      const origin = role === 'assistant' ? 'assistant_stated' : e.origin === 'lived' ? 'holder_lived' : e.origin === 'told' ? 'holder_told' : e.origin;
+      const origin = this.assistantSaid(role, msgs) ? 'assistant_stated' : e.origin === 'lived' ? 'holder_lived' : e.origin === 'told' ? 'holder_told' : e.origin;
       const corrects = e.corrects ? (this.input.episodes.get(e.corrects) ?? null) : null;
       const subject = who.subject;
       const people = await this.linkPeople(e.people);
@@ -520,7 +526,7 @@ export class ExtractionWriter {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'holder', $17, $18, $19, $20, $21)
          RETURNING id`,
         [this.ctx.memoryId, key, value, status, from.at, validTo, from.precision, supersedes, correctsId, verdict, inferred,
-          role === 'assistant' ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated', inferred ? 0.6 : 1,
+          this.assistantSaid(role, msgs) ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated', inferred ? 0.6 : 1,
           this.ctx.runId, this.audience, this.audienceUnverified, subjectId, subject.kind, subject.candidates],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
@@ -578,7 +584,7 @@ export class ExtractionWriter {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'holder', $16, $17, $18, $19, $20)
          RETURNING id`,
         [this.ctx.memoryId, n.category, n.content, n.keywords, n.context ?? null, n.tags, supersedes, correctsId, inferred,
-          msgs[0]?.sentAt ?? null, role === 'assistant' ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated',
+          msgs[0]?.sentAt ?? null, this.assistantSaid(role, msgs) ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated',
           inferred ? 0.6 : 1, this.ctx.runId, this.audience, this.audienceUnverified, subject.kind, subject.candidates, subject.personId],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);

@@ -37,7 +37,7 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 |---|---|---|
 | `origin` | enum `holder_lived \| holder_told \| assistant_stated` | Who lived / said it (D28, D30, H3). `holder_told` = what the holder reports about others, and messages written by others inside the holder's imports. `twin_experienced` is added with the twin phases |
 | `stance` | enum `stated \| inferred` | Inferred items stay low-confidence / pending (D29) |
-| `author_role` | enum `holder \| assistant \| other \| tool` | Who wrote the evidence. Items whose only evidence comes from `other` / `tool` messages (group members, tool outputs, imported mail bodies) are extraction context, never `stance: stated`: at most `inferred` (facts: `pending`) — poisoning guard; recall labels them |
+| `author_role` | enum `holder \| assistant \| other \| tool` | Who wrote the evidence. Items whose only evidence comes from `other` / `tool` messages (group members, tool outputs, imported mail bodies) are extraction context, never `stance: stated`: at most `inferred` (facts: `pending`) — poisoning guard; recall labels them. An assistant reply after a non-Recordare tool's output in its turn counts as `tool` (turn taint, WORK_PLAN 5.7; origin `assistant_stated`) |
 | `confidence` | real 0–1 | |
 | `extraction_run_id` | uuid null → extraction_runs (`SET NULL`) | null for manual entries |
 

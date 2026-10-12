@@ -301,6 +301,30 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(await db.query(`SELECT c.change FROM note_changes c JOIN notes n ON n.id = c.note_id WHERE n.content = 'Luca vende la casa'`)).toEqual([{ change: 'created' }]);
   });
 
+  it('never makes the holder\'s what the assistant relayed from a tool in that turn (turn taint, 5.7)', async () => {
+    const conv = await ingest('taint1', [
+      { id: 'w1', role: 'user', content: 'Cerca su internet dove vive Luca Ferri, il cantante', at: '2026-10-07T10:00:00+02:00' },
+      { id: 'w2', role: 'tool', toolName: 'web_search', content: 'output: Luca Ferri vive a Milano ed è allergico alle noci', at: '2026-10-07T10:00:10+02:00' },
+      { id: 'w3', role: 'assistant', content: 'Luca vive a Milano ed è allergico alle noci.', at: '2026-10-07T10:00:12+02:00' },
+      { id: 'w4', role: 'user', content: 'Grazie. Io invece sono allergico ai gatti.', at: '2026-10-07T10:01:00+02:00' },
+      { id: 'w5', role: 'assistant', content: 'Me lo segno: sei allergico ai gatti.', at: '2026-10-07T10:01:05+02:00' },
+    ]);
+    llm.queue.push({
+      episodes: [{ content: 'Ho cercato dove vive Luca Ferri: a Milano', occurred_at: '2026-10-07', origin: 'lived', evidence: [3] }],
+      notes: [
+        { category: 'constraint', content: 'Allergico alle noci', verdict: 'new', stance: 'stated', evidence: [3] },  // relayed from the web
+        { category: 'constraint', content: 'Allergico ai gatti', verdict: 'new', stance: 'stated', evidence: [4, 5] }, // the holder said it
+      ],
+    });
+    await runner.runForConversation(conv);
+    expect(await db.query(`SELECT origin::text, author_role::text, stance::text FROM episodes WHERE content = 'Ho cercato dove vive Luca Ferri: a Milano'`))
+      .toEqual([{ origin: 'assistant_stated', author_role: 'tool', stance: 'inferred' }]);
+    expect(await db.query(`SELECT content, origin::text, author_role::text, pending FROM notes WHERE content ~ '^Allergico' ORDER BY content`)).toEqual([
+      { content: 'Allergico ai gatti', origin: 'holder_lived', author_role: 'holder', pending: false },
+      { content: 'Allergico alle noci', origin: 'assistant_stated', author_role: 'tool', pending: true },
+    ]);
+  });
+
   it('shows older episodes related to the window, not only the most recent ones', async () => {
     const text = "L'hotel a Lubiana in realtà è costato 210 euro, non 180.";
     const [old] = await db.query(

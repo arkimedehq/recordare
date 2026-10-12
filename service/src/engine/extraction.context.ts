@@ -46,6 +46,11 @@ export interface WindowMessage {
   sentAt: Date;
   /** An assistant reply given right after a memory recall in its turn (an echo of memories, not new information). */
   fromMemory?: boolean;
+  /**
+   * An assistant reply given after another tool's output in its turn (a web search, a page, a calendar): it relays what
+   * the tool said, so its items are the tool's, never the holder's (turn taint, 5.7). Cleared by the next person's message.
+   */
+  toolDerived?: boolean;
 }
 
 export interface Memory {
@@ -89,11 +94,13 @@ export interface ExtractionInput {
 /** Recordare's own read tools, as a client names them (possibly prefixed, e.g. `recordare_search_episodes`). */
 const MEMORY_TOOLS = '(^|[_.:-])(search_episodes|search_memory|search_facts|resolve_period)$';
 export const isMemoryTool = (name: string | null): boolean => !!name && new RegExp(MEMORY_TOOLS).test(name);
+/** All of Recordare's tools (reads and writes): their output is the memory's own, not the world's. */
+const RECORDARE_TOOLS = '(^|[_.:-])(search_episodes|search_memory|search_facts|search_knowledge|resolve_period|log_episode|remember|correct_episode|forget_episode|learn_source)$';
 
 /** Pending messages of a conversation, oldest first, split into windows of bounded size. */
 export async function pendingWindows(tx: EntityManager, conversationId: string, maxChars: number, personal = false): Promise<WindowMessage[][]> {
   const rows: Array<{ id: string; role: WindowMessage['role']; tool_name: string | null; account_speaker: boolean; author_kind: AuthorKind;
-    author_person_id: string | null; author_name: string | null; content: string; sent_at: Date; from_memory: boolean }> = await tx.query(
+    author_person_id: string | null; author_name: string | null; content: string; sent_at: Date; from_memory: boolean; tool_derived: boolean }> = await tx.query(
     // Unverified group members are not persons: their name comes from the conversation's participants.
     // from_memory: an assistant reply whose turn (since the previous non-assistant, non-tool message) contains a
     // recall — one of Recordare's read tools called by the client (its tool message), or a recall Recordare served
@@ -104,21 +111,24 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
           EXISTS (SELECT 1 FROM messages t WHERE t.conversation_id = m.conversation_id AND t.role = 'tool'
                     AND t.tool_name ~ $2 AND t.sent_at <= m.sent_at + interval '5 seconds' AND t.sent_at >= turn.start)
           OR EXISTS (SELECT 1 FROM recall_log r WHERE r.conversation_id = m.conversation_id
-                    AND r.served_at <= m.sent_at AND r.served_at >= turn.start))) AS from_memory
+                    AND r.served_at <= m.sent_at AND r.served_at >= turn.start))) AS from_memory,
+       (m.role = 'assistant' AND EXISTS (SELECT 1 FROM messages t WHERE t.conversation_id = m.conversation_id AND t.role = 'tool'
+          AND (t.tool_name IS NULL OR t.tool_name !~ $3) AND t.sent_at <= m.sent_at + interval '5 seconds' AND t.sent_at >= turn.start)) AS tool_derived
      FROM messages m LEFT JOIN persons p ON p.id = m.author_person_id
        LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
        CROSS JOIN LATERAL (SELECT COALESCE(max(u.sent_at), '-infinity'::timestamptz) AS start FROM messages u
                            WHERE u.conversation_id = m.conversation_id AND u.role IN ('user', 'other') AND u.sent_at < m.sent_at) turn
      WHERE m.conversation_id = $1 AND m.extracted_run_id IS NULL
      ORDER BY m.sent_at, m.received_at`,
-    [conversationId, MEMORY_TOOLS],
+    [conversationId, MEMORY_TOOLS, RECORDARE_TOOLS],
   );
   const windows: WindowMessage[][] = [];
   let current: WindowMessage[] = [];
   let size = 0;
   for (const r of rows) {
     const msg: WindowMessage = { id: r.id, role: r.role, toolName: r.tool_name, accountSpeaker: r.account_speaker,
-      authorKind: r.author_kind, authorPersonId: r.author_person_id, authorName: r.author_name, content: r.content, sentAt: r.sent_at, ...(r.from_memory ? { fromMemory: true } : {}) };
+      authorKind: r.author_kind, authorPersonId: r.author_person_id, authorName: r.author_name, content: r.content, sentAt: r.sent_at, ...(r.from_memory ? { fromMemory: true } : {}),
+      ...(r.tool_derived ? { toolDerived: true } : {}) };
     if (current.length > 0 && size + r.content.length > maxChars) {
       windows.push(current);
       current = [];

@@ -135,7 +135,6 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connectors last): 4.1 nightly sweep of
-unextracted messages, 5.7 web-tool taint, 5.3 consolidation dedup, 5.4 + D26 pattern promotions, the rest of 4.7
+Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connectors last): 5.3 consolidation dedup, 5.4 + D26 pattern promotions, the rest of 4.7
 (settings, usage, export, notes change feed); then 6.6b ((5), (6), (10)), D34 A-MEM toggle split, 5.8 decision model,
 entity memory on a new blind set.

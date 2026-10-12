@@ -31,7 +31,7 @@ Checks — run all three before every commit (CI runs them): `npm run typecheck`
 | `src/console` | Admin console, a static page served at `/admin` over the admin API |
 | `src/identity` | Identity entities |
 | `src/rawlog` | Layer 0: REST ingest (idempotent, always stores — the client holds the on/off switch, D50), edits and purges, raw-log search (full-text + vector) |
-| `src/queue` | BullMQ: debounced idle extraction jobs, message and source-passage embeddings, hourly consolidation sweep |
+| `src/queue` | BullMQ: debounced idle extraction jobs, message and source-passage embeddings, hourly sweep (pending extractions, then consolidation) |
 | `src/engine` | Extraction (one call per window, writer with lifecycle rules and the recall-echo guard), near-duplicate / correction resolver, quality profiles, nightly consolidation (digests), facts review |
 | `src/recall` | `search_episodes`, `search_memory`, period resolver, people-aware recall, explicit writes and forgetting, the pre-turn memory context (`POST api/v1/context`), recall log |
 | `src/knowledge` | Learned sources (D49, WORK_PLAN 8.9): source ingest in parts, passages (split in code, embedded in the background), `search_knowledge`, the code-written learning episode, read / forget routes |
