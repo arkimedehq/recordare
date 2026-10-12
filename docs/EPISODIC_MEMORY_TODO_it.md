@@ -7,7 +7,7 @@ scritture esplicite e dimenticanza di un singolo episodio; i punti aperti per mi
 corso). Aggiornamento (2026-10-08): **rilasciata come v0.1.0** (pubblica, profilo privato — D33), con l'API di lettura per
 il diario, il contesto di memoria prima del turno, la libreria client e i connettori; aperti: passaggio notturno dei
 messaggi in attesa (D1), dimenticare un periodo (D16), promozioni dei pattern (D20 / D26), l'endpoint del feed delle
-modifiche delle note (D34) — WORK_PLAN M4–M7. Valutazione dei motori (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): un prototipo di questo design (D)
+modifiche delle note (D34) (2026-10-12: i primi tre costruiti) — WORK_PLAN M4–M7. Valutazione dei motori (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): un prototipo di questo design (D)
 ha battuto Memobase, Graphiti e la baseline grezza; D23 (approvata) lo costruisce. Decisioni prese durante la realizzazione: D36–D48.
 
 Questa è la **fase 1** della visione del digital twin (`DIGITAL_TWIN_VISION.md`): la memoria
@@ -128,7 +128,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   - scrive un **digest giornaliero** (Strato 2); i digest settimanali/mensili si aggregano dai giornalieri;
   - collega gli episodi a note semantiche correlate / episodi precedenti;
   - rileva **pattern ricorrenti** ("ha sciato 4 weekend quest'inverno") e li propone
-    come note semantiche — sempre `pending`, mai auto-confermate (regola A-MEM esistente);
+    come note semantiche — sempre `pending`, mai auto-confermate (regola A-MEM esistente; **rivista il 2026-10-12,
+    D26**: la memoria li tiene come sue note inferite, nessuno li conferma — vedi D20);
   - deduplica lo stesso evento citato in più chat (collegamento, non riscrittura).
 - Al massimo un passaggio, nessuna cascata (stesso vincolo dell'evoluzione di A-MEM).
 
@@ -202,7 +203,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D9 — Gli episodi estratti sono auto-confermati (2026-10-01)
 - Memorizzati subito, visibili / modificabili / cancellabili nella timeline. Mai
   auto-iniettati, quindi un episodio sbagliato emerge solo se richiesto esplicitamente.
-- Le promozioni di pattern ricorrenti a note semantiche restano `pending` (regola A-MEM).
+- Le promozioni di pattern ricorrenti a note semantiche restano `pending` (regola A-MEM). *Rivista il 2026-10-12
+  (D26)*: sono conclusioni della memoria stessa — inferite, mai in attesa (vedi D20).
 
 ### D10 — Un piano passato resta un piano finché non è confermato (2026-10-01)
 - `kind='plan'` + `validUntil`. Quando la data passa, il consolidamento **non**
@@ -287,6 +289,13 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   in fase di implementazione).
 - `user_memory` riceve solo l'inserimento della nota `pending`, tramite lo stesso percorso
   dell'estrazione automatica (etichetta di origine "from diary"). Nessuna UI dedicata alle promozioni nella v1.
+- **Rivista il 2026-10-12 (D26 decisa dal maintainer: "la memoria deve essere autonoma"; WORK_PLAN 5.4 costruito)**:
+  niente proposte, niente conferma. Il passaggio notturno dei pattern scrive un pattern come nota della memoria stessa
+  (inferita, mai in attesa, etichettata nel recall), sostenuta da almeno tre episodi in giorni diversi di un solo
+  soggetto, e lo conferma, aggiorna o ritira da sola quando arrivano nuovi episodi. `episode_promotions` è il registro:
+  `active | retired | forgotten`; un pattern la cui nota viene cancellata è `forgotten` e non viene più dedotto, salvo
+  che lo sostengano almeno due episodi da cui non era nato. Il client non decide nulla (può solo far dimenticare, come
+  per tutto).
 
 ### D21 — Gli episodi catturano emozioni e opinioni (2026-10-01)
 - Guidato dall'obiettivo del digital twin: "giornata splendida", "il rifugio era deludente" fanno parte
@@ -421,7 +430,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   e disclosure predefinita (`DATA_MODEL.md` → fact_slots).
 - Le preferenze durevoli e le note semantiche a forma libera restano nella memoria semantica del client (A-MEM in
   Arkimede) fino alla migrazione di A-MEM — nessun secondo archivio di note concorrente. Gli episodi si collegano alle note tramite
-  riferimento esterno (`linked_notes`, D19); le promozioni vanno al client come proposte (D20, D26).
+  riferimento esterno (`linked_notes`, D19); le promozioni vanno al client come proposte (D20, D26). *Superato*:
+  Recordare tiene le sue note (D34) e i suoi pattern ricorrenti (D26, 2026-10-12).
 
 ### D32 — Una chiamata di estrazione per finestra (modifica D2) (2026-10-03)
 - Una chiamata del motore per finestra a riposo estrae episodi, patch dei piani e candidati fatto (come faceva il prototipo
@@ -689,7 +699,7 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   omonimi: nessuna domanda. Sostituisce il legame per solo nome della 8.4.
 ## Questioni aperte (da discutere)
 
-Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 ancora aperta, con WORK_PLAN 5.4). Il lavoro aperto è tracciato
+Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 decisa il 2026-10-12 con WORK_PLAN 5.4). Il lavoro aperto è tracciato
 in `WORK_PLAN.md`.
 
 ## Non-obiettivi (per ora)
@@ -698,8 +708,8 @@ in `WORK_PLAN.md`.
 - Riscrittura degli episodi al richiamo (nessun riconsolidamento).
 - Esportazione del diario (JSON / Markdown) — più avanti.
 - UI dedicata alle promozioni di pattern del consolidamento (pannello con gli episodi a supporto,
-  "non riproporre"): nella v1 compaiono come normali note `pending` nell'elenco
-  Memoria esistente con un'etichetta di origine; la riproposta è gestita da D20.
+  "non riproporre"): nella v1 compaiono come normali note (`pattern: true`, inferite) nell'elenco
+  Memoria esistente; dimenticarne uno ne impedisce il ritorno (D20, rivista il 2026-10-12).
 - Boost di richiamo delle note semantiche collegate (D19) — v2.
 
 ## Checklist di regressione (in fase di implementazione)

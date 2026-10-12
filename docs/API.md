@@ -52,7 +52,7 @@ migration.
 **v1**: memories are created by the admin (`POST api/v1/admin/memories`), or auto-provisioned at a client's first
 request when that client allows it (`autoProvision`, named after the client's user id until the client renames them);
 personal tokens and identity bindings are managed through the admin API (and its console,
-§6) — as built no route lets a personal token change them; there are no holder pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, the memory's timezone); `POST api/v1/admin/memories/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/memories/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation). Quality profile (D35): `qualityProfile` `economy | balanced | full` on memory create /
+§6) — as built no route lets a personal token change them; there are no holder pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, the memory's timezone); `POST api/v1/admin/memories/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/memories/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation); `POST api/v1/admin/memories/:id/patterns` runs the recurring-pattern pass alone now, whatever the profile (WORK_PLAN 5.4, same lock; → `{calls, written, retired, failed}`). Quality profile (D35): `qualityProfile` `economy | balanced | full` on memory create /
 `PATCH api/v1/admin/memories/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set). The same
 routes take `mode` `personal | entity` (D50: `personal` — the account holder is "I", undeclared input is the memory's
 own; `entity` — a memory shared by everyone using the account, a home device, a robot, a place: undeclared input is
@@ -150,7 +150,7 @@ mode of a memory that is not empty), `GET persons`, `POST identities {kind: acco
 externalId} | {kind: participant, memoryId (the memory), personId (its self or one of its contacts), clientId |
 channel (exactly one), externalId, verified?}`, `DELETE identities/:id`,
 `POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/consolidate`,
-`POST memories/:id/review-facts`, `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
+`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; the console routes are described there). Revocations take effect at once (the credential
 cache is cleared). Not built yet: memory export / full erasure jobs.
 
@@ -393,7 +393,9 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   (what happened / when). Returns `{memory, speaker, notes, facts, notes_info, clarifications?}` (`notes_info`:
   notices about the result; `speaker` and `clarifications` as in `search_episodes`). Facts and notes of the self and of
   the people the memory knows, in both modes; each carries its `subject` (`self` — in an entity memory the agent and
-  its place — or `{kind: "contact", name}`; notes may also be `undecided`).
+  its place — or `{kind: "contact", name}`; notes may also be `undecided`). A note carries `inferred` (drawn, not said)
+  and `pattern` (a recurring pattern the memory noticed in its episodes, WORK_PLAN 5.4 — inferred, never pending: the
+  agent tells it as a habit it noticed).
 
 ### `search_knowledge` and `learn_source` (D49, WORK_PLAN 8.9 — learned sources)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passages of the sources the agent learned, ranked by
@@ -459,10 +461,11 @@ entries, newest first), `GET facts` (slots with `history`, `asOf`, per person in
 keepRaw?}` (days or months, inclusive, in the memory's time zone; synchronous, `200` with
 `{episodes, messages, facts, notes}` forgotten; `400` when `from` is after `to`); plus the
 `GET / PATCH api/v1/me` rows. Edits answer `204` (`404` for an id that is not this memory's); only `GET episodes` pages
-(`{items, nextCursor}`, default 50), the other lists are arrays. As built, deleting a fact or a note (and rejecting a
+(`{items, nextCursor}`, default 50), the other lists are arrays. `GET notes` items: `{id, category, content, pinned,
+pending, inferred, pattern, authorRole, supportCount, recordedAt}` (`pattern`: a recurring pattern, WORK_PLAN 5.4). As built, deleting a fact or a note (and rejecting a
 pending one) removes the row with its evidence and leaves a `fact` / `note` tombstone (4.13) — a note also a
 `forgotten` entry in `note_changes`; confirming makes it stated (`pending` false). **Not built yet**: manual entry,
-fact / note corrections, promotions (5.4), settings, usage, exports, the notes change feed, `GET facts/{id}` / `GET notes/{id}`. Client library:
+fact / note corrections, settings, usage, exports, the notes change feed, `GET facts/{id}` / `GET notes/{id}`. Client library:
 `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`, `correctEpisode`, `forgetEpisode`,
 `forgetPeriod`, `pinNote`, `delete`, `decide`).
 
@@ -483,9 +486,8 @@ account sees all of it (D48).
 | `GET api/v1/facts?key&asOf&status&includePending` / `GET …/{id}` | read | Facts with history (as built: `key`, `asOf`, `includePending`; no `status` filter) |
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Fix or forget a fact |
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Pending facts (D20) |
-| `GET api/v1/promotions?status` + `POST …/{id}/confirm\|reject` | read / write | Pattern proposals (D20, D26) |
 | `GET api/v1/plans?status` | read | Open / unresolved plans |
-| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34) |
+| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34); recurring patterns are notes with `pattern: true` (D26: the memory's own, nothing to confirm) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Manage notes |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed for clients keeping copies (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | locale, timezone, quality profile |

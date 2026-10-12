@@ -443,6 +443,31 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 5.4 — recurring patterns, the memory's own conclusions (2026-10-12, DeepSeek direct, `patterns_runs.sh`)
+
+D26 decided by the maintainer: no proposals, no confirmation — the nightly pattern pass writes a pattern as the memory's
+own inferred note (never pending, labelled in recall), backed by ≥ 3 episodes on different days of one subject, and
+keeps, updates or retires it on its own. New dev set `dataset_dev_patterns` (66 sessions, 7 memories: it / en / es, one
+entity memory; two checkpoints, the pass run alone at each with `pattern_eval.py`): 7 expected habits shown only by
+repeated episodes, and traps — one trip (3 museums in Rome), wishes ("I should start swimming" ×3), one event told three
+times, one-offs, the assistant's guess ("gym every Monday") and a calendar tool's "weekly yoga", a habit already stated
+as a note (restating it is a duplicate), three different people watering the plants once each, a pattern that stops
+(the pool closes: must be found at checkpoint 1, retired at checkpoint 2). An LLM judge (LLM_MODEL) matches the current
+patterns to the gold; any current pattern matching no expected item is false. Single prompt version per run
+(`extract.v15`, `+entity.v5`, `patterns.v1` / `v2`).
+
+| Version | Runs | Habits found | False patterns | Pool found, then retired |
+|---|---|---|---|---|
+| `patterns.v1` | 1 | 7 / 7 | 1 (the pool retired, then drawn again the same night) | yes (judge missed it at cp 1) |
+| **`patterns.v2`** (weekday shown; stopped patterns listed and not drawn again from the same episodes) | 3 | **7 / 7 / 6 = 20 / 21** | **0 / 0 / 0** | 3 / 3 |
+
+The miss (run 2): Luis's Sunday paella — four correct episodes, the model answered an empty list at both checkpoints
+(the prompt's "when unsure, propose nothing"). No trap became a pattern in any run. v2 also names the weekday
+("il sabato", "il martedì", "di giovedì") that v1 left as "spesso". Cost per run: 14 pattern calls (one per memory per
+checkpoint), ≈ 14.8k input / 1k output tokens in all — next to 66 extraction calls (≈ 290k input). Patterns were written
+in the memory's language (the harness creates memories with the default locale `it`, so Tom's and Luis's are in
+Italian). Decision: on in `balanced` and `full`, off in `economy`. Next: a blind set (not tuned on).
+
 ### WORK_PLAN 5.7 — turn taint from tools (2026-10-12, DeepSeek direct, `taint_runs.sh`)
 
 Code rule, no prompt change: an assistant reply given after the output of a tool that is not Recordare's (web search,

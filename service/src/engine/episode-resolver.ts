@@ -48,6 +48,8 @@ interface Candidate {
   new_content: string;
   old_id: string;
   old_content: string;
+  /** The "new" one was recorded before the other (only possible in the nightly pass, where both may be unchecked). */
+  older: boolean;
 }
 
 /** A check may have missed an episode written up to this long before it (written, not yet committed). */
@@ -68,7 +70,8 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, memory
        AND (o.resolved_at IS NULL OR n.recorded_at > o.resolved_at - ${COMMIT_MARGIN})
        AND (n.extraction_run_id IS NULL OR o.extraction_run_id IS DISTINCT FROM n.extraction_run_id)`;
   const found: Candidate[] = await db.query(
-    `SELECT DISTINCT ON (n.id) n.id AS new_id, n.content AS new_content, o.id AS old_id, o.content AS old_content
+    `SELECT DISTINCT ON (n.id) n.id AS new_id, n.content AS new_content, o.id AS old_id, o.content AS old_content,
+       n.recorded_at < o.recorded_at AS older
      FROM episodes n JOIN episodes o
        ON o.memory_id = n.memory_id AND o.id <> n.id AND ${scope}
       AND o.kind = n.kind AND o.deleted_at IS NULL AND o.invalidated_at IS NULL AND o.duplicate_of IS NULL
@@ -80,12 +83,13 @@ export async function resolveNearDuplicates(db: DataSource, llm: LlmPort, memory
      WHERE n.memory_id = $1 AND n.id = ANY($2)
      ORDER BY n.id, similarity(o.content, n.content) DESC`,
     [memoryId, newIds, profile.resolverSimilarity, profile.resolverWindowDays, TRIGRAM]);
-  // Two episodes of the pass may each pick the other: ask once.
+  // Two episodes of the pass may each pick the other: ask once, the later recorded as the new telling (whichever the
+  // query met first).
   const asked = new Set<string>();
   const pairs = found.filter((p) => {
     const key = [p.new_id, p.old_id].sort().join();
     return !asked.has(key) && !!asked.add(key);
-  });
+  }).map((p) => (opts.unseen && p.older ? { new_id: p.old_id, new_content: p.old_content, old_id: p.new_id, old_content: p.new_content, older: false } : p));
   const stamp = () => db.query(`UPDATE episodes SET resolved_at = $1 WHERE id = ANY($2) AND memory_id = $3`, [checked, newIds, memoryId]);
   if (pairs.length === 0) {
     await stamp();

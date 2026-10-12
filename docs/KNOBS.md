@@ -22,9 +22,10 @@ API or console). A profile only groups knobs; models stay provider configuration
 | `rawHitsAlongside` | 1 | 3 | 5 | Chat excerpts returned next to matching episodes |
 | `recallDigests` | off | off | off | Nightly diary given to period overviews · blind5 3+3 runs: −1.9 pt, within noise; diary v2 (8.6, first person) dev sets 1 run: no gain |
 | `factsReview` | off | off | off | Nightly facts review against new episodes · no gain measured (5.6; v2 with subjects, 8.6: proposed no change on the dev sets) |
+| `patterns` | off | on | on | Nightly pattern pass: recurring patterns (≥ 3 episodes on different days) become the memory's own inferred notes, kept / updated / retired by it · one call per memory per night with new episodes · dev_patterns, `patterns.v2`, 3 runs: 20 / 21 habits, no false pattern (5.4) |
 
 Installation overrides of single knobs (they win over every profile): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
-`RECALL_DIGESTS`, `FACTS_REVIEW`.
+`RECALL_DIGESTS`, `FACTS_REVIEW`, `PATTERNS`.
 
 ## 2. Service (`service/.env`, or `deploy/.env` for the installed service)
 
@@ -53,7 +54,7 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `LLM_PROVIDER` | `openai-compatible` (default), `anthropic`, `claude-cli` (local evaluations only) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Default endpoint and model of every task |
 | `LLM_PROFILE` / `LLM_PROFILE_JSON` | Provider profile — how to switch reasoning off, structured output: `generic`, `deepseek`, `openrouter`, `ollama`, `vllm`, `anthropic`, `openai`, or a JSON definition |
-| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Per-task override; tasks: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST` |
+| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Per-task override; tasks: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS` |
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Embedding endpoint (measured with `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fixed per installation (1024 for bge-m3); changing the model needs a re-embed |
 

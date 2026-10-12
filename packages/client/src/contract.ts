@@ -182,6 +182,8 @@ export interface Note {
   pinned: boolean;
   pending: boolean;
   inferred: boolean;
+  /** A recurring pattern the memory drew from its episodes (inferred, never pending; WORK_PLAN 5.4). */
+  pattern: boolean;
   authorRole: string;
   supportCount: number;
   recordedAt: string;

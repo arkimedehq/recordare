@@ -58,7 +58,7 @@ dei dati.
 di un client che lo consente (`autoProvision`, con il nome dell'id utente del client finché il client non le rinomina);
 i token personali e i collegamenti di identità sono gestiti tramite l'API admin (e la
 sua console, §6) — come costruito nessuna rotta permette a un personal token di cambiarli; non esistono pagine
-del titolare. Il consolidamento notturno si avvia da solo (`CONSOLIDATION_HOUR`, fuso orario della memoria); `POST api/v1/admin/memories/:id/consolidate` lo esegue subito (rispetta `X-Recordare-Now` dove consentito); `POST api/v1/admin/memories/:id/review-facts` esegue subito la sola revisione dei fatti (WORK_PLAN 5.6, stesso lock del consolidamento). Profilo di qualità (D35): `qualityProfile` `economy | balanced | full` alla creazione della memoria /
+del titolare. Il consolidamento notturno si avvia da solo (`CONSOLIDATION_HOUR`, fuso orario della memoria); `POST api/v1/admin/memories/:id/consolidate` lo esegue subito (rispetta `X-Recordare-Now` dove consentito); `POST api/v1/admin/memories/:id/review-facts` esegue subito la sola revisione dei fatti (WORK_PLAN 5.6, stesso lock del consolidamento); `POST api/v1/admin/memories/:id/patterns` esegue subito il solo passaggio dei pattern ricorrenti, qualunque sia il profilo (WORK_PLAN 5.4, stesso lock; → `{calls, written, retired, failed}`). Profilo di qualità (D35): `qualityProfile` `economy | balanced | full` alla creazione della memoria /
 `PATCH api/v1/admin/memories/:id` (`null` = il default dell'installazione `QUALITY_PROFILE`, `balanced` se non impostato). Le stesse
 route accettano `mode` `personal | entity` (D50: `personal` — il titolare dell'account è l'"io", ciò che arriva senza
 identità dichiarata è della memoria stessa; `entity` — una memoria condivisa da tutti coloro che usano l'account, un
@@ -158,7 +158,7 @@ cambiare il modo di una memoria non vuota), `GET persons`, `POST identities {kin
 clientId, externalId} | {kind: participant, memoryId (la memoria), personId (il suo sé o uno dei suoi contatti), clientId |
 channel (esattamente uno), externalId, verified?}`, `DELETE identities/:id`,
 `POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/consolidate`,
-`POST memories/:id/review-facts`, `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
+`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; le rotte della console sono descritte lì). Le revoche hanno effetto subito (la cache delle
 credenziali viene svuotata). Non ancora costruiti: job di export della memoria / cancellazione totale.
 
@@ -404,7 +404,9 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   (cosa è successo / quando). Restituisce `{memory, speaker, notes, facts, notes_info, clarifications?}` (`notes_info`:
   avvisi sul risultato; `speaker` e `clarifications` come in `search_episodes`). Fatti e note del sé e delle persone che la
   memoria conosce, in entrambe le modalità; ognuno riporta il suo `subject` (`self` — in una memoria di entità l'agente e il
-  suo luogo — oppure `{kind: "contact", name}`; le note possono essere anche `undecided`).
+  suo luogo — oppure `{kind: "contact", name}`; le note possono essere anche `undecided`). Una nota riporta `inferred`
+  (dedotta, non detta) e `pattern` (un pattern ricorrente che la memoria ha notato nei suoi episodi, WORK_PLAN 5.4 —
+  inferito, mai in attesa: l'agente lo racconta come un'abitudine che ha notato).
 
 ### `search_knowledge` e `learn_source` (D49, WORK_PLAN 8.9 — fonti apprese)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passaggi delle fonti che l'agente ha imparato, ordinati
@@ -471,10 +473,12 @@ di entità), `DELETE facts/{id}`, `POST facts/{id}/confirm | reject`, `GET notes
 `POST forget {from, to, keepRaw?}` (giorni o mesi, inclusi, nel fuso orario della memoria; sincrono, `200` con
 `{episodes, messages, facts, notes}` dimenticati; `400` se `from` è dopo `to`);
 più le righe `GET / PATCH api/v1/me`. Le modifiche rispondono `204` (`404` per un id che non è di questa memoria); pagina solo
-`GET episodes` (`{items, nextCursor}`, default 50), le altre liste sono array. Come costruito, cancellare un fatto o una
+`GET episodes` (`{items, nextCursor}`, default 50), le altre liste sono array. Elementi di `GET notes`: `{id, category,
+content, pinned, pending, inferred, pattern, authorRole, supportCount, recordedAt}` (`pattern`: un pattern ricorrente,
+WORK_PLAN 5.4). Come costruito, cancellare un fatto o una
 nota (e rifiutarne uno in sospeso) rimuove la riga con le sue evidenze e lascia un tombstone `fact` / `note` (4.13) —
 una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichiarata (`pending` false). **Non ancora
-costruite**: inserimento manuale, correzioni di fatti / note, promozioni (5.4), impostazioni, uso, export, il feed delle modifiche delle note, `GET facts/{id}` /
+costruite**: inserimento manuale, correzioni di fatti / note, impostazioni, uso, export, il feed delle modifiche delle note, `GET facts/{id}` /
 `GET notes/{id}`. Libreria client: `packages/client` (`episodes`, `episode`, `digests`, `facts`, `notes`, `plans`,
 `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide`).
 
@@ -494,9 +498,8 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/facts?key&asOf&status&includePending` / `GET …/{id}` | read | Fatti con cronologia (come costruito: `key`, `asOf`, `includePending`; nessun filtro `status`) |
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Correggere o dimenticare un fatto |
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Fatti in sospeso (D20) |
-| `GET api/v1/promotions?status` + `POST …/{id}/confirm\|reject` | read / write | Proposte di pattern (D20, D26) |
 | `GET api/v1/plans?status` | read | Piani aperti / irrisolti |
-| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34) |
+| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true` (D26: della memoria stessa, nulla da confermare) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Gestire le note |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed per i client che tengono copie (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | lingua, fuso orario, profilo di qualità |

@@ -1,0 +1,138 @@
+{
+ "_note": "Patterns expected at the last checkpoint (current), patterns that must not be current (traps, retired). The judge sees `desc` only; `why` explains the trap.",
+ "checkpoints": [
+  "2026-08-31T22:00:00+02:00",
+  "2026-09-30T22:00:00+02:00"
+ ],
+ "memories": {
+  "giulia": {
+   "expected": [
+    {
+     "id": "g-run",
+     "desc": "Giulia runs at the Valentino park on Saturday mornings"
+    },
+    {
+     "id": "g-mom",
+     "desc": "Giulia phones her mother on Sunday evenings"
+    }
+   ],
+   "traps": [
+    {
+     "id": "g-pizza",
+     "desc": "Giulia regularly eats out / at a pizzeria",
+     "why": "it happened once"
+    }
+   ]
+  },
+  "marco": {
+   "expected": [],
+   "traps": [
+    {
+     "id": "m-museum",
+     "desc": "Marco regularly visits museums",
+     "why": "all on one trip to Rome"
+    },
+    {
+     "id": "m-swim",
+     "desc": "Marco swims / goes to the pool",
+     "why": "he only keeps saying he should start"
+    },
+    {
+     "id": "m-promo",
+     "desc": "anything recurring about the promotion",
+     "why": "one event told three times"
+    },
+    {
+     "id": "m-sushi",
+     "desc": "Marco eats sushi regularly",
+     "why": "once"
+    }
+   ]
+  },
+  "sara": {
+   "expected": [
+    {
+     "id": "s-padel",
+     "desc": "Sara plays padel with Chiara on Tuesday evenings"
+    }
+   ],
+   "traps": [
+    {
+     "id": "s-pizza",
+     "desc": "Sara orders pizza on Friday evenings",
+     "why": "she stated it herself, already a note: restating it as a pattern is a duplicate"
+    }
+   ]
+  },
+  "tom": {
+   "expected": [
+    {
+     "id": "t-dog",
+     "desc": "Tom walks his dog Biscuit along the river in the evening"
+    }
+   ],
+   "traps": [
+    {
+     "id": "t-gym",
+     "desc": "Tom goes to the gym on Mondays",
+     "why": "only the assistant said so; he went once"
+    },
+    {
+     "id": "t-yoga",
+     "desc": "Tom does yoga on Thursdays",
+     "why": "only a calendar tool listed it"
+    }
+   ]
+  },
+  "elena": {
+   "expected": [
+    {
+     "id": "e-yoga",
+     "desc": "Elena goes to yoga class at the gym on Thursday evenings"
+    }
+   ],
+   "traps": [
+    {
+     "id": "e-swim",
+     "desc": "Elena swims at the pool on Wednesdays",
+     "why": "she stopped (the pool closed): must not be current"
+    }
+   ],
+   "checkpoint_expected": {
+    "2026-08-31T22:00:00+02:00": [
+     "e-swim"
+    ]
+   }
+  },
+  "luis": {
+   "expected": [
+    {
+     "id": "l-paella",
+     "desc": "Luis cooks paella for his family on Sundays"
+    }
+   ],
+   "traps": [
+    {
+     "id": "l-concert",
+     "desc": "Luis goes to concerts regularly",
+     "why": "once"
+    }
+   ]
+  },
+  "casa_neri": {
+   "expected": [
+    {
+     "id": "c-market",
+     "desc": "Paolo goes to the market of piazza Madama on Saturday mornings"
+    }
+   ],
+   "traps": [
+    {
+     "id": "c-plants",
+     "desc": "someone / the house waters the balcony plants regularly",
+     "why": "three different people, once each"
+    }
+   ]
+  }
+ }
+}

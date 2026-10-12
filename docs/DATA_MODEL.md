@@ -112,6 +112,7 @@ it by name); the writer's episode-subject rule reads them. Episodes still keep p
 | `locale`, `timezone` | text | Defaults `it`, `Europe/Rome`; the admin API accepts `it` / `en`. The locale only formats dates and recall notices: the deterministic language helpers (periods, months, relations, self stand-ins for the leak detector — `service/src/lang`, 25 most used languages) apply all languages at once |
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
+| `patterns_upto` | timestamptz null | Watermark of the nightly pattern pass (WORK_PLAN 5.4, on the recording clock) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `mode` | enum `personal \| entity`, default `personal` | D50: `personal` — undeclared input is the memory's self (the account holder is "I"); `entity` (D48) — a shared device, robot or place: undeclared input is "someone"'s. Changed by the client only while the memory is empty (`PATCH api/v1/me`), by the admin any time |
 | `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | The first person in gendered languages (D50; used from WORK_PLAN 8.4) |
@@ -397,10 +398,14 @@ typed patches; transitions in code (D29). As built, `unresolved` is computed at 
 confirmed is shown as unresolved); no job writes it and the `expire` patch is unused. Patches need evidence about
 that plan (D37).
 
-### episode_promotions (D20) — created, unused yet (WORK_PLAN 5.4)
-`id, memory_id, pattern text, episode_ids uuid[], proposed_note_ref text null, status enum
-(proposed|confirmed|rejected), created_at, updated_at` — recurring patterns proposed as
-semantic notes; exposed to clients as pending proposals (D26).
+### episode_promotions (D20, D26) — built 2026-10-12 (WORK_PLAN 5.4, migration `Patterns1791130000000`)
+`id, memory_id, note_id uuid null → notes (SET NULL), pattern text, episode_ids uuid[], subject_person_id null,
+status enum (active|retired|forgotten), created_at, updated_at` — the register of the recurring patterns the memory drew
+on its own (nightly pattern pass, quality-profile knob `patterns`). Each one is a note of the memory (`stance` inferred,
+never `pending`, `tags` `{pattern}`, evidence = the episodes, confidence 0.7 with three or four episodes, 0.85 from five);
+`retired` when it stopped holding (or was replaced by a new form, or its note was replaced / corrected), `forgotten`
+when its note was deleted — never drawn again from the same episodes (at least two others needed). A pattern left with
+fewer than three of its episodes is dropped with its note.
 
 ## Layer 2 — digests
 
@@ -470,17 +475,18 @@ Semantic notes: who the memory's self is, beyond state slots.
 | `status` | enum `current \| superseded \| corrected` | History kept, never rewritten |
 | `supersedes`, `corrects` | uuid null → notes (`SET NULL`) | |
 | `support_count` | int | Restatements counted |
-| `pending` | bool | Inferred notes await confirmation; excluded from recall unless asked |
+| `pending` | bool | Inferred notes await confirmation; excluded from recall unless asked. Recurring patterns (5.4) are inferred but never pending: recall labels them |
 | *time* | | `valid_from`, `recorded_at` |
 | *provenance*, *disclosure*, *embedding* | | |
 | `deleted_at` | timestamptz null | |
 
 `note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`;
 `note_changes(seq bigserial, memory_id, note_id uuid, change enum (created|updated|corrected|
-confirmed|forgotten), at)` — the change feed clients use to keep copies aligned (forgotten notes are
-purged, the feed keeps only their id). As built the extraction writes `created` / `updated` / `corrected` and
-`remember` writes `created`; deleting, confirming or rejecting a note through the read API (`API.md` §4) writes no entry,
-and the feed route (`GET api/v1/notes/changes`) is not built yet.
+confirmed|forgotten|retired), at)` — the change feed clients use to keep copies aligned (forgotten notes are
+purged, the feed keeps only their id). As built the extraction writes `created` / `updated` / `corrected`,
+`remember` writes `created`, the pattern pass `created` / `updated` / `retired` (a pattern that stopped holding) /
+`forgotten`; deleting or rejecting a note (read API, `API.md` §4, or forgetting) writes `forgotten`, confirming writes no
+entry, and the feed route (`GET api/v1/notes/changes`) is not built yet.
 
 ## Learned sources (D49, WORK_PLAN 8.9) — built 2026-10-10 (migration `Sources1791090000000`)
 
