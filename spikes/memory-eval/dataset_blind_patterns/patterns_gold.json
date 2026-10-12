@@ -1,0 +1,244 @@
+{
+ "_note": "Blind recurring-patterns set. At each checkpoint the sessions before it are ingested, then the pattern pass runs as of that moment. At the final checkpoint every 'expected' pattern must be held and no 'trap' may be; 'checkpoint_expected' lists patterns that must exist at an earlier checkpoint. The judge sees only 'desc'; 'why' is for humans.",
+ "checkpoints": [
+  "2027-02-28T23:30:00+01:00",
+  "2027-04-10T23:30:00+02:00"
+ ],
+ "memories": {
+  "giulia": {
+   "expected": [
+    {
+     "id": "giulia_pool",
+     "desc": "Giulia swims at the swimming pool on Tuesday evenings."
+    },
+    {
+     "id": "giulia_parents",
+     "desc": "Giulia has Sunday lunch at her parents' home in Casalecchio."
+    }
+   ],
+   "traps": [
+    {
+     "id": "giulia_vienna_museums",
+     "desc": "Giulia visits art museums regularly.",
+     "why": "Three museum visits on consecutive days of one business trip to Vienna (one week, one trip); never again."
+    },
+    {
+     "id": "giulia_brother_fishing",
+     "desc": "Giulia's brother Davide goes fishing on the Reno on Sundays.",
+     "why": "Another person's habit, told once by Giulia; not an episode of hers and not repeated."
+    },
+    {
+     "id": "giulia_yoga_two",
+     "desc": "Giulia takes yoga classes on Saturday mornings.",
+     "why": "Only two yoga lessons (below the three-occurrence threshold), and she says she may not continue."
+    }
+   ],
+   "checkpoint_expected": {
+    "2027-02-28T23:30:00+01:00": [
+     "giulia_pool",
+     "giulia_parents"
+    ]
+   }
+  },
+  "marco": {
+   "expected": [
+    {
+     "id": "marco_calcetto",
+     "desc": "Marco plays five-a-side football (calcetto) with his office colleagues on Thursday evenings."
+    },
+    {
+     "id": "marco_market",
+     "desc": "Marco goes shopping at the Porta Palazzo market on Saturday mornings."
+    }
+   ],
+   "traps": [
+    {
+     "id": "marco_running_plan",
+     "desc": "Marco goes running.",
+     "why": "Only plans repeated many times ('from Monday I start running'); in the last session he says he has still not gone running."
+    },
+    {
+     "id": "marco_gym_claim",
+     "desc": "Marco goes to the gym on Monday evenings.",
+     "why": "Only the assistant claims it ('you always go on Mondays'); Marco never confirms or mentions the gym."
+    },
+    {
+     "id": "marco_yoga_calendar",
+     "desc": "Marco does yoga on Wednesday evenings.",
+     "why": "Only a calendar tool output lists a recurring Wednesday yoga event; Marco never says he went."
+    }
+   ],
+   "checkpoint_expected": {
+    "2027-02-28T23:30:00+01:00": [
+     "marco_calcetto"
+    ]
+   }
+  },
+  "chiara": {
+   "expected": [
+    {
+     "id": "chiara_nonna",
+     "desc": "Chiara video-calls her grandmother Titina on Sunday evenings."
+    }
+   ],
+   "traps": [
+    {
+     "id": "chiara_spanish",
+     "desc": "Chiara attends a Spanish class on Wednesday evenings.",
+     "why": "A real pattern until February (five Wednesday lessons), but on 10 March she quits the course because of new shifts and confirms it on 24 March: it must be retired at the final checkpoint."
+    },
+    {
+     "id": "chiara_pizza_note",
+     "desc": "Chiara orders pizza from Concettina on Friday evenings.",
+     "why": "She states this habit explicitly once ('il venerdì sera ordino sempre la pizza'), so the memory already holds it as a stated note; a pattern restating it would be a duplicate."
+    }
+   ],
+   "checkpoint_expected": {
+    "2027-02-28T23:30:00+01:00": [
+     "chiara_spanish",
+     "chiara_nonna"
+    ]
+   }
+  },
+  "luca": {
+   "expected": [
+    {
+     "id": "luca_aperitivo",
+     "desc": "Luca has an aperitivo with his colleagues Stefano and Paola after work on Friday evenings."
+    }
+   ],
+   "traps": [
+    {
+     "id": "luca_dinner_retold",
+     "desc": "Luca has dinner with his former university classmates regularly.",
+     "why": "One single reunion dinner (23 January) retold in three later sessions; it happened once."
+    },
+    {
+     "id": "luca_climbing_two",
+     "desc": "Luca goes indoor climbing on Saturday mornings.",
+     "why": "Only two climbing sessions, five weeks apart (below the threshold); he has not even subscribed."
+    }
+   ]
+  },
+  "emma": {
+   "expected": [
+    {
+     "id": "emma_choir",
+     "desc": "Emma goes to choir rehearsal on Wednesday evenings."
+    },
+    {
+     "id": "emma_parkrun",
+     "desc": "Emma runs the parkrun at Portobello on Saturday mornings."
+    }
+   ],
+   "traps": [
+    {
+     "id": "emma_quiz_week",
+     "desc": "Emma goes to pub quizzes regularly.",
+     "why": "Three quizzes all in one week while her friend Priya visited; later she says she has not been to a quiz since."
+    },
+    {
+     "id": "emma_mum_two",
+     "desc": "Emma visits her mother in Dundee on Sundays.",
+     "why": "Only two visits (below the threshold), linked to her mother's recovery after an operation."
+    }
+   ],
+   "checkpoint_expected": {
+    "2027-02-28T23:30:00+01:00": [
+     "emma_choir",
+     "emma_parkrun"
+    ]
+   }
+  },
+  "lucia": {
+   "expected": [
+    {
+     "id": "lucia_padel",
+     "desc": "Lucía plays padel with Rocío and Mar on Monday evenings."
+    }
+   ],
+   "traps": [
+    {
+     "id": "lucia_flamenco_once",
+     "desc": "Lucía goes to flamenco shows.",
+     "why": "A single evening at a tablao with clients."
+    },
+    {
+     "id": "lucia_alcazar_two",
+     "desc": "Lucía visits the Alcázar on Sundays.",
+     "why": "Two visits on consecutive Sundays guiding visiting relatives (below the threshold)."
+    }
+   ],
+   "checkpoint_expected": {
+    "2027-02-28T23:30:00+01:00": [
+     "lucia_padel"
+    ]
+   }
+  },
+  "jonas": {
+   "expected": [
+    {
+     "id": "jonas_boulder",
+     "desc": "Jonas goes bouldering at the climbing hall on Thursday evenings."
+    }
+   ],
+   "traps": [
+    {
+     "id": "jonas_alster_trip",
+     "desc": "Jonas runs in the mornings.",
+     "why": "Three morning runs around the Alster all during one trade-fair trip to Hamburg; never mentioned at home."
+    }
+   ]
+  },
+  "kenji": {
+   "expected": [
+    {
+     "id": "kenji_kamo",
+     "desc": "Kenji goes jogging along the Kamo river on Sunday mornings."
+    }
+   ],
+   "traps": [
+    {
+     "id": "kenji_onsen_once",
+     "desc": "Kenji goes to hot springs (onsen) with his colleagues.",
+     "why": "A single day trip to Arima onsen."
+    }
+   ],
+   "checkpoint_expected": {
+    "2027-02-28T23:30:00+01:00": [
+     "kenji_kamo"
+    ]
+   }
+  },
+  "biblioteca_villa_rosa": {
+   "expected": [
+    {
+     "id": "bib_teresa",
+     "desc": "Teresa Mantovani comes to the library on Saturday mornings to return a mystery novel and borrow another."
+    },
+    {
+     "id": "bib_ottavio",
+     "desc": "Ottavio Rizzi plays at the library's chess club on Tuesday afternoons."
+    }
+   ],
+   "traps": [
+    {
+     "id": "bib_knitting_each_once",
+     "desc": "A visitor (Nadia, Fabio or Rina) attends the library's knitting workshop on Wednesdays every week.",
+     "why": "Three different people each attended the knitting workshop once; no one person did it more than once."
+    },
+    {
+     "id": "bib_newspapers_anon",
+     "desc": "A regular visitor comes to the library in the mornings to read the newspapers.",
+     "why": "Three morning visits by someone who never says who they are; nothing shows they are the same person, and a pattern needs one identified person."
+    }
+   ],
+   "checkpoint_expected": {
+    "2027-02-28T23:30:00+01:00": [
+     "bib_teresa",
+     "bib_ottavio"
+    ]
+   }
+  }
+ }
+}

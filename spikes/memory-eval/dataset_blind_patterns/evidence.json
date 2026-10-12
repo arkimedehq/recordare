@@ -1,0 +1,330 @@
+{
+ "_note": "For check.py only (never shown to a system or judge): sessions behind each gold id.",
+ "expected": {
+  "giulia_pool": {
+   "user": "giulia",
+   "weekday": 1,
+   "part": "evening",
+   "person": null,
+   "sessions": [
+    "s002",
+    "s017",
+    "s052",
+    "s080"
+   ]
+  },
+  "giulia_parents": {
+   "user": "giulia",
+   "weekday": 6,
+   "part": "afternoon",
+   "person": null,
+   "sessions": [
+    "s012",
+    "s034",
+    "s068",
+    "s097"
+   ]
+  },
+  "marco_calcetto": {
+   "user": "marco",
+   "weekday": 3,
+   "part": "evening",
+   "person": null,
+   "sessions": [
+    "s006",
+    "s027",
+    "s055",
+    "s076",
+    "s099"
+   ]
+  },
+  "marco_market": {
+   "user": "marco",
+   "weekday": 5,
+   "part": "morning",
+   "person": null,
+   "sessions": [
+    "s021",
+    "s046",
+    "s091"
+   ]
+  },
+  "chiara_nonna": {
+   "user": "chiara",
+   "weekday": 6,
+   "part": "evening",
+   "person": null,
+   "sessions": [
+    "s013",
+    "s035",
+    "s059",
+    "s073",
+    "s087"
+   ]
+  },
+  "luca_aperitivo": {
+   "user": "luca",
+   "weekday": 4,
+   "part": "evening",
+   "person": null,
+   "sessions": [
+    "s007",
+    "s020",
+    "s045",
+    "s077",
+    "s095"
+   ]
+  },
+  "emma_choir": {
+   "user": "emma",
+   "weekday": 2,
+   "part": "evening",
+   "person": null,
+   "sessions": [
+    "s004",
+    "s026",
+    "s063",
+    "s094"
+   ]
+  },
+  "emma_parkrun": {
+   "user": "emma",
+   "weekday": 5,
+   "part": "morning",
+   "person": null,
+   "sessions": [
+    "s010",
+    "s031",
+    "s071",
+    "s092"
+   ]
+  },
+  "lucia_padel": {
+   "user": "lucia",
+   "weekday": 0,
+   "part": "evening",
+   "person": null,
+   "sessions": [
+    "s001",
+    "s015",
+    "s036",
+    "s079"
+   ]
+  },
+  "jonas_boulder": {
+   "user": "jonas",
+   "weekday": 3,
+   "part": "evening",
+   "person": null,
+   "sessions": [
+    "s005",
+    "s065",
+    "s082",
+    "s098"
+   ]
+  },
+  "kenji_kamo": {
+   "user": "kenji",
+   "weekday": 6,
+   "part": "morning",
+   "person": null,
+   "sessions": [
+    "s011",
+    "s033",
+    "s058",
+    "s078",
+    "s100"
+   ]
+  },
+  "bib_teresa": {
+   "user": "biblioteca_villa_rosa",
+   "weekday": 5,
+   "part": "morning",
+   "person": "Teresa",
+   "sessions": [
+    "s009",
+    "s030",
+    "s067",
+    "s083",
+    "s096"
+   ]
+  },
+  "bib_ottavio": {
+   "user": "biblioteca_villa_rosa",
+   "weekday": 1,
+   "part": "afternoon",
+   "person": "Ottavio",
+   "sessions": [
+    "s016",
+    "s038",
+    "s070",
+    "s089"
+   ]
+  }
+ },
+ "traps": {
+  "giulia_vienna_museums": {
+   "user": "giulia",
+   "kind": "trip-cluster",
+   "sessions": [
+    "s043",
+    "s044",
+    "s048"
+   ]
+  },
+  "giulia_brother_fishing": {
+   "user": "giulia",
+   "kind": "other-person-habit",
+   "sessions": [
+    "s012"
+   ]
+  },
+  "giulia_yoga_two": {
+   "user": "giulia",
+   "kind": "near-threshold",
+   "sessions": [
+    "s032",
+    "s084"
+   ]
+  },
+  "marco_running_plan": {
+   "user": "marco",
+   "kind": "plan-never-done",
+   "sessions": [
+    "s014",
+    "s024",
+    "s060",
+    "s088",
+    "s099"
+   ]
+  },
+  "marco_gym_claim": {
+   "user": "marco",
+   "kind": "assistant-claim",
+   "sessions": [
+    "s050",
+    "s074",
+    "s088"
+   ]
+  },
+  "marco_yoga_calendar": {
+   "user": "marco",
+   "kind": "tool-only",
+   "sessions": [
+    "s024",
+    "s060",
+    "s088"
+   ]
+  },
+  "chiara_spanish": {
+   "user": "chiara",
+   "kind": "stopped",
+   "sessions": [
+    "s003",
+    "s019",
+    "s041",
+    "s062"
+   ]
+  },
+  "chiara_pizza_note": {
+   "user": "chiara",
+   "kind": "stated-once-duplicate",
+   "sessions": [
+    "s008",
+    "s029",
+    "s066"
+   ]
+  },
+  "luca_dinner_retold": {
+   "user": "luca",
+   "kind": "retold-single-event",
+   "sessions": [
+    "s022",
+    "s025",
+    "s040",
+    "s061"
+   ]
+  },
+  "luca_climbing_two": {
+   "user": "luca",
+   "kind": "near-threshold",
+   "sessions": [
+    "s057",
+    "s085"
+   ]
+  },
+  "emma_quiz_week": {
+   "user": "emma",
+   "kind": "one-week-cluster",
+   "sessions": [
+    "s051",
+    "s053",
+    "s056",
+    "s092"
+   ]
+  },
+  "emma_mum_two": {
+   "user": "emma",
+   "kind": "near-threshold",
+   "sessions": [
+    "s049",
+    "s086"
+   ]
+  },
+  "lucia_flamenco_once": {
+   "user": "lucia",
+   "kind": "one-off",
+   "sessions": [
+    "s028"
+   ]
+  },
+  "lucia_alcazar_two": {
+   "user": "lucia",
+   "kind": "near-threshold",
+   "sessions": [
+    "s069",
+    "s072"
+   ]
+  },
+  "jonas_alster_trip": {
+   "user": "jonas",
+   "kind": "trip-cluster",
+   "sessions": [
+    "s037",
+    "s039",
+    "s042"
+   ]
+  },
+  "kenji_onsen_once": {
+   "user": "kenji",
+   "kind": "one-off",
+   "sessions": [
+    "s047"
+   ]
+  },
+  "bib_knitting_each_once": {
+   "user": "biblioteca_villa_rosa",
+   "kind": "different-people-once",
+   "sessions": [
+    "s018",
+    "s054",
+    "s075"
+   ]
+  },
+  "bib_newspapers_anon": {
+   "user": "biblioteca_villa_rosa",
+   "kind": "unidentified-repeated",
+   "sessions": [
+    "s023",
+    "s064",
+    "s090"
+   ]
+  }
+ },
+ "stop_sessions": {
+  "chiara_spanish": [
+   "s081",
+   "s093"
+  ]
+ }
+}

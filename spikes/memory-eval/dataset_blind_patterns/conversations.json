@@ -1,0 +1,1629 @@
+{
+ "_note": "Blind synthetic dataset for recurring patterns (fictional people): eight personal memories and one entity memory (a neighbourhood library help desk), January-April 2027, in Italian, English, Spanish, German and Japanese. Timestamps carry each memory's local offset. Habits show only through repeated episodes told on the day they happen.",
+ "users": {
+  "giulia": "Giulia Ferretti, Bologna",
+  "marco": "Marco Bellini, Torino",
+  "chiara": "Chiara Esposito, Napoli",
+  "luca": "Luca Testori, Milano",
+  "emma": "Emma Lindqvist-Shaw, Edinburgh",
+  "lucia": "Lucía Ortega, Sevilla",
+  "jonas": "Jonas Brenner, Leipzig",
+  "kenji": "Kenji Morimoto (森本健二), Kyoto",
+  "biblioteca_villa_rosa": "Entity under test: the self-service help desk of the Villa Rosa neighbourhood library, Parma; many visitors talk to it"
+ },
+ "genders": {
+  "giulia": "feminine",
+  "marco": "masculine",
+  "chiara": "feminine",
+  "luca": "masculine",
+  "emma": "feminine",
+  "lucia": "feminine",
+  "jonas": "masculine",
+  "kenji": "masculine",
+  "biblioteca_villa_rosa": "neutral"
+ },
+ "entities": [
+  "biblioteca_villa_rosa"
+ ],
+ "sessions": [
+  {
+   "id": "s001",
+   "user": "lucia",
+   "ts": "2027-01-11T22:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Acabo de volver del pádel con Rocío y Mar en el club de Triana. Perdimos, pero nos reímos muchísimo. Mañana tengo que llevar el coche al taller a las ocho."
+    },
+    {
+     "role": "assistant",
+     "content": "Te lo recuerdo mañana a las siete y media."
+    }
+   ]
+  },
+  {
+   "id": "s002",
+   "user": "giulia",
+   "ts": "2027-01-12T21:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Uff, appena tornata dalla piscina, ho fatto quaranta vasche e ho le gambe di gelatina. Domani ho la riunione col cliente di Modena: mi ricordi di stampare il preventivo prima di uscire?"
+    },
+    {
+     "role": "assistant",
+     "content": "Certo, domattina ti ricordo di stampare il preventivo per il cliente di Modena."
+    }
+   ]
+  },
+  {
+   "id": "s003",
+   "user": "chiara",
+   "ts": "2027-01-13T22:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono tornata dalla prima lezione del corso di spagnolo all'istituto in via Toledo. La prof è di Valencia, simpaticissima. Abbiamo già i compiti: presentarsi in cinque frasi."
+    },
+    {
+     "role": "assistant",
+     "content": "Vuoi provare a scriverle insieme?"
+    },
+    {
+     "role": "user",
+     "content": "Domani, ora crollo."
+    }
+   ]
+  },
+  {
+   "id": "s004",
+   "user": "emma",
+   "ts": "2027-01-13T22:00:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Back from choir rehearsal. We started the Fauré Requiem tonight and the sopranos are struggling with the Pie Jesu. My voice is shot."
+    },
+    {
+     "role": "assistant",
+     "content": "Rest your voice, then."
+    }
+   ]
+  },
+  {
+   "id": "s005",
+   "user": "jonas",
+   "ts": "2027-01-14T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bin gerade aus der Boulderhalle in Plagwitz zurück, hab endlich das gelbe Problem im Überhang geschafft. Meine Unterarme brennen."
+    },
+    {
+     "role": "assistant",
+     "content": "Glückwunsch zum gelben Problem!"
+    }
+   ]
+  },
+  {
+   "id": "s006",
+   "user": "marco",
+   "ts": "2027-01-14T23:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rientrato adesso dal calcetto con quelli dell'ufficio, abbiamo perso 7 a 5. Almeno il ginocchio regge."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene il ginocchio! Buonanotte."
+    }
+   ]
+  },
+  {
+   "id": "s007",
+   "user": "luca",
+   "ts": "2027-01-15T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Aperitivo con Stefano e Paola al bar sotto l'ufficio in Isola, abbiamo fatto le nove. Domani niente sveglia, finalmente."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon fine settimana!"
+    }
+   ]
+  },
+  {
+   "id": "s008",
+   "user": "chiara",
+   "ts": "2027-01-15T23:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il venerdì sera ordino sempre la pizza da Concettina, è il mio rito di fine settimana. Stasera margherita con la bufala, e ho anche visto due puntate della serie coreana."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona serata, allora!"
+    }
+   ]
+  },
+  {
+   "id": "s009",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-01-16T10:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, sono Teresa Mantovani. Riporto 'La casa sul lago' e prendo un altro giallo: c'è qualcosa di Simenon disponibile?"
+    },
+    {
+     "role": "assistant",
+     "content": "Restituzione registrata. 'Maigret e il cliente del sabato' è disponibile, scaffale G."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, prendo quello."
+    }
+   ]
+  },
+  {
+   "id": "s010",
+   "user": "emma",
+   "ts": "2027-01-16T11:00:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Did parkrun at Portobello this morning, 27:40, with a freezing wind off the sea. Now pancakes. Can you remind me to renew the car insurance on Monday?"
+    },
+    {
+     "role": "assistant",
+     "content": "I'll remind you on Monday."
+    }
+   ]
+  },
+  {
+   "id": "s011",
+   "user": "kenji",
+   "ts": "2027-01-17T09:30:00+09:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "今朝は鴨川沿いを走ってきた。出町柳まで往復で8キロ。寒かったけど気持ちよかった。"
+    },
+    {
+     "role": "assistant",
+     "content": "お疲れさまでした。"
+    }
+   ]
+  },
+  {
+   "id": "s012",
+   "user": "giulia",
+   "ts": "2027-01-17T16:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rientrata adesso dal pranzo dai miei a Casalecchio. Mamma ha fatto i tortellini in brodo e papà ci ha raccontato di nuovo la storia della sua Vespa. Mio fratello Davide non c'era: lui la domenica va sempre a pescare sul Reno, ogni settimana, col freddo o col caldo."
+    },
+    {
+     "role": "assistant",
+     "content": "Un pranzo ricco! Riposati un po'."
+    }
+   ]
+  },
+  {
+   "id": "s013",
+   "user": "chiara",
+   "ts": "2027-01-17T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho appena fatto la videochiamata con nonna Titina a Salerno. Ha imparato a girare la fotocamera da sola, mi ha fatto vedere tutte le piante del balcone!"
+    },
+    {
+     "role": "assistant",
+     "content": "Che brava tua nonna!"
+    }
+   ]
+  },
+  {
+   "id": "s014",
+   "user": "marco",
+   "ts": "2027-01-18T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Basta, devo rimettermi in forma: da lunedì prossimo inizio a correre, sul serio. Mi consigli un programma per principianti?"
+    },
+    {
+     "role": "assistant",
+     "content": "Un programma graduale tipo 'da zero a cinque chilometri' va bene per iniziare. Vuoi che te lo ricordi lunedì?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, ricordamelo."
+    }
+   ]
+  },
+  {
+   "id": "s015",
+   "user": "lucia",
+   "ts": "2027-01-18T22:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pádel esta noche: Mar se ha comprado una pala nueva y ahora no hay quien le gane. Estoy molida."
+    },
+    {
+     "role": "assistant",
+     "content": "Descansa bien."
+    }
+   ]
+  },
+  {
+   "id": "s016",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-01-19T17:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Ottavio Rizzi. Finita adesso la partita al circolo degli scacchi in saletta: patta con la signora Bice dopo due ore. Posso lasciare qui la mia scacchiera?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, può lasciarla nell'armadietto della saletta."
+    }
+   ]
+  },
+  {
+   "id": "s017",
+   "user": "giulia",
+   "ts": "2027-01-19T22:05:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera in piscina la corsia era pienissima, ma un'oretta l'ho nuotata. Senti, il bollo dell'auto scade a fine mese?"
+    },
+    {
+     "role": "assistant",
+     "content": "Non ho la data di scadenza del bollo. Vuoi che ti ricordi di controllarla?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, ricordamelo venerdì."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto, te lo ricordo venerdì."
+    }
+   ]
+  },
+  {
+   "id": "s018",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-01-20T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Nadia. Oggi sono venuta per la prima volta al laboratorio di maglia, ho fatto dieci righe storte. I ferri si possono prendere in prestito?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, il laboratorio ne presta alcune paia: chieda alla volontaria al banco."
+    }
+   ]
+  },
+  {
+   "id": "s019",
+   "user": "chiara",
+   "ts": "2027-01-20T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lezione di spagnolo stasera: i verbi irregolari mi uccideranno. Però ho capito una canzone di Rosalía quasi tutta."
+    },
+    {
+     "role": "assistant",
+     "content": "È un bel progresso."
+    }
+   ]
+  },
+  {
+   "id": "s020",
+   "user": "luca",
+   "ts": "2027-01-22T21:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Spritz con Stefano e Paola dopo il lavoro, poi a casa per la partita. Domani sera c'è la cena con i compagni dell'università, sono curioso."
+    },
+    {
+     "role": "assistant",
+     "content": "Divertiti domani!"
+    }
+   ]
+  },
+  {
+   "id": "s021",
+   "user": "marco",
+   "ts": "2027-01-23T11:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatto il giro a Porta Palazzo stamattina: carciofi, un pezzo di toma e due etti di acciughe. Stasera cucino io per Sara, bagna cauda!"
+    },
+    {
+     "role": "assistant",
+     "content": "Buona bagna cauda!"
+    }
+   ]
+  },
+  {
+   "id": "s022",
+   "user": "luca",
+   "ts": "2027-01-23T23:50:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tornato dalla cena con i compagni dell'università: eravamo in dodici dopo quindici anni, in una trattoria a Porta Romana. Marco adesso fa il pilota, Elena vive a Lione."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella rimpatriata."
+    }
+   ]
+  },
+  {
+   "id": "s023",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-01-25T09:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, sono passato a leggere i giornali. La Gazzetta di oggi dov'è finita?"
+    },
+    {
+     "role": "assistant",
+     "content": "È sul tavolo vicino alla finestra."
+    }
+   ]
+  },
+  {
+   "id": "s024",
+   "user": "marco",
+   "ts": "2027-01-25T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che cosa ho in agenda questa settimana?"
+    },
+    {
+     "role": "tool",
+     "tool": "calendar",
+     "content": "Lun 25/01 18:00 Dentista\nMer 27/01 19:00 Yoga (evento ricorrente, ogni mercoledì)\nVen 29/01 09:30 Call fornitore Pastore"
+    },
+    {
+     "role": "assistant",
+     "content": "Oggi alle 18 il dentista, mercoledì alle 19 lo yoga e venerdì alle 9:30 la call con Pastore."
+    },
+    {
+     "role": "user",
+     "content": "Il dentista l'ho spostato a febbraio. E la corsa slitta alla settimana prossima, questa è un delirio."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "s025",
+   "user": "luca",
+   "ts": "2027-01-26T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ripenso ancora alla cena di sabato scorso con quelli dell'università. Mi ha fatto un effetto strano vedere quanto siamo cambiati. Comunque: mi trovi un idraulico in zona Città Studi?"
+    },
+    {
+     "role": "assistant",
+     "content": "Posso cercarne alcuni. Preferisci qualcuno disponibile anche il sabato?"
+    },
+    {
+     "role": "user",
+     "content": "Sì."
+    }
+   ]
+  },
+  {
+   "id": "s026",
+   "user": "emma",
+   "ts": "2027-01-27T22:15:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Choir tonight, the conductor finally split the altos so I'm singing second alto now. Also my landlord texted: the boiler man comes Friday at 9."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: boiler engineer on Friday at 9."
+    }
+   ]
+  },
+  {
+   "id": "s027",
+   "user": "marco",
+   "ts": "2027-01-28T22:50:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Calcetto stasera, doppietta! Poi birra con Gianni e Fede. Domani però sveglia alle sei, c'è l'inventario."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti per la doppietta. Sveglia alle sei impostata."
+    }
+   ]
+  },
+  {
+   "id": "s028",
+   "user": "lucia",
+   "ts": "2027-01-28T23:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Esta noche fui a un tablao en Triana con unos clientes de Hamburgo. Hacía años que no veía flamenco en directo, la bailaora era impresionante."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué buena noche!"
+    }
+   ]
+  },
+  {
+   "id": "s029",
+   "user": "chiara",
+   "ts": "2027-01-29T22:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pizza da Concettina, oggi friarielli e salsiccia. Ah, il capo mi ha detto che da marzo cambiano i turni in ospedale, speriamo bene."
+    },
+    {
+     "role": "assistant",
+     "content": "Speriamo che i nuovi turni siano gestibili."
+    }
+   ]
+  },
+  {
+   "id": "s030",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-01-30T10:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono di nuovo Teresa. Riporto il Maigret, letto in due sere. Oggi vorrei una giallista italiana, mi consigli tu?"
+    },
+    {
+     "role": "assistant",
+     "content": "Restituzione registrata. Tra le disponibili c'è un romanzo di Maria Ricci ambientato a Trieste."
+    }
+   ]
+  },
+  {
+   "id": "s031",
+   "user": "emma",
+   "ts": "2027-01-30T11:20:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Portobello parkrun done, 27:05! Volunteered as timekeeper last time so it felt good to run again."
+    },
+    {
+     "role": "assistant",
+     "content": "Nice time."
+    }
+   ]
+  },
+  {
+   "id": "s032",
+   "user": "giulia",
+   "ts": "2027-01-30T12:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina ho provato una lezione di yoga in uno studio in via Saragozza. Carina, ma mi fanno male le spalle. Costa 18 euro a lezione, mica poco."
+    },
+    {
+     "role": "assistant",
+     "content": "Le spalle si abitueranno. Com'era l'insegnante?"
+    },
+    {
+     "role": "user",
+     "content": "Brava, molto calma."
+    }
+   ]
+  },
+  {
+   "id": "s033",
+   "user": "kenji",
+   "ts": "2027-01-31T10:00:00+09:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "さっき鴨川をジョギングしてきた。途中で鷺がたくさんいた。午後は部屋の掃除をするつもり。"
+    },
+    {
+     "role": "assistant",
+     "content": "掃除、頑張ってください。"
+    }
+   ]
+  },
+  {
+   "id": "s034",
+   "user": "giulia",
+   "ts": "2027-01-31T15:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Appena uscita da casa dei miei: lasagne e discussioni sulla politica. Mia sorella Irene era di cattivo umore per il lavoro, poverina."
+    },
+    {
+     "role": "assistant",
+     "content": "Speriamo che per Irene la settimana vada meglio."
+    }
+   ]
+  },
+  {
+   "id": "s035",
+   "user": "chiara",
+   "ts": "2027-01-31T21:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Videochiamata con la nonna, oggi era tutta contenta perché è venuta a trovarla zia Pina con le pastiere. Mi ha chiesto quando scendo a Salerno."
+    },
+    {
+     "role": "assistant",
+     "content": "Magari puoi programmare una visita."
+    }
+   ]
+  },
+  {
+   "id": "s036",
+   "user": "lucia",
+   "ts": "2027-02-01T22:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Vengo del pádel, hoy ganamos 6-4 en el último set. Rocío dice que el mes que viene se va a Lisboa por trabajo y tendremos que buscar a una cuarta."
+    },
+    {
+     "role": "assistant",
+     "content": "Ojalá encontréis a alguien pronto."
+    }
+   ]
+  },
+  {
+   "id": "s037",
+   "user": "jonas",
+   "ts": "2027-02-02T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bin seit gestern in Hamburg wegen der Messe. Heute früh eine Runde um die Alster gelaufen, herrlich, ganz anders als im Hotelgym."
+    },
+    {
+     "role": "assistant",
+     "content": "Viel Erfolg auf der Messe."
+    }
+   ]
+  },
+  {
+   "id": "s038",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-02-02T17:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Ottavio. Al circolo scacchi oggi ho perso contro il ragazzino nuovo, Luigi, dodici anni. Gioca la siciliana meglio di me."
+    },
+    {
+     "role": "assistant",
+     "content": "Una sconfitta onorevole."
+    }
+   ]
+  },
+  {
+   "id": "s039",
+   "user": "jonas",
+   "ts": "2027-02-03T08:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Wieder um die Alster gelaufen, diesmal mit einem Kollegen aus Bremen. Heute Abend Standparty, wird lang."
+    },
+    {
+     "role": "assistant",
+     "content": "Viel Spaß heute Abend."
+    }
+   ]
+  },
+  {
+   "id": "s040",
+   "user": "luca",
+   "ts": "2027-02-03T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho ritrovato le foto della cena con gli ex compagni dell'università di due settimane fa, le mando nel gruppo. In una c'è Elena che ride con il bicchiere in mano, bellissima."
+    },
+    {
+     "role": "assistant",
+     "content": "Faranno piacere a tutti."
+    }
+   ]
+  },
+  {
+   "id": "s041",
+   "user": "chiara",
+   "ts": "2027-02-03T22:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rientrata dallo spagnolo: oggi conversazione a coppie, mi è toccato un ingegnere che parla benissimo. Che figuraccia."
+    },
+    {
+     "role": "assistant",
+     "content": "Si impara anche così."
+    }
+   ]
+  },
+  {
+   "id": "s042",
+   "user": "jonas",
+   "ts": "2027-02-04T08:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Letzter Morgen an der Alster, heute Abend fahre ich mit dem ICE zurück nach Leipzig. Kannst du mich um 17 Uhr an den Zug erinnern?"
+    },
+    {
+     "role": "assistant",
+     "content": "Ich erinnere dich um 17 Uhr."
+    }
+   ]
+  },
+  {
+   "id": "s043",
+   "user": "giulia",
+   "ts": "2027-02-04T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono a Vienna per la fiera fino a sabato! Oggi pomeriggio sono scappata al Belvedere a vedere il Bacio di Klimt dal vivo. Pazzesco."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Buona fiera."
+    }
+   ]
+  },
+  {
+   "id": "s044",
+   "user": "giulia",
+   "ts": "2027-02-05T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Altra fuga dopo la fiera: Kunsthistorisches Museum, due ore volate. Poi Wiener Schnitzel con i colleghi."
+    },
+    {
+     "role": "assistant",
+     "content": "Una giornata piena. Buona serata!"
+    }
+   ]
+  },
+  {
+   "id": "s045",
+   "user": "luca",
+   "ts": "2027-02-05T21:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Aperitivo con Stefano e Paola, stavolta in quel posto nuovo con i cocktail al basilico. Paola ci ha detto che aspetta un bambino!"
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella notizia!"
+    }
+   ]
+  },
+  {
+   "id": "s046",
+   "user": "marco",
+   "ts": "2027-02-06T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mercato a Porta Palazzo stamattina, c'era una ressa incredibile. Però ho trovato i cardi gobbi di Nizza che cercavo da settimane."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo acquisto!"
+    }
+   ]
+  },
+  {
+   "id": "s047",
+   "user": "kenji",
+   "ts": "2027-02-06T20:00:00+09:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "今日は会社の同僚と有馬温泉に日帰りで行ってきた。金泉がすごく熱かった。帰りに炭酸せんべいを買った。"
+    },
+    {
+     "role": "assistant",
+     "content": "いい一日でしたね。"
+    }
+   ]
+  },
+  {
+   "id": "s048",
+   "user": "giulia",
+   "ts": "2027-02-06T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ultima mattina a Vienna, giro all'Albertina prima di andare in aeroporto. Tre musei in tre giorni, credo sia un record per me."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon rientro!"
+    }
+   ]
+  },
+  {
+   "id": "s049",
+   "user": "emma",
+   "ts": "2027-02-07T18:00:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Drove up to Dundee to see Mum today, she's doing better after the hip operation. Long drive back in the rain."
+    },
+    {
+     "role": "assistant",
+     "content": "Glad she's recovering."
+    }
+   ]
+  },
+  {
+   "id": "s050",
+   "user": "marco",
+   "ts": "2027-02-08T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono distrutto, giornata infinita in ufficio con la chiusura del trimestre."
+    },
+    {
+     "role": "assistant",
+     "content": "Allora stasera niente palestra, visto che il lunedì ci vai sempre?"
+    },
+    {
+     "role": "user",
+     "content": "Mah. Mi metti la sveglia alle 6:45 domani?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sveglia impostata alle 6:45."
+    }
+   ]
+  },
+  {
+   "id": "s051",
+   "user": "emma",
+   "ts": "2027-02-08T23:00:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "My friend Priya is here from Toronto for the week! We ended up at the pub quiz at the Sheep Heid and came third. She knew every geography answer."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like a great evening."
+    }
+   ]
+  },
+  {
+   "id": "s052",
+   "user": "giulia",
+   "ts": "2027-02-09T21:50:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giornata lunghissima: consegnato il progetto della scuola, poi piscina per scaricare la tensione. Ah, la caldaia fa di nuovo quel rumore strano, domani chiamo il tecnico."
+    },
+    {
+     "role": "assistant",
+     "content": "Vuoi che ti ricordi di chiamare il tecnico domattina?"
+    },
+    {
+     "role": "user",
+     "content": "Sì grazie."
+    }
+   ]
+  },
+  {
+   "id": "s053",
+   "user": "emma",
+   "ts": "2027-02-09T23:15:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Another quiz tonight, this time at a bar in the Grassmarket. Priya is obsessed, apparently they don't have proper pub quizzes in her part of Toronto."
+    },
+    {
+     "role": "assistant",
+     "content": "Two nights in a row!"
+    }
+   ]
+  },
+  {
+   "id": "s054",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-02-10T18:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Salve, sono Fabio. Mia moglie mi ha convinto a venire al laboratorio di maglia di oggi, unico uomo. Una volta basta, credo. Dov'è il bagno?"
+    },
+    {
+     "role": "assistant",
+     "content": "In fondo al corridoio a destra."
+    }
+   ]
+  },
+  {
+   "id": "s055",
+   "user": "marco",
+   "ts": "2027-02-11T23:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Finito adesso il calcetto, ma Gianni si è storto la caviglia e l'ho accompagnato al pronto soccorso. Niente di rotto, per fortuna."
+    },
+    {
+     "role": "assistant",
+     "content": "Meno male. Salutami Gianni."
+    }
+   ]
+  },
+  {
+   "id": "s056",
+   "user": "emma",
+   "ts": "2027-02-11T23:05:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Third quiz this week and we finally won! Twenty-five quid bar tab. Priya flies home on Saturday, I'll miss her."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations on the win."
+    }
+   ]
+  },
+  {
+   "id": "s057",
+   "user": "luca",
+   "ts": "2027-02-13T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina sono andato a provare l'arrampicata indoor con mio cugino Ale, a Lambrate. Ho le braccia distrutte, non riesco a tenere la tazza."
+    },
+    {
+     "role": "assistant",
+     "content": "Il primo giorno è sempre così."
+    }
+   ]
+  },
+  {
+   "id": "s058",
+   "user": "kenji",
+   "ts": "2027-02-14T09:45:00+09:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "朝、鴨川を北大路橋まで走った。ちょっと膝が痛い。来週の会議の資料、明日の朝リマインドしてくれる？"
+    },
+    {
+     "role": "assistant",
+     "content": "明日の朝にリマインドします。"
+    }
+   ]
+  },
+  {
+   "id": "s059",
+   "user": "chiara",
+   "ts": "2027-02-14T21:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Chiuso adesso con nonna Titina, mezz'ora di videochiamata. Ha la tosse ma dice che sta bene. Domani chiamo mia madre per sentire se l'ha vista il medico."
+    },
+    {
+     "role": "assistant",
+     "content": "Vuoi che ti ricordi di chiamare tua madre domani?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, alle sei."
+    }
+   ]
+  },
+  {
+   "id": "s060",
+   "user": "marco",
+   "ts": "2027-02-15T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che ho domani e dopodomani?"
+    },
+    {
+     "role": "tool",
+     "tool": "calendar",
+     "content": "Mar 16/02 08:30 Treno Torino-Milano (riunione sede)\nMer 17/02 19:00 Yoga (evento ricorrente, ogni mercoledì)"
+    },
+    {
+     "role": "assistant",
+     "content": "Domani il treno per Milano alle 8:30, mercoledì alle 19 lo yoga."
+    },
+    {
+     "role": "user",
+     "content": "Ok. La corsa l'ho rimandata ancora, ma a marzo comincio davvero, giuro."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "s061",
+   "user": "luca",
+   "ts": "2027-02-15T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Raccontavo a mia madre della cena dell'università di gennaio, si ricordava ancora di Davide che veniva a studiare da noi. Le ho fatto vedere le foto."
+    },
+    {
+     "role": "assistant",
+     "content": "Bello che se lo ricordi."
+    }
+   ]
+  },
+  {
+   "id": "s062",
+   "user": "chiara",
+   "ts": "2027-02-17T22:05:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera spagnolo: abbiamo fatto il passato remoto, che loro chiamano indefinido. Ho preso 8 nel test!"
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti per l'8!"
+    }
+   ]
+  },
+  {
+   "id": "s063",
+   "user": "emma",
+   "ts": "2027-02-17T22:00:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rehearsal was long tonight, two and a half hours on the Sanctus. Concert is on the 17th of April, I need to buy a black dress."
+    },
+    {
+     "role": "assistant",
+     "content": "Want me to remind you about the dress?"
+    },
+    {
+     "role": "user",
+     "content": "Yes, next weekend."
+    }
+   ]
+  },
+  {
+   "id": "s064",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-02-18T09:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, solo una lettura dei giornali stamattina. Manca il Sole 24 Ore?"
+    },
+    {
+     "role": "assistant",
+     "content": "Arriva verso le dieci."
+    }
+   ]
+  },
+  {
+   "id": "s065",
+   "user": "jonas",
+   "ts": "2027-02-18T22:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Boulderhalle heute Abend war voll, aber ich hab zwei neue blaue Routen geschafft. Danach Döner mit Henrik."
+    },
+    {
+     "role": "assistant",
+     "content": "Klingt nach einem guten Abend."
+    }
+   ]
+  },
+  {
+   "id": "s066",
+   "user": "chiara",
+   "ts": "2027-02-19T23:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pizza da Concettina con mia cugina Rosa che è passata a sorpresa. Abbiamo parlato fino a mezzanotte quasi."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella sorpresa!"
+    }
+   ]
+  },
+  {
+   "id": "s067",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-02-20T10:05:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, sono Teresa Mantovani. Ti riporto il romanzo di Trieste, bello. Adesso voglio un giallo scandinavo, ma non troppo violento."
+    },
+    {
+     "role": "assistant",
+     "content": "Restituzione registrata. Ti propongo un giallo svedese ambientato su un'isola, è al bancone novità."
+    }
+   ]
+  },
+  {
+   "id": "s068",
+   "user": "giulia",
+   "ts": "2027-02-21T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi dai miei c'era anche la zia Nives: bollito, mostarda e poi a carte fino alle quattro. Ho perso dieci euro a briscola."
+    },
+    {
+     "role": "assistant",
+     "content": "La zia Nives ti ha battuta, allora!"
+    }
+   ]
+  },
+  {
+   "id": "s069",
+   "user": "lucia",
+   "ts": "2027-02-21T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Han venido mis primos de Valladolid y los he llevado al Alcázar. Los jardines estaban preciosos con el sol de invierno."
+    },
+    {
+     "role": "assistant",
+     "content": "Seguro que les ha encantado."
+    }
+   ]
+  },
+  {
+   "id": "s070",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-02-23T17:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Ottavio Rizzi. Oggi al circolo ho vinto due partite su tre, una contro Luigi: rivincita presa. Bice ha portato le frittelle."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti per la rivincita."
+    }
+   ]
+  },
+  {
+   "id": "s071",
+   "user": "emma",
+   "ts": "2027-02-27T11:10:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Parkrun this morning in proper sleet, 28:30, but I didn't stop once. Hot shower and then the farmers' market on Castle Terrace."
+    },
+    {
+     "role": "assistant",
+     "content": "Well done in the sleet."
+    }
+   ]
+  },
+  {
+   "id": "s072",
+   "user": "lucia",
+   "ts": "2027-02-28T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Otra vez al Alcázar, esta vez con mi tía, que no pudo venir el domingo pasado. Ya me sé los azulejos de memoria."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Guía turística oficial!"
+    }
+   ]
+  },
+  {
+   "id": "s073",
+   "user": "chiara",
+   "ts": "2027-02-28T21:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Videochiamata con nonna: la tosse è passata e mi ha insegnato la ricetta dei suoi struffoli, anche se non è periodo."
+    },
+    {
+     "role": "assistant",
+     "content": "Meno male che sta meglio."
+    }
+   ]
+  },
+  {
+   "id": "s074",
+   "user": "marco",
+   "ts": "2027-03-01T20:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che tempo fa domani a Torino?"
+    },
+    {
+     "role": "assistant",
+     "content": "Nuvoloso, massima di 9 gradi. Stasera sei passato in palestra come ogni lunedì?"
+    },
+    {
+     "role": "user",
+     "content": "Lascia stare. Ricordami di pagare l'affitto entro il 5."
+    },
+    {
+     "role": "assistant",
+     "content": "Te lo ricordo il 4."
+    }
+   ]
+  },
+  {
+   "id": "s075",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-03-03T18:05:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Rina, sono nuova del quartiere. Ho appena partecipato al laboratorio di maglia, ma credo che preferirò il corso di acquerello. Quando c'è?"
+    },
+    {
+     "role": "assistant",
+     "content": "Il corso di acquerello è il giovedì alle 16, al primo piano."
+    }
+   ]
+  },
+  {
+   "id": "s076",
+   "user": "marco",
+   "ts": "2027-03-04T22:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Calcetto finito, pareggio 6 a 6 e ultimo gol mio all'ultimo minuto. Gianni è tornato a giocare, caviglia a posto."
+    },
+    {
+     "role": "assistant",
+     "content": "Che finale!"
+    }
+   ]
+  },
+  {
+   "id": "s077",
+   "user": "luca",
+   "ts": "2027-03-05T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Aperitivo con Stefano e Paola, Paola beveva succo di mela e ci prendeva in giro. Poi sushi con Stefano."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona serata!"
+    }
+   ]
+  },
+  {
+   "id": "s078",
+   "user": "kenji",
+   "ts": "2027-03-07T10:15:00+09:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "鴨川沿いを10キロ走ってきた。梅がもう咲いていた。膝はもう大丈夫みたい。"
+    },
+    {
+     "role": "assistant",
+     "content": "膝が治ってよかったです。"
+    }
+   ]
+  },
+  {
+   "id": "s079",
+   "user": "lucia",
+   "ts": "2027-03-08T22:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pádel con Rocío y Mar, Rocío ya ha vuelto de Lisboa. Me he torcido un poco el tobillo, nada grave. ¿Me recuerdas comprar hielo instantáneo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Te lo recuerdo mañana."
+    }
+   ]
+  },
+  {
+   "id": "s080",
+   "user": "giulia",
+   "ts": "2027-03-09T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rientrata ora, nuotato 1500 metri anche se fuori diluviava. Mi è arrivata la mail della banca per la rinegoziazione del mutuo, la guardiamo insieme domani?"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, domani la guardiamo insieme."
+    }
+   ]
+  },
+  {
+   "id": "s081",
+   "user": "chiara",
+   "ts": "2027-03-10T20:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho deciso: lascio il corso di spagnolo. Con i turni nuovi in ospedale non ce la faccio più, stasera non ci sono andata e ho scritto alla segreteria per ritirarmi."
+    },
+    {
+     "role": "assistant",
+     "content": "Capisco. Vuoi che ti segni di controllare la risposta della segreteria?"
+    },
+    {
+     "role": "user",
+     "content": "No, tanto è fatta."
+    }
+   ]
+  },
+  {
+   "id": "s082",
+   "user": "jonas",
+   "ts": "2027-03-11T21:50:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Komme vom Bouldern. Henrik hat sich am Finger verletzt, nichts Schlimmes. Morgen muss ich die Steuererklärung fertig machen, erinnerst du mich um zehn?"
+    },
+    {
+     "role": "assistant",
+     "content": "Ich erinnere dich morgen um zehn."
+    }
+   ]
+  },
+  {
+   "id": "s083",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-03-13T10:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Teresa. Lo svedese l'ho finito ieri notte, che ansia! Riporto e prendo il seguito, se c'è."
+    },
+    {
+     "role": "assistant",
+     "content": "Restituzione registrata. Il seguito è disponibile, te lo segno in prestito."
+    }
+   ]
+  },
+  {
+   "id": "s084",
+   "user": "giulia",
+   "ts": "2027-03-13T11:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Seconda lezione di yoga in via Saragozza, stavolta meglio, le spalle non mi fanno male. Non so se continuerò, il pacchetto da dieci lezioni costa parecchio."
+    },
+    {
+     "role": "assistant",
+     "content": "Puoi pensarci con calma."
+    }
+   ]
+  },
+  {
+   "id": "s085",
+   "user": "luca",
+   "ts": "2027-03-13T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Seconda volta in palestra di arrampicata con Ale: sono arrivato in cima alla via blu! Non so se mi iscrivo, l'abbonamento costa."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti per la via blu."
+    }
+   ]
+  },
+  {
+   "id": "s086",
+   "user": "emma",
+   "ts": "2027-03-14T19:00:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Back from Dundee. Mum is walking without the stick now, and she made me take home half a fruit cake."
+    },
+    {
+     "role": "assistant",
+     "content": "Great news about your mum."
+    }
+   ]
+  },
+  {
+   "id": "s087",
+   "user": "chiara",
+   "ts": "2027-03-14T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Nonna oggi in videochiamata mi ha presentato il gatto della vicina, che adesso dorme da lei. Ridevamo tantissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Un nuovo inquilino!"
+    }
+   ]
+  },
+  {
+   "id": "s088",
+   "user": "marco",
+   "ts": "2027-03-15T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho comprato le scarpe da corsa! Adesso non ho più scuse, parto. Che ho in calendario questa settimana?"
+    },
+    {
+     "role": "tool",
+     "tool": "calendar",
+     "content": "Mer 17/03 19:00 Yoga (evento ricorrente, ogni mercoledì)\nGio 18/03 14:00 Revisione auto"
+    },
+    {
+     "role": "assistant",
+     "content": "Mercoledì alle 19 lo yoga e giovedì alle 14 la revisione dell'auto. Per la palestra del lunedì oggi com'è andata?"
+    },
+    {
+     "role": "user",
+     "content": "Ok per la revisione, grazie."
+    },
+    {
+     "role": "assistant",
+     "content": "Prego."
+    }
+   ]
+  },
+  {
+   "id": "s089",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-03-16T17:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Ottavio. Circolo scacchi finito, oggi abbiamo fatto un torneo lampo: secondo dietro Luigi, il ragazzino diventerà un campione."
+    },
+    {
+     "role": "assistant",
+     "content": "Un ottimo secondo posto."
+    }
+   ]
+  },
+  {
+   "id": "s090",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-03-19T09:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, oggi un'oretta di giornali prima di fare la spesa. Il Corriere è libero?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, è sul tavolo centrale."
+    }
+   ]
+  },
+  {
+   "id": "s091",
+   "user": "marco",
+   "ts": "2027-03-20T11:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Porta Palazzo con mia suocera stamattina, mi ha fatto comprare mezzo banco di arance siciliane. Adesso spremute per un mese."
+    },
+    {
+     "role": "assistant",
+     "content": "Almeno la vitamina C è assicurata."
+    }
+   ]
+  },
+  {
+   "id": "s092",
+   "user": "emma",
+   "ts": "2027-03-20T11:15:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "New PB at parkrun: 26:12! Haven't been to a single quiz since Priya left, by the way, my brain is resting."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations on the PB!"
+    }
+   ]
+  },
+  {
+   "id": "s093",
+   "user": "chiara",
+   "ts": "2027-03-24T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mercoledì sera libera, che strano: film sul divano. Lo spagnolo un po' mi manca, ma con questi turni non avrei retto."
+    },
+    {
+     "role": "assistant",
+     "content": "Goditi la serata."
+    }
+   ]
+  },
+  {
+   "id": "s094",
+   "user": "emma",
+   "ts": "2027-03-24T22:10:00+00:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Choir: first full run-through of the Requiem tonight, it gave me goosebumps. Three weeks to the concert."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like it's coming together."
+    }
+   ]
+  },
+  {
+   "id": "s095",
+   "user": "luca",
+   "ts": "2027-03-26T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Spritz con Stefano e Paola sotto l'ufficio, era l'ultimo prima della maternità di Paola. Le abbiamo regalato una tutina con scritto 'aperitivo'."
+    },
+    {
+     "role": "assistant",
+     "content": "Che pensiero carino."
+    }
+   ]
+  },
+  {
+   "id": "s096",
+   "user": "biblioteca_villa_rosa",
+   "ts": "2027-03-27T10:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Teresa Mantovani. Riporto il seguito svedese e stavolta cambio: vorrei un giallo storico, magari ambientato nel Medioevo."
+    },
+    {
+     "role": "assistant",
+     "content": "Restituzione registrata. C'è un giallo ambientato in un'abbazia nel Trecento, scaffale G."
+    }
+   ]
+  },
+  {
+   "id": "s097",
+   "user": "giulia",
+   "ts": "2027-03-28T16:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pranzo di Pasqua dai miei: agnello, colomba fatta da mamma e mezzo parentado. Papà ha nascosto un uovo anche per me, a 34 anni."
+    },
+    {
+     "role": "assistant",
+     "content": "Che tenero tuo padre. Buona Pasqua!"
+    }
+   ]
+  },
+  {
+   "id": "s098",
+   "user": "jonas",
+   "ts": "2027-04-01T22:05:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bouldern war super heute, sie haben die ganze Wand neu geschraubt. Ich hab das schwarze Dach probiert und bin dreimal rausgefallen."
+    },
+    {
+     "role": "assistant",
+     "content": "Beim nächsten Mal klappt es."
+    }
+   ]
+  },
+  {
+   "id": "s099",
+   "user": "marco",
+   "ts": "2027-04-01T22:55:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Calcetto stasera, vinto 8 a 4. Le scarpe da corsa le ho usate per scaldarmi prima della partita: almeno lì sono servite, a correre non ci sono ancora andato."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella vittoria."
+    }
+   ]
+  },
+  {
+   "id": "s100",
+   "user": "kenji",
+   "ts": "2027-04-04T10:00:00+09:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "鴨川の桜が満開で、走りながら写真を撮りまくった。人が多くてタイムは遅かったけど。"
+    },
+    {
+     "role": "assistant",
+     "content": "きれいな季節ですね。"
+    }
+   ]
+  }
+ ]
+}

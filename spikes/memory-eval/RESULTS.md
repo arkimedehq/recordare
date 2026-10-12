@@ -468,6 +468,24 @@ checkpoint), ≈ 14.8k input / 1k output tokens in all — next to 66 extraction
 in the memory's language (the harness creates memories with the default locale `it`, so Tom's and Luis's are in
 Italian). Decision: on in `balanced` and `full`, off in `economy`. Next: a blind set (not tuned on).
 
+**Blind confirmation (2026-10-12, `DS=dataset_blind_patterns patterns_runs.sh patb_v2 3`):** `dataset_blind_patterns`,
+written blind by a separate agent (100 sessions Jan–Apr 2027, 9 memories in it / en / es / de / ja, one entity memory;
+13 expected habits, 18 traps: near-threshold pairs, trip clusters, one week only, wishes, the assistant's claim, a
+calendar tool, a habit stated as a note, a retold event, another person's habit told once, different people once each,
+an unidentified speaker, a course that stops after the mid checkpoint). `patterns.v2`, nothing changed after seeing it:
+
+| Run | Habits found (final) | False patterns | Expected at mid checkpoint | Stopped course retired |
+|---|---|---|---|---|
+| 1 | 12 / 13 (Teresa's Saturday visits to the library missed) | 0 | 9 / 11 | yes |
+| 2 | 13 / 13 | 0 | 10 / 11 | yes |
+| 3 | 13 / 13 | **1** — the Friday pizza, a habit the person had stated (a note already): the restatement check (cosine ≥ 0.88 with the note, and the KNOW list) let it through | 10 / 11 | yes |
+| **all** | **38 / 39 (97 %)** | **1 in 3 runs** | 29 / 33 | 3 / 3 |
+
+Also seen (not counted false, the judge matched it to the right habit): in run 2 the entity memory wrote Teresa's
+habit twice, once as hers and once as its own ("on Saturdays I register Teresa's returns"). Cost per run: 18 pattern
+calls, ≈ 25k input tokens. To follow up on the dev set (not here): the duplicate-of-a-note threshold and the
+self-vs-person restatement in entity memories.
+
 ### WORK_PLAN 5.7 — turn taint from tools (2026-10-12, DeepSeek direct, `taint_runs.sh`)
 
 Code rule, no prompt change: an assistant reply given after the output of a tool that is not Recordare's (web search,
