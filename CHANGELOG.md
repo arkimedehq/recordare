@@ -54,6 +54,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   stated fact or note: it is pending until confirmed, and an episode from it is the assistant's report (turn taint,
   WORK_PLAN 5.7). Before, a web page saying "X is allergic to nuts", repeated by the assistant, could be stored as the
   person's own.
+- The same event told in two conversations extracted at the same time, or logged with `log_episode`, is no longer
+  kept twice: the nightly consolidation checks the pairs no near-duplicate check could see, before writing the diary
+  (WORK_PLAN 5.3; migration `EpisodeResolvedAt1791120000000`; the consolidation summary counts `duplicates`).
 
 ## [0.2.0] — 2026-10-10
 

@@ -389,7 +389,8 @@ joined_at` — fonte dell'`audience` di ogni riga (registrata; dal D50 nessuna l
 | `confirmed_by` | uuid null → episodes (`SET NULL`) | |
 | `corrects` | uuid null → episodes (`SET NULL`) | Questa riga corregge una precedente |
 | `invalidated_at` | timestamptz null | **Solo per le correzioni**: impostato sulla riga che era sbagliata |
-| `duplicate_of` | uuid null → episodes (`SET NULL`) | Collegamento di dedup del consolidamento (stesso evento in più chat); i duplicati sono nascosti dal recall |
+| `duplicate_of` | uuid null → episodes (`SET NULL`) | Collegamento di dedup (stesso evento in più chat; il controllo dei quasi-duplicati all'estrazione e il passaggio notturno); i duplicati sono nascosti dal recall |
+| `resolved_at` | timestamptz null | Quando il controllo dei quasi-duplicati lo ha guardato l'ultima volta (null: mai — `log_episode`, una correzione, un controllo fallito); il passaggio notturno chiede solo delle coppie che nessun controllo poteva vedere (WORK_PLAN 5.3) |
 | `linked_notes` | text[] | Riferimenti esterni a note semantiche (id A-MEM finché vive nel client — D19, D31) |
 | *soggetto* | | `subject_kind` enum `self \| contact \| someone \| undecided` (default `self`), `subject_person_id` uuid null → persons (`SET NULL`), `subject_candidates` uuid[] (i contatti candidati di una riga `undecided`) — di chi è il ricordo (D50, regole in "Memoria dell'agente"); le stesse tre colonne su fatti e note |
 | `access_count`, `last_accessed_at` | int, timestamptz | Solo ranking |

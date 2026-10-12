@@ -52,7 +52,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     llm.queue.push({ summary: 'Il 14 ho cenato con Marco.' }, { summary: 'Il 15 ho giocato a calcetto; Giulia ha vinto la gara.' },
       { summary: 'Marzo: cena con Marco, calcetto.' });
     const before = llm.requests.length;
-    expect((await consolidate()).body).toEqual({ days: 2, months: 1, superseded: 0, llmCalls: 3, failed: 0, facts: 0, leaks: 0 });
+    expect((await consolidate()).body).toEqual({ days: 2, months: 1, superseded: 0, llmCalls: 3, failed: 0, facts: 0, leaks: 0, duplicates: 0 });
     expect(await current()).toEqual([
       { level: 'day', day: '2026-03-14', content: 'Il 14 ho cenato con Marco.' },
       { level: 'day', day: '2026-03-15', content: 'Il 15 ho giocato a calcetto; Giulia ha vinto la gara.' },
@@ -69,7 +69,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     expect((await db.query(`SELECT prompt_version, summary FROM extraction_runs WHERE memory_id = $1 AND kind = 'consolidation'`, [memoryId]))[0])
       .toMatchObject({ prompt_version: 'digest.day.v2', summary: { days: 2, months: 1, leaks: 0 } });
 
-    expect((await consolidate()).body).toEqual({ days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0 });
+    expect((await consolidate()).body).toEqual({ days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0 });
 
     // Forgetting an episode supersedes the digests built on it; the next night rewrites the month from what is left.
     const { client } = await connectMemory();
@@ -77,7 +77,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     await client.close();
     expect((await current()).map((d: { day: string }) => d.day)).toEqual(['2026-03-15']);
     llm.queue.push({ summary: 'A marzo Luca ha giocato a calcetto.' }); // the self named in the third person: counted
-    expect((await consolidate()).body).toEqual({ days: 0, months: 1, superseded: 0, llmCalls: 1, failed: 0, facts: 0, leaks: 1 });
+    expect((await consolidate()).body).toEqual({ days: 0, months: 1, superseded: 0, llmCalls: 1, failed: 0, facts: 0, leaks: 1, duplicates: 0 });
   });
 
   it('skips a digest whose call fails and retries it at the next consolidation', async () => {
