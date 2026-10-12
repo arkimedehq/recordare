@@ -30,7 +30,7 @@ describe('nightly near-duplicate pass: only the pairs no check could see (WORK_P
     llm = await startFakeLlm();
     const fake = await startFakeEmbeddings();
     emb = fake.server;
-    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url });
+    testEnv({ EMBEDDING_BASE_URL: fake.url, LLM_BASE_URL: llm.url, PATTERNS: 'false' }); // the pattern pass is tested on its own
     await resetSchema();
     let url: string;
     ({ app, url } = await startApp());

@@ -69,7 +69,7 @@ interface FactRow {
   pending: boolean; stance: string; author_role: string; about: string | null;
 }
 interface NoteRow {
-  id: string; category: string; content: string; pinned: boolean; pending: boolean; stance: string; author_role: string;
+  id: string; category: string; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; author_role: string;
   support_count: number; recorded_at: Date;
 }
 
@@ -247,11 +247,11 @@ export class ReadService {
       query.pinned !== undefined ? `AND pinned = $${params.push(query.pinned)}` : '',
     ].join(' ');
     const rows: NoteRow[] = await this.db.query(
-      `SELECT id, category, content, pinned, pending, stance, author_role, support_count, recorded_at FROM notes
+      `SELECT id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, support_count, recorded_at FROM notes
        WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($2::boolean OR NOT pending) ${extra}
        ORDER BY pinned DESC, recorded_at DESC`, params);
     return rows.map((r) => ({ id: r.id, category: r.category, content: r.content, pinned: r.pinned, pending: r.pending,
-      inferred: r.stance === 'inferred', authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString() }));
+      inferred: r.stance === 'inferred', pattern: r.pattern, authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString() }));
   }
 
   /** Plans, soonest first (open and unresolved by default). */

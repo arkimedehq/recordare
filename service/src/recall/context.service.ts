@@ -106,8 +106,8 @@ export class ContextService {
        WHERE f.memory_id = $1 AND f.status = 'current' AND NOT f.pending AND f.deleted_at IS NULL AND f.embedding IS NOT NULL
          AND ${sim('f.embedding')} >= ${at(0)}
        ORDER BY ${sim('f.embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_FACTS]);
-    const notes: Array<{ content: string; about: string | null }> = await this.db.query(
-      `SELECT content, (SELECT display_name FROM persons WHERE id = notes.subject_person_id) AS about FROM notes
+    const notes: Array<{ content: string; about: string | null; pattern: boolean }> = await this.db.query(
+      `SELECT content, 'pattern' = ANY(tags) AS pattern, (SELECT display_name FROM persons WHERE id = notes.subject_person_id) AS about FROM notes
        WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND embedding IS NOT NULL
          AND ${sim('embedding')} >= ${at(0)}
        ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_NOTES]);
@@ -139,7 +139,8 @@ export class ContextService {
     for (const f of facts) {
       lines.push(`- fact: ${f.about ? `[${f.about}] ` : ''}${f.key.replace(/_/g, ' ')} = ${f.value}${f.valid_from ? ` (since ${day(f.valid_from)})` : ''}`);
     }
-    for (const n of notes) lines.push(`- note: ${whose(n.about)}${n.content}`);
+    // A recurring pattern is the memory's own conclusion (WORK_PLAN 5.4), not something said: labelled so.
+    for (const n of notes) lines.push(`- ${n.pattern ? 'pattern I noticed' : 'note'}: ${whose(n.about)}${n.content}`);
     for (const p of plans) lines.push(`- plan: ${p.content} (${when(p.occurred_at, p.date_precision, tz, memory.locale)})`);
     for (const e of episodes) lines.push(`- episode: ${whose(e.about)}${e.content} (${when(e.occurred_at, e.date_precision, tz, memory.locale)})`);
     // One passage of what I learned, when clearly about the message (its text, not a memory of what happened).

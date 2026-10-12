@@ -115,6 +115,7 @@ come stringhe "Nome (relazione)" (`episode_people.alias`), che il recall consape
 | `locale`, `timezone` | text | Default `it`, `Europe/Rome`; l'API admin accetta `it` / `en`. La lingua formatta solo le date e gli avvisi del recall: gli aiuti linguistici deterministici (periodi, mesi, parentele, sostituti del sé per il rilevatore di fughe — `service/src/lang`, le 25 lingue più usate) applicano tutte le lingue insieme |
 | `consolidated_at` | timestamptz null | Ultimo consolidamento notturno (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark della revisione notturna dei fatti (WORK_PLAN 5.6, sull'orologio di registrazione) |
+| `patterns_upto` | timestamptz null | Watermark del passaggio notturno dei pattern (WORK_PLAN 5.4, sull'orologio di registrazione) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = default dell'installazione (`QUALITY_PROFILE`) |
 | `mode` | enum `personal \| entity`, default `personal` | D50: `personal` — ciò che arriva senza identità dichiarata è del sé della memoria (il titolare dell'account è l'"io"); `entity` (D48) — un dispositivo condiviso, un robot o un luogo: ciò che arriva non dichiarato è di "qualcuno". Il client lo cambia solo finché la memoria è vuota (`PATCH api/v1/me`), l'admin in qualsiasi momento |
 | `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | La prima persona nelle lingue con genere (D50; usato dall'8.4 del WORK_PLAN) |
@@ -418,10 +419,14 @@ patch tipizzate; transizioni nel codice (D29). Come costruito, `unresolved` è c
 confermato è mostrato come unresolved); nessun job lo scrive e la patch `expire` non è usata. Le patch richiedono evidenza su
 quel piano (D37).
 
-### episode_promotions (D20) — created, unused yet (WORK_PLAN 5.4)
-`id, memory_id, pattern text, episode_ids uuid[], proposed_note_ref text null, status enum
-(proposed|confirmed|rejected), created_at, updated_at` — pattern ricorrenti proposti come
-note semantiche; esposti ai client come proposte in sospeso (D26).
+### episode_promotions (D20, D26) — costruita il 2026-10-12 (WORK_PLAN 5.4, migrazione `Patterns1791130000000`)
+`id, memory_id, note_id uuid null → notes (SET NULL), pattern text, episode_ids uuid[], subject_person_id null,
+status enum (active|retired|forgotten), created_at, updated_at` — il registro dei pattern ricorrenti che la memoria ha
+dedotto da sola (passaggio notturno dei pattern, opzione `patterns` del profilo di qualità). Ognuno è una nota della
+memoria (`stance` inferred, mai `pending`, `tags` `{pattern}`, prove = gli episodi, fiducia 0,7 con tre o quattro
+episodi, 0,85 da cinque); `retired` quando ha smesso di valere (o è stato sostituito da una nuova forma, o la sua nota è
+stata sostituita / corretta), `forgotten` quando la sua nota è stata cancellata — mai più dedotto dagli stessi episodi
+(ne servono almeno due altri). Un pattern rimasto con meno di tre dei suoi episodi viene eliminato con la sua nota.
 
 ## Layer 2 — digest
 
@@ -492,17 +497,18 @@ Note semantiche: chi è il sé della memoria, oltre gli slot di stato.
 | `status` | enum `current \| superseded \| corrected` | Cronologia conservata, mai riscritta |
 | `supersedes`, `corrects` | uuid null → notes (`SET NULL`) | |
 | `support_count` | int | Riaffermazioni contate |
-| `pending` | bool | Le note inferite attendono conferma; escluse dal recall salvo richiesta |
+| `pending` | bool | Le note inferite attendono conferma; escluse dal recall salvo richiesta. I pattern ricorrenti (5.4) sono inferiti ma mai in attesa: il recall li etichetta |
 | *time* | | `valid_from`, `recorded_at` |
 | *provenance*, *disclosure*, *embedding* | | |
 | `deleted_at` | timestamptz null | |
 
 `note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`;
 `note_changes(seq bigserial, memory_id, note_id uuid, change enum (created|updated|corrected|
-confirmed|forgotten), at)` — il change feed che i client usano per tenere allineate le copie (le note dimenticate sono
-eliminate, il feed conserva solo il loro id). Come costruito l'estrazione scrive `created` / `updated` / `corrected` e
-`remember` scrive `created`; cancellare, confermare o rifiutare una nota dall'API di lettura (`API.md` §4) non scrive
-alcuna voce, e la rotta del feed (`GET api/v1/notes/changes`) non è ancora costruita.
+confirmed|forgotten|retired), at)` — il change feed che i client usano per tenere allineate le copie (le note dimenticate
+sono eliminate, il feed conserva solo il loro id). Come costruito l'estrazione scrive `created` / `updated` /
+`corrected`, `remember` scrive `created`, il passaggio dei pattern `created` / `updated` / `retired` (un pattern che ha
+smesso di valere) / `forgotten`; cancellare o rifiutare una nota (API di lettura, `API.md` §4, o oblio) scrive
+`forgotten`, confermarla non scrive alcuna voce, e la rotta del feed (`GET api/v1/notes/changes`) non è ancora costruita.
 
 ## Fonti apprese (D49, WORK_PLAN 8.9) — costruite il 2026-10-10 (migrazione `Sources1791090000000`)
 

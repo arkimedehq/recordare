@@ -10,6 +10,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - **Forget a period**: `POST api/v1/forget {from, to, keepRaw?}` (client `forgetPeriod`) forgets the episodes that took
   place in it and the raw messages sent in it (`keepRaw`: kept but hidden and never extracted again), with what only
   they supported; returns how much went (WORK_PLAN 5.5).
+- **Recurring patterns** (WORK_PLAN 5.4, D26): the nightly consolidation draws the habits that show in the episodes of
+  the last months ("I run at the park on Saturday mornings") and keeps them as the memory's own notes — inferred, never
+  pending, nobody confirms them — backed by at least three episodes on different days; it strengthens, updates and
+  retires them on its own, and a forgotten one does not come back from the same episodes. Notes carry `pattern`
+  (`GET api/v1/notes`, `search_memory`; client `Note.pattern`); the memory context labels them. Quality-profile knob
+  `patterns` (on in balanced / full; `PATTERNS` overrides it), LLM task `patterns` (`LLM_PATTERNS_*`), admin
+  `POST api/v1/admin/memories/:id/patterns`; migration `Patterns1791130000000` (`episode_promotions` rebuilt,
+  `memories.patterns_upto`, note change `retired`). Dev set: 20 of 21 habits, no false pattern (3 runs).
 
 ### Changed
 - Extraction prompt `extract.v14` (both modes, WORK_PLAN 8.11): the agent's own slips are stored in the first person
@@ -56,7 +64,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   person's own.
 - The same event told in two conversations extracted at the same time, or logged with `log_episode`, is no longer
   kept twice: the nightly consolidation checks the pairs no near-duplicate check could see, before writing the diary
-  (WORK_PLAN 5.3; migration `EpisodeResolvedAt1791120000000`; the consolidation summary counts `duplicates`).
+  (WORK_PLAN 5.3; migration `EpisodeResolvedAt1791120000000`; the consolidation summary counts `duplicates`). When
+  both tellings were never checked, the later recorded one is the one that may be hidden (it was decided by id order).
 
 ## [0.2.0] — 2026-10-10
 

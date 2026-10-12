@@ -4,7 +4,7 @@ Status: **implemented** (2026-10-07) in `service/` — raw log, episodes, plans,
 explicit writes and forgetting of one episode; open items per milestone in `WORK_PLAN.md` (M5 partial, M6 in
 progress). Update (2026-10-08): **released as v0.1.0** (public, private profile — D33), with the read API for the
 diary, the pre-turn memory context, the client library and connectors; open: nightly sweep of pending messages
-(D1), forgetting a period (D16), pattern promotions (D20 / D26), the notes change-feed endpoint (D34) — WORK_PLAN M4–M7. Engine evaluation (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D)
+(D1), forgetting a period (D16), pattern promotions (D20 / D26), the notes change-feed endpoint (D34) (2026-10-12: the first three built) — WORK_PLAN M4–M7. Engine evaluation (`spikes/memory-eval/RESULTS.md`, round 2 + held-out): a prototype of this design (D)
 beat Memobase, Graphiti and the raw baseline; D23 (approved) builds it. Decisions taken while building: D36–D48.
 
 This is **phase 1** of the digital twin vision (`DIGITAL_TWIN_VISION.md`): episodic
@@ -125,7 +125,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   - writes a **daily digest** (Layer 2); weekly/monthly digests roll up from daily;
   - links episodes to related semantic notes / earlier episodes;
   - detects **recurring patterns** ("skied 4 weekends this winter") and proposes them
-    as semantic notes — always `pending`, never auto-confirmed (existing A-MEM rule);
+    as semantic notes — always `pending`, never auto-confirmed (existing A-MEM rule; **revised 2026-10-12, D26**: the
+    memory keeps them as its own inferred notes, nobody confirms them — see D20);
   - dedups the same event mentioned in several chats (link, not rewrite).
 - Max one pass, no cascades (same constraint as A-MEM evolution).
 
@@ -199,7 +200,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D9 — Extracted episodes are auto-confirmed (2026-10-01)
 - Stored immediately, visible / editable / deletable in the timeline. Never
   auto-injected, so a wrong episode only surfaces when explicitly asked.
-- Promotions of recurring patterns to semantic notes stay `pending` (A-MEM rule).
+- Promotions of recurring patterns to semantic notes stay `pending` (A-MEM rule). *Revised 2026-10-12 (D26)*: they
+  are the memory's own conclusions — inferred, never pending (see D20).
 
 ### D10 — A past plan stays a plan unless confirmed (2026-10-01)
 - `kind='plan'` + `validUntil`. When the date passes, consolidation does **not**
@@ -284,6 +286,12 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   implementation).
 - `user_memory` only receives the `pending` note insert, via the same path as
   automatic extraction (origin label "from diary"). No dedicated promotions UI in v1.
+- **Revised 2026-10-12 (D26 decided by the maintainer: "the memory must be autonomous"; WORK_PLAN 5.4 built)**: no
+  proposals, no confirmation. The nightly pattern pass writes a pattern as a note of the memory itself (inferred, never
+  pending, labelled in recall), backed by at least three episodes on different days of one subject, and keeps, updates
+  or retires it on its own as new episodes come. `episode_promotions` is the register: `active | retired | forgotten`;
+  a pattern whose note is deleted is `forgotten` and is not drawn again unless at least two episodes it did not come
+  from back it. The client decides nothing (it may only forget, as for everything).
 
 ### D21 — Episodes capture emotions and opinions (2026-10-01)
 - Driven by the digital twin goal: "great day", "the hut was disappointing" are part
@@ -416,7 +424,8 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   and default disclosure (`DATA_MODEL.md` → fact_slots).
 - Durable preferences and free-form semantic notes stay in the client's semantic memory (A-MEM in
   Arkimede) until the A-MEM migration — no second, competing note store. Episodes link to notes by
-  external ref (`linked_notes`, D19); promotions go to the client as proposals (D20, D26).
+  external ref (`linked_notes`, D19); promotions go to the client as proposals (D20, D26). *Superseded*: Recordare
+  holds its own notes (D34) and its own recurring patterns (D26, 2026-10-12).
 
 ### D32 — One extraction call per window (amends D2) (2026-10-03)
 - One engine call per idle window extracts episodes, plan patches and fact candidates (as the D
@@ -674,7 +683,7 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   `mergeContacts`), "no" keeps them apart. Several namesakes: no question. Replaces 8.4's name-only binding.
 ## Open questions (to discuss)
 
-None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 still open, with WORK_PLAN 5.4). Open work is tracked
+None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 decided 2026-10-12 with WORK_PLAN 5.4). Open work is tracked
 in `WORK_PLAN.md`.
 
 ## Non-goals (for now)
@@ -683,8 +692,8 @@ in `WORK_PLAN.md`.
 - Rewriting episodes on recall (no reconsolidation).
 - Diary export (JSON / Markdown) — later.
 - Dedicated UI for consolidation pattern promotions (panel with supporting episodes,
-  "don't propose again"): in v1 they appear as ordinary `pending` notes in the
-  existing Memory list with an origin label; re-proposal handled by D20.
+  "don't propose again"): in v1 they appear as ordinary notes (`pattern: true`, inferred) in the
+  existing Memory list; forgetting one stops it coming back (D20, revised 2026-10-12).
 - Recall boost of linked semantic notes (D19) — v2.
 
 ## Regression checklist (when implementing)

@@ -1,0 +1,1032 @@
+{
+ "_note": "dev_patterns (WORK_PLAN 5.4): recurring patterns — true habits shown by repeated episodes, and traps. Fictional.",
+ "users": {
+  "giulia": "Giulia, Torino",
+  "marco": "Marco, Torino",
+  "sara": "Sara, Bologna",
+  "tom": "Tom, Bristol",
+  "elena": "Elena, Padova",
+  "luis": "Luis, Valencia",
+  "casa_neri": "Casa Neri, Torino"
+ },
+ "genders": {
+  "giulia": "feminine",
+  "marco": "masculine",
+  "sara": "feminine",
+  "tom": "masculine",
+  "elena": "feminine",
+  "luis": "masculine"
+ },
+ "entities": [
+  "casa_neri"
+ ],
+ "sessions": [
+  {
+   "id": "sara-2026-07-03-2000",
+   "user": "sara",
+   "ts": "2026-07-03T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il venerdì sera ordino sempre la pizza, è il mio piccolo rito di fine settimana."
+    },
+    {
+     "role": "assistant",
+     "content": "Un rito sacrosanto!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-07-04-0900",
+   "user": "casa_neri",
+   "ts": "2026-07-04T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paolo, sto andando al mercato di piazza Madama: ricordami di prendere le pesche."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-07-06-2130",
+   "user": "marco",
+   "ts": "2026-07-06T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Devo assolutamente iniziare a nuotare, la schiena me lo chiede."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando vuoi ti aiuto a trovare una piscina."
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-07-08-2100",
+   "user": "tom",
+   "ts": "2026-07-08T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Just got back from walking Biscuit along the river, beautiful sunset."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds lovely!"
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-07-08-2130",
+   "user": "elena",
+   "ts": "2026-07-08T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera piscina, 40 vasche a stile libero."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-07-09-1900",
+   "user": "casa_neri",
+   "ts": "2026-07-09T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Anna, ho annaffiato le piante del balcone."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie, segnato."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-07-11-1230",
+   "user": "giulia",
+   "ts": "2026-07-11T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina sono andata a correre al parco del Valentino, 7 km. Che caldo!"
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, brava!"
+    }
+   ]
+  },
+  {
+   "id": "luis-2026-07-12-1700",
+   "user": "luis",
+   "ts": "2026-07-12T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hoy cociné paella para toda la familia, salió buenísima."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué rico!"
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-07-13-1900",
+   "user": "tom",
+   "ts": "2026-07-13T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Went to the gym today for the first time in ages, everything hurts."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like you hit the gym every Monday! Keep it up."
+    },
+    {
+     "role": "user",
+     "content": "Ha, let's see if I survive this one."
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-07-14-2200",
+   "user": "sara",
+   "ts": "2026-07-14T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Partita a padel con Chiara stasera, ho perso 6-3 6-4."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella partita!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-07-15-2300",
+   "user": "giulia",
+   "ts": "2026-07-15T23:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cena in pizzeria con i colleghi stasera, siamo stati benissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-07-17-2100",
+   "user": "sara",
+   "ts": "2026-07-17T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera pizza margherita dal solito posto sotto casa."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon appetito!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-07-18-0900",
+   "user": "casa_neri",
+   "ts": "2026-07-18T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paolo, vado al mercato di piazza Madama come sempre, serve qualcosa?"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-07-18-2330",
+   "user": "marco",
+   "ts": "2026-07-18T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera concerto dei Subsonica al Parco Dora, pazzesco."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-07-19-2100",
+   "user": "giulia",
+   "ts": "2026-07-19T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho appena sentito mia mamma al telefono, mi ha raccontato del suo orto: pomodori ovunque."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi fa piacere sentirlo."
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-07-22-2100",
+   "user": "tom",
+   "ts": "2026-07-22T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Evening walk with Biscuit by the river, he chased a duck again."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds lovely!"
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-07-22-2130",
+   "user": "elena",
+   "ts": "2026-07-22T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Piscina dopo il lavoro, oggi 50 vasche."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-07-23-1900",
+   "user": "casa_neri",
+   "ts": "2026-07-23T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Luca, ho dato l'acqua alle piante del balcone."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie, segnato."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-07-25-1230",
+   "user": "giulia",
+   "ts": "2026-07-25T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa al Valentino stamattina presto, poi colazione al bar del parco."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, brava!"
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-07-27-2130",
+   "user": "marco",
+   "ts": "2026-07-27T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ancora non ho iniziato con il nuoto, prima o poi mi iscrivo in piscina."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando vuoi ti aiuto a trovare una piscina."
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-07-28-2200",
+   "user": "sara",
+   "ts": "2026-07-28T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Padel con Chiara dopo il lavoro, stavolta ho vinto io!"
+    },
+    {
+     "role": "assistant",
+     "content": "Bella partita!"
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-07-30-1300",
+   "user": "elena",
+   "ts": "2026-07-30T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pranzo con mia sorella in centro."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    }
+   ]
+  },
+  {
+   "id": "luis-2026-07-30-2330",
+   "user": "luis",
+   "ts": "2026-07-30T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Esta noche fui a un concierto de Rosalía, increíble."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué suerte!"
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-07-31-2100",
+   "user": "sara",
+   "ts": "2026-07-31T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera pizza margherita dal solito posto sotto casa."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon appetito!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-08-01-0900",
+   "user": "casa_neri",
+   "ts": "2026-08-01T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ciao, sono Paolo. Esco per il mercato, prendo il pane e il formaggio."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "luis-2026-08-02-1700",
+   "user": "luis",
+   "ts": "2026-08-02T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Paella de mariscos hoy para mis padres y mis hermanos."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué rico!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-03-1900",
+   "user": "giulia",
+   "ts": "2026-08-03T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giornata pesante, ho consegnato il progetto del cliente di Milano."
+    },
+    {
+     "role": "assistant",
+     "content": "Finalmente consegnato!"
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-08-05-2100",
+   "user": "tom",
+   "ts": "2026-08-05T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Took Biscuit for his walk along the river after dinner."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds lovely!"
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-08-05-2130",
+   "user": "elena",
+   "ts": "2026-08-05T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera nuoto in piscina comunale, quasi vuota per le ferie."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-08-1230",
+   "user": "giulia",
+   "ts": "2026-08-08T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatti 8 km al Valentino stamattina, nuovo record sul giro lungo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, brava!"
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-08-10-2000",
+   "user": "marco",
+   "ts": "2026-08-10T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Primo giorno a Roma: stamattina Musei Vaticani, la Cappella Sistina è incredibile."
+    },
+    {
+     "role": "assistant",
+     "content": "Che viaggio!"
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-08-11-2000",
+   "user": "marco",
+   "ts": "2026-08-11T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi a Roma Galleria Borghese, i Bernini dal vivo sono un'altra cosa."
+    },
+    {
+     "role": "assistant",
+     "content": "Che viaggio!"
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-08-11-2200",
+   "user": "sara",
+   "ts": "2026-08-11T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera padel con Chiara al circolo, faceva un caldo assurdo."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella partita!"
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-08-12-2000",
+   "user": "marco",
+   "ts": "2026-08-12T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ultimo giorno a Roma: Musei Capitolini e poi treno per Torino."
+    },
+    {
+     "role": "assistant",
+     "content": "Che viaggio!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-08-13-1900",
+   "user": "casa_neri",
+   "ts": "2026-08-13T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paolo, ho annaffiato le piante del balcone, erano secchissime."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie, segnato."
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-08-15-1800",
+   "user": "sara",
+   "ts": "2026-08-15T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ferragosto al lago con la famiglia."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-16-2100",
+   "user": "giulia",
+   "ts": "2026-08-16T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Telefonata con mia mamma stasera, è tornata dal mare con mia zia."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi fa piacere sentirlo."
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-08-17-2000",
+   "user": "tom",
+   "ts": "2026-08-17T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Long day at work."
+    },
+    {
+     "role": "assistant",
+     "content": "Another Monday at the gym, I guess?"
+    },
+    {
+     "role": "user",
+     "content": "No, just work, too tired."
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-08-19-2130",
+   "user": "elena",
+   "ts": "2026-08-19T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Piscina stasera, ho provato anche un po' di dorso."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-08-20-0900",
+   "user": "tom",
+   "ts": "2026-08-20T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "What's on my calendar this week?"
+    },
+    {
+     "role": "tool",
+     "tool": "calendar",
+     "content": "Thu 18:00 Yoga class (recurring weekly)\nFri 12:30 Lunch with Dan"
+    },
+    {
+     "role": "assistant",
+     "content": "You have your weekly yoga class on Thursday at 18:00 and lunch with Dan on Friday."
+    },
+    {
+     "role": "user",
+     "content": "Thanks."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-22-1230",
+   "user": "giulia",
+   "ts": "2026-08-22T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina corsa al parco del Valentino con le cuffie nuove, comodissime."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, brava!"
+    }
+   ]
+  },
+  {
+   "id": "luis-2026-08-23-1700",
+   "user": "luis",
+   "ts": "2026-08-23T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hoy otra vez paella para la familia, mi sobrino repitió dos veces."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué rico!"
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-08-26-2100",
+   "user": "tom",
+   "ts": "2026-08-26T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "River walk with Biscuit tonight, it was finally cooler."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds lovely!"
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-08-28-2100",
+   "user": "sara",
+   "ts": "2026-08-28T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera pizza margherita dal solito posto sotto casa."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon appetito!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-08-29-0900",
+   "user": "casa_neri",
+   "ts": "2026-08-29T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paolo, torno adesso dal mercato di piazza Madama: ho preso le zucchine."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-01-1930",
+   "user": "marco",
+   "ts": "2026-09-01T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi hanno promosso responsabile del reparto! Non ci credo."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti ancora!"
+    }
+   ]
+  },
+  {
+   "id": "luis-2026-09-02-1400",
+   "user": "luis",
+   "ts": "2026-09-02T14:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tuve la entrevista de trabajo esta mañana, creo que fue bien."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Mucha suerte!"
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-02-1930",
+   "user": "marco",
+   "ts": "2026-09-02T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ancora euforico per la promozione di ieri, oggi tutti i colleghi a congratularsi."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti ancora!"
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-09-03-1800",
+   "user": "tom",
+   "ts": "2026-09-03T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Booked the car service for next Tuesday."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-03-1930",
+   "user": "marco",
+   "ts": "2026-09-03T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho raccontato della promozione ai miei genitori, mio padre era commosso."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti ancora!"
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-09-03-2000",
+   "user": "elena",
+   "ts": "2026-09-03T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho smesso di andare in piscina: hanno chiuso la piscina comunale per lavori fino all'anno prossimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato! Magari trovi un'alternativa."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-04-2200",
+   "user": "marco",
+   "ts": "2026-09-04T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prima volta in un ristorante di sushi, devo dire che mi è piaciuto."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, una scoperta!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-05-1230",
+   "user": "giulia",
+   "ts": "2026-09-05T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Al Valentino stamattina c'era la nebbia, ma ho corso lo stesso 6 km."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, brava!"
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-09-08-2200",
+   "user": "sara",
+   "ts": "2026-09-08T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ripreso il padel con Chiara dopo le ferie, sono arrugginita."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella partita!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-09-1800",
+   "user": "giulia",
+   "ts": "2026-09-09T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono stata dal dentista, otturazione fatta."
+    },
+    {
+     "role": "assistant",
+     "content": "Tutto bene allora."
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-09-10-2130",
+   "user": "elena",
+   "ts": "2026-09-10T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prima lezione di yoga in palestra stasera, mi è piaciuta molto."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-13-2100",
+   "user": "giulia",
+   "ts": "2026-09-13T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho chiamato mia mamma, le fa ancora male il ginocchio. Domani le prenoto la visita."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi fa piacere sentirlo."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-14-2130",
+   "user": "marco",
+   "ts": "2026-09-14T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Settembre è il mese giusto per iniziare a nuotare, dico io. Vedremo."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando vuoi ti aiuto a trovare una piscina."
+    }
+   ]
+  },
+  {
+   "id": "tom-2026-09-16-2100",
+   "user": "tom",
+   "ts": "2026-09-16T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Walked Biscuit down by the river, met our neighbour Priya with her dog."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds lovely!"
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-09-17-2130",
+   "user": "elena",
+   "ts": "2026-09-17T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Yoga stasera in palestra, ancora rigida ma meglio."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-19-1230",
+   "user": "giulia",
+   "ts": "2026-09-19T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina 9 km di corsa al Valentino, mi preparo per la mezza di novembre."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, brava!"
+    }
+   ]
+  },
+  {
+   "id": "luis-2026-09-20-1700",
+   "user": "luis",
+   "ts": "2026-09-20T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hice paella valenciana hoy para todos en casa de mis padres."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué rico!"
+    }
+   ]
+  },
+  {
+   "id": "sara-2026-09-22-2200",
+   "user": "sara",
+   "ts": "2026-09-22T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Padel con Chiara stasera, abbiamo giocato anche il doppio con due amici suoi."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella partita!"
+    }
+   ]
+  },
+  {
+   "id": "elena-2026-09-24-2130",
+   "user": "elena",
+   "ts": "2026-09-24T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lezione di yoga stasera, l'insegnante ci ha fatto fare il saluto al sole."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    }
+   ]
+  },
+  {
+   "id": "casa_neri-2026-09-26-0900",
+   "user": "casa_neri",
+   "ts": "2026-09-26T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Paolo qui, sto andando al mercato: segna che il latte è finito."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Paolo."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-27-2100",
+   "user": "giulia",
+   "ts": "2026-09-27T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sentita mia mamma stasera: ha finalmente fatto la visita al ginocchio, niente di grave."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi fa piacere sentirlo."
+    }
+   ]
+  }
+ ]
+}

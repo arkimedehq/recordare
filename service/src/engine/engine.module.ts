@@ -6,10 +6,11 @@ import { EXTRACTION_RUNNER } from '../queue/queue.port';
 import { EngineExtractionRunner } from './extraction.runner';
 import { ConsolidationService } from './consolidation.service';
 import { FactsReviewService } from './facts-review.service';
+import { PatternsService } from './patterns.service';
 
 @Global()
 @Module({
-  providers: [{ provide: EXTRACTION_RUNNER, useClass: EngineExtractionRunner }, ConsolidationService, FactsReviewService],
+  providers: [{ provide: EXTRACTION_RUNNER, useClass: EngineExtractionRunner }, ConsolidationService, FactsReviewService, PatternsService],
   exports: [EXTRACTION_RUNNER, ConsolidationService],
 })
 export class EngineModule {}

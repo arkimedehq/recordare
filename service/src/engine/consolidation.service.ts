@@ -25,6 +25,8 @@ import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { FactsReviewService } from './facts-review.service';
 import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
+import { PatternsService } from './patterns.service';
+import { PATTERNS_VERSION } from './patterns.prompt';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
 import { resolveNearDuplicates } from './episode-resolver';
 import { expireClarifications } from './clarifications';
@@ -41,6 +43,8 @@ interface DigestRow { id: string; level: 'day' | 'month'; period_start: string; 
 export interface ConsolidationReport { days: number; months: number; superseded: number; llmCalls: number; failed: number; facts: number;
   /** Episodes linked by the nightly near-duplicate pass (hidden duplicates, corrections). */
   duplicates: number;
+  /** Recurring patterns written (new or updated) and retired by the nightly pattern pass (5.4). */
+  patterns: number;
   /** Digests still naming the self in the third person (counts only, like the extraction's). */
   leaks: number }
 
@@ -57,12 +61,13 @@ export class ConsolidationService {
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly telemetry: TelemetryService,
     private readonly factsReview: FactsReviewService,
+    private readonly patterns: PatternsService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
   /** Consolidate every complete day (in the memory's timezone) before `now`. Idempotent; one run per memory at a time. */
   async consolidateMemory(memoryId: string, now: Date): Promise<ConsolidationReport> {
-    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0 };
+    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0, patterns: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
@@ -101,7 +106,7 @@ export class ConsolidationService {
     const ctx = { memoryId, runId: run.id as string };
     try {
       const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
-        undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }));
+        undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }), this.config.get('PATTERNS', { infer: true }));
       // Same event told twice where no check could see both (5.3): resolved before the diary is written from them.
       report.duplicates = await this.resolveUnseen(memoryId, ctx, profile, report);
       const episodes: EpisodeRow[] = await this.db.query(
@@ -176,9 +181,14 @@ export class ConsolidationService {
         const r = await this.factsReview.review(memoryId, now, ctx.runId);
         report.facts += r.changed; report.llmCalls += r.calls; report.failed += r.failed;
       }
+      // Recurring patterns: the memory's own conclusions from the episodes of the last months (quality-profile knob).
+      if (profile.patterns) {
+        const r = await this.patterns.review(memoryId, now, ctx.runId);
+        report.patterns += r.written + r.retired; report.llmCalls += r.calls; report.failed += r.failed;
+      }
       await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), summary = $2 WHERE id = $1`, [ctx.runId,
         { days: report.days, months: report.months, superseded: report.superseded, failed: report.failed, facts: report.facts, leaks: report.leaks,
-          duplicates: report.duplicates }]);
+          duplicates: report.duplicates, patterns: report.patterns }]);
       await this.db.query(`UPDATE memories SET consolidated_at = $2 WHERE person_id = $1`, [memoryId, now]);
       this.telemetry.emit({ type: 'consolidation.finished', memoryId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
     } catch (err) {
@@ -192,16 +202,28 @@ export class ConsolidationService {
    * profile asks for it). Same lock as the consolidation: never two at once for one memory.
    */
   async reviewFactsNow(memoryId: string, now: Date): Promise<{ calls: number; changed: number; failed: number }> {
+    return (await this.alone(memoryId, now, 'task:facts', FACTS_REVIEW_VERSION, (runId) => this.factsReview.review(memoryId, now, runId)))
+      ?? { calls: 0, changed: 0, failed: 0 };
+  }
+
+  /** The pattern pass alone, now (operators and evaluations), whatever the profile says. */
+  async patternsNow(memoryId: string, now: Date): Promise<{ calls: number; written: number; retired: number; failed: number }> {
+    return (await this.alone(memoryId, now, 'task:patterns', PATTERNS_VERSION, (runId) => this.patterns.review(memoryId, now, runId)))
+      ?? { calls: 0, written: 0, retired: 0, failed: 0 };
+  }
+
+  /** One nightly step on its own run, under the consolidation's lock (null: a consolidation of this memory is running). */
+  private async alone<T>(memoryId: string, now: Date, model: string, version: string, step: (runId: string) => Promise<T>): Promise<T | null> {
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
       const [{ locked }] = await runner.query(`SELECT pg_try_advisory_lock(hashtextextended($1, 11)) AS locked`, [memoryId]);
-      if (!locked) return { calls: 0, changed: 0, failed: 0 };
+      if (!locked) return null;
       try {
         const [run] = await this.db.query(
-          `INSERT INTO extraction_runs (memory_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, 'task:facts', 'configured', $3) RETURNING id`,
-          [memoryId, now, FACTS_REVIEW_VERSION]);
-        const r = await this.telemetry.track('consolidation', memoryId, () => this.factsReview.review(memoryId, now, run.id));
+          `INSERT INTO extraction_runs (memory_id, kind, window_to, model, provider, prompt_version) VALUES ($1, 'consolidation', $2, $3, 'configured', $4) RETURNING id`,
+          [memoryId, now, model, version]);
+        const r = await this.telemetry.track('consolidation', memoryId, () => step(run.id));
         await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now() WHERE id = $1`, [run.id]);
         return r;
       } finally {

@@ -62,6 +62,8 @@ const baseSchema = z.object({
   CONTEXT_MIN_PASSAGE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
+  /** Installation override of the quality profile's nightly pattern pass (WORK_PLAN 5.4). */
+  PATTERNS: bool.optional(),
   /** Local hour (memory's timezone) after which the nightly consolidation runs (M5). */
   CONSOLIDATION_HOUR: z.coerce.number().int().min(0).max(23).default(3),
   /** Installation default quality profile (D35); memories may override it. */

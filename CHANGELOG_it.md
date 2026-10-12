@@ -10,6 +10,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - **Dimenticare un periodo**: `POST api/v1/forget {from, to, keepRaw?}` (client `forgetPeriod`) dimentica gli episodi
   avvenuti nel periodo e i messaggi grezzi inviati in esso (`keepRaw`: conservati ma nascosti e mai più estratti), con
   ciò che solo loro sostenevano; restituisce quanto è stato dimenticato (WORK_PLAN 5.5).
+- **Pattern ricorrenti** (WORK_PLAN 5.4, D26): il consolidamento notturno deduce le abitudini che emergono dagli episodi
+  degli ultimi mesi ("corro al parco il sabato mattina") e le tiene come note della memoria stessa — inferite, mai in
+  attesa, nessuno le conferma — sostenute da almeno tre episodi in giorni diversi; le rafforza, aggiorna e ritira da
+  sola, e una dimenticata non ritorna dagli stessi episodi. Le note riportano `pattern` (`GET api/v1/notes`,
+  `search_memory`; client `Note.pattern`); il contesto di memoria le etichetta. Opzione `patterns` del profilo di
+  qualità (accesa in balanced / full; `PATTERNS` la sovrascrive), task LLM `patterns` (`LLM_PATTERNS_*`), admin
+  `POST api/v1/admin/memories/:id/patterns`; migrazione `Patterns1791130000000` (`episode_promotions` ricostruita,
+  `memories.patterns_upto`, modifica di nota `retired`). Set di sviluppo: 20 abitudini su 21, nessun pattern falso (3 run).
 
 ### Modificato
 - Prompt di estrazione `extract.v14` (entrambe le modalità, WORK_PLAN 8.11): gli errori dell'agente stesso sono salvati in
@@ -64,7 +72,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - Lo stesso evento raccontato in due conversazioni estratte nello stesso momento, o registrato con `log_episode`, non
   resta più doppio: il consolidamento notturno controlla le coppie che nessun controllo dei quasi-duplicati poteva
   vedere, prima di scrivere il diario (WORK_PLAN 5.3; migrazione `EpisodeResolvedAt1791120000000`; il riepilogo del
-  consolidamento conta `duplicates`).
+  consolidamento conta `duplicates`). Quando nessuno dei due racconti era mai stato controllato, quello che può essere
+  nascosto è il registrato dopo (prima dipendeva dall'ordine degli id).
 
 ## [0.2.0] — 2026-10-10
 
