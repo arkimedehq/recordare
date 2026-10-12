@@ -42,6 +42,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   (solo id: chiave dello slot o categoria della nota, soggetto, messaggi di evidenza), così una ri-estrazione degli
   stessi messaggi non lo riscrive più; raccontato di nuovo in un messaggio nuovo, viene imparato (WORK_PLAN 4.13;
   migrazione `FactNoteTombstones1791110000000`).
+- Le ricerche vettoriali filtrate per memoria scandiscono gli indici HNSW in modo iterativo (`hnsw.iterative_scan =
+  strict_order`, pgvector ≥ 0.8): su un'installazione grande una ricerca poteva restituire meno righe di quelle chieste
+  quando altre memorie riempivano l'indice (WORK_PLAN 4.14).
 
 ## [0.2.0] — 2026-10-10
 

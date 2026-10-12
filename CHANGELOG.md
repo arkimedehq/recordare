@@ -37,6 +37,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - Deleting a fact or a note (`DELETE api/v1/facts|notes/{id}`, or rejecting a pending one) leaves a tombstone (ids
   only: slot key or note category, subject, evidence messages), so a re-extraction of the same messages no longer writes
   it again; told again in a new message, it is learned (WORK_PLAN 4.13; migration `FactNoteTombstones1791110000000`).
+- Vector searches filtered by memory scan HNSW indexes iteratively (`hnsw.iterative_scan = strict_order`, pgvector ≥ 0.8):
+  on a large install a search could return fewer rows than asked once other memories filled the index (WORK_PLAN 4.14).
 
 ## [0.2.0] — 2026-10-10
 

@@ -75,9 +75,12 @@ l'intervallo richiesto.
 
 **Embedding**: `embedding vector(N)`, `embedding_model text`, `embedding_text text`. N è fisso per
 installazione (D27). HNSW (`vector_cosine_ops`) interrogato con filtro `memory_id` e scansione
-iterativa di pgvector (`hnsw.iterative_scan = relaxed_order`) così che il recall per memoria regga nelle
-installazioni multi-memoria; partizionare per memoria se un'installazione diventa grande. <!-- verify: hnsw.iterative_scan
-non è impostato da nessuna parte in service/src (main) — non ancora costruito? -->
+iterativa di pgvector (`hnsw.iterative_scan = strict_order`, impostata all'apertura della connessione — pgvector ≥ 0.8;
+uno più vecchio la scarta con un avviso; WORK_PLAN 4.14) così che il recall per memoria regga nelle installazioni
+multi-memoria: senza, una ricerca HNSW filtrata si ferma a `hnsw.ef_search` candidati dell'intera tabella (3 righe su 10
+per una memoria che ha lo 0,5 % di 20.000). Ogni tabella con indice HNSW ha anche un btree su `memory_id`, che il
+pianificatore preferisce per le memorie piccole; `strict_order` mantiene l'ordine esatto per distanza su cui si basa la
+fusione dei ranghi. Partizionare per memoria se un'installazione diventa grande.
 
 ## Identità
 

@@ -73,9 +73,11 @@ requested range.
 
 **Embeddings**: `embedding vector(N)`, `embedding_model text`, `embedding_text text`. N fixed per
 installation (D27). HNSW (`vector_cosine_ops`) queried with `memory_id` filter and pgvector
-iterative scan (`hnsw.iterative_scan = relaxed_order`) so per-memory recall holds in multi-memory
-installs; partition by memory if an install grows large. <!-- verify: hnsw.iterative_scan is not set anywhere in
-service/src (main) — not built yet? -->
+iterative scan (`hnsw.iterative_scan = strict_order`, set at connection start — pgvector ≥ 0.8; an older one drops it
+with a warning; WORK_PLAN 4.14) so per-memory recall holds in multi-memory installs: without it a filtered HNSW search
+stops at `hnsw.ef_search` candidates of the whole table (3 rows of 10 for a memory holding 0.5 % of 20,000). Every
+table with an HNSW index also has a `memory_id` btree, which the planner prefers for small memories; `strict_order`
+keeps the exact distance order the rank fusion uses. Partition by memory if an install grows large.
 
 ## Identity
 

@@ -135,5 +135,5 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - API convention: no global prefix, controllers hard-code `api/...`.
 
 ## Next steps
-Follow `docs/WORK_PLAN.md`: 4.14 `hnsw.iterative_scan` → the rest of 6.6b and the open rows (D34 A-MEM
+Follow `docs/WORK_PLAN.md`: the rest of 6.6b and the open rows (D34 A-MEM
 toggle split, 5.8 decision model, entity memory on a new blind set).
