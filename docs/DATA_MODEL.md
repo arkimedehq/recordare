@@ -569,7 +569,15 @@ dropped: {kind: {reason: n}}}` — what the model returned, what was written, wh
 ### llm_calls
 `id, memory_id null, client_id null, run_id null, prompt_id, provider, model, input_tokens,
 cached_input_tokens, output_tokens, latency_ms, status, created_at` — no prompt or completion
-text stored. Aggregated per memory / client / day for budgets and the CI cost gate.
+text stored. Aggregated per memory / client / day for budgets and the CI cost gate; per memory by prompt and day for the
+person (`GET api/v1/usage`, WORK_PLAN 4.7).
+
+### exports (WORK_PLAN 4.7, migration `Exports1791140000000`)
+`id, memory_id → memories (CASCADE), client_id null, status enum (running|done|failed), archive bytea null (the gzipped
+JSON archive), bytes, error, created_at, finished_at` — full exports (`POST api/v1/exports`), built in the background,
+purged after 7 days; a build not finished within an hour (a restart) counts as failed. The archive (`format:
+"recordare-export/1"`) holds every table of the memory as stored, vectors and search indexes left out, and the raw
+messages a forgotten period hides left out.
 
 ### recall_log
 `id bigserial, memory_id → persons (CASCADE), tool, mode null, items, conversation_id null → conversations (SET NULL),

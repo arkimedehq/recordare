@@ -69,6 +69,11 @@ await rc.learnSource('user-42', { externalId: 'boiler-manual', title: 'Manuale d
 ## The diary
 `episodes`, `episode`, `digests`, `facts`, `notes`, `plans` read what Recordare remembers for the person's own view in
 the platform's UI; `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`, `delete`, `decide` are the person's edits (API.md §4).
+`fact`, `note` give one item with its evidence; `addEpisode`, `addNote` are written by the person (stated, theirs);
+`correctFact`, `correctNote` keep the wrong version as history. `noteChanges` is the change feed for a platform keeping a
+copy of the notes (pass `next` back as `since`). `settings`, `usage` read the memory's settings and the LLM calls spent on
+it; `updateSettings` and the export (`startExport` → `exportJob` → `exportArchive`) need the memory's personal token
+(scopes `memory_settings`, `export`; pass `user` empty).
 
 ## What stays with the host
 How it stores its outbox (its own database, its own transaction) and how it maps its chats to the ingest contract.

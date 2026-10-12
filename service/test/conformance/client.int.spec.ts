@@ -124,6 +124,33 @@ describe('client conformance (packages/client against the service)', () => {
     expect(await rc.notes('user-1')).toEqual([]);
   });
 
+  it('writes, corrects and follows the diary; reads settings and usage; exports with a personal token (4.7)', async () => {
+    const episodeId = await rc.addEpisode('user-1', { content: 'Cena da Aldina', occurredAt: '2026-10-03' });
+    expect((await rc.episode('user-1', episodeId)).content).toBe('Cena da Aldina');
+    const noteId = await rc.addNote('user-1', { content: 'Il caffè lo prendo amaro', category: 'preference' });
+    const fixed = await rc.correctNote('user-1', noteId, { content: 'Il caffè lo prendo amaro, senza zucchero' });
+    expect(await rc.note('user-1', fixed)).toMatchObject({ corrects: noteId, status: 'current', pattern: false, evidence: [] });
+    const feed = await rc.noteChanges('user-1');
+    expect(feed.items.slice(-2).map((c) => c.change)).toEqual(['created', 'corrected']);
+    expect(await rc.noteChanges('user-1', { since: feed.next })).toEqual({ items: [], next: feed.next, more: false });
+    expect(await rc.settings('user-1')).toMatchObject({ locale: 'it', effectiveQualityProfile: 'balanced' });
+    expect(await rc.usage('user-1', { from: '2026-10-01', to: '2026-10-07' })).toMatchObject({ from: '2026-10-01', calls: expect.any(Number) });
+
+    const memoryId = (await rc.me('user-1')).memoryId;
+    const token = (await call(url, 'POST', `/api/v1/admin/memories/${memoryId}/tokens`,
+      { token: ADMIN_KEY, body: { clientId, scopes: ['read', 'memory_settings', 'export'] } })).body.token;
+    const own = new RecordareClient({ baseUrl: url, apiKey: token });
+    expect(await own.updateSettings('', { qualityProfile: 'full' })).toMatchObject({ qualityProfile: 'full', effectiveQualityProfile: 'full' });
+    let job = await own.startExport('');
+    for (let i = 0; i < 50 && job.status === 'running'; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      job = await own.exportJob('', job.id);
+    }
+    expect(job.status).toBe('done');
+    expect(await own.exportArchive('', job.id)).toMatchObject({ format: 'recordare-export/1' });
+    await own.close();
+  });
+
   it('learns a source in parts, lists it and forgets it (WORK_PLAN 8.9)', async () => {
     const text = Array.from({ length: 6 }, (_, i) => `Paragrafo ${i + 1} del manuale della caldaia.`).join('\n\n');
     const r = await rc.learnSource('user-1', { externalId: 'manual', title: 'Manuale della caldaia', text }, 100);

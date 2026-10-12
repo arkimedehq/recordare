@@ -2,9 +2,10 @@
 // Copyright © 2026 Andrea Genovese
 
 import {
-  CONVERSATION_HEADER, type Digest, type Episode, type EpisodeDetail, type EpisodeQuery, type Fact, type IngestRequest, type IngestResult,
-  type LearnSource, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MeSettings, type MemoryContext, type Note, type PlanStatus,
-  type Precision, type Source, SOURCE_PART_BYTES,
+  CONVERSATION_HEADER, type Digest, type Episode, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
+  type IngestRequest, type IngestResult, type LearnSource, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
+  type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
+  SOURCE_PART_BYTES, type Usage,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
@@ -196,6 +197,68 @@ export class RecordareClient {
   /** A pending (inferred) note or fact: confirmed it becomes the person's, rejected it is removed. */
   async decide(user: string, what: 'notes' | 'facts', id: string, decision: 'confirm' | 'reject'): Promise<void> {
     await this.http.request('POST', `api/v1/${what}/${enc(id)}/${decision}`, { user });
+  }
+
+  /** The person writes an episode in the platform's UI (stated, theirs). Returns its id. */
+  async addEpisode(user: string, episode: { content: string; kind?: 'event' | 'plan'; occurredAt?: string; occurredUntil?: string;
+    datePrecision?: Exclude<Precision, 'unknown' | 'minute'>; place?: string; people?: string[] }): Promise<string> {
+    return (await this.http.request<{ id: string }>('POST', 'api/v1/episodes', { user, body: episode })).id;
+  }
+
+  /** The person writes a note in the platform's UI (stated, theirs). Returns its id. */
+  async addNote(user: string, note: { content: string; category?: Note['category'] }): Promise<string> {
+    return (await this.http.request<{ id: string }>('POST', 'api/v1/notes', { user, body: note })).id;
+  }
+
+  fact(user: string, id: string): Promise<FactDetail> {
+    return this.http.request('GET', `api/v1/facts/${enc(id)}`, { user });
+  }
+
+  note(user: string, id: string): Promise<NoteDetail> {
+    return this.http.request('GET', `api/v1/notes/${enc(id)}`, { user });
+  }
+
+  /** The person corrects a current fact (`value` null: not known any more); the wrong one stays in its history. */
+  async correctFact(user: string, id: string, fix: { value: string | null; validFrom?: string; datePrecision?: Exclude<Precision, 'unknown' | 'minute'> }): Promise<string> {
+    return (await this.http.request<{ id: string }>('POST', `api/v1/facts/${enc(id)}/corrections`, { user, body: fix })).id;
+  }
+
+  /** The person corrects a current note; the wrong one stays as `corrected`. */
+  async correctNote(user: string, id: string, fix: { content: string; category?: Note['category'] }): Promise<string> {
+    return (await this.http.request<{ id: string }>('POST', `api/v1/notes/${enc(id)}/corrections`, { user, body: fix })).id;
+  }
+
+  /** The notes change feed, for a platform keeping a copy: pass `next` back as `since`; `more` when the page was full. */
+  noteChanges(user: string, query: { since?: number; limit?: number } = {}): Promise<{ items: NoteChange[]; next: number; more: boolean }> {
+    return this.http.request('GET', `api/v1/notes/changes${qs(query)}`, { user });
+  }
+
+  settings(user: string): Promise<MemorySettings> {
+    return this.http.request('GET', 'api/v1/settings', { user });
+  }
+
+  /** Needs `memory_settings`: the memory's personal token (never a client key); pass `user` empty with it. */
+  updateSettings(user: string, patch: { locale?: string; timezone?: string; qualityProfile?: MemorySettings['qualityProfile'] }): Promise<MemorySettings> {
+    return this.http.request('PATCH', 'api/v1/settings', { user, body: patch });
+  }
+
+  /** LLM calls and tokens spent on the memory between two local days (default: the last 30). */
+  usage(user: string, query: { from?: string; to?: string } = {}): Promise<Usage> {
+    return this.http.request('GET', `api/v1/usage${qs(query)}`, { user });
+  }
+
+  /** Starts a full export (needs `export`: the memory's personal token); poll `exportJob`, then `exportArchive`. */
+  startExport(user: string): Promise<ExportJob> {
+    return this.http.request('POST', 'api/v1/exports', { user });
+  }
+
+  exportJob(user: string, id: string): Promise<ExportJob> {
+    return this.http.request('GET', `api/v1/exports/${enc(id)}`, { user });
+  }
+
+  /** The finished export: one JSON archive (`format: "recordare-export/1"`). */
+  exportArchive(user: string, id: string): Promise<Record<string, unknown>> {
+    return this.http.request('GET', `api/v1/exports/${enc(id)}/archive`, { user });
   }
 
   /** Closes the MCP sessions (on shutdown). */

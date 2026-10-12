@@ -6,6 +6,8 @@
  * forget_episode. Explicit capture is "stated" with importance 10 only when evidence binds to a
  * message of the holder; otherwise it is recorded as noted by the assistant (poisoning guard).
  * Forgetting is physical and sticks (tombstones also hide the evidence from the chat search).
+ * Manual entry from the host's UI (API.md §4, WORK_PLAN 4.7): `ev` null — the person wrote it themself, so it is stated,
+ * with no message behind it.
  */
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
@@ -47,7 +49,7 @@ export class MemoryWriteService {
     private readonly telemetry: TelemetryService,
   ) {}
 
-  async logEpisode(memoryId: string, ev: Evidence, input: {
+  async logEpisode(memoryId: string, ev: Evidence | null, input: {
     content: string; kind?: 'event' | 'plan'; occurredAt?: string; occurredUntil?: string; datePrecision?: Precision; people?: string[]; place?: string;
   }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
@@ -68,8 +70,10 @@ export class MemoryWriteService {
           byHolder ? 'holder_lived' : 'assistant_stated', byHolder ? 'holder' : 'assistant',
           // "stated" only with the holder's own words behind it (API.md §3), as for notes.
           byHolder ? 'stated' : 'inferred', byHolder ? 1 : 0.6, [memoryId], subject.kind, subject.personId, subject.candidates]);
-      await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, $3)`,
-        [row.id, messageId, byHolder ? 'message' : 'agent_paraphrase']);
+      if (messageId) {
+        await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, $3)`,
+          [row.id, messageId, byHolder ? 'message' : 'agent_paraphrase']);
+      }
       for (const p of input.people ?? []) {
         await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [row.id, p, people.get(p) ?? null]);
       }
@@ -79,7 +83,7 @@ export class MemoryWriteService {
     return id;
   }
 
-  async remember(memoryId: string, ev: Evidence, input: { content: string; category?: string }): Promise<string> {
+  async remember(memoryId: string, ev: Evidence | null, input: { content: string; category?: string }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
       const { messageId, byHolder } = await this.bindEvidence(tx, memoryId, ev, input.content);
       const [memory] = await tx.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
@@ -89,7 +93,7 @@ export class MemoryWriteService {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'holder', $9, $10, $11) RETURNING id`,
         [memoryId, input.category ?? 'knowledge', input.content, !byHolder, byHolder ? 'holder_lived' : 'assistant_stated',
           byHolder ? 'holder' : 'assistant', byHolder ? 'stated' : 'inferred', byHolder ? 1 : 0.6, [memoryId], subject.kind, subject.candidates]);
-      await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, messageId]);
+      if (messageId) await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, messageId]);
       await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'created')`, [memoryId, row.id]);
       return row.id as string;
     });
@@ -120,6 +124,51 @@ export class MemoryWriteService {
     });
     const [row] = await this.db.query(`SELECT content FROM episodes WHERE id = $1`, [id]);
     await this.embed('episodes', id, row.content);
+    return id;
+  }
+
+  /**
+   * The person corrects a fact in the host's UI (WORK_PLAN 4.7): a new row of the same slot and subject that `corrects`
+   * the old one (now `corrected`, history kept, D16) — stated by the person, no message behind it. `value` null: the
+   * value is not known any more. 404 unless the fact is current.
+   */
+  async correctFact(memoryId: string, input: { id: string; value: string | null; validFrom?: string; datePrecision?: Precision }): Promise<string> {
+    const { id, text } = await this.db.transaction(async (tx) => {
+      const [old] = await tx.query(
+        `SELECT f.*, (SELECT display_name FROM persons WHERE id = f.subject_person_id) AS about FROM facts f
+         WHERE f.id = $1 AND f.memory_id = $2 AND f.deleted_at IS NULL AND f.status IN ('current', 'unknown_current')`, [input.id, memoryId]);
+      if (!old) throw new NotFoundException();
+      const [memory] = await tx.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
+      const from = input.validFrom ? toStored(input.validFrom, input.datePrecision, memory.timezone) : { at: old.valid_from, precision: old.date_precision };
+      await tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1`, [input.id]);
+      const [row] = await tx.query(
+        `INSERT INTO facts (memory_id, key, value, status, valid_from, date_precision, corrects, verdict, pending, origin, author_role, stance,
+           confidence, disclosure, audience, subject_kind, subject_person_id, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'corrects', false, 'holder_lived', 'holder', 'stated', 1, 'holder', $8, $9, $10, $11) RETURNING id`,
+        [memoryId, old.key, input.value, input.value === null ? 'unknown_current' : 'current', from.at, from.precision, input.id,
+          [memoryId], old.subject_kind, old.subject_person_id, old.subject_candidates]);
+      return { id: row.id as string, text: `${old.about ? `${old.about} — ` : ''}${old.key}: ${input.value ?? '(unknown)'}` };
+    });
+    await this.embed('facts', id, text);
+    return id;
+  }
+
+  /** The person corrects a note in the host's UI: a new note that `corrects` the old one (now `corrected`). */
+  async correctNote(memoryId: string, input: { id: string; content: string; category?: string }): Promise<string> {
+    const id = await this.db.transaction(async (tx) => {
+      const [old] = await tx.query(`SELECT * FROM notes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL AND status = 'current'`, [input.id, memoryId]);
+      if (!old) throw new NotFoundException();
+      await tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1`, [input.id]);
+      const [row] = await tx.query(
+        `INSERT INTO notes (memory_id, category, content, pinned, corrects, pending, valid_from, origin, author_role, stance, confidence, disclosure,
+           audience, subject_kind, subject_person_id, subject_candidates)
+         VALUES ($1, $2, $3, $4, $5, false, $6, 'holder_lived', 'holder', 'stated', 1, 'holder', $7, $8, $9, $10) RETURNING id`,
+        [memoryId, input.category ?? old.category, input.content, old.pinned, input.id, old.valid_from, [memoryId], old.subject_kind,
+          old.subject_person_id, old.subject_candidates]);
+      await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'corrected')`, [memoryId, row.id]);
+      return row.id as string;
+    });
+    await this.embed('notes', id, input.content);
     return id;
   }
 
@@ -220,7 +269,8 @@ export class MemoryWriteService {
    * `mcp_tool` conversation as the agent's paraphrase (role assistant: the extraction gate never
    * spends a call on it).
    */
-  private async bindEvidence(tx: EntityManager, memoryId: string, ev: Evidence, text: string): Promise<{ messageId: string; byHolder: boolean }> {
+  private async bindEvidence(tx: EntityManager, memoryId: string, ev: Evidence | null, text: string): Promise<{ messageId: string | null; byHolder: boolean }> {
+    if (!ev) return { messageId: null, byHolder: true }; // written by the person in the host's UI
     if (ev.conversationId) {
       // Memory-stated only when a recent message of the holder actually says it (text overlap):
       // an agent cannot turn "ciao" into "the memory decided X" (poisoning guard).
@@ -255,14 +305,12 @@ export class MemoryWriteService {
     return { messageId: msg.id, byHolder: false };
   }
 
-  private async embed(table: 'episodes' | 'notes', id: string, text: string): Promise<void> {
+  private async embed(table: 'episodes' | 'notes' | 'facts', id: string, text: string): Promise<void> {
     try {
       const [v] = await this.embeddings.embed([text], 'document');
       if (!v) return;
-      const sql = table === 'episodes'
-        ? `UPDATE episodes SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`
-        : `UPDATE notes SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`;
-      await this.db.query(sql, [`[${v.join(',')}]`, this.embeddings.model, text, id]);
+      await this.db.query(`UPDATE ${table} SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`,
+        [`[${v.join(',')}]`, this.embeddings.model, text, id]);
     } catch {
       // Embedding is best-effort; full-text still finds the row.
     }
