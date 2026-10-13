@@ -30,6 +30,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   `memories.patterns_upto`, modifica di nota `retired`). Set di sviluppo: 20 abitudini su 21, nessun pattern falso (3 run).
 
 ### Modificato
+- `/mcp` risponde in JSON semplice (`application/json`) invece che come flusso di eventi: un host o uno script legge la
+  risposta senza un parser SSE; i client inviano comunque `Accept: application/json, text/event-stream` (WORK_PLAN 6.6b (10)).
 - Prompt di estrazione `extract.v14` (entrambe le modalità, WORK_PLAN 8.11): gli errori dell'agente stesso sono salvati in
   prima persona ("ho sbagliato le date: avevo detto X, è Y"), le alternative confrontate restano accanto alla scelta, e un
   passo di un piano aperto fatto prima della sua data (una prenotazione, dei biglietti) aggiorna il piano. Set ciechi:

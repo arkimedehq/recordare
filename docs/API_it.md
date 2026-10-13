@@ -272,7 +272,7 @@ argomento (D29); supersessione solo in avanti per `sentAt`.
 
 ## 3. Strumenti MCP (task 1.3) — entrambi i livelli
 
-Trasporto: **MCP streamable HTTP** su `/mcp`. **Una sessione MCP per memoria**: la memoria è fissata
+Trasporto: **MCP streamable HTTP** su `/mcp`, con risposte in JSON semplice (`application/json`, nessun flusso di eventi). **Una sessione MCP per memoria**: la memoria è fissata
 a `initialize` (la memoria del token, oppure `X-Recordare-User` per le chiavi client); ogni richiesta riconvalida
 `X-Recordare-User` rispetto alla memoria della sessione — una discrepanza restituisce 403 e termina la sessione
 (gli host che riutilizzano una sessione per più utenti non possono incrociare le memorie). La conversazione segue il §1

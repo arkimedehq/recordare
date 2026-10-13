@@ -84,6 +84,8 @@ export class McpService implements OnModuleDestroy {
     });
     const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
+      // Plain JSON answers (no tool streams progress): hosts and scripts read them without an event-stream parser.
+      enableJsonResponse: true,
       onsessioninitialized: (id) => {
         this.sessions.set(id, { transport, server, memoryId, credential: credentialId(principal) });
       },

@@ -30,6 +30,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `memories.patterns_upto`, note change `retired`). Dev set: 20 of 21 habits, no false pattern (3 runs).
 
 ### Changed
+- `/mcp` answers plain JSON (`application/json`) instead of an event stream: a host or a script reads the answer
+  without an SSE parser; clients still send `Accept: application/json, text/event-stream` (WORK_PLAN 6.6b (10)).
 - Extraction prompt `extract.v14` (both modes, WORK_PLAN 8.11): the agent's own slips are stored in the first person
   ("I got the dates wrong: I said X, it is Y"), the options compared stay next to the choice, and a step of an open plan
   done before its date (a booking, tickets) amends the plan. Blind sets: personal 81.6 % → 90.1 %, entity 89.8 % → 93.3 %

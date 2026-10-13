@@ -144,6 +144,25 @@ describe('MCP endpoint', () => {
     await b.client.close();
   });
 
+  it('answers plain JSON, not an event stream: a host needs no SSE parser', async () => {
+    const post = (body: unknown, session?: string) => fetch(`${url}/mcp`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'application/json, text/event-stream',
+        ...(session ? { 'mcp-session-id': session, 'mcp-protocol-version': '2025-06-18' } : {}) },
+      body: JSON.stringify(body),
+    });
+    const init = await post({ jsonrpc: '2.0', id: 1, method: 'initialize',
+      params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'curl', version: '1' } } });
+    expect(init.headers.get('content-type')).toContain('application/json');
+    expect(((await init.json()) as { result: { serverInfo: { name: string } } }).result.serverInfo.name).toBe('recordare');
+    const session = init.headers.get('mcp-session-id') as string;
+    await post({ jsonrpc: '2.0', method: 'notifications/initialized' }, session);
+    const list = await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, session);
+    expect(list.headers.get('content-type')).toContain('application/json');
+    expect(((await list.json()) as { result: { tools: Array<{ name: string }> } }).result.tools.map((t) => t.name)).toContain('search_episodes');
+    await fetch(`${url}/mcp`, { method: 'DELETE', headers: { authorization: `Bearer ${token}`, 'mcp-session-id': session } });
+  });
+
   it('binds a session to its memory: another user on the same session is rejected and the session closed', async () => {
     const { transport, client } = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', 'x-recordare-conversation': 'nas-chat' });
     const sessionId = transport.sessionId as string;

@@ -262,7 +262,7 @@ segmentation (D29); forward-only supersession by `sentAt`.
 
 ## 3. MCP tools (task 1.3) — both levels
 
-Transport: **MCP streamable HTTP** at `/mcp`. **One MCP session per memory**: the memory is fixed
+Transport: **MCP streamable HTTP** at `/mcp`, answering plain JSON (`application/json`, no event stream). **One MCP session per memory**: the memory is fixed
 at `initialize` (the token's memory, or `X-Recordare-User` for client keys); every request re-validates
 `X-Recordare-User` against the session's memory — a mismatch returns 403 and terminates the session
 (hosts that reuse one session across users cannot cross memories). The conversation follows §1
