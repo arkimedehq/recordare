@@ -479,8 +479,9 @@ più le righe `GET / PATCH api/v1/me`. **Costruiti il 2026-10-12 (il resto del 4
 category?}` → `{id}`: una nuova riga che `corrects` quella attuale, conservata come `corrected`; `404` se non è attuale),
 dettagli (`GET facts/{id}` con la `history` dello slot; `GET notes/{id}` con `status`; entrambi con `evidence` — testo
 dei messaggi filtrato come per gli episodi — ed `episodeIds`), il feed delle modifiche delle note (`GET
-notes/changes?since&limit` → `{items: [{seq, noteId, change, at, note | null}], next, more}`: dalla più vecchia, `note`
-com'è ora, null una volta dimenticata; si richiede con `since=next`), impostazioni (`GET settings` → `{locale, timezone,
+notes/changes?since&limit` → `{items: [{seq, noteId, change, at, replaces, note | null}], next, more}`: dalla più
+vecchia, `note` com'è ora, null una volta dimenticata; `replaces` su `updated` / `corrected`: la nota di cui ha preso il
+posto, così una sua copia può seguirla; si richiede con `since=next`), impostazioni (`GET settings` → `{locale, timezone,
 qualityProfile | null, effectiveQualityProfile}`; `PATCH settings` con `memory_settings`, `400` per un fuso orario o una
 lingua sconosciuti), uso (`GET usage?from&to` giorni locali, default gli ultimi 30 → totali, `byPrompt`, `byDay`), export
 (`POST exports` → `202 {id, status: running, …}`; `GET exports/{id}` → stato; `GET exports/{id}/archive` → l'archivio

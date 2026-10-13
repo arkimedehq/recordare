@@ -372,7 +372,8 @@ export class ReadService {
 
   /**
    * The notes change feed (D34, WORK_PLAN 4.3): every change after `since`, oldest first, for clients keeping a copy
-   * (Arkimede → A-MEM). Each entry carries the note as it is now — null once it is forgotten (only its id is kept).
+   * (Arkimede → A-MEM). Each entry carries the note as it is now — null once it is forgotten (only its id is kept) — and
+   * `replaces`: the note an `updated` or `corrected` one took the place of, so a copy of the old one can follow it.
    */
   async noteChanges(memoryId: string, query: { since?: number; limit?: number }) {
     await this.memory(memoryId);
@@ -384,9 +385,15 @@ export class ReadService {
       `SELECT ${NOTE_COLUMNS}, status::text FROM notes WHERE id = ANY($1) AND memory_id = $2 AND deleted_at IS NULL`,
       [[...new Set(rows.map((r) => r.note_id))], memoryId]) : [];
     const byId = new Map(notes.map((n) => [n.id, { ...noteView(n), status: n.status }]));
+    // Read apart from the note: a forgotten note keeps what it replaced.
+    const links: Array<{ id: string; replaces: string | null }> = rows.length ? await this.db.query(
+      `SELECT id, coalesce(corrects, supersedes) AS replaces FROM notes WHERE id = ANY($1) AND memory_id = $2`,
+      [[...new Set(rows.map((r) => r.note_id))], memoryId]) : [];
+    const replaces = new Map(links.map((l) => [l.id, l.replaces]));
     const last = rows.at(-1);
     return {
-      items: rows.map((r) => ({ seq: Number(r.seq), noteId: r.note_id, change: r.change, at: r.at.toISOString(), note: byId.get(r.note_id) ?? null })),
+      items: rows.map((r) => ({ seq: Number(r.seq), noteId: r.note_id, change: r.change, at: r.at.toISOString(),
+        replaces: r.change === 'updated' || r.change === 'corrected' ? replaces.get(r.note_id) ?? null : null, note: byId.get(r.note_id) ?? null })),
       // Ask again from here; equal to `since` when nothing new.
       next: last ? Number(last.seq) : (query.since ?? 0),
       more: rows.length === limit,

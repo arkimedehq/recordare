@@ -216,6 +216,8 @@ export interface NoteChange {
   noteId: string;
   change: 'created' | 'updated' | 'corrected' | 'confirmed' | 'forgotten' | 'retired';
   at: string;
+  /** For `updated` / `corrected`: the note this one took the place of (a copy of it should follow), else null. */
+  replaces: string | null;
   note: (Note & { status: string }) | null;
 }
 

@@ -10,7 +10,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - **The rest of the read API** (WORK_PLAN 4.7, API.md §4): manual entry (`POST api/v1/episodes`, `POST api/v1/notes` —
   written by the person, stated), corrections of facts and notes (`POST …/{id}/corrections`, history kept), one fact or
   note with its evidence (`GET api/v1/facts/{id}`, `GET api/v1/notes/{id}`), the notes change feed
-  (`GET api/v1/notes/changes?since`, for platforms keeping a copy), settings (`GET` / `PATCH api/v1/settings`: locale,
+  (`GET api/v1/notes/changes?since`, for platforms keeping a copy; `replaces` names the note an updated or corrected one
+  took the place of), settings (`GET` / `PATCH api/v1/settings`: locale,
   time zone, quality profile; changing them needs the memory's personal token), usage (`GET api/v1/usage`: LLM calls and
   tokens by prompt and day) and full exports (`POST api/v1/exports` → `GET …/{id}` → `GET …/{id}/archive`: one JSON
   archive, built in the background, kept 7 days; personal token). Client methods for all of them; migration

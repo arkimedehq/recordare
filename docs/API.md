@@ -466,8 +466,9 @@ person in the host's UI — stated, theirs, no message behind them), corrections
 null, validFrom?, datePrecision?}`, `POST notes/{id}/corrections {content, category?}` → `{id}`: a new row that
 `corrects` the current one, kept as `corrected`; `404` unless current), details (`GET facts/{id}` with the slot's
 `history`; `GET notes/{id}` with `status`; both with `evidence` — message text filtered as for episodes — and
-`episodeIds`), the notes change feed (`GET notes/changes?since&limit` → `{items: [{seq, noteId, change, at, note | null}],
-next, more}`: oldest first, `note` as it is now, null once forgotten; ask again with `since=next`), settings
+`episodeIds`), the notes change feed (`GET notes/changes?since&limit` → `{items: [{seq, noteId, change, at, replaces,
+note | null}], next, more}`: oldest first, `note` as it is now, null once forgotten; `replaces` on `updated` / `corrected`:
+the note this one took the place of, so a copy of it can follow; ask again with `since=next`), settings
 (`GET settings` → `{locale, timezone, qualityProfile | null, effectiveQualityProfile}`; `PATCH settings` with
 `memory_settings`, `400` for an unknown time zone or locale), usage (`GET usage?from&to` local days, default the last 30
 → totals, `byPrompt`, `byDay`), exports (`POST exports` → `202 {id, status: running, …}`; `GET exports/{id}` → status;

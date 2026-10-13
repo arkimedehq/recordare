@@ -72,9 +72,10 @@ describe('read API, the rest of 4.7: manual entry, corrections, details, change 
     const all = (await call(url, 'GET', '/api/v1/notes/changes', as('u1'))).body;
     expect(all.items.map((i: { change: string }) => i.change)).toEqual(['created', 'corrected']);
     expect(all.items[1].note).toMatchObject({ content: 'Il caffè lo prendo amaro, senza zucchero', status: 'current' });
+    expect(all.items.map((i: { replaces: string | null }) => i.replaces)).toEqual([null, all.items[0].noteId]);
     await call(url, 'DELETE', `/api/v1/notes/${all.items[1].noteId}`, as('u1'));
     const next = (await call(url, 'GET', `/api/v1/notes/changes?since=${all.next}`, as('u1'))).body;
-    expect(next.items).toEqual([expect.objectContaining({ change: 'forgotten', noteId: all.items[1].noteId, note: null })]);
+    expect(next.items).toEqual([expect.objectContaining({ change: 'forgotten', noteId: all.items[1].noteId, replaces: null, note: null })]);
     expect((await call(url, 'GET', `/api/v1/notes/changes?since=${next.next}`, as('u1'))).body).toEqual({ items: [], next: next.next, more: false });
   });
 

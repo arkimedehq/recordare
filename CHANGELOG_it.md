@@ -10,7 +10,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - **Il resto dell'API di lettura** (WORK_PLAN 4.7, API.md §4): inserimento manuale (`POST api/v1/episodes`,
   `POST api/v1/notes` — scritti dalla persona, dichiarati), correzioni di fatti e note (`POST …/{id}/corrections`,
   cronologia conservata), un fatto o una nota con le sue prove (`GET api/v1/facts/{id}`, `GET api/v1/notes/{id}`), il
-  feed delle modifiche delle note (`GET api/v1/notes/changes?since`, per le piattaforme che ne tengono una copia),
+  feed delle modifiche delle note (`GET api/v1/notes/changes?since`, per le piattaforme che ne tengono una copia;
+  `replaces` indica la nota di cui una nota aggiornata o corretta ha preso il posto),
   impostazioni (`GET` / `PATCH api/v1/settings`: lingua, fuso orario, profilo di qualità; cambiarle richiede il token
   personale della memoria), uso (`GET api/v1/usage`: chiamate LLM e token per prompt e per giorno) ed export completi
   (`POST api/v1/exports` → `GET …/{id}` → `GET …/{id}/archive`: un archivio JSON, costruito in background, conservato 7
