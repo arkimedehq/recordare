@@ -24,7 +24,9 @@ own [Recordare](../../README.md) service — the **full** client level:
 It does not take OpenClaw's memory slot: `memory-core` (`MEMORY.md`, `memory_search`) keeps working beside it. Recordare
 stores every turn the plugin sends (it has no consent flag, D50). The plugin never blocks or breaks a turn: every call
 is time-boxed (3 s before the turn), failures are logged without content, captured messages that could not be sent are
-retried in the background for about ten minutes (in memory: a Gateway restart drops them).
+retried in the background for a few hours, from a queue on disk that survives a Gateway restart
+(`<OpenClaw state dir>/recordare/outbox`, normally `~/.openclaw/recordare/outbox`, owner-only files; only unsent
+messages are written there, and each file is deleted once Recordare has it).
 
 Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 

@@ -89,6 +89,8 @@ declare module 'openclaw/plugin-sdk/plugin-entry' {
     on<K extends keyof HookMap>(hookName: K, handler: HookMap[K], opts?: { timeoutMs?: number }): void;
     registerTool(factory: (ctx: ToolContext) => AgentTool | null | undefined, opts?: { name?: string }): void;
     registerService(service: { id: string; start: () => void | Promise<void>; stop?: () => void | Promise<void> }): void;
+    /** Runtime helpers; only the state-dir resolver is used (OPENCLAW_STATE_DIR, else ~/.openclaw). */
+    runtime?: { state?: { resolveStateDir?: (env?: NodeJS.ProcessEnv) => string } };
   }
 
   export interface PluginEntry {

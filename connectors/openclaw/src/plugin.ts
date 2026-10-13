@@ -13,7 +13,8 @@
  * Which memory (D50): by default the agent's one memory, every sender a participant recognised inside it
  * (`memoryPer: agent`); optionally one memory per person (`memoryPer: user`).
  * Never blocks or breaks OpenClaw: every call is time-boxed, every failure is logged (no content) and swallowed;
- * captured messages that could not be sent are retried in the background.
+ * captured messages that could not be sent are retried in the background, from a queue on disk that survives a restart
+ * (`outbox.ts`).
  */
 import { createHash } from 'node:crypto';
 import {
@@ -25,6 +26,7 @@ import { type RecordareConfig } from './config.js';
 import {
   conversationId, isGroupSession, isSystemRun, resolveSpeaker, resolveUser, senderParticipant, senderRef, type Speaker,
 } from './identity.js';
+import { Outbox, type Pending, pendingId } from './outbox.js';
 import { TOOLS, toolName } from './tools.js';
 import { cleanUserText, lastTurn } from './transcript.js';
 
@@ -37,8 +39,13 @@ export interface SessionKinds {
 
 const VERSION = '0.2.0';
 const TOOL_TIMEOUT_MS = 20_000;
-/** Background retries of captured messages: ~8 attempts over ≈ 10 minutes, then dropped (logged). */
-const RETRY: DeliveryPolicy = { maxAttempts: 8, baseDelayMs: 2_000, maxDelayMs: 5 * 60_000 };
+/**
+ * Background retries of captured messages: 16 attempts, waits doubling from 2 s up to an hour (jittered) — about 2–5
+ * hours in all — then dropped (logged). The queue is on disk, so a Gateway restart does not cut the retries short.
+ */
+const RETRY: DeliveryPolicy = { maxAttempts: 16, baseDelayMs: 2_000, maxDelayMs: 60 * 60_000 };
+/** First flush of the batches a previous run left on disk. */
+const RESUME_MS = 5_000;
 const MAX_QUEUE = 500;
 const MAX_TRACKED = 500;
 const MAX_GROUP_BUFFER = 50;
@@ -69,12 +76,13 @@ interface Turn {
   message?: IngestMessage;
 }
 
-interface Pending { user: string; req: IngestRequest; attempts: number }
-
 /** The turn's identity, or null when the turn is not remembered. */
 interface Who { user: string; conversation: string; channel?: string; speaker: Speaker }
 
-export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, kinds: SessionKinds): { stop: () => Promise<void> } {
+/** `outboxDir`: where undelivered batches wait (`<OpenClaw state dir>/recordare/outbox`); null keeps them in memory. */
+export function registerRecordare(
+  api: OpenClawPluginApi, cfg: RecordareConfig, kinds: SessionKinds, outboxDir: string | null = null,
+): { stop: () => Promise<void> } {
   const log = api.logger;
   const clientInfo = { name: 'openclaw-recordare', version: VERSION };
   // Before the agent answers: short timeouts (the turn waits). Background sends and tools: Recordare's usual 15 s.
@@ -88,7 +96,8 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
   const groupBuffer = new Map<string, IngestMessage[]>(); // session key → other members' messages not sent yet
   const groupParticipants = new Map<string, IngestParticipant[]>(); // session key → the members seen
   const names = new Map<string, string>(); // "<channel>:<senderId>" → the sender's name on the channel
-  const queue: Pending[] = [];
+  const outbox = new Outbox(outboxDir, (m) => log.warn(m));
+  const queue: Pending[] = outbox.load();
   let timer: NodeJS.Timeout | undefined;
   let stopped = false;
   if (cfg.memoryPer === 'agent' && !cfg.defaultUser) {
@@ -98,23 +107,26 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
     log.warn('recordare: `users` is used only with memoryPer "user"; every sender is a participant of the agent\'s memory');
   }
 
-  // ── Delivery: one try now, then background retries with back-off ─────────────────────────────────────────────
+  // ── Delivery: one try now, then background retries with back-off (queue on disk) ──────────────────────────────
   async function deliver(p: Pending): Promise<boolean> {
     try {
       const res = await slow.ingest(headerUser(p.user), p.req);
       if (res.conflicts.length) log.warn(`recordare: ${res.conflicts.length} message id(s) conflicted (kept the stored version)`);
+      outbox.remove(p);
       return true;
     } catch (err) {
       p.attempts++;
       const next = afterFailure(err, p.attempts, RETRY);
       if (next.action === 'park') {
         log.warn(`recordare: dropped ${p.req.messages.length} message(s) after ${p.attempts} attempt(s) (${next.reason}: ${errName(err)})`);
+        outbox.remove(p);
         return true;
       }
       if (queue.length >= MAX_QUEUE) {
-        queue.shift();
+        outbox.remove(queue.shift()!);
         log.warn('recordare: retry queue full, dropped the oldest batch');
       }
+      outbox.save(p);
       queue.push(p);
       schedule(next.delayMs);
       if (p.attempts === 1) log.warn(`recordare: ingest failed (${errName(err)}), retrying in the background`);
@@ -134,7 +146,7 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
   }
 
   function send(user: string, req: IngestRequest): Promise<boolean> {
-    return deliver({ user, req, attempts: 0 });
+    return deliver({ id: pendingId(), user, req, attempts: 0 });
   }
 
   // ── Who and where ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -309,13 +321,21 @@ export function registerRecordare(api: OpenClawPluginApi, cfg: RecordareConfig, 
     }
   }
 
+  if (queue.length) {
+    log.info(`recordare: ${queue.length} undelivered batch(es) from the last run, retrying`);
+    schedule(RESUME_MS);
+  }
+
   return {
     async stop() {
       stopped = true;
       if (timer) clearTimeout(timer);
       timer = undefined;
-      // One last bounded attempt for what is still queued (OpenClaw gives shutdown hooks ~2 s).
-      await withTimeout(Promise.all(queue.splice(0).map((p) => slow.ingest(headerUser(p.user), p.req).catch(() => undefined))), 1500).catch(() => undefined);
+      // One last bounded attempt for what is still queued (OpenClaw gives shutdown hooks ~2 s); on disk, the rest waits
+      // for the next start.
+      const last = queue.splice(0);
+      await withTimeout(Promise.all(last.map((p) => slow.ingest(headerUser(p.user), p.req).then(() => outbox.remove(p), () => undefined))), 1500)
+        .catch(() => undefined);
       await Promise.all([fast.close(), slow.close()]).catch(() => undefined);
     },
   };

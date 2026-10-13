@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentTool, HookMap, OpenClawPluginApi, ToolContext } from 'openclaw/plugin-sdk/plugin-entry';
 import { parseConfig } from '../src/config.js';
@@ -193,6 +195,66 @@ describe('hooks and tools', () => {
       .find((t) => t.name === 'recordare_search_episodes')!;
     expect(tool).toBeDefined();
     expect((await tool.execute('t', { query: 'x' })).content[0]!.text).toMatch(/unavailable/);
+    await plugin.stop();
+  });
+});
+
+describe('durable retry queue', () => {
+  let dir: string;
+  let calls: string[];
+  let down: boolean;
+  const cfg = { url: 'http://r', apiKey: 'rk_x', memoryPer: 'user', users: { 'telegram:42': 'alice' } };
+  const ctx = { sessionKey: 'k', sessionId: 's', channel: 'telegram', senderId: '42', runId: 'r1' };
+  const end = { success: true, messages: [{ role: 'user', content: 'my sister is Giulia' }, { role: 'assistant', content: 'Noted.' }] };
+  const files = () => readdirSync(dir).filter((n) => n.endsWith('.json'));
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'recordare-outbox-'));
+    calls = [];
+    down = true;
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      if (down) throw new Error('ECONNREFUSED');
+      calls.push(String(init.body));
+      return new Response(JSON.stringify({ conversationId: 'c', accepted: 2, duplicates: 0, conflicts: [] }), { status: 200 });
+    }));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('a batch Recordare did not take survives a restart and is sent by the next run', async () => {
+    const first = fakeApi(cfg);
+    const plugin = registerRecordare(first.api, parseConfig(first.api.pluginConfig, {})!, kinds, dir);
+    await first.hooks.agent_end(end, ctx);
+    expect(files()).toHaveLength(1);
+    expect(readFileSync(join(dir, files()[0]!), 'utf8')).toContain('my sister is Giulia');
+    await plugin.stop();
+    expect(files()).toHaveLength(1);           // still down at shutdown: kept for the next start
+
+    vi.useFakeTimers();
+    down = false;
+    const second = fakeApi(cfg);
+    const again = registerRecordare(second.api, parseConfig(second.api.pluginConfig, {})!, kinds, dir);
+    expect(second.logs.some((m) => m.includes('1 undelivered batch'))).toBe(true);
+    await vi.advanceTimersByTimeAsync(6_000);
+    expect(calls).toHaveLength(1);
+    expect(JSON.parse(calls[0]!).messages.map((m: { content: string }) => m.content)).toEqual(['my sister is Giulia', 'Noted.']);
+    expect(files()).toHaveLength(0);
+    vi.useRealTimers();
+    await again.stop();
+  });
+
+  it('a batch sent at once never touches the disk; an unreadable file is dropped', async () => {
+    down = false;
+    writeFileSync(join(dir, '000000000000001-aaaaaaaaaaaa.json'), '{broken');
+    const { api, hooks, logs } = fakeApi(cfg);
+    const plugin = registerRecordare(api, parseConfig(api.pluginConfig, {})!, kinds, dir);
+    expect(logs.some((m) => m.includes('unreadable'))).toBe(true);
+    await hooks.agent_end(end, ctx);
+    expect(calls).toHaveLength(1);
+    expect(files()).toHaveLength(0);
     await plugin.stop();
   });
 });

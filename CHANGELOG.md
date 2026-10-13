@@ -30,6 +30,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `memories.patterns_upto`, note change `retired`). Dev set: 20 of 21 habits, no false pattern (3 runs).
 
 ### Changed
+- OpenClaw plugin: captured messages that could not be sent wait in a queue on disk (`<OpenClaw state dir>/recordare/outbox`,
+  owner-only, unsent batches only) and are retried for a few hours, across Gateway restarts — before, an in-memory queue
+  gave up after about ten minutes and lost everything on restart (WORK_PLAN 6.6b (5)).
 - `/mcp` answers plain JSON (`application/json`) instead of an event stream: a host or a script reads the answer
   without an SSE parser; clients still send `Accept: application/json, text/event-stream` (WORK_PLAN 6.6b (10)).
 - Extraction prompt `extract.v14` (both modes, WORK_PLAN 8.11): the agent's own slips are stored in the first person

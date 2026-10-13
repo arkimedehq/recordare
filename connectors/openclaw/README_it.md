@@ -26,8 +26,10 @@ tenuta dal tuo servizio [Recordare](../../README_it.md) — il livello client **
 Non occupa lo slot memoria di OpenClaw: `memory-core` (`MEMORY.md`, `memory_search`) continua a funzionare accanto.
 Recordare conserva ogni turno che il plugin invia (non ha un flag di consenso, D50). Il plugin non blocca né rompe mai
 un turno: ogni chiamata ha un limite di tempo (3 s prima del turno), gli errori finiscono nel log senza contenuti, i
-messaggi catturati non inviati vengono ritentati in background per una decina di minuti (in memoria: un riavvio del
-Gateway li perde).
+messaggi catturati non inviati vengono ritentati in background per qualche ora, da una coda su disco che sopravvive a un
+riavvio del Gateway (`<cartella di stato di OpenClaw>/recordare/outbox`, di solito `~/.openclaw/recordare/outbox`, file
+leggibili solo dal proprietario; ci finiscono solo i messaggi non inviati, e ogni file viene cancellato appena Recordare
+lo ha ricevuto).
 
 Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 

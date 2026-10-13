@@ -30,6 +30,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   `memories.patterns_upto`, modifica di nota `retired`). Set di sviluppo: 20 abitudini su 21, nessun pattern falso (3 run).
 
 ### Modificato
+- Plugin OpenClaw: i messaggi catturati non inviati aspettano in una coda su disco (`<cartella di stato di OpenClaw>/recordare/outbox`,
+  solo per il proprietario, solo i batch non inviati) e vengono ritentati per qualche ora, anche dopo un riavvio del
+  Gateway — prima una coda in memoria rinunciava dopo una decina di minuti e perdeva tutto al riavvio (WORK_PLAN 6.6b (5)).
 - `/mcp` risponde in JSON semplice (`application/json`) invece che come flusso di eventi: un host o uno script legge la
   risposta senza un parser SSE; i client inviano comunque `Accept: application/json, text/event-stream` (WORK_PLAN 6.6b (10)).
 - Prompt di estrazione `extract.v14` (entrambe le modalità, WORK_PLAN 8.11): gli errori dell'agente stesso sono salvati in
