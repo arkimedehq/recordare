@@ -252,11 +252,12 @@ no fallback without WebGL).
 Status (2026-10-07): 6.1 TODO; **6.2 done** in Arkimede (outbox, identity + naming, MCP tools as `recordare_*` without
 `log_episode`, consent state *(superseded by D50 / 8.1, 2026-10-09: no consent)*, error turns excluded); 6.3 partial (Settings switch done; Diary tab TODO — needs 4.7);
 6.4 partial (unit tests; no recorded regression run); 6.5, 6.6 TODO; 6.7 (client library + conformance, Arkimede on it), 6.8 (entity memory, D48) and 6.9 (admin console) done; D34's A-MEM toggle split and the notes copy
-Recordare → A-MEM TODO. Next in order (maintainer's decision 2026-10-07: connectors last): the 5.7 ideas,
+Recordare → A-MEM TODO *(done 2026-10-13)*. Next in order (maintainer's decision 2026-10-07: connectors last): the 5.7 ideas,
 4.7 read API (then the Diary tab, 6.3), 4.8 fresh blind dataset (and a blind entity-memory set), 4.10, then 6.6
 connectors.
 Status (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b mostly done ((5), (6), (10) TODO, (8) done with 5.7); 6.4 partial (unit tests; no recorded regression run); 6.5 TODO; D34's A-MEM
-toggle split and the notes copy Recordare → A-MEM TODO; Arkimede still uses the synced copy of the client library, not
+toggle split and the notes copy Recordare → A-MEM TODO *(done 2026-10-13: `sharedMemoryEnabled` apart from
+`autoMemoryEnabled`; Diary copies by hand or by category rule, kept in step through the notes change feed)*; Arkimede still uses the synced copy of the client library, not
 the npm package. Of the order above, 4.7 (diary
 part), 6.3, 4.8 and 6.6 are done; next: 4.12, 4.10, 4.13, 4.14, the rest of 6.6b.
 

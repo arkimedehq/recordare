@@ -256,10 +256,12 @@ Stato (2026-10-08): righe invariate; Recordare Atlas è pubblico insieme a Recor
 Stato (2026-10-07): 6.1 TODO; **6.2 done** in Arkimede (outbox, identità + naming, strumenti MCP come `recordare_*` senza
 `log_episode`, stato del consenso *(superato da D50 / 8.1, 2026-10-09: niente consenso)*, turni di errore esclusi); 6.3 partial (interruttore nelle Impostazioni fatto; scheda Diario TODO — richiede 4.7);
 6.4 partial (test unitari; nessuna esecuzione di regressione registrata); 6.5, 6.6 TODO; 6.7 (libreria client + conformità, Arkimede la usa), 6.8 (memoria di entità, D48) e 6.9 (console admin) done; la divisione dell'interruttore A-MEM di D34 e la copia delle note
-Recordare → A-MEM TODO. Prossimi in ordine (decisione del maintainer 2026-10-07: i connettori per ultimi): le idee
+Recordare → A-MEM TODO *(fatte il 2026-10-13)*. Prossimi in ordine (decisione del maintainer 2026-10-07: i connettori per ultimi): le idee
 della 5.7, la 4.7 API di lettura (poi la scheda Diario, 6.3), la 4.8 nuovo dataset cieco (e un set cieco per la memoria
 di entità), la 4.10, poi i connettori 6.6.
-Stato (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b quasi completa ((5), (6), (10) TODO, (8) fatto con la 5.7); 6.4 partial (test unitari; nessuna esecuzione di regressione registrata); 6.5 TODO; la divisione dell'interruttore A-MEM di D34 e la copia delle note Recordare → A-MEM TODO; Arkimede usa ancora la
+Stato (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b quasi completa ((5), (6), (10) TODO, (8) fatto con la 5.7); 6.4 partial (test unitari; nessuna esecuzione di regressione registrata); 6.5 TODO; la divisione dell'interruttore A-MEM di D34 e la copia delle note Recordare → A-MEM TODO *(fatte il
+2026-10-13: `sharedMemoryEnabled` separato da `autoMemoryEnabled`; il Diario copia a mano o con una regola per categoria,
+e il feed delle modifiche delle note tiene le copie allineate)*; Arkimede usa ancora la
 copia sincronizzata della libreria client, non il pacchetto npm.
 Dell'ordine qui sopra sono fatte la 4.7 (parte del diario), la 6.3, la 4.8 e la 6.6; prossimi: 4.12, 4.10, 4.13, 4.14,
 il resto della 6.6b.

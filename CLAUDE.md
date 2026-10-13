@@ -127,8 +127,9 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   without it.
 - Existing semantic memory: A-MEM (`backend/src/user-memory/`, `docs/MEMORY.md`, per-user
   `autoMemoryEnabled` governs extraction + injection + tools; scopes personal / team / org).
-  **D34**: A-MEM stays in Arkimede unchanged; Recordare is complete (notes too); users copy notes
-  Recordare → A-MEM by choice; the Arkimede toggle is split in M6 (TODO).
+  **D34** (done 2026-10-13): A-MEM stays in Arkimede unchanged; Recordare is complete (notes too); users copy notes
+  Recordare → A-MEM by hand or by category rule, kept in step by the notes change feed (`replaces`); Arkimede's toggle
+  is split: `autoMemoryEnabled` (personal notes) and `sharedMemoryEnabled` (team / org notes).
 - Integration (M6.2, done): outbox ingest, identity + naming, Recordare MCP tools as `recordare_*` (no `log_episode`),
   its per-user memory switch is the only on/off (D50, no consent state); voice spans from its Wyoming server act for
   the Wyoming user (D47).
@@ -136,5 +137,5 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 
 ## Next steps
 Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connectors last). Done 2026-10-12: 5.3, 5.4 (+ blind),
-5.5, 4.1, 4.7, 5.7 taint; 5.8 parked; blind11 entity set 98.8 %; 5.4 follow-ups tried and reverted (known limit). Next:
-D34 A-MEM toggle split (Arkimede), then 6.6b ((5), (6), (10)).
+5.5, 4.1, 4.7, 5.7 taint; 5.8 parked; blind11 entity set 98.8 %; 5.4 follow-ups tried and reverted (known limit).
+Done 2026-10-13: D34 A-MEM toggle split + note copies (Arkimede). Next: 6.6b ((5), (6), (10)).

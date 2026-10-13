@@ -467,8 +467,12 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   personal notes memory (extraction + use), team / org notes (use), Recordare (connected or not).
   Users without Recordare get the same flexibility. If a user enables both personal A-MEM extraction
   and Recordare notes, duplicates are possible: the UI warns, it does not forbid (user's choice).
-- Status (2026-10-08): Recordare's notes are built; changes are recorded (`note_changes`) but the change-feed endpoint
-  is not built yet (WORK_PLAN 4.3 / 4.7); the Arkimede side (toggle split, copying notes into A-MEM) is TODO.
+- Status (2026-10-13): **done**. Recordare: notes, the change feed (`GET api/v1/notes/changes?since`, 4.7) with
+  `replaces` (the note an updated or corrected one took the place of). Arkimede: `autoMemoryEnabled` (personal notes:
+  extraction + use) and `sharedMemoryEnabled` (team / org notes: use; starts equal to the old toggle); the Diary copies a
+  note into A-MEM by hand (personal, a team, the org — audited) or by category rule (personal only, never pushing the
+  user's own notes out of a full memory); a worker follows the feed so copies are updated, corrected or removed with
+  the note; the Memory section warns about duplicates when both personal A-MEM and Recordare are on.
 
 ### D35 — Cost is an option, not a limit: quality profiles (2026-10-03)
 - The maintainer's guidance: models get cheaper and local models stronger; users choose the quality they

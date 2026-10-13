@@ -473,9 +473,13 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   memoria di note personali (estrazione + uso), note team / org (uso), Recordare (connesso o no).
   Gli utenti senza Recordare ottengono la stessa flessibilità. Se un utente abilita sia l'estrazione personale di A-MEM
   sia le note di Recordare, sono possibili duplicati: la UI avvisa, non vieta (scelta dell'utente).
-- Stato (2026-10-08): le note di Recordare sono realizzate; i cambiamenti sono registrati (`note_changes`) ma l'endpoint del
-  feed delle modifiche non è ancora realizzato (WORK_PLAN 4.3 / 4.7); il lato Arkimede (divisione dell'interruttore, copia
-  delle note in A-MEM) è TODO.
+- Stato (2026-10-13): **fatto**. Recordare: le note, il feed delle modifiche (`GET api/v1/notes/changes?since`, 4.7)
+  con `replaces` (la nota di cui una nota aggiornata o corretta ha preso il posto). Arkimede: `autoMemoryEnabled` (note
+  personali: estrazione + uso) e `sharedMemoryEnabled` (note di team / organizzazione: uso; parte uguale al vecchio
+  interruttore); il Diario copia una nota in A-MEM a mano (personale, un team, l'organizzazione — registrato nell'audit)
+  o con una regola per categoria (solo personale, senza mai togliere le note dell'utente da una memoria piena); un
+  worker segue il feed così le copie vengono aggiornate, corrette o rimosse con la nota; la sezione Memoria avvisa dei
+  doppioni quando A-MEM personale e Recordare sono attivi insieme.
 
 ### D35 — Il costo è un'opzione, non un limite: profili di qualità (2026-10-03)
 - Indicazione del maintainer: i modelli diventano più economici e i modelli locali più forti; gli utenti scelgono la qualità
