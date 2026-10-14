@@ -16,6 +16,8 @@ export const ingestSchema = z.object({
     source: z.enum(CONVERSATION_SOURCES).exclude(['mcp_tool']).default('chat'),
     channel: z.string().max(100).optional(),
     title: z.string().max(500).optional(),
+    /** A one-to-one chat (true) or a group (false); unknown when missing. A link code is never accepted in a group (D51). */
+    direct: z.boolean().optional(),
     participants: z.array(z.object({
       ref: z.string().min(1).max(200),
       role: z.enum(['holder', 'assistant', 'other']),

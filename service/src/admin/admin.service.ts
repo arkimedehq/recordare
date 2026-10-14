@@ -3,6 +3,7 @@
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource, QueryFailedError } from 'typeorm';
+import { CLAIM_TTL_DAYS, confirmClaim, createLinkCode, type LinkCode, rejectClaim } from '../identity/holder-links';
 import { AccessToken, ApiKey, Client, ExternalIdentity, Memory, Person } from '../identity/identity.entities';
 import { generateCredential, hashCredential } from '../auth/credentials';
 import { AuthService } from '../auth/auth.service';
@@ -129,11 +130,29 @@ export class AdminService {
       `SELECT t.id, t.memory_id AS "memoryId", t.prefix, t.scopes, c.name AS client, t.created_at AS "createdAt",
               t.expires_at AS "expiresAt", t.last_used_at AS "lastUsedAt"
        FROM access_tokens t JOIN clients c ON c.id = t.client_id WHERE t.revoked_at IS NULL ORDER BY t.created_at`);
+    const claims: Array<{ memoryId: string }> = await this.db.query(
+      `SELECT l.id, l.memory_id AS "memoryId", l.claim_channel AS channel, c.name AS client, l.claim_external_id AS "externalId",
+              l.claim_display_name AS "displayName", l.claimed_at AS "claimedAt"
+       FROM link_codes l LEFT JOIN clients c ON c.id = l.claim_client_id
+       WHERE l.claimed_at > now() - make_interval(days => $1) ORDER BY l.claimed_at`, [CLAIM_TTL_DAYS]);
     return memories.map((o) => ({
       ...o,
       identities: identities.filter((i) => (i.memoryId ?? i.personId) === o.id),
       tokens: tokens.filter((t) => t.memoryId === o.id),
+      linkClaims: claims.filter((l) => l.memoryId === o.id),
     }));
+  }
+
+  linkCode(memoryId: string): Promise<LinkCode> {
+    return createLinkCode(this.db, memoryId, new Date());
+  }
+
+  confirmClaim(memoryId: string, claimId: string): Promise<void> {
+    return this.db.transaction((tx) => confirmClaim(tx, memoryId, claimId, new Date()));
+  }
+
+  rejectClaim(memoryId: string, claimId: string): Promise<void> {
+    return rejectClaim(this.db, memoryId, claimId);
   }
 
   /** Clients with their active keys (prefixes only). */
