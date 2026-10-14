@@ -11,7 +11,7 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 ## Read first
 - `docs/DIGITAL_TWIN_VISION.md` — goal, pillars, disclosure tiers, initiative levels, legacy
   mode, architecture (standalone, own DB, one memory per person), name, roadmap.
-- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D48 (layered memory: raw log →
+- `docs/EPISODIC_MEMORY_TODO.md` — phase 1 design, decisions D1–D51 (layered memory: raw log →
   episodes → digests → semantic notes; one extraction call per window (D32); idle+nightly triggers; tools
   `log_episode` / `search_episodes`; bi-temporal episodes; Memobase-like profile+events).
 - `spikes/memory-eval/RESULTS.md` — engine comparison (baseline / Graphiti / Memobase / prototype
@@ -140,4 +140,5 @@ Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connect
 5.5, 4.1, 4.7, 5.7 taint; 5.8 parked; blind11 entity set 98.8 %; 5.4 follow-ups tried and reverted (known limit).
 Done 2026-10-13: D34 A-MEM toggle split + note copies (Arkimede); 6.6b (5) durable OpenClaw queue, (10) `/mcp` plain JSON;
 6.6b (6) real-channel tests on hold. Done 2026-10-14: 8.7 follow-ups (alias, personal-token `PATCH me`, gender in
-`PersonDirectory`). Next: 8.7 holder binding by one-time code + holder's confirmation (branch, new decision).
+`PersonDirectory`); D51 holder link codes (one-time code + holder's confirmation) built on branch `holder-link-codes`
+(merge pending the maintainer's OK). Next: per WORK_PLAN (6.6b (6) on hold).

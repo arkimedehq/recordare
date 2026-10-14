@@ -99,6 +99,15 @@ non tu: elenca lì i tuoi id (oppure chiedi all'amministratore di legarli al sé
 di scrivere la prima volta). Le parole degli altri restano loro (ruolo `other`, attribuite al loro contatto), così ciò
 che dicono di sé non diventa mai un fatto su di te.
 
+**Oppure collega il tuo sender id con un codice** (D51, memorie personali). Crea un codice monouso — "Codice di collegamento" sulla
+memoria nella console di amministrazione, oppure `POST api/v1/me/link-codes` con il token personale della memoria
+(`→ {"code": "RCD-…", "expiresAt": …}`, dieci minuti) — e invialo da solo all'agente in una **chat diretta** dal tuo
+account del canale. Il plugin lo invia subito a Recordare (non viene mai salvato come messaggio) e dice al modello solo di
+rispondere che il codice è arrivato; poi conferma la richiesta nella console ("Da confermare" → "È il titolare") oppure
+con `GET api/v1/me/identities` e `POST api/v1/me/identities/pending/{id}/confirm`, entro sette giorni. Da allora quel
+mittente sei tu; i messaggi precedenti mantengono la loro attribuzione. Il plugin considera gruppi le sessioni di gruppo,
+canale e stanza (dalla chiave di sessione), dove un codice non chiede nulla.
+
 **Aggiornare da una mappa `users`.** Il comportamento precedente (ogni mittente mappato un utente Recordare separato, i
 non mappati non ricordati) è `memoryPer: "user"`: aggiungilo per tenere le memorie divise per persona.
 

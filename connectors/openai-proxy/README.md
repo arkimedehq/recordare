@@ -112,6 +112,15 @@ The person id goes through `USER_MAP`. Then the memory (`MEMORY_PER`):
 - **`user`**: the person id is the Recordare user — one memory per platform user, each its "I" (the behaviour before
   D50; set it when upgrading to keep memories split per person).
 
+**Or link the holder with a code** (D51, personal memories), instead of `SELF_USERS`: make a one-time code — the admin
+console's "Link code" on the memory, or `POST api/v1/me/link-codes` with the memory's credential (`→ {"code": "RCD-…",
+"expiresAt": …}`, ten minutes) — and send it alone as a chat message from your platform account, in a chat with no one
+else. The proxy sends it to Recordare at once (never stored as a message) and puts only an instruction in the system
+message: say that the code was received. Then confirm the claim in the console ("To confirm" → "It is the holder") or
+with `GET api/v1/me/identities` and `POST api/v1/me/identities/pending/{id}/confirm`, within seven days; from then on
+that platform user is you, earlier messages keep their attribution. The proxy cannot tell a direct chat from a shared
+one (`direct` unknown), so the confirmation is what makes it safe.
+
 Unexpanded placeholders (`{{…}}`, `[User ID]`, `{user.name}`) and values like `null` / `new` count as missing.
 Without a conversation id the conversation is **one per user (and workspace) and day**; identity headers
 (`X-Recordare-*`, `X-OpenWebUI-*`) are never sent upstream, and markers are removed from every system message.

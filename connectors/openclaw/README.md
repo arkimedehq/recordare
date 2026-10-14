@@ -95,6 +95,15 @@ list your ids there (or have the admin bind them to the memory's self, `POST api
 people's words are kept as theirs (role `other`, attributed to their contact), so what they say about themselves never
 becomes a fact about you.
 
+**Or link your sender id with a code** (D51, personal memories). Make a one-time code — the admin console's "Link code"
+on the memory, or `POST api/v1/me/link-codes` with the memory's personal token (`→ {"code": "RCD-…", "expiresAt": …}`,
+ten minutes) — and send it alone to the agent in a **direct chat** from your channel account. The plugin sends it to
+Recordare at once (never stored as a message) and tells the model only to say that the code was received; then confirm
+the claim in the console ("To confirm" → "It is the holder") or with `GET api/v1/me/identities` and `POST
+api/v1/me/identities/pending/{id}/confirm`, within seven days. From then on that sender is you; earlier messages keep
+their attribution. The plugin marks group, channel and room sessions (by their session key) as groups, where a code
+claims nothing.
+
 **Upgrading from a `users` map.** The earlier behaviour (each mapped sender a separate Recordare user, unmapped senders
 not remembered) is `memoryPer: "user"`: add it to keep your memories split per person.
 

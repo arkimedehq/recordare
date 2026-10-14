@@ -75,6 +75,22 @@ copy of the notes (pass `next` back as `since`). `settings`, `usage` read the me
 it; `updateSettings` and the export (`startExport` → `exportJob` → `exportArchive`) need the memory's personal token
 (scopes `memory_settings`, `export`; pass `user` empty).
 
+## Linking the holder's channel identity (D51)
+In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,
+expiresAt}` (`RCD-XXXX-XXXX`, ten minutes, one use) — the holder sends the code alone to the agent from that channel, in
+a direct chat (set `conversation.direct` on the ingest when you know it; `false` = a group, where a code claims nothing);
+then `holderIdentities(user)` → `{linked, pending}`, and `confirmHolderClaim(user, id)` / `rejectHolderClaim(user, id)`
+within seven days; `unlinkHolderIdentity(user, id)` undoes a link. Recordare never stores the code's message, but your
+model sees it: when `isLinkCode(text)` (the service's own `LINK_CODE` pattern), send the turn at once and give the model
+`LINK_CODE_INSTRUCTION` instead of a memory context.
+
+```ts
+const { code } = await rc.linkCode('user-42');            // show it to the holder
+if (isLinkCode(text)) systemExtra = LINK_CODE_INSTRUCTION; // the model says the code was received, without repeating it
+const { pending } = await rc.holderIdentities('user-42');
+await rc.confirmHolderClaim('user-42', pending[0].id);
+```
+
 ## What stays with the host
 How it stores its outbox (its own database, its own transaction) and how it maps its chats to the ingest contract.
 Everything else is here, the same for every client.

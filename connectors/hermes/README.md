@@ -81,6 +81,15 @@ that author — Recordare links it to a contact of the memory, created on first 
 never becomes a fact about you. Recordare answers with the whole memory in every conversation (D50): what one person
 told the agent can come up with another; whoever runs the agent tells the people who talk to it.
 
+**Or link your gateway id with a code** (D51, personal memories), instead of `RECORDARE_SELF_IDS`. Make a one-time code
+— the admin console's "Link code" on the memory, or `POST api/v1/me/link-codes` with the memory's personal token
+(`→ {"code": "RCD-…", "expiresAt": …}`, ten minutes) — and send it alone to the agent in a **direct chat** (DM) from
+your account on the platform. The provider sends it to Recordare at once (never stored as a message) and, instead of a
+memory context, tells the model only to say that the code was received; then confirm the claim in the console ("To
+confirm" → "It is the holder") or with `GET api/v1/me/identities` and `POST api/v1/me/identities/pending/{id}/confirm`,
+within seven days. From then on that id is you; earlier messages keep their attribution. The provider marks the chat
+from the gateway's `chat_type` (`dm` direct, anything else a group, where a code claims nothing).
+
 **Memory per user (`RECORDARE_MEMORY_PER=user`, the behaviour before D50).** With a client key the person is
 `<platform>:<user_id_alt or user_id>`, through `RECORDARE_USER_ALIASES` when mapped; turns without a gateway user use
 `RECORDARE_USER`, and without one the provider stays off. With a personal token every turn belongs to the token's
