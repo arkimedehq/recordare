@@ -90,7 +90,7 @@ diario self-service.
 ### Scope
 | Scope | Consente |
 |---|---|
-| `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; §2 fonti apprese (`api/v1/ingest/sources…`); `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me` (chiavi client) |
+| `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; §2 fonti apprese (`api/v1/ingest/sources…`); `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me` |
 | `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
 | `read` | §4 endpoint GET (compreso `GET api/v1/sources`), `GET api/v1/me`, `POST api/v1/context` |
 | `write` | §4 inserimenti manuali, correzioni, oblio (anche di una fonte appresa), modifiche di fatti / note |
@@ -523,7 +523,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/sources/{id}` | read | Lo stesso con il testo, passaggio per passaggio: `text: [{ordinal, heading, content}]` (costruito) |
 | `DELETE api/v1/sources/{id}` | write | Dimenticare una fonte (come `DELETE api/v1/ingest/sources/{externalId}`; `404` per un id che non è di questa memoria) (costruito) |
 | `GET api/v1/me` | read | Per chi agisce la richiesta: `{memoryId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`mode` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (con una chiave client: la memoria dell'account dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| memory_token`) |
-| `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (chiave client; un token personale riceve 403) | Le impostazioni della memoria provenienti dalla piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `mode` `personal \| entity` (D50) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo); `gender` `masculine \| feminine \| neutral` (la prima persona, dal profilo dell'account) in qualsiasi momento |
+| `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (una chiave client con `X-Recordare-User`, oppure il token personale della memoria — per un host senza account utente; 8.7) | Le impostazioni della memoria provenienti dalla piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `mode` `personal \| entity` (D50) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo); `gender` `masculine \| feminine \| neutral` (la prima persona, dal profilo dell'account) in qualsiasi momento |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | sessione del titolare (public profile) | Client / identità connessi, revoca |
 
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)

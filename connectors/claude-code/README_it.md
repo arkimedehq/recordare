@@ -18,7 +18,8 @@ plugin. Gli hook non bloccano mai Claude Code: se Recordare non risponde, il tur
 (una memoria `personal`: sei insieme il suo utente e il suo agente). La stessa
 memoria può servire anche i tuoi altri agenti (un altro token o client). La modalità e il genere della sua prima persona
 li imposta l'amministratore (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`; `gender` `masculine` per default,
-`feminine`, `neutral`); il plugin non ha impostazioni per questi valori.
+`feminine`, `neutral`) oppure lo stesso token personale, se ha lo scope `ingest` (`PATCH api/v1/me {mode?, gender?}`; la
+modalità solo finché la memoria è vuota); il plugin non ha impostazioni per questi valori.
 
 ## Installazione
 

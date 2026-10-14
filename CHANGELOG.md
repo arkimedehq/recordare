@@ -30,6 +30,13 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `memories.patterns_upto`, note change `retired`). Dev set: 20 of 21 habits, no false pattern (3 runs).
 
 ### Changed
+- A known participant who shows up under a new name on the channel (a nickname that became a full name) keeps their
+  contact, and the new name is added to the contact's aliases, so a search by it finds them (WORK_PLAN 8.7).
+- `PATCH api/v1/me` also accepts the memory's personal token (`ingest` scope): a host without user accounts (Claude Code,
+  Codex, a connector on a personal token) sets the gender, and the mode while the memory is empty, without the admin
+  (WORK_PLAN 8.7).
+- Client library: `PersonDirectory` keeps the gender in sync with the platform's profile like the name
+  (`PlatformUser.gender`; one `PATCH api/v1/me` carries both when both changed) (WORK_PLAN 8.7).
 - OpenClaw plugin: captured messages that could not be sent wait in a queue on disk (`<OpenClaw state dir>/recordare/outbox`,
   owner-only, unsent batches only) and are retried for a few hours, across Gateway restarts — before, an in-memory queue
   gave up after about ten minutes and lost everything on restart (WORK_PLAN 6.6b (5)).

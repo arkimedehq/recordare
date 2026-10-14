@@ -59,7 +59,7 @@ Recordare non ha un flag di consenso (D50): i turni sono salvati dalla prima ric
 **token personale** (`rp_…`) al posto della chiave client: ogni richiesta risolta va allora nella memoria del token.
 
 **Modalità** e **genere** della memoria li imposta l'admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`) oppure,
-con la chiave client, `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`): `personal` (l'assistente di una
+con la chiave client, `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`; con un token personale, senza header): `personal` (l'assistente di una
 persona: è lei l'"io", ciò che arriva senza identità dichiarata è suo) o `entity` (un assistente di famiglia, di team o
 di ufficio: ciò che arriva senza identità è di "qualcuno"); `gender` `masculine` (predefinito) | `feminine` | `neutral`
 per la prima persona nelle lingue con il genere. Il proxy non ha impostazioni per questi valori.

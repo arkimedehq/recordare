@@ -19,9 +19,9 @@ import { PersonDirectory, RecordareClient, afterFailure } from '@arkimedehq/reco
 const rc = new RecordareClient({ baseUrl: 'http://recordare:8080', apiKey: process.env.RECORDARE_API_KEY!,
   headers: () => traceHeaders() });                       // e.g. OpenTelemetry propagation.inject
 
-// Which memory the user's account opens, its mode (personal | entity) and Atlas address; the name follows the platform's profile. `enabled` is the
+// Which memory the user's account opens, its mode (personal | entity) and Atlas address; the name and gender follow the platform's profile. `enabled` is the
 // platform's own memory switch: while false, Recordare is not contacted (no consent flag in Recordare, D50).
-const people = new PersonDirectory(rc, { user: async (id) => ({ enabled: true, name: 'Andrea' }) });
+const people = new PersonDirectory(rc, { user: async (id) => ({ enabled: true, name: 'Andrea', gender: 'masculine' }) });
 const person = await people.refresh('user-42');           // { memoryId, mode, atlasUrl }; peek() reads the cache
 
 // Ingest (split into requests of 500, idempotent on each externalId): → { conversationId, accepted, duplicates, conflicts }.

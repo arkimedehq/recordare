@@ -101,7 +101,8 @@ memory is rejected); a future merge must remap `audience` arrays and FKs in one 
 (extracted|manual|client), created_at`, unique `(person_id, alias_norm)` — the names of a contact (first name,
 nicknames, "my sister"…). `alias_norm` = `lower(unaccent(btrim(alias)))`. As built (8.3) every contact has its display
 name as an alias (`client` when created from a participant the client identified, `extracted` when the writer created
-it by name); the writer's episode-subject rule reads them. Episodes still keep people as "Name (relation)" strings
+it by name), and a known participant's new display name on the channel is added as a `client` alias (8.7); the
+writer's episode-subject rule reads them. Episodes still keep people as "Name (relation)" strings
 (`episode_people.alias`), which people-aware recall reads (D39).
 
 ### memories
@@ -207,7 +208,7 @@ trigger; `person_aliases.source` + `client`; `external_identities.kind` `account
   attribution; otherwise a `user` message is `self` in a personal memory (method `account`) and `someone` in an entity
   memory (method `none`), any other `someone`. Participants: `assistant` → agent; `holder` → `self` in a personal memory
   (implied when missing; an entity memory implies none); with an identity → resolved in this memory (the account's own
-  user id → `self`; a participant identity → its person; first seen → a new contact + alias + verified participant
+  user id → `self`; a participant identity → its person, a new display name added as an alias; first seen → a new contact + alias + verified participant
   identity; method `client_assertion` for a client's user id, `declared` for a channel id; an unverified binding →
   `someone`).
 - *Subjects* — personal: every episode, fact, note is `self`. Entity: a fact with a subject → that `contact` (found by

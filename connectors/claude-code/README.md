@@ -17,8 +17,9 @@ block Claude Code: if Recordare is down, the turn goes on without memory.
 **Whose memory** (D50): the personal token opens one memory — your agent's, where you are "I" (a `personal` memory:
 you are both its user and its agent). The same memory can serve your other agents (another
 token or client). Its mode and the gender of its first person are set by the admin
-(`PATCH api/v1/admin/memories/{id}` `{mode, gender}`; `gender` `masculine` by default, `feminine`, `neutral`); the plugin
-has no setting for them.
+(`PATCH api/v1/admin/memories/{id}` `{mode, gender}`; `gender` `masculine` by default, `feminine`, `neutral`) or with the
+personal token itself, if it has the `ingest` scope (`PATCH api/v1/me {mode?, gender?}`; the mode only while the memory
+is empty); the plugin has no setting for them.
 
 ## Install
 

@@ -122,15 +122,17 @@ describe('clipUtf8', () => {
 });
 
 describe('PersonDirectory', () => {
-  it('keeps the name in sync with the profile, caches the memory, mode and Atlas, and survives an outage', async () => {
+  it('keeps the name and gender in sync with the profile, caches the memory, mode and Atlas, and survives an outage', async () => {
     let shown = 'Andrea';
+    let shownGender = 'masculine';
     reply = (s) => (s.method === 'GET'
-      ? { status: 200, body: { memoryId: 'o1', displayName: shown, mode: 'entity', gender: 'masculine', atlasUrl: 'http://atlas', via: 'client', scopes: [] } }
+      ? { status: 200, body: { memoryId: 'o1', displayName: shown, mode: 'entity', gender: shownGender, atlasUrl: 'http://atlas', via: 'client', scopes: [] } }
       : { status: 204 });
     let profile = 'Andrea';
+    let gender: 'masculine' | 'feminine' | null = null;
     const resolved: string[] = [];
     const people = new PersonDirectory(client(), {
-      user: async (u) => (u === 'off' ? { enabled: false } : { enabled: true, name: profile }),
+      user: async (u) => (u === 'off' ? { enabled: false } : { enabled: true, name: profile, gender }),
       onResolved: (u, p) => { resolved.push(`${u}:${p.memoryId}`); },
     });
     expect(people.peek('u1')).toBeUndefined(); // never waits; looks up in the background
@@ -143,10 +145,21 @@ describe('PersonDirectory', () => {
     expect(seen.filter((s) => s.method === 'PATCH').map((s) => s.body)).toEqual([{ displayName: 'Andrea G.' }]);
     shown = 'Andrea G.';
 
+    // The gender follows the profile too: sent once when it differs, together with any rename.
+    gender = 'feminine';
+    profile = 'Andrea';
+    await people.refresh('u1');
+    expect(seen.filter((s) => s.method === 'PATCH').map((s) => s.body).at(-1)).toEqual({ displayName: 'Andrea', gender: 'feminine' });
+    shown = 'Andrea';
+    shownGender = 'feminine';
+    const patches = seen.filter((s) => s.method === 'PATCH').length;
+    await people.refresh('u1');
+    expect(seen.filter((s) => s.method === 'PATCH')).toHaveLength(patches);
+
     reply = () => ({ status: 503 });
     expect((await people.refresh('u1')).memoryId).toBe('o1');
     expect(people.peek('u1')?.memoryId).toBe('o1'); // the last known person stays
-    expect(resolved).toEqual(['u1:o1', 'u1:o1']);
+    expect(resolved).toEqual(['u1:o1', 'u1:o1', 'u1:o1', 'u1:o1']);
 
     // Not opted in on the platform: Recordare is never contacted; a stored person stays known.
     seen.length = 0;

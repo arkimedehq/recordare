@@ -38,7 +38,7 @@ Provato con Hermes Agent v0.21.6. Python puro, solo `requests` (una dipendenza d
      consente); la chiave client serve anche per una memoria per utente del gateway.
 
    **Modalità** e **genere** della memoria li imposta l'admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`),
-   oppure, con una chiave client, `PATCH api/v1/me`: `personal` (il tuo assistente: tu sei l'"io", ciò che arriva senza
+   oppure, con una chiave client o il token personale, `PATCH api/v1/me`: `personal` (il tuo assistente: tu sei l'"io", ciò che arriva senza
    identità dichiarata è tuo) o `entity` (un agente condiviso da una famiglia, un team, un luogo: ciò che arriva senza
    identità è di "qualcuno"); `gender` `masculine` (predefinito) | `feminine` | `neutral` per la prima persona nelle
    lingue con il genere. Il provider non ha impostazioni per questi valori.

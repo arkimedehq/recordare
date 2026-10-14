@@ -91,6 +91,29 @@ describe('auth and admin (v1 home / research profile)', () => {
     expect(new Set(burst.map((r) => r.body.memoryId)).size).toBe(1);
   });
 
+  it('lets a personal token set its own memory\'s gender, and the mode while the memory is empty', async () => {
+    const memory = await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Sara' } });
+    const memoryId: string = memory.body.personId;
+    const client = await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'Laptop', kind: 'mcp_client' } });
+    const token = async (scopes: string[]) => (await call(url, 'POST', `/api/v1/admin/memories/${memoryId}/tokens`,
+      { token: ADMIN_KEY, body: { clientId: client.body.id, scopes } })).body.token as string;
+    const tok = await token(['mcp', 'ingest', 'read']);
+    const set = (body: object, t = tok) => call(url, 'PATCH', '/api/v1/me', { token: t, body });
+    const shown = async () => (await call(url, 'GET', '/api/v1/me', { token: tok })).body;
+
+    expect((await set({ gender: 'feminine' })).status).toBe(204);
+    expect((await set({ mode: 'entity' })).status).toBe(204); // empty memory
+    expect(await shown()).toMatchObject({ memoryId, gender: 'feminine', mode: 'entity' });
+    expect((await set({ gender: 'neutral' }, await token(['mcp', 'read']))).status).toBe(403); // scope
+
+    const { DataSource } = await import('typeorm');
+    await app.get(DataSource).query(`INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience)
+      VALUES ($1, 'event', 'Riunione', 'holder_lived', 'holder', $2)`, [memoryId, [memoryId]]);
+    expect(await set({ mode: 'personal' })).toMatchObject({ status: 409, body: { code: 'memory_not_empty' } });
+    expect((await set({ gender: 'masculine' })).status).toBe(204); // the gender changes any time
+    expect(await shown()).toMatchObject({ gender: 'masculine', mode: 'entity' });
+  });
+
   it('rejects tokens for unknown clients and cuts off tokens of disabled clients', async () => {
     const memory = await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Chiara' } });
     const missing = await call(url, 'POST', `/api/v1/admin/memories/${memory.body.personId}/tokens`, {

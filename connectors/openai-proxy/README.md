@@ -57,7 +57,7 @@ or remove the proxy. To use an existing memory as the proxy's, bind its account:
 **personal token** (`rp_…`) instead of a client key: every resolved request then goes to the token's memory.
 
 The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`) or, with
-the client key, by `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`): `personal` (one person's assistant: they
+the client key, by `PATCH api/v1/me` (`X-Recordare-User: <RECORDARE_USER>`; with a personal token, no header): `personal` (one person's assistant: they
 are "I", what arrives undeclared is theirs) or `entity` (a family, team or office assistant: what arrives undeclared is
 "someone"'s); `gender` `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The
 proxy has no setting for them.

@@ -51,7 +51,7 @@ Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
      per persona.
 
    **Modalità** e **genere** della memoria li imposta l'amministratore (`PATCH api/v1/admin/memories/{id}`
-   `{mode, gender}`), oppure, con una chiave client, `PATCH api/v1/me`: `personal` (il tuo assistente: tu sei l'"io",
+   `{mode, gender}`), oppure, con una chiave client o il token personale, `PATCH api/v1/me`: `personal` (il tuo assistente: tu sei l'"io",
    ciò che arriva senza identità dichiarata è tuo) o `entity` (un agente condiviso da una famiglia, un team, un luogo:
    ciò che arriva senza identità è di "qualcuno"); `gender` `masculine` (default) | `feminine` | `neutral` per la prima
    persona nelle lingue con il genere. Il plugin non ha impostazioni per questi valori.

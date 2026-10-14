@@ -36,7 +36,7 @@ Tested with Hermes Agent v0.21.6. Pure Python, only `requests` (a Hermes depende
      what one memory per gateway user needs.
 
    The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`), or
-   with a client key by `PATCH api/v1/me`: `personal` (your own assistant: you are "I", what arrives undeclared is
+   with a client key or the personal token by `PATCH api/v1/me`: `personal` (your own assistant: you are "I", what arrives undeclared is
    yours) or `entity` (an agent shared by a family, a team, a place: what arrives undeclared is "someone"'s); `gender`
    `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The provider has no
    setting for them.

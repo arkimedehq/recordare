@@ -84,7 +84,7 @@ self-service diary.
 ### Scopes
 | Scope | Allows |
 |---|---|
-| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; §2 learned sources (`api/v1/ingest/sources…`); `ingest` inside `POST api/v1/context`; `PATCH api/v1/me` (client keys) |
+| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; §2 learned sources (`api/v1/ingest/sources…`); `ingest` inside `POST api/v1/context`; `PATCH api/v1/me` |
 | `mcp` | §3 tools (reads + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
 | `read` | §4 GET endpoints (`GET api/v1/sources` included), `GET api/v1/me`, `POST api/v1/context` |
 | `write` | §4 manual entries, corrections, forgetting (a learned source included), fact / note edits |
@@ -510,7 +510,7 @@ account sees all of it (D48).
 | `GET api/v1/sources/{id}` | read | The same with its text, passage by passage: `text: [{ordinal, heading, content}]` (built) |
 | `DELETE api/v1/sources/{id}` | write | Forget a source (as `DELETE api/v1/ingest/sources/{externalId}`; `404` for an id that is not this memory's) (built) |
 | `GET api/v1/me` | read | Who the request acts for: `{memoryId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`mode` `entity` = a shared memory: the client tells its users so) (with a client key: the memory of the account behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| memory_token`) |
-| `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (client key; a personal token gets 403) | The memory's settings from the platform: the name follows the client's user (sync on every rename); `mode` `personal \| entity` (D50) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it); `gender` `masculine \| feminine \| neutral` (first person, from the account's profile) any time |
+| `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (a client key with `X-Recordare-User`, or the memory's personal token — for a host without user accounts; 8.7) | The memory's settings from the platform: the name follows the client's user (sync on every rename); `mode` `personal \| entity` (D50) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it); `gender` `masculine \| feminine \| neutral` (first person, from the account's profile) any time |
 | `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | holder session (public profile) | Connected clients / identities, revoke |
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)

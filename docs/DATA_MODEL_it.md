@@ -104,7 +104,8 @@ memoria viene rifiutato); una futura unione dovrà rimappare gli array `audience
 (extracted|manual|client), created_at`, unique `(person_id, alias_norm)` — i nomi di un contatto (nome, soprannomi,
 "mia sorella"…). `alias_norm` = `lower(unaccent(btrim(alias)))`. Come costruito (8.3) ogni contatto ha il suo nome
 visualizzato come alias (`client` quando creato da un partecipante identificato dal client, `extracted` quando lo
-scrittore lo ha creato per nome); la regola del soggetto degli episodi li legge. Gli episodi tengono ancora le persone
+scrittore lo ha creato per nome), e il nuovo nome visualizzato di un partecipante noto sul canale si aggiunge come alias
+`client` (8.7); la regola del soggetto degli episodi li legge. Gli episodi tengono ancora le persone
 come stringhe "Nome (relazione)" (`episode_people.alias`), che il recall consapevole delle persone legge (D39).
 
 ### memories
@@ -218,7 +219,7 @@ sull'ambito; `person_aliases.source` + `client`; `external_identities.kind` `acc
   `someone` in una memoria di entità (metodo `none`), ogni altro `someone`. Partecipanti: `assistant` → agent; `holder` →
   `self` in una memoria personale (implicito quando manca; una memoria di entità non ne implica nessuno); con
   un'identità → risolto in questa memoria (l'id utente dell'account stesso → `self`; un'identità di partecipante → la sua
-  persona; vista per la prima volta → un nuovo contatto + alias + identità di partecipante verificata; metodo
+  persona, con un nuovo nome visualizzato aggiunto come alias; vista per la prima volta → un nuovo contatto + alias + identità di partecipante verificata; metodo
   `client_assertion` per un id utente del client, `declared` per un id di canale; un collegamento non verificato →
   `someone`).
 - *Soggetti* — personale: ogni episodio, fatto, nota è `self`. Entità: un fatto con un soggetto → quel `contact`

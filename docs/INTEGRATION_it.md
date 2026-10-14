@@ -37,7 +37,8 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   segue la stessa via: `PATCH api/v1/me {mode: personal | entity}` (D50 — `entity` per un account condiviso che usano
   tutti: un dispositivo domestico, un robot, un luogo), accettato solo finché la memoria è vuota (409
   `memory_not_empty`); e il genere grammaticale della prima persona dal profilo dell'utente, in qualsiasi momento:
-  `PATCH api/v1/me {gender: masculine | feminine | neutral}` (default maschile). `GET api/v1/me` restituisce `mode` e
+  `PATCH api/v1/me {gender: masculine | feminine | neutral}` (default maschile). Il `PersonDirectory` della libreria
+  client tiene nome e genere allineati al profilo a ogni lookup. `GET api/v1/me` restituisce `mode` e
   `gender` (mostrare una memoria condivisa come tale) e `atlasUrl` quando Recordare Atlas è installato (collegarlo solo
   per i propri amministratori: mostra l'attività di ogni persona).
 - **Due tipi di identità** (D50, WORK_PLAN 8.3): `X-Recordare-User` è un'identità di **account** — apre la memoria
@@ -145,8 +146,9 @@ di Hermes, gli utenti della piattaforma del proxy) sono **partecipanti** con un'
 memoria come suoi contatti, e i loro turni sono inviati con ruolo `other` e il loro autore; il titolare dell'account
 (indicato nelle impostazioni di ciascun connettore) è l'"io" della memoria. Una memoria per persona resta
 un'impostazione (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`, `MEMORY_PER=user`). Claude Code e Codex: la memoria
-del token personale. Modalità e genere di una memoria li imposta l'amministratore o `PATCH api/v1/me`, non i
-connettori.
+del token personale. Modalità e genere di una memoria li imposta l'amministratore o `PATCH api/v1/me` (una chiave
+client, oppure il token personale della memoria con `ingest`), non i connettori. Un partecipante noto che compare con un
+nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 
 ## 5. Osservabilità (opzionale)
 Recordare Atlas mostra il lavoro di Recordare stesso dal suo flusso di telemetria; i propri agenti (chiamate LLM,

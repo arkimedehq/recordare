@@ -32,7 +32,8 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   profile (the name follows the platform). The user's choice of memory mode goes the same way: `PATCH api/v1/me
   {mode: personal | entity}` (D50 — `entity` for a shared account everyone uses: a home device, a robot, a place),
   accepted only while the memory is empty (409 `memory_not_empty`); and the first person's grammatical gender from the
-  user's profile, any time: `PATCH api/v1/me {gender: masculine | feminine | neutral}` (default masculine). `GET
+  user's profile, any time: `PATCH api/v1/me {gender: masculine | feminine | neutral}` (default masculine). The client
+  library's `PersonDirectory` keeps the name and the gender in sync with the profile on every lookup. `GET
   api/v1/me` returns `mode` and `gender` (show a shared memory as such) and `atlasUrl` when Recordare Atlas is installed
   (link it for your admins only: it shows every person's activity).
 - **Two kinds of identity** (D50, WORK_PLAN 8.3): `X-Recordare-User` is an **account** identity — it opens the memory of
@@ -131,7 +132,8 @@ gateway users, the proxy's platform users) are **participants** with an identity
 contacts, and their turns are sent as role `other` with their author; the account holder (listed in each connector's
 settings) is the memory's "I". One memory per person stays a setting (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`,
 `MEMORY_PER=user`). Claude Code and Codex: the personal token's memory. Mode and gender of a memory are set by the
-admin or with `PATCH api/v1/me`, not by the connectors.
+admin or with `PATCH api/v1/me` (a client key, or the memory's personal token with `ingest`), not by the connectors. A
+known participant who shows up under a new name on the channel keeps their contact; the new name becomes an alias.
 
 ## 5. Observability (optional)
 Recordare Atlas shows Recordare's own work from its telemetry stream; your agents (LLM calls, tools) appear when you

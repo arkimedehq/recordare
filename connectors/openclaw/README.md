@@ -47,7 +47,7 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
      Recordare or auto-provisioned if the client allows it); a client key is also what one memory per person needs.
 
    The memory's **mode** and **gender** are set by the admin (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`), or
-   with a client key by `PATCH api/v1/me`: `personal` (your own assistant: you are "I", what arrives undeclared is
+   with a client key or the personal token by `PATCH api/v1/me`: `personal` (your own assistant: you are "I", what arrives undeclared is
    yours) or `entity` (an agent shared by a family, a team, a place: what arrives undeclared is "someone"'s); `gender`
    `masculine` (default) | `feminine` | `neutral` for the first person in gendered languages. The plugin has no setting
    for them.

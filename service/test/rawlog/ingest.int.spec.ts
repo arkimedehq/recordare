@@ -120,6 +120,19 @@ describe('REST ingest (Layer 0)', () => {
     expect(await db.query(`SELECT kind, channel, external_id FROM external_identities WHERE person_id = $1`, [tizio.id]))
       .toEqual([{ kind: 'participant', channel: 'telegram', external_id: '999' }]);
     expect(await db.query(`SELECT alias, source FROM person_aliases WHERE person_id = $1`, [tizio.id])).toEqual([{ alias: 'Tizio', source: 'client' }]);
+
+    // The same contact under a new name on the channel: the name becomes an alias (once), the contact keeps its name.
+    for (const id of ['g2', 'g3']) {
+      await call(url, 'POST', '/api/v1/ingest/messages', {
+        ...as('luca'),
+        body: batch('group', [msg(id, 'Eccomi')], {
+          participants: [{ ref: 'stranger', role: 'other', displayName: 'Tiziano Rossi', identity: { channel: 'telegram', externalId: '999' } }],
+        }),
+      });
+    }
+    expect(await db.query(`SELECT alias FROM person_aliases WHERE person_id = $1 ORDER BY alias`, [tizio.id]))
+      .toEqual([{ alias: 'Tiziano Rossi' }, { alias: 'Tizio' }]);
+    expect((await db.query(`SELECT display_name FROM persons WHERE id = $1`, [tizio.id]))[0].display_name).toBe('Tizio');
   });
 
   it('schedules one idle extraction per conversation and reschedules it on new messages', async () => {

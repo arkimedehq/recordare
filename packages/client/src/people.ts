@@ -5,9 +5,9 @@
  * Who each of the platform's users is in Recordare, cached: the memory (memoryId), its mode and the Atlas
  * address. Recordare has no consent flag (D50): the platform's own switch (`enabled`) decides whether it is contacted.
  * The synchronous readers never wait on Recordare: they answer from the cache (even if stale) and refresh in the
- * background. Each lookup also keeps the person's name in sync with the platform's profile.
+ * background. Each lookup also keeps the person's name and gender in sync with the platform's profile.
  */
-import { type MemoryMode } from './contract.js';
+import { type MeSettings, type MemoryGender, type MemoryMode } from './contract.js';
 import { type RecordareClient } from './client.js';
 
 export interface Person {
@@ -23,6 +23,8 @@ export interface PlatformUser {
   enabled: boolean;
   /** The current profile name: the person's name in Recordare follows it. */
   name?: string | null;
+  /** The profile's gender: the first person's gender in gendered languages follows it (not set = left as it is). */
+  gender?: MemoryGender | null;
 }
 
 export interface PersonDirectoryOptions {
@@ -32,7 +34,7 @@ export interface PersonDirectoryOptions {
   user: (user: string) => Promise<PlatformUser | null>;
   /** A person resolved (e.g. to store the memoryId with the platform's user). */
   onResolved?: (user: string, person: Person) => void | Promise<void>;
-  /** Called when a lookup or a rename fails (the cache keeps the last known person). */
+  /** Called when a lookup or a settings update fails (the cache keeps the last known person). */
   onError?: (user: string, err: unknown) => void;
 }
 
@@ -85,8 +87,12 @@ export class PersonDirectory {
       if (!platform?.enabled) return remember({ memoryId: last?.memoryId ?? null, mode: last?.mode ?? null, atlasUrl: last?.atlasUrl ?? null });
       const me = await this.client.me(user);
       const name = platform.name?.trim().slice(0, 100);
-      if (name && me.displayName !== name) {
-        await this.client.updateMe(user, { displayName: name }).catch((err) => this.options.onError?.(user, err));
+      const changed: MeSettings = {
+        ...(name && me.displayName !== name ? { displayName: name } : {}),
+        ...(platform.gender && me.gender !== platform.gender ? { gender: platform.gender } : {}),
+      };
+      if (Object.keys(changed).length) {
+        await this.client.updateMe(user, changed).catch((err) => this.options.onError?.(user, err));
       }
       const person: Person = { memoryId: me.memoryId, mode: me.mode, atlasUrl: me.atlasUrl ?? null };
       await this.options.onResolved?.(user, person);

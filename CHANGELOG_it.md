@@ -30,6 +30,13 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   `memories.patterns_upto`, modifica di nota `retired`). Set di sviluppo: 20 abitudini su 21, nessun pattern falso (3 run).
 
 ### Modificato
+- Un partecipante noto che compare con un nome nuovo sul canale (un soprannome diventato nome completo) resta lo stesso
+  contatto, e il nome nuovo si aggiunge ai suoi alias, così una ricerca per quel nome lo trova (WORK_PLAN 8.7).
+- `PATCH api/v1/me` accetta anche il token personale della memoria (scope `ingest`): un host senza account utente
+  (Claude Code, Codex, un connettore con token personale) imposta il genere, e la modalità finché la memoria è vuota,
+  senza l'amministratore (WORK_PLAN 8.7).
+- Libreria client: `PersonDirectory` tiene il genere allineato al profilo sulla piattaforma come il nome
+  (`PlatformUser.gender`; un solo `PATCH api/v1/me` porta entrambi quando cambiano entrambi) (WORK_PLAN 8.7).
 - Plugin OpenClaw: i messaggi catturati non inviati aspettano in una coda su disco (`<cartella di stato di OpenClaw>/recordare/outbox`,
   solo per il proprietario, solo i batch non inviati) e vengono ritentati per qualche ora, anche dopo un riavvio del
   Gateway — prima una coda in memoria rinunciava dopo una decina di minuti e perdeva tutto al riavvio (WORK_PLAN 6.6b (5)).

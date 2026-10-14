@@ -43,13 +43,15 @@ export class MeController {
    * name of "I") and stays in sync when they rename their profile (auto-provisioning first names it after the client's
    * user id). The mode (personal or entity, D50) changes only while the memory is empty: first-person memories would
    * otherwise mix with "someone"'s (409 `memory_not_empty`; the admin can still change it). The gender changes any time.
+   * A personal token (`ingest` scope) sets the same settings of its own memory: a host without user accounts (an MCP
+   * client, a connector) has no platform profile to sync, so its holder sets them once.
    */
   @Patch()
   @HttpCode(204)
   @RequireScopes('ingest')
   async settings(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(settingsSchema)) body: z.infer<typeof settingsSchema>): Promise<void> {
-    if (principal.kind !== 'client' || !user) throw new ForbiddenException();
+    if (principal.kind === 'admin' || (principal.kind === 'client' && !user)) throw new ForbiddenException();
     const memoryId = await this.memories.resolve(principal, user);
     await this.db.transaction(async (tx) => {
       if (body.mode) {

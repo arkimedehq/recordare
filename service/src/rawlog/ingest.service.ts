@@ -255,7 +255,16 @@ export class IngestService {
         [memoryId, id.channel, id.externalId]);
     if (hit) {
       if (!hit.verified_at) return SOMEONE;
-      return hit.person_id === memoryId ? self(memoryId) : { kind: 'contact', personId: hit.person_id, method, confidence: 1 };
+      if (hit.person_id === memoryId) return self(memoryId);
+      // A known contact under a new name on the channel (e.g. a nickname became a full name): the name becomes an alias,
+      // so a search by it finds them. The contact's display name stays as it is.
+      const renamed = p.displayName?.trim().slice(0, 200);
+      if (renamed) {
+        await tx.query(
+          `INSERT INTO person_aliases (memory_id, person_id, alias, alias_norm, source) VALUES ($1, $2, $3, lower(unaccent(btrim($3))), 'client')
+           ON CONFLICT DO NOTHING`, [memoryId, hit.person_id, renamed]);
+      }
+      return { kind: 'contact', personId: hit.person_id, method, confidence: 1 };
     }
     const name = (p.displayName?.trim() || (byClient ? id.externalUserId : id.externalId)).slice(0, 200);
     // A person the memory knows without an identity is this participant only on strong evidence: the full name, equal to
