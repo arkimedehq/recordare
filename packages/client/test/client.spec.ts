@@ -5,7 +5,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { type AddressInfo } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
-  afterFailure, backoffMs, clipUtf8, MemoryNotEmptyError, parseRetryAfter, PersonDirectory, RecordareClient,
+  afterFailure, backoffMs, clipUtf8, isLinkCode, MemoryNotEmptyError, parseRetryAfter, PersonDirectory, RecordareClient,
   RecordareHttpError, RecordareUnavailableError,
 } from '../src/index.js';
 
@@ -167,6 +167,25 @@ describe('PersonDirectory', () => {
     expect(await people.refresh('off')).toEqual({ memoryId: 'o-stored', mode: null, atlasUrl: null });
     expect(people.peek('off')?.memoryId).toBe('o-stored');
     expect(seen).toHaveLength(0);
+  });
+});
+
+describe('holder links (D51)', () => {
+  it('recognises a link code and calls the holder-identity endpoints', async () => {
+    expect(isLinkCode('RCD-7K4M-9Q2X')).toBe(true);
+    expect(isLinkCode(' rcd7k4m9q2x. ')).toBe(true);
+    expect(isLinkCode('il mio codice è RCD-7K4M-9Q2X')).toBe(false);
+    reply = (s) => (s.method === 'POST' && s.path.endsWith('/link-codes') ? { status: 201, body: { code: 'RCD-AAAA-BBBB', expiresAt: 'x' } }
+      : s.method === 'GET' ? { status: 200, body: { linked: [], pending: [] } } : { status: 204 });
+    expect((await client().linkCode('u1')).code).toBe('RCD-AAAA-BBBB');
+    expect(await client().holderIdentities('u1')).toEqual({ linked: [], pending: [] });
+    await client().confirmHolderClaim('u1', 'c1');
+    await client().rejectHolderClaim('u1', 'c2');
+    await client().unlinkHolderIdentity('u1', 'i1');
+    expect(seen.map((s) => `${s.method} ${s.path}`)).toEqual([
+      'POST /api/v1/me/link-codes', 'GET /api/v1/me/identities', 'POST /api/v1/me/identities/pending/c1/confirm',
+      'DELETE /api/v1/me/identities/pending/c2', 'DELETE /api/v1/me/identities/i1',
+    ]);
   });
 });
 

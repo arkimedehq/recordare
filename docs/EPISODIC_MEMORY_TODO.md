@@ -685,6 +685,28 @@ emergent case. Research: `docs/literature/human-memory-and-agent-architectures.m
   new contact and, when exactly one such contact shares the name, a "same person?" clarification (`clarifications.contact_id`,
   migration `ContactClarification1791080000000`); "yes" merges the two contacts (every reference moves, one place:
   `mergeContacts`), "no" keeps them apart. Several namesakes: no question. Replaces 8.4's name-only binding.
+
+### D51 — The holder's channel identities by one-time code, with the holder's confirmation (maintainer's decision, 2026-10-14)
+WORK_PLAN 8.7 follow-up. Attributing a message to "I" (the holder of a personal memory) must be as certain as possible;
+the holder is **never inferred** from names or content.
+- **Options**: (a) bind on the first message a connector marks as the holder — rejected: it trusts a configuration that
+  may be wrong; (b) a **one-time code** the holder sends from the channel — chosen, with the **holder's confirmation
+  mandatory**, because a connector cannot always tell a direct chat from a group, nor stop the message from reaching the
+  model and other people.
+- **Flow**: the holder makes a code `RCD-XXXX-XXXX` (Crockford base32, ten minutes, one use, one open code at a time,
+  stored hashed; personal memories only — in an entity memory "I" is the entity) and sends it to the agent from the
+  channel. The ingest recognises a user / other message that is only a code and **never stores it**; from a sender with
+  a participant identity, in a chat not marked as a group (`conversation.direct` ≠ `false`), it becomes a *claim*. A
+  code from the holder already (no identity) or in a group claims nothing; five wrong codes cancel the memory's open
+  codes. The holder confirms (or rejects) the claim within seven days: the identity is bound to the memory's self
+  (`external_identities`, verified) and speaks as "I" from then on; it can be unlinked later. Until confirmed nothing changes.
+- **The past (maintainer's choice, 2026-10-14)**: the link applies from the confirmation on. Earlier messages, and a
+  contact created from the holder's messages, keep their attribution (the contact can be deleted in the console); no
+  re-extraction, no merge into self (`mergeContacts` merges contacts only).
+- Connectors' explicit lists of the holder's senders (`selfSenders`, `RECORDARE_SELF_IDS`, `SELF_USERS`) stay valid.
+  Built 2026-10-14: `service/src/identity/holder-links.ts`, migration `HolderLinks1791150000000`; contract `API.md`
+  (`/me` link codes and identities, admin link claims, `conversation.direct`), data `DATA_MODEL.md` (`link_codes`).
+
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 decided 2026-10-12 with WORK_PLAN 5.4). Open work is tracked

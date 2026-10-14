@@ -153,11 +153,20 @@ null, external_id, verified_at null, created_at` (migration `MemoryIdentity`, D5
   `(memory_id, client_id, external_id)` and `(memory_id, channel, external_id)`. Never opens a memory: the same
   client user id can be one memory's account and a participant (a contact) in another. Ingest creates one (verified)
   when it first sees a participant's identity; an unverified binding (admin, `verified: false`) identifies nobody.
+  The holder's confirmation of a link code (D51) binds one to the memory's self (verified; a binding to a contact is
+  moved).
 Only verified bindings identify interlocutors and enter `audience`.
 
-### link_codes (public profile)
-`id, memory_id, client_id (the only client allowed to redeem), code_hash, expires_at, used_at,
-created_at`.
+### link_codes (D51) — built 2026-10-14 (migration `HolderLinks1791150000000`)
+`id, memory_id → memories ON DELETE CASCADE, code_hash bytea, expires_at, failures int default 0, claimed_at null,
+claim_client_id null, claim_channel null, claim_external_id null, claim_display_name null, created_at`; unique
+`(memory_id, code_hash)`. A personal memory's one-time code for linking the holder's channel identity
+(`service/src/identity/holder-links.ts`): `code_hash` = sha-256 of the 8 Crockford base32 characters (O → 0, I / L → 1);
+ten minutes, one open code per memory (a new one deletes the unused one); five `failures` delete the open codes. A code
+sent from a channel fills the `claim_*` columns (the sender's participant identity: `claim_client_id` for a client's
+user id, `claim_channel` for a channel id); the holder confirms within seven days (an `external_identities`
+participant row bound to the self) or rejects — either way the row is deleted. *Public profile*: the cross-client link
+code (`client_id`, `used_at`) is not built and will need its own table.
 
 ### idempotency_keys (public profile; v1 keeps replay keys in Redis for 24 h)
 `credential_id, memory_id, method_path, key, response_hash, response_body, created_at` — unique on
@@ -210,7 +219,9 @@ trigger; `person_aliases.source` + `client`; `external_identities.kind` `account
   (implied when missing; an entity memory implies none); with an identity → resolved in this memory (the account's own
   user id → `self`; a participant identity → its person, a new display name added as an alias; first seen → a new contact + alias + verified participant
   identity; method `client_assertion` for a client's user id, `declared` for a channel id; an unverified binding →
-  `someone`).
+  `someone`). A message that is only a link code (D51) is never stored: it may become a claim (`link_codes`); the
+  identity speaks as `self` only after the holder confirms, from then on — earlier messages, and a contact created
+  from them, keep their attribution.
 - *Subjects* — personal: every episode, fact, note is `self`. Entity: a fact with a subject → that `contact` (found by
   display name or created, as before), without one → `self` (the entity's own); an episode → the `contact` when its
   people name exactly one known contact (display name or alias, "(relation)" stripped; `episode_people.person_id` set

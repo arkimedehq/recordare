@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { Body, ConflictException, Controller, ForbiddenException, Get, Headers, HttpCode, Patch } from '@nestjs/common';
+import { Body, ConflictException, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { z } from 'zod';
@@ -11,6 +11,7 @@ import { type Principal } from '../auth/principal';
 import { ZodBody } from '../common/zod-body.pipe';
 import { type Env } from '../config/env';
 import { MEMORY_GENDERS, MEMORY_MODES } from '../identity/identity.entities';
+import { confirmClaim, createLinkCode, holderIdentities, rejectClaim, unlinkHolderIdentity } from '../identity/holder-links';
 
 const settingsSchema = z.object({
   displayName: z.string().trim().min(1).max(100).optional(),
@@ -51,8 +52,7 @@ export class MeController {
   @RequireScopes('ingest')
   async settings(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(settingsSchema)) body: z.infer<typeof settingsSchema>): Promise<void> {
-    if (principal.kind === 'admin' || (principal.kind === 'client' && !user)) throw new ForbiddenException();
-    const memoryId = await this.memories.resolve(principal, user);
+    const memoryId = await this.own(principal, user);
     await this.db.transaction(async (tx) => {
       if (body.mode) {
         const [cur] = await tx.query(`SELECT mode FROM memories WHERE person_id = $1 FOR UPDATE`, [memoryId]);
@@ -68,5 +68,54 @@ export class MeController {
       if (body.gender) await tx.query(`UPDATE memories SET gender = $1 WHERE person_id = $2`, [body.gender, memoryId]);
       if (body.displayName) await tx.query(`UPDATE persons SET display_name = $1 WHERE id = $2`, [body.displayName, memoryId]);
     });
+  }
+
+  /**
+   * D51: a one-time code (`RCD-XXXX-XXXX`, ten minutes) the holder sends from a channel to link that channel identity
+   * to themselves — a claim they then confirm. Personal memories only (409 `memory_not_personal`).
+   */
+  @Post('link-codes')
+  @RequireScopes('ingest')
+  async linkCode(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user?: string) {
+    const memoryId = await this.own(principal, user);
+    return createLinkCode(this.db, memoryId, new Date());
+  }
+
+  /** The identities that speak as the memory's "I" and the claims waiting for confirmation (D51). */
+  @Get('identities')
+  @RequireScopes('read')
+  async identities(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user?: string) {
+    return holderIdentities(this.db, await this.memories.resolve(principal, user), new Date());
+  }
+
+  /** Confirms a claim: that channel identity is the holder from now on (earlier messages keep their attribution). */
+  @Post('identities/pending/:id/confirm')
+  @HttpCode(204)
+  @RequireScopes('ingest')
+  async confirm(@CurrentPrincipal() principal: Principal, @Param('id', ParseUUIDPipe) id: string, @Headers(USER_HEADER) user?: string): Promise<void> {
+    const memoryId = await this.own(principal, user);
+    await this.db.transaction((tx) => confirmClaim(tx, memoryId, id, new Date()));
+  }
+
+  /** Rejects a claim (not the holder). */
+  @Delete('identities/pending/:id')
+  @HttpCode(204)
+  @RequireScopes('ingest')
+  async reject(@CurrentPrincipal() principal: Principal, @Param('id', ParseUUIDPipe) id: string, @Headers(USER_HEADER) user?: string): Promise<void> {
+    await rejectClaim(this.db, await this.own(principal, user), id);
+  }
+
+  /** Unlinks one of the holder's identities. */
+  @Delete('identities/:id')
+  @HttpCode(204)
+  @RequireScopes('ingest')
+  async unlink(@CurrentPrincipal() principal: Principal, @Param('id', ParseUUIDPipe) id: string, @Headers(USER_HEADER) user?: string): Promise<void> {
+    await unlinkHolderIdentity(this.db, await this.own(principal, user), id);
+  }
+
+  /** The caller's own memory for a write: a personal token, or a client key acting for one of its users. */
+  private own(principal: Principal, user: string | undefined): Promise<string> {
+    if (principal.kind === 'admin' || (principal.kind === 'client' && !user)) throw new ForbiddenException();
+    return this.memories.resolve(principal, user);
   }
 }

@@ -28,6 +28,9 @@ const T = {
     secretTitle: 'Copia ora il segreto', secretHint: 'Non verrà più mostrato: Recordare ne conserva solo l\'impronta.',
     copy: 'Copia', close: 'Chiudi', copied: 'Copiato', client: 'client', never: 'mai', used: 'usato', search: 'Cerca per nome',
     shown: '{n} di {total}',
+    linkCode: 'Codice di collegamento', linkCodeHint: 'Il titolare lo invia all\'agente dal canale, in chat diretta, entro 10 minuti; poi la richiesta si conferma qui.',
+    claims: 'Da confermare', isHolder: 'È il titolare', notHolder: 'Non è il titolare',
+    claimConfirm: 'Da ora i messaggi di questo mittente saranno del titolare ("io"); i messaggi passati restano come sono. Confermare?',
   },
   en: {
     persons: 'People', clients: 'Clients', logout: 'Sign out', signIn: 'Administrator sign-in',
@@ -51,6 +54,9 @@ const T = {
     secretTitle: 'Copy the secret now', secretHint: 'It will not be shown again: Recordare keeps only its hash.',
     copy: 'Copy', close: 'Close', copied: 'Copied', client: 'client', never: 'never', used: 'used', search: 'Search by name',
     shown: '{n} of {total}',
+    linkCode: 'Link code', linkCodeHint: 'The holder sends it to the agent from the channel, in a direct chat, within 10 minutes; then the claim is confirmed here.',
+    claims: 'To confirm', isHolder: 'It is the holder', notHolder: 'Not the holder',
+    claimConfirm: 'From now on this sender\'s messages will be the holder\'s ("I"); past messages stay as they are. Confirm?',
   },
 };
 const PROFILES = ['economy', 'balanced', 'full'];
@@ -178,6 +184,18 @@ function personCard(p) {
         onclick: () => linkId.value.trim() && act(() => api('POST', 'identities',
           { kind: 'account', personId: p.id, clientId: linkClient.value, externalId: linkId.value.trim() })),
       }, t('link'))) : null,
+      // D51: the holder's channel identities — a one-time code, then the claim it made is confirmed here.
+      p.linkClaims.length ? h('h4', {}, t('claims')) : null,
+      ...p.linkClaims.map((c) => h('div', { class: 'item' },
+        h('span', { class: 'chip' }, c.client ?? c.channel), h('code', {}, c.externalId),
+        c.displayName ? h('span', { class: 'muted' }, c.displayName) : null, h('span', { class: 'muted' }, when(c.claimedAt)),
+        h('button', { class: 'small', onclick: () => confirm(t('claimConfirm')) && act(() => api('POST', `memories/${p.id}/link-claims/${c.id}/confirm`)) }, t('isHolder')),
+        h('button', { class: 'danger small', onclick: () => act(() => api('DELETE', `memories/${p.id}/link-claims/${c.id}`)) }, t('notHolder')),
+      )),
+      p.mode === 'personal' ? h('div', { class: 'row' }, h('button', {
+        class: 'ghost small', title: t('linkCodeHint'),
+        onclick: () => act(async () => showSecret((await api('POST', `memories/${p.id}/link-codes`)).code), null),
+      }, `${t('linkCode')} ⓘ`)) : null,
     ),
     h('div', { class: 'sub' },
       h('h4', {}, t('tokens')),

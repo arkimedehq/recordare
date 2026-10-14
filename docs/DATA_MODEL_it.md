@@ -157,12 +157,20 @@ null, external_id, verified_at null, created_at` (migrazione `MemoryIdentity`, D
   `(memory_id, client_id, external_id)` e `(memory_id, channel, external_id)`. Non apre mai una memoria: lo stesso
   id utente del client può essere l'account di una memoria e un partecipante (un contatto) in un'altra. L'ingest ne
   crea uno (verificato) quando vede per la prima volta l'identità di un partecipante; un collegamento non verificato
-  (admin, `verified: false`) non identifica nessuno.
+  (admin, `verified: false`) non identifica nessuno. La conferma del titolare di un codice di collegamento (D51) ne lega
+  uno al sé della memoria (verificato; un collegamento a un contatto viene spostato).
 Solo i collegamenti verificati identificano gli interlocutori ed entrano in `audience`.
 
-### link_codes (public profile)
-`id, memory_id, client_id (l'unico client autorizzato a riscattarlo), code_hash, expires_at, used_at,
-created_at`.
+### link_codes (D51) — costruita il 2026-10-14 (migrazione `HolderLinks1791150000000`)
+`id, memory_id → memories ON DELETE CASCADE, code_hash bytea, expires_at, failures int default 0, claimed_at null,
+claim_client_id null, claim_channel null, claim_external_id null, claim_display_name null, created_at`; unique
+`(memory_id, code_hash)`. Il codice monouso di una memoria personale per collegare l'identità di canale del titolare
+(`service/src/identity/holder-links.ts`): `code_hash` = sha-256 degli 8 caratteri base32 di Crockford (O → 0, I / L → 1);
+dieci minuti, un codice aperto per memoria (uno nuovo cancella quello non usato); cinque `failures` cancellano i codici
+aperti. Un codice inviato da un canale riempie le colonne `claim_*` (l'identità di partecipante del mittente:
+`claim_client_id` per un id utente del client, `claim_channel` per un id di canale); il titolare conferma entro sette
+giorni (una riga `external_identities` di tipo participant legata al sé) o rifiuta — in entrambi i casi la riga viene
+cancellata. *Public profile*: il link code tra client (`client_id`, `used_at`) non è costruito e avrà una tabella propria.
 
 ### idempotency_keys (public profile; la v1 tiene le chiavi di replay in Redis per 24 h)
 `credential_id, memory_id, method_path, key, response_hash, response_body, created_at` — unique sulle
@@ -221,7 +229,9 @@ sull'ambito; `person_aliases.source` + `client`; `external_identities.kind` `acc
   un'identità → risolto in questa memoria (l'id utente dell'account stesso → `self`; un'identità di partecipante → la sua
   persona, con un nuovo nome visualizzato aggiunto come alias; vista per la prima volta → un nuovo contatto + alias + identità di partecipante verificata; metodo
   `client_assertion` per un id utente del client, `declared` per un id di canale; un collegamento non verificato →
-  `someone`).
+  `someone`). Un messaggio che contiene solo un codice di collegamento (D51) non viene mai salvato: può diventare una
+  richiesta di collegamento (`link_codes`); l'identità parla come `self` solo dopo la conferma del titolare, da lì in
+  poi — i messaggi precedenti, e un contatto creato da essi, mantengono la loro attribuzione.
 - *Soggetti* — personale: ogni episodio, fatto, nota è `self`. Entità: un fatto con un soggetto → quel `contact`
   (trovato per nome visualizzato o creato, come prima), senza → `self` (dell'entità stessa); un episodio → il `contact`
   quando le sue persone nominano esattamente un contatto noto (nome visualizzato o alias, tolta la "(relazione)";

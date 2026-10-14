@@ -48,6 +48,17 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   Così lo stesso utente può essere l'account di una memoria e un contatto in un'altra (una persona che parla alla
   memoria di un dispositivo condiviso): inviare il suo id come `identity` del partecipante e il suo nome come
   `displayName`. Collegamento a mano: `POST api/v1/admin/identities` (`API.md` §1).
+- **Collegare l'identità di canale del titolare** (D51): in una memoria personale un mittente di un canale parla come
+  "io" solo dopo che il titolare l'ha collegato — mai dedotto da nomi o contenuti. Il titolare crea un codice monouso
+  (`POST api/v1/me/link-codes` → `RCD-XXXX-XXXX`, dieci minuti; libreria `linkCode(user)`; oppure "Codice di collegamento" nella
+  console), lo invia all'agente da quel canale in una chat diretta, poi conferma la richiesta (`GET api/v1/me/identities`
+  → `pending`, `POST …/pending/{id}/confirm`, oppure la rifiuta; libreria `holderIdentities`, `confirmHolderClaim`,
+  `rejectHolderClaim`) entro sette giorni; da allora (non retroattivamente) quell'identità è il sé della memoria;
+  `unlinkHolderIdentity` la scollega. Il messaggio si invia come sempre, con il mittente come partecipante con la sua
+  `identity`, e con `conversation.direct` quando lo si sa (`false` per un gruppo: lì un codice non chiede nulla).
+  Recordare non salva mai il messaggio del codice; il modello però lo vede, quindi quando `isLinkCode(text)` si aggiunge
+  `LINK_CODE_INSTRUCTION` per il modello al posto del contesto di memoria (risponde che il codice è arrivato, senza
+  ripeterlo). A una piattaforma i cui utenti sono identità di account (Arkimede) non serve.
 
 ## 3. Ingest — non bloccare mai la chat
 - Inviare ogni messaggio persistito (utente, assistente, altri partecipanti, output degli strumenti) con
@@ -145,8 +156,11 @@ impostazioni (`X-Recordare-User`). Le persone che parlano con l'agente (i mitten
 di Hermes, gli utenti della piattaforma del proxy) sono **partecipanti** con un'identità, riconosciuti dentro quella
 memoria come suoi contatti, e i loro turni sono inviati con ruolo `other` e il loro autore; il titolare dell'account
 (indicato nelle impostazioni di ciascun connettore) è l'"io" della memoria. Una memoria per persona resta
-un'impostazione (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`, `MEMORY_PER=user`). Claude Code e Codex: la memoria
-del token personale. Modalità e genere di una memoria li imposta l'amministratore o `PATCH api/v1/me` (una chiave
+un'impostazione (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`, `MEMORY_PER=user`). L'identità di canale del titolare si collega o con la lista esplicita dei mittenti del
+titolare del connettore (`selfSenders`, `RECORDARE_SELF_IDS`, `SELF_USERS`) o con un codice di collegamento che il
+titolare invia in una chat diretta e conferma (D51, §2): OpenClaw, Hermes e il proxy inviano subito il codice a Recordare
+e dicono al modello che cos'è; OpenClaw e Hermes segnano le chat dirette (`conversation.direct`), il proxy non può.
+Claude Code e Codex: la memoria del token personale (il suo utente è il titolare; nessun codice necessario). Modalità e genere di una memoria li imposta l'amministratore o `PATCH api/v1/me` (una chiave
 client, oppure il token personale della memoria con `ingest`), non i connettori. Un partecipante noto che compare con un
 nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 

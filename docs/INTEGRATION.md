@@ -42,6 +42,16 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   (created on first sight, named after its `displayName`) and never opens a memory. So the same user of yours can be
   one memory's account and a contact in another (a person talking to a shared device's memory): send their id as the
   participant's `identity` and their name as `displayName`. Binding by hand: `POST api/v1/admin/identities` (`API.md` §1).
+- **Linking the holder's channel identity** (D51): in a personal memory, a channel sender speaks as "I" only once the
+  holder links it — never inferred from names or content. The holder makes a one-time code (`POST api/v1/me/link-codes`
+  → `RCD-XXXX-XXXX`, ten minutes; library `linkCode(user)`; or the console's "Link code"), sends it to the agent from that
+  channel in a direct chat, then confirms the claim (`GET api/v1/me/identities` → `pending`, `POST
+  …/pending/{id}/confirm`, or reject; library `holderIdentities`, `confirmHolderClaim`, `rejectHolderClaim`) within seven
+  days; from then on (not retroactively) that identity is the memory's self; `unlinkHolderIdentity` undoes it. Send the
+  message as usual, with the sender as a participant with its `identity`, and set `conversation.direct` when you know it
+  (`false` for a group: a code there claims nothing). Recordare never stores the code's message; your model still sees
+  it, so when `isLinkCode(text)` add `LINK_CODE_INSTRUCTION` for the model instead of a memory context (it replies that
+  the code was received, without repeating it). A platform whose users are account identities (Arkimede) does not need it.
 
 ## 3. Ingest — never block the chat
 - Send every persisted message (user, assistant, other participants, tool output) with `POST api/v1/ingest/messages`,
@@ -131,7 +141,11 @@ and the agent's account in its settings (`X-Recordare-User`). The people who tal
 gateway users, the proxy's platform users) are **participants** with an identity, recognised inside that memory as its
 contacts, and their turns are sent as role `other` with their author; the account holder (listed in each connector's
 settings) is the memory's "I". One memory per person stays a setting (`memoryPer: "user"`, `RECORDARE_MEMORY_PER=user`,
-`MEMORY_PER=user`). Claude Code and Codex: the personal token's memory. Mode and gender of a memory are set by the
+`MEMORY_PER=user`). The holder's own channel identity is linked either by the connector's explicit list of the holder's
+senders (`selfSenders`, `RECORDARE_SELF_IDS`, `SELF_USERS`) or by a link code the holder sends in a direct chat and
+confirms (D51, §2): OpenClaw, Hermes and the proxy send a code to Recordare at once and tell the model what it is;
+OpenClaw and Hermes mark direct chats (`conversation.direct`), the proxy cannot. Claude Code and Codex: the personal token's memory (its
+user is the holder; no link code needed). Mode and gender of a memory are set by the
 admin or with `PATCH api/v1/me` (a client key, or the memory's personal token with `ingest`), not by the connectors. A
 known participant who shows up under a new name on the channel keeps their contact; the new name becomes an alias.
 

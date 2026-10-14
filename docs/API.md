@@ -10,7 +10,8 @@ into deployment profiles (§0) so v1 stays focused on the twin.
 client library, the admin API and console, live telemetry and the atlas snapshot; `GET api/v1/health` (no auth:
 liveness and database reachability). **Built (2026-10-10, WORK_PLAN 8.9, D49)**: learned sources — §2 source ingest,
 §3 `search_knowledge` / `learn_source`, the §4 source rows. Sections or rows marked **not built yet (v1 plan)** are the contract still to
-build (the public-profile `me/identities` rows, OpenAPI, `Idempotency-Key`; the rest of §4 built 2026-10-12).
+build (the public-profile cross-client link codes, OpenAPI, `Idempotency-Key`; the rest of §4 built 2026-10-12).
+**Built (2026-10-14, D51)**: the holder's channel identities by one-time code (`me/link-codes`, `me/identities`, §4).
 Client-neutral: nothing here is specific to Arkimede. Data model: `DATA_MODEL.md`. Two integration
 levels (vision → Architecture): **basic** = MCP tools only; **full** = REST ingest + MCP + read API
 + SDK.
@@ -84,9 +85,9 @@ self-service diary.
 ### Scopes
 | Scope | Allows |
 |---|---|
-| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; §2 learned sources (`api/v1/ingest/sources…`); `ingest` inside `POST api/v1/context`; `PATCH api/v1/me` |
+| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; §2 learned sources (`api/v1/ingest/sources…`); `ingest` inside `POST api/v1/context`; `PATCH api/v1/me`; D51 link codes and the holder's identities (`POST api/v1/me/link-codes`, confirm / reject / unlink) |
 | `mcp` | §3 tools (reads + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
-| `read` | §4 GET endpoints (`GET api/v1/sources` included), `GET api/v1/me`, `POST api/v1/context` |
+| `read` | §4 GET endpoints (`GET api/v1/sources` included), `GET api/v1/me`, `GET api/v1/me/identities`, `POST api/v1/context` |
 | `write` | §4 manual entries, corrections, forgetting (a learned source included), fact / note edits |
 | `memory_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: the memory's personal token (the admin uses `PATCH api/v1/admin/memories/:id`); public profile: holder sessions / holder-created tokens |
 | `export` | §4 export jobs — v1: the memory's personal token; public profile: holder sessions only, expiring download |
@@ -130,7 +131,14 @@ point of the later privacy work (`RESEARCH_NOTES.md` H2).
 memory, or a participant to a person outside that memory fails with a generic `400 cannot_link`. Ingest also creates
 participant identities (§2).
 
-**Public profile**:
+**The holder's channel identities (D51, built 2026-10-14)**: in a personal memory a channel sender (a Telegram account
+writing to the agent…) speaks as "I" only once the holder has linked it — by a one-time code sent from that channel and
+the holder's confirmation (§2 link codes, §4 `me/link-codes`, `me/identities`; admin: `POST memories/:id/link-codes`,
+`POST memories/:id/link-claims/:claim/confirm`, `DELETE memories/:id/link-claims/:claim`). The holder is never inferred
+from names or content; connectors' explicit lists of the holder's senders stay valid.
+
+**Public profile** (the paths below are not built; `me/link-codes` and `me/identities` are now D51's — this
+cross-client link will need its own):
 1. In a **holder session**, the holder picks the target client and creates a link code
    (`POST api/v1/me/link-codes {clientId}` → `{code, expiresAt}`, single use, 10 min), seeing what
    that client will get: episodes and facts of all clients; raw chats only of its own conversations
@@ -149,7 +157,9 @@ neutral), locale? (it | en), timezone?, qualityProfile?}`, `PATCH memories/:id` 
 mode of a memory that is not empty), `GET persons`, `POST identities {kind: account, personId (a memory), clientId,
 externalId} | {kind: participant, memoryId (the memory), personId (its self or one of its contacts), clientId |
 channel (exactly one), externalId, verified?}`, `DELETE identities/:id`,
-`POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/consolidate`,
+`POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/link-codes` (D51 → `{code,
+expiresAt}`; 409 `memory_not_personal`), `POST memories/:id/link-claims/:claim/confirm` / `DELETE
+memories/:id/link-claims/:claim` (→ 204), `POST memories/:id/consolidate`,
 `POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; the console routes are described there). Revocations take effect at once (the credential
 cache is cleared). Not built yet: full erasure (the memory export is §4).
@@ -167,6 +177,8 @@ connectors for one person). The admin credential cannot ingest (403).
            | "import_notes" | "interview"
            | "document" | "perception" | "ambient";       // default "chat"
     channel?: string; title?: string;              // title: a group chat's name, given to the extraction
+    direct?: boolean;                              // a one-to-one chat (true) or a group (false); unknown when
+                                                   // missing (D51: a link code is never accepted in a group)
     participants?: Array<{
       ref: string; role: "holder" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
@@ -205,6 +217,12 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   (`assistant`), `tool`, `own` (`own: true`) — with a confidence (1, or none when nothing was established). Not exposed
   by the read API yet. The extraction prompts show it (8.4, 8.5): `own` content and the assistant's turns are the
   agent's own ("me") in both modes.
+- **Link codes** (D51): in a personal memory, a `user` / `other` message (not `own`) that is only a link code
+  (`RCD-XXXX-XXXX`, any case, dashes and a final dot optional) is **never stored** (not counted in `accepted`). When its
+  author is a participant with an `identity` and `conversation.direct` is not `false`, it becomes a *claim* (that
+  identity and its `displayName`) for the holder to confirm (§4 `me/identities`). From the holder already (no identity)
+  or in a group it claims nothing. The same claim sent again (a retried batch) is fine; a wrong or expired code, or a
+  claimed code from another sender, is a failure — five cancel the memory's open codes.
 
 ### Edits and deletions
 - `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` when
@@ -511,13 +529,18 @@ account sees all of it (D48).
 | `DELETE api/v1/sources/{id}` | write | Forget a source (as `DELETE api/v1/ingest/sources/{externalId}`; `404` for an id that is not this memory's) (built) |
 | `GET api/v1/me` | read | Who the request acts for: `{memoryId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`mode` `entity` = a shared memory: the client tells its users so) (with a client key: the memory of the account behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| memory_token`) |
 | `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (a client key with `X-Recordare-User`, or the memory's personal token — for a host without user accounts; 8.7) | The memory's settings from the platform: the name follows the client's user (sync on every rename); `mode` `personal \| entity` (D50) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it); `gender` `masculine \| feminine \| neutral` (first person, from the account's profile) any time |
-| `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` | holder session (public profile) | Connected clients / identities, revoke |
+| `POST api/v1/me/link-codes` | ingest (a client key with `X-Recordare-User`, or the personal token) | D51: a one-time code for the holder to send from a channel → `201 {code, expiresAt}` (`RCD-XXXX-XXXX`, Crockford base32, 10 min, one use; a new code cancels the unused one; stored hashed); personal memories only, else 409 `memory_not_personal` |
+| `GET api/v1/me/identities` | read | D51: `{linked: [{id, channel, client, externalId, linkedAt}], pending: [{id, channel, client, externalId, displayName, claimedAt}]}` — the identities that speak as "I" and the claims (7 days) waiting for confirmation |
+| `POST api/v1/me/identities/pending/{id}/confirm`, `DELETE api/v1/me/identities/pending/{id}` | ingest | Confirm (that identity is bound to the memory's self, verified — a binding to a contact is moved; earlier messages keep their attribution) or reject a claim → 204 (404 unknown / expired) |
+| `DELETE api/v1/me/identities/{id}` | ingest | Unlink a linked identity → 204: that sender is a participant like any other again (a new contact) |
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (its README): `RecordareClient` (`me`, `updateMe`, `ingest` split
 into requests of 500, `context` / `contextWithTurn` (§3 pre-turn memory context, with `ingest`), `endConversation`,
-`editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, `learnSource` (§2 learned sources, a big text sent
+`editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, D51 `linkCode` / `holderIdentities` /
+`confirmHolderClaim` / `rejectHolderClaim` / `unlinkHolderIdentity` with `isLinkCode` and `LINK_CODE_INSTRUCTION` (text a
+host gives its model when the user's message is a code), `learnSource` (§2 learned sources, a big text sent
 in parts of `SOURCE_PART_BYTES` = 4 MB at paragraph boundaries) / `forgetSource` / `sources`, the §4 wrappers `episodes`, `episode`,
 `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`, `mcp.listTools` /
 `mcp.callTool` over the official MCP SDK with one session per user + conversation), `TOOLS` (the published MCP tool
@@ -540,7 +563,7 @@ in that browser tab only (strict CSP, `no-store`). Routes it uses besides those 
 `GET api/v1/admin/memories/{id}/runs?conversation=&limit=` (a person's recent extraction runs with their summary — returned,
 written, dropped and why, counts only; WORK_PLAN 4.12), `GET api/v1/admin/persons` (memories with settings — mode, gender, locale, profile —, message / episode / fact / note /
 contact counts, pending extraction, last message, identities — the accounts that open the memory and the participant
-ids of its self and contacts —, active personal tokens by prefix), `GET api/v1/admin/clients` (clients with active keys by prefix),
+ids of its self and contacts —, active personal tokens by prefix, `linkClaims` — D51 claims waiting for confirmation), `GET api/v1/admin/clients` (clients with active keys by prefix),
 `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = every key and token of the client stops at
 once), `DELETE api/v1/admin/identities/:id` (unlinks a client's user from a person; memories stay). The console uses
 the other admin routes of §1 for the rest (memory mode and gender, quality profile, name, identities, personal tokens,

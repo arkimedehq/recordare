@@ -114,6 +114,16 @@ L'id della persona passa per `USER_MAP`. Poi la memoria (`MEMORY_PER`):
 - **`user`**: l'id della persona è l'utente Recordare — una memoria per utente della piattaforma, ognuno il suo "io"
   (il comportamento prima di D50; impostalo aggiornando per tenere le memorie divise per persona).
 
+**Oppure collega il titolare con un codice** (D51, memorie personali), al posto di `SELF_USERS`: crea un codice monouso —
+"Codice di collegamento" sulla memoria nella console di amministrazione, oppure `POST api/v1/me/link-codes` con la credenziale della
+memoria (`→ {"code": "RCD-…", "expiresAt": …}`, dieci minuti) — e invialo da solo come messaggio di chat dal tuo account
+della piattaforma, in una chat senza nessun altro. Il proxy lo invia subito a Recordare (non viene mai salvato come
+messaggio) e nel messaggio di sistema mette solo un'istruzione: rispondere che il codice è arrivato. Poi conferma la
+richiesta nella console ("Da confermare" → "È il titolare") oppure con `GET api/v1/me/identities` e
+`POST api/v1/me/identities/pending/{id}/confirm`, entro sette giorni; da allora quell'utente della piattaforma sei tu, i
+messaggi precedenti mantengono la loro attribuzione. Il proxy non distingue una chat diretta da una condivisa (`direct`
+sconosciuto), quindi è la conferma a renderlo sicuro.
+
 Segnaposto non espansi (`{{…}}`, `[User ID]`, `{user.name}`) e valori come `null` / `new` contano come mancanti. Senza id di conversazione, la conversazione è **una per utente (e workspace) e giorno**; gli header
 d'identità (`X-Recordare-*`, `X-OpenWebUI-*`) non vanno mai upstream, e i marcatori sono tolti da ogni messaggio di
 sistema.

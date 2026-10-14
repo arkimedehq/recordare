@@ -83,6 +83,16 @@ canale `{channel: <piattaforma>, externalId: <id utente>}` (o `{externalUserId: 
 di sé non diventa mai un fatto su di te. Recordare risponde con tutta la memoria in ogni conversazione (D50): ciò che una
 persona ha detto all'agente può emergere con un'altra; chi gestisce l'agente lo dice alle persone che gli parlano.
 
+**Oppure collega il tuo id del gateway con un codice** (D51, memorie personali), al posto di `RECORDARE_SELF_IDS`. Crea
+un codice monouso — "Codice di collegamento" sulla memoria nella console di amministrazione, oppure `POST api/v1/me/link-codes` con il
+token personale della memoria (`→ {"code": "RCD-…", "expiresAt": …}`, dieci minuti) — e invialo da solo all'agente in
+una **chat diretta** (DM) dal tuo account sulla piattaforma. Il provider lo invia subito a Recordare (non viene mai
+salvato come messaggio) e, al posto del contesto di memoria, dice al modello solo di rispondere che il codice è arrivato;
+poi conferma la richiesta nella console ("Da confermare" → "È il titolare") oppure con `GET api/v1/me/identities` e
+`POST api/v1/me/identities/pending/{id}/confirm`, entro sette giorni. Da allora quell'id sei tu; i messaggi precedenti
+mantengono la loro attribuzione. Il provider riconosce la chat dal `chat_type` del gateway (`dm` diretta, qualsiasi altro
+valore un gruppo, dove un codice non chiede nulla).
+
 **Memoria per utente (`RECORDARE_MEMORY_PER=user`, il comportamento prima di D50).** Con una chiave client la persona è
 `<piattaforma>:<user_id_alt o user_id>`, tramite `RECORDARE_USER_ALIASES` se mappata; i turni senza utente del gateway
 usano `RECORDARE_USER`, e senza di esso il provider resta spento. Con un token personale ogni turno appartiene alla

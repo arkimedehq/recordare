@@ -701,6 +701,30 @@ inventario e piano: `docs/AGENT_MEMORY_AUDIT.md`.
   chiarificazione "stessa persona?" (`clarifications.contact_id`, migrazione `ContactClarification1791080000000`); "sì"
   fonde i due contatti (ogni riferimento si sposta, in un solo punto: `mergeContacts`), "no" li tiene separati. Più
   omonimi: nessuna domanda. Sostituisce il legame per solo nome della 8.4.
+
+### D51 — Le identità di canale del titolare con un codice monouso, confermate dal titolare (decisione del maintainer, 2026-10-14)
+Seguito della WORK_PLAN 8.7. Attribuire un messaggio all'"io" (il titolare di una memoria personale) deve essere il più
+certo possibile; il titolare **non viene mai dedotto** da nomi o contenuti.
+- **Opzioni**: (a) legare al primo messaggio che un connettore segna come del titolare — scartata: si fida di una
+  configurazione che può essere sbagliata; (b) un **codice monouso** che il titolare invia dal canale — scelta, con la
+  **conferma del titolare obbligatoria**, perché un connettore non sempre distingue una chat diretta da un gruppo, né
+  può impedire che il messaggio arrivi al modello e ad altre persone.
+- **Flusso**: il titolare crea un codice `RCD-XXXX-XXXX` (base32 di Crockford, dieci minuti, un solo uso, un codice
+  aperto alla volta, salvato come hash; solo memorie personali — in una memoria di entità "io" è l'entità) e lo invia
+  all'agente dal canale. L'ingest riconosce un messaggio user / other che contiene solo un codice e **non lo salva mai**;
+  da un mittente con un'identità di partecipante, in una chat non segnata come gruppo (`conversation.direct` ≠ `false`),
+  diventa una *richiesta di collegamento*. Un codice che arriva già dal titolare (senza identità) o in un gruppo non
+  chiede nulla; cinque codici sbagliati annullano i codici aperti della memoria. Il titolare conferma (o rifiuta) la
+  richiesta entro sette giorni: l'identità viene legata al sé della memoria (`external_identities`, verificata) e da
+  allora parla come "io"; in seguito si può scollegare. Finché non è confermata non cambia nulla.
+- **Il passato (scelta del maintainer, 2026-10-14)**: il collegamento vale dalla conferma in poi. I messaggi precedenti, e
+  un contatto creato dai messaggi del titolare, mantengono la loro attribuzione (il contatto si può eliminare dalla
+  console); nessuna ri-estrazione, nessuna fusione nel sé (`mergeContacts` fonde solo contatti).
+- Le liste esplicite dei mittenti del titolare nei connettori (`selfSenders`, `RECORDARE_SELF_IDS`, `SELF_USERS`) restano
+  valide. Costruita il 2026-10-14: `service/src/identity/holder-links.ts`, migrazione `HolderLinks1791150000000`;
+  contratto `API.md` (codici di collegamento e identità in `/me`, richieste di collegamento admin, `conversation.direct`),
+  dati `DATA_MODEL.md` (`link_codes`).
+
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 decisa il 2026-10-12 con WORK_PLAN 5.4). Il lavoro aperto è tracciato

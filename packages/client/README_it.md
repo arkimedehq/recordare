@@ -77,6 +77,23 @@ feed delle modifiche per una piattaforma che tiene una copia delle note (si ripa
 (`startExport` → `exportJob` → `exportArchive`) richiedono il token personale della memoria (scope `memory_settings`,
 `export`; `user` vuoto).
 
+## Collegare l'identità di canale del titolare (D51)
+In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:
+`linkCode(user)` → `{code, expiresAt}` (`RCD-XXXX-XXXX`, dieci minuti, un solo uso) — il titolare invia il codice da
+solo all'agente da quel canale, in una chat diretta (impostare `conversation.direct` nell'ingest quando lo si sa;
+`false` = un gruppo, dove un codice non chiede nulla); poi `holderIdentities(user)` → `{linked, pending}`, e
+`confirmHolderClaim(user, id)` / `rejectHolderClaim(user, id)` entro sette giorni; `unlinkHolderIdentity(user, id)`
+annulla un collegamento. Recordare non salva mai il messaggio del codice, ma il modello lo vede: quando `isLinkCode(text)`
+(lo stesso pattern `LINK_CODE` del servizio), inviare subito il turno e dare al modello `LINK_CODE_INSTRUCTION` al posto
+del contesto di memoria.
+
+```ts
+const { code } = await rc.linkCode('user-42');            // da mostrare al titolare
+if (isLinkCode(text)) systemExtra = LINK_CODE_INSTRUCTION; // il modello dice che il codice è arrivato, senza ripeterlo
+const { pending } = await rc.holderIdentities('user-42');
+await rc.confirmHolderClaim('user-42', pending[0].id);
+```
+
 ## Cosa resta all'host
 Come conserva la sua outbox (il suo database, la sua transazione) e come trasforma le sue chat nel contratto di
 ingest. Tutto il resto è qui, uguale per ogni client.

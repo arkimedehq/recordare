@@ -117,4 +117,23 @@ export class AdminController {
   revokeToken(@Param('id', ParseUUIDPipe) id: string) {
     return this.admin.revokeToken(id);
   }
+
+  /** D51: a one-time code for the holder to send from a channel (personal memories only). */
+  @Post('memories/:id/link-codes')
+  linkCode(@Param('id', ParseUUIDPipe) id: string) {
+    return this.admin.linkCode(id);
+  }
+
+  /** Confirms a claimed link code: that channel identity is the memory's holder from now on. */
+  @Post('memories/:id/link-claims/:claim/confirm')
+  @HttpCode(204)
+  confirmClaim(@Param('id', ParseUUIDPipe) id: string, @Param('claim', ParseUUIDPipe) claim: string) {
+    return this.admin.confirmClaim(id, claim);
+  }
+
+  @Delete('memories/:id/link-claims/:claim')
+  @HttpCode(204)
+  rejectClaim(@Param('id', ParseUUIDPipe) id: string, @Param('claim', ParseUUIDPipe) claim: string) {
+    return this.admin.rejectClaim(id, claim);
+  }
 }

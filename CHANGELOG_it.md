@@ -28,6 +28,17 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   qualità (accesa in balanced / full; `PATTERNS` la sovrascrive), task LLM `patterns` (`LLM_PATTERNS_*`), admin
   `POST api/v1/admin/memories/:id/patterns`; migrazione `Patterns1791130000000` (`episode_promotions` ricostruita,
   `memories.patterns_upto`, modifica di nota `retired`). Set di sviluppo: 20 abitudini su 21, nessun pattern falso (3 run).
+- **Le identità di canale del titolare con un codice monouso** (D51, WORK_PLAN 8.7): in una memoria personale il titolare
+  crea un codice (`POST api/v1/me/link-codes` → `RCD-XXXX-XXXX`, dieci minuti, un solo uso; admin
+  `POST api/v1/admin/memories/:id/link-codes`; "Link code" nella console), lo invia all'agente da un canale in una chat
+  diretta — il messaggio non viene mai salvato, diventa una richiesta di collegamento — e la conferma entro sette giorni
+  (`GET api/v1/me/identities`, `POST …/pending/{id}/confirm`, `DELETE …/pending/{id}`; admin `…/link-claims/:claim`,
+  `linkClaims` in `GET admin/persons`; "To confirm" nella console): da allora quel mittente è l'"io" della memoria (i
+  messaggi precedenti mantengono la loro attribuzione); `DELETE api/v1/me/identities/{id}` lo scollega. Campo d'ingest
+  `conversation.direct` (un gruppo non chiede mai nulla). Libreria client: `linkCode`, `holderIdentities`,
+  `confirmHolderClaim`, `rejectHolderClaim`, `unlinkHolderIdentity`, `isLinkCode`, `LINK_CODE_INSTRUCTION`. OpenClaw,
+  Hermes e il proxy inviano subito un codice e dicono al modello che cos'è (OpenClaw e Hermes segnano le chat dirette).
+  Migrazione `HolderLinks1791150000000`.
 
 ### Modificato
 - Un partecipante noto che compare con un nome nuovo sul canale (un soprannome diventato nome completo) resta lo stesso

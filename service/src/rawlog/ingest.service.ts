@@ -19,6 +19,7 @@ import { type MemoryMode } from '../identity/identity.entities';
 import { type Attribution, SOMEONE } from './attribution';
 import { askSameContact, matchUnboundContacts, sameContactQuestion } from '../engine/contacts';
 import { dropUnsupported, supportedBy } from '../recall/forgetting';
+import { claimLinkCode, type Claimant } from '../identity/holder-links';
 
 type Participant = IngestRequest['conversation']['participants'][number];
 interface MemoryInfo { mode: MemoryMode; locale: string; timezone: string }
@@ -38,6 +39,12 @@ export function attribute(m: IngestMessage, participants: Map<string, Attributio
   if (m.role === 'assistant') return asserted('agent');
   if (byRef) return byRef;
   return m.role === 'user' && mode === 'personal' ? self(memoryId) : SOMEONE;
+}
+
+/** The participant a message names, when it carries an identity (a link code's claimant). */
+function claimant(participants: Participant[], m: IngestMessage): Claimant | null {
+  const p = m.authorRef !== undefined ? participants.find((x) => x.ref === m.authorRef) : undefined;
+  return p?.identity && p.role === 'other' ? { identity: p.identity, displayName: p.displayName } : null;
 }
 
 export function contentHash(content: string): Buffer {
@@ -86,7 +93,13 @@ export class IngestService {
       const conflicts: string[] = [];
       const newIds: string[] = [];
 
+      const now = new Date();
       for (const m of req.messages) {
+        // A link code (D51) is a claim of the sender's identity for the holder, never a message of the memory.
+        if (mode === 'personal' && (m.role === 'user' || m.role === 'other') && !m.own
+          && await claimLinkCode(tx, memoryId, clientId, m.content, claimant(req.conversation.participants, m), req.conversation.direct, now)) {
+          continue;
+        }
         const hash = contentHash(m.content);
         const author = attribute(m, participants, memoryId, mode);
         const [inserted] = await tx.query(

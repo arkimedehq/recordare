@@ -295,6 +295,20 @@ class AgentMemoryTest(unittest.TestCase):
         self.assertEqual(body["ingest"]["messages"][0]["role"], "user")
         self.assertNotIn("authorRef", body["ingest"]["messages"][0])
 
+    def test_link_code_is_sent_at_once_and_explained_to_the_model(self):
+        p = self.provider(chat_type="dm")
+        p.on_turn_start(1, "RCD-7K4M-9Q2X")
+        self.assertIn("one-time code", p.prefetch("RCD-7K4M-9Q2X"))
+        deadline = time.time() + 3
+        while not self.fake.ingests() and time.time() < deadline:
+            time.sleep(0.05)
+        batch = self.fake.ingests()[0]
+        self.assertEqual(batch["messages"][0]["content"], "RCD-7K4M-9Q2X")
+        self.assertEqual(batch["messages"][0]["authorRef"], "telegram:42")
+        self.assertIs(batch["conversation"]["direct"], True)
+        self.assertNotIn("/api/v1/context", self.fake.paths())  # no memory context read for a code
+        p.shutdown()
+
 
 if __name__ == "__main__":
     unittest.main()

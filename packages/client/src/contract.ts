@@ -74,7 +74,18 @@ export interface IngestConversation {
   source?: ConversationSource;
   channel?: string;
   title?: string;
+  /** A one-to-one chat (true) or a group (false), when the platform knows: a link code is never accepted in a group (D51). */
+  direct?: boolean;
   participants?: IngestParticipant[];
+}
+
+/** A one-time code the holder sends from a channel to link that identity to themselves (D51; ten minutes, one use). */
+export interface LinkCode { code: string; expiresAt: string }
+
+/** The identities that speak as the memory's "I", and the claims waiting for the holder's confirmation (D51). */
+export interface HolderIdentities {
+  linked: Array<{ id: string; channel: string | null; client: string | null; externalId: string; linkedAt: string }>;
+  pending: Array<{ id: string; channel: string | null; client: string | null; externalId: string; displayName: string | null; claimedAt: string }>;
 }
 
 export interface IngestMessage {

@@ -19,7 +19,7 @@
 import { createHash } from 'node:crypto';
 import {
   afterFailure, clipUtf8, type DeliveryPolicy, type IngestConversation, type IngestMessage, type IngestParticipant,
-  type IngestRequest, RecordareClient,
+  type IngestRequest, isLinkCode, LINK_CODE_INSTRUCTION, RecordareClient,
 } from '@arkimedehq/recordare-client';
 import type { AgentContext, AgentTool, OpenClawPluginApi, ToolContext } from 'openclaw/plugin-sdk/plugin-entry';
 import { type RecordareConfig } from './config.js';
@@ -176,6 +176,8 @@ export function registerRecordare(
       source: 'chat',
       channel: w.channel ? `openclaw:${w.channel}` : 'openclaw',
       title: ctx.sessionKey,
+      // Group sessions are known by their key; every other session of a person is a direct chat (D51: link codes).
+      ...(ctx.sessionKey ? { direct: !isGroupSession(ctx.sessionKey) } : {}),
       participants,
     };
   }
@@ -201,6 +203,11 @@ export function registerRecordare(
       const conversation = conversationMeta(w, ctx);
       const message: IngestMessage = { externalId: `${id}:u`, role: w.speaker.role, authorRef: w.speaker.ref, content: clipUtf8(text), sentAt: now };
       remember(turns, ctx.runId ?? w.conversation, { user: w.user, conversation, message });
+      if (cfg.capture && isLinkCode(text)) {
+        // A link code (D51): Recordare records the claim and never stores it; the model is only told what it is.
+        void send(w.user, { conversation, messages: [message] });
+        return { prependSystemContext: LINK_CODE_INSTRUCTION };
+      }
       if (!cfg.capture) {
         const ctxRes = await fast.context(headerUser(w.user), w.conversation, text.slice(0, 4000));
         return ctxRes.block ? { prependContext: ctxRes.block } : undefined;

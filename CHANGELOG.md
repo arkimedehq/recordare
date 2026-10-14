@@ -28,6 +28,16 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `patterns` (on in balanced / full; `PATTERNS` overrides it), LLM task `patterns` (`LLM_PATTERNS_*`), admin
   `POST api/v1/admin/memories/:id/patterns`; migration `Patterns1791130000000` (`episode_promotions` rebuilt,
   `memories.patterns_upto`, note change `retired`). Dev set: 20 of 21 habits, no false pattern (3 runs).
+- **The holder's channel identities by one-time code** (D51, WORK_PLAN 8.7): in a personal memory the holder makes a
+  code (`POST api/v1/me/link-codes` → `RCD-XXXX-XXXX`, ten minutes, one use; admin `POST api/v1/admin/memories/:id/link-codes`;
+  console "Link code"), sends it to the agent from a channel in a direct chat — the message is never stored, it becomes a
+  claim — and confirms it within seven days (`GET api/v1/me/identities`, `POST …/pending/{id}/confirm`, `DELETE
+  …/pending/{id}`; admin `…/link-claims/:claim`, `linkClaims` in `GET admin/persons`; console "To confirm"): from then on
+  that sender is the memory's "I" (earlier messages keep their attribution); `DELETE api/v1/me/identities/{id}` unlinks.
+  Ingest field `conversation.direct` (a group never claims). Client library: `linkCode`, `holderIdentities`,
+  `confirmHolderClaim`, `rejectHolderClaim`, `unlinkHolderIdentity`, `isLinkCode`, `LINK_CODE_INSTRUCTION`. OpenClaw,
+  Hermes and the proxy send a code at once and tell the model what it is (OpenClaw and Hermes mark direct chats). Migration
+  `HolderLinks1791150000000`.
 
 ### Changed
 - A known participant who shows up under a new name on the channel (a nickname that became a full name) keeps their

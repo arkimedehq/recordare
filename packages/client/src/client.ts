@@ -3,7 +3,7 @@
 
 import {
   CONVERSATION_HEADER, type Digest, type Episode, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
-  type IngestRequest, type IngestResult, type LearnSource, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
+  type HolderIdentities, type IngestRequest, type IngestResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
 } from './contract.js';
@@ -48,6 +48,31 @@ export class RecordareClient {
       if (err instanceof RecordareHttpError && err.status === 409) throw new MemoryNotEmptyError();
       throw err;
     }
+  }
+
+  /** A one-time code for the holder to send from a channel (D51; personal memories only, else 409). */
+  linkCode(user: string): Promise<LinkCode> {
+    return this.http.request<LinkCode>('POST', 'api/v1/me/link-codes', { user });
+  }
+
+  /** The identities that speak as the memory's "I" and the claims waiting for confirmation (D51). */
+  holderIdentities(user: string): Promise<HolderIdentities> {
+    return this.http.request<HolderIdentities>('GET', 'api/v1/me/identities', { user });
+  }
+
+  /** Confirms a claim: that channel identity is the holder from now on. */
+  async confirmHolderClaim(user: string, id: string): Promise<void> {
+    await this.http.request('POST', `api/v1/me/identities/pending/${encodeURIComponent(id)}/confirm`, { user });
+  }
+
+  /** Rejects a claim (not the holder). */
+  async rejectHolderClaim(user: string, id: string): Promise<void> {
+    await this.http.request('DELETE', `api/v1/me/identities/pending/${encodeURIComponent(id)}`, { user });
+  }
+
+  /** Unlinks one of the holder's identities. */
+  async unlinkHolderIdentity(user: string, id: string): Promise<void> {
+    await this.http.request('DELETE', `api/v1/me/identities/${encodeURIComponent(id)}`, { user });
   }
 
   /**
