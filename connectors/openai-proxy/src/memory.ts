@@ -10,7 +10,7 @@
 import { createHash } from 'node:crypto';
 import {
   afterFailure, clipUtf8, type DeliveryPolicy, type FetchLike, type IngestConversation, type IngestMessage, type IngestRequest,
-  RecordareClient, RecordareUnavailableError,
+  isLinkCode, LINK_CODE_INSTRUCTION, RecordareClient, RecordareUnavailableError,
 } from '@arkimedehq/recordare-client';
 import type { ProxyConfig } from './config.js';
 import type { Identity } from './identity.js';
@@ -96,6 +96,18 @@ export class Memory {
     const req: IngestRequest | undefined = this.cfg.capture && !st.ingested
       ? { conversation: this.conversation(turn), messages: [this.userMessage(turn)] } : undefined;
     if (req) st.ingested = true;
+    if (this.cfg.capture && isLinkCode(turn.text)) {
+      // A link code (D51): Recordare records the claim and never stores it; the model is only told what it is.
+      if (req && now < this.downUntil) this.enqueue({ user: identity.user, req, attempts: 0 });
+      else if (req) {
+        await this.fast.ingest(this.headerUser(identity.user), req).catch((err: unknown) => {
+          this.failed(err, 'ingest before the answer');
+          this.enqueue({ user: identity.user, req, attempts: 1 }, err);
+        });
+      }
+      st.block = LINK_CODE_INSTRUCTION;
+      return st.block;
+    }
     if (now < this.downUntil) {
       if (req) this.enqueue({ user: identity.user, req, attempts: 0 });
       return null;

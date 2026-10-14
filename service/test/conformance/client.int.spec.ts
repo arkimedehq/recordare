@@ -15,6 +15,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   type Episode as ClientEpisode, type IngestRequest as ClientIngest, type IngestResult as ClientIngestResult, type LearnSource as ClientLearnSource,
+  type HolderIdentities as ClientHolderIdentities, isLinkCode, type LinkCode as ClientLinkCode,
   type LearnSourceResult as ClientLearnSourceResult, MemoryNotEmptyError, type Source as ClientSource,
   PersonDirectory, RecordareClient, TOOLS,
 } from '../../../packages/client/src/index.js';
@@ -22,6 +23,7 @@ import { type EpisodeItem } from '../../src/read/read.service';
 import { type IngestResult, type ingestSchema } from '../../src/rawlog/ingest.schemas';
 import { type LearnSourceResult, type learnSourceSchema } from '../../src/knowledge/sources.schemas';
 import { type SourceView } from '../../src/knowledge/sources.service';
+import { type HolderIdentities, type LinkCode } from '../../src/identity/holder-links';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 // ── Contract drift (compile time) ──────────────────────────────────────────────
@@ -33,6 +35,8 @@ export type ServiceEpisodeFitsClient = Assert<Extends<EpisodeItem, ClientEpisode
 export type ClientSourceFitsService = Assert<Extends<ClientLearnSource & { final?: boolean }, z.input<typeof learnSourceSchema>>>;
 export type ServiceSourceResultFitsClient = Assert<Extends<LearnSourceResult, ClientLearnSourceResult>>;
 export type ServiceSourceFitsClient = Assert<Extends<SourceView, ClientSource>>;
+export type ServiceLinkCodeFitsClient = Assert<Extends<LinkCode, ClientLinkCode>>;
+export type ServiceHolderIdentitiesFitsClient = Assert<Extends<HolderIdentities, ClientHolderIdentities>>;
 
 describe('client conformance (packages/client against the service)', () => {
   let app: INestApplication;
@@ -112,6 +116,26 @@ describe('client conformance (packages/client against the service)', () => {
        SELECT o.person_id, 'preference', 'x', 'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[o.person_id] FROM memories o
        JOIN external_identities i ON i.person_id = o.person_id WHERE i.external_id = 'user-1'`);
     await expect(rc.updateMe('user-1', { mode: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);
+  });
+
+  it('links the holder\'s channel identity by one-time code and confirmation (D51)', async () => {
+    const { code } = await rc.linkCode('user-link');
+    expect(isLinkCode(code)).toBe(true); // the library recognises what the service makes
+    const sender = { ref: 'telegram:42', role: 'other' as const, identity: { channel: 'telegram', externalId: '42' } };
+    const send = (id: string, content: string) => rc.ingest('user-link', {
+      conversation: { externalId: 'tg', direct: true, participants: [sender] },
+      messages: [{ externalId: id, role: 'other', authorRef: 'telegram:42', content, sentAt: '2026-10-14T10:00:00+02:00' }],
+    });
+    expect(await send('c1', code)).toMatchObject({ accepted: 0 });
+    const { pending } = await rc.holderIdentities('user-link');
+    expect(pending).toMatchObject([{ channel: 'telegram', externalId: '42' }]);
+    await rc.confirmHolderClaim('user-link', pending[0]!.id);
+    await send('c2', 'Ciao');
+    const [row] = await db().query(`SELECT author_kind FROM messages WHERE external_id = 'c2' AND content = 'Ciao'`);
+    expect(row.author_kind).toBe('self');
+    const { linked } = await rc.holderIdentities('user-link');
+    await rc.unlinkHolderIdentity('user-link', linked[0]!.id);
+    expect((await rc.holderIdentities('user-link')).linked).toEqual([]);
   });
 
   it('reads and edits the person\'s diary', async () => {

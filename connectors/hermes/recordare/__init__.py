@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,6 +42,12 @@ logger = logging.getLogger(__name__)
 MAX_CONTENT_BYTES = 60 * 1024  # Recordare accepts 64 KiB per message
 TURN_START_DEADLINE_S = 1.5    # the person's message must be stored before a read or a memory tool call
 DEFAULT_TIMEOUT_S = 3.0        # context request (Hermes bounds prefetch at 8 s)
+# D51: a message that is only a link code (the service's own pattern) — the holder linking this channel identity.
+LINK_CODE = re.compile(r"^\s*RCD-?[0-9A-Z]{4}-?[0-9A-Z]{4}\.?\s*$", re.IGNORECASE)
+LINK_CODE_INSTRUCTION = ("The user's last message is a one-time code that links their account on this channel to their "
+                         "memory (Recordare); it is handled automatically. Reply only, briefly and in the user's language, "
+                         "that the code was received and that they now confirm the link where they created the code. Do not "
+                         "repeat the code.")
 
 
 def _p(description: str, type_: str = "string", **extra: Any) -> Dict[str, Any]:
@@ -305,7 +312,10 @@ class RecordareMemoryProvider(MemoryProvider):
         participants = [{"ref": "holder", "role": "holder", **({"displayName": holder_name} if holder_name else {})},
                         {"ref": "assistant", "role": "assistant", "displayName": assistant}]
         title = kwargs.get("session_title") or kwargs.get("chat_name")
-        self._meta = {"channel": f"hermes:{platform}", "participants": participants,
+        # A direct chat or a group, when the gateway says (D51: a link code is never accepted in a group).
+        chat_type = str(kwargs.get("chat_type") or "")
+        direct = {"direct": chat_type == "dm"} if chat_type else {}
+        self._meta = {"channel": f"hermes:{platform}", "participants": participants, **direct,
                       **({"title": str(title)[:500]} if title else {})}
 
     @staticmethod
@@ -384,10 +394,11 @@ class RecordareMemoryProvider(MemoryProvider):
                 return
             ext_id = f"{self._session_id}:{uuid.uuid4().hex[:12]}:u"
             message = self._user_message(ext_id, text, _now())
+            code = bool(LINK_CODE.match(text))  # D51: sent at once (a claim, never stored); no context read for it
             row = self._outbox.add_batch(self._conv, self._user, {"conversation": self._conversation(),
-                                                                  "messages": [message]}, wake=not self._recall)
+                                                                  "messages": [message]}, wake=code or not self._recall)
             self._pending_user = (text, ext_id)
-            if self._recall:
+            if self._recall and not code:
                 self._turn_row = row
             else:
                 self._outbox.deliver_now(TURN_START_DEADLINE_S)
@@ -465,7 +476,11 @@ class RecordareMemoryProvider(MemoryProvider):
         always name the conversation: with a personal token one not stored yet counts as the person's own.)"""
         row, self._turn_row = self._turn_row, None
         try:
-            if not (self._active and self._recall and self._client and query and query.strip()) or self._other_author():
+            if not (self._active and self._client and query and query.strip()) or self._other_author():
+                return ""
+            if self._capture and LINK_CODE.match(_user_instruction(query).strip()):
+                return LINK_CODE_INSTRUCTION  # D51: the model is told what the code is
+            if not self._recall:
                 return ""
             q = query[:4000]
             sent, block = False, None

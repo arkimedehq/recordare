@@ -130,6 +130,20 @@ describe('hooks and tools', () => {
     await plugin.stop();
   });
 
+  it('a link code is sent for the claim and the model is told what it is (D51); direct chats are marked', async () => {
+    const { api, hooks } = fakeApi({ url: 'http://r', apiKey: 'rp_x' });
+    const plugin = registerRecordare(api, parseConfig(api.pluginConfig, {})!, kinds);
+    const ctx = { runId: 'r5', sessionKey: 'agent:main:telegram:direct:42', sessionId: 's5', channel: 'telegram', senderId: '42' };
+    const res = await hooks.before_prompt_build({ prompt: 'p', currentUserMessage: 'RCD-7K4M-9Q2X', currentUserMessageId: 'm5', messages: [] }, ctx);
+    expect(res).toEqual({ prependSystemContext: expect.stringContaining('one-time code') });
+    await vi.waitFor(() => expect(calls).toHaveLength(1));
+    expect(calls[0]!.url).toBe('http://r/api/v1/ingest/messages'); // no memory context for a code
+    const req = calls[0]!.body as { conversation: { direct: boolean }; messages: Array<{ content: string; authorRef: string }> };
+    expect(req.conversation.direct).toBe(true);
+    expect(req.messages).toMatchObject([{ content: 'RCD-7K4M-9Q2X', authorRef: 'telegram:42' }]);
+    await plugin.stop();
+  });
+
   it('offers the eight memory tools from the published schemas, as the manifest lists them', () => {
     const manifest = JSON.parse(readFileSync(new URL('../openclaw.plugin.json', import.meta.url), 'utf8')) as { contracts: { tools: string[] } };
     expect(TOOLS.map(toolName).sort()).toEqual([...manifest.contracts.tools].sort());

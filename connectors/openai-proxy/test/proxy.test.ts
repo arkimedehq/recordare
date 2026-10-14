@@ -184,6 +184,19 @@ describe('proxy', () => {
     expect(ingest.messages[0]).toMatchObject({ role: 'user', authorRef: 'holder' });
   });
 
+  it('a link code is sent for the claim and the model is told what it is, without a memory context (D51)', async () => {
+    const seen: Seen[] = []; const calls: RCall[] = [];
+    const { base } = await start({}, seen, calls);
+    await (await chat(base, { ...anythingllm('RCD-7K4M-9Q2X'), stream: false })).text();
+    const system = (seen[0]!.body.messages as Array<{ content: string }>)[0]!.content;
+    expect(system).toContain('one-time code');
+    expect(system).not.toContain('memory-context');
+    await until(() => calls.length >= 2);
+    expect(calls.map((c) => c.path)).toEqual(['/api/v1/ingest/messages', '/api/v1/ingest/messages']);
+    expect((calls[0]!.body.messages as Array<{ content: string; authorRef: string }>)[0])
+      .toMatchObject({ content: 'RCD-7K4M-9Q2X', authorRef: 'anythingllm:7' });
+  });
+
   it('with recall off, stores the message with a plain ingest', async () => {
     const seen: Seen[] = []; const calls: RCall[] = [];
     const { base } = await start({ RECALL: 'false' }, seen, calls);

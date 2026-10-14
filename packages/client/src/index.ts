@@ -9,4 +9,5 @@ export { RecordareClient } from './client.js';
 export { RecordareMcp, type McpOptions, type Tool, type ToolResult } from './mcp.js';
 export { PersonDirectory, type Person, type PersonDirectoryOptions } from './people.js';
 export { TOOLS } from './tools.js';
+export { isLinkCode, LINK_CODE, LINK_CODE_INSTRUCTION } from './links.js';
 export { afterFailure, backoffMs, DEFAULT_DELIVERY, type DeliveryPolicy, type Next } from './delivery.js';
