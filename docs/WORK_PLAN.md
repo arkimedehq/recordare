@@ -139,7 +139,7 @@ Status (2026-10-07): done except 4.1 (nightly sweep of pending messages TODO), 4
 Status (2026-10-08): done except 4.1 (partial: nightly sweep of pending messages TODO), 4.3 (partial: the notes change
 feed is recorded in `note_changes` but has no endpoint yet), 4.4c (TODO), 4.5b (partial), 4.5c (partial) and 4.7
 (partial: the diary part is built); 4.4b and 4.6 done in M4b; 4.8, 4.9, 4.11 done; 4.10 and 4.12 TODO.
-Status (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done.
+Status (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done. Status (2026-10-15): 4.4c done.
 
 | # | Task |
 |---|---|
@@ -148,7 +148,7 @@ Status (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done.
 | 4.3 | `log_episode` (explicit capture, max importance); semantic notes (D34): extraction in the same call, `notes` tables, `remember` / `search_memory`, notes change feed — **done 2026-10-12**: the change feed's endpoint `GET api/v1/notes/changes?since` built with 4.7 |
 | 4.4 | `search_episodes` full: date-range filter, `mode: search \| list`, ranking relevance + recency + importance + access boost (D14), automatic raw-log fallback (D13); deterministic resolver for common period expressions (this / last week, month names) |
 | 4.4b | Eval suite = `dataset/` + `dataset_holdout/` (+ a new blind set when prompts change a lot); gaps from `ENGINE_IDEAS.md` covered (rescheduled plans, corrections, `latest` mode, facts as-of) — **done** in M4b: blind sets 3–8 (4b.1, 4.8) |
-| 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget — **TODO** (accounting exists, no budget / CI gate) |
+| 4.4c | Cost budget per idle window and per person/month, measured by the per-call accounting; CI fails if a change raises tokens per message beyond the budget — **done** (2026-10-15): `service/test/cost/` — a reference day of one person (two weeks of history, then 100 messages in three idle windows and the night after), per quality profile: calls and estimated input tokens per idle window and per night, projected to a month, against `budget.json`; CI fails above it, an intended rise is recorded in the same commit (`COST_BUDGET_UPDATE=1`). First budget (UTF-8 bytes / 4): economy ≈ 230 input tokens per message, 4 calls a night, ≈ 1.0 M input tokens a month; balanced ≈ 230, 5, ≈ 1.2 M; full ≈ 290, 5, ≈ 1.3 M. Output tokens depend on the model and are not budgeted; nothing limits a memory at run time (D35: cost is the deployer's option) |
 | 4.5 | Per-person toggle `episodicMemoryEnabled` (D4), default off — *superseded by D50 / 8.1 (2026-10-09): no consent flag in Recordare; the client platform's switch is the only one* |
 | 4.5b | **Provider matrix**: eval suite run against DeepSeek, Ollama and at least one of OpenAI / Anthropic / Gemini; CLI `eval --config <profile>`; supported-models table (D27) — **partial**: measured (DeepSeek, Ollama local models, OpenRouter models, claude-cli); no `eval --config` CLI, no formal supported-models table with weight licences |
 | 4.5c | Eval categories for H1 (plan resolution incl. unresolved, premise traps, accumulate vs supersede, correction vs change) with unjustified-assertion and over-abstention rates (`RESEARCH_NOTES.md`) — **partial**: the H1 categories are in the blind sets (4b.1) and scored per category; the two rates are not reported <!-- verify: no unjustified-assertion / over-abstention rate found in RESULTS.md --> |
@@ -259,7 +259,8 @@ Status (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b mostly done ((
 toggle split and the notes copy Recordare → A-MEM TODO *(done 2026-10-13: `sharedMemoryEnabled` apart from
 `autoMemoryEnabled`; Diary copies by hand or by category rule, kept in step through the notes change feed)*; Arkimede still uses the synced copy of the client library, not
 the npm package. Of the order above, 4.7 (diary
-part), 6.3, 4.8 and 6.6 are done; next: 4.12, 4.10, 4.13, 4.14, 6.6b (6) when resumed; 8.7 follow-ups (done 2026-10-14, D51 included).
+part), 6.3, 4.8, 6.6, 4.12, 4.10, 4.13, 4.14, the 8.7 follow-ups (2026-10-14, D51 included) and 4.4c (2026-10-15) are done; next: 6.5,
+6.6b (6) when resumed.
 
 | # | Task | Where |
 |---|---|---|

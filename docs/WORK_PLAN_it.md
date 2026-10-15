@@ -143,7 +143,7 @@ Stato (2026-10-08): completata tranne 4.1 (partial: sweep notturno dei messaggi 
 cambiamenti delle note è registrato in `note_changes` ma non ha ancora un endpoint), 4.4c (TODO), 4.5b (partial), 4.5c
 (partial) e 4.7 (partial: la parte per il diario è realizzata); 4.4b e 4.6 completate in M4b; 4.8, 4.9, 4.11 done; 4.10
 e 4.12 TODO.
-Stato (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done.
+Stato (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done. Stato (2026-10-15): 4.4c fatto.
 
 | # | Compito |
 |---|---|
@@ -152,7 +152,7 @@ Stato (2026-10-12): 4.1, 4.10, 4.12, 4.13, 4.14 done.
 | 4.3 | `log_episode` (cattura esplicita, importanza massima); note semantiche (D34): estrazione nella stessa chiamata, tabelle `notes`, `remember` / `search_memory`, feed dei cambiamenti delle note — **fatto il 2026-10-12**: l'endpoint del feed `GET api/v1/notes/changes?since` costruito con la 4.7 |
 | 4.4 | `search_episodes` completo: filtro per intervallo di date, `mode: search \| list`, ranking rilevanza + recenza + importanza + boost di accesso (D14), fallback automatico al log grezzo (D13); risolutore deterministico per le espressioni di periodo comuni (questa / scorsa settimana, nomi dei mesi) |
 | 4.4b | Suite di valutazione = `dataset/` + `dataset_holdout/` (+ un nuovo set cieco quando i prompt cambiano molto); lacune di `ENGINE_IDEAS.md` coperte (piani riprogrammati, correzioni, modalità `latest`, fatti as-of) — **done** in M4b: set ciechi 3–8 (4b.1, 4.8) |
-| 4.4c | Budget di costo per finestra idle e per persona/mese, misurato dalla contabilità per chiamata; la CI fallisce se una modifica porta i token per messaggio oltre il budget — **TODO** (la contabilità esiste, nessun budget / gate in CI) |
+| 4.4c | Budget di costo per finestra idle e per persona/mese, misurato dalla contabilità per chiamata; la CI fallisce se una modifica porta i token per messaggio oltre il budget — **fatto** (2026-10-15): `service/test/cost/` — una giornata di riferimento di una persona (due settimane di storia, poi 100 messaggi in tre finestre idle e la notte successiva), per profilo di qualità: chiamate e token di input stimati per finestra idle e per notte, proiettati su un mese, confrontati con `budget.json`; la CI fallisce oltre il budget, un aumento voluto si registra nello stesso commit (`COST_BUDGET_UPDATE=1`). Primo budget (byte UTF-8 / 4): economy ≈ 230 token di input per messaggio, 4 chiamate a notte, ≈ 1,0 M token di input al mese; balanced ≈ 230, 5, ≈ 1,2 M; full ≈ 290, 5, ≈ 1,3 M. I token di output dipendono dal modello e non sono a budget; nulla limita una memoria a runtime (D35: il costo è un'opzione di chi installa) |
 | 4.5 | Interruttore per persona `episodicMemoryEnabled` (D4), default off — *superato da D50 / 8.1 (2026-10-09): niente flag di consenso in Recordare; l'interruttore della piattaforma client è l'unico* |
 | 4.5b | **Matrice dei provider**: suite di valutazione eseguita su DeepSeek, Ollama e almeno uno tra OpenAI / Anthropic / Gemini; CLI `eval --config <profile>`; tabella dei modelli supportati (D27) — **partial**: misurati (DeepSeek, modelli locali Ollama, modelli OpenRouter, claude-cli); nessuna CLI `eval --config`, nessuna tabella formale dei modelli supportati con le licenze dei pesi |
 | 4.5c | Categorie di valutazione per H1 (risoluzione dei piani incl. unresolved, trappole di premessa, accumulare vs sostituire, correzione vs cambiamento) con tassi di asserzioni ingiustificate e di astensione eccessiva (`RESEARCH_NOTES.md`) — **partial**: le categorie H1 sono nei set ciechi (4b.1) e hanno un punteggio per categoria; i due tassi non sono riportati <!-- verify: nessun tasso di asserzioni ingiustificate / astensione eccessiva in RESULTS.md --> |
@@ -263,8 +263,8 @@ Stato (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b quasi completa 
 2026-10-13: `sharedMemoryEnabled` separato da `autoMemoryEnabled`; il Diario copia a mano o con una regola per categoria,
 e il feed delle modifiche delle note tiene le copie allineate)*; Arkimede usa ancora la
 copia sincronizzata della libreria client, non il pacchetto npm.
-Dell'ordine qui sopra sono fatte la 4.7 (parte del diario), la 6.3, la 4.8 e la 6.6; prossimi: 4.12, 4.10, 4.13, 4.14,
-la 6.6b (6) quando ripresa; i seguiti della 8.7 (fatti il 2026-10-14, D51 compresa).
+Dell'ordine qui sopra sono fatte la 4.7 (parte del diario), la 6.3, la 4.8, la 6.6, la 4.12, la 4.10, la 4.13, la 4.14, i seguiti
+della 8.7 (2026-10-14, D51 compresa) e la 4.4c (2026-10-15); prossimi: 6.5, la 6.6b (6) quando ripresa.
 
 | # | Compito | Dove |
 |---|---|---|

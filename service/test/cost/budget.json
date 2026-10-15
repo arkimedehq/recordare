@@ -1,0 +1,23 @@
+{
+  "economy": {
+    "extractionCalls": 6,
+    "extractionInputPerMessage": 239,
+    "nightlyCalls": 4,
+    "nightlyInput": 11529,
+    "monthlyInput": 1061991
+  },
+  "balanced": {
+    "extractionCalls": 6,
+    "extractionInputPerMessage": 243,
+    "nightlyCalls": 5,
+    "nightlyInput": 16371,
+    "monthlyInput": 1218200
+  },
+  "full": {
+    "extractionCalls": 8,
+    "extractionInputPerMessage": 305,
+    "nightlyCalls": 5,
+    "nightlyInput": 15072,
+    "monthlyInput": 1366628
+  }
+}

@@ -7,6 +7,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Budget di costo in CI** (WORK_PLAN 4.4c): `service/test/cost/` misura, per profilo di qualità, le chiamate LLM e i
+  token di input di una giornata di riferimento di una persona (per finestra idle, per notte, per mese) e fallisce oltre
+  `budget.json`; un aumento voluto si registra nello stesso commit (`COST_BUDGET_UPDATE=1 npx vitest run test/cost`).
 - **Il resto dell'API di lettura** (WORK_PLAN 4.7, API.md §4): inserimento manuale (`POST api/v1/episodes`,
   `POST api/v1/notes` — scritti dalla persona, dichiarati), correzioni di fatti e note (`POST …/{id}/corrections`,
   cronologia conservata), un fatto o una nota con le sue prove (`GET api/v1/facts/{id}`, `GET api/v1/notes/{id}`), il

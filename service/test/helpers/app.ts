@@ -42,16 +42,19 @@ export async function startFakeEmbeddings(): Promise<{ url: string; server: Serv
   return { url: `http://127.0.0.1:${port}/v1`, server, requests };
 }
 
-/** OpenAI-compatible /v1/chat/completions stub: answers with the queued JSON outputs in order. */
-export async function startFakeLlm(): Promise<{ url: string; server: Server; queue: unknown[]; requests: Array<{ messages: Array<{ role: string; content: string }> }> }> {
+type FakeLlmRequest = { messages: Array<{ role: string; content: string }> };
+
+/** OpenAI-compatible /v1/chat/completions stub: answers with the queued JSON outputs in order, then with `respond`. */
+export async function startFakeLlm(respond?: (req: FakeLlmRequest) => unknown): Promise<{ url: string; server: Server; queue: unknown[]; requests: FakeLlmRequest[] }> {
   const queue: unknown[] = [];
-  const requests: Array<{ messages: Array<{ role: string; content: string }> }> = [];
+  const requests: FakeLlmRequest[] = [];
   const server = createServer((req, res) => {
     let body = '';
     req.on('data', (c) => { body += c; });
     req.on('end', () => {
-      requests.push(JSON.parse(body));
-      const next = queue.shift() ?? {};
+      const parsed = JSON.parse(body) as FakeLlmRequest;
+      requests.push(parsed);
+      const next = queue.length ? queue.shift() : respond?.(parsed) ?? {};
       res.setHeader('content-type', 'application/json');
       res.end(JSON.stringify({
         id: 'x', object: 'chat.completion', created: 0, model: 'fake',

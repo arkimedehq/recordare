@@ -140,5 +140,6 @@ Follow `docs/WORK_PLAN.md`, memory engine first (maintainer, 2026-10-12: connect
 5.5, 4.1, 4.7, 5.7 taint; 5.8 parked; blind11 entity set 98.8 %; 5.4 follow-ups tried and reverted (known limit).
 Done 2026-10-13: D34 A-MEM toggle split + note copies (Arkimede); 6.6b (5) durable OpenClaw queue, (10) `/mcp` plain JSON;
 6.6b (6) real-channel tests on hold. Done 2026-10-14: 8.7 follow-ups (alias, personal-token `PATCH me`, gender in
-`PersonDirectory`); D51 holder link codes (one-time code + holder's confirmation) built on branch `holder-link-codes`
-(merge pending the maintainer's OK). Next: per WORK_PLAN (6.6b (6) on hold).
+`PersonDirectory`); D51 holder link codes (one-time code + holder's confirmation), merged and deployed. Done 2026-10-15:
+4.4c cost budget gate (`service/test/cost/`, `budget.json`; `COST_BUDGET_UPDATE=1` records an intended rise). Next: 6.5
+continuous listening (6.6b (6) on hold).
