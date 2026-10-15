@@ -5,10 +5,11 @@
  * Extraction prompts. The system prompt is constant (provider prefix caching); everything variable goes in the user
  * message. Rules come from the prototype that passed the blind held-out check (spikes/memory-eval/systems/d_sys.py)
  * plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
- * - Personal memories (D50, WORK_PLAN 8.4): `extract.v15` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
+ * - Personal memories (D50, WORK_PLAN 8.4): `extract.v16` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
  *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date; v15: a group
- *   chat's name in the input, GROUP CHAT, only for group chats with one — the system prompt is v14's).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v15+entity.v5` — the shared agent's memory in the first person, people by
+ *   chat's name in the input, GROUP CHAT, only for group chats with one — the system prompt is v14's; v16: HEARD AROUND ME in
+ *   the input, only for continuous listening, WORK_PLAN 6.5 — the system prompt is still v14's).
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v16+entity.v5` — the shared agent's memory in the first person, people by
  *   name or "someone"; the personal prompt's sections where they hold for both.
  */
 export interface PromptMessage {
@@ -30,6 +31,8 @@ export interface PromptContext {
   learnedSources: string[];
   /** The group chat's name on its platform, when the window is a group chat with one (extract.v15). */
   groupChat: string | null;
+  /** Continuous listening (WORK_PLAN 6.5, extract.v16): the window is speech a home device heard, transcribed. */
+  ambient: boolean;
   locale: string;
   messageDay: string;
   calendar: string;
@@ -49,7 +52,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v15';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v16';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -380,7 +383,19 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v15`, entity `extract.v15+entity.v5`). */
+/** The extraction input of both modes (personal `extract.v16`, entity `extract.v16+entity.v5`). */
+/**
+ * Continuous listening (WORK_PLAN 6.5, D45): only in ambient windows, so every other input stays byte-identical. The
+ * speakers' names come from voice recognition and the words from speech recognition; nobody is talking to the
+ * assistant. Facts and notes from these windows are pending in code whatever the model says (the writer).
+ */
+export const AMBIENT_NOTE = `HEARD AROUND ME: these messages are speech a device heard in the room, transcribed — nobody is \
+talking to the assistant. Speech recognition gets words wrong (names, numbers, similar-sounding words) and a speaker's \
+name may be the wrong person. Record what happened and what was said as it was said; when a word is garbled, keep the \
+plain meaning or leave the detail out — never guess a name, a number or a date from it; skip fragments with no clear \
+meaning; a sentence makes an item about the person who said it only when it fits who they are (name, relations, what \
+else they said).`;
+
 export function buildExtractionUser(ctx: PromptContext): string {
   const [name, ...others] = ctx.selfNames;
   return [
@@ -396,6 +411,7 @@ export function buildExtractionUser(ctx: PromptContext): string {
     `KNOWN SLOTS: ${ctx.knownSlots.join(', ') || NONE}`,
     `CURRENT NOTES:\n${ctx.currentNotes.join('\n') || NONE}`,
     `KNOWN EPISODES (recent, and older ones related to these messages):\n${ctx.knownEpisodes.join('\n') || NONE}`,
+    ...(ctx.ambient ? [AMBIENT_NOTE] : []),
     ...(ctx.groupChat ? [`GROUP CHAT: «${ctx.groupChat}» (the group's name: an episode told here says it was in the group «${ctx.groupChat}»)`] : []),
     `CONVERSATION WINDOW:\n${ctx.messages.map((m) => `[${m.n}] ${m.sentAt} ${m.speaker}: ${m.content}`).join('\n')}`,
   ].join('\n\n');

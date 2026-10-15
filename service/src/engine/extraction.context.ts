@@ -51,6 +51,8 @@ export interface WindowMessage {
    * the tool said, so its items are the tool's, never the holder's (turn taint, 5.7). Cleared by the next person's message.
    */
   toolDerived?: boolean;
+  /** Heard by a device in the room (a conversation of source `ambient`, continuous listening, WORK_PLAN 6.5). */
+  heard?: boolean;
 }
 
 export interface Memory {
@@ -122,13 +124,15 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
      ORDER BY m.sent_at, m.received_at`,
     [conversationId, MEMORY_TOOLS, RECORDARE_TOOLS],
   );
+  const [conversation]: Array<{ source: string }> = await tx.query(`SELECT source FROM conversations WHERE id = $1`, [conversationId]);
+  const heard = conversation?.source === 'ambient';
   const windows: WindowMessage[][] = [];
   let current: WindowMessage[] = [];
   let size = 0;
   for (const r of rows) {
     const msg: WindowMessage = { id: r.id, role: r.role, toolName: r.tool_name, accountSpeaker: r.account_speaker,
       authorKind: r.author_kind, authorPersonId: r.author_person_id, authorName: r.author_name, content: r.content, sentAt: r.sent_at, ...(r.from_memory ? { fromMemory: true } : {}),
-      ...(r.tool_derived ? { toolDerived: true } : {}) };
+      ...(r.tool_derived ? { toolDerived: true } : {}), ...(heard ? { heard: true } : {}) };
     if (current.length > 0 && size + r.content.length > maxChars) {
       windows.push(current);
       current = [];
@@ -239,6 +243,7 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
       openQuestions: people.lines,
       locale: memory.locale,
       groupChat: chat?.title?.trim() || null,
+      ambient: window.some((m) => m.heard),
       messageDay,
       calendar: calendar(messageDay, 14, 21, memory.locale),
       openPlans: plans.map((p, i) => {

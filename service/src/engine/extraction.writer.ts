@@ -6,7 +6,8 @@
  * the model only proposes items, verdicts and patches (D29, PIS). Rules:
  * - evidence: message numbers are mapped to ids in code; items without valid evidence are dropped;
  * - provenance: author_role from the evidence messages; items backed only by other people or tool
- *   output are `inferred` (facts / notes pending) — poisoning guard;
+ *   output are `inferred` (facts / notes pending) — poisoning guard; so is every fact and note heard by a device in the
+ *   room (continuous listening, WORK_PLAN 6.5): a misrecognised speaker must not make someone else's words mine;
  * - forgetting: items whose evidence or date hits a tombstone are not recreated (D16); a deleted fact or note is not
  *   written again from the messages it came from (same slot or category, same subject; 4.13);
  * - plans: confirm / cancel / reschedule / amend change status in code, with a plan_events log; a patch needs evidence
@@ -34,6 +35,11 @@ import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject
 import { askClarification, resolveClarification } from './clarifications';
 
 type AuthorRole = 'holder' | 'assistant' | 'other' | 'tool';
+
+/** Heard by a device in the room (continuous listening, WORK_PLAN 6.5): the speaker may be misrecognised. */
+const heard = (msgs: WindowMessage[]): boolean => msgs.some((m) => m.heard);
+/** Words that can confirm a pending item: a person's own, not heard in the room. */
+const confirms = (role: AuthorRole, msgs: WindowMessage[]): boolean => !heard(msgs) && (role === 'holder' || role === 'other');
 
 /**
  * Below this plan ↔ evidence-message similarity, with no shared name, place or keyword, a plan patch is treated as
@@ -464,12 +470,13 @@ export class ExtractionWriter {
       if (r.subject.kind === 'someone' || r.subject.kind === 'undecided') { this.drop('fact', `${r.subject.kind}_subject`); continue; }
       const subjectId = r.subject.personId;
       if (this.deleted('fact', key, subjectId, msgs)) { this.drop('fact', 'deleted'); continue; }
-      const inferred = await this.inferred(role, msgs, subjectId ? contact(subjectId) : SELF_SUBJECT);
+      const own = !(await this.inferred(role, msgs, subjectId ? contact(subjectId) : SELF_SUBJECT));
+      const inferred = !own || heard(msgs);
       let target = f.target ? this.input.facts.get(f.target) : undefined;
       if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
 
       if (f.verdict === 'keep') {
-        if (target) await this.tx.query(`UPDATE facts SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [target.id, this.ctx.memoryId]);
+        if (target) await this.support('facts', target.id, own && confirms(role, msgs));
         continue;
       }
       let verdict = f.verdict;
@@ -556,18 +563,18 @@ export class ExtractionWriter {
       const problem = this.evidenceProblem(msgs, null, n.content);
       if (problem) { this.drop('note', problem); continue; }
       const target = n.target ? this.input.notes.get(n.target) : undefined;
+      const role = this.authorRole(msgs);
       if (n.verdict === 'keep') {
-        if (target) await this.tx.query(`UPDATE notes SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
+        if (target) await this.support('notes', target, confirms(role, msgs) && !(await this.inferred(role, msgs, await this.subjectOf('notes', target))));
         continue;
       }
-      const role = this.authorRole(msgs);
       if (!this.subjectNamed(n.subject, [])) { this.drop('note', 'person_not_named'); continue; }
       const who = await this.resolveSubject(this.itemSubject(n.subject), [], null);
       if (!who) { this.drop('note', 'unknown_contact'); continue; }
       if (who.subject.kind === 'someone') { this.drop('note', 'someone_subject'); continue; }
       const subject = who.subject;
       if (this.deleted('note', n.category, subject.personId, msgs)) { this.drop('note', 'deleted'); continue; }
-      const inferred = n.stance === 'inferred' || (await this.inferred(role, msgs, subject));
+      const inferred = n.stance === 'inferred' || heard(msgs) || (await this.inferred(role, msgs, subject));
       let supersedes: string | null = null;
       let correctsId: string | null = null;
       if (target && n.verdict === 'replace') {
@@ -643,6 +650,21 @@ export class ExtractionWriter {
       if (r.subject.kind === 'contact' && r.subject.personId) out.set(alias, r.subject.personId);
     }
     return out;
+  }
+
+  /**
+   * A fact or note told again. Said again by its own person outside continuous listening (in a chat, or by voice to the
+   * assistant), a pending one is confirmed — e.g. what a device heard in the room (WORK_PLAN 6.5).
+   */
+  private async support(table: 'facts' | 'notes', id: string, confirm: boolean): Promise<void> {
+    await this.tx.query(
+      `UPDATE ${table} SET support_count = support_count + 1${confirm ? `, pending = false, stance = 'stated', confidence = 1` : ''}
+       WHERE id = $1 AND memory_id = $2`, [id, this.ctx.memoryId]);
+  }
+
+  private async subjectOf(table: 'facts' | 'notes', id: string): Promise<Subject> {
+    const [row]: Array<{ subject_person_id: string | null }> = await this.tx.query(`SELECT subject_person_id FROM ${table} WHERE id = $1`, [id]);
+    return row?.subject_person_id ? contact(row.subject_person_id) : SELF_SUBJECT;
   }
 
   /**
