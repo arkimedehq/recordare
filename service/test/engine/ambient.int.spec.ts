@@ -4,6 +4,7 @@
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
+import { ReadService } from '../../src/read/read.service';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
@@ -79,6 +80,20 @@ describe('continuous listening: what a device hears in the room waits for its pe
     });
     expect(await fact()).toEqual([{ value: 'noci', pending: false, stance: 'stated', confidence: 1, support_count: 4 }]);
     expect(await note()).toEqual([{ pending: false, stance: 'stated' }]);
+  });
+
+  it('a pending fact only proposes to replace a stated one: confirmed, it does (dev_ambient: a sister\'s age heard as mine)', async () => {
+    await run({ externalId: 'chat-3' }, [
+      { id: 'g1', role: 'user', content: 'Ho 41 anni.', at: '2026-06-13T09:00:00+02:00' },
+    ], { facts: [{ key: 'eta', value: '41', verdict: 'new', subject: 'me', evidence: [1] }] });
+    await run({ externalId: 'room-4', source: 'ambient' }, [
+      { id: 'a4', role: 'user', content: 'A marzo compio trentanove anni, festa a Torino.', at: '2026-06-13T20:00:00+02:00' },
+    ], { facts: [{ key: 'eta', value: '38', verdict: 'replace', target: 'F1', subject: 'me', evidence: [1] }] });
+    const ages = () => db.query(`SELECT value, status, pending FROM facts WHERE key = 'eta' ORDER BY recorded_at`);
+    expect(await ages()).toEqual([{ value: '41', status: 'current', pending: false }, { value: '38', status: 'current', pending: true }]);
+    const [{ id }] = await db.query(`SELECT id FROM facts WHERE key = 'eta' AND pending`);
+    await app.get(ReadService).decide(memoryId, 'facts', id, true);
+    expect(await ages()).toEqual([{ value: '41', status: 'superseded', pending: false }, { value: '38', status: 'current', pending: false }]);
   });
 
   it('a link code heard in the room is nobody\'s claim (D51)', async () => {

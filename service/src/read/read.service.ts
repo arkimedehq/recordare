@@ -12,6 +12,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { localDate, periodEnd, type Precision, zonedMidnight, addDays } from '../engine/time';
 import { toOrTsQuery } from '../rawlog/rawlog-search.service';
+import { confirmPending } from '../engine/pending';
 
 export type PlanStatus = 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
 
@@ -308,9 +309,7 @@ export class ReadService {
   /** A pending (inferred) fact or note the person confirms becomes theirs; rejected, it is removed. */
   async decide(memoryId: string, table: 'notes' | 'facts', id: string, confirm: boolean): Promise<void> {
     if (!confirm) return this.deleteRow(memoryId, table, id);
-    const [, n] = await this.db.query(
-      `UPDATE ${table} SET pending = false, stance = 'stated', confidence = 1 WHERE id = $1 AND memory_id = $2 AND pending AND deleted_at IS NULL`, [id, memoryId]);
-    if (!n) throw new NotFoundException();
+    if (!(await this.db.transaction((tx) => confirmPending(tx, table, id, memoryId)))) throw new NotFoundException();
   }
 
   /**

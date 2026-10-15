@@ -33,6 +33,7 @@ import { selfLeak } from '../lang';
 import { localDate, toStored, type Precision } from './time';
 import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 import { askClarification, resolveClarification } from './clarifications';
+import { confirmPending, isPending } from './pending';
 
 type AuthorRole = 'holder' | 'assistant' | 'other' | 'tool';
 
@@ -488,7 +489,8 @@ export class ExtractionWriter {
       if (!target && cardinality === 'single' && verdict !== 'corrects') {
         // A new value for a single-value slot that already has one is a replacement.
         const [cur] = await this.tx.query(
-          `SELECT id, valid_from FROM facts WHERE memory_id = $1 AND subject_person_id IS NOT DISTINCT FROM $3 AND key = $2 AND status IN ('current', 'unknown_current') AND deleted_at IS NULL`,
+          `SELECT id, valid_from FROM facts WHERE memory_id = $1 AND subject_person_id IS NOT DISTINCT FROM $3 AND key = $2 AND status IN ('current', 'unknown_current') AND deleted_at IS NULL
+           ORDER BY pending, recorded_at DESC LIMIT 1`,
           [this.ctx.memoryId, key, subjectId]);
         if (cur) {
           target = { id: cur.id, key, validFrom: cur.valid_from, subjectId };
@@ -507,6 +509,8 @@ export class ExtractionWriter {
       const value = verdict === 'stale' || verdict === 'unknown' ? null : (f.value ?? null);
       if (value === null && verdict !== 'stale' && verdict !== 'unknown') { this.drop('fact', 'no_value'); continue; }
 
+      // A pending fact only proposes the change to a stated one: applied when it is confirmed (pending.ts).
+      const proposal = inferred && !!target && !(await isPending(this.tx, 'facts', target.id));
       if (target && (verdict === 'replace' || verdict === 'stale' || verdict === 'unknown')) {
         if (target.validFrom && from.at && from.at < target.validFrom) {
           // Older evidence that a value became unknown changes nothing in the newer history.
@@ -515,13 +519,15 @@ export class ExtractionWriter {
           status = 'superseded';
           validTo = target.validFrom;
         } else {
-          await this.tx.query(`UPDATE facts SET status = 'superseded', valid_to = $1, expired_at = now() WHERE id = $2 AND memory_id = $3`,
-            [from.at, target.id, this.ctx.memoryId]);
+          if (!proposal) {
+            await this.tx.query(`UPDATE facts SET status = 'superseded', valid_to = $1, expired_at = now() WHERE id = $2 AND memory_id = $3`,
+              [from.at, target.id, this.ctx.memoryId]);
+          }
           supersedes = target.id;
           status = value === null ? 'unknown_current' : 'current';
         }
       } else if (target && verdict === 'corrects') {
-        await this.tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1 AND memory_id = $2`, [target.id, this.ctx.memoryId]);
+        if (!proposal) await this.tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1 AND memory_id = $2`, [target.id, this.ctx.memoryId]);
         correctsId = target.id;
       }
       // A fact without a subject is the self's: the person's (personal) or the agent's and its place's (entity, e.g. where the spare keys are).
@@ -577,11 +583,13 @@ export class ExtractionWriter {
       const inferred = n.stance === 'inferred' || heard(msgs) || (await this.inferred(role, msgs, subject));
       let supersedes: string | null = null;
       let correctsId: string | null = null;
+      // A pending note only proposes the change to a stated one: applied when it is confirmed (pending.ts).
+      const proposal = inferred && !!target && !(await isPending(this.tx, 'notes', target));
       if (target && n.verdict === 'replace') {
-        await this.tx.query(`UPDATE notes SET status = 'superseded' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
+        if (!proposal) await this.tx.query(`UPDATE notes SET status = 'superseded' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
         supersedes = target;
       } else if (target && n.verdict === 'corrects') {
-        await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
+        if (!proposal) await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
         correctsId = target;
       }
       const [row] = await this.tx.query(
@@ -657,9 +665,8 @@ export class ExtractionWriter {
    * assistant), a pending one is confirmed — e.g. what a device heard in the room (WORK_PLAN 6.5).
    */
   private async support(table: 'facts' | 'notes', id: string, confirm: boolean): Promise<void> {
-    await this.tx.query(
-      `UPDATE ${table} SET support_count = support_count + 1${confirm ? `, pending = false, stance = 'stated', confidence = 1` : ''}
-       WHERE id = $1 AND memory_id = $2`, [id, this.ctx.memoryId]);
+    await this.tx.query(`UPDATE ${table} SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [id, this.ctx.memoryId]);
+    if (confirm) await confirmPending(this.tx, table, id, this.ctx.memoryId);
   }
 
   private async subjectOf(table: 'facts' | 'notes', id: string): Promise<Subject> {
