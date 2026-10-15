@@ -7,6 +7,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ## [Unreleased]
 
 ### Added
+- **Continuous listening** (WORK_PLAN 6.5, D45): conversation source `ambient` for speech a home device hears in the
+  room. The extraction is told it reads overheard speech (`extract.v16`, in those windows only); episodes are written as
+  usual, every fact and note heard there stays pending until its person says it again in a chat or by voice to the
+  assistant (or confirms it in the diary); recall marks episodes and chat excerpts heard there (`heard: true`; "heard in
+  the room" in the memory context) and the `search_episodes` description tells the agent what that means; a link code
+  heard there is never a claim. Dev set `dataset_dev_ambient`: 86.7 %, no misattributed sentence stored as a stated fact.
 - **Cost budget in CI** (WORK_PLAN 4.4c): `service/test/cost/` measures, per quality profile, the LLM calls and input
   tokens of a reference day of one person (per idle window, per night, per month) and fails above `budget.json`; an
   intended rise is recorded in the same commit (`COST_BUDGET_UPDATE=1 npx vitest run test/cost`).
@@ -82,6 +88,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   3/3).
 
 ### Fixed
+- A pending fact or note that would replace or correct a stated one (someone else's claim, a tool's output, speech heard
+  in the room) only proposes it: the stated item stays current until the pending one is confirmed, which retires it
+  then (migration `PendingProposals1791160000000`; before, a sister's age heard as the holder's retired the holder's).
 - Deleting a fact or a note (`DELETE api/v1/facts|notes/{id}`, or rejecting a pending one) leaves a tombstone (ids
   only: slot key or note category, subject, evidence messages), so a re-extraction of the same messages no longer writes
   it again; told again in a new message, it is learned (WORK_PLAN 4.13; migration `FactNoteTombstones1791110000000`).

@@ -350,7 +350,7 @@ entità seguono ora lo stesso modello di quelle personali; i prompt personali re
 |---|---|---|
 | `id`, `memory_id`, `client_id` | uuid | Unique `(client_id, memory_id, external_id)` |
 | `external_id` | text | |
-| `source` | enum `chat \| voice \| mcp_tool \| import_chat \| import_social \| import_email \| import_notes \| interview \| document \| perception \| ambient` | `mcp_tool` = conversazione sintetica che contiene le chiamate di strumento del livello basic; `document` / `perception` / `ambient` (D50): un documento dato all'agente, ciò che un dispositivo percepisce, l'ascolto continuo |
+| `source` | enum `chat \| voice \| mcp_tool \| import_chat \| import_social \| import_email \| import_notes \| interview \| document \| perception \| ambient` | `mcp_tool` = conversazione sintetica che contiene le chiamate di strumento del livello basic; `document` / `perception` / `ambient` (D50): un documento dato all'agente, ciò che un dispositivo percepisce, l'ascolto continuo (WORK_PLAN 6.5: fatti e note da `ambient` restano in attesa finché la loro persona non li ridice altrove) |
 | `channel`, `title` | text null | `title`: il nome di una chat di gruppo; l'estrazione lo vede quando la conversazione ha un altro partecipante (`extract.v15`) |
 | `started_at`, `last_message_at` | timestamptz | |
 | `idle_job_at` | timestamptz null | Quando è dovuta l'estrazione idle |

@@ -71,6 +71,14 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   | perception | ambient` quando è la natura della conversazione. (Fino al WORK_PLAN 8.4 l'estrazione legge il contenuto
   proprio come i turni del proprio utente.) Un testo che l'agente deve tenere come conoscenza da consultare (un
   manuale, un documento) è invece una fonte appresa (§3b).
+- **Ascolto continuo** (un dispositivo di casa che sente la stanza, D45, WORK_PLAN 6.5): inviare la trascrizione come
+  conversazione con `source: "ambient"` — la persona di cui è la memoria come `user`, gli altri come partecipanti `other`
+  (con un'identità quando il riconoscimento vocale li conosce), mai `own`. All'estrazione viene detto che legge parlato
+  sentito nella stanza (errori di riconoscimento, interlocutori forse sbagliati); gli episodi si scrivono come sempre, ma
+  ogni fatto e nota sentiti lì restano **in attesa** — nascosti al richiamo se non richiesti — finché la loro persona non
+  li ridice in una chat o a voce all'assistente, o li conferma nel diario: una voce riconosciuta male non deve far
+  diventare sue le parole di un altro. Il richiamo segna ciò che è stato sentito (`heard: true` su episodi ed estratti di
+  chat; "heard in the room" nel contesto di memoria), così l'agente lo racconta come sentito in casa.
 - Usare un **outbox**: scrivere prima il messaggio nella propria tabella, inviare in modo asincrono, ritentare con
   back-off; un'interruzione di Recordare non deve mai far fallire o rallentare la chat. Modifiche ed eliminazioni
   seguono (`API.md` §2).

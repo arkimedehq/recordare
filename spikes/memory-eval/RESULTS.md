@@ -443,6 +443,35 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 6.5 — continuous listening: extract.v16, pending facts, `heard` in recall (2026-10-15, DeepSeek direct, `amb65_runs.sh`)
+
+Dev set `dataset_dev_ambient` (NOT blind, written by an agent of the engine developer): Stefano, his son Leo, his mother
+Rosanna, his sister Chiara (a nurse, staying two weeks) — 13 sessions (9 `ambient` room transcripts with recognition
+errors and misrecognised speakers, 4 chats), 30 questions (heard, garbled, misattributed, unconfirmed, confirmed,
+background, control). One run per arm, one service instance on :8095 (queue `amb95`), `extract.v16` only in each run.
+Comparison arm: the same transcripts sent as `voice` (`EVAL_SOURCE_AMBIENT_AS=voice`: no note, nothing pending).
+
+| Run | Code | Accuracy | misattributed | unconfirmed | heard | garbled |
+|---|---|---|---|---|---|---|
+| `voice` (comparison) | `d756bd4` | 88.3 % | 0.60 | 1.00 | 1.00 | 0.88 |
+| `ambient` r1 | `d756bd4` | 76.7 % | 0.60 | 0.33 | 0.88 | 0.75 |
+| `ambient` r2 | + pending proposals (`ca751d2`) | 82.8 % | 0.60 | 0.67 | 0.86 | 0.88 |
+| `ambient` r3 | + `heard` in recall | **86.7 %** | **0.90** | 1.00 | 0.81 | 0.75 |
+
+- r1 found a bug: Chiara's "compio 39 anni", heard as Stefano's, became a pending `age` that **superseded** his stated
+  41. Fixed in `ca751d2`: a pending fact or note only proposes a replacement; the stated one stays current until the
+  pending one is confirmed (migration `PendingProposals1791160000000`).
+- In `voice`, Chiara's "faccio le notti fino a Natale" became Stefano's stated `job_title`; with `ambient` it is pending,
+  and so are the misattributed age, allergy and motorbike sale.
+- r2 → r3: the facts were already right; the answers still followed **episodes** written from misattributed sentences
+  ("sì, fai le notti…") and called room speech "what you wrote in the chat". With `heard: true` on episodes and chat
+  excerpts (and the `search_episodes` description saying what it means), the answer hedges ("non mi risulta con
+  certezza che sia tu", "è un contenuto captato in casa"): misattributed 0.60 → 0.90.
+- Still wrong in r3: q09 (a garbled place name, "Solesino" for Asolo), q06 and q14 (heard details; q14 a garbled place).
+  Single runs on 30 questions: ±1–2 questions is noise; the misattributed gain (3 of 10 questions) and the absence of
+  any stated misattributed fact are the findings, not the total.
+- Not measured: the value of the extraction's HEARD AROUND ME note on its own (v16 vs v14 input on `ambient`).
+
 ### A fresh blind entity-memory set — blind11 (2026-10-12, DeepSeek direct, `b11_runs.sh`)
 
 `dataset_blind11`, written blind by a separate agent and gold-audited by a second one (2 small fixes, `GOLD_AUDIT.md`):

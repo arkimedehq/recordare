@@ -555,6 +555,13 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 ### D45 — Ascolto continuo da un dispositivo vocale domestico (2026-10-07)
 - Un dispositivo client che ascolta in modo continuo, opt-in: impronte vocali sul dispositivo, voci sconosciute scartate, nessun
   audio memorizzato, le parole di ciascuno nella propria memoria. WORK_PLAN 6.5.
+- Come costruito (2026-10-15): sorgente di conversazione `ambient`; l'input dell'estrazione dice che è parlato sentito
+  nella stanza (`extract.v16`, solo in quelle finestre); ogni fatto e nota da lì resta in attesa finché la sua persona
+  non lo ridice fuori dalla stanza (una chat, a voce all'assistente) o lo conferma — gli episodi come sempre; un codice
+  di collegamento sentito lì non è mai una richiesta (D51); uno in attesa non ritira mai un elemento dichiarato finché
+  non è confermato; il richiamo segna episodi ed estratti di chat sentiti lì (`heard`), così l'agente li racconta come
+  sentiti in casa. La distribuzione per stanza (una trascrizione nelle memorie
+  di tutti i presenti) è per dopo.
 
 ### D46 — Regola di valutazione 9: un'istanza del servizio per coda (2026-10-07)
 - Un run le cui estrazioni portano più di una versione di prompt viene scartato (un'istanza obsoleta ha contaminato dei run; corretto

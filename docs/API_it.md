@@ -185,6 +185,10 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
     source?: "chat" | "voice" | "import_chat" | "import_social" | "import_email"
            | "import_notes" | "interview"
            | "document" | "perception" | "ambient";       // default "chat"
+                                                   // "ambient": parlato sentito da un dispositivo nella stanza (WORK_PLAN
+                                                   // 6.5) — i suoi fatti e note restano in attesa finché la loro persona
+                                                   // non li ridice altrove; un codice di collegamento sentito lì non è
+                                                   // mai una richiesta
     channel?: string; title?: string;              // title: a group chat's name, given to the extraction
     direct?: boolean;                              // a one-to-one chat (true) or a group (false); unknown when
                                                    // missing (D51: a link code is never accepted in a group)
@@ -355,6 +359,7 @@ Restituisce (come costruito):
                                                       // (what was done about the period may lie before it), 5 when the period has no match;
                                                       // ranked by relevance alone (not importance or recency)
   fromChats: Array<{ conversationId: string; conversation: string; group?: string;  // group: the group chat's name
+                     heard?: true;                           // overheard in the room (source "ambient", 6.5)
                      messageId: string; at: string;
                      authorRole: "holder" | "other" | "tool"; author?: string; excerpt: string;
                      correctedBy?: string }>;                // the episode that corrected a memory drawn from this message
@@ -371,12 +376,17 @@ type Episode = {
          | { kind: "undecided"; candidates: string[] };   // whose memory it is (D50, 8.4)
   claimedBy?: string[];                               // for claims: who wrote the evidence
   inferred: boolean;
+  heard?: true;                                       // told only by speech heard in the room (source "ambient", 6.5)
   people: string[]; feelings: string[]; opinion?: string;
   source: { conversation: string; messageIds: string[]; at: string };   // conversation = the client's own id
   sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
 Lo stesso in ogni conversazione, anche in quelle a cui partecipano altri (D50: nessun filtro su chi legge).
+**Sentito nella stanza (WORK_PLAN 6.5)**: un episodio le cui prove vengono tutte da conversazioni `ambient`, e un estratto
+di chat di una di esse, riportano `heard: true` — sentito da un dispositivo in ascolto, non detto all'agente, chi parlava
+forse riconosciuto male. La descrizione di `search_episodes` dice all'agente di raccontarlo come sentito in casa e che
+ciò che dice del sé può essere di qualcun altro; il contesto di memoria etichetta questi episodi "heard in the room".
 Ogni elemento riporta `authorRole` (`holder | assistant | other | tool`) così che gli host possano racchiudere i contenuti
 non scritti dai turni propri della memoria come dati, non come istruzioni; tali elementi riportano anche `claimedBy` (i nomi di chi ha
 scritto l'evidenza), gli estratti di chat riportano il proprio `author` quando non sono un turno proprio della memoria; quando tali

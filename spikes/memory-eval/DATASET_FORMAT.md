@@ -39,6 +39,15 @@ name only. An identified person is the same contact of the memory in every sessi
 Optional session field `group: "Famiglia Rossi"`: the group chat's name on its platform, sent as the conversation
 `title`.
 
+Optional session field `source`: the conversation's nature, as the service accepts it — `chat` (default) | `voice` |
+`ambient` | `document` | `perception` | `interview` | `import_chat` | `import_social` | `import_email` |
+`import_notes`. `ambient` (WORK_PLAN 6.5) is speech a home device heard in the room, transcribed: nobody talks to the
+assistant; the holder's lines are `role: "user"`, the other voices `role: "other"` with their `author` (declared in
+`participants` with an `identity` when the platform's voice recognition knows them; a voice it does not recognise — the
+TV, a stranger — is `other` without `author`). Transcription errors and wrong speaker labels are part of the content.
+The service system sends `source` as is; with `EVAL_SOURCE_AMBIENT_AS=voice` it sends the `ambient` sessions as `voice`
+instead (the comparison arm: same transcripts, no ambient handling; give it its own `RUN_TAG`).
+
 ## Learned sources
 A text the agent learns (a manual, a recipe, a contract, notes), as its own entry in `sessions`, in time order with the
 conversations:
