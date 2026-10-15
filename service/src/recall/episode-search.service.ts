@@ -51,6 +51,9 @@ export interface EpisodeView {
   /** Who wrote the evidence when it is someone else's claim (authorRole other / tool): names, never the self. */
   claimedBy?: string[];
   inferred: boolean;
+  /** Told by speech heard in the room by an always-listening device (WORK_PLAN 6.5): not said to me, and its speaker may
+   * be misrecognised — what it says of me may be someone else's. */
+  heard?: true;
   people: string[];
   feelings: string[];
   opinion?: string;
@@ -332,8 +335,8 @@ export class EpisodeSearchService {
     if (rows.length === 0) return [];
     const ids = rows.map((r) => r.id);
     const people: Array<{ episode_id: string; alias: string }> = await this.db.query(`SELECT episode_id, alias FROM episode_people WHERE episode_id = ANY($1)`, [ids]);
-    const evidence: Array<{ episode_id: string; message_id: string; external_id: string; sent_at: Date; role: string; author: string | null }> = await this.db.query(
-      `SELECT ev.episode_id, ev.message_id, c.external_id, m.sent_at, m.role,
+    const evidence: Array<{ episode_id: string; message_id: string; external_id: string; heard: boolean; sent_at: Date; role: string; author: string | null }> = await this.db.query(
+      `SELECT ev.episode_id, ev.message_id, c.external_id, c.source = 'ambient' AS heard, m.sent_at, m.role,
               CASE WHEN m.role = 'tool' THEN m.tool_name ELSE COALESCE(p.display_name, cp.display_name) END AS author
        FROM episode_evidence ev
        JOIN messages m ON m.id = ev.message_id JOIN conversations c ON c.id = m.conversation_id
@@ -366,6 +369,7 @@ export class EpisodeSearchService {
         ...(r.author_role === 'other' || r.author_role === 'tool'
           ? { claimedBy: [...new Set(ev.filter((e) => e.role === 'other' || e.role === 'tool').map((e) => e.author ?? '?'))] } : {}),
         inferred: r.stance === 'inferred',
+        ...(ev.length && ev.every((e) => e.heard) ? { heard: true as const } : {}),
         people: people.filter((p) => p.episode_id === r.id).map((p) => p.alias),
         feelings: r.feelings, ...(r.opinion ? { opinion: r.opinion } : {}),
         source: { conversation: ev[0]?.external_id ?? '', messageIds: ev.map((e) => e.message_id), at: ev[0]?.sent_at.toISOString() ?? '' },

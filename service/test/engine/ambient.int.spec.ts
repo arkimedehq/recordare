@@ -5,6 +5,8 @@ import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { ReadService } from '../../src/read/read.service';
+import { EpisodeSearchService } from '../../src/recall/episode-search.service';
+import { ContextService } from '../../src/recall/context.service';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
@@ -54,6 +56,15 @@ describe('continuous listening: what a device hears in the room waits for its pe
     expect(await fact()).toEqual([{ value: 'noci', pending: true, stance: 'inferred', confidence: 0.6, support_count: 1 }]);
     expect(await note()).toEqual([{ pending: true, stance: 'inferred' }]);
     expect(await db.query(`SELECT stance FROM episodes`)).toEqual([{ stance: 'stated' }]);
+  });
+
+  it('recall says what was heard in the room: episodes, chat excerpts and the memory context', async () => {
+    const at = new Date('2026-06-09T20:00:00+02:00');
+    const recall = await app.get(EpisodeSearchService).search(memoryId, null, { query: 'allergico alle noci' }, at);
+    expect(recall.episodes).toEqual([expect.objectContaining({ content: 'A cena ho detto di essere allergico alle noci.', heard: true })]);
+    expect(recall.fromChats).toEqual([expect.objectContaining({ heard: true })]);
+    const { block } = await app.get(ContextService).build(memoryId, 'A cena ho detto di essere allergico alle noci.', undefined, at);
+    expect(block).toContain('- episode (heard in the room; the speaker may be misrecognised): A cena ho detto di essere allergico alle noci.');
   });
 
   it('heard again in the room, or repeated by the assistant, it stays pending', async () => {
