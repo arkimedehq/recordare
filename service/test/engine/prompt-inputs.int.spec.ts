@@ -3,14 +3,14 @@
 
 /**
  * Prompt inputs are part of a measured version (evaluation rule 9): the personal prompts stay byte-identical to the ones
- * measured (`extract.v15`: v14's system prompt, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
- * `extract.v15+entity.v5`) — a change to any of them is a new version, measured before it ships.
+ * measured (`extract.v16`: v14's system prompt; its HEARD AROUND ME line only in ambient windows, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
+ * `extract.v16+entity.v5`) — a change to any of them is a new version, measured before it ships.
  */
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
 import { createHash } from 'node:crypto';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
-import { EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
+import { AMBIENT_NOTE, EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
 import { FACTS_SYSTEM } from '../../src/engine/facts.prompt';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
@@ -47,7 +47,7 @@ describe('prompt inputs of the measured versions', () => {
     return { system: req?.messages[0]?.content ?? '', user: req?.messages[1]?.content ?? '' };
   }
 
-  it('personal prompts are the measured extract.v15 (v14 system prompt) and facts.v2', () => {
+  it('personal prompts are the measured extract.v16 (v14 system prompt) and facts.v2', () => {
     expect(sha(EXTRACTION_SYSTEM)).toBe('d0742a4e7114ed4b66b4968c83010f8a88913c29735c25b01b5ad6b078618b53');
     expect(sha(FACTS_SYSTEM)).toBe('309707b0c33d7fb2b05cce9fe88d434185180cf5c195135070e6f37509924d7c');
   });
@@ -153,7 +153,7 @@ describe('prompt inputs of the measured versions', () => {
     ].join('\n'));
   });
 
-  it('a group chat with a name on its platform gives it to the extraction; a titled chat without others does not (extract.v15)', async () => {
+  it('a group chat with a name on its platform gives it to the extraction; a titled chat without others does not (extract.v15, kept in v16)', async () => {
     const group = await run({ externalId: 'u3', title: 'Trasloco cantina', participants: [{ ref: 'marta', role: 'other', displayName: 'Marta' }] }, [
       { externalId: 'u3-1', role: 'other', authorRef: 'marta', content: 'Sabato porto io i guanti.', sentAt: '2026-06-09T09:00:00+02:00' },
     ], {});
@@ -162,5 +162,16 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u4-1', role: 'user', content: 'Venerdì faccio la pizza.', sentAt: '2026-06-09T10:00:00+02:00' },
     ], {});
     expect(alone.user).not.toContain('GROUP CHAT');
+  });
+
+  it('continuous listening tells the extraction it reads speech heard in the room; other sources do not (extract.v16, 6.5)', async () => {
+    const heard = await run({ externalId: 'u5', source: 'ambient' }, [
+      { externalId: 'u5-1', role: 'user', content: 'Domani passo dal ferramenta.', sentAt: '2026-06-09T18:00:00+02:00' },
+    ], {});
+    expect(heard.user).toContain(`${AMBIENT_NOTE}\n\nCONVERSATION WINDOW:`);
+    const voice = await run({ externalId: 'u6', source: 'voice' }, [
+      { externalId: 'u6-1', role: 'user', content: 'Domani passo dal ferramenta.', sentAt: '2026-06-10T18:00:00+02:00' },
+    ], {});
+    expect(voice.user).not.toContain('HEARD AROUND ME');
   });
 });

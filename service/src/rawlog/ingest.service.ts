@@ -95,9 +95,11 @@ export class IngestService {
 
       const now = new Date();
       for (const m of req.messages) {
-        // A link code (D51) is a claim of the sender's identity for the holder, never a message of the memory.
+        // A link code (D51) is a claim of the sender's identity for the holder, never a message of the memory; heard in
+        // the room (continuous listening, WORK_PLAN 6.5) it is nobody's claim, like one sent in a group.
         if (mode === 'personal' && (m.role === 'user' || m.role === 'other') && !m.own
-          && await claimLinkCode(tx, memoryId, clientId, m.content, claimant(req.conversation.participants, m), req.conversation.direct, now)) {
+          && await claimLinkCode(tx, memoryId, clientId, m.content, claimant(req.conversation.participants, m),
+            req.conversation.source === 'ambient' ? false : req.conversation.direct, now)) {
           continue;
         }
         const hash = contentHash(m.content);

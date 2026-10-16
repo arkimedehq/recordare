@@ -137,6 +137,8 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 ## 9. Spike di valutazione (`spikes/memory-eval/.env`)
 
 `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` (risposta e giudice), `ENGINE_MODEL`, `ENGINE_NO_THINKING`, `EMBED_MODEL`,
-`EVAL_DATASET`, `RECORDARE_URL` / `RECORDARE_ADMIN_KEY` / `RECORDARE_DB_URL` (sistema service), `CONSOLIDATE`,
+`EVAL_DATASET`, `RECORDARE_URL` / `RECORDARE_ADMIN_KEY` / `RECORDARE_DB_URL` (sistema service),
+`EVAL_SOURCE_AMBIENT_AS` (sistema service: invia le sessioni `ambient` di un set con questa sorgente, es. `voice` — il
+braccio di confronto di WORK_PLAN 6.5), `CONSOLIDATE`,
 `AGENT_SYSTEM_FILE` (modalità agente: il prompt di un agente reale), `REASONING_OFF_BODY`, `OPEN_ROUTER_API_KEY`. Le run
 dello spike costano denaro: valgono le regole del budget di valutazione in `WORK_PLAN.md`.

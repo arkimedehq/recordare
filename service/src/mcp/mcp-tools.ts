@@ -72,7 +72,9 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
       + 'a person by name, someone, or undecided. Use `from`/`to` (ISO dates, inclusive; see resolve_period) for questions '
       + 'about a period; a vague span ("lately", "these weeks") is not a period: leave them out. '
       + 'mode: "search" = most relevant, "list" = chronological in the period (overviews, counting), '
-      + '"latest" = most recent first ("when did I last…").',
+      + '"latest" = most recent first ("when did I last…"). An item or chat excerpt marked `heard` was overheard in the room '
+      + 'by a listening device, not said to you: tell it as heard at home, and its speaker may have been misrecognised — '
+      + 'what it says of you may be someone else\'s.',
     inputSchema: {
       query: z.string().optional().describe('What to look for — pass the question also when listing a period: it ranks '
         + 'the items and finds the matching chat excerpts'),

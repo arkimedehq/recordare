@@ -7,6 +7,13 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Ascolto continuo** (WORK_PLAN 6.5, D45): sorgente di conversazione `ambient` per il parlato che un dispositivo di
+  casa sente nella stanza. All'estrazione viene detto che legge parlato sentito per caso (`extract.v16`, solo in quelle
+  finestre); gli episodi si scrivono come sempre, ogni fatto e nota sentiti lì restano in attesa finché la loro persona
+  non li ridice in una chat o a voce all'assistente (o li conferma nel diario); il richiamo segna episodi ed estratti di
+  chat sentiti lì (`heard: true`; "heard in the room" nel contesto di memoria) e la descrizione di `search_episodes` dice
+  all'agente che cosa significa; un codice di collegamento sentito lì non è mai una richiesta. Dev set
+  `dataset_dev_ambient`: 86,7 %, nessuna frase attribuita male salvata come fatto dichiarato.
 - **Budget di costo in CI** (WORK_PLAN 4.4c): `service/test/cost/` misura, per profilo di qualità, le chiamate LLM e i
   token di input di una giornata di riferimento di una persona (per finestra idle, per notte, per mese) e fallisce oltre
   `budget.json`; un aumento voluto si registra nello stesso commit (`COST_BUDGET_UPDATE=1 npx vitest run test/cost`).
@@ -87,6 +94,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   96,0 % → 97,2 % (3 run; la domanda sui messaggi di un fratello in due gruppi corretta 3 su 3).
 
 ### Corretto
+- Un fatto o una nota in attesa che sostituirebbe o correggerebbe uno dichiarato (l'affermazione di un altro, l'output di
+  uno strumento, parlato sentito nella stanza) lo propone soltanto: quello dichiarato resta corrente finché quello in
+  attesa non è confermato, che allora lo ritira (migrazione `PendingProposals1791160000000`; prima, l'età di una sorella
+  sentita come quella del titolare ritirava quella del titolare).
 - Cancellare un fatto o una nota (`DELETE api/v1/facts|notes/{id}`, o rifiutarne uno in sospeso) lascia un tombstone
   (solo id: chiave dello slot o categoria della nota, soggetto, messaggi di evidenza), così una ri-estrazione degli
   stessi messaggi non lo riscrive più; raccontato di nuovo in un messaggio nuovo, viene imparato (WORK_PLAN 4.13;

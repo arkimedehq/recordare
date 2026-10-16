@@ -13,6 +13,8 @@ Agent memory (D50, WORK_PLAN 8.4): a session may declare identified participants
 their messages carry the identity, so the service knows them as contacts); a question may be asked by one of them
 (`asker: {name, identity}`: the question is ingested in its own conversation as that person's turn and the recall runs in
 that conversation). `genders` in conversations.json sets a memory's first-person gender (default masculine).
+A session's `source` (e.g. "ambient": speech a device heard in the room, WORK_PLAN 6.5) is the conversation's source;
+EVAL_SOURCE_AMBIENT_AS=voice sends the ambient sessions as voice instead (the comparison arm).
 
 Needs a running service (`npm run start:dev` in service/) and:
   RECORDARE_URL (default http://localhost:8080), RECORDARE_ADMIN_KEY, RECORDARE_DB_URL
@@ -48,6 +50,7 @@ PLAN_SYSTEM = D_PLAN_SYSTEM.replace(
 URL = os.getenv("RECORDARE_URL", "http://localhost:8080")
 ADMIN = os.environ.get("RECORDARE_ADMIN_KEY", "")
 DB_URL = os.getenv("RECORDARE_DB_URL", "postgres://recordare:recordare@localhost:5433/recordare")
+AMBIENT_AS = os.getenv("EVAL_SOURCE_AMBIENT_AS")  # e.g. "voice": ambient sessions sent with this source instead
 
 
 class ServiceSystem:
@@ -116,7 +119,11 @@ class ServiceSystem:
                 "content": m["content"],
                 "sentAt": (base + timedelta(seconds=i)).isoformat(),
             } for i, m in enumerate(s["messages"])]
+            # Conversation source (continuous listening, WORK_PLAN 6.5: "ambient"); EVAL_SOURCE_AMBIENT_AS sends the
+            # ambient sessions as another source (e.g. voice): the comparison arm, same transcripts, no ambient handling.
+            source = (AMBIENT_AS or s["source"]) if s.get("source") == "ambient" else s.get("source")
             conversation = {"externalId": s["id"], **({"title": s["group"]} if s.get("group") else {}),
+                            **({"source": source} if source else {}),
                             "participants": [{"ref": a, "role": "other", "displayName": a,
                                               **({"identity": {"externalUserId": declared[a]}} if a in declared else {})}
                                              for a in authors]}
@@ -306,6 +313,9 @@ def _episode_line(e: dict, personal: bool = False, me: str = "") -> str:
     # Personal memories: only others' statements about someone else (inferred) are claims; a person's own news is theirs.
     if e.get("claimedBy") and (not personal or (e.get("authorRole") == "other" and e.get("inferred"))):
         extra.append("affermazione di " + ", ".join(e["claimedBy"]) + (f", non confermata da {me}" if personal else ", non confermata dal proprietario"))
+    # Overheard in the room by a listening device (6.5): as the search_episodes description tells the agent.
+    if e.get("heard"):
+        extra.append(f"sentito in casa da un dispositivo in ascolto, non detto all'assistente; chi parlava può essere stato scambiato — ciò che dice di {me} può essere di un altro")
     src = e.get("source", {})
     return (f"- [{e['when']}]{tag} {e['content']}" + (f" ({'; '.join(extra)})" if extra else "")
             + (f" — fonte: sessione {src.get('conversation')}" if src.get("conversation") else ""))
@@ -375,6 +385,8 @@ def format_context(args: dict, episodes: dict, memory: dict, knowledge: dict | N
             who = f" · scritto da {h['author']}" if h.get("author") else (mine if h.get("authorRole") == "holder" else "")
             fix = f" (poi corretto: {h['correctedBy']})" if h.get("correctedBy") else ""
             grp = f" · gruppo «{h['group']}»" if h.get("group") else ""
+            if h.get("heard"):
+                who = " · sentito in casa da un dispositivo in ascolto (chi parlava può essere stato scambiato)"
             lines.append(f"- [{fmt_when(h['at'])} · sessione {h['conversation']}{grp}{who}] {h['excerpt']}{fix}")
     if knowledge and knowledge.get("passages"):
         lines.append("CONOSCENZA APPRESA (brani delle fonti imparate: il loro testo, non ricordi di fatti accaduti):")

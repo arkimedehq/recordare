@@ -62,6 +62,14 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   `own: true` on the message (`user` or `other` role), with `source: document | perception | ambient` when that is the
   conversation's nature. (Until WORK_PLAN 8.4 the extraction reads own content like your user's turns.) A text the
   agent should keep as knowledge to look things up in (a manual, a document) is a learned source instead (§3b).
+- **Continuous listening** (a home device that hears the room, D45, WORK_PLAN 6.5): send the transcript as a
+  conversation with `source: "ambient"` — the person whose memory it is as `user`, the others as `other` participants
+  (with an identity when your voice recognition knows them), never `own`. The extraction is told it reads speech heard
+  in the room (recognition errors, speakers possibly wrong); episodes are written as usual, but every fact and note
+  heard there stays **pending** — hidden from recall unless asked for — until its person says it again in a chat or by
+  voice to the assistant, or confirms it in the diary: a misrecognised voice must not make someone else's words theirs.
+  Recall marks what was heard (`heard: true` on episodes and chat excerpts; "heard in the room" in the memory
+  context), so the agent tells it as heard at home.
 - Use an **outbox**: write the message to your own table first, send asynchronously, retry with back-off; a Recordare
   outage must never fail or slow the chat. Edits and deletions follow (`API.md` §2).
 - When a conversation ends on your side (session closed, /new), say so: `POST api/v1/ingest/conversations/{id}/end`

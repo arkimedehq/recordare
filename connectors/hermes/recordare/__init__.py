@@ -65,7 +65,8 @@ TOOLS: List[Dict[str, Any]] = [
                     "to the people you know, with dates and status. Each item has a subject: you (first person), a person "
                     "by name, someone, or undecided. Use from/to for questions about a period. mode: \"search\" = most "
                     "relevant, \"list\" = chronological in the period (overviews, counting), \"latest\" = most recent "
-                    "first (\"when did I last…\").",
+                    "first (\"when did I last…\"). An item marked heard was overheard in the room by a listening device, "
+                    "not said to you: tell it as heard at home; its speaker may have been misrecognised.",
      "parameters": {"type": "object", "properties": {
          "query": _p("What to look for — pass the question also when listing a period"),
          "from": _p(f"Start date, {_ISO}"), "to": _p(f"End date (inclusive), {_ISO}"),

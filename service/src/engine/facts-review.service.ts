@@ -64,10 +64,11 @@ export class FactsReviewService {
     // One message behind each episode stands for its evidence (number n ↔ episode n); its text carries the episode's
     // too, so the writer's checks (a person named, a person speaking of themself) see both.
     const evidence: Array<{ episode_id: string; id: string; role: WindowMessage['role']; tool_name: string | null;
-      account_speaker: boolean; author_kind: AuthorKind; author_person_id: string | null; author_name: string | null; content: string; sent_at: Date }> = await this.db.query(
+      account_speaker: boolean; author_kind: AuthorKind; author_person_id: string | null; author_name: string | null; content: string; sent_at: Date; heard: boolean }> = await this.db.query(
       `SELECT DISTINCT ON (v.episode_id) v.episode_id, m.id, m.role, m.tool_name,
          ${entity ? accountSpeaker('m') : `m.author_kind IN ('self', 'own')`} AS account_speaker, m.author_kind,
-         m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at
+         m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at,
+         (SELECT c.source = 'ambient' FROM conversations c WHERE c.id = m.conversation_id) AS heard
        FROM episode_evidence v JOIN messages m ON m.id = v.message_id LEFT JOIN persons p ON p.id = m.author_person_id
          LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
        WHERE v.episode_id = ANY($1) ORDER BY v.episode_id, m.sent_at`,
@@ -77,7 +78,8 @@ export class FactsReviewService {
     const messages: WindowMessage[] = listed.map((e) => {
       const m = byEpisode.get(e.id)!;
       return { id: m.id, role: m.role, toolName: m.tool_name, accountSpeaker: m.account_speaker, authorKind: m.author_kind,
-        authorPersonId: m.author_person_id, authorName: m.author_name, content: `${e.content}\n${m.content}`, sentAt: m.sent_at };
+        authorPersonId: m.author_person_id, authorName: m.author_name, content: `${e.content}\n${m.content}`, sentAt: m.sent_at,
+        ...(m.heard ? { heard: true } : {}) };
     });
 
     const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null; subject_id: string | null; subject: string | null }> = await this.db.query(

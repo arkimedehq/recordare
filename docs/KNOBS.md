@@ -135,6 +135,8 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 ## 9. Evaluation spike (`spikes/memory-eval/.env`)
 
 `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` (answer and judge), `ENGINE_MODEL`, `ENGINE_NO_THINKING`, `EMBED_MODEL`,
-`EVAL_DATASET`, `RECORDARE_URL` / `RECORDARE_ADMIN_KEY` / `RECORDARE_DB_URL` (service system), `CONSOLIDATE`,
+`EVAL_DATASET`, `RECORDARE_URL` / `RECORDARE_ADMIN_KEY` / `RECORDARE_DB_URL` (service system),
+`EVAL_SOURCE_AMBIENT_AS` (service system: send a set's `ambient` sessions with this source instead, e.g. `voice` — the
+comparison arm of WORK_PLAN 6.5), `CONSOLIDATE`,
 `AGENT_SYSTEM_FILE` (agent mode: a real agent's prompt), `REASONING_OFF_BODY`, `OPEN_ROUTER_API_KEY`. Spike runs cost
 money: the evaluation budget rules in `WORK_PLAN.md` apply.

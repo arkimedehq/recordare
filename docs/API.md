@@ -176,6 +176,9 @@ connectors for one person). The admin credential cannot ingest (403).
     source?: "chat" | "voice" | "import_chat" | "import_social" | "import_email"
            | "import_notes" | "interview"
            | "document" | "perception" | "ambient";       // default "chat"
+                                                   // "ambient": speech a device heard in the room (WORK_PLAN 6.5) —
+                                                   // its facts and notes stay pending until their person says them
+                                                   // again elsewhere; a link code heard there is never a claim
     channel?: string; title?: string;              // title: a group chat's name, given to the extraction
     direct?: boolean;                              // a one-to-one chat (true) or a group (false); unknown when
                                                    // missing (D51: a link code is never accepted in a group)
@@ -341,6 +344,7 @@ Returns (as built):
                                                       // (what was done about the period may lie before it), 5 when the period has no match;
                                                       // ranked by relevance alone (not importance or recency)
   fromChats: Array<{ conversationId: string; conversation: string; group?: string;  // group: the group chat's name
+                     heard?: true;                           // overheard in the room (source "ambient", 6.5)
                      messageId: string; at: string;
                      authorRole: "holder" | "other" | "tool"; author?: string; excerpt: string;
                      correctedBy?: string }>;                // the episode that corrected a memory drawn from this message
@@ -357,12 +361,17 @@ type Episode = {
          | { kind: "undecided"; candidates: string[] };   // whose memory it is (D50, 8.4)
   claimedBy?: string[];                               // for claims: who wrote the evidence
   inferred: boolean;
+  heard?: true;                                       // told only by speech heard in the room (source "ambient", 6.5)
   people: string[]; feelings: string[]; opinion?: string;
   source: { conversation: string; messageIds: string[]; at: string };   // conversation = the client's own id
   sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
 The same in every conversation, including those others take part in (D50: no viewer filter).
+**Heard in the room (WORK_PLAN 6.5)**: an episode whose evidence all comes from `ambient` conversations, and a chat
+excerpt from one, carry `heard: true` — overheard by a listening device, not said to the agent, the speaker possibly
+misrecognised. The `search_episodes` description tells the agent to tell it as heard at home and that what it says of
+the self may be someone else's; the memory context labels such episodes "heard in the room".
 Every item carries `authorRole` (`holder | assistant | other | tool`) so hosts can wrap content not written by the
 memory's own turns as data, not instructions; such items also carry `claimedBy` (the names of who wrote the evidence),
 chat excerpts carry their `author` when not the memory's own turn; when such items are returned, `notes` says so
