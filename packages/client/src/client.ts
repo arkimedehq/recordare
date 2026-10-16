@@ -3,7 +3,7 @@
 
 import {
   CONVERSATION_HEADER, type Digest, type Episode, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
-  type HolderIdentities, type IngestRequest, type IngestResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
+  type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
 } from './contract.js';
@@ -98,6 +98,31 @@ export class RecordareClient {
       total.conflicts.push(...part.conflicts);
     }
     return total;
+  }
+
+  /**
+   * Sends a room transcript to the memories of the people present (continuous listening), split into requests of at
+   * most MAX_MESSAGES_PER_REQUEST; needs a client key (not a personal token). Idempotent like `ingest`.
+   */
+  async ingestRoom(req: RoomRequest): Promise<RoomResult> {
+    const total = new Map<string, RoomResult['recipients'][number]>();
+    for (let i = 0; i < req.messages.length; i += MAX_MESSAGES_PER_REQUEST) {
+      const last = i + MAX_MESSAGES_PER_REQUEST >= req.messages.length;
+      const part = await this.http.request<RoomResult>('POST', 'api/v1/ingest/room', {
+        body: { ...req, messages: req.messages.slice(i, i + MAX_MESSAGES_PER_REQUEST), hints: req.hints && last ? req.hints : undefined },
+      });
+      for (const r of part.recipients) {
+        const t = total.get(r.user);
+        if (!t) total.set(r.user, { ...r, conflicts: [...r.conflicts] });
+        else {
+          t.conversationId = r.conversationId ?? t.conversationId;
+          t.accepted += r.accepted;
+          t.duplicates += r.duplicates;
+          t.conflicts.push(...r.conflicts);
+        }
+      }
+    }
+    return { recipients: [...total.values()] };
   }
 
   /**

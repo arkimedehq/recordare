@@ -85,6 +85,20 @@ describe('client conformance (packages/client against the service)', () => {
     await rc.deleteConversation('user-1', 'doc-1');
   });
 
+  it('sends a room transcript to the memories of the people present (6.5 (4)); deleted through the per-user calls', async () => {
+    const res = await rc.ingestRoom({
+      conversation: { externalId: 'room-1' },
+      speakers: [{ ref: 'a', user: 'user-1' }, { ref: 'b', displayName: 'Giulia', identity: { channel: 'voice', externalId: 'giulia' } }],
+      recipients: ['user-1'],
+      messages: [{ externalId: 'r1', speakerRef: 'a', content: 'Stasera pizza.', sentAt: '2026-10-07T19:00:00+02:00' },
+        { externalId: 'r2', speakerRef: 'b', content: 'Io porto il dolce.', sentAt: '2026-10-07T19:01:00+02:00' }],
+    });
+    expect(res.recipients).toEqual([expect.objectContaining({ user: 'user-1', accepted: 2, duplicates: 0, conflicts: [] })]);
+    expect(await db().query(`SELECT m.author_kind, c.source FROM messages m JOIN conversations c ON c.id = m.conversation_id
+      WHERE c.external_id = 'room-1' ORDER BY m.external_id`)).toEqual([{ author_kind: 'self', source: 'ambient' }, { author_kind: 'contact', source: 'ambient' }]);
+    await rc.deleteConversation('user-1', 'room-1');
+  });
+
   it('propagates deletions; deleting what Recordare never had is done', async () => {
     await rc.deleteMessage('user-1', 'chat-1', 'm2');
     const live = await db().query(
