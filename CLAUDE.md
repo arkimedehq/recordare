@@ -144,4 +144,5 @@ Done 2026-10-13: D34 A-MEM toggle split + note copies (Arkimede); 6.6b (5) durab
 4.4c cost budget gate (`service/test/cost/`, `budget.json`; `COST_BUDGET_UPDATE=1` records an intended rise); 6.5 (1)–(3)
 continuous listening (source `ambient`, `extract.v16`, everything heard pending, pending items only propose replacements —
 migration `PendingProposals` —, `heard` in recall; dev set `dataset_dev_ambient` 86.7 %). Done 2026-10-16: 6.5 (4) room fan-out
-(`POST api/v1/ingest/room`, client `ingestRoom`). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.
+(`POST api/v1/ingest/room`, client `ingestRoom`); 4.5c the two H1 rates (`spikes/memory-eval/outcome_eval.py`, a second
+grading of stored answers; RESULTS.md). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.

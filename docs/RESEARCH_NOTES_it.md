@@ -71,8 +71,11 @@ vs cambiamento, domande bi-temporali "come detto" vs "come vero". Metriche: valu
 astensione eccessiva**, Set-F1 per le liste, costo per utente. Baseline: contesto completo, RAG semplice, Mem0,
 Zep/Graphiti, Memobase, Letta, A-Mem, un archivio tipizzato in stile PIS. I nostri due dataset contengono già
 i semi di (a)–(d). Da allora i set ciechi 3–7 contengono categorie sui piani (confermati / annullati / spostati /
-irrisolti, trappole di premessa) e il servizio è misurato su di esse (RESULTS.md); il confronto con le baseline qui
-sopra su queste categorie resta da fare.
+irrisolti, trappole di premessa) e il servizio è misurato su di esse (RESULTS.md). I due tassi (4.5c, 2026-10-16, una
+seconda valutazione delle risposte salvate): su blind3 Recordare è quello che afferma meno senza fondamento (0,028; Mem0
+0,046, Cognee 0,065, D 0,065, contesto completo 0,037), ma sulle categorie H1 vere e proprie tutti i sistemi sono vicini
+a zero — questi set non mostrano H1; serve un set più difficile (piani irrisolti chiesti come se fossero avvenuti, esiti
+impliciti, storie lunghe), e restano da confrontare Zep/Graphiti, Letta, A-Mem e un archivio tipizzato stile PIS.
 
 **Il modello dati della fase 1 deve memorizzare.** Stato del piano `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, data dello stato, episodio di evidenza); tipo di episodio

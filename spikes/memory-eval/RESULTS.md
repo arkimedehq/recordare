@@ -443,6 +443,65 @@ developer runs them.
 = **91.7 %**, paired vs `extract.v11` (91.7 %) **0.0** [−3.6, +3.6], no question changed by ≥ 0.5; plan +0.14, **provenance
 −0.23** (0.3 / 0.4 / 0.5; spread, no single question) — kept, provenance followed up in WORK_PLAN 8.4b.
 
+### WORK_PLAN 4.5c — unjustified-assertion and over-abstention rates (2026-10-16, DeepSeek direct, `h1_rates_runs.sh`)
+
+A second, independent grading of stored answers (`outcome_eval.py`, HaluMem's three-way outcome; the validated judge
+is untouched): each answer is **supported** (asserts only what the reference supports, maybe incompletely),
+**unjustified** (asserts a claim the reference contradicts, a MUST_NOT claim, or an outcome the reference says is
+unknown) or **abstained** (does not give the asked information); each reference is **known** or **unknown** (one label
+per question: the majority over the runs graded here). Rates: unjustified-assertion = unjustified / all;
+over-abstention = abstained on a known reference / known; invented on unknown = unjustified on an unknown reference /
+unknown. No ingestion, judge calls only: 1,065 answers graded (28 runs), ≈ 2,300 calls of `deepseek-flash` over the three passes
+(the prompt fixes below), a few tens of cents.
+
+Grader checks before reading the numbers: no memory → over-abstention 1.0, unjustified 0.0 (as it must); of the 1,065
+answers graded, 38 are unjustified: the judge grades 30 of them wrong and 3 partial; the 5 it grades correct are
+stricter catches on secondary details (a score given as 3-1 for 1-3, "Sofia helped" for "you helped", an extra message
+not in the reference). Two
+prompt fixes found by reading disagreements, then everything regraded: the grader checked weekdays itself ("22 May
+2033 was not a Sunday" — it was), and counted "I have no record that Greta did it — your brother Michele did, on 26
+October" as an abstention (it is a premise rejected with the right facts: supported). It is told who asks, as the
+judge is (blind9: "Beatrice submitted it" when Beatrice asks).
+
+**blind3, the service and the baselines, 3 runs each (same answer model and judge):**
+
+| System | Accuracy | Unjustified | Over-abstention | Invented on unknown |
+|---|---|---|---|---|
+| Recordare (xv4) | 94.9 % | **0.028** | 0.020 | 0.0 |
+| Mem0 | 87.5 % | 0.046 | 0.061 | 0.0 |
+| Cognee | 85.7 % | 0.065 | 0.061 | 0.0 |
+| D (prototype) | 92.1 % | 0.065 | 0.000 | 0.0 |
+| full context | 97.2 % | 0.037 | 0.000 | 0.0 |
+| no memory (1 run) | 8.3 % | 0.000 | 1.000 | 0.0 |
+
+**The current engine, 3 runs each:** blind7 91.3 % (unjustified 0.058, over-abstention 0.025, invented on unknown
+0.111 — 1 of 3 unknown references per run), blind9 97.2 % (0.000 / 0.009 / 0.0), blind10 96.7 % (0.019 / 0.011 /
+0.0), blind11 98.8 % (0.017 / 0.010 / 0.0).
+
+**H1 categories** (unjustified / over-abstention, answers pooled over runs):
+
+| System | plan | premise-trap | correction | state / change | negative (never mentioned) |
+|---|---|---|---|---|---|
+| Recordare (xv4, blind3) | 0.00 / 0.00 (24) | 0.00 / 0.00 (6) | 0.00 / 0.11 (9) | 0.00 / 0.00 (21) | 0.00 / — (3) |
+| Mem0 | 0.04 / 0.00 | 0.00 / 0.00 | 0.00 / 0.00 | 0.00 / 0.00 | 0.00 / — |
+| Cognee | 0.00 / 0.00 | 0.00 / 0.00 | 0.00 / 0.00 | 0.05 / 0.00 | 0.00 / — |
+| D | 0.00 / 0.00 | 0.00 / 0.00 | 0.00 / 0.00 | 0.10 / 0.00 | 0.00 / — |
+| full context | 0.04 / 0.00 | 0.00 / 0.00 | 0.00 / 0.00 | 0.05 / 0.00 | 0.00 / — |
+| Recordare now (blind7, 9, 10, 11) | 0.00 / 0.00 (51) | 0.00 / 0.06 (36) | 0.00 / 0.00 (24) | 0.00 / 0.00 (45) | 0.00 / 0.00 (30) |
+
+- **The H1 categories hardly discriminate here**: every system, the baselines included, almost never asserts a wrong
+  plan status, a false premise, or a superseded state on these sets — the questions are too few (blind3: 6 premise
+  traps, 3 unknown references) and the answer model hedges well. H1's claim (unresolved plans, premise traps need a
+  typed store) is **not shown** by this suite; a harder set (more unresolved plans asked as if done, implicit outcomes,
+  long histories) would be needed to separate the systems.
+- Where the systems do assert wrongly is elsewhere: the one third-party question (Recordare xv4 in all 3 runs, D 2, Mem0 1),
+  the one poisoning probe (Mem0 3, D 3, Cognee 2 — never Recordare), counts (Cognee); in the current engine blind7's
+  provenance questions (5 of 15 answers: who said it, in which group), aggregation and the agent's own actions.
+- Over-abstention is low everywhere but no memory; on the current engine most abstentions are the right ones (26 of
+  the 30 negative questions are unknown references), the rest are unidentified-speaker and knowledge questions.
+- Single grader (DeepSeek flash), not audited by a human; stricter than the judge on secondary details. The rates are
+  per answer, so a run's ±1 answer is ±0.02–0.03.
+
 ### WORK_PLAN 6.5 — continuous listening: extract.v16, pending facts, `heard` in recall (2026-10-15, DeepSeek direct, `amb65_runs.sh`)
 
 Dev set `dataset_dev_ambient` (NOT blind, written by an agent of the engine developer): Stefano, his son Leo, his mother
