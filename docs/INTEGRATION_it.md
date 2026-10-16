@@ -78,7 +78,11 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   ogni fatto e nota sentiti lì restano **in attesa** — nascosti al richiamo se non richiesti — finché la loro persona non
   li ridice in una chat o a voce all'assistente, o li conferma nel diario: una voce riconosciuta male non deve far
   diventare sue le parole di un altro. Il richiamo segna ciò che è stato sentito (`heard: true` su episodi ed estratti di
-  chat; "heard in the room" nel contesto di memoria), così l'agente lo racconta come sentito in casa.
+  chat; "heard in the room" nel contesto di memoria), così l'agente lo racconta come sentito in casa. Quando nella stanza
+  ci sono più persone con una memoria, inviare la trascrizione una volta a `POST api/v1/ingest/room` (client
+  `ingestRoom`) con i parlanti (il loro user id, o un profilo vocale) e i destinatari — le persone presenti con la
+  memoria attiva: ogni memoria la riceve con le proprie parole come turni `user` e gli altri come contatti (`API.md`
+  §2 Trascrizioni di stanza).
 - Usare un **outbox**: scrivere prima il messaggio nella propria tabella, inviare in modo asincrono, ritentare con
   back-off; un'interruzione di Recordare non deve mai far fallire o rallentare la chat. Modifiche ed eliminazioni
   seguono (`API.md` §2).

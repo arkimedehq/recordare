@@ -238,6 +238,30 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   /new) — extraction runs now instead of after the idle delay; `404` for a conversation never ingested. Same effect as `hints.conversationEnded` (honoured also on a batch whose
   messages are all duplicates), without re-sending a message.
 
+### Room transcripts (continuous listening, WORK_PLAN 6.5 (4))
+`POST api/v1/ingest/room` (scope `ingest`, client keys only — a personal token acts for one memory: `403`) — what a home
+device heard in a room, fanned out by the service to the memories of the people present:
+```ts
+{
+  conversation: { externalId: string; channel?: string; title?: string };
+  speakers: Array<{ ref: string; displayName?: string;
+                    user?: string;                   // the client's user id of a speaker with an account
+                    identity?: { channel: string; externalId: string } | { externalUserId: string } }>;  // e.g. a voice profile
+  recipients: string[];                              // client user ids (1–50) whose memories get it: the people present
+                                                     // whose memory is on (the client's switch, D50); silent ones too
+  messages: Array<{ externalId: string; speakerRef?: string;   // missing: the device could not tell who spoke
+                    content: string; sentAt: string; upsert?: boolean }>;  // 1–500
+  hints?: { conversationEnded?: boolean };
+}
+→ 200 { recipients: Array<{ user: string; conversationId: string; accepted: number; duplicates: number; conflicts: string[] }> }
+```
+Each recipient's memory gets it as a `source: "ambient"` conversation with the same `externalId` (everything §2 says of
+`ambient` applies): the recipient's own words as `user` turns; every other speaker an `other` participant linked to a
+contact of that memory — by `externalUserId` when the speaker has an account (`user`), else by the given identity; an
+utterance without `speakerRef` is "someone". Recipients are resolved like `X-Recordare-User` (auto-provisioned when the
+client allows it). Recipient by recipient, each idempotent: a failed request is safe to resend whole. Edits, deletions
+and `end` go through the per-user routes above with the same `externalId`.
+
 ### Learned sources (D49, WORK_PLAN 8.9)
 What the agent learned — a manual, a page, a note, a book, its own text — kept apart from episodes, facts and notes and
 searched with `search_knowledge` (§3). **Text only**: the client turns files (PDF, office documents, pages) into text.
@@ -546,7 +570,7 @@ account sees all of it (D48).
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (its README): `RecordareClient` (`me`, `updateMe`, `ingest` split
-into requests of 500, `context` / `contextWithTurn` (§3 pre-turn memory context, with `ingest`), `endConversation`,
+into requests of 500, `context` / `contextWithTurn` (§3 pre-turn memory context, with `ingest`), `ingestRoom` (§2 room transcripts), `endConversation`,
 `editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, D51 `linkCode` / `holderIdentities` /
 `confirmHolderClaim` / `rejectHolderClaim` / `unlinkHolderIdentity` with `isLinkCode` and `LINK_CODE_INSTRUCTION` (text a
 host gives its model when the user's message is a code), `learnSource` (§2 learned sources, a big text sent

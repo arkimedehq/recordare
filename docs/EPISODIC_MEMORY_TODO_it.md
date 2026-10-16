@@ -560,8 +560,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   non lo ridice fuori dalla stanza (una chat, a voce all'assistente) o lo conferma — gli episodi come sempre; un codice
   di collegamento sentito lì non è mai una richiesta (D51); uno in attesa non ritira mai un elemento dichiarato finché
   non è confermato; il richiamo segna episodi ed estratti di chat sentiti lì (`heard`), così l'agente li racconta come
-  sentiti in casa. La distribuzione per stanza (una trascrizione nelle memorie
-  di tutti i presenti) è per dopo.
+  sentiti in casa. La distribuzione per stanza (2026-10-16): `POST api/v1/ingest/room`
+  invia una trascrizione alle memorie dei destinatari che il client indica, ciascuna con le proprie parole come turni
+  `user` e gli altri parlanti come contatti.
 
 ### D46 — Regola di valutazione 9: un'istanza del servizio per coda (2026-10-07)
 - Un run le cui estrazioni portano più di una versione di prompt viene scartato (un'istanza obsoleta ha contaminato dei run; corretto

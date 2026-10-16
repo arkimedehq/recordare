@@ -32,6 +32,10 @@ await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
 await rc.ingest('user-42', { conversation: { externalId: 'doc-1', source: 'document' }, messages: [
   { externalId: 'd1', role: 'user', own: true, content: 'La caldaia va revisionata ogni due anni.', sentAt: new Date().toISOString() },
 ] });
+// Una trascrizione di stanza (ascolto continuo): Recordare la distribuisce alle memorie delle persone presenti.
+await rc.ingestRoom({ conversation: { externalId: 'kitchen-1' }, recipients: ['user-42', 'user-7'],
+  speakers: [{ ref: 'a', user: 'user-42' }, { ref: 'b', user: 'user-7' }, { ref: 'c', displayName: 'Leo', identity: { channel: 'voice', externalId: 'leo' } }],
+  messages: [{ externalId: 'k1', speakerRef: 'c', content: 'Mi hanno preso in squadra!', sentAt: new Date().toISOString() }] });
 // Modo (solo finché la memoria è vuota, altrimenti MemoryNotEmptyError) e genere della prima persona, dal profilo.
 await rc.updateMe('user-42', { gender: 'feminine' });
 
