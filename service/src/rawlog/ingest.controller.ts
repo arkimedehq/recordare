@@ -6,7 +6,8 @@ import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
 import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { ZodBody } from '../common/zod-body.pipe';
-import { editMessageSchema, ingestSchema, type IngestRequest, type IngestResult } from './ingest.schemas';
+import { editMessageSchema, ingestSchema, type IngestRequest, type IngestResult, roomSchema, type RoomRequest, type RoomResult } from './ingest.schemas';
+import { roomFor } from './room';
 import { IngestService } from './ingest.service';
 
 @Controller('api/v1/ingest')
@@ -22,6 +23,22 @@ export class IngestController {
   ): Promise<IngestResult> {
     const { clientId, memoryId } = await this.scope(p, user);
     return this.ingestion.ingest(clientId, memoryId, body);
+  }
+
+  /**
+   * A room transcript fanned out to the memories of the people present (WORK_PLAN 6.5 (4)): client keys only (a personal
+   * token acts for one memory). Recipient by recipient, each idempotent: a failed request is safe to resend whole.
+   */
+  @Post('room')
+  @HttpCode(200)
+  async room(@CurrentPrincipal() p: Principal, @Body(new ZodBody(roomSchema)) body: RoomRequest): Promise<RoomResult> {
+    if (p.kind !== 'client') throw new ForbiddenException();
+    const recipients: RoomResult['recipients'] = [];
+    for (const user of new Set(body.recipients)) {
+      const memoryId = await this.memories.resolve(p, user);
+      recipients.push({ user, ...await this.ingestion.ingest(p.clientId, memoryId, roomFor(body, user)) });
+    }
+    return { recipients };
   }
 
   @Patch('conversations/:conv/messages/:msg')

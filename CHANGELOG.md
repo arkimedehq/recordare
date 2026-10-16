@@ -13,6 +13,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   assistant (or confirms it in the diary); recall marks episodes and chat excerpts heard there (`heard: true`; "heard in
   the room" in the memory context) and the `search_episodes` description tells the agent what that means; a link code
   heard there is never a claim. Dev set `dataset_dev_ambient`: 86.7 %, no misattributed sentence stored as a stated fact.
+  **Room transcripts**: `POST api/v1/ingest/room` (client `ingestRoom`) sends one transcript to the memories of the
+  people present — each gets its own words as `user` turns and the other speakers as contacts.
 - **Cost budget in CI** (WORK_PLAN 4.4c): `service/test/cost/` measures, per quality profile, the LLM calls and input
   tokens of a reference day of one person (per idle window, per night, per month) and fails above `budget.json`; an
   intended rise is recorded in the same commit (`COST_BUDGET_UPDATE=1 npx vitest run test/cost`).

@@ -69,7 +69,10 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   heard there stays **pending** — hidden from recall unless asked for — until its person says it again in a chat or by
   voice to the assistant, or confirms it in the diary: a misrecognised voice must not make someone else's words theirs.
   Recall marks what was heard (`heard: true` on episodes and chat excerpts; "heard in the room" in the memory
-  context), so the agent tells it as heard at home.
+  context), so the agent tells it as heard at home. When several people with a memory are in the room, send the
+  transcript once to `POST api/v1/ingest/room` (client `ingestRoom`) with the speakers (their user id, or a voice
+  profile) and the recipients — the people present whose memory is on: each memory gets it with its own words as
+  `user` turns and the others as contacts (`API.md` §2 Room transcripts).
 - Use an **outbox**: write the message to your own table first, send asynchronously, retry with back-off; a Recordare
   outage must never fail or slow the chat. Edits and deletions follow (`API.md` §2).
 - When a conversation ends on your side (session closed, /new), say so: `POST api/v1/ingest/conversations/{id}/end`

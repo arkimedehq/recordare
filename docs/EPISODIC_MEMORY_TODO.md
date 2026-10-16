@@ -552,8 +552,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
   (`extract.v16`, only in those windows); every fact and note from it is pending until its person says it again outside
   the room (a chat, voice to the assistant) or confirms it — episodes as usual; a link code heard there is never a claim
   (D51); a pending one never retires a stated item until confirmed; recall marks episodes and chat excerpts heard
-  there (`heard`), so the agent tells them as heard at home. The room fan-out (one transcript into the memories of
-  everyone present) is later.
+  there (`heard`), so the agent tells them as heard at home. The room fan-out (2026-10-16): `POST api/v1/ingest/room` sends one
+  transcript to the memories of the recipients the client names, each with its own words as `user` turns and the
+  other speakers as contacts.
 
 ### D46 — Evaluation rule 9: one service instance per queue (2026-10-07)
 - A run whose extractions carry more than one prompt version is discarded (a stale instance contaminated runs; fixed

@@ -13,7 +13,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   non li ridice in una chat o a voce all'assistente (o li conferma nel diario); il richiamo segna episodi ed estratti di
   chat sentiti lì (`heard: true`; "heard in the room" nel contesto di memoria) e la descrizione di `search_episodes` dice
   all'agente che cosa significa; un codice di collegamento sentito lì non è mai una richiesta. Dev set
-  `dataset_dev_ambient`: 86,7 %, nessuna frase attribuita male salvata come fatto dichiarato.
+  `dataset_dev_ambient`: 86,7 %, nessuna frase attribuita male salvata come fatto dichiarato. **Trascrizioni di stanza**:
+  `POST api/v1/ingest/room` (client `ingestRoom`) invia una trascrizione alle memorie delle persone presenti — ognuna
+  riceve le proprie parole come turni `user` e gli altri parlanti come contatti.
 - **Budget di costo in CI** (WORK_PLAN 4.4c): `service/test/cost/` misura, per profilo di qualità, le chiamate LLM e i
   token di input di una giornata di riferimento di una persona (per finestra idle, per notte, per mese) e fallisce oltre
   `budget.json`; un aumento voluto si registra nello stesso commit (`COST_BUDGET_UPDATE=1 npx vitest run test/cost`).

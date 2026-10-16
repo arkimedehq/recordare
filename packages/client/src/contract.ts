@@ -122,6 +122,43 @@ export interface IngestResult {
   conflicts: string[];
 }
 
+/** One voice of a room transcript (continuous listening, `ingestRoom`). */
+export interface RoomSpeaker {
+  /** The transcript-local reference messages use in `speakerRef`. */
+  ref: string;
+  displayName?: string;
+  /** The platform's user id of a speaker with an account: in their own memory their words are theirs. */
+  user?: string;
+  /** Otherwise (or as well) a channel identity, e.g. a voice profile: a contact in every recipient's memory. */
+  identity?: ParticipantIdentity;
+}
+
+/**
+ * What a home device heard in a room (WORK_PLAN 6.5 (4)), fanned out by Recordare to the memories of `recipients` (the
+ * platform's user ids of the people present whose memory is on — the platform's switch, D50): each gets it as an
+ * `ambient` conversation with the same external id, so edits and deletions go through the per-user calls.
+ */
+export interface RoomRequest {
+  conversation: { externalId: string; channel?: string; title?: string };
+  speakers: RoomSpeaker[];
+  recipients: string[];
+  messages: Array<{
+    externalId: string;
+    /** Missing when the device could not tell who spoke: "someone" in every memory. */
+    speakerRef?: string;
+    content: string;
+    /** ISO 8601 with offset. */
+    sentAt: string;
+    upsert?: boolean;
+  }>;
+  hints?: { conversationEnded?: boolean };
+}
+
+export interface RoomResult {
+  /** One per recipient, in the request's order; `conversationId` is that memory's conversation. */
+  recipients: Array<{ user: string; conversationId: string | null; accepted: number; duplicates: number; conflicts: string[] }>;
+}
+
 // ── The diary: read / write API for host UIs (API.md §4) ─────────────────────────────────────────────────────────
 
 export type PlanStatus = 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';

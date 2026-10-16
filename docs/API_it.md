@@ -249,6 +249,31 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   /new) — l'estrazione parte subito invece che dopo il ritardo di inattività; `404` per una conversazione mai ricevuta. Stesso effetto di `hints.conversationEnded`
   (rispettato anche in un batch i cui messaggi sono tutti duplicati), senza reinviare un messaggio.
 
+### Trascrizioni di stanza (ascolto continuo, WORK_PLAN 6.5 (4))
+`POST api/v1/ingest/room` (scope `ingest`, solo chiavi client — un token personale agisce per una memoria: `403`) — ciò
+che un dispositivo di casa ha sentito in una stanza, distribuito dal servizio alle memorie delle persone presenti:
+```ts
+{
+  conversation: { externalId: string; channel?: string; title?: string };
+  speakers: Array<{ ref: string; displayName?: string;
+                    user?: string;                   // the client's user id of a speaker with an account
+                    identity?: { channel: string; externalId: string } | { externalUserId: string } }>;  // e.g. a voice profile
+  recipients: string[];                              // client user ids (1–50) whose memories get it: the people present
+                                                     // whose memory is on (the client's switch, D50); silent ones too
+  messages: Array<{ externalId: string; speakerRef?: string;   // missing: the device could not tell who spoke
+                    content: string; sentAt: string; upsert?: boolean }>;  // 1–500
+  hints?: { conversationEnded?: boolean };
+}
+→ 200 { recipients: Array<{ user: string; conversationId: string; accepted: number; duplicates: number; conflicts: string[] }> }
+```
+La memoria di ogni destinatario la riceve come conversazione `source: "ambient"` con lo stesso `externalId` (vale tutto
+ciò che la §2 dice di `ambient`): le parole del destinatario come turni `user`; ogni altro parlante un partecipante
+`other` collegato a un contatto di quella memoria — con `externalUserId` quando il parlante ha un account (`user`),
+altrimenti con l'identità data; un enunciato senza `speakerRef` è "qualcuno". I destinatari si risolvono come
+`X-Recordare-User` (creati automaticamente quando il client lo consente). Destinatario per destinatario, ciascuno
+idempotente: una richiesta fallita si può reinviare intera. Modifiche, cancellazioni ed `end` passano per le route per
+utente qui sopra con lo stesso `externalId`.
+
 ### Fonti apprese (D49, WORK_PLAN 8.9)
 Ciò che l'agente ha imparato — un manuale, una pagina, una nota, un libro, un suo testo — tenuto separato da episodi,
 fatti e note e cercato con `search_knowledge` (§3). **Solo testo**: è il client a convertire i file (PDF, documenti
@@ -562,8 +587,8 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (vedi il suo README): `RecordareClient` (`me`, `updateMe`, `ingest`
-diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memoria prima del turno, con `ingest`),
-`endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, i metodi del D51 `linkCode` /
+diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memoria prima del turno, con `ingest`), `ingestRoom` (§2 trascrizioni
+di stanza), `endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, i metodi del D51 `linkCode` /
 `holderIdentities` / `confirmHolderClaim` / `rejectHolderClaim` / `unlinkHolderIdentity` con `isLinkCode` e
 `LINK_CODE_INSTRUCTION` (il testo che un host dà al suo modello quando il messaggio dell'utente è un codice), `learnSource` (§2 fonti apprese:
 un testo grande inviato a parti di `SOURCE_PART_BYTES` = 4 MB ai confini dei paragrafi) / `forgetSource` / `sources`,
