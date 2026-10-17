@@ -6,6 +6,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-17
+
+Memory **quality and control**: recall ranks by relevance, recurring habits, continuous listening in the room, forgetting
+a period, the rest of the read API (manual entries, corrections, the notes change feed, settings, usage, exports), the
+holder's channel identities by one-time code. No breaking change: the API only grows; upgrade the service first (the
+migrations run at start-up), then the client library and the connectors. Quality (DeepSeek `deepseek-flash`,
+`spikes/memory-eval/RESULTS.md`, 3 runs each): blind personal set 97.2 % (90.9 % in 0.2.0), blind entity sets 96.7 %
+and 98.8 % (91.4 % in 0.2.0); the lowest unjustified-assertion rate of the systems compared on blind3 (WORK_PLAN 4.5c).
+
 ### Added
 - **Continuous listening** (WORK_PLAN 6.5, D45): conversation source `ambient` for speech a home device hears in the
   room. The extraction is told it reads overheard speech (`extract.v16`, in those windows only); episodes are written as

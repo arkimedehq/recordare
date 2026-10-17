@@ -6,6 +6,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.3.0] — 2026-10-17
+
+**Qualità e controllo** della memoria: il richiamo ordina per pertinenza, abitudini ricorrenti, ascolto continuo nella
+stanza, dimenticare un periodo, il resto dell'API di lettura (inserimenti manuali, correzioni, il feed delle modifiche
+alle note, impostazioni, consumi, esportazioni), le identità di canale del titolare con un codice monouso. Nessuna
+modifica incompatibile: l'API cresce soltanto; aggiornare prima il servizio (le migrazioni girano all'avvio), poi la
+libreria client e i connettori. Qualità (DeepSeek `deepseek-flash`, `spikes/memory-eval/RESULTS.md`, 3 run ciascuno):
+insieme cieco personale 97,2 % (90,9 % nella 0.2.0), insiemi ciechi di entità 96,7 % e 98,8 % (91,4 % nella 0.2.0); il
+tasso più basso di affermazioni non giustificate tra i sistemi confrontati su blind3 (WORK_PLAN 4.5c).
+
 ### Aggiunto
 - **Ascolto continuo** (WORK_PLAN 6.5, D45): sorgente di conversazione `ambient` per il parlato che un dispositivo di
   casa sente nella stanza. All'estrazione viene detto che legge parlato sentito per caso (`extract.v16`, solo in quelle
