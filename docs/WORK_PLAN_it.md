@@ -79,8 +79,9 @@ periodo e il resto della §4 sono TODO; 1.6 **done** come libreria client (`pack
 `@arkimedehq/recordare-client` 0.1.0); l'OpenAPI generato **non è ancora realizzato**.
 Stato (2026-10-18): l'OpenAPI generato è **done** — `GET api/v1/openapi.json` (OpenAPI 3.1, `service/src/openapi/`):
 percorsi, scope, parametri e corpi delle richieste dalle rotte e dai loro schemi zod (un `@Body()` o un `@Query()` intero
-senza schema fa fallire la costruzione del documento); risposte solo per codice di stato (la loro forma resta in API.md e
-nei tipi del client).
+senza schema fa fallire la costruzione del documento); le risposte JSON dagli schemi di risposta `@Returns`, controllati
+su ogni risposta nei test (`test/helpers/response-contract.ts`) e dal compilatore sui gestori delle rotte e sui tipi del
+client.
 
 | # | Compito | Output |
 |---|---|---|

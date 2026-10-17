@@ -24,6 +24,9 @@ import { type IngestResult, type ingestSchema } from '../../src/rawlog/ingest.sc
 import { type LearnSourceResult, type learnSourceSchema } from '../../src/knowledge/sources.schemas';
 import { type SourceView } from '../../src/knowledge/sources.service';
 import { type HolderIdentities, type LinkCode } from '../../src/identity/holder-links';
+import type * as client from '../../../packages/client/src/index.js';
+import type * as read from '../../src/read/read.responses';
+import type * as api from '../../src/openapi/responses';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 // ── Contract drift (compile time) ──────────────────────────────────────────────
@@ -37,6 +40,23 @@ export type ServiceSourceResultFitsClient = Assert<Extends<LearnSourceResult, Cl
 export type ServiceSourceFitsClient = Assert<Extends<SourceView, ClientSource>>;
 export type ServiceLinkCodeFitsClient = Assert<Extends<LinkCode, ClientLinkCode>>;
 export type ServiceHolderIdentitiesFitsClient = Assert<Extends<HolderIdentities, ClientHolderIdentities>>;
+// What the service answers (its `@Returns` schemas, checked against every response in the tests) fits the client's types.
+type Answer<S extends z.ZodType> = z.output<S>;
+export type AnswersFitClient = Assert<Extends<[
+  Answer<typeof read.episodesResponse>, Answer<typeof read.episodeDetailResponse>, Answer<typeof read.digestsResponse>,
+  Answer<typeof read.factsResponse>, Answer<typeof read.factDetailResponse>, Answer<typeof read.notesResponse>,
+  Answer<typeof read.noteDetailResponse>, Answer<typeof read.noteChangesResponse>['items'], Answer<typeof read.settingsResponse>,
+  Answer<typeof read.usageResponse>, Answer<typeof read.exportResponse>, Answer<typeof api.contextResponse>, Answer<typeof api.meResponse>,
+  Answer<typeof api.ingestResponse>, Answer<typeof api.roomResponse>, Answer<typeof api.learnSourceResponse>, Answer<typeof api.sourcesResponse>,
+  Answer<typeof api.linkCodeResponse>, Answer<typeof api.holderIdentitiesResponse>,
+], [
+  { items: client.Episode[]; nextCursor: string | null }, client.EpisodeDetail, client.Digest[],
+  client.Fact[], client.FactDetail, client.Note[],
+  client.NoteDetail, client.NoteChange[], client.MemorySettings,
+  client.Usage, client.ExportJob, client.MemoryContext, client.Me,
+  client.IngestResult, client.RoomResult, client.LearnSourceResult, client.Source[],
+  client.LinkCode, client.HolderIdentities,
+]>>;
 
 describe('client conformance (packages/client against the service)', () => {
   let app: INestApplication;

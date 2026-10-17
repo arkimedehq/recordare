@@ -22,7 +22,8 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - `docs/API.md`, `docs/DATA_MODEL.md` — contracts: identity / auth (D24), REST ingest, MCP tools as built
   (`search_episodes`, `search_memory` — notes + facts with `as_of`, `resolve_period`, `log_episode`, `remember`,
   `correct_episode`, `forget_episode`; `search_facts` planned), no viewer filter (D50: whole memory in every conversation; 8.2); memory context
-  `POST api/v1/context`; read API (§4) built; client library (§5) built as `packages/client`; OpenAPI generated from the routes (`GET api/v1/openapi.json`, `service/src/openapi/`; responses by status only);
+  `POST api/v1/context`; read API (§4) built; client library (§5) built as `packages/client`; OpenAPI generated from the routes (`GET api/v1/openapi.json`, `service/src/openapi/`): every JSON route needs a `@Returns` response
+  schema (tests check every answer against it, `test/helpers/response-contract.ts`);
   data model v1. **D33**: build only the v1
   home / research profile; public-profile hardening is specified but deferred (stay on the twin).
 - `docs/WORK_PLAN.md` — milestones M0–M7 for phase 1 with done / partial / TODO per row, watch list, D26 (decided 2026-10-12),

@@ -4,8 +4,7 @@
 /**
  * The OpenAPI 3.1 document, generated from the routes themselves (API.md: the zod schemas are the contract): paths and
  * methods from the Nest metadata, request bodies and query parameters from the `ZodBody` pipes, path parameters from
- * the route, the bearer scopes from `@RequireScopes`. Responses are described by status only — their shapes are in
- * API.md and in the client library's types.
+ * the route, the bearer scopes from `@RequireScopes`, the JSON answers from `@Returns`.
  */
 import { type Type } from '@nestjs/common';
 import { HTTP_CODE_METADATA, METHOD_METADATA, PATH_METADATA, ROUTE_ARGS_METADATA, SSE_METADATA } from '@nestjs/common/constants';
@@ -15,6 +14,7 @@ import { ParseUUIDPipe } from '@nestjs/common/pipes/parse-uuid.pipe';
 import { z } from 'zod';
 import { PUBLIC_KEY, SCOPES_KEY } from '../auth/decorators';
 import { USER_HEADER } from '../auth/memory-resolver.service';
+import { RETURNS_KEY } from '../common/returns';
 import { ZodBody } from '../common/zod-body.pipe';
 import { VERSION } from '../version';
 
@@ -23,9 +23,9 @@ type RouteArg = { type: number; data?: unknown; pipes?: unknown[] };
 
 const PROBLEM = { $ref: '#/components/schemas/Problem' };
 
-/** JSON Schema of the input a zod schema accepts (what the client sends), without the draft marker. */
-function inputSchema(schema: z.ZodType): Json {
-  const out = z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Json;
+/** JSON Schema of a zod schema — the input it accepts (what the client sends) or its output (what the service answers). */
+function schemaOf(schema: z.ZodType, io: 'input' | 'output' = 'input'): Json {
+  const out = z.toJSONSchema(schema, { io, unrepresentable: 'any' }) as Json;
   delete out['$schema'];
   return out;
 }
@@ -62,13 +62,13 @@ function operation(ctrl: Type, name: string, tag: string, scopes: string[] | und
       throw new Error(`${ctrl.name}.${name}: @Body() / @Query() without a ZodBody schema`);
     }
     if (arg.type === RouteParamtypes.BODY && schema) {
-      requestBody = { required: true, content: { 'application/json': { schema: inputSchema(schema) } } };
+      requestBody = { required: true, content: { 'application/json': { schema: schemaOf(schema) } } };
     } else if (arg.type === RouteParamtypes.QUERY) {
       if (typeof arg.data === 'string') {
         const uuid = arg.pipes?.some((p) => p instanceof ParseUUIDPipe);
         parameters.push({ name: arg.data, in: 'query', required: false, schema: uuid ? { type: 'string', format: 'uuid' } : { type: 'string' } });
       } else if (schema) {
-        const s = inputSchema(schema) as { properties?: Record<string, Json>; required?: string[] };
+        const s = schemaOf(schema) as { properties?: Record<string, Json>; required?: string[] };
         for (const [q, prop] of Object.entries(s.properties ?? {})) {
           parameters.push({ name: q, in: 'query', required: s.required?.includes(q) ?? false, schema: prop });
         }
@@ -83,9 +83,16 @@ function operation(ctrl: Type, name: string, tag: string, scopes: string[] | und
   const sse = Reflect.getMetadata(SSE_METADATA, handler) === true;
   const method = Reflect.getMetadata(METHOD_METADATA, handler) as RequestMethod;
   const code = Number(Reflect.getMetadata(HTTP_CODE_METADATA, handler) ?? (method === RequestMethod.POST ? 201 : 200));
-  const ok: Json = code === 204 || code === 202
-    ? { description: code === 204 ? 'Done, no content' : 'Accepted, carried out in the background' }
-    : { description: 'OK', content: sse ? { 'text/event-stream': {} } : { 'application/json': {} } };
+  const returns = Reflect.getMetadata(RETURNS_KEY, handler) as z.ZodType | undefined;
+  const raw = args.some((a) => a.type === RouteParamtypes.RESPONSE);
+  let ok: Json;
+  if (code === 204) ok = { description: 'Done, no content' };
+  else if (returns) ok = { description: code === 202 ? 'Accepted, carried out in the background' : 'OK', content: { 'application/json': { schema: schemaOf(returns, 'output') } } };
+  else if (sse) ok = { description: 'Server-sent events', content: { 'text/event-stream': {} } };
+  else if (raw) ok = { description: 'A file, written by the handler', content: { 'application/json': {} } };
+  else if (code === 202) ok = { description: 'Accepted, carried out in the background' };
+  // The response half of the contract: a JSON answer without a schema would be undocumented.
+  else throw new Error(`${ctrl.name}.${name}: a JSON response without @Returns`);
   return {
     operationId: `${tag}_${name}`,
     // The handler's name in words ("forgetPeriod" → "Forget period"): the routes carry no other summary.

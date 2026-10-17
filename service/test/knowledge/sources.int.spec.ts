@@ -67,6 +67,8 @@ describe('learned sources (WORK_PLAN 8.9)', () => {
       source: { title: 'Manuale della caldaia', providedBy: { kind: 'contact', name: 'Paolo' } } });
     expect(found.episodes.map((e) => e.content)).toEqual(["L'8 ottobre 2026 ho imparato «Manuale della caldaia», da Paolo."]);
     expect((await as('GET', '/api/v1/sources')).body).toMatchObject([{ title: 'Manuale della caldaia', status: 'ready', passages: 2 }]);
+    const one = await as('GET', `/api/v1/sources/${first.body.sourceId}`);
+    expect(one.body).toMatchObject({ title: 'Manuale della caldaia', text: [expect.objectContaining({ heading: 'Revisione' }), expect.anything()] });
   });
 
   it('takes a big text in parts, in order; a part sent again is a duplicate, a gap is refused', async () => {

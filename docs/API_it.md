@@ -24,8 +24,9 @@ Convenzioni: JSON su HTTPS; i controller hard-codano `api/v1/…` (nessun prefis
 offset; uuid; errori come problem details RFC 9457 (`{type, title, status, detail, code}`); gli schemi zod
 sono l'unica fonte di verità e generano `GET /api/v1/openapi.json` (**costruito il 2026-10-18**: OpenAPI 3.1, senza
 autenticazione; percorsi, scope, parametri di percorso e di query e corpi delle richieste dalle rotte e dai loro schemi zod,
-risposte per codice di stato ed errori RFC 9457 — la forma delle risposte è in questo documento e nei tipi della libreria
-client); paginazione
+le risposte JSON dallo schema di risposta di ogni rotta (`@Returns`: controllato su ogni risposta nei test e dal
+compilatore sul gestore della rotta e sui tipi della libreria client; le risposte dell'admin e di Atlas sono oggetti
+liberi), errori RFC 9457); paginazione
 `?cursor&limit` → `{items, nextCursor}` (come costruito pagina solo `GET api/v1/episodes`; le altre liste della §4
 restituiscono semplici array); ogni POST non idempotente accetta un header `Idempotency-Key`
 (finestra di replay di 24 h, viene restituita la stessa risposta — **not built yet**; l'ingest è idempotente sugli id dei messaggi).

@@ -9,6 +9,8 @@ import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
 import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { ZodBody } from '../common/zod-body.pipe';
+import { Returns } from '../common/returns';
+import { holderIdentitiesResponse, linkCodeResponse, meResponse } from '../openapi/responses';
 import { type Env } from '../config/env';
 import { MEMORY_GENDERS, MEMORY_MODES } from '../identity/identity.entities';
 import { confirmClaim, createLinkCode, holderIdentities, rejectClaim, unlinkHolderIdentity } from '../identity/holder-links';
@@ -28,6 +30,7 @@ export class MeController {
 
   @Get()
   @RequireScopes('read')
+  @Returns(meResponse)
   async me(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user?: string) {
     const memoryId = await this.memories.resolve(principal, user);
     const [memory] = await this.db.query(
@@ -76,6 +79,7 @@ export class MeController {
    */
   @Post('link-codes')
   @RequireScopes('ingest')
+  @Returns(linkCodeResponse)
   async linkCode(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user?: string) {
     const memoryId = await this.own(principal, user);
     return createLinkCode(this.db, memoryId, new Date());
@@ -84,6 +88,7 @@ export class MeController {
   /** The identities that speak as the memory's "I" and the claims waiting for confirmation (D51). */
   @Get('identities')
   @RequireScopes('read')
+  @Returns(holderIdentitiesResponse)
   async identities(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user?: string) {
     return holderIdentities(this.db, await this.memories.resolve(principal, user), new Date());
   }

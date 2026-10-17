@@ -9,6 +9,7 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { type NestExpressApplication } from '@nestjs/platform-express';
 import { configureHttp } from '../../src/http.js';
+import { ResponseContract } from './response-contract';
 import { DataSource } from 'typeorm';
 import { createServer, type Server } from 'node:http';
 import { createHash } from 'node:crypto';
@@ -100,6 +101,7 @@ export async function startApp(): Promise<{ app: INestApplication; url: string }
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false, logger: process.env['TEST_LOG'] ? ['error', 'warn'] : false });
   configureHttp(app);
+  app.useGlobalInterceptors(new ResponseContract());
   await app.listen(0);
   const address = app.getHttpServer().address() as { port: number };
   return { app, url: `http://127.0.0.1:${address.port}` };
