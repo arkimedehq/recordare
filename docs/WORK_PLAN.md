@@ -101,6 +101,12 @@ docker-compose, CI, Dockerfile. Moved to where they are first used: `QueuePort` 
 M3, `VectorStorePort` and IT/EN prompt files → M4.
 Status (2026-10-07): done except 2.3 `VectorStorePort` (**TODO** — pgvector SQL is inline in the services) and 2.6 i18n
 (**partial** — prompts are English with a memory-language line; period resolver and relation words are IT/EN).
+Status (2026-10-18): 2.3 **closed by decision** — no `VectorStorePort` (maintainer, 2026-10-18; D25 below): recall ranks
+by vector, full text and dates in one SQL query and compares rows' embeddings in SQL (near duplicates, patterns, Atlas),
+and forgetting deletes rows with their vectors in one transaction; a port that a second store could fill would split those
+queries, change recall (paid eval runs) and lose the single transaction, for no deployment that needs it (Postgres is
+required anyway). Done instead: `service/src/db/pgvector.ts` — vector parameters (`vectorParam`) and every embedding
+write (`storeEmbeddings`, one place for the eight copies); results unchanged. Larger volumes: pgvectorscale (index only).
 Status (2026-10-08): 2.6 still **partial**, with the language module (maintainer's rule: all languages, at least the most
 used): `service/src/lang` holds periods and month names from Intl for 25 locales, relation words and third-person stand-ins for the self for
 many languages (scripts without spaces matched as substrings), used by the period resolver, people matching and
@@ -110,7 +116,7 @@ the leak detector; prompts stay English with a memory-language line; the admin c
 |---|---|
 | 2.1 | NestJS project, strict TS, lint, `tsc --noEmit`, test runner; CI on every push |
 | 2.2 | Postgres + migrations (TypeORM); pgvector with HNSW index (**D25**) |
-| 2.3 | Ports and adapters: `LlmPort` (adapters OpenAI-compatible + native Anthropic, provider profiles from config — reasoning off, structured-output mode, token param, caching, usage — validate + retry; D27), `EmbeddingPort` (OpenAI-compatible, `bge-m3` default), `VectorStorePort` (pgvector adapter; Qdrant would be just another adapter), `ClockPort`, `QueuePort` (BullMQ) |
+| 2.3 | Ports and adapters: `LlmPort` (adapters OpenAI-compatible + native Anthropic, provider profiles from config — reasoning off, structured-output mode, token param, caching, usage — validate + retry; D27), `EmbeddingPort` (OpenAI-compatible, `bge-m3` default), ~~`VectorStorePort` (pgvector adapter; Qdrant would be just another adapter)~~ — not built, decided 2026-10-18 (status above), `ClockPort`, `QueuePort` (BullMQ) |
 | 2.4 | Auth (v1 home / research profile, D33): hashed client API keys, personal tokens, admin bootstrap, person / identity tables |
 | 2.5 | `docker-compose.yml` (service, Postgres, Redis), health endpoint, config via env |
 | 2.6 | i18n scaffolding for prompts and messages (IT/EN) |
@@ -386,7 +392,7 @@ M8, when the prompts are stable; every model kept only at ≥ 95 % on the suite 
 | D28 | Data model fields for research hypotheses | Reserved from v1 (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
 | D27 | LLM / embedding providers | **Any provider** via config profiles; DeepSeek + Ollama only as test setups | Done (2026-10-02) |
 | D24 | MCP transport and per-person auth for basic-level clients | **Decided (M1)**: streamable HTTP at `/mcp`; personal access tokens for header-capable clients; OAuth 2.1 per the MCP authorization spec for clients that require it (Claude Desktop / claude.ai); full level = client API key + `X-Recordare-User` (`API.md` §1) | Done (2026-10-03) |
-| D25 | Vector store | **pgvector** — decided, in use (HNSW, see below) | Done (2026-10-03) |
+| D25 | Vector store | **pgvector** — decided, in use (HNSW, see below); no vector-store port (2026-10-18, 2.3) | Done (2026-10-03) |
 | D26 | Where pattern promotions go while A-MEM lives in Arkimede | ~~Exposed by Recordare as `pending` proposals via API; the client decides~~ — the memory is autonomous (maintainer, 2026-10-12): patterns are its own inferred notes, kept / updated / retired by itself; a client reads them as notes (`pattern: true`) and may only forget them | **Decided 2026-10-12** (5.4 built) |
 | — | Single-tenant (one install per family) vs multi-tenant | Model `person` + `client` so both work; start single-tenant | M1 |
 
@@ -401,7 +407,8 @@ M8, when the prompts are stable; every model kept only at ≥ 95 % on the suite 
 - Volumes are small (thousands of episodes per person): HNSW is more than enough.
   Memobase uses Postgres + pgvector too.
 - Not chosen: **Qdrant** (familiar from Arkimede, built-in sparse+dense hybrid, scales
-  further) — kept reachable through `VectorStorePort`. **TimescaleDB** (time-series
+  further) — ~~kept reachable through `VectorStorePort`~~ (2026-10-18: no port, see M2 status: one-query hybrid recall
+  and transactional forgetting are the reasons for pgvector). **TimescaleDB** (time-series
   hypertables: no benefit at our volume, partitioning constraints, non-OSI Timescale
   License next to AGPL, heavy image, rarely available on managed Postgres).
 - Escape hatch: **pgvectorscale** (PostgreSQL licence) adds a StreamingDiskANN index on the

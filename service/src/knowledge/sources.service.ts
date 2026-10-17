@@ -18,6 +18,7 @@ import { ContactBook } from '../engine/subjects';
 import { splitPassages } from './passages';
 import { writeLearnedEpisode } from './learned-episode';
 import { type LearnSourceRequest, type LearnSourceResult, type SourcePartRequest } from './sources.schemas';
+import { storeEmbeddings } from '../db/pgvector';
 
 export interface SourceView {
   id: string;
@@ -162,9 +163,8 @@ export class SourcesService {
 
   private async embed(episodeId: string, text: string): Promise<void> {
     try {
-      const [v] = await this.embeddings.embed([text], 'document');
-      await this.db.query(`UPDATE episodes SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`,
-        [`[${(v ?? []).join(',')}]`, this.embeddings.model, text, episodeId]);
+      const [vector] = await this.embeddings.embed([text], 'document');
+      await storeEmbeddings(this.db, 'episodes', this.embeddings.model, [{ id: episodeId, vector, text }]);
     } catch (err) {
       this.log.warn(`learning episode embedding skipped: ${(err as Error).message}`); // full-text still finds it
     }

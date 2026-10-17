@@ -15,6 +15,7 @@ import { accountSpeaker, type AuthorKind } from '../rawlog/attribution';
 import { type MemoryGender } from '../identity/identity.entities';
 import { expireClarifications } from './clarifications';
 import { fold } from './subjects';
+import { vectorParam } from '../db/pgvector';
 
 const MAX_OPEN_PLANS = 15;
 const MAX_FACTS = 40;
@@ -191,7 +192,7 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
       `SELECT id, content, occurred_at, date_precision FROM (
          SELECT id, content, occurred_at, date_precision, embedding <=> $2::vector AS dist FROM episodes
          WHERE ${visible} AND embedding IS NOT NULL ORDER BY dist LIMIT $3) r
-       WHERE 1 - dist >= $4`, [memory.id, `[${windowVector.join(',')}]`, profile.relatedEpisodes, MIN_RELATED_SIMILARITY])
+       WHERE 1 - dist >= $4`, [memory.id, vectorParam(windowVector), profile.relatedEpisodes, MIN_RELATED_SIMILARITY])
     : [];
   const episodes = [...recent, ...related.filter((r) => !recent.some((e) => e.id === r.id))];
 

@@ -11,6 +11,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { memorySpeaker } from './attribution';
+import { vectorParam } from '../db/pgvector';
 
 export interface RawHit {
   conversationId: string;
@@ -87,7 +88,7 @@ export class RawLogSearchService {
           `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
            WHERE ${base} AND m.embedding IS NOT NULL
            ORDER BY m.embedding <=> $${params.length + 1}::vector LIMIT ${CANDIDATES}`,
-          [...params, `[${q.join(',')}]`]);
+          [...params, vectorParam(q)]);
       }
     } catch (err) {
       // Embedding server down: degrade to full-text only.

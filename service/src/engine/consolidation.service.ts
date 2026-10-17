@@ -31,6 +31,7 @@ import { qualityProfile, type QualityProfile, type QualityProfileName } from './
 import { resolveNearDuplicates } from './episode-resolver';
 import { expireClarifications } from './clarifications';
 import { subjectLabel } from './subjects';
+import { vectorParam } from '../db/pgvector';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
@@ -287,7 +288,7 @@ export class ConsolidationService {
            embedding, embedding_model, embedding_text)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::vector, $11, $5) RETURNING id`,
         [memoryId, level, start, end, text, (previous?.version ?? 0) + 1, [memoryId], runId, hash,
-          vector ? `[${vector.join(',')}]` : null, vector ? this.embeddings.model : null]);
+          vector ? vectorParam(vector) : null, vector ? this.embeddings.model : null]);
       for (const id of episodeIds) await tx.query(`INSERT INTO digest_sources (digest_id, episode_id) VALUES ($1, $2)`, [d.id, id]);
       for (const id of digestIds) await tx.query(`INSERT INTO digest_sources (digest_id, source_digest_id) VALUES ($1, $2)`, [d.id, id]);
     });

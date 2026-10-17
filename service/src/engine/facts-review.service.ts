@@ -22,6 +22,7 @@ import { localDate } from './time';
 import { accountSpeaker, type AuthorKind } from '../rawlog/attribution';
 import { type SubjectKind } from '../identity/identity.entities';
 import { subjectLabel } from './subjects';
+import { storeEmbeddings } from '../db/pgvector';
 
 /** Episodes per review: the oldest new ones first; the rest wait for the next night. */
 const MAX_EPISODES = 300;
@@ -149,10 +150,7 @@ export class FactsReviewService {
     if (rows.length === 0) return;
     try {
       const vectors = await this.embeddings.embed(rows.map((r) => r.text), 'document');
-      for (const [i, r] of rows.entries()) {
-        await this.db.query(`UPDATE facts SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`,
-          [`[${(vectors[i] ?? []).join(',')}]`, this.embeddings.model, r.text, r.id]);
-      }
+      await storeEmbeddings(this.db, 'facts', this.embeddings.model, rows.map((r, i) => ({ id: r.id, vector: vectors[i], text: r.text })));
     } catch (err) {
       this.log.warn(`embedding reviewed facts failed: ${(err as Error).message}`);
     }

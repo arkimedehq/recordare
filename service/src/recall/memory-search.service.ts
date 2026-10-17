@@ -19,6 +19,7 @@ import { contactNames, speakerOf, subjectView, type SubjectRow, type SubjectView
 import { relevantClarifications } from '../engine/clarifications';
 import { type MemoryView } from './episode-search.service';
 import { type SubjectKind } from '../identity/identity.entities';
+import { vectorParam } from '../db/pgvector';
 
 export interface MemorySearchArgs {
   /** The conversation the recall is served in (see EpisodeSearchArgs). */
@@ -90,7 +91,7 @@ export class MemorySearchService {
                 CASE WHEN $2::text IS NULL OR embedding IS NULL THEN NULL ELSE 1 - (embedding <=> $2::vector) END AS sim,
                 ($3::text <> '' AND to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')) @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
          FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)`,
-        [memoryId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
+        [memoryId, vec ? vectorParam(vec) : null, tsq, args.includePending ?? false]);
     const notes = noteRows.filter((n) => n.pinned || n.fts || (n.sim ?? 0) >= MIN_VECTOR_SIMILARITY)
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || (b.sim ?? 0) + (b.fts ? 0.1 : 0) - ((a.sim ?? 0) + (a.fts ? 0.1 : 0)))
       .slice(0, limit);
@@ -107,7 +108,7 @@ export class MemorySearchService {
        WHERE f.memory_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected'
          AND ($4::boolean OR NOT f.pending)
        ORDER BY f.key, f.valid_from NULLS FIRST, f.recorded_at`,
-      [memoryId, vec ? `[${vec.join(',')}]` : null, tsq, args.includePending ?? false]);
+      [memoryId, vec ? vectorParam(vec) : null, tsq, args.includePending ?? false]);
     // One slot per (person, key): Andrea's car and Marta's car are two histories.
     const byKey = new Map<string, typeof factRows>();
     for (const f of factRows) {

@@ -23,6 +23,7 @@ import { type SubjectKind } from '../identity/identity.entities';
 import { ENTITY_PATTERNS_SUFFIX, ENTITY_PATTERNS_SYSTEM, PATTERNS_SYSTEM, PATTERNS_VERSION, type PatternsOutput, patternsSchema } from './patterns.prompt';
 import { localDate } from './time';
 import { subjectLabel } from './subjects';
+import { vectorParam } from '../db/pgvector';
 
 /** Episodes looked at: those of the last LOOKBACK_DAYS, the newest MAX_EPISODES. */
 const LOOKBACK_DAYS = 90;
@@ -205,7 +206,7 @@ export class PatternsService {
     const rows: unknown[] = await tx.query(
       `SELECT 1 FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND embedding IS NOT NULL
          AND id IS DISTINCT FROM $3 AND 1 - (embedding <=> $2::vector) >= $4 LIMIT 1`,
-      [memoryId, `[${vector.join(',')}]`, except ?? null, SAME_SIMILARITY]);
+      [memoryId, vectorParam(vector), except ?? null, SAME_SIMILARITY]);
     return rows.length > 0;
   }
 
@@ -219,7 +220,7 @@ export class PatternsService {
        VALUES ($1, $2, $3, '{pattern}', $4, false, $5, 'holder_lived', 'holder', 'inferred', $6, $7, $8, 'holder', ARRAY[$1::uuid], $9, $10,
          $11::vector, $12, $3) RETURNING id`,
       [memoryId, category, content, supersedes, ev.reduce((a, e) => (e.occurred_at < a ? e.occurred_at : a), first.occurred_at),
-        confidence(ev.length), ev.length, runId, subjectId ? 'contact' : 'self', subjectId, `[${vector.join(',')}]`, this.embeddings.model]);
+        confidence(ev.length), ev.length, runId, subjectId ? 'contact' : 'self', subjectId, vectorParam(vector), this.embeddings.model]);
     for (const e of ev) await tx.query(`INSERT INTO note_evidence (note_id, episode_id) VALUES ($1, $2)`, [note.id, e.id]);
     await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, $3)`, [memoryId, note.id, supersedes ? 'updated' : 'created']);
     await tx.query(`INSERT INTO episode_promotions (memory_id, note_id, pattern, episode_ids, subject_person_id) VALUES ($1, $2, $3, $4, $5)`,

@@ -104,6 +104,13 @@ docker-compose, CI, Dockerfile. Spostati dove vengono usati per la prima volta: 
 M3, `VectorStorePort` e file di prompt IT/EN → M4.
 Stato (2026-10-07): completata tranne 2.3 `VectorStorePort` (**TODO** — l'SQL pgvector è inline nei servizi) e 2.6 i18n
 (**partial** — i prompt sono in inglese con una riga sulla lingua della memoria; il risolutore di periodi e le parole di relazione sono IT/EN).
+Stato (2026-10-18): 2.3 **chiusa per decisione** — nessun `VectorStorePort` (maintainer, 2026-10-18; D25 sotto): il
+richiamo ordina per vettore, testo e date in una sola query SQL e confronta in SQL gli embedding delle righe (quasi
+duplicati, abitudini, Atlas), e dimenticare cancella le righe con i loro vettori in una sola transazione; una porta che
+un secondo archivio potesse riempire spezzerebbe quelle query, cambierebbe il richiamo (run di valutazione a pagamento) e
+perderebbe la transazione unica, senza un'installazione che ne abbia bisogno (Postgres serve comunque). Fatto invece:
+`service/src/db/pgvector.ts` — i parametri vettoriali (`vectorParam`) e ogni scrittura di embedding (`storeEmbeddings`,
+un solo punto al posto delle otto copie); risultati invariati. Volumi maggiori: pgvectorscale (solo l'indice).
 Stato (2026-10-08): 2.6 ancora **partial**, con il modulo delle lingue (regola del maintainer: tutte le lingue, almeno
 le più usate): `service/src/lang` contiene periodi e nomi dei mesi da Intl per 25 lingue, parole di relazione e sostituti
 in terza persona del sé per molte lingue (le scritture senza spazi si confrontano come sottostringhe), usati dal risolutore di
@@ -114,7 +121,7 @@ lingua della memoria; la console admin è IT/EN.
 |---|---|
 | 2.1 | Progetto NestJS, TS strict, lint, `tsc --noEmit`, test runner; CI a ogni push |
 | 2.2 | Postgres + migrazioni (TypeORM); pgvector con indice HNSW (**D25**) |
-| 2.3 | Porte e adattatori: `LlmPort` (adattatori compatibili OpenAI + Anthropic nativo, profili provider dalla configurazione — ragionamento disattivato, modalità di output strutturato, parametro dei token, caching, usage — validazione + retry; D27), `EmbeddingPort` (compatibile OpenAI, default `bge-m3`), `VectorStorePort` (adattatore pgvector; Qdrant sarebbe solo un altro adattatore), `ClockPort`, `QueuePort` (BullMQ) |
+| 2.3 | Porte e adattatori: `LlmPort` (adattatori compatibili OpenAI + Anthropic nativo, profili provider dalla configurazione — ragionamento disattivato, modalità di output strutturato, parametro dei token, caching, usage — validazione + retry; D27), `EmbeddingPort` (compatibile OpenAI, default `bge-m3`), ~~`VectorStorePort` (adattatore pgvector; Qdrant sarebbe solo un altro adattatore)~~ — non costruito, deciso il 2026-10-18 (stato sopra), `ClockPort`, `QueuePort` (BullMQ) |
 | 2.4 | Auth (profilo v1 privato / di ricerca, D33): chiavi API dei client con hash, token personali, bootstrap dell'admin, tabelle person / identity |
 | 2.5 | `docker-compose.yml` (servizio, Postgres, Redis), endpoint health, configurazione via env |
 | 2.6 | Impalcatura i18n per prompt e messaggi (IT/EN) |
@@ -395,7 +402,7 @@ al 95 % sulla valutazione (regola del maintainer).
 | D28 | Campi del modello dati per le ipotesi di ricerca | Riservati dalla v1 (`EPISODIC_MEMORY_TODO.md`) | Fatto (2026-10-02) |
 | D27 | Provider LLM / di embedding | **Qualsiasi provider** tramite profili di configurazione; DeepSeek + Ollama solo come ambienti di test | Fatto (2026-10-02) |
 | D24 | Trasporto MCP e auth per persona per i client di livello basic | **Deciso (M1)**: HTTP streamable su `/mcp`; token di accesso personali per i client che supportano header; OAuth 2.1 secondo la specifica di autorizzazione MCP per i client che lo richiedono (Claude Desktop / claude.ai); livello full = chiave API del client + `X-Recordare-User` (`API.md` §1) | Fatto (2026-10-03) |
-| D25 | Vector store | **pgvector** — deciso, in uso (HNSW, vedi sotto) | Fatto (2026-10-03) |
+| D25 | Vector store | **pgvector** — deciso, in uso (HNSW, vedi sotto); nessuna porta per il vector store (2026-10-18, 2.3) | Fatto (2026-10-03) |
 | D26 | Dove vanno le promozioni di pattern finché A-MEM vive in Arkimede | ~~Esposte da Recordare come proposte `pending` via API; decide il client~~ — la memoria è autonoma (maintainer, 2026-10-12): i pattern sono sue note inferite, confermate / aggiornate / ritirate da sola; un client li legge come note (`pattern: true`) e può solo farli dimenticare | **Decisa il 2026-10-12** (5.4 costruito) |
 | — | Single-tenant (un'installazione per famiglia) vs multi-tenant | Modellare `person` + `client` in modo che funzionino entrambi; partire single-tenant | M1 |
 
@@ -410,7 +417,8 @@ al 95 % sulla valutazione (regola del maintainer).
 - I volumi sono piccoli (migliaia di episodi per persona): HNSW è più che sufficiente.
   Anche Memobase usa Postgres + pgvector.
 - Non scelti: **Qdrant** (familiare da Arkimede, ibrido sparse+dense integrato, scala
-  di più) — resta raggiungibile tramite `VectorStorePort`. **TimescaleDB** (hypertable per serie temporali:
+  di più) — ~~resta raggiungibile tramite `VectorStorePort`~~ (2026-10-18: nessuna porta, vedi lo stato di M2: il
+  richiamo ibrido in una query e la cancellazione transazionale sono le ragioni di pgvector). **TimescaleDB** (hypertable per serie temporali:
   nessun beneficio al nostro volume, vincoli di partizionamento, Timescale License non OSI accanto ad AGPL, immagine pesante,
   raramente disponibile su Postgres gestiti).
 - Via di fuga: **pgvectorscale** (licenza PostgreSQL) aggiunge un indice StreamingDiskANN sullo

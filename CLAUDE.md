@@ -146,4 +146,5 @@ Done 2026-10-13: D34 A-MEM toggle split + note copies (Arkimede); 6.6b (5) durab
 continuous listening (source `ambient`, `extract.v16`, everything heard pending, pending items only propose replacements —
 migration `PendingProposals` —, `heard` in recall; dev set `dataset_dev_ambient` 86.7 %). Done 2026-10-16: 6.5 (4) room fan-out
 (`POST api/v1/ingest/room`, client `ingestRoom`); 4.5c the two H1 rates (`spikes/memory-eval/outcome_eval.py`, a second
-grading of stored answers; RESULTS.md). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.
+grading of stored answers; RESULTS.md). Done 2026-10-18: v0.3.0 released; OpenAPI with request and response
+schemas; 2.3 closed by decision (no `VectorStorePort`: pgvector helpers in `service/src/db/pgvector.ts`). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.

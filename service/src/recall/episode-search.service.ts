@@ -25,6 +25,7 @@ import { peopleInQuestion } from './people';
 import { contactNames, speakerOf, subjectView, type Speaker, type SubjectRow, type SubjectView } from './subjects';
 import { relevantClarifications } from '../engine/clarifications';
 import { type MemoryMode, type SubjectKind } from '../identity/identity.entities';
+import { vectorParam } from '../db/pgvector';
 
 export interface EpisodeSearchArgs {
   /** The conversation the recall is served in (recall log: lets the extractor recognise answers from memory). */
@@ -320,7 +321,7 @@ export class EpisodeSearchService {
         const vec: Array<{ id: string; sim: number }> = await this.db.query(
           `SELECT id, 1 - (embedding <=> $2::vector) AS sim FROM episodes
            WHERE memory_id = $1 AND deleted_at IS NULL AND embedding IS NOT NULL
-           ORDER BY embedding <=> $2::vector LIMIT $3`, [memoryId, `[${q.join(',')}]`, CANDIDATES]);
+           ORDER BY embedding <=> $2::vector LIMIT $3`, [memoryId, vectorParam(q), CANDIDATES]);
         vec.forEach((r) => similarity.set(r.id, r.sim));
         vec.filter((r) => r.sim >= MIN_VECTOR_SIMILARITY)
           .forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 1 / (RRF_K + i + 1)));
