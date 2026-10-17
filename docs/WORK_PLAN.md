@@ -77,7 +77,8 @@ of §4 are TODO; 1.6 **done** as the client library (`packages/client`, 6.7; pub
 `@arkimedehq/recordare-client` 0.1.0); the generated OpenAPI is still **not built**.
 Status (2026-10-18): the generated OpenAPI is **done** — `GET api/v1/openapi.json` (OpenAPI 3.1, `service/src/openapi/`):
 paths, scopes, parameters and request bodies from the routes and their zod schemas (a `@Body()` or whole `@Query()`
-without one fails the build of the document); responses by status only (their shapes stay in API.md and the client types).
+without one fails the build of the document); the JSON answers from `@Returns` response schemas, checked against every
+response in the tests (`test/helpers/response-contract.ts`) and by the compiler against the handlers and the client types.
 
 | # | Task | Output |
 |---|---|---|

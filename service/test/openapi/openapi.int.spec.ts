@@ -2,12 +2,13 @@
 // Copyright © 2026 Andrea Genovese
 
 import { type INestApplication } from '@nestjs/common';
-import { call, resetSchema, startApp, testEnv } from '../helpers/app';
+import { ADMIN_KEY, call, resetSchema, startApp, testEnv } from '../helpers/app';
 
 describe('OpenAPI document generated from the routes (API.md)', () => {
   let app: INestApplication;
   let url: string;
-  type Operation = { operationId: string; security?: unknown[]; parameters: Array<Record<string, unknown>>; responses: Record<string, { content?: object }>;
+  type Operation = { operationId: string; security?: unknown[]; parameters: Array<Record<string, unknown>>;
+    responses: Record<string, { content?: Record<string, { schema?: Record<string, unknown> }> }>;
     requestBody: { content: Record<string, { schema: { required?: string[] } }> }; 'x-recordare-scopes': string[] };
   let doc: { openapi: string; info: { version: string }; paths: Record<string, Record<string, Operation>> };
   const op = (path: string, method: string) => doc.paths[path]![method]!;
@@ -47,6 +48,16 @@ describe('OpenAPI document generated from the routes (API.md)', () => {
     expect(op('/api/v1/admin/memories', 'post')['x-recordare-scopes']).toEqual(['admin']);
     expect(op('/api/v1/exports', 'post').responses['202']).toBeDefined();
     expect(op('/api/v1/admin/telemetry/stream', 'get').responses['200']!.content).toHaveProperty('text/event-stream');
+  });
+
+  it('JSON answers carry the schema they are checked against in every test (ResponseContract)', async () => {
+    const schema = (path: string, method: string, code: string) => op(path, method).responses[code]!.content!['application/json']!.schema;
+    expect(schema('/api/v1/episodes', 'get', '200')).toMatchObject({ type: 'object', required: ['items', 'nextCursor'] });
+    expect(schema('/api/v1/exports', 'post', '202')).toMatchObject({ properties: { status: { enum: ['running', 'done', 'failed'] } } });
+    expect(schema('/api/v1/ingest/messages', 'post', '200')).toMatchObject({ required: expect.arrayContaining(['conversationId', 'accepted']) });
+    expect(schema('/api/v1/admin/clients', 'get', '200')).toMatchObject({ type: 'array' });
+    expect(op('/api/v1/facts/{id}', 'delete').responses['204']!.content).toBeUndefined();
+    expect((await call(url, 'GET', '/api/v1/admin/memories', { token: ADMIN_KEY })).status).toBe(200); // the Atlas list, checked like the rest
   });
 
   it('every operation has a unique id and every path parameter is declared', () => {

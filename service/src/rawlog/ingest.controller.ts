@@ -6,6 +6,8 @@ import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
 import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { ZodBody } from '../common/zod-body.pipe';
+import { Returns } from '../common/returns';
+import { ingestResponse, roomResponse } from '../openapi/responses';
 import { editMessageSchema, ingestSchema, type IngestRequest, type IngestResult, roomSchema, type RoomRequest, type RoomResult } from './ingest.schemas';
 import { roomFor } from './room';
 import { IngestService } from './ingest.service';
@@ -17,6 +19,7 @@ export class IngestController {
 
   @Post('messages')
   @HttpCode(200)
+  @Returns(ingestResponse)
   async messages(
     @CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(ingestSchema)) body: IngestRequest,
@@ -31,6 +34,7 @@ export class IngestController {
    */
   @Post('room')
   @HttpCode(200)
+  @Returns(roomResponse)
   async room(@CurrentPrincipal() p: Principal, @Body(new ZodBody(roomSchema)) body: RoomRequest): Promise<RoomResult> {
     if (p.kind !== 'client') throw new ForbiddenException();
     const recipients: RoomResult['recipients'] = [];

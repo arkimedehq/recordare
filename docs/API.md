@@ -19,8 +19,9 @@ levels (vision → Architecture): **basic** = MCP tools only; **full** = REST in
 Conventions: JSON over HTTPS; controllers hard-code `api/v1/…` (no global prefix); ISO 8601 with
 offset; uuids; errors as RFC 9457 problem details (`{type, title, status, detail, code}`); zod
 schemas are the single source of truth and generate `GET /api/v1/openapi.json` (**built 2026-10-18**: OpenAPI 3.1, no
-authentication; paths, scopes, path / query parameters and request bodies from the routes and their zod schemas, responses
-by status and RFC 9457 errors — the response shapes are in this document and in the client library's types); pagination
+authentication; paths, scopes, path / query parameters and request bodies from the routes and their zod schemas, the JSON
+answers from each route's response schema (`@Returns`: checked against every response in the tests, and by the compiler
+against the handler and the client library's types; admin and Atlas answers are loose objects), RFC 9457 errors); pagination
 `?cursor&limit` → `{items, nextCursor}` (as built only `GET api/v1/episodes` pages; the other §4 lists return plain
 arrays); every non-idempotent POST accepts an `Idempotency-Key`
 header (24 h replay window, same response returned — **not built yet**; ingest is idempotent on message ids).

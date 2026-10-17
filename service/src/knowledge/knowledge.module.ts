@@ -12,6 +12,8 @@ import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { ZodBody } from '../common/zod-body.pipe';
+import { Returns } from '../common/returns';
+import { learnSourceResponse, sourceDetailResponse, sourcesResponse } from '../openapi/responses';
 import { KnowledgeSearchService } from './knowledge-search.service';
 import { learnSourceSchema, type LearnSourceRequest, type LearnSourceResult, sourcePartSchema, type SourcePartRequest } from './sources.schemas';
 import { SourcesService, type SourceView } from './sources.service';
@@ -23,6 +25,7 @@ export class SourceIngestController {
 
   @Post()
   @HttpCode(200)
+  @Returns(learnSourceResponse)
   async learn(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(learnSourceSchema)) body: LearnSourceRequest): Promise<LearnSourceResult> {
     const { clientId, memoryId } = await this.scope(p, user);
@@ -31,6 +34,7 @@ export class SourceIngestController {
 
   @Post(':externalId/parts')
   @HttpCode(200)
+  @Returns(learnSourceResponse)
   async part(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('externalId') externalId: string,
     @Body(new ZodBody(sourcePartSchema)) body: SourcePartRequest): Promise<LearnSourceResult> {
     const { clientId, memoryId } = await this.scope(p, user);
@@ -57,12 +61,14 @@ export class SourceReadController {
 
   @Get()
   @RequireScopes('read')
+  @Returns(sourcesResponse)
   async list(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined): Promise<SourceView[]> {
     return this.sources.list(await this.who(p, user));
   }
 
   @Get(':id')
   @RequireScopes('read')
+  @Returns(sourceDetailResponse)
   async get(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
     return this.sources.get(await this.who(p, user), id);
   }

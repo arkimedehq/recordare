@@ -9,7 +9,9 @@ import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { hasScope, type Principal } from '../auth/principal';
 import { CONVERSATION_HEADER, ConversationResolver } from '../auth/conversation-resolver.service';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
+import { Returns } from '../common/returns';
 import { ZodBody } from '../common/zod-body.pipe';
+import { contextResponse } from '../openapi/responses';
 import { type Env } from '../config/env';
 import { NOW_HEADER } from '../mcp/mcp-tools';
 import { ingestSchema } from '../rawlog/ingest.schemas';
@@ -42,6 +44,7 @@ export class ContextController {
   @Post()
   @HttpCode(200)
   @RequireScopes('read')
+  @Returns(contextResponse)
   async build(
     @CurrentPrincipal() principal: Principal,
     @Headers(USER_HEADER) user: string | undefined,

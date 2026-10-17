@@ -9,8 +9,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Added
 - **OpenAPI** (API.md): `GET api/v1/openapi.json`, no authentication — the REST contract as OpenAPI 3.1, generated from
   the routes: paths, scopes (`x-recordare-scopes`), path and query parameters and request bodies from the zod schemas
-  that validate them, status codes and RFC 9457 errors. Response shapes are not in it yet (API.md, the client library's
-  types).
+  that validate them, the JSON answers from the routes' response schemas (`@Returns`; the admin and Atlas answers are
+  loose objects, not a stable contract), status codes and RFC 9457 errors. The tests check every answer they see against
+  its schema, and the compiler checks the handlers and the client library's types against them.
 
 ## [0.3.0] — 2026-10-17
 

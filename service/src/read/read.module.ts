@@ -13,12 +13,17 @@ import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
 import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
+import { Returns } from '../common/returns';
 import { ZodBody } from '../common/zod-body.pipe';
 import { type Env } from '../config/env';
 import { NOW_HEADER } from '../mcp/mcp-tools';
 import { MemoryWriteService } from '../recall/memory-write.service';
 import { QUALITY_PROFILES } from '../engine/quality-profile';
 import { ExportsService } from './exports.service';
+import {
+  createdResponse, digestsResponse, episodeDetailResponse, episodesResponse, exportResponse, factDetailResponse, factsResponse, forgetPeriodResponse,
+  noteChangesResponse, noteDetailResponse, notesResponse, plansResponse, settingsResponse, usageResponse,
+} from './read.responses';
 import { ReadService } from './read.service';
 import { SettingsService } from './settings.service';
 
@@ -100,6 +105,7 @@ export class ReadController {
 
   @Get('episodes')
   @RequireScopes('read')
+  @Returns(episodesResponse)
   async episodes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Query(new ZodBody(episodesQuery)) q: z.infer<typeof episodesQuery>) {
     const { memoryId } = await this.who(p, user);
@@ -108,6 +114,7 @@ export class ReadController {
 
   @Get('episodes/:id')
   @RequireScopes('read')
+  @Returns(episodeDetailResponse)
   async episode(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Param('id', ParseUUIDPipe) id: string) {
     const { memoryId, clientId } = await this.who(p, user);
@@ -117,6 +124,7 @@ export class ReadController {
   /** Manual entry from the host's UI: written by the person, stated (API.md §4). */
   @Post('episodes')
   @RequireScopes('write')
+  @Returns(createdResponse)
   async addEpisode(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(episodeBody)) body: z.infer<typeof episodeBody>) {
     const { memoryId } = await this.who(p, user);
@@ -125,6 +133,7 @@ export class ReadController {
 
   @Post('episodes/:id/corrections')
   @RequireScopes('write')
+  @Returns(createdResponse)
   async correct(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodBody(correctionBody)) body: z.infer<typeof correctionBody>) {
     const { memoryId, clientId } = await this.who(p, user);
@@ -143,6 +152,7 @@ export class ReadController {
   @Post('forget')
   @HttpCode(200)
   @RequireScopes('write')
+  @Returns(forgetPeriodResponse)
   async forgetPeriod(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(forgetBody)) body: z.infer<typeof forgetBody>) {
     const { memoryId } = await this.who(p, user);
@@ -151,6 +161,7 @@ export class ReadController {
 
   @Get('digests')
   @RequireScopes('read')
+  @Returns(digestsResponse)
   async digests(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query(new ZodBody(digestsQuery)) q: z.infer<typeof digestsQuery>) {
     const { memoryId } = await this.who(p, user);
     return this.read.digests(memoryId, q);
@@ -158,6 +169,7 @@ export class ReadController {
 
   @Get('facts')
   @RequireScopes('read')
+  @Returns(factsResponse)
   async facts(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Query(new ZodBody(factsQuery)) q: z.infer<typeof factsQuery>) {
     const { memoryId } = await this.who(p, user);
@@ -166,6 +178,7 @@ export class ReadController {
 
   @Get('facts/:id')
   @RequireScopes('read')
+  @Returns(factDetailResponse)
   async fact(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
     const { memoryId, clientId } = await this.who(p, user);
     return this.read.fact(memoryId, clientId, id);
@@ -173,6 +186,7 @@ export class ReadController {
 
   @Post('facts/:id/corrections')
   @RequireScopes('write')
+  @Returns(createdResponse)
   async correctFact(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodBody(factCorrectionBody)) body: z.infer<typeof factCorrectionBody>) {
     const { memoryId } = await this.who(p, user);
@@ -205,6 +219,7 @@ export class ReadController {
 
   @Get('notes')
   @RequireScopes('read')
+  @Returns(notesResponse)
   async notes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query(new ZodBody(notesQuery)) q: z.infer<typeof notesQuery>) {
     const { memoryId } = await this.who(p, user);
     return this.read.notes(memoryId, q);
@@ -213,6 +228,7 @@ export class ReadController {
   /** The notes change feed (D34): declared before `notes/:id`. */
   @Get('notes/changes')
   @RequireScopes('read')
+  @Returns(noteChangesResponse)
   async noteChanges(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query(new ZodBody(changesQuery)) q: z.infer<typeof changesQuery>) {
     const { memoryId } = await this.who(p, user);
     return this.read.noteChanges(memoryId, q);
@@ -220,6 +236,7 @@ export class ReadController {
 
   @Get('notes/:id')
   @RequireScopes('read')
+  @Returns(noteDetailResponse)
   async note(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
     const { memoryId, clientId } = await this.who(p, user);
     return this.read.note(memoryId, clientId, id);
@@ -228,6 +245,7 @@ export class ReadController {
   /** Manual entry from the host's UI: written by the person, stated. */
   @Post('notes')
   @RequireScopes('write')
+  @Returns(createdResponse)
   async addNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(noteBody)) body: z.infer<typeof noteBody>) {
     const { memoryId } = await this.who(p, user);
@@ -236,6 +254,7 @@ export class ReadController {
 
   @Post('notes/:id/corrections')
   @RequireScopes('write')
+  @Returns(createdResponse)
   async correctNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodBody(noteBody)) body: z.infer<typeof noteBody>) {
     const { memoryId } = await this.who(p, user);
@@ -277,6 +296,7 @@ export class ReadController {
 
   @Get('plans')
   @RequireScopes('read')
+  @Returns(plansResponse)
   async plans(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Query(new ZodBody(plansQuery)) q: z.infer<typeof plansQuery>) {
     const { memoryId } = await this.who(p, user);
@@ -285,6 +305,7 @@ export class ReadController {
 
   @Get('settings')
   @RequireScopes('read')
+  @Returns(settingsResponse)
   async getSettings(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined) {
     const { memoryId } = await this.who(p, user);
     return this.settings.get(memoryId);
@@ -292,6 +313,7 @@ export class ReadController {
 
   @Patch('settings')
   @RequireScopes('memory_settings')
+  @Returns(settingsResponse)
   async patchSettings(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Body(new ZodBody(settingsBody)) body: z.infer<typeof settingsBody>) {
     const { memoryId } = await this.who(p, user);
@@ -300,6 +322,7 @@ export class ReadController {
 
   @Get('usage')
   @RequireScopes('read')
+  @Returns(usageResponse)
   async usage(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
     @Query(new ZodBody(usageQuery)) q: z.infer<typeof usageQuery>) {
     const { memoryId } = await this.who(p, user);
@@ -310,6 +333,7 @@ export class ReadController {
   @Post('exports')
   @HttpCode(202)
   @RequireScopes('export')
+  @Returns(exportResponse)
   async startExport(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined) {
     const { memoryId, clientId } = await this.who(p, user);
     return this.exports.start(memoryId, clientId);
@@ -317,6 +341,7 @@ export class ReadController {
 
   @Get('exports/:id')
   @RequireScopes('export')
+  @Returns(exportResponse)
   async exportStatus(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
     const { memoryId } = await this.who(p, user);
     return this.exports.status(memoryId, id);

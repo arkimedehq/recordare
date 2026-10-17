@@ -13,6 +13,7 @@ import { DataSource } from 'typeorm';
 import { localDate, periodEnd, type Precision, zonedMidnight, addDays } from '../engine/time';
 import { toOrTsQuery } from '../rawlog/rawlog-search.service';
 import { confirmPending } from '../engine/pending';
+import { type NoteCategory, type NoteChangeKind, type NoteStatus } from './read.responses';
 
 export type PlanStatus = 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
 
@@ -64,13 +65,13 @@ interface EvidenceRow {
 }
 interface HistoryRow { id: string; content: string; occurred_at: Date | null; recorded_at: Date }
 interface PlanEventRow { patch: string; note: string | null; created_at: Date }
-interface DigestRow { id: string; level: string; period_start: string; period_end: string; content: string; created_at: Date }
+interface DigestRow { id: string; level: 'day' | 'month'; period_start: string; period_end: string; content: string; created_at: Date }
 interface FactRow {
   id: string; key: string; value: string | null; status: string; valid_from: Date | null; valid_to: Date | null;
   pending: boolean; stance: string; author_role: string; about: string | null;
 }
 interface NoteRow {
-  id: string; category: string; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; author_role: string;
+  id: string; category: NoteCategory; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; author_role: string;
   support_count: number; recorded_at: Date;
 }
 
@@ -193,7 +194,7 @@ export class ReadService {
       ...item,
       evidence: evidence.map((e) => (e.own || showAll
         ? { messageId: e.message_id, conversation: e.conversation, role: e.role, author: e.author, sentAt: (e.sent_at as Date).toISOString(), text: e.content, kind: e.evidence_kind }
-        : { role: e.role, sentAt: (e.sent_at as Date).toISOString(), kind: e.evidence_kind, otherClient: true })),
+        : { role: e.role, sentAt: (e.sent_at as Date).toISOString(), kind: e.evidence_kind, otherClient: true as const })),
       history: history.map((h) => ({ id: h.id, content: h.content, occurredAt: h.occurred_at ? localDate(h.occurred_at, o.tz) : null,
         recordedAt: (h.recorded_at as Date).toISOString() })),
       ...(row.kind === 'plan' ? {
@@ -341,7 +342,7 @@ export class ReadService {
   /** One note (any status) with its evidence, as `fact`. */
   async note(memoryId: string, clientId: string, id: string) {
     await this.memory(memoryId);
-    const [n]: Array<NoteRow & { status: string; supersedes: string | null; corrects: string | null }> = await this.db.query(
+    const [n]: Array<NoteRow & { status: NoteStatus; supersedes: string | null; corrects: string | null }> = await this.db.query(
       `SELECT ${NOTE_COLUMNS}, status::text, supersedes, corrects FROM notes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL`, [id, memoryId]);
     if (!n) throw new NotFoundException();
     return { ...noteView(n), status: n.status, supersedes: n.supersedes, corrects: n.corrects, ...(await this.itemEvidence('notes', id, clientId)) };
@@ -364,7 +365,7 @@ export class ReadService {
     return {
       evidence: messages.map((e) => (e.own || showAll
         ? { messageId: e.message_id, conversation: e.conversation, role: e.role, author: e.author, sentAt: (e.sent_at as Date).toISOString(), text: e.content }
-        : { role: e.role, sentAt: (e.sent_at as Date).toISOString(), otherClient: true })),
+        : { role: e.role, sentAt: (e.sent_at as Date).toISOString(), otherClient: true as const })),
       episodeIds: episodes.map((e) => e.episode_id),
     };
   }
@@ -377,10 +378,10 @@ export class ReadService {
   async noteChanges(memoryId: string, query: { since?: number; limit?: number }) {
     await this.memory(memoryId);
     const limit = query.limit ?? 100;
-    const rows: Array<{ seq: string; note_id: string; change: string; at: Date }> = await this.db.query(
+    const rows: Array<{ seq: string; note_id: string; change: NoteChangeKind; at: Date }> = await this.db.query(
       `SELECT seq::text, note_id, change::text, at FROM note_changes WHERE memory_id = $1 AND seq > $2 ORDER BY seq LIMIT $3`,
       [memoryId, query.since ?? 0, limit]);
-    const notes: Array<NoteRow & { status: string }> = rows.length ? await this.db.query(
+    const notes: Array<NoteRow & { status: NoteStatus }> = rows.length ? await this.db.query(
       `SELECT ${NOTE_COLUMNS}, status::text FROM notes WHERE id = ANY($1) AND memory_id = $2 AND deleted_at IS NULL`,
       [[...new Set(rows.map((r) => r.note_id))], memoryId]) : [];
     const byId = new Map(notes.map((n) => [n.id, { ...noteView(n), status: n.status }]));
