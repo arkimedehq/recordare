@@ -5,7 +5,7 @@
 Servizio NestJS che implementa `docs/API.md` e `docs/DATA_MODEL.md` (profilo v1 privato / di ricerca, D33). Stato
 (2026-10-17, rilasciato come v0.3.0): ingest, motore, consolidamento, strumenti MCP, il contesto di memoria
 (`POST api/v1/context`), l'API di lettura (`API.md` §4), API e console di amministrazione e telemetria realizzati; ciò
-che resta aperto è indicato riga per riga in `docs/WORK_PLAN.md` (ad esempio OpenAPI, `search_facts`). Guida per i
+che resta aperto è indicato riga per riga in `docs/WORK_PLAN.md` (ad esempio `search_facts`); il contratto REST come OpenAPI 3.1: `GET api/v1/openapi.json`. Guida per i
 client: `docs/INTEGRATION.md` (libreria client: `packages/client`); deployment: `docs/DEPLOYMENT.md`; tutte le
 impostazioni: `docs/KNOBS.md`.
 

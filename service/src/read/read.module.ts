@@ -72,10 +72,6 @@ const forgetBody = z.object({ from: isoDay, to: isoDay, keepRaw: z.boolean().opt
   // A month (YYYY-MM) counts from its first day to its last one.
   .refine((b) => (b.from.length === 7 ? `${b.from}-01` : b.from) <= (b.to.length === 7 ? `${b.to}-31` : b.to), { message: 'from after to' });
 
-function parse<T>(schema: z.ZodType<T>, raw: unknown): T {
-  return new ZodBody(schema).transform(raw);
-}
-
 /**
  * The person's diary, read and edited from their platform's UI: the reader is the person themself (memory-direct), so
  * a client key names them with X-Recordare-User; a personal token is the person.
@@ -105,9 +101,9 @@ export class ReadController {
   @Get('episodes')
   @RequireScopes('read')
   async episodes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
-    @Query() q: Record<string, string>) {
+    @Query(new ZodBody(episodesQuery)) q: z.infer<typeof episodesQuery>) {
     const { memoryId } = await this.who(p, user);
-    return this.read.episodes(memoryId, parse(episodesQuery, q), this.now(at));
+    return this.read.episodes(memoryId, q, this.now(at));
   }
 
   @Get('episodes/:id')
@@ -155,17 +151,17 @@ export class ReadController {
 
   @Get('digests')
   @RequireScopes('read')
-  async digests(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query() q: Record<string, string>) {
+  async digests(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query(new ZodBody(digestsQuery)) q: z.infer<typeof digestsQuery>) {
     const { memoryId } = await this.who(p, user);
-    return this.read.digests(memoryId, parse(digestsQuery, q));
+    return this.read.digests(memoryId, q);
   }
 
   @Get('facts')
   @RequireScopes('read')
   async facts(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
-    @Query() q: Record<string, string>) {
+    @Query(new ZodBody(factsQuery)) q: z.infer<typeof factsQuery>) {
     const { memoryId } = await this.who(p, user);
-    return this.read.facts(memoryId, parse(factsQuery, q), this.now(at));
+    return this.read.facts(memoryId, q, this.now(at));
   }
 
   @Get('facts/:id')
@@ -209,17 +205,17 @@ export class ReadController {
 
   @Get('notes')
   @RequireScopes('read')
-  async notes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query() q: Record<string, string>) {
+  async notes(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query(new ZodBody(notesQuery)) q: z.infer<typeof notesQuery>) {
     const { memoryId } = await this.who(p, user);
-    return this.read.notes(memoryId, parse(notesQuery, q));
+    return this.read.notes(memoryId, q);
   }
 
   /** The notes change feed (D34): declared before `notes/:id`. */
   @Get('notes/changes')
   @RequireScopes('read')
-  async noteChanges(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query() q: Record<string, string>) {
+  async noteChanges(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Query(new ZodBody(changesQuery)) q: z.infer<typeof changesQuery>) {
     const { memoryId } = await this.who(p, user);
-    return this.read.noteChanges(memoryId, parse(changesQuery, q));
+    return this.read.noteChanges(memoryId, q);
   }
 
   @Get('notes/:id')
@@ -282,9 +278,9 @@ export class ReadController {
   @Get('plans')
   @RequireScopes('read')
   async plans(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
-    @Query() q: Record<string, string>) {
+    @Query(new ZodBody(plansQuery)) q: z.infer<typeof plansQuery>) {
     const { memoryId } = await this.who(p, user);
-    return this.read.plans(memoryId, parse(plansQuery, q), this.now(at));
+    return this.read.plans(memoryId, q, this.now(at));
   }
 
   @Get('settings')
@@ -305,9 +301,9 @@ export class ReadController {
   @Get('usage')
   @RequireScopes('read')
   async usage(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Headers(NOW_HEADER) at: string | undefined,
-    @Query() q: Record<string, string>) {
+    @Query(new ZodBody(usageQuery)) q: z.infer<typeof usageQuery>) {
     const { memoryId } = await this.who(p, user);
-    return this.settings.usage(memoryId, parse(usageQuery, q), this.now(at));
+    return this.settings.usage(memoryId, q, this.now(at));
   }
 
   /** A full export, built in the background: poll `GET exports/{id}`, then download `GET exports/{id}/archive`. */

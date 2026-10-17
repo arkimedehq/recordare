@@ -6,7 +6,7 @@ import { type z } from 'zod';
 
 /** Validates a request body against a zod schema (the schemas are the API contract). */
 export class ZodBody<T> implements PipeTransform<unknown, T> {
-  constructor(private readonly schema: z.ZodType<T>) {}
+  constructor(readonly schema: z.ZodType<T>) {}
 
   transform(value: unknown): T {
     const parsed = this.schema.safeParse(value);
