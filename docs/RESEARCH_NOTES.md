@@ -70,8 +70,11 @@ vs change, bi-temporal "as told" vs "as true" questions. Metrics: closed-pool gr
 rate**, Set-F1 for lists, cost per user. Baselines: full context, plain RAG, Mem0,
 Zep/Graphiti, Memobase, Letta, A-Mem, a PIS-style typed store. Our two datasets already contain
 seeds of (a)–(d). Since then the blind sets 3–7 carry plan categories (confirmed / cancelled / rescheduled /
-unresolved, premise traps) and the service is measured on them (RESULTS.md); the comparison with the baselines above on
-these categories is still to do.
+unresolved, premise traps) and the service is measured on them (RESULTS.md). The two rates (4.5c, 2026-10-16, a second
+grading of stored answers): on blind3 Recordare asserts least without support (0.028; Mem0 0.046, Cognee 0.065, D 0.065,
+full context 0.037), but on the H1 categories themselves every system is near zero — these sets do not show H1; a
+harder set (unresolved plans asked as if done, implicit outcomes, long histories) is needed, and Zep/Graphiti, Letta,
+A-Mem and a PIS-style store are still to compare.
 
 **Phase-1 data model must store.** Plan status `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, status date, evidence episode); episode kind
