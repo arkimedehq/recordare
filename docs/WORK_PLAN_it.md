@@ -77,6 +77,10 @@ di 1.4 **non è realizzata** (vedi 4.7); 1.6 scheletro SDK e OpenAPI generato **
 Stato (2026-10-08): 1.4 **partial** — la parte dell'API di lettura che serve al diario è realizzata (4.7), dimenticare un
 periodo e il resto della §4 sono TODO; 1.6 **done** come libreria client (`packages/client`, 6.7; pubblicata su npm come
 `@arkimedehq/recordare-client` 0.1.0); l'OpenAPI generato **non è ancora realizzato**.
+Stato (2026-10-18): l'OpenAPI generato è **done** — `GET api/v1/openapi.json` (OpenAPI 3.1, `service/src/openapi/`):
+percorsi, scope, parametri e corpi delle richieste dalle rotte e dai loro schemi zod (un `@Body()` o un `@Query()` intero
+senza schema fa fallire la costruzione del documento); risposte solo per codice di stato (la loro forma resta in API.md e
+nei tipi del client).
 
 | # | Compito | Output |
 |---|---|---|

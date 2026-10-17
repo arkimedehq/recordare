@@ -6,6 +6,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **OpenAPI** (API.md): `GET api/v1/openapi.json`, senza autenticazione — il contratto REST come OpenAPI 3.1, generato
+  dalle rotte: percorsi, scope (`x-recordare-scopes`), parametri di percorso e di query e corpi delle richieste dagli
+  schemi zod che li validano, codici di stato ed errori RFC 9457. La forma delle risposte non c'è ancora (API.md, i tipi
+  della libreria client).
+
 ## [0.3.0] — 2026-10-17
 
 **Qualità e controllo** della memoria: il richiamo ordina per pertinenza, abitudini ricorrenti, ascolto continuo nella

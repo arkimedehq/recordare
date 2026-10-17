@@ -13,8 +13,8 @@ memoria prima del turno (`POST api/v1/context`, con `ingest`), le righe della §
 snapshot dell'atlas; `GET api/v1/health` (senza autenticazione: il servizio è vivo e raggiunge il database).
 **Costruito (2026-10-10, WORK_PLAN 8.9, D49)**: le fonti apprese — §2 ingest delle fonti, §3 `search_knowledge` /
 `learn_source`, le righe delle fonti nella §4. Le sezioni o
-righe contrassegnate **not built yet (v1 plan)** sono il contratto ancora da costruire (i link code tra client del public profile, OpenAPI,
-`Idempotency-Key`; il resto della §4 costruito il 2026-10-12).
+righe contrassegnate **not built yet (v1 plan)** sono il contratto ancora da costruire (i link code tra client del public profile,
+`Idempotency-Key`; il resto della §4 costruito il 2026-10-12; OpenAPI costruito il 2026-10-18).
 **Costruito (2026-10-14, D51)**: le identità di canale del titolare con un codice monouso (`me/link-codes`, `me/identities`, §4).
 Neutrale rispetto al client: nulla qui è specifico di Arkimede. Modello dati: `DATA_MODEL.md`. Due livelli di
 integrazione (visione → Architecture): **basic** = solo strumenti MCP; **full** = ingest REST + MCP + API di lettura
@@ -22,7 +22,10 @@ integrazione (visione → Architecture): **basic** = solo strumenti MCP; **full*
 
 Convenzioni: JSON su HTTPS; i controller hard-codano `api/v1/…` (nessun prefisso globale); ISO 8601 con
 offset; uuid; errori come problem details RFC 9457 (`{type, title, status, detail, code}`); gli schemi zod
-sono l'unica fonte di verità e generano `GET /api/v1/openapi.json` (**not built yet**); paginazione
+sono l'unica fonte di verità e generano `GET /api/v1/openapi.json` (**costruito il 2026-10-18**: OpenAPI 3.1, senza
+autenticazione; percorsi, scope, parametri di percorso e di query e corpi delle richieste dalle rotte e dai loro schemi zod,
+risposte per codice di stato ed errori RFC 9457 — la forma delle risposte è in questo documento e nei tipi della libreria
+client); paginazione
 `?cursor&limit` → `{items, nextCursor}` (come costruito pagina solo `GET api/v1/episodes`; le altre liste della §4
 restituiscono semplici array); ogni POST non idempotente accetta un header `Idempotency-Key`
 (finestra di replay di 24 h, viene restituita la stessa risposta — **not built yet**; l'ingest è idempotente sugli id dei messaggi).

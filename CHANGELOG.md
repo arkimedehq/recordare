@@ -6,6 +6,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **OpenAPI** (API.md): `GET api/v1/openapi.json`, no authentication — the REST contract as OpenAPI 3.1, generated from
+  the routes: paths, scopes (`x-recordare-scopes`), path and query parameters and request bodies from the zod schemas
+  that validate them, status codes and RFC 9457 errors. Response shapes are not in it yet (API.md, the client library's
+  types).
+
 ## [0.3.0] — 2026-10-17
 
 Memory **quality and control**: recall ranks by relevance, recurring habits, continuous listening in the room, forgetting

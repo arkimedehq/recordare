@@ -9,6 +9,7 @@
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException, type OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
+import { VERSION } from '../version';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -74,7 +75,7 @@ export class McpService implements OnModuleDestroy {
     }
     if (req.method !== 'POST' || !isInitializeRequest(body)) throw new NotFoundException();
 
-    const server = new McpServer({ name: 'recordare', version: '0.3.0' });
+    const server = new McpServer({ name: 'recordare', version: VERSION });
     const [settings] = await this.db.query(`SELECT timezone, locale FROM memories WHERE person_id = $1`, [memoryId]);
     registerTools(server, {
       principal, memoryId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,

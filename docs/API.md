@@ -10,7 +10,7 @@ into deployment profiles (§0) so v1 stays focused on the twin.
 client library, the admin API and console, live telemetry and the atlas snapshot; `GET api/v1/health` (no auth:
 liveness and database reachability). **Built (2026-10-10, WORK_PLAN 8.9, D49)**: learned sources — §2 source ingest,
 §3 `search_knowledge` / `learn_source`, the §4 source rows. Sections or rows marked **not built yet (v1 plan)** are the contract still to
-build (the public-profile cross-client link codes, OpenAPI, `Idempotency-Key`; the rest of §4 built 2026-10-12).
+build (the public-profile cross-client link codes, `Idempotency-Key`; the rest of §4 built 2026-10-12; OpenAPI built 2026-10-18).
 **Built (2026-10-14, D51)**: the holder's channel identities by one-time code (`me/link-codes`, `me/identities`, §4).
 Client-neutral: nothing here is specific to Arkimede. Data model: `DATA_MODEL.md`. Two integration
 levels (vision → Architecture): **basic** = MCP tools only; **full** = REST ingest + MCP + read API
@@ -18,7 +18,9 @@ levels (vision → Architecture): **basic** = MCP tools only; **full** = REST in
 
 Conventions: JSON over HTTPS; controllers hard-code `api/v1/…` (no global prefix); ISO 8601 with
 offset; uuids; errors as RFC 9457 problem details (`{type, title, status, detail, code}`); zod
-schemas are the single source of truth and generate `GET /api/v1/openapi.json` (**not built yet**); pagination
+schemas are the single source of truth and generate `GET /api/v1/openapi.json` (**built 2026-10-18**: OpenAPI 3.1, no
+authentication; paths, scopes, path / query parameters and request bodies from the routes and their zod schemas, responses
+by status and RFC 9457 errors — the response shapes are in this document and in the client library's types); pagination
 `?cursor&limit` → `{items, nextCursor}` (as built only `GET api/v1/episodes` pages; the other §4 lists return plain
 arrays); every non-idempotent POST accepts an `Idempotency-Key`
 header (24 h replay window, same response returned — **not built yet**; ingest is idempotent on message ids).

@@ -75,6 +75,9 @@ of 1.4 is **not built** (see 4.7); 1.6 SDK skeleton and the generated OpenAPI **
 Status (2026-10-08): 1.4 **partial** — the diary part of the read API is built (4.7), forgetting a period and the rest
 of §4 are TODO; 1.6 **done** as the client library (`packages/client`, 6.7; published on npm as
 `@arkimedehq/recordare-client` 0.1.0); the generated OpenAPI is still **not built**.
+Status (2026-10-18): the generated OpenAPI is **done** — `GET api/v1/openapi.json` (OpenAPI 3.1, `service/src/openapi/`):
+paths, scopes, parameters and request bodies from the routes and their zod schemas (a `@Body()` or whole `@Query()`
+without one fails the build of the document); responses by status only (their shapes stay in API.md and the client types).
 
 | # | Task | Output |
 |---|---|---|

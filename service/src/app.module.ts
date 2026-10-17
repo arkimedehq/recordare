@@ -20,6 +20,7 @@ import { QueueModule } from './queue/queue.module';
 import { EngineModule } from './engine/engine.module';
 import { RawLogModule } from './rawlog/rawlog.module';
 import { McpModule } from './mcp/mcp.module';
+import { OpenApiModule } from './openapi/openapi.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
 
 @Module({
@@ -47,6 +48,7 @@ import { KnowledgeModule } from './knowledge/knowledge.module';
     RawLogModule,
     KnowledgeModule,
     McpModule,
+    OpenApiModule,
   ],
   controllers: [HealthController, MeController],
 })
