@@ -7,7 +7,8 @@
  * formats dates. To add a language: add it to LOCALES (months and relative periods come from Intl), then its relation
  * words and its third-person stand-ins for the self ("the user", "l'utente") in self.ts.
  */
-export { containsPhrase, LOCALES, normalize } from './locales';
+export { canonicalLocale, containsPhrase, language, LOCALES, normalize } from './locales';
+export { messages, type Messages } from './messages';
 export { selfLeak, type SelfLeak } from './self';
 export { isFullName, isProperName } from './names';
 export { MONTH_NAMES, periodPhrases, WEEKDAY_NAMES } from './periods';

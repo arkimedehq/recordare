@@ -116,6 +116,12 @@ le più usate): `service/src/lang` contiene periodi e nomi dei mesi da Intl per 
 in terza persona del sé per molte lingue (le scritture senza spazi si confrontano come sottostringhe), usati dal risolutore di
 periodi, dal riconoscimento delle persone e dal rilevatore di fughe; i prompt restano in inglese con una riga sulla
 lingua della memoria; la console admin è IT/EN.
+Stato (2026-10-18): 2.6 **done**. I prompt restano in inglese con la riga MEMORY LANGUAGE (D27: le istruzioni le legge il
+modello, la memoria è scritta nella lingua della memoria); le frasi del servizio — le note degli strumenti di richiamo per
+l'agente, le date ignote / approssimate, la domanda "stessa persona?" — sono in `service/src/lang/messages.ts` per le 25
+lingue (IT ed EN invariati, quindi il richiamo non cambia dove è stato misurato), i nomi dei giorni da Intl; la lingua di
+una memoria è qualsiasi tag BCP 47 anche nell'API admin (prima `it` / `en`), e una regionale (`it-IT`, accettata da `PATCH
+settings`) non ricade più sull'inglese. La console admin resta IT/EN (interfaccia degli operatori, non della memoria).
 
 | # | Compito |
 |---|---|
@@ -124,7 +130,7 @@ lingua della memoria; la console admin è IT/EN.
 | 2.3 | Porte e adattatori: `LlmPort` (adattatori compatibili OpenAI + Anthropic nativo, profili provider dalla configurazione — ragionamento disattivato, modalità di output strutturato, parametro dei token, caching, usage — validazione + retry; D27), `EmbeddingPort` (compatibile OpenAI, default `bge-m3`), ~~`VectorStorePort` (adattatore pgvector; Qdrant sarebbe solo un altro adattatore)~~ — non costruito, deciso il 2026-10-18 (stato sopra), `ClockPort`, `QueuePort` (BullMQ) |
 | 2.4 | Auth (profilo v1 privato / di ricerca, D33): chiavi API dei client con hash, token personali, bootstrap dell'admin, tabelle person / identity |
 | 2.5 | `docker-compose.yml` (servizio, Postgres, Redis), endpoint health, configurazione via env |
-| 2.6 | Impalcatura i18n per prompt e messaggi (IT/EN) |
+| 2.6 | Impalcatura i18n per prompt e messaggi (IT/EN) — **fatto il 2026-10-18**: tutte le lingue (stato sopra) |
 
 ### M3 — Livello 0: log grezzo
 

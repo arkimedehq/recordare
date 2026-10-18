@@ -6,12 +6,10 @@
  * timezone, with a precision (docs/DATA_MODEL.md → Time); calendars help models resolve
  * "sabato" / "last Friday" against the message time (spike finding).
  */
+import { messages } from '../lang';
+
 export type Precision = 'minute' | 'day' | 'month' | 'year' | 'approximate' | 'unknown';
 
-const WEEKDAYS: Record<string, string[]> = {
-  it: ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'],
-  en: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-};
 
 /** Offset (ms) of `tz` at instant `d`: local wall time − UTC. */
 function tzOffsetMs(d: Date, tz: string): number {
@@ -45,8 +43,15 @@ export function addDays(isoDate: string, n: number): string {
   return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
 }
 
+/** The weekday's name in `locale` (Intl), English when Intl does not know the locale. */
 export function weekdayName(isoDate: string, locale: string): string {
-  return (WEEKDAYS[locale] ?? WEEKDAYS['en'] as string[])[weekdayIndex(isoDate)] as string;
+  const [y, m, d] = isoDate.split('-').map(Number) as [number, number, number];
+  const noon = new Date(Date.UTC(y, m - 1, d, 12));
+  try {
+    return new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(noon);
+  } catch {
+    return new Intl.DateTimeFormat('en', { weekday: 'long', timeZone: 'UTC' }).format(noon);
+  }
 }
 
 /** Explicit weekday → date table around `ref`. */
@@ -82,10 +87,10 @@ export function periodEnd(at: Date, precision: Precision, tz: string): Date {
 
 /** Human-readable date with precision, in the memory's language. */
 export function describe(at: Date | null, precision: Precision, tz: string, locale: string): string {
-  if (!at) return locale === 'it' ? 'data ignota' : 'unknown date';
+  if (!at) return messages(locale).unknownDate;
   const day = localDate(at, tz);
   if (precision === 'year') return day.slice(0, 4);
   if (precision === 'month') return day.slice(0, 7);
   const base = `${weekdayName(day, locale)} ${day}`;
-  return precision === 'approximate' ? `${locale === 'it' ? 'circa' : 'about'} ${base}` : base;
+  return precision === 'approximate' ? messages(locale).about(base) : base;
 }

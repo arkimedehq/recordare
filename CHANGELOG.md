@@ -13,6 +13,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   loose objects, not a stable contract), status codes and RFC 9457 errors. The tests check every answer they see against
   its schema, and the compiler checks the handlers and the client library's types against them.
 
+### Changed
+- **All languages in the service's own sentences** (WORK_PLAN 2.6): the recall tools' notes for the agent, unknown and
+  approximate dates, weekday names and the "same person?" question follow the memory's language in the 25 most used
+  languages (they were Italian or English); a memory's `locale` is any BCP 47 tag in the admin API too (was `it` / `en`).
+
+### Fixed
+- A memory whose locale is regional (`it-IT`, as `PATCH settings` accepts) got those sentences and weekday names in
+  English.
+
 ## [0.3.0] — 2026-10-17
 
 Memory **quality and control**: recall ranks by relevance, recurring habits, continuous listening in the room, forgetting

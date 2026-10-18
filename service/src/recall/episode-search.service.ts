@@ -26,6 +26,7 @@ import { contactNames, speakerOf, subjectView, type Speaker, type SubjectRow, ty
 import { relevantClarifications } from '../engine/clarifications';
 import { type MemoryMode, type SubjectKind } from '../identity/identity.entities';
 import { vectorParam } from '../db/pgvector';
+import { messages } from '../lang';
 
 export interface EpisodeSearchArgs {
   /** The conversation the recall is served in (recall log: lets the extractor recognise answers from memory). */
@@ -209,7 +210,7 @@ export class EpisodeSearchService {
       : [];
 
     const views = await this.views([...chosen, ...outside], tz, locale, now);
-    const it = locale === 'it';
+    const say = messages(locale);
     const name: string = memory.display_name;
     const result: EpisodeSearchResult = {
       memory: { name, mode: memory.mode },
@@ -224,23 +225,15 @@ export class EpisodeSearchService {
       notes: [],
     };
     if (result.episodes.some((e) => e.planStatus === 'unresolved')) {
-      result.notes.push(locale === 'it'
-        ? 'alcuni piani hanno la data passata senza conferma: non è noto se siano avvenuti'
-        : 'some plans are past their date without confirmation: whether they happened is unknown');
+      result.notes.push(say.plansUnresolved);
     }
     if (speaker.kind === 'contact') {
-      result.notes.push(it
-        ? `chi chiede è ${speaker.name}, una persona che conosco: "io" nella domanda è ${speaker.name}; i ricordi in prima persona sono miei (${name}), non di ${speaker.name}`
-        : `the person asking is ${speaker.name}, someone I know: "I" in the question is ${speaker.name}; first-person memories are mine (${name}), not ${speaker.name}'s`);
+      result.notes.push(say.speakerContact(speaker.name, name));
     } else if (speaker.kind === 'someone') {
-      result.notes.push(it
-        ? `chi chiede non si è identificato: "io" nella domanda è chi parla, non io (${name}); i ricordi in prima persona sono miei`
-        : `the person asking has not said who they are: "I" in the question is the speaker, not me (${name}); first-person memories are mine`);
+      result.notes.push(say.speakerSomeone(name));
     }
     if (result.claims.length) {
-      result.notes.push(it
-        ? `"claims" sono affermazioni di chi è in claimedBy, non confermate: ciò che dicono di me (${name}) non è un mio ricordo né qualcosa che ho detto`
-        : `"claims" are statements of the people in claimedBy, unconfirmed: what they say about me (${name}) is not my memory nor something I said`);
+      result.notes.push(say.claims(name));
     }
     // The chat log answers what episodes never hold (help requests, how-tos: "when did I ask you…") and keeps the
     // holder's own words next to the summaries, so a few raw hits always come along — also when they are behind a
@@ -264,14 +257,10 @@ export class EpisodeSearchService {
         if (by) h.correctedBy = by;
       }
       if (corrected.size) {
-        result.notes.push(it
-          ? 'gli estratti con correctedBy dicono una versione poi corretta: vale la correzione'
-          : 'excerpts with correctedBy state a version that was later corrected: the correction holds');
+        result.notes.push(say.correctedExcerpts);
       }
       if (result.fromChats.some((h) => h.authorRole !== 'holder')) {
-        result.notes.push(it
-          ? `gli estratti scritti da altri (author) sono parole loro: ciò che dicono di me (${name}) non è confermato`
-          : `excerpts written by others (author) are their words: what they say about me (${name}) is unconfirmed`);
+        result.notes.push(say.othersExcerpts(name));
       }
     }
     if (memory.mode === 'personal' || speaker.kind === 'contact') {

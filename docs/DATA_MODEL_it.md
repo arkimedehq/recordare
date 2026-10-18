@@ -113,7 +113,7 @@ come stringhe "Nome (relazione)" (`episode_people.alias`), che il recall consape
 |---|---|---|
 | `person_id` | uuid PK → persons | |
 | `email` | text unique null | Login del titolare (magic link, `API.md` §1) — usato solo dal profilo public |
-| `locale`, `timezone` | text | Default `it`, `Europe/Rome`; l'API admin accetta `it` / `en`. La lingua formatta solo le date e gli avvisi del recall: gli aiuti linguistici deterministici (periodi, mesi, parentele, sostituti del sé per il rilevatore di fughe — `service/src/lang`, le 25 lingue più usate) applicano tutte le lingue insieme |
+| `locale`, `timezone` | text | Default `it`, `Europe/Rome`; qualsiasi locale BCP 47, salvato in forma canonica (`it-IT`). La lingua formatta solo le date e le frasi del servizio (note del recall, date ignote / approssimate, la domanda "stessa persona?" — `service/src/lang/messages.ts`, per la sua parte di lingua, inglese per una lingua non elencata): gli aiuti linguistici deterministici (periodi, mesi, parentele, sostituti del sé per il rilevatore di fughe — `service/src/lang`, le 25 lingue più usate) applicano tutte le lingue insieme |
 | `consolidated_at` | timestamptz null | Ultimo consolidamento notturno (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark della revisione notturna dei fatti (WORK_PLAN 5.6, sull'orologio di registrazione) |
 | `patterns_upto` | timestamptz null | Watermark del passaggio notturno dei pattern (WORK_PLAN 5.4, sull'orologio di registrazione) |
@@ -278,7 +278,7 @@ personali; le memorie di entità mantengono le regole della 8.3 e input dei prom
   del partecipante è uno dei suoi nomi, oppure — per un partecipante con un solo nome — la prima parola di uno di essi;
   mai un contatto il cui nome completo noto differisce da quello del partecipante), una memoria personale apre una
   **chiarificazione "stessa persona?"** (`clarifications.contact_id` = il nuovo contatto, `candidates` = quello noto,
-  nessun elemento; la domanda in italiano quando la lingua della memoria è l'italiano, altrimenti in inglese: "Giulia, che
+  nessun elemento; la domanda nella lingua della memoria (`lang/messages.ts`): "Giulia, che
   ha scritto il 22 settembre, è la stessa persona di Giulia (sorella)?", `created_at` = l'ora del primo messaggio del
   lotto). Più contatti di questo tipo: un nuovo contatto e nessuna domanda (niente spam; il Diario può fonderli a mano).
   Le memorie di entità non chiedono mai (fino alla 8.5). Le auto-presentazioni con relazione ("sono Giulia, la sorella di

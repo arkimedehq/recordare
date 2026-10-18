@@ -110,7 +110,7 @@ writer's episode-subject rule reads them. Episodes still keep people as "Name (r
 |---|---|---|
 | `person_id` | uuid PK → persons | |
 | `email` | text unique null | Holder login (magic link, `API.md` §1) — used by the public profile only |
-| `locale`, `timezone` | text | Defaults `it`, `Europe/Rome`; the admin API accepts `it` / `en`. The locale only formats dates and recall notices: the deterministic language helpers (periods, months, relations, self stand-ins for the leak detector — `service/src/lang`, 25 most used languages) apply all languages at once |
+| `locale`, `timezone` | text | Defaults `it`, `Europe/Rome`; any BCP 47 locale, stored canonical (`it-IT`). The locale only formats dates and the service's own sentences (recall notes, unknown / approximate dates, the "same person?" question — `service/src/lang/messages.ts`, by its language part, English for a language not listed): the deterministic language helpers (periods, months, relations, self stand-ins for the leak detector — `service/src/lang`, 25 most used languages) apply all languages at once |
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `patterns_upto` | timestamptz null | Watermark of the nightly pattern pass (WORK_PLAN 5.4, on the recording clock) |
@@ -263,7 +263,7 @@ memories keep the 8.3 rules and byte-identical prompt inputs until 8.5.
   name (the participant's first name is one of its names, or — for a single-name participant — the first word of one;
   never a contact whose known full name differs from the participant's full name), a personal memory opens a **"same
   person?" clarification** (`clarifications.contact_id` = the new contact, `candidates` = the known one, no item; the
-  question in Italian when the memory's locale is Italian, else English: "Giulia, che ha scritto il 22 settembre, è la
+  question in the memory's language (`lang/messages.ts`): "Giulia, che ha scritto il 22 settembre, è la
   stessa persona di Giulia (sorella)?", `created_at` = the batch's first message time). Several such contacts: a new
   contact and no question (no spam; the Diary can merge by hand). Entity memories never ask (until 8.5). Relation
   self-introductions ("sono Giulia, la sorella di Andrea") and recognised identifiers are other paths (not at ingest).

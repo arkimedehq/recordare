@@ -111,6 +111,12 @@ Status (2026-10-08): 2.6 still **partial**, with the language module (maintainer
 used): `service/src/lang` holds periods and month names from Intl for 25 locales, relation words and third-person stand-ins for the self for
 many languages (scripts without spaces matched as substrings), used by the period resolver, people matching and
 the leak detector; prompts stay English with a memory-language line; the admin console is IT/EN.
+Status (2026-10-18): 2.6 **done**. Prompts stay English with the MEMORY LANGUAGE line (D27: the instructions are read by
+the model, the memory is written in the memory's language); the service's own sentences — the recall tools' notes for the
+agent, unknown / approximate dates, the "same person?" question — are in `service/src/lang/messages.ts` for the 25
+languages (IT and EN unchanged, so recall is unchanged where it was measured), weekday names from Intl; a memory's
+locale is any BCP 47 tag in the admin API too (was `it` / `en`), and a regional one (`it-IT`, accepted by `PATCH settings`)
+no longer falls back to English. The admin console stays IT/EN (operators' UI, not the memory's).
 
 | # | Task |
 |---|---|
@@ -119,7 +125,7 @@ the leak detector; prompts stay English with a memory-language line; the admin c
 | 2.3 | Ports and adapters: `LlmPort` (adapters OpenAI-compatible + native Anthropic, provider profiles from config — reasoning off, structured-output mode, token param, caching, usage — validate + retry; D27), `EmbeddingPort` (OpenAI-compatible, `bge-m3` default), ~~`VectorStorePort` (pgvector adapter; Qdrant would be just another adapter)~~ — not built, decided 2026-10-18 (status above), `ClockPort`, `QueuePort` (BullMQ) |
 | 2.4 | Auth (v1 home / research profile, D33): hashed client API keys, personal tokens, admin bootstrap, person / identity tables |
 | 2.5 | `docker-compose.yml` (service, Postgres, Redis), health endpoint, config via env |
-| 2.6 | i18n scaffolding for prompts and messages (IT/EN) |
+| 2.6 | i18n scaffolding for prompts and messages (IT/EN) — **done 2026-10-18**: all languages (status above) |
 
 ### M3 — Layer 0: raw log
 
