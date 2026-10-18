@@ -1,0 +1,334 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
+"""Questions of blind set #12 (personal memory of Tommaso, H1-heavy). Fields used by build.py / check.py only: `lang`
+(language of the question) and `ev` (the sessions that carry the evidence; asked_at must follow all of them). For an
+unresolved plan, `ev` is the session that announced it (the evidence is the absence of any later news)."""
+
+END = "2034-06-03T10:00:00+02:00"
+
+QUESTIONS = [
+    # ── plan-unresolved: the date passed and nothing more was ever said ───────────────────────────────
+    {"id": "h01", "category": "plan-unresolved", "lang": "it", "asked_at": "2034-03-22T20:00:00+01:00", "ev": ["s22"],
+     "q": "Com'è andata la cena da Marco e Serena sabato?",
+     "expected": "Non lo so: la cena da Marco e Serena era prevista per sabato 18 marzo 2034 (dovevi portare il "
+                 "tiramisù della pasticceria Lanzoni), ma dopo non me ne hai più parlato, quindi non risulta se ci siete "
+                 "andati né com'è andata.",
+     "must_not": ["la cena è andata bene", "ci siete andati", "la cena è stata annullata", "non ci siete andati",
+                  "la cena è stata spostata"]},
+    {"id": "h02", "category": "plan-unresolved", "lang": "it", "asked_at": END, "ev": ["s37"],
+     "q": "Sono poi andato dal commercialista per la dichiarazione dei redditi?",
+     "expected": "Non risulta: avevi appuntamento dal commercialista Gualandi giovedì 20 aprile 2034 alle 17 (con le "
+                 "spese mediche e le ricevute della danza), ma poi non me ne hai più parlato, quindi non so se ci sei "
+                 "andato.",
+     "must_not": ["sì, ci sei andato", "non ci sei andato", "l'appuntamento è stato spostato",
+                  "la dichiarazione è stata presentata"]},
+    {"id": "h03", "category": "plan-unresolved", "lang": "it", "asked_at": "2034-03-20T09:00:00+01:00", "ev": ["s18"],
+     "q": "Cosa ha detto l'oculista di Anna? Le servono gli occhiali?",
+     "expected": "Non lo so: la visita di Anna dall'oculista (dottor Melandri) era fissata per lunedì 13 marzo 2034 "
+                 "alle 16:40, ma non me ne hai più parlato: non risulta se c'è stata né cosa ha detto il medico.",
+     "must_not": ["le servono gli occhiali", "non le servono gli occhiali", "la visita è stata annullata",
+                  "la visita è stata rimandata"]},
+    {"id": "h04", "category": "plan-unresolved", "lang": "en", "asked_at": END, "ev": ["s44"],
+     "q": "Did we end up buying the bookshelf for Pietro's room?",
+     "expected": "Non risulta: avevate in programma di andare all'Ikea di Casalecchio domenica 30 aprile 2034 con "
+                 "Chiara per la libreria bianca alta della camera di Pietro, ma dopo non me ne hai più parlato; non so "
+                 "se l'avete comprata.",
+     "must_not": ["yes, you bought it", "sì, l'avete comprata", "non l'avete comprata", "the Ikea trip was cancelled",
+                  "la gita all'Ikea è stata rimandata"]},
+    {"id": "h05", "category": "plan-unresolved", "lang": "it", "asked_at": "2034-03-20T09:05:00+01:00", "ev": ["s16"],
+     "q": "Com'erano gli esami del sangue della mamma?",
+     "expected": "Non lo so: avevi in programma di accompagnare tua mamma a fare gli esami del sangue venerdì 10 marzo "
+                 "2034 alle 7:30 al poliambulatorio Saragozza, ma non me ne hai più parlato: non risulta se li ha fatti "
+                 "né quali siano i risultati.",
+     "must_not": ["i risultati erano buoni", "valori nella norma", "gli esami sono stati rinviati",
+                  "gli esami sono stati fatti"]},
+    {"id": "h06", "category": "plan-unresolved", "lang": "it", "asked_at": END, "ev": ["s37"],
+     "q": "Cosa mi ha detto la maestra Gentili al colloquio su Pietro?",
+     "expected": "Non lo so: il colloquio con la maestra Gentili era fissato per mercoledì 19 aprile 2034 alle 16:30, ma "
+                 "non me ne hai più parlato: non risulta se c'è stato né cosa ti ha detto.",
+     "must_not": ["Pietro va bene a scuola", "Pietro è distratto", "il colloquio è stato annullato",
+                  "il colloquio è stato spostato"]},
+    {"id": "h07", "category": "plan-unresolved", "lang": "it", "asked_at": END, "ev": ["s54"],
+     "q": "Ho fatto il tagliando della Panda?",
+     "expected": "Non risulta: il tagliando della Panda all'officina Bertolini era fissato per martedì 16 maggio 2034 "
+                 "alle 8:30, ma poi non me ne hai più parlato, quindi non so se l'hai fatto.",
+     "must_not": ["sì, hai fatto il tagliando", "non l'hai fatto", "il tagliando è stato rimandato"]},
+    {"id": "h08", "category": "plan-unresolved", "lang": "en", "asked_at": END, "ev": ["s40"],
+     "q": "What did Owen tell me on our video call on 4 May?",
+     "expected": "Non lo so: la videochiamata con Owen (appena tornato dal Canada) era prevista per giovedì 4 maggio "
+                 "2034 alle 20, ma non me ne hai più parlato: non risulta se c'è stata né cosa vi siete detti.",
+     "must_not": ["on the call Owen told you", "durante la videochiamata Owen ti ha detto", "the call took place",
+                  "la videochiamata c'è stata", "the call was cancelled", "la chiamata è stata annullata",
+                  "la chiamata è stata spostata"]},
+
+    # ── plan-implicit: the outcome follows from a later mention ──────────────────────────────────────
+    {"id": "h09", "category": "plan-implicit", "lang": "it", "asked_at": END, "ev": ["s07", "s40", "s46"],
+     "q": "Siamo poi andati a Lisbona?",
+     "expected": "Sì: il viaggio con Chiara era da sabato 22 a martedì 25 aprile 2034 (hotel all'Alfama), e il 3 maggio "
+                 "hai messo sul NAS le foto di Lisbona (cartella '2034-04 Lisbona', più di 600 foto).",
+     "must_not": ["non risulta se siete andati", "il viaggio è stato annullato", "il viaggio è stato rimandato"]},
+    {"id": "h10", "category": "plan-implicit", "lang": "it", "asked_at": "2034-03-20T09:10:00+01:00",
+     "ev": ["s15", "s17", "s22"],
+     "q": "L'idraulico è venuto martedì 7 marzo, come d'accordo?",
+     "expected": "No: Sandro doveva passare martedì 7 marzo in mattinata, ma giovedì 9 marzo il lavello perdeva ancora "
+                 "e stavi ancora aspettando che si facesse vivo. È venuto poi giovedì 16 marzo mattina e ha cambiato il "
+                 "sifone (90 €).",
+     "must_not": ["sì, è venuto il 7 marzo", "ha riparato il lavello il 7 marzo"]},
+    {"id": "h11", "category": "plan-implicit", "lang": "it", "asked_at": END, "ev": ["s32", "s37"],
+     "q": "Ho verniciato la ringhiera del balcone sabato 1° aprile, come avevo detto?",
+     "expected": "No, non quel giorno: il 12 aprile dicevi ancora che avresti dato 'finalmente' l'antiruggine alla "
+                 "ringhiera sabato 15 aprile (il barattolo era lì da fine marzo), quindi il 1° aprile non l'hai fatto. Se "
+                 "poi l'hai verniciata il 15 aprile non risulta: non ne hai più parlato.",
+     "must_not": ["sì, l'hai verniciata il 1° aprile", "l'hai verniciata sabato 15 aprile",
+                  "la ringhiera è stata verniciata"]},
+    {"id": "h12", "category": "plan-implicit", "lang": "it", "asked_at": "2034-03-10T12:00:00+01:00",
+     "ev": ["s08", "s16"],
+     "q": "Ho poi fatto la devitalizzazione dal dentista?",
+     "expected": "Sì: l'appuntamento con la dottoressa Fabbri era lunedì 27 febbraio 2034 alle 15, e il 6 marzo hai "
+                 "detto che da quando te l'ha fatta il dente non ti fa più male.",
+     "must_not": ["non risulta", "è stata rimandata", "servono altre sedute"]},
+    {"id": "h13", "category": "plan-implicit", "lang": "it", "asked_at": END, "ev": ["s07", "s36"],
+     "q": "Sono riuscito a rinnovare la carta d'identità prima di Lisbona?",
+     "expected": "Sì: avevi appuntamento all'anagrafe venerdì 24 febbraio 2034 alle 9:10 (la vecchia scadeva a marzo), e "
+                 "il 10 aprile hai detto che per Lisbona viaggiavi con la carta d'identità nuova.",
+     "must_not": ["non risulta", "hai viaggiato con il passaporto", "non l'hai rinnovata"]},
+    {"id": "h14", "category": "plan-implicit", "lang": "en", "asked_at": END, "ev": ["s05", "s06", "s14"],
+     "q": "Did we go to Giovanna's 70th birthday party in Modena?",
+     "expected": "Sì: era domenica 19 febbraio 2034, pranzo a Modena a casa di Giovanna, la mamma di Chiara; il 3 marzo "
+                 "avete aperto il Lambrusco che vi avevano regalato a quella festa.",
+     "must_not": ["non risulta", "non ci siete andati", "you stayed home because Anna had a fever"]},
+    {"id": "h15", "category": "plan-implicit", "lang": "it", "asked_at": END, "ev": ["s46", "s52", "s54", "s56"],
+     "q": "La lavatrice nuova è arrivata mercoledì 10 maggio, come previsto?",
+     "expected": "No: Euronics doveva consegnarla mercoledì 10 maggio, ma venerdì 12 maggio eri ancora alla lavanderia a "
+                 "gettoni e ti dicevano 'la settimana prossima'. È arrivata venerdì 19 maggio 2034 e va benissimo.",
+     "must_not": ["sì, è arrivata il 10 maggio", "non è ancora arrivata"]},
+
+    # ── plan-moved: rescheduled, sometimes then cancelled or done ─────────────────────────────────────
+    {"id": "h16", "category": "plan-moved", "lang": "it", "asked_at": END, "ev": ["s12", "s14", "s18", "s26"],
+     "q": "Quando siamo andati da Elisa a Ferrara, e quando era previsto all'inizio?",
+     "expected": "Ci siete andati sabato 25 marzo 2034. All'inizio il pranzo era previsto per domenica 5 marzo; per "
+                 "l'influenza di Elisa è stato spostato a domenica 12 marzo e poi, con Elisa ancora con la febbre, a "
+                 "sabato 25 marzo.",
+     "must_not": ["siete andati domenica 5 marzo", "siete andati domenica 12 marzo"]},
+    {"id": "h17", "category": "plan-moved", "lang": "it", "asked_at": END, "ev": ["s11", "s20", "s24"],
+     "q": "Quando si gioca la finale del torneo di calcetto?",
+     "expected": "Non si gioca più: era fissata per giovedì 16 marzo 2034 alle 21 al campo Dozza contro i Bradipi; "
+                 "Simone nel gruppo l'ha spostata a giovedì 23 marzo (campo occupato da un altro torneo) e poi il 21 "
+                 "marzo ha scritto che era annullata (campo allagato, nessun'altra data): torneo finito, coppa ai "
+                 "Bradipi per classifica.",
+     "must_not": ["si gioca giovedì 23 marzo", "l'avete vinta", "l'avete persa", "la finale si gioca a settembre"]},
+    {"id": "h18", "category": "plan-moved", "lang": "it", "asked_at": END, "ev": ["s09", "s16", "s21", "s25"],
+     "q": "Quante volte è stata spostata la demo per Varesi Logistica, e quando si è fatta?",
+     "expected": "Due volte: era fissata per mercoledì 8 marzo 2034 alle 14:30, è stata spostata a mercoledì 15 marzo "
+                 "(su richiesta di Varesi) e poi a martedì 21 marzo alle 10 (il loro direttore era a Roma). Si è fatta "
+                 "martedì 21 marzo ed è andata benissimo (firmano entro aprile).",
+     "must_not": ["si è fatta il 15 marzo", "si è fatta l'8 marzo", "una volta sola", "tre volte"]},
+    {"id": "h19", "category": "plan-moved", "lang": "it", "asked_at": END, "ev": ["s39", "s45", "s50"],
+     "q": "Quando ha fatto Anna il richiamo del vaccino?",
+     "expected": "Martedì 9 maggio 2034 (alle 9:30, ASL di via Montebello): era fissato per martedì 2 maggio, ma l'ASL "
+                 "l'ha spostato con un SMS.",
+     "must_not": ["l'ha fatto martedì 2 maggio", "non risulta"]},
+    {"id": "h20", "category": "plan-moved", "lang": "it", "asked_at": END, "ev": ["s38", "s42", "s47", "s51", "s53"],
+     "q": "Sono andato alla rimpatriata del liceo?",
+     "expected": "No. Giulia l'aveva proposta per venerdì 28 aprile 2034 alla Trattoria del Portico, poi nel gruppo "
+                 "l'ha spostata a venerdì 5 maggio e infine a venerdì 12 maggio; il 12 maggio non ci sei andato perché "
+                 "Chiara era a Modena e tu eri a casa con i bambini (Giulia ti ha mandato le foto).",
+     "must_not": ["sì, ci sei andato", "la rimpatriata è stata annullata", "si è fatta il 28 aprile",
+                  "si è fatta il 5 maggio"]},
+    {"id": "h21", "category": "plan-moved", "lang": "it", "asked_at": "2034-03-01T08:00:00+01:00",
+     "ev": ["s05", "s07", "s08"],
+     "q": "Che giorno sono andato dal medico per la schiena?",
+     "expected": "Non ci sei andato: la visita dal dottor Zaccaria era fissata per lunedì 20 febbraio 2034 alle 11, lo "
+                 "studio l'ha spostata a giovedì 23 febbraio alle 10, e il 22 febbraio l'hai annullata perché il mal di "
+                 "schiena era passato.",
+     "must_not": ["ci sei andato il 20 febbraio", "ci sei andato il 23 febbraio"]},
+    {"id": "h22", "category": "plan-moved", "lang": "en", "asked_at": END, "ev": ["s31", "s40", "s57"],
+     "q": "When am I flying to Dublin, and when was the trip first planned?",
+     "expected": "Il viaggio a Dublino è ora da lunedì 12 a mercoledì 14 giugno 2034. All'inizio era da lunedì 15 a "
+                 "mercoledì 17 maggio; il 20 aprile è stato spostato a lunedì 29 – mercoledì 31 maggio e il 22 maggio di "
+                 "nuovo al 12–14 giugno.",
+     "must_not": ["the trip is 29–31 May", "il viaggio è dal 29 al 31 maggio", "sei già stato a Dublino",
+                  "il viaggio è dal 15 al 17 maggio"]},
+
+    # ── premise-trap: the question presupposes something false ───────────────────────────────────────
+    {"id": "h23", "category": "premise-trap", "lang": "it", "asked_at": END, "ev": ["s03", "s06"],
+     "q": "Cosa abbiamo mangiato da Kumo per il nostro anniversario?",
+     "expected": "Da Kumo non ci siete andati: la cena per i dieci anni di matrimonio era prenotata per venerdì 17 "
+                 "febbraio 2034 alle 20:30, ma Anna aveva la febbre e avete disdetto il tavolo; avete preso due pizze da "
+                 "asporto.",
+     "must_not": ["avete mangiato sushi", "siete andati da Kumo", "la cena da Kumo è stata spostata"]},
+    {"id": "h24", "category": "premise-trap", "lang": "it", "asked_at": END, "ev": ["s04", "s17", "s33"],
+     "q": "Marco mi ha poi restituito il trapano?",
+     "expected": "Il trapano non l'aveva Marco: l'hai prestato il 9 marzo 2034 a Gianni del terzo piano, che te l'ha "
+                 "riportato domenica 2 aprile (con una bottiglia di vino). A Marco hai prestato la tenda da campeggio, "
+                 "il 13 febbraio, e non risulta che te l'abbia restituita.",
+     "must_not": ["Marco ti ha restituito il trapano", "Marco ha ancora il trapano", "Marco ti ha restituito la tenda"]},
+    {"id": "h25", "category": "premise-trap", "lang": "en", "asked_at": END, "ev": ["s07", "s45", "s46"],
+     "q": "What did we visit in Lisbon on 1 May?",
+     "expected": "Il 1° maggio non eravate a Lisbona: il viaggio era da sabato 22 a martedì 25 aprile 2034. Il 1° maggio "
+                 "mi hai detto di una giornata di festa tranquilla, con il pomeriggio al parco.",
+     "must_not": ["eravate a Lisbona il 1° maggio", "you visited Belém on 1 May", "il 1° maggio avete visitato"]},
+    {"id": "h26", "category": "premise-trap", "lang": "it", "asked_at": END, "ev": ["s03", "s28"],
+     "q": "Visto che il venerdì lavoro da casa, posso far venire il tecnico della caldaia venerdì 9 giugno in mattinata?",
+     "expected": "Attenzione: dal 3 aprile 2034 il tuo giorno di smart working è il lunedì, non più il venerdì; il "
+                 "venerdì sei in ufficio, quindi venerdì 9 giugno non saresti a casa (a meno di prendere un permesso).",
+     "must_not": ["sì, il venerdì lavori da casa", "venerdì 9 giugno sei a casa"]},
+    {"id": "h27", "category": "premise-trap", "lang": "it", "asked_at": END, "ev": ["s03", "s21"],
+     "q": "Quanto abbiamo speso alla fine per la settimana in Sardegna?",
+     "expected": "Niente: la Sardegna a giugno era solo un'idea di Chiara (10 febbraio 2034); il 14 marzo avete deciso di "
+                 "lasciar perdere perché costava troppo e di fare solo Lisbona ad aprile. Non avete prenotato nulla.",
+     "must_not": ["avete prenotato la Sardegna", "avete speso una cifra per la Sardegna", "siete andati in Sardegna"]},
+    {"id": "h28", "category": "premise-trap", "lang": "it", "asked_at": END, "ev": ["s25"],
+     "q": "Quanto ho pagato per la multa della ZTL di marzo?",
+     "expected": "Non hai preso tu la multa: la multa ZTL di 83 € l'ha presa Chiara con la sua Yaris (era entrata in via "
+                 "Indipendenza per lasciare un pacco), come mi hai detto il 22 marzo 2034. Quanto abbia pagato alla fine "
+                 "non mi risulta.",
+     "must_not": ["hai preso una multa", "hai pagato 83 €", "hai pagato 58,10 €"]},
+    {"id": "h29", "category": "premise-trap", "lang": "it", "asked_at": "2034-04-08T10:00:00+02:00",
+     "ev": ["s11", "s30"],
+     "q": "Chi c'era ieri sera alla festa per i 40 anni di Marco?",
+     "expected": "La festa non c'è stata: era prevista per venerdì 7 aprile 2034 all'Osteria del Moro, ma il 29 marzo "
+                 "Marco l'ha annullata nel gruppo del calcetto perché suo padre era in ospedale, dicendo che l'avrebbe "
+                 "rifatta più avanti (nessuna nuova data).",
+     "must_not": ["la festa si è fatta", "c'erano Simone e Davide", "la festa è stata spostata a"]},
+
+    # ── accumulate: events that add up ───────────────────────────────────────────────────────────────
+    {"id": "h30", "category": "accumulate", "lang": "it", "asked_at": END,
+     "ev": ["s15", "s18", "s23", "s27", "s35", "s49"],
+     "q": "Quante corse ti ho raccontato da quando ho ricominciato a correre, e quanti km fanno in tutto?",
+     "expected": "5 corse, 36 km in tutto: 5 km sabato 4 marzo, 6 km sabato 11 marzo, 7 km domenica 26 marzo, 8 km "
+                 "domenica 9 aprile e 10 km domenica 7 maggio 2034 (domenica 19 marzo niente corsa per la pioggia). "
+                 "Dopo il 7 maggio hai detto che avresti continuato con una o due corse a settimana, ma di altre corse "
+                 "non mi hai parlato.",
+     "must_not": ["6 corse", "4 corse", "43 km", "46 km"]},
+    {"id": "h31", "category": "accumulate", "lang": "it", "asked_at": END, "ev": ["s05", "s12", "s44"],
+     "q": "Quanto ho speso in tutto per l'attrezzatura da calcio di Pietro?",
+     "expected": "82 €: scarpini 45 € (15 febbraio 2034), parastinchi 12 € (1° marzo) e borsa 25 € (27 aprile). Le "
+                 "scarpette da 30 € erano per la danza di Anna.",
+     "must_not": ["112 €", "70 €", "57 €"]},
+    {"id": "h32", "category": "accumulate", "lang": "it", "asked_at": END, "ev": ["s02", "s04", "s31", "s35", "s55"],
+     "q": "Quali libri ho finito di leggere da febbraio?",
+     "expected": "Tre: 'La casa sul canale' (finito il 12 febbraio 2034), 'Le stagioni di Ottavio' (prestato da Luca, "
+                 "finito il 30 marzo in treno) e 'The Quiet Harbour' (finito il 18 maggio). 'Nebbia sul Reno' l'hai "
+                 "abbandonato a metà.",
+     "must_not": ["hai finito Nebbia sul Reno", "quattro libri", "due libri"]},
+    {"id": "h33", "category": "accumulate", "lang": "it", "asked_at": END, "ev": ["s04", "s54", "s61"],
+     "q": "Quante volte ho donato il sangue quest'anno?",
+     "expected": "Due volte: lunedì 13 febbraio e mercoledì 31 maggio 2034. Lunedì 15 maggio ti hanno rimandato a casa "
+                 "per l'emoglobina bassa, quindi quel giorno non hai donato.",
+     "must_not": ["tre volte", "una volta", "hai donato il 15 maggio"]},
+    {"id": "h34", "category": "accumulate", "lang": "it", "asked_at": END, "ev": ["s10", "s23", "s33", "s53"],
+     "q": "Quanti gol ha segnato Pietro nelle partite di cui ti ho parlato?",
+     "expected": "4 gol: 1 sabato 25 febbraio 2034 contro il Corticella (2-2), 2 sabato 18 marzo contro il San Donato "
+                 "(3-1) e 1 domenica 2 aprile contro la Fortitudo (2-0, prima partita con Bonacini). Della partita col "
+                 "Granarolo di sabato 13 maggio non mi hai detto com'è andata.",
+     "must_not": ["5 gol", "3 gol", "ha segnato contro il Granarolo"]},
+    {"id": "h35", "category": "accumulate", "lang": "en", "asked_at": END, "ev": ["s13", "s31", "s43", "s51"],
+     "q": "How many times did I go to the Milan office this year, and when?",
+     "expected": "Tre volte: giovedì 2 marzo, giovedì 30 marzo e giovedì 11 maggio 2034. La trasferta di giovedì 27 "
+                 "aprile è saltata (quelli di Varesi sono venuti a Bologna).",
+     "must_not": ["four times", "quattro volte", "sei andato a Milano il 27 aprile"]},
+
+    # ── supersede: states that replace each other ("now" and "as of") ───────────────────────────────
+    {"id": "h36", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s01", "s19", "s23"],
+     "q": "Chi allena adesso Pietro, e in che giorni?",
+     "expected": "Paolo Bonacini, il lunedì e il mercoledì alle 17:30 al campo della Barca (il lunedì lo porta Chiara, "
+                 "il mercoledì tu). Ha preso il posto del mister Ruggeri, che a metà marzo 2034 si è trasferito a Imola.",
+     "must_not": ["lo allena Ruggeri", "si chiama Bonetti", "martedì e giovedì"]},
+    {"id": "h37", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s01", "s19", "s23"],
+     "q": "Chi era l'allenatore di Pietro il 1° marzo, e in che giorni si allenava allora?",
+     "expected": "Il mister Ruggeri, con allenamenti il martedì e il giovedì alle 17:30 al campo della Barca.",
+     "must_not": ["il 1° marzo l'allenatore era Bonacini", "il 1° marzo l'allenatore era Bonetti",
+                  "il 1° marzo si allenava il lunedì e il mercoledì"]},
+    {"id": "h38", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s01", "s28", "s34", "s59"],
+     "q": "Che operatore telefonico ho adesso e quanto pago al mese?",
+     "expected": "Kena, 8,99 € al mese dal 1° giugno 2034 (prima 7,99 €). Sei passato da Iliad (9,99 €) a Kena con la "
+                 "portabilità del 3 aprile.",
+     "must_not": ["sei con Iliad", "paghi 7,99 €", "paghi 9,99 €"]},
+    {"id": "h39", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s01", "s28", "s34"],
+     "q": "Con che operatore ero a metà marzo, e quanto pagavo?",
+     "expected": "Con Iliad, 9,99 € al mese (il passaggio a Kena è avvenuto il 3 aprile 2034).",
+     "must_not": ["a metà marzo eri con Kena", "a metà marzo pagavi 7,99 €", "a metà marzo pagavi 8,99 €"]},
+    {"id": "h40", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s26", "s56"],
+     "q": "Dov'è parcheggiata adesso la Punto?",
+     "expected": "Da nessuna parte: l'hai venduta a Simone del calcetto per 1.200 € sabato 20 maggio 2034 (l'ha ritirata "
+                 "dal posto auto condominiale n. 14, dove l'avevi spostata il 25 marzo dal garage di tua mamma in via "
+                 "Saragozza).",
+     "must_not": ["è nel posto auto 14", "è nel garage di via Saragozza", "è ancora tua"]},
+    {"id": "h41", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s02", "s39", "s58"],
+     "q": "Qual è il mio obiettivo di peso, e quanto pesavo l'ultima volta che te l'ho detto?",
+     "expected": "Obiettivo 80 kg entro settembre (fissato il 18 aprile 2034; prima era 82 kg). L'ultimo peso che mi "
+                 "hai detto è 82,5 kg, il 23 maggio.",
+     "must_not": ["l'obiettivo è 82 kg", "pesi 84 kg", "pesi 88 kg"]},
+    {"id": "h42", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s02", "s31", "s51"],
+     "q": "In che palestra vado a Bologna adesso? L'ho cambiata?",
+     "expected": "Sempre la Palestra Ercole in via Andrea Costa (abbonamento annuale rinnovato a febbraio 2034): non "
+                 "l'hai cambiata. La tessera da 10 ingressi alla FitHub di Porta Romana, comprata il 30 marzo, è in più "
+                 "ed è solo per i giorni a Milano.",
+     "must_not": ["a Bologna vai alla FitHub", "hai lasciato la Palestra Ercole", "hai cambiato palestra"]},
+    {"id": "h43", "category": "supersede", "lang": "it", "asked_at": END, "ev": ["s29", "s34", "s56"],
+     "q": "Chi è adesso la nostra babysitter?",
+     "expected": "Irina, studentessa di infermieristica, dal 3 aprile 2034, il martedì e il giovedì pomeriggio; ha preso "
+                 "il posto di Giorgia, partita per l'Erasmus a Valencia. Giorgia è tornata solo per una sera, sabato 20 "
+                 "maggio, mentre era a Bologna per il weekend e Irina aveva un esame.",
+     "must_not": ["la babysitter è Giorgia", "Giorgia è tornata a fare la babysitter"]},
+
+    # ── correction-vs-change: never true vs true until a date ───────────────────────────────────────
+    {"id": "h44", "category": "correction-vs-change", "lang": "it", "asked_at": END, "ev": ["s45", "s48"],
+     "q": "Che data ti avevo detto all'inizio per la gita di Anna allo zoo, e qual è quella giusta?",
+     "expected": "Il 1° maggio mi avevi detto giovedì 11 maggio, ma era un tuo errore di lettura dell'avviso: il 5 maggio "
+                 "hai corretto, la gita è (ed è sempre stata) venerdì 12 maggio 2034.",
+     "must_not": ["la gita è stata spostata", "la scuola ha spostato la gita", "la data giusta è l'11 maggio"]},
+    {"id": "h45", "category": "correction-vs-change", "lang": "it", "asked_at": END, "ev": ["s45", "s48"],
+     "q": "La gita di Anna è mai stata in programma per l'11 maggio?",
+     "expected": "No: la data è sempre stata venerdì 12 maggio 2034; l'11 maggio era solo un tuo errore nel leggere "
+                 "l'avviso, corretto il 5 maggio.",
+     "must_not": ["era prevista per l'11 maggio e poi è stata spostata", "la scuola l'ha spostata"]},
+    {"id": "h46", "category": "correction-vs-change", "lang": "it", "asked_at": "2034-03-24T12:00:00+01:00",
+     "ev": ["s12", "s17", "s25"],
+     "q": "In che data era fissata in origine l'assemblea condominiale, e quando si è tenuta?",
+     "expected": "In origine martedì 14 marzo 2034 alle 21 (sala della parrocchia); l'amministratore l'ha spostata a "
+                 "martedì 21 marzo perché la sala era occupata, e si è tenuta il 21 marzo (approvato il rifacimento del "
+                 "tetto, 1.400 € a famiglia in due rate).",
+     "must_not": ["si è tenuta il 14 marzo", "è sempre stata fissata il 21"]},
+    {"id": "h47", "category": "correction-vs-change", "lang": "it", "asked_at": END, "ev": ["s12", "s17"],
+     "q": "Il 14 marzo è mai stata davvero la data dell'assemblea condominiale, o mi ero sbagliato io?",
+     "expected": "Era davvero la data: la lettera dell'amministratore Ferri la fissava per martedì 14 marzo 2034, e poi "
+                 "(il 9 marzo me l'hai detto) è stata spostata a martedì 21 marzo perché la sala era occupata. Non era un "
+                 "tuo errore.",
+     "must_not": ["ti eri sbagliato", "non è mai stata il 14"]},
+    {"id": "h48", "category": "correction-vs-change", "lang": "it", "asked_at": END, "ev": ["s07", "s09"],
+     "q": "Quanto sono costati i voli per Lisbona?",
+     "expected": "412 € in due, andata e ritorno. Il 20 febbraio 2034 mi avevi detto 312 €, ma il 23 febbraio hai "
+                 "corretto: avevi letto male, il prezzo è sempre stato 412 €.",
+     "must_not": ["sono costati 312 €", "il prezzo è aumentato", "il prezzo è cambiato"]},
+    {"id": "h49", "category": "correction-vs-change", "lang": "it", "asked_at": END, "ev": ["s05", "s29"],
+     "q": "La danza di Anna è sempre costata 50 € al mese?",
+     "expected": "No: costava 45 € al mese (fino a marzo 2034); da aprile la scuola ha aumentato la retta a 50 €.",
+     "must_not": ["è sempre costata 50 €", "i 45 € erano un errore"]},
+    {"id": "h50", "category": "correction-vs-change", "lang": "it", "asked_at": END, "ev": ["s19", "s23"],
+     "q": "Che nome ti avevo detto all'inizio per il nuovo allenatore di Pietro? Da allora l'allenatore è cambiato di "
+          "nuovo?",
+     "expected": "Il 13 marzo 2034 mi avevi detto 'Bonetti', ma il 20 marzo hai corretto: si chiama Paolo Bonacini, avevi "
+                 "capito male. Non è cambiato di nuovo: è sempre lo stesso allenatore, Bonacini, arrivato al posto di "
+                 "Ruggeri.",
+     "must_not": ["Bonetti è stato sostituito da Bonacini", "ci sono stati due nuovi allenatori"]},
+
+    # ── negative: never said ────────────────────────────────────────────────────────────────────────
+    {"id": "h51", "category": "negative", "lang": "it", "asked_at": END, "ev": ["s62"],
+     "q": "Che voto ha preso Pietro nell'ultima verifica di matematica?",
+     "expected": "Non me l'hai mai detto: non ho informazioni sui voti di Pietro.",
+     "must_not": ["ha preso 6", "ha preso 7", "ha preso 8", "ha preso 9"]},
+    {"id": "h52", "category": "negative", "lang": "it", "asked_at": END, "ev": ["s62"],
+     "q": "Come si chiama il cane di Elisa?",
+     "expected": "Non me l'hai mai detto (non mi risulta nemmeno che Elisa abbia un cane).",
+     "must_not": []},
+    {"id": "h53", "category": "negative", "lang": "it", "asked_at": END, "ev": ["s62"],
+     "q": "Qual è la targa della Panda?",
+     "expected": "Non me l'hai mai detta.",
+     "must_not": []},
+    {"id": "h54", "category": "negative", "lang": "en", "asked_at": END, "ev": ["s62"],
+     "q": "What's my blood type?",
+     "expected": "Non me l'hai mai detto: so che doni il sangue all'AVIS, ma il gruppo sanguigno non l'hai mai nominato.",
+     "must_not": ["il tuo gruppo è 0", "il tuo gruppo è A", "il tuo gruppo è B", "il tuo gruppo è AB"]},
+]
