@@ -43,6 +43,7 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - `docs/ATLAS_EVENTS.md` — contract v1 (endpoints + telemetry events, metadata only) with the optional live brain
   view **Recordare Atlas**, its own repo `~/Development/recordare-atlas` (`arkimedehq/recordare-atlas`, published with
   Recordare); Recordare must work without it.
+- `docs/MODELS.md` — supported-models table (measured engine models, scores, weight licences); `provider_eval.py` measures one.
 - `docs/KNOBS.md` — every setting in one place (quality profiles, service env, models, per person / client, deploy, atlas,
   client side, spike), with defaults and what was measured. Update it with every new knob.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out

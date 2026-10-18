@@ -1,0 +1,11 @@
+{
+  "label": "ollama-gpt-oss-20b",
+  "provider": "openai-compatible",
+  "profile": "ollama",
+  "baseUrl": "http://localhost:11434/v1",
+  "model": "gpt-oss:20b",
+  "reasoningOffTry": [{"reasoningOff": {"reasoning_effort": "low"}}],
+  "price": {"input": 0, "output": 0},
+  "weights": {"name": "openai/gpt-oss-20b", "licence": "Apache-2.0"},
+  "notes": "Best local engine so far (83.3 % on blind3, reasoning low); removed from disk per the 95 % rule — pull it again to re-measure."
+}

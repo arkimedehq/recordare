@@ -319,7 +319,7 @@ compito. Altre due guide: [integrare una piattaforma client](docs/INTEGRATION_it
 | `packages/client/` | `@arkimedehq/recordare-client` (su npm), la libreria client TypeScript usata dai connettori e da Arkimede |
 | `deploy/` | Script di installazione, aggiornamento e backup, file Compose (standalone / co-ospitato) |
 | `spikes/memory-eval/` | Harness di valutazione e dataset: confronto tra motori, set ciechi, risultati ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
-| `docs/` | Visione, decisioni di design D1–D48 ([design della memoria episodica](docs/EPISODIC_MEMORY_TODO_it.md)), [piano di lavoro](docs/WORK_PLAN_it.md), contratti, [tutte le impostazioni](docs/KNOBS_it.md), note di ricerca, schede di letteratura, note di ricerca sui connettori (`docs/connectors/`) |
+| `docs/` | Visione, decisioni di design D1–D48 ([design della memoria episodica](docs/EPISODIC_MEMORY_TODO_it.md)), [piano di lavoro](docs/WORK_PLAN_it.md), contratti, [tutte le impostazioni](docs/KNOBS_it.md), [modelli supportati](docs/MODELS_it.md), note di ricerca, schede di letteratura, note di ricerca sui connettori (`docs/connectors/`) |
 | `CHANGELOG.md` | Note di rilascio ([v0.3.0](CHANGELOG_it.md)) |
 | `docker-compose.yml` | Stack di sviluppo locale (Postgres + pgvector, Redis, servizio) |
 | `CLAUDE.md` | Contesto e convenzioni per le sessioni di sviluppo |

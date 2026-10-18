@@ -1,0 +1,11 @@
+{
+  "label": "gemini-3.1-flash-lite",
+  "provider": "openai-compatible",
+  "profile": "generic",
+  "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai/",
+  "model": "gemini-3.1-flash-lite",
+  "keyEnv": "GEMINI_API_KEY",
+  "reasoningOffTry": [{"reasoningOff": {"reasoning_effort": "none"}}, {"reasoningOff": {"reasoning_effort": "minimal"}}, {"reasoningOff": {"reasoning_effort": "low"}}],
+  "price": {"input": 0.25, "output": 1.50},
+  "notes": "Gemini's OpenAI-compatible endpoint (4.5b); no service profile until the smoke shows which reasoning switch it takes. Via OpenRouter it scored 81.0 % on blind5."
+}
