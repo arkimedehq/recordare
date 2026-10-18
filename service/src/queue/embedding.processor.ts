@@ -8,6 +8,7 @@ import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { EMBEDDING_QUEUE } from './queue.port';
+import { storeEmbeddings } from '../db/pgvector';
 
 /** Passages embedded per call (a source of any size is embedded in batches, one job). */
 const PASSAGE_BATCH = 64;
@@ -33,9 +34,7 @@ export class EmbeddingProcessor extends WorkerHost {
     if (rows.length === 0) return;
     await this.telemetry.track('embed.messages', rows[0]?.memory_id ?? null, async () => {
       const vectors = await this.embeddings.embed(rows.map((r) => r.content), 'document');
-      for (const [i, row] of rows.entries()) {
-        await this.db.query(`UPDATE messages SET embedding = $1 WHERE id = $2`, [`[${(vectors[i] ?? []).join(',')}]`, row.id]);
-      }
+      await storeEmbeddings(this.db, 'messages', this.embeddings.model, rows.map((row, i) => ({ id: row.id, vector: vectors[i] })));
     });
   }
 
@@ -47,10 +46,7 @@ export class EmbeddingProcessor extends WorkerHost {
       if (rows.length === 0) break;
       await this.telemetry.track('embed.memories', rows[0]?.memory_id ?? null, async () => {
         const vectors = await this.embeddings.embed(rows.map((r) => (r.heading ? `${r.heading}\n${r.content}` : r.content)), 'document');
-        for (const [i, row] of rows.entries()) {
-          await this.db.query(`UPDATE source_passages SET embedding = $1::vector, embedding_model = $2 WHERE id = $3`,
-            [`[${(vectors[i] ?? []).join(',')}]`, this.embeddings.model, row.id]);
-        }
+        await storeEmbeddings(this.db, 'source_passages', this.embeddings.model, rows.map((row, i) => ({ id: row.id, vector: vectors[i] })));
       });
     }
     await this.db.query(`UPDATE sources SET status = 'ready', updated_at = now() WHERE id = $1 AND status = 'indexing'

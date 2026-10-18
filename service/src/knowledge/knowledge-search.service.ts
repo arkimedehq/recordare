@@ -14,6 +14,7 @@ import { toOrTsQuery } from '../rawlog/rawlog-search.service';
 import { describe, type Precision } from '../engine/time';
 import { logRecall } from '../recall/recall-log';
 import { type MemoryMode } from '../identity/identity.entities';
+import { vectorParam } from '../db/pgvector';
 
 const RRF_K = 60;
 const CANDIDATES = 50;
@@ -100,7 +101,7 @@ export class KnowledgeSearchService {
     return this.db.query(
       `SELECT x.content AS text, s.title, 1 - (x.embedding <=> $2::vector) AS similarity
        FROM source_passages x JOIN sources s ON s.id = x.source_id
-       WHERE x.memory_id = $1 AND x.embedding IS NOT NULL ORDER BY x.embedding <=> $2::vector LIMIT $3`, [memoryId, `[${vector.join(',')}]`, limit]);
+       WHERE x.memory_id = $1 AND x.embedding IS NOT NULL ORDER BY x.embedding <=> $2::vector LIMIT $3`, [memoryId, vectorParam(vector), limit]);
   }
 
   private async rank(memoryId: string, query: string): Promise<{ scores: Map<string, number>; similarity: Map<string, number> }> {
@@ -118,7 +119,7 @@ export class KnowledgeSearchService {
       if (q) {
         const vec: Array<{ id: string; sim: number }> = await this.db.query(
           `SELECT id, 1 - (embedding <=> $2::vector) AS sim FROM source_passages
-           WHERE memory_id = $1 AND embedding IS NOT NULL ORDER BY embedding <=> $2::vector LIMIT $3`, [memoryId, `[${q.join(',')}]`, CANDIDATES]);
+           WHERE memory_id = $1 AND embedding IS NOT NULL ORDER BY embedding <=> $2::vector LIMIT $3`, [memoryId, vectorParam(q), CANDIDATES]);
         vec.forEach((r) => similarity.set(r.id, r.sim));
         vec.filter((r) => r.sim >= MIN_VECTOR_SIMILARITY).forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 1 / (RRF_K + i + 1)));
       }

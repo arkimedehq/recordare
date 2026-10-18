@@ -24,6 +24,7 @@ import { qualityProfile, type QualityProfile, type QualityProfileName } from './
 import { EPISODES_ONLY_NOTE, ENTITY_FACTS_SYSTEM, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { writeLearnedEpisode } from '../knowledge/learned-episode';
+import { storeEmbeddings } from '../db/pgvector';
 
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
@@ -190,12 +191,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
     try {
       const vectors = await this.embeddings.embed(rows.map((r) => r.text), 'document');
       for (const [i, r] of rows.entries()) {
-        const sql = r.table === 'episodes'
-          ? `UPDATE episodes SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`
-          : r.table === 'facts'
-            ? `UPDATE facts SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`
-            : `UPDATE notes SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`;
-        await this.db.query(sql, [`[${(vectors[i] ?? []).join(',')}]`, this.embeddings.model, r.text, r.id]);
+        await storeEmbeddings(this.db, r.table, this.embeddings.model, [{ id: r.id, vector: vectors[i], text: r.text }]);
       }
     } catch (err) {
       this.log.warn(`embedding new memories failed: ${(err as Error).message}`);

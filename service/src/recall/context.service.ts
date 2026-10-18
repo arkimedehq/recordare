@@ -23,6 +23,7 @@ import { resolvePeriod } from './period';
 import { logRecall } from './recall-log';
 import { relevantClarifications } from '../engine/clarifications';
 import { speakerOf } from './subjects';
+import { vectorParam } from '../db/pgvector';
 
 /**
  * Minimum query ↔ memory similarity (bge-m3) for an item to enter the block: above the recall tools' floors (0.35),
@@ -98,7 +99,7 @@ export class ContextService {
       this.log.warn(`memory context skipped: ${(err as Error).message}`);
       return EMPTY;
     }
-    const vectors = vecs.map((x) => `[${x.join(',')}]`);
+    const vectors = vecs.map(vectorParam);
     // $2 … $(1 + n): the vectors; similarity of a column = the best over them.
     const sim = (col: string) => `GREATEST(${vectors.map((_, i) => `1 - (${col} <=> $${i + 2}::vector)`).join(', ')})`;
     const at = (k: number) => `$${vectors.length + 2 + k}`; // parameters after the vectors

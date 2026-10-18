@@ -18,6 +18,7 @@ import { TelemetryService } from '../telemetry/telemetry.service';
 import { memorySpeaker } from '../rawlog/attribution';
 import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
 import { dropUnsupported, supersedeDigests, supportedBy } from './forgetting';
+import { storeEmbeddings } from '../db/pgvector';
 
 /**
  * The agent's text is backed by a message of the holder when the two overlap as a whole (trigram similarity ≥ 0.2) or
@@ -307,10 +308,8 @@ export class MemoryWriteService {
 
   private async embed(table: 'episodes' | 'notes' | 'facts', id: string, text: string): Promise<void> {
     try {
-      const [v] = await this.embeddings.embed([text], 'document');
-      if (!v) return;
-      await this.db.query(`UPDATE ${table} SET embedding = $1::vector, embedding_model = $2, embedding_text = $3 WHERE id = $4`,
-        [`[${v.join(',')}]`, this.embeddings.model, text, id]);
+      const [vector] = await this.embeddings.embed([text], 'document');
+      await storeEmbeddings(this.db, table, this.embeddings.model, [{ id, vector, text }]);
     } catch {
       // Embedding is best-effort; full-text still finds the row.
     }
