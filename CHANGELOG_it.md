@@ -14,6 +14,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   risposta che vedono contro il suo schema, e il compilatore vi controlla i gestori delle rotte e i tipi della libreria
   client.
 
+### Modificato
+- **Tutte le lingue nelle frasi del servizio** (WORK_PLAN 2.6): le note degli strumenti di richiamo per l'agente, le date
+  ignote e approssimate, i nomi dei giorni e la domanda "stessa persona?" seguono la lingua della memoria nelle 25 lingue
+  più usate (erano in italiano o in inglese); il `locale` di una memoria è qualsiasi tag BCP 47 anche nell'API admin
+  (prima `it` / `en`).
+
+### Corretto
+- Una memoria con lingua regionale (`it-IT`, come accetta `PATCH settings`) riceveva quelle frasi e i nomi dei giorni in
+  inglese.
+
 ## [0.3.0] — 2026-10-17
 
 **Qualità e controllo** della memoria: il richiamo ordina per pertinenza, abitudini ricorrenti, ascolto continuo nella

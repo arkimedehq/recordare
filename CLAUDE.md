@@ -147,4 +147,4 @@ continuous listening (source `ambient`, `extract.v16`, everything heard pending,
 migration `PendingProposals` —, `heard` in recall; dev set `dataset_dev_ambient` 86.7 %). Done 2026-10-16: 6.5 (4) room fan-out
 (`POST api/v1/ingest/room`, client `ingestRoom`); 4.5c the two H1 rates (`spikes/memory-eval/outcome_eval.py`, a second
 grading of stored answers; RESULTS.md). Done 2026-10-18: v0.3.0 released; OpenAPI with request and response
-schemas; 2.3 closed by decision (no `VectorStorePort`: pgvector helpers in `service/src/db/pgvector.ts`).; 6.4 Arkimede regression checklist done (`memory-regression.integration.spec.ts` in Arkimede). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.
+schemas; 2.3 closed by decision (no `VectorStorePort`: pgvector helpers in `service/src/db/pgvector.ts`).; 6.4 Arkimede regression checklist done (`memory-regression.integration.spec.ts` in Arkimede).; 2.6 done (the service's own sentences in all languages: `service/src/lang/messages.ts`; any BCP 47 locale). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.

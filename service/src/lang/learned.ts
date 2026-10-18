@@ -7,7 +7,7 @@
  * the verb agrees with it (Russian, Ukrainian, Polish). The date comes from Intl; a locale not listed falls back to
  * English.
  */
-import { type LOCALES } from './locales';
+import { type LOCALES, language } from './locales';
 
 type Gender = 'masculine' | 'feminine' | 'neutral';
 type Template = (date: string, title: string, from: string | null, gender: Gender) => string;
@@ -58,7 +58,6 @@ function longDate(locale: string, at: Date, timeZone: string): string {
  * who gave it, null when it was mine.
  */
 export function learnedSentence(locale: string, at: Date, timeZone: string, title: string, from: string | null, gender: Gender): string {
-  const lang = (locale.split(/[-_]/)[0] ?? 'en').toLowerCase();
-  const template = (TEMPLATES as Record<string, Template>)[lang] ?? TEMPLATES.en;
+  const template = (TEMPLATES as Record<string, Template>)[language(locale)] ?? TEMPLATES.en;
   return template(longDate(locale, at, timeZone), title, from, gender);
 }

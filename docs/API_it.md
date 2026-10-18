@@ -166,7 +166,7 @@ questo collegamento tra client ne avrà di propri):
 Admin (`api/v1/admin/…`), costruito: `POST clients {name, kind: platform | mcp_client | import, autoProvision?,
 rawLogScope?}`, `GET clients`, `PATCH clients/:id`, `POST clients/:id/keys {scopes}` (→ `{id, key, prefix}`, la chiave
 mostrata una sola volta), `DELETE keys/:id`, `POST memories {displayName, mode? (personal | entity), gender? (masculine |
-feminine | neutral), locale? (it | en), timezone?, qualityProfile?}`, `PATCH memories/:id` (stessi campi; l'admin può
+feminine | neutral), locale? (BCP 47, es. it, en, pt-BR), timezone?, qualityProfile?}`, `PATCH memories/:id` (stessi campi; l'admin può
 cambiare il modo di una memoria non vuota), `GET persons`, `POST identities {kind: account, personId (una memoria),
 clientId, externalId} | {kind: participant, memoryId (la memoria), personId (il suo sé o uno dei suoi contatti), clientId |
 channel (esattamente uno), externalId, verified?}`, `DELETE identities/:id`,

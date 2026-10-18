@@ -11,6 +11,7 @@ import { DataSource } from 'typeorm';
 import { type Env } from '../config/env';
 import { type QualityProfileName } from '../engine/quality-profile';
 import { addDays, localDate, zonedMidnight } from '../engine/time';
+import { canonicalLocale } from '../lang';
 
 export interface Settings { locale: string; timezone: string; qualityProfile: QualityProfileName | null; effectiveQualityProfile: QualityProfileName }
 
@@ -32,10 +33,7 @@ export class SettingsService {
     const sets: string[] = [];
     const params: unknown[] = [memoryId];
     if (patch.locale !== undefined) {
-      let locale: string | undefined;
-      try {
-        [locale] = Intl.getCanonicalLocales(patch.locale);
-      } catch { /* invalid tag */ }
+      const locale = canonicalLocale(patch.locale);
       if (!locale) throw new BadRequestException('invalid locale');
       sets.push(`locale = $${params.push(locale)}`);
     }

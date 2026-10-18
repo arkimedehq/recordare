@@ -11,6 +11,7 @@
  */
 import { type EntityManager } from 'typeorm';
 import { fold } from './subjects';
+import { messages } from '../lang';
 
 type Queryable = Pick<EntityManager, 'query'>;
 
@@ -60,22 +61,18 @@ export async function matchUnboundContacts(db: Queryable, memoryId: string, disp
   return { bind: null, similar: similar.map((r) => r.id) };
 }
 
-/**
- * "Giulia, che ha scritto il 9 ottobre, è la stessa persona di Giulia (sorella)?" — in the memory's language when it is
- * Italian, in English otherwise.
- */
+/** "Giulia, che ha scritto il 9 ottobre, è la stessa persona di Giulia (sorella)?" — in the memory's language. */
 export async function sameContactQuestion(db: Queryable, name: string, candidateId: string, at: Date, locale: string, timezone: string): Promise<string> {
   const [c]: Array<{ display_name: string; full_name: string | null; relation: string | null }> = await db.query(
     `SELECT display_name, full_name, relation FROM persons WHERE id = $1`, [candidateId]);
   const label = `${c?.full_name ?? c?.display_name ?? ''}${c?.relation ? ` (${c.relation})` : ''}`;
-  const it = locale.toLowerCase().startsWith('it');
   let day: string;
   try {
-    day = new Intl.DateTimeFormat(it ? 'it-IT' : 'en-GB', { day: 'numeric', month: 'long', timeZone: timezone }).format(at);
+    day = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', timeZone: timezone }).format(at);
   } catch {
     day = at.toISOString().slice(0, 10);
   }
-  return it ? `${name}, che ha scritto il ${day}, è la stessa persona di ${label}?` : `Is ${name}, who wrote on ${day}, the same person as ${label}?`;
+  return messages(locale).sameContact(name, day, label);
 }
 
 /** Opens a "same person?" question about `contactId` (new) and `candidateId` (known), as of `at`. */

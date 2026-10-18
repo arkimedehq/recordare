@@ -156,7 +156,7 @@ cross-client link will need its own):
 Admin (`api/v1/admin/…`), built: `POST clients {name, kind: platform | mcp_client | import, autoProvision?,
 rawLogScope?}`, `GET clients`, `PATCH clients/:id`, `POST clients/:id/keys {scopes}` (→ `{id, key, prefix}`, the key
 shown once), `DELETE keys/:id`, `POST memories {displayName, mode? (personal | entity), gender? (masculine | feminine |
-neutral), locale? (it | en), timezone?, qualityProfile?}`, `PATCH memories/:id` (same fields; the admin may change the
+neutral), locale? (BCP 47, e.g. it, en, pt-BR), timezone?, qualityProfile?}`, `PATCH memories/:id` (same fields; the admin may change the
 mode of a memory that is not empty), `GET persons`, `POST identities {kind: account, personId (a memory), clientId,
 externalId} | {kind: participant, memoryId (the memory), personId (its self or one of its contacts), clientId |
 channel (exactly one), externalId, verified?}`, `DELETE identities/:id`,

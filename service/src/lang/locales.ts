@@ -8,6 +8,18 @@
 export const LOCALES = ['en', 'zh', 'hi', 'es', 'fr', 'ar', 'bn', 'pt', 'ru', 'ur', 'id', 'de', 'ja', 'it', 'tr', 'ko',
   'vi', 'fa', 'pl', 'nl', 'th', 'sw', 'uk', 'ro', 'el'] as const;
 
+/** The language part of a locale, lower case: "it-IT" → "it". */
+export const language = (locale: string): string => (locale.split(/[-_]/)[0] ?? 'en').toLowerCase();
+
+/** A locale in its canonical BCP 47 form ("it-it" → "it-IT"), undefined when it is not one. */
+export function canonicalLocale(locale: string): string | undefined {
+  try {
+    return Intl.getCanonicalLocales(locale)[0];
+  } catch {
+    return undefined;
+  }
+}
+
 /** Lower case, NFC, apostrophes folded to ' — the form every phrase is matched in. */
 export const normalize = (s: string): string => s.normalize('NFC').toLocaleLowerCase().replace(/[’']/g, "'").replace(/\s+/g, ' ').trim();
 

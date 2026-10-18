@@ -4,8 +4,11 @@
 import { z } from 'zod';
 import { MEMORY_GENDERS, MEMORY_MODES, SCOPES } from '../identity/identity.entities';
 import { QUALITY_PROFILES } from '../engine/quality-profile';
+import { canonicalLocale } from '../lang';
 
 const scopes = z.array(z.enum(SCOPES)).min(1);
+/** The memory's language: any BCP 47 locale, stored canonical ("it-it" → "it-IT"). */
+const locale = z.string().refine((l) => !!canonicalLocale(l), 'invalid locale').transform((l) => canonicalLocale(l)!);
 
 export const createClientSchema = z.object({
   name: z.string().min(1).max(200),
@@ -31,7 +34,7 @@ export const createMemorySchema = z.object({
   mode: z.enum(MEMORY_MODES).default('personal'),
   /** First person in gendered languages (D50). */
   gender: z.enum(MEMORY_GENDERS).default('masculine'),
-  locale: z.enum(['it', 'en']).default('it'),
+  locale: locale.default('it'),
   timezone: z.string().min(1).default('Europe/Rome'),
   /** D35; omitted = installation default. */
   qualityProfile: z.enum(QUALITY_PROFILES).nullable().default(null),
@@ -41,7 +44,7 @@ export const updateMemorySchema = z.object({
   displayName: z.string().trim().min(1).max(200).optional(),
   mode: z.enum(MEMORY_MODES).optional(),
   gender: z.enum(MEMORY_GENDERS).optional(),
-  locale: z.enum(['it', 'en']).optional(),
+  locale: locale.optional(),
   timezone: z.string().min(1).optional(),
   /** null = back to the installation default. */
   qualityProfile: z.enum(QUALITY_PROFILES).nullable().optional(),

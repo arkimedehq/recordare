@@ -15,6 +15,7 @@ import { describe, type Precision } from '../engine/time';
 import { logRecall } from '../recall/recall-log';
 import { type MemoryMode } from '../identity/identity.entities';
 import { vectorParam } from '../db/pgvector';
+import { messages } from '../lang';
 
 const RRF_K = 60;
 const CANDIDATES = 50;
@@ -81,11 +82,7 @@ export class KnowledgeSearchService {
            WHERE es.source_id = ANY($1) AND e.memory_id = $2 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL) r
          WHERE n <= $3 ORDER BY occurred_at`, [sourceIds, memoryId, EPISODES_PER_SOURCE])
       : [];
-    const it = memory?.locale === 'it';
-    const notes = passages.length
-      ? [it ? 'i brani sono ciò che ho imparato dalle fonti (il loro testo), non ricordi di ciò che è successo; la fonte dice da chi e quando'
-        : 'passages are what I learned from sources (their text), not memories of what happened; the source says from whom and when']
-      : [];
+    const notes = passages.length ? [messages(memory?.locale ?? 'en').passages] : [];
     await logRecall(this.db, memoryId, 'search_knowledge', null, passages.length, args.conversationId, now);
     return {
       memory: { name: memory?.display_name ?? '', mode: memory?.mode ?? 'personal' },

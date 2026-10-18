@@ -20,6 +20,7 @@ import { relevantClarifications } from '../engine/clarifications';
 import { type MemoryView } from './episode-search.service';
 import { type SubjectKind } from '../identity/identity.entities';
 import { vectorParam } from '../db/pgvector';
+import { messages } from '../lang';
 
 export interface MemorySearchArgs {
   /** The conversation the recall is served in (see EpisodeSearchArgs). */
@@ -134,7 +135,7 @@ export class MemorySearchService {
       });
     const info: string[] = [];
     if (facts.some((f) => f.status === 'unknown')) {
-      info.push(memory.locale === 'it' ? 'per alcuni fatti il valore attuale non è noto' : 'the current value of some facts is not known');
+      info.push(messages(memory.locale).factsUnknown);
     }
     this.telemetry.emit({ type: 'recall.served', memoryId, tool: 'search_memory', episodeIds: [], claimIds: [], chats: 0, digests: 0,
       facts: facts.length, notes: notes.length });
