@@ -544,6 +544,22 @@ Saturday" as a fact, with no plan state to say the outcome is unknown. Cost: 62 
 band overlaps Recordare's and full context's; the outcome rates do not: Recordare invented nothing on unknown in both its
 runs, Mem0 invents in all three.
 
+**3 runs each** (2026-10-19; Recordare = current engine `extract.v17`, every run single-version; r1 of each is the
+run above):
+
+| System | Accuracy, mean ± sd (runs) | Unjustified, mean (runs) | Invented on unknown, mean (runs) | Over-abstention |
+|---|---|---|---|---|
+| Recordare v17 | 93.5 % ± 5.2 (88.9, 99.1, 92.6) | **0.025** (0.037, 0.000, 0.037) | **0.000** (0, 0, 0) | 0.016 |
+| Full context | 93.2 % ± 1.9 (95.4, 91.7, 92.6) | 0.062 (0.037, 0.074, 0.074) | 0.051 (0.077, 0, 0.077) | 0.008 |
+| Mem0 2.2.1 | 93.2 % ± 4.3 (91.7, 98.1, 89.8) | 0.093 (0.093, 0.056, 0.130) | 0.128 (0.154, 0.077, 0.154) | 0.000 |
+
+Accuracy does not separate the three (54 questions, overlapping intervals). The outcome rates do: Recordare invented
+no outcome on an unknown plan in 3 of 3 runs, full context in 2 of 3, Mem0 in 3 of 3; its unjustified-assertion
+rate is a quarter of Mem0's and under half of full context's. Recordare's unjustified answers are different items in
+each run (h11 h19; none; h30 h41), the others repeat (full context h05 h32 h41 h45, Mem0 h05 h11 h12). Recordare's
+extraction, r3: episode recall 0.967, plan outcome 0.781, unsupported 0.163; engine 66 extraction calls, 447 k input
+(62 % cached) / 47 k output.
+
 One run each; with 54 questions a 3-point gap is within noise. Cost: engine 63 extraction calls, ≈ 508 k input (49 %
 cached) / 60 k output; full context ≈ 550 k input for the answers.
 

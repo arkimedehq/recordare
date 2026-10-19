@@ -78,9 +78,10 @@ a zero — questi set non mostrano H1; serve un set più difficile (piani irriso
 impliciti, storie lunghe), e restano da confrontare Zep/Graphiti, Letta, A-Mem e un archivio tipizzato stile PIS. Quel set, `dataset_blind12` (2026-10-19, 54 domande H1, 1 run): contesto
 completo 95,4 % ma afferma un esito non confermato e scambia una correzione per un cambiamento (esiti inventati 0,077);
 Recordare 92,6 %, nessun esito inventato, piani irrisolti e correzione vs cambiamento tutti giusti; il suo errore H1 è
-un'intenzione dello stesso giorno salvata come fatta. Mem0 sullo stesso set (3 run): 93,2 % ± 4,3, ma affermazioni
-ingiustificate 0,093 ed esiti inventati 0,128 (in ogni run) — piani tenuti come eventi. Primo segnale che gli stati tipizzati dei piani
-aiutano dove il contesto completo e un archivio di fatti sbagliano; un run ciascuno.
+un'intenzione dello stesso giorno salvata come fatta. Con 3 run ciascuno (Recordare su `extract.v17`): accuratezza
+93,5 / 93,2 / 93,2 % per Recordare / contesto completo / Mem0, ma affermazioni ingiustificate 0,025 / 0,062 / 0,093 ed
+esiti inventati 0,000 / 0,051 / 0,128 — Mem0 tiene i piani come eventi. Primo segnale che gli stati tipizzati dei piani
+aiutano dove il contesto completo e un archivio di fatti sbagliano, costante su 3 run ciascuno; un solo set di 54 domande.
 
 **Il modello dati della fase 1 deve memorizzare.** Stato del piano `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, data dello stato, episodio di evidenza); tipo di episodio
