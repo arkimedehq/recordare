@@ -19,10 +19,22 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   ignote e approssimate, i nomi dei giorni e la domanda "stessa persona?" seguono la lingua della memoria nelle 25 lingue
   più usate (erano in italiano o in inglese); il `locale` di una memoria è qualsiasi tag BCP 47 anche nell'API admin
   (prima `it` / `en`).
+- **Una cosa raccontata come fatta oggi che poi non è avvenuta** (H1, `extract.v17`, memorie personali): "oggi
+  pomeriggio vernicio la ringhiera" viene salvato come fatto quel giorno, come prima; quando un messaggio successivo
+  mostra che non è avvenuto ("sabato vernicio finalmente la ringhiera, il barattolo è ancora lì"), ora l'episodio viene
+  corretto invece di restare vero. Le memorie entity mantengono il loro prompt.
+- **Un elenco senza periodo** (`search_episodes` in modalità `list`, senza `from` / `to`) sceglie per argomento, come una
+  ricerca, e riempie i posti liberi per somiglianza; prima teneva gli elementi più importanti fra quelli pertinenti e non
+  aggiungeva altro, così "quante corse ti ho raccontato?" non riceveva nessuna corsa. Gli elenchi con periodo non
+  cambiano.
 
 ### Corretto
 - Una memoria con lingua regionale (`it-IT`, come accetta `PATCH settings`) riceveva quelle frasi e i nomi dei giorni in
   inglese.
+- Un fatto non più noto faceva fallire l'intera finestra di estrazione quando veniva ridetto non noto, riceveva un nuovo
+  valore o veniva corretto (il database non ammetteva valori vuoti nella storia di un fatto); un "non noto" ripetuto ora
+  non cambia nulla, e gli altri due casi scrivono la storia come devono (migrazione `UnknownFactHistory`).
+- `provider_eval.py` (valutazione): run con tag diversi sullo stesso set non si sovrascrivono più il riepilogo.
 
 ## [0.3.0] — 2026-10-17
 

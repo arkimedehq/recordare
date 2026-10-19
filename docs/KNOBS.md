@@ -58,7 +58,7 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Embedding endpoint (measured with `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fixed per installation (1024 for bge-m3); changing the model needs a re-embed |
 
-Supported models: only those reaching 95 % on the evaluation (`RESULTS.md`).
+Supported models: only those reaching 95 % on the evaluation — measured models, scores and weight licences in `docs/MODELS.md`.
 
 ## 4. Per person (admin API, console, or the person's platform)
 
@@ -138,5 +138,5 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 `EVAL_DATASET`, `RECORDARE_URL` / `RECORDARE_ADMIN_KEY` / `RECORDARE_DB_URL` (service system),
 `EVAL_SOURCE_AMBIENT_AS` (service system: send a set's `ambient` sessions with this source instead, e.g. `voice` — the
 comparison arm of WORK_PLAN 6.5), `CONSOLIDATE`,
-`AGENT_SYSTEM_FILE` (agent mode: a real agent's prompt), `REASONING_OFF_BODY`, `OPEN_ROUTER_API_KEY`. Spike runs cost
+`AGENT_SYSTEM_FILE` (agent mode: a real agent's prompt), `REASONING_OFF_BODY`, `OPEN_ROUTER_API_KEY`; the provider matrix (`provider_eval.py --config profiles/<model>.json`) reads each profile's key from the variable it names (`OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `LLM_API_KEY`). Spike runs cost
 money: the evaluation budget rules in `WORK_PLAN.md` apply.

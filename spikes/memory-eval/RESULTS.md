@@ -502,6 +502,70 @@ judge is (blind9: "Beatrice submitted it" when Beatrice asks).
 - Single grader (DeepSeek flash), not audited by a human; stricter than the judge on secondary details. The rates are
   per answer, so a run's ±1 answer is ±0.02–0.03.
 
+### H1 harder set — `dataset_blind12` (2026-10-19, DeepSeek direct, 1 run each)
+
+A blind set built for H1 after 4.5c showed the earlier sets had too few hard items (written and audited by separate
+agents; `dataset_blind12/GOLD_AUDIT.md`): Tommaso, Bologna, Feb–Jun 2034, 62 sessions (8 English, 7 group chats), 54
+questions, all H1 — plan-unresolved 8, plan-implicit 7, plan-moved 7, premise-trap 7, accumulate 6, supersede 8,
+correction-vs-change 7, negative 4. Service through `provider_eval.py --config profiles/deepseek-flash.json` (current
+engine, `extract.v16`, one prompt version per task); answer and judge `deepseek-flash`; outcomes by `outcome_eval.py`.
+
+| System | Accuracy | Unjustified | Over-abstention | Invented on unknown (13) |
+|---|---|---|---|---|
+| Recordare | 92.6 % | **0.019** | 0.049 | **0.000** |
+| full context | **95.4 %** | 0.037 | 0.024 | 0.077 |
+
+Per category (Recordare / full context): plan-unresolved **1.00** / 0.88, plan-implicit 0.79 / 1.00, plan-moved 1.00 /
+1.00, premise-trap 0.86 / 0.93, accumulate 0.83 / 1.00, supersede 0.94 / 1.00, correction-vs-change **1.00** / 0.86,
+negative 1.00 / 1.00. Extraction: episode recall 0.97, dates 0.90, plan outcome 0.84, unsupported 17 % (blind5 9 %),
+facts 0.62 / 0.54, notes 0.50.
+
+Reading. The set separates the two where H1 says it should. Full context, with every chat in front of it, still
+asserts an outcome nobody told (h07: "Sì" to an unconfirmed car service) and takes a correction for a change (h45:
+"the trip was first set for 11 May" — it never was); Recordare's plan states and `corrects` keep both right (unresolved
+and correction-vs-change 1.00, nothing invented on unknown). Recordare's losses are of two other kinds:
+- **an intention stored as done** (h11, the one unjustified answer): "Oggi pomeriggio vernicio la ringhiera" became
+  the event "on 1 April I painted the railing"; twelve days later "Saturday 15 I'll finally do the railing, the can is
+  still there" was stored as a new plan without revising that event. The H1 error itself, made by the extraction;
+- **recall misses with the memory right** (h30 runs, h26 smart-working day): the five runs and the change of the home
+  working day are stored, but the recall did not bring them to the answer ("I have nothing on it"). Plus two partials
+  (a detail of the evidence omitted).
+One run each; with 54 questions a 3-point gap is within noise. Cost: engine 63 extraction calls, ≈ 508 k input (49 %
+cached) / 60 k output; full context ≈ 550 k input for the answers.
+
+### H1 follow-ups after blind12 (2026-10-19, DeepSeek direct, 1 run each)
+
+Three fixes from the blind12 failures (h11, h30 and h26 are no longer blind; the other 51 questions are):
+- **`extract.v17`** (personal memories; the entity prompt is byte-identical): NOT DONE AFTER ALL — something in KNOWN
+  EPISODES told as done that the window shows did not happen ("still to do", "finally", rained off) is corrected
+  (`corrects`), a new date is a new plan. The rule "today / tonight is an event" stays: most same-day intentions are
+  never contradicted and are kept as events (blind4 and blind5 have 13–16 each).
+  Dev set `dataset_dev_intentions` (new, not blind, 10 sessions, 6 questions): v16 **4/6** (both contradicted Italian
+  intentions stored as done) → v17 **6/6**, the corrections linked in the database; the kept and confirmed same-day
+  events unchanged. blind5, same code but the prompt: v16 **94.8 %** → v17 **92.5 %** (5 flips: e18 lost because one
+  window failed with an invalid model output — the move to Noto was never extracted; replayed, it passes at once — and four
+  partial ↔ correct on details); plan outcome 0.69 → 0.92, recall 0.94 both, unsupported 11.5 → 12.9 %. Within noise.
+- **A list without a period** (`search_episodes` mode `list`, no `from` / `to`): it kept the most important of the
+  relevant items and added nothing else. h30 ("how many runs did I tell you about?"): the agent asked `list` "corse" with
+  no period and got 2 unrelated items; the five runs (low importance) were relevant but never chosen. Now chosen by
+  relevance, free places filled by similarity, shown in time order: on the blind12 memory 0 → 7 of 7 run items with the
+  agent's own topics. Known limit: the bare plural "corse" still finds 3 (full text has no stemming, and one word sits
+  near the similarity floor).
+- **A fact unknown again failed the window** (found in the blind12 re-run: `QueryFailedError`, `facts_check`): the
+  history of a fact could not hold an empty value, so "back pain: unknown" said unknown again (or later given a value, or
+  corrected) failed the whole window. Fixed in the writer (a repeated unknown changes nothing) and the schema (migration
+  `UnknownFactHistory`).
+
+**blind12 re-run** (v17 + list fix; the facts fix came after): **88.9 %** (was 92.6 %), unjustified 0.037 (0.019),
+over-abstention 0.024 (0.049), invented on unknown 0.0 (0.0). Fixed: h30 (runs, 5 and 36 km), h26 (smart-working day —
+the agent's query kept the premise this time: run-to-run variation, not a fix). **Still wrong: h11** — the window of 12
+April ("Sabato 15 do finalmente l'antiruggine alla ringhiera, il barattolo è lì da fine marzo") wrote the new plan and
+left the 1 April event: the phrasing is subtler than the dev set's, and the rule did not fire. New losses on items no fix
+touches (h01 a dinner denied, h19 a vaccine date, h37 a coach as of a date, plus partials) and one failed window (the
+facts bug): with one run each on 54 questions the difference is within noise. Two harness gaps seen here: a window that
+fails is never retried in an evaluation (the service retries it at the next nightly sweep), and one failed window can
+cost several answers.
+
 ### WORK_PLAN 6.5 — continuous listening: extract.v16, pending facts, `heard` in recall (2026-10-15, DeepSeek direct, `amb65_runs.sh`)
 
 Dev set `dataset_dev_ambient` (NOT blind, written by an agent of the engine developer): Stefano, his son Leo, his mother

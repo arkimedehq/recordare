@@ -353,7 +353,7 @@ assistant" — so an injected tool output cannot create a high-importance "the u
 |---|---|---|
 | `query` | string | Optional for pure period overviews |
 | `from`, `to` | string | ISO dates (`YYYY-MM-DD`, or `YYYY-MM` = the whole month), inclusive, matched by overlap (`resolve_period` helps) |
-| `mode` | `"search" \| "list" \| "latest"` | `search` relevance; `list` chronological in range; `latest` most recent matches first |
+| `mode` | `"search" \| "list" \| "latest"` | `search` relevance; `list` chronological in range (without a range: the items on the topic, chosen by relevance); `latest` most recent matches first |
 | `include_plans` | boolean | default true |
 | `limit` | integer, 1–50 | defaults: search 10, list 30, latest 5 |
 

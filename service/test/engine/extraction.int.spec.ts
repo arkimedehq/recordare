@@ -261,6 +261,29 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
     expect(await db.query(`SELECT count(*)::int AS n FROM extraction_runs WHERE status = 'failed'`)).toEqual([{ n: 0 }]);
   });
 
+  it('a fact not known any more can be unknown again (nothing changes), then get a new value or a correction', async () => {
+    const fid = async () => (await db.query(`SELECT key FROM facts WHERE status IN ('current','unknown_current') ORDER BY recorded_at DESC`))
+      .findIndex((r: { key: string }) => r.key === 'back_pain') + 1;
+    const step = async (id: string, content: string, at: string, fact: Record<string, unknown>) => {
+      const c = await ingest(id, [{ id: `${id}-1`, role: 'user', content, at }]);
+      llm.queue.push({ facts: [{ key: 'back_pain', evidence: [1], ...fact }] });
+      await runner.runForConversation(c);
+    };
+    await step('bp1', 'Ho mal di schiena da giorni.', '2026-07-01T10:00:00+02:00', { value: 'mal di schiena da giorni', verdict: 'new' });
+    await step('bp2', 'Il mal di schiena? Boh, vedremo.', '2026-07-05T10:00:00+02:00', { verdict: 'stale', target: `F${await fid()}` });
+    await step('bp3', 'Della schiena non so dirti.', '2026-07-08T10:00:00+02:00', { verdict: 'stale', target: `F${await fid()}` });
+    await step('bp4', 'La schiena è guarita.', '2026-07-10T10:00:00+02:00', { value: 'guarita', verdict: 'replace', target: `F${await fid()}` });
+    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'back_pain' ORDER BY valid_from, recorded_at`)).toEqual([
+      { value: 'mal di schiena da giorni', status: 'superseded' }, { value: null, status: 'superseded' }, { value: 'guarita', status: 'current' },
+    ]);
+    await step('bp5', 'Della schiena non so più nulla.', '2026-07-12T10:00:00+02:00', { verdict: 'unknown', target: `F${await fid()}` });
+    await step('bp6', 'Anzi no, era solo stanchezza, la schiena non è mai stata guarita.', '2026-07-13T10:00:00+02:00',
+      { value: 'mal di schiena', verdict: 'corrects', target: `F${await fid()}` });
+    expect(await db.query(`SELECT value, status FROM facts WHERE key = 'back_pain' AND recorded_at > now() - interval '1 minute' ORDER BY recorded_at DESC LIMIT 2`))
+      .toEqual([{ value: 'mal di schiena', status: 'current' }, { value: null, status: 'corrected' }]);
+    expect(await db.query(`SELECT count(*)::int AS n FROM extraction_runs WHERE status = 'failed'`)).toEqual([{ n: 0 }]);
+  });
+
   it("extracts the memory's messages ingested with role other (group chats, imports)", async () => {
     const c = await ingest('grp', [{ id: 'g1', role: 'other', content: 'Sono io, Luca: domani vado a Torino.', at: '2026-06-03T10:00:00+02:00' }],
       [{ ref: 'luca', role: 'holder' }]);

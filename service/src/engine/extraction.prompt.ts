@@ -5,11 +5,12 @@
  * Extraction prompts. The system prompt is constant (provider prefix caching); everything variable goes in the user
  * message. Rules come from the prototype that passed the blind held-out check (spikes/memory-eval/systems/d_sys.py)
  * plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
- * - Personal memories (D50, WORK_PLAN 8.4): `extract.v16` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
+ * - Personal memories (D50, WORK_PLAN 8.4): `extract.v17` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
  *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date; v15: a group
  *   chat's name in the input, GROUP CHAT, only for group chats with one — the system prompt is v14's; v16: HEARD AROUND ME in
- *   the input, only for continuous listening, WORK_PLAN 6.5 — the system prompt is still v14's).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v16+entity.v5` — the shared agent's memory in the first person, people by
+ *   the input, only for continuous listening, WORK_PLAN 6.5 — the system prompt is still v14's; v17: NOT DONE AFTER ALL —
+ *   something told as done today that a later window shows did not happen is corrected, H1 blind12).
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v17+entity.v5` — the shared agent's memory in the first person, people by
  *   name or "someone"; the personal prompt's sections where they hold for both.
  */
 export interface PromptMessage {
@@ -52,7 +53,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v16';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v17';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -234,6 +235,16 @@ date, emit a "reschedule" patch for that P-number instead. Facts and notes use v
 sbagliato le date del corso di Verona: avevo detto 21 e 22 ottobre, invece sono sabato 14 e domenica 15 ottobre"), \
 naming who corrected me when it was someone else. Never "I corrected the assistant": the assistant is me.`;
 
+/**
+ * v17 (H1, blind12 h11): "today" intentions are stored as done (DATES); when a later window shows one did not happen,
+ * the episode is corrected. Personal memories only: the entity prompt stays byte-identical.
+ */
+const P_NOT_DONE = `
+- Not done after all: when the window shows that something in KNOWN EPISODES I told as done did not happen (it is \
+still to do — "finalmente", "ancora", "not yet", "still" —, it was put off, it was rained off), emit the corrected \
+episode with "corrects" set to that E-number, saying what I meant to do that day and that I did not do it \
+("Il 1° aprile 2034 volevo verniciare la ringhiera, ma non l'ho fatto"); a new date in the window is a new plan.`;
+
 const P_SAFETY = `
 
 SAFETY
@@ -253,7 +264,7 @@ const END = `
 Empty lists when there is nothing to remember. Output JSON only.`;
 
 export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono stato al mare con Giulia', 'Mia sorella Giulia ha vinto la gara')") + P_FIRST_PERSON + P_SUBJECT + DATES + P_EPISODES + PLANS + P_FACTS + NOTES
-  + CORRECTIONS + P_SAFETY + END;
+  + CORRECTIONS + P_NOT_DONE + P_SAFETY + END;
 
 /**
  * Entity memories (D50, WORK_PLAN 8.5): the memory of a shared agent — a device, a place, a robot, a service — that several
@@ -383,7 +394,7 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v16`, entity `extract.v16+entity.v5`). */
+/** The extraction input of both modes (personal `extract.v17`, entity `extract.v17+entity.v5`). */
 /**
  * Continuous listening (WORK_PLAN 6.5, D45): only in ambient windows, so every other input stays byte-identical. The
  * speakers' names come from voice recognition and the words from speech recognition; nobody is talking to the

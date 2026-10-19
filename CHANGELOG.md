@@ -17,10 +17,21 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - **All languages in the service's own sentences** (WORK_PLAN 2.6): the recall tools' notes for the agent, unknown and
   approximate dates, weekday names and the "same person?" question follow the memory's language in the 25 most used
   languages (they were Italian or English); a memory's `locale` is any BCP 47 tag in the admin API too (was `it` / `en`).
+- **Something told as done today that did not happen** (H1, `extract.v17`, personal memories): "this afternoon I paint
+  the railing" is stored as done that day, as before; when a later message shows it did not happen ("Saturday I'll
+  finally paint the railing, the can is still there"), the episode is now corrected instead of staying true. Entity
+  memories keep their prompt.
+- **A list without a period** (`search_episodes` mode `list`, no `from` / `to`) selects by its topic, like a search, and
+  fills free places by similarity; it used to keep the most important items among the relevant ones and to add nothing
+  else, so "how many runs did I tell you about?" got none of the runs. Period lists are unchanged.
 
 ### Fixed
 - A memory whose locale is regional (`it-IT`, as `PATCH settings` accepts) got those sentences and weekday names in
   English.
+- A fact that was not known any more failed the whole extraction window when it was said unknown again, got a new value
+  or was corrected (the database allowed no empty value in a fact's history); a repeated "unknown" now changes nothing,
+  and the other two write history as they should (migration `UnknownFactHistory`).
+- `provider_eval.py` (evaluation): runs with different tags on the same set no longer overwrite each other's summary.
 
 ## [0.3.0] — 2026-10-17
 

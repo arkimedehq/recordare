@@ -43,6 +43,7 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - `docs/ATLAS_EVENTS.md` — contract v1 (endpoints + telemetry events, metadata only) with the optional live brain
   view **Recordare Atlas**, its own repo `~/Development/recordare-atlas` (`arkimedehq/recordare-atlas`, published with
   Recordare); Recordare must work without it.
+- `docs/MODELS.md` — supported-models table (measured engine models, scores, weight licences); `provider_eval.py` measures one.
 - `docs/KNOBS.md` — every setting in one place (quality profiles, service env, models, per person / client, deploy, atlas,
   client side, spike), with defaults and what was measured. Update it with every new knob.
 - `docs/ENGINE_IDEAS.md` — what we borrow from Memobase / Graphiti, what we reject, held-out
@@ -147,4 +148,4 @@ continuous listening (source `ambient`, `extract.v16`, everything heard pending,
 migration `PendingProposals` —, `heard` in recall; dev set `dataset_dev_ambient` 86.7 %). Done 2026-10-16: 6.5 (4) room fan-out
 (`POST api/v1/ingest/room`, client `ingestRoom`); 4.5c the two H1 rates (`spikes/memory-eval/outcome_eval.py`, a second
 grading of stored answers; RESULTS.md). Done 2026-10-18: v0.3.0 released; OpenAPI with request and response
-schemas; 2.3 closed by decision (no `VectorStorePort`: pgvector helpers in `service/src/db/pgvector.ts`).; 6.4 Arkimede regression checklist done (`memory-regression.integration.spec.ts` in Arkimede).; 2.6 done (the service's own sentences in all languages: `service/src/lang/messages.ts`; any BCP 47 locale). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.
+schemas; 2.3 closed by decision (no `VectorStorePort`: pgvector helpers in `service/src/db/pgvector.ts`).; 6.4 Arkimede regression checklist done (`memory-regression.integration.spec.ts` in Arkimede).; 2.6 done (the service's own sentences in all languages: `service/src/lang/messages.ts`; any BCP 47 locale). Done 2026-10-19: 4.5b CLI `provider_eval.py` + `docs/MODELS.md` (native OpenAI / Gemini / Anthropic runs wait for keys); H1 harder blind set `dataset_blind12` (Recordare 92.6 %, nothing invented on unknown; full context 95.4 % but invents outcomes); `extract.v17` (an event told as done that a later window contradicts is corrected), lists without a period by relevance, facts unknown again (migration `UnknownFactHistory`). Next: 6.6b (6) on hold; follow `docs/WORK_PLAN.md`.

@@ -1,0 +1,329 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright © 2026 Andrea Genovese
+"""Gold memory of blind set #12: what a perfect personal memory of Tommaso Rinaldi should hold.
+
+Every episode carries `speaker` (who said it: "Tommaso" or a group-chat author) and `people` (who it is about /
+involves). `kind`: event | plan | state_change. For a plan, `date` is its last scheduled date and `plan_outcome` is
+the final status as of the end of the period: confirmed (happened, said or implied) | cancelled | missed (did not happen
+on that date, without a cancellation) | unresolved (date passed, no news at all) | open (date still in the future).
+A plan that moved keeps one episode, its history in `content`. The agent's own actions are told in the first person.
+"""
+
+EPISODES = [
+    {"id": "g-e01", "sessions": ["s01", "s19", "s23"], "speaker": "Tommaso", "kind": "state_change",
+     "date": "2034-03-20", "date_precision": "day", "people": ["Tommaso", "Pietro", "Chiara", "Ruggeri", "Bonacini"],
+     "plan_outcome": None,
+     "content": "Pietro's football: until mid-March 2034 coach Ruggeri, training Tuesday and Thursday 17:30 at campo "
+                "della Barca (Tommaso drives on Tuesday, Chiara on Thursday). Ruggeri left for Imola (farewell 13 Mar); "
+                "the new coach is Paolo Bonacini (first told as 'Bonetti' on 13 Mar, corrected 20 Mar: never Bonetti); "
+                "from 20 Mar training Monday and Wednesday 17:30 at the Barca (Chiara Monday, Tommaso Wednesday). I "
+                "moved the reminder accordingly."},
+    {"id": "g-e02", "sessions": ["s01", "s28", "s34", "s59"], "speaker": "Tommaso", "kind": "state_change",
+     "date": "2034-06-01", "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Tommaso's phone line: Iliad 9,99 €/month until 3 Apr 2034; ported to Kena (7,99 €/month) on Mon 3 Apr "
+                "(confirmed working 4 Apr, Iliad SIM thrown away); Kena raised the offer to 8,99 € from 1 Jun 2034 and "
+                "Tommaso decided to stay."},
+    {"id": "g-e03", "sessions": ["s01"], "speaker": "Tommaso", "kind": "event", "date": "2034-02-06",
+     "date_precision": "day", "people": ["Tommaso", "Federica"], "plan_outcome": None,
+     "content": "Busy work day: progress meeting at 10 and lunch with Federica (his manager) about the spring budget."},
+    {"id": "g-e04", "sessions": ["s02", "s39", "s58"], "speaker": "Tommaso", "kind": "state_change",
+     "date": "2034-05-23", "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Weight: 88 kg on 8 Feb 2034 (target 82 kg by summer); 84 kg on 18 Apr, target raised to 80 kg by "
+                "September; 82,5 kg on 23 May."},
+    {"id": "g-e05", "sessions": ["s02"], "speaker": "Tommaso", "kind": "state_change", "date": "2034-02-08",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Renewed the yearly membership at Palestra Ercole, via Andrea Costa, Bologna (goes Monday and Wednesday "
+                "after work)."},
+    {"id": "g-e06", "sessions": ["s03", "s06"], "speaker": "Tommaso", "kind": "plan", "date": "2034-02-17",
+     "date_precision": "day", "people": ["Tommaso", "Chiara", "Giorgia", "Anna"], "plan_outcome": "cancelled",
+     "content": "Tenth wedding anniversary dinner at Kumo (Japanese, via del Pratello) Fri 17 Feb 2034 20:30, babysitter "
+                "Giorgia from 20:00. Cancelled: Anna had a fever (38,5); they cancelled the table and had two takeaway "
+                "pizzas (told 18 Feb)."},
+    {"id": "g-e07", "sessions": ["s03", "s21"], "speaker": "Tommaso", "kind": "plan", "date": "2034-03-14",
+     "date_precision": "day", "people": ["Tommaso", "Chiara"], "plan_outcome": "cancelled",
+     "content": "A week in Sardinia in June was only Chiara's idea (10 Feb 2034), never booked; on 14 Mar they dropped "
+                "it (too expensive) and kept only Lisbon in April. Maybe a few days in Cesenatico in summer, nothing "
+                "decided."},
+    {"id": "g-e08", "sessions": ["s03", "s28", "s33", "s36", "s48", "s60"], "speaker": "Tommaso",
+     "kind": "state_change", "date": "2034-04-03", "date_precision": "day", "people": ["Tommaso"],
+     "plan_outcome": None,
+     "content": "Smart working: until March 2034 Tommaso worked from home on Fridays; from Mon 3 Apr the company moved "
+                "the remote day to Monday for everyone, Friday is an office day."},
+    {"id": "g-e09", "sessions": ["s04", "s54", "s61"], "speaker": "Tommaso", "kind": "event", "date": "2034-05-31",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Blood donations at AVIS: Mon 13 Feb 2034 (done); Mon 15 May sent home for low haemoglobin (no "
+                "donation, given iron); Wed 31 May donated. Two donations in the period."},
+    {"id": "g-e10", "sessions": ["s02", "s04", "s31", "s35", "s55"], "speaker": "Tommaso", "kind": "event",
+     "date": "2034-05-18", "date_precision": "day", "people": ["Tommaso", "Luca", "Owen"], "plan_outcome": None,
+     "content": "Books: finished 'La casa sul canale' on 12 Feb 2034; finished 'Le stagioni di Ottavio' (lent by Luca) "
+                "on 30 Mar on the train; abandoned 'Nebbia sul Reno' halfway (9 Apr); finished 'The Quiet Harbour' "
+                "(recommended by Owen) on 18 May."},
+    {"id": "g-e11", "sessions": ["s04"], "speaker": "Tommaso", "kind": "event", "date": "2034-02-13",
+     "date_precision": "day", "people": ["Tommaso", "Marco"], "plan_outcome": None,
+     "content": "Lent his camping tent to Marco (for a weekend in the Apennines with his children); no return mentioned."},
+    {"id": "g-e12", "sessions": ["s05", "s12", "s44"], "speaker": "Tommaso", "kind": "event", "date": "2034-04-27",
+     "date_precision": "day", "people": ["Tommaso", "Pietro", "Anna"], "plan_outcome": None,
+     "content": "Purchases for Pietro's football: football boots 45 € (15 Feb 2034), shin guards 12 € (1 Mar), new kit "
+                "bag 25 € (27 Apr) — 82 € in all. Dance shoes 30 € for Anna (27 Apr)."},
+    {"id": "g-e13", "sessions": ["s05", "s29"], "speaker": "Tommaso", "kind": "state_change", "date": "2034-04-01",
+     "date_precision": "month", "people": ["Anna", "Chiara"], "plan_outcome": None,
+     "content": "Anna's dance school fee: 45 €/month (February paid 15 Feb 2034); raised to 50 €/month from April."},
+    {"id": "g-e14", "sessions": ["s05", "s06", "s14"], "speaker": "Tommaso", "kind": "plan", "date": "2034-02-19",
+     "date_precision": "day", "people": ["Tommaso", "Chiara", "Giovanna", "Franco"], "plan_outcome": "confirmed",
+     "content": "Lunch in Modena for the 70th birthday of Giovanna (Chiara's mother) Sun 19 Feb 2034; gift a spa weekend "
+                "for her and Franco. Happened (implied: on 3 Mar they opened the Lambrusco given to them at that "
+                "party)."},
+    {"id": "g-e15", "sessions": ["s05", "s07", "s08"], "speaker": "Tommaso", "kind": "plan", "date": "2034-02-23",
+     "date_precision": "day", "people": ["Tommaso", "Zaccaria"], "plan_outcome": "cancelled",
+     "content": "Doctor's visit for back pain with dott. Zaccaria: booked Mon 20 Feb 2034 11:00, moved by the surgery to "
+                "Thu 23 Feb 10:00, cancelled by Tommaso on 22 Feb because the back pain had gone."},
+    {"id": "g-e16", "sessions": ["s06"], "speaker": "Tommaso", "kind": "event", "date": "2034-02-18",
+     "date_precision": "day", "people": ["Anna"], "plan_outcome": None,
+     "content": "Anna (23 kg) had a fever of 38,5 in the night of 17–18 Feb 2034; paediatrician: paracetamol and rest."},
+    {"id": "g-e17", "sessions": ["s07", "s09", "s36", "s40", "s41", "s46"], "speaker": "Tommaso", "kind": "plan",
+     "date": "2034-04-22", "date_precision": "day", "people": ["Tommaso", "Chiara", "Rosa"], "plan_outcome": "confirmed",
+     "content": "Trip to Lisbon with Chiara Sat 22 – Tue 25 Apr 2034, small hotel in Alfama, children with Tommaso's "
+                "mother Rosa. Flights 412 € for two, return (first told 312 € on 20 Feb, corrected 23 Feb: misread, "
+                "always 412). Check-in done 20 Apr. Happened (implied: on 3 May he put the Lisbon photos on the NAS, "
+                "folder '2034-04 Lisbona')."},
+    {"id": "g-e18", "sessions": ["s07", "s36"], "speaker": "Tommaso", "kind": "plan", "date": "2034-02-24",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": "confirmed",
+     "content": "Identity card renewal at the anagrafe Fri 24 Feb 2034 9:10 (old one expiring in March). Done (implied: "
+                "on 10 Apr he travels with the new identity card)."},
+    {"id": "g-e19", "sessions": ["s08", "s16"], "speaker": "Tommaso", "kind": "plan", "date": "2034-02-27",
+     "date_precision": "day", "people": ["Tommaso", "Fabbri"], "plan_outcome": "confirmed",
+     "content": "Root canal (devitalizzazione) with dott.ssa Fabbri Mon 27 Feb 2034 15:00. Done (implied: on 6 Mar the "
+                "tooth no longer hurts since Fabbri did it)."},
+    {"id": "g-e20", "sessions": ["s09", "s16", "s21", "s25"], "speaker": "Tommaso", "kind": "plan",
+     "date": "2034-03-21", "date_precision": "day", "people": ["Tommaso", "Luca", "Federica"],
+     "plan_outcome": "confirmed",
+     "content": "Demo for the client Varesi Logistica: Wed 8 Mar 2034 14:30 → Wed 15 Mar (client's request) → Tue 21 Mar "
+                "10:00 (their director was in Rome). Held on 21 Mar, went very well (they sign by April)."},
+    {"id": "g-e21", "sessions": ["s10", "s23", "s33", "s53"], "speaker": "Tommaso", "kind": "event",
+     "date": "2034-04-02", "date_precision": "day", "people": ["Pietro"], "plan_outcome": None,
+     "content": "Pietro's goals: 1 vs Corticella Sat 25 Feb 2034 (2-2); 2 vs San Donato Sat 18 Mar (3-1); 1 vs Fortitudo "
+                "Sun 2 Apr (2-0, first match with Bonacini). Match vs Granarolo Sat 13 May 15:00, result never told."},
+    {"id": "g-e22", "sessions": ["s10"], "speaker": "Tommaso", "kind": "event", "date": "2034-02-26",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "I drew up the weekly shopping list (plus coffee and Anna's cocoa biscuits)."},
+    {"id": "g-e23", "sessions": ["s11", "s20", "s24"], "speaker": "Simone", "kind": "plan", "date": "2034-03-23",
+     "date_precision": "day", "people": ["Simone", "Marco", "Davide", "Tommaso"], "plan_outcome": "cancelled",
+     "content": "Five-a-side tournament final vs the Bradipi at campo Dozza: Thu 16 Mar 2034 21:00, moved by Simone "
+                "(group 'Calcetto del giovedì', 14 Mar) to Thu 23 Mar 21:00, cancelled by Simone on 21 Mar (pitch "
+                "flooded, no other date); tournament over, cup to the Bradipi on the standings."},
+    {"id": "g-e24", "sessions": ["s24"], "speaker": "Simone", "kind": "plan", "date": "2034-03-23",
+     "date_precision": "day", "people": ["Simone", "Tommaso"], "plan_outcome": "unresolved",
+     "content": "Simone proposed a beer at the Moro on Thu 23 Mar anyway; Tommaso said he'd be there. No later news."},
+    {"id": "g-e25", "sessions": ["s11", "s30"], "speaker": "Marco", "kind": "plan", "date": "2034-04-07",
+     "date_precision": "day", "people": ["Marco", "Tommaso", "Chiara"], "plan_outcome": "cancelled",
+     "content": "Marco's 40th birthday party Fri 7 Apr 2034 at the Osteria del Moro from 20:00 (Tommaso and Chiara "
+                "accepted). Cancelled by Marco on 29 Mar (his father in hospital); to be redone later, no new date."},
+    {"id": "g-e26", "sessions": ["s12", "s17", "s25"], "speaker": "Tommaso", "kind": "plan", "date": "2034-03-21",
+     "date_precision": "day", "people": ["Tommaso", "Ferri"], "plan_outcome": "confirmed",
+     "content": "Condominium meeting set by the administrator Ferri for Tue 14 Mar 2034 21:00 (parish hall); really moved "
+                "(a change, not a correction) to Tue 21 Mar because the hall was taken. Held 21 Mar: roof renovation "
+                "approved, 1.400 € per family in two instalments (June and November)."},
+    {"id": "g-e27", "sessions": ["s12", "s14", "s18", "s26"], "speaker": "Tommaso", "kind": "plan",
+     "date": "2034-03-25", "date_precision": "day", "people": ["Tommaso", "Elisa"], "plan_outcome": "confirmed",
+     "content": "Lunch at sister Elisa's in Ferrara: Sun 5 Mar 2034 → Sun 12 Mar (Elisa's flu) → Sat 25 Mar (still "
+                "feverish). Happened on 25 Mar: long lunch and a bike ride on the city walls with the children."},
+    {"id": "g-e28", "sessions": ["s13", "s31", "s43", "s51"], "speaker": "Tommaso", "kind": "event",
+     "date": "2034-05-11", "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Days at the Milan office: Thu 2 Mar 2034 (Varesi integration scope; weekly sync Tuesdays 11:00), Thu 30 "
+                "Mar, Thu 11 May. The trip planned for Thu 27 Apr was called off (Varesi came to Bologna)."},
+    {"id": "g-e29", "sessions": ["s15", "s18", "s23", "s27", "s35", "s49"], "speaker": "Tommaso", "kind": "event",
+     "date": "2034-05-07", "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Runs after restarting: 5 km Sat 4 Mar 2034, 6 km Sat 11 Mar, 7 km Sun 26 Mar, 8 km Sun 9 Apr, 10 km Sun "
+                "7 May (5 runs, 36 km). No run on Sun 19 Mar (rain). Right knee complained after 26 Mar, fine by 9 Apr."},
+    {"id": "g-e30", "sessions": ["s15", "s17", "s22"], "speaker": "Tommaso", "kind": "plan", "date": "2034-03-07",
+     "date_precision": "day", "people": ["Tommaso", "Sandro"], "plan_outcome": "missed",
+     "content": "Plumber Sandro was to fix the kitchen sink leak Tue 7 Mar 2034 morning (Tommaso home on smart working); "
+                "he did not come (9 Mar still leaking, still waiting). He came on Thu 16 Mar morning, replaced the "
+                "trap, 90 €."},
+    {"id": "g-e31", "sessions": ["s16"], "speaker": "Tommaso", "kind": "plan", "date": "2034-03-10",
+     "date_precision": "day", "people": ["Tommaso", "Rosa"], "plan_outcome": "unresolved",
+     "content": "Tommaso to take his mother Rosa for blood tests Fri 10 Mar 2034 7:30 at the poliambulatorio Saragozza "
+                "(fasting). Never mentioned again."},
+    {"id": "g-e32", "sessions": ["s17", "s33"], "speaker": "Tommaso", "kind": "event", "date": "2034-04-02",
+     "date_precision": "day", "people": ["Tommaso", "Gianni"], "plan_outcome": None,
+     "content": "Lent the drill to Gianni (third floor neighbour) on 9 Mar 2034; returned Sun 2 Apr with a bottle of wine."},
+    {"id": "g-e33", "sessions": ["s18"], "speaker": "Tommaso", "kind": "plan", "date": "2034-03-13",
+     "date_precision": "day", "people": ["Anna", "Tommaso", "Melandri"], "plan_outcome": "unresolved",
+     "content": "Anna's eye check with dott. Melandri Mon 13 Mar 2034 16:40 (she squints at the board). Never mentioned "
+                "again."},
+    {"id": "g-e34", "sessions": ["s19"], "speaker": "Tommaso", "kind": "event", "date": "2034-03-13",
+     "date_precision": "day", "people": ["Tommaso", "Chiara"], "plan_outcome": None,
+     "content": "Evening watching a documentary about lighthouses with Chiara."},
+    {"id": "g-e35", "sessions": ["s22"], "speaker": "Tommaso", "kind": "plan", "date": "2034-03-18",
+     "date_precision": "day", "people": ["Tommaso", "Marco", "Serena"], "plan_outcome": "unresolved",
+     "content": "Dinner at Marco and Serena's Sat 18 Mar 2034; Tommaso to pick up the tiramisù ordered at pasticceria "
+                "Lanzoni on Fri 17 Mar. Never mentioned again."},
+    {"id": "g-e36", "sessions": ["s25"], "speaker": "Tommaso", "kind": "event", "date": "2034-03-22",
+     "date_precision": "week", "people": ["Chiara"], "plan_outcome": None,
+     "content": "Chiara (not Tommaso) got an 83 € ZTL fine with her Yaris (via Indipendenza, dropping off a parcel)."},
+    {"id": "g-e37", "sessions": ["s26", "s56"], "speaker": "Tommaso", "kind": "state_change", "date": "2034-05-20",
+     "date_precision": "day", "people": ["Tommaso", "Rosa", "Simone"], "plan_outcome": None,
+     "content": "The old Punto: in his mother's garage in via Saragozza until 25 Mar 2034, then in the condominium "
+                "parking space no. 14 (garage rented out from 1 Apr); sold to Simone (five-a-side) for 1.200 € on Sat "
+                "20 May."},
+    {"id": "g-e38", "sessions": ["s29", "s34", "s56"], "speaker": "Tommaso", "kind": "state_change",
+     "date": "2034-04-03", "date_precision": "day", "people": ["Giorgia", "Irina"], "plan_outcome": None,
+     "content": "Babysitter: Giorgia until early April 2034 (left for Erasmus in Valencia); Irina, a nursing student, "
+                "from 3 Apr (Tuesday and Thursday afternoons; first afternoon 4 Apr). Giorgia babysat once more on Sat "
+                "20 May evening, back for the weekend, while Irina had an exam."},
+    {"id": "g-e39", "sessions": ["s31", "s40", "s57"], "speaker": "Tommaso", "kind": "plan", "date": "2034-06-12",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": "open",
+     "content": "Work trip to the Dublin office: Mon 15 – Wed 17 May 2034 → Mon 29 – Wed 31 May (told 20 Apr) → Mon 12 – "
+                "Wed 14 Jun (told 22 May); the week of Pietro's end-of-season party."},
+    {"id": "g-e40", "sessions": ["s31", "s51"], "speaker": "Tommaso", "kind": "state_change", "date": "2034-03-30",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Bought a 10-entry card at FitHub (Porta Romana, Milan) for Milan office days, in addition to Palestra "
+                "Ercole in Bologna (kept); used it on 11 May."},
+    {"id": "g-e41", "sessions": ["s32", "s37"], "speaker": "Tommaso", "kind": "plan", "date": "2034-04-15",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": "unresolved",
+     "content": "Painting the balcony railing: planned Sat 1 Apr 2034 afternoon (anti-rust bought 31 Mar); not done then "
+                "(on 12 Apr he would 'finally' do it Sat 15 Apr); whether done on 15 Apr is unknown."},
+    {"id": "g-e42", "sessions": ["s34"], "speaker": "Tommaso", "kind": "plan", "date": "2034-04-06",
+     "date_precision": "day", "people": ["Tommaso", "Federica"], "plan_outcome": "unresolved",
+     "content": "Estimate for the Varesi project due to Federica by Fri 7 Apr 2034; I reminded him on Thu 6 Apr."},
+    {"id": "g-e43", "sessions": ["s36"], "speaker": "Tommaso", "kind": "plan", "date": "2034-04-10",
+     "date_precision": "month", "people": ["Tommaso", "Chiara"], "plan_outcome": "open",
+     "content": "Wants to replace the twelve-year-old mattress; I listed what to check."},
+    {"id": "g-e44", "sessions": ["s37"], "speaker": "Tommaso", "kind": "plan", "date": "2034-04-19",
+     "date_precision": "day", "people": ["Tommaso", "Pietro", "Gentili"], "plan_outcome": "unresolved",
+     "content": "Parent-teacher meeting with Pietro's teacher, maestra Gentili, Wed 19 Apr 2034 16:30. Never mentioned "
+                "again."},
+    {"id": "g-e45", "sessions": ["s37"], "speaker": "Tommaso", "kind": "plan", "date": "2034-04-20",
+     "date_precision": "day", "people": ["Tommaso", "Gualandi"], "plan_outcome": "unresolved",
+     "content": "Appointment with the accountant Gualandi for the tax return Thu 20 Apr 2034 17:00 (medical expenses and "
+                "dance receipts). Never mentioned again."},
+    {"id": "g-e46", "sessions": ["s38", "s42", "s47", "s51", "s53"], "speaker": "Giulia", "kind": "plan",
+     "date": "2034-05-12", "date_precision": "day", "people": ["Giulia", "Andrea", "Stefano", "Tommaso"],
+     "plan_outcome": "confirmed",
+     "content": "High-school class reunion (5ªC) at the Trattoria del Portico: Fri 28 Apr 2034 20:30 → Fri 5 May → Fri "
+                "12 May (moved by Giulia in 'Amici del liceo'). It took place on 12 May without Tommaso (Chiara in "
+                "Modena, he stayed home with the children); Giulia sent him the photos."},
+    {"id": "g-e47", "sessions": ["s39", "s45", "s50"], "speaker": "Tommaso", "kind": "plan", "date": "2034-05-09",
+     "date_precision": "day", "people": ["Anna", "Chiara"], "plan_outcome": "confirmed",
+     "content": "Anna's vaccine booster at the ASL in via Montebello: Tue 2 May 2034 9:30, moved by an ASL text to Tue 9 "
+                "May 9:30; done on 9 May (no tears)."},
+    {"id": "g-e48", "sessions": ["s40"], "speaker": "Tommaso", "kind": "plan", "date": "2034-05-04",
+     "date_precision": "day", "people": ["Tommaso", "Owen"], "plan_outcome": "unresolved",
+     "content": "Video call with Owen (back from Canada) Thu 4 May 2034 20:00. Never mentioned again."},
+    {"id": "g-e49", "sessions": ["s44"], "speaker": "Tommaso", "kind": "plan", "date": "2034-04-30",
+     "date_precision": "day", "people": ["Tommaso", "Chiara", "Pietro"], "plan_outcome": "unresolved",
+     "content": "Ikea Casalecchio with Chiara Sun 30 Apr 2034 for the tall white bookshelf for Pietro's room (measure "
+                "the wall Sat 29 Apr). Never mentioned again."},
+    {"id": "g-e50", "sessions": ["s45", "s48"], "speaker": "Tommaso", "kind": "plan", "date": "2034-05-12",
+     "date_precision": "day", "people": ["Anna"], "plan_outcome": "unresolved",
+     "content": "Anna's school trip to the zoo Fri 12 May 2034 (15 € and packed lunch). First told as Thu 11 May on 1 "
+                "May, corrected on 5 May: a misreading, the date was always the 12th."},
+    {"id": "g-e51", "sessions": ["s46", "s50", "s52", "s54", "s56"], "speaker": "Tommaso", "kind": "plan",
+     "date": "2034-05-19", "date_precision": "day", "people": ["Tommaso"], "plan_outcome": "confirmed",
+     "content": "Washing machine died (3 May 2034); new one from Euronics due Wed 10 May morning, did not come (12 May "
+                "still at the laundrette, 'next week'); then due Fri 19 May; arrived 19 May, works very well."},
+    {"id": "g-e52", "sessions": ["s54"], "speaker": "Tommaso", "kind": "plan", "date": "2034-05-16",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": "unresolved",
+     "content": "Panda service at officina Bertolini Tue 16 May 2034 8:30. Never mentioned again."},
+    {"id": "g-e53", "sessions": ["s56"], "speaker": "Tommaso", "kind": "event", "date": "2034-05-20",
+     "date_precision": "day", "people": ["Tommaso", "Chiara", "Giorgia"], "plan_outcome": None,
+     "content": "Dinner out with Chiara on Sat 20 May evening, Giorgia with the children."},
+    {"id": "g-e54", "sessions": ["s57"], "speaker": "Tommaso", "kind": "event", "date": "2034-05-22",
+     "date_precision": "day", "people": ["Chiara", "Pietro"], "plan_outcome": None,
+     "content": "Chiara unhappy that the Dublin trip falls in the week of Pietro's end-of-season party."},
+    {"id": "g-e55", "sessions": ["s59"], "speaker": "Tommaso", "kind": "event", "date": "2034-05-25",
+     "date_precision": "day", "people": ["Tommaso"], "plan_outcome": None,
+     "content": "Cooked an asparagus risotto in the evening (plan)."},
+    {"id": "g-e56", "sessions": ["s60"], "speaker": "Tommaso", "kind": "plan", "date": "2034-06-03",
+     "date_precision": "day", "people": ["Tommaso", "Elisa", "Nicola"], "plan_outcome": "open",
+     "content": "Dinner for eight on Sat 3 Jun 2034 with Elisa, her husband Nicola and the children; menu lasagne al "
+                "pesto, cold roast beef (from the butcher in via San Felice), fruit tart."},
+    {"id": "g-e57", "sessions": ["s62"], "speaker": "Tommaso", "kind": "plan", "date": "2034-06-02",
+     "date_precision": "day", "people": ["Tommaso", "Pietro", "Anna"], "plan_outcome": "open",
+     "content": "Picnic at the Prati di Mugnano with the children on 2 Jun 2034 (Festa della Repubblica)."},
+    {"id": "g-e58", "sessions": ["s32", "s45"], "speaker": "Tommaso", "kind": "event", "date": "2034-05-01",
+     "date_precision": "day", "people": ["Tommaso", "Pietro", "Anna"], "plan_outcome": None,
+     "content": "Family outings: market with the children on Sat 1 Apr 2034 morning; quiet holiday on 1 May, afternoon at "
+                "the park."},
+    {"id": "g-e59", "sessions": ["s47", "s51", "s53"], "speaker": "Tommaso", "kind": "event", "date": "2034-05-12",
+     "date_precision": "day", "people": ["Chiara", "Tommaso"], "plan_outcome": None,
+     "content": "Chiara at her mother's in Modena on the evening of Fri 12 May 2034; Tommaso home with the children."},
+    {"id": "g-e60", "sessions": ["s48"], "speaker": "Tommaso", "kind": "event", "date": "2034-05-05",
+     "date_precision": "day", "people": ["Tommaso", "Chiara"], "plan_outcome": None,
+     "content": "In the office on Fri 5 May (half the team on holiday); Chiara on a long shift at the pharmacy."},
+    {"id": "g-e61", "sessions": ["s30"], "speaker": "Marco", "kind": "event", "date": "2034-03-28",
+     "date_precision": "day", "people": ["Marco"], "plan_outcome": None,
+     "content": "Marco's father in hospital since 28 Mar 2034 (not very serious)."},
+]
+
+FACTS = [
+    {"key": "Pietro's football coach", "history": [
+        {"value": "Ruggeri (Tue/Thu 17:30)", "from": None, "to": "2034-03-13"},
+        {"value": "Paolo Bonacini (Mon/Wed 17:30)", "from": "2034-03-20", "to": None}]},
+    {"key": "Tommaso's phone plan", "history": [
+        {"value": "Iliad 9,99 €/month", "from": None, "to": "2034-04-02"},
+        {"value": "Kena 7,99 €/month", "from": "2034-04-03", "to": "2034-05-31"},
+        {"value": "Kena 8,99 €/month", "from": "2034-06-01", "to": None}]},
+    {"key": "where the Punto is kept", "history": [
+        {"value": "mother's garage, via Saragozza", "from": None, "to": "2034-03-25"},
+        {"value": "condominium parking space no. 14", "from": "2034-03-25", "to": "2034-05-20"},
+        {"value": "sold to Simone (1.200 €)", "from": "2034-05-20", "to": None}]},
+    {"key": "weight target", "history": [
+        {"value": "82 kg", "from": "2034-02-08", "to": "2034-04-18"},
+        {"value": "80 kg by September", "from": "2034-04-18", "to": None}]},
+    {"key": "weight", "history": [
+        {"value": "88 kg", "from": "2034-02-08", "to": "2034-04-18"},
+        {"value": "84 kg", "from": "2034-04-18", "to": "2034-05-23"},
+        {"value": "82,5 kg", "from": "2034-05-23", "to": None}]},
+    {"key": "gym in Bologna", "history": [
+        {"value": "Palestra Ercole, via Andrea Costa (yearly)", "from": None, "to": None}]},
+    {"key": "gym in Milan (office days, additional)", "history": [
+        {"value": "FitHub Porta Romana, 10-entry card", "from": "2034-03-30", "to": None}]},
+    {"key": "babysitter", "history": [
+        {"value": "Giorgia", "from": None, "to": "2034-04-02"},
+        {"value": "Irina (Tue/Thu afternoons)", "from": "2034-04-03", "to": None}]},
+    {"key": "smart working day", "history": [
+        {"value": "Friday", "from": None, "to": "2034-04-02"},
+        {"value": "Monday", "from": "2034-04-03", "to": None}]},
+    {"key": "Anna's dance fee", "history": [
+        {"value": "45 €/month", "from": None, "to": "2034-03-31"},
+        {"value": "50 €/month", "from": "2034-04-01", "to": None}]},
+    {"key": "Lisbon flights", "history": [
+        {"value": "412 € for two, return", "from": "2034-02-18", "to": None}]},
+    {"key": "the drill", "history": [
+        {"value": "lent to Gianni", "from": "2034-03-09", "to": "2034-04-02"},
+        {"value": "back home", "from": "2034-04-02", "to": None}]},
+    {"key": "the camping tent", "history": [
+        {"value": "lent to Marco", "from": "2034-02-13", "to": None}]},
+]
+
+NOTES = [
+    {"category": "people", "content": "Tommaso Rinaldi, Bologna; project manager (manager Federica, colleague Luca); "
+                                      "bilingual Italian / English"},
+    {"category": "people", "content": "Chiara: Tommaso's wife (married 17 Feb 2024), works at a pharmacy, drives a Yaris; "
+                                      "her parents Giovanna and Franco live in Modena"},
+    {"category": "people", "content": "Pietro: son, plays football (coach Paolo Bonacini since March 2034); Anna: "
+                                      "daughter, dance school, 23 kg"},
+    {"category": "people", "content": "Rosa: Tommaso's mother (garage in via Saragozza, rented out from April 2034); "
+                                      "Elisa: sister in Ferrara, husband Nicola"},
+    {"category": "people", "content": "Marco (Marco Bellini, with Serena): friend, five-a-side team; Simone: team "
+                                      "organiser, bought the Punto; Davide: teammate"},
+    {"category": "people", "content": "Giulia, Andrea, Stefano: high-school friends (group 'Amici del liceo'); Owen: "
+                                      "English-speaking friend; Gianni: third-floor neighbour"},
+    {"category": "people", "content": "Professionals: dott. Zaccaria (doctor, back pain), dott.ssa Fabbri (dentist), dott. Melandri "
+                                      "(ophthalmologist), Sandro (plumber), Gualandi (accountant), Ferri (building "
+                                      "administrator), maestra Gentili (Pietro's teacher), officina Bertolini (garage)"},
+    {"category": "preferences", "content": "Runs at the Giardini Margherita, one run a week adding a km; reads novels, "
+                                           "sometimes in English"},
+]
+
+NOT_MEMORIES = [
+    {"sessions": ["s07", "s09"], "why": "Lisbon flights 312 € — corrected (always 412 €)"},
+    {"sessions": ["s19", "s23"], "why": "the new coach called 'Bonetti' — corrected (Bonacini, never Bonetti)"},
+    {"sessions": ["s45", "s48"], "why": "Anna's zoo trip on Thu 11 May — a misreading, always Fri 12 May"},
+    {"sessions": ["s03", "s21"], "why": "a booked / taken Sardinia holiday — only an idea, dropped"},
+    {"sessions": ["s25"], "why": "a ZTL fine of Tommaso's — it was Chiara's"},
+    {"sessions": ["s22", "s16", "s18", "s37", "s40", "s44", "s54"],
+     "why": "any outcome of the unresolved plans (Marco's dinner, mother's blood tests, Anna's eye check, teacher meeting, "
+            "accountant, Owen call, Ikea, Panda service)"},
+]

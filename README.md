@@ -306,7 +306,7 @@ co-hosted with Arkimede on a small server).
 | `packages/client/` | `@arkimedehq/recordare-client` (on npm), the TypeScript client library the connectors and Arkimede use |
 | `deploy/` | Installer, update and backup scripts, Compose files (standalone / co-hosted) |
 | `spikes/memory-eval/` | Evaluation harness and datasets: engine comparison, blind sets, results ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
-| `docs/` | Vision, design decisions D1–D48 ([episodic memory design](docs/EPISODIC_MEMORY_TODO.md)), [work plan](docs/WORK_PLAN.md), contracts, [every setting](docs/KNOBS.md), research notes, literature cards, connector research notes (`docs/connectors/`) |
+| `docs/` | Vision, design decisions D1–D48 ([episodic memory design](docs/EPISODIC_MEMORY_TODO.md)), [work plan](docs/WORK_PLAN.md), contracts, [every setting](docs/KNOBS.md), [supported models](docs/MODELS.md), research notes, literature cards, connector research notes (`docs/connectors/`) |
 | `CHANGELOG.md` | Release notes ([v0.3.0](CHANGELOG.md)) |
 | `docker-compose.yml` | Local development stack (Postgres + pgvector, Redis, service) |
 | `CLAUDE.md` | Context and conventions for development sessions |

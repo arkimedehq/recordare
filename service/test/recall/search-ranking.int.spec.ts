@@ -52,8 +52,15 @@ describe('search_episodes ranking by the question type (H13)', () => {
     expect(eps.map((e) => e.id)).toContain(ids[0]);
   });
 
-  it('a list keeps the blend: the big events come first', async () => {
-    const eps = await search({ query: 'Tommaso', mode: 'list', limit: 3 });
+  it('a period list keeps the blend: the big events come first', async () => {
+    const from = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+    const to = new Date().toISOString().slice(0, 10);
+    const eps = await search({ query: 'Tommaso Ducati colloquio', mode: 'list', from, to, limit: 3 });
     expect(eps.map((e) => e.id)).not.toContain(ids[0]);
+  });
+
+  it('a list without a period selects by its topic, like a search (blind12 h30)', async () => {
+    const eps = await search({ query: 'Tommaso Ducati colloquio', mode: 'list', limit: 3 });
+    expect(eps.map((e) => e.id)).toContain(ids[0]);
   });
 });

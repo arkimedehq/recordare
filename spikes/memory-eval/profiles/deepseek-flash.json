@@ -1,0 +1,10 @@
+{
+  "label": "deepseek-flash",
+  "provider": "openai-compatible",
+  "profile": "deepseek",
+  "baseUrl": "https://api.deepseek.com/v1",
+  "model": "deepseek-flash",
+  "keyEnv": "LLM_API_KEY",
+  "weights": {"name": "DeepSeek-V4-Flash", "licence": "MIT (weights); measured through the DeepSeek API"},
+  "notes": "Reference engine (D23); thinking off through the deepseek profile."
+}

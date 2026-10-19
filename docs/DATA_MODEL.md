@@ -456,7 +456,7 @@ by explicit statement.
 | `subject_person_id` | uuid null | null = the memory's self. **Entity memories (D48)**: the person the fact is about (a contact of that memory, found by name or created by the writer); null = the entity itself. Never set in a personal memory |
 | `subject_kind`, `subject_candidates` | | As on episodes (D50): `contact` with a subject, else `self` |
 | `key` | text → fact_slots | |
-| `value` | text **null** | null only for `unknown_current` |
+| `value` | text **null** | never null for `current`, always null for `unknown_current`; history (`superseded`, `corrected`) keeps what the row held, so an unknown period can end |
 | `status` | enum `current \| superseded \| corrected \| unknown_current` | `unknown_current` is a **new row** (value null) that supersedes the stale one: "the current value is not known" (D29, STALE) |
 | *time* | | `valid_from`, `valid_to`, `date_precision`, `time_expression`, `recorded_at` |
 | `expired_at` | timestamptz null | When Recordare stopped believing it |

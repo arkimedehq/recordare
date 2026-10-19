@@ -1,0 +1,9 @@
+{
+  "label": "anthropic-claude-haiku-4.5",
+  "provider": "anthropic",
+  "profile": "anthropic",
+  "model": "claude-haiku-4-5",
+  "keyEnv": "ANTHROPIC_API_KEY",
+  "price": {"input": 1.0, "cachedInput": 0.10, "output": 5.0},
+  "notes": "Native Anthropic API, low effort. Via OpenRouter (no thinking) it scored 81.0 % on blind5."
+}

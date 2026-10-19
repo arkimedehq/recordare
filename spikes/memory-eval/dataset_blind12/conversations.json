@@ -1,0 +1,1978 @@
+{
+ "_note": "Blind synthetic dataset #12 (fictional people), personal memory built to probe H1: a user's plans (unresolved, implicit outcomes, moved several times, premise traps), accumulating events vs superseding states, correction vs change. Holder Tommaso Rinaldi, Bologna, February–June 2034; mostly Italian, some English. Timestamps are Europe/Rome (DST starts 2034-03-26). Holder turns are role 'user', the agent 'assistant', group-chat members 'other' with 'author'.",
+ "users": {
+  "tommaso": "Tommaso Rinaldi, Bologna"
+ },
+ "genders": {
+  "tommaso": "masculine"
+ },
+ "entities": [],
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "tommaso",
+   "ts": "2034-02-06T08:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno! Mi metti un promemoria fisso per gli allenamenti di Pietro? Martedì e giovedì alle 17:30 al campo della Barca, li tiene il mister Ruggeri. Il martedì lo porto io, il giovedì Chiara."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: promemoria ricorrente il martedì e il giovedì alle 17 per l'allenamento di Pietro delle 17:30 al campo della Barca con il mister Ruggeri; il martedì tocca a te, il giovedì a Chiara."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto. Altra cosa: è arrivata la fattura di Iliad, sempre 9,99 € al mese. Va bene così, segnalami solo se un mese cambia."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, tengo come riferimento 9,99 € al mese per la tua linea Iliad e ti avviso se una fattura è diversa."
+    },
+    {
+     "role": "user",
+     "content": "Grazie. Oggi giornata piena: riunione di avanzamento alle 10 e poi pranzo con Federica per parlare del budget di primavera."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo. Vuoi che ti prepari una scaletta per la riunione delle 10?"
+    },
+    {
+     "role": "user",
+     "content": "No, ce l'ho già. A dopo."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "tommaso",
+   "ts": "2034-02-08T21:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi sono pesato stasera: 88 kg. Troppi. Mi do un obiettivo: 82 kg entro l'estate."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: 88 kg oggi, obiettivo 82 kg entro l'estate. Vuoi che ogni tanto ti chieda il peso?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, ma senza assillarmi. Ho anche rinnovato l'abbonamento annuale alla Palestra Ercole in via Andrea Costa, così non ho scuse."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo. Ci vai di solito la sera?"
+    },
+    {
+     "role": "user",
+     "content": "Lunedì e mercoledì dopo il lavoro, se riesco. Adesso però divano e libro: sto leggendo 'La casa sul canale', mi mancano un centinaio di pagine."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona lettura!"
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "tommaso",
+   "ts": "2034-02-10T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi lavoro da casa come tutti i venerdì, quindi approfitto per le prenotazioni. Venerdì 17 febbraio sono dieci anni di matrimonio con Chiara: ho prenotato da Kumo, il giapponese in via del Pratello, alle 20:30."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel traguardo! Segno la cena per l'anniversario da Kumo venerdì 17 febbraio alle 20:30. Serve la babysitter?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, ho già scritto a Giorgia, viene lei dalle 20. Ricordamelo giovedì così le confermo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ti ricordo giovedì 16 febbraio di confermare Giorgia per venerdì dalle 20."
+    },
+    {
+     "role": "user",
+     "content": "Poi Chiara a pranzo mi ha buttato lì l'idea di una settimana in Sardegna a giugno. Io non sono convinto, i prezzi sono folli. Ci pensiamo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, la tengo come idea da valutare. Se vuoi più avanti ti preparo un confronto di costi."
+    },
+    {
+     "role": "user",
+     "content": "Più avanti, magari."
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "user": "tommaso",
+   "ts": "2034-02-13T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi sono andato all'AVIS a donare il sangue. Tutto liscio, mi hanno dato pure la colazione."
+    },
+    {
+     "role": "assistant",
+     "content": "Bravo! Per la prossima donazione di sangue intero devono passare almeno 90 giorni, quindi da metà maggio."
+    },
+    {
+     "role": "user",
+     "content": "Esatto. Ieri sera ho finito 'La casa sul canale', bello il finale ma lento a metà."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai già il prossimo?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, 'Le stagioni di Ottavio', me l'ha prestato Luca. Ah, e oggi Marco è passato a prendere la mia tenda da campeggio, la usa per un weekend in Appennino con i suoi figli."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, la tenda da campeggio è in prestito a Marco."
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "tommaso",
+   "ts": "2034-02-15T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Spese della giornata: ho preso gli scarpini nuovi a Pietro, 45 €, i vecchi gli stavano stretti. E ho pagato la retta di febbraio della danza di Anna, 45 € come al solito."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnati: scarpini da calcio per Pietro 45 € e retta di febbraio della danza di Anna 45 €."
+    },
+    {
+     "role": "user",
+     "content": "Domenica 19 invece siamo a Modena per i 70 anni di Giovanna, la mamma di Chiara. Pranzo a casa loro, ci sarà tutto il parentado."
+    },
+    {
+     "role": "assistant",
+     "content": "Bello. Vuoi un'idea per il regalo?"
+    },
+    {
+     "role": "user",
+     "content": "Ci ha già pensato Chiara, un weekend alle terme per lei e Franco. Senti, la schiena mi fa male da giorni, ho prenotato dal dottor Zaccaria lunedì 20 alle 11."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno la visita dal dottor Zaccaria lunedì 20 febbraio alle 11. Nel frattempo evita di sollevare pesi."
+    },
+    {
+     "role": "user",
+     "content": "Facile a dirsi con due bambini."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "tommaso",
+   "ts": "2034-02-18T10:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Anna stanotte ha avuto la febbre a 38,5, adesso è a 37,8. Il pediatra al telefono dice paracetamolo e riposo. Mi ricordi la dose indicativa per il suo peso? Pesa 23 kg."
+    },
+    {
+     "role": "assistant",
+     "content": "L'indicazione abituale è circa 15 mg per kg a dose, quindi per 23 kg circa 345 mg, a distanza di almeno 6 ore e non più di 4 dosi al giorno; vale comunque quello che dice il pediatra e il foglietto del prodotto che avete."
+    },
+    {
+     "role": "user",
+     "content": "Coincide con quello che ha detto lui. Ieri sera niente Kumo ovviamente: abbiamo disdetto il tavolo e preso due pizze da asporto, festeggiamo un'altra volta."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato, ma era la scelta giusta. Vuoi che ti ricordi di riprenotare quando Anna sta meglio?"
+    },
+    {
+     "role": "user",
+     "content": "No, lascia stare per ora. Speriamo che domani stia bene per Modena."
+    },
+    {
+     "role": "assistant",
+     "content": "Speriamo. Un abbraccio ad Anna."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "tommaso",
+   "ts": "2034-02-20T08:05:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ha chiamato lo studio di Zaccaria: oggi il dottore non c'è, la visita per la schiena è spostata a giovedì 23 alle 10."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: visita dal dottor Zaccaria giovedì 23 febbraio alle 10."
+    },
+    {
+     "role": "user",
+     "content": "Intanto sabato sera, mentre Anna dormiva, ho prenotato Lisbona con Chiara: si parte sabato 22 aprile e si torna martedì 25 aprile, che è festivo. Voli presi, 312 € in due, e un hotel piccolo all'Alfama."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Segno Lisbona da sabato 22 a martedì 25 aprile, hotel all'Alfama. I bambini?"
+    },
+    {
+     "role": "user",
+     "content": "Da mia mamma Rosa. Ah, la mia carta d'identità scade a marzo: ho preso appuntamento all'anagrafe venerdì 24 febbraio alle 9:10 per rifarla."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, per Lisbona serve valida. Segno l'anagrafe venerdì 24 febbraio alle 9:10; porta una fototessera recente."
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "user": "tommaso",
+   "ts": "2034-02-22T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buone notizie: la schiena è passata del tutto, credo fosse solo la postura. Ho chiamato lo studio e ho annullato la visita di domani da Zaccaria."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo. Tolgo la visita di domani dall'agenda."
+    },
+    {
+     "role": "user",
+     "content": "In compenso mi fa male un dente, la dottoressa Fabbri dice che va devitalizzato. Appuntamento lunedì 27 alle 15."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno la dottoressa Fabbri lunedì 27 febbraio alle 15. A volte servono due sedute."
+    },
+    {
+     "role": "user",
+     "content": "Lei dice una sola. Speriamo."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "tommaso",
+   "ts": "2034-02-23T12:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Correggo una cosa su Lisbona: i voli sono costati 412 € in due, andata e ritorno, non 312. Avevo letto male la cifra sul riepilogo, il prezzo è sempre stato quello."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: voli per Lisbona 412 € in due, andata e ritorno."
+    },
+    {
+     "role": "user",
+     "content": "A lavoro invece abbiamo fissato la demo per Varesi Logistica: mercoledì 8 marzo alle 14:30, da loro. Devo preparare l'ambiente di prova con Luca."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno la demo per Varesi Logistica mercoledì 8 marzo alle 14:30. Vuoi un promemoria per l'ambiente di prova qualche giorno prima?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, lunedì 6 marzo mattina."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto."
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "tommaso",
+   "ts": "2034-02-26T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri Pietro ha giocato contro il Corticella e ha segnato un gol! Abbiamo pareggiato 2-2."
+    },
+    {
+     "role": "assistant",
+     "content": "Bravo Pietro! Chissà com'era contento."
+    },
+    {
+     "role": "user",
+     "content": "Adesso però spesa per la settimana. Mi fai una lista? Pasta, latte, yogurt per i bambini, frutta, detersivo per piatti, e qualcosa per le cene veloci."
+    },
+    {
+     "role": "assistant",
+     "content": "Ecco: pasta, latte, yogurt bianco e alla frutta, mele, banane, arance, detersivo per piatti, uova, piadine, stracchino, verdure surgelate, tonno. Aggiungo altro?"
+    },
+    {
+     "role": "user",
+     "content": "Caffè. E i biscotti che piacciono ad Anna, quelli al cacao."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiunti caffè e biscotti al cacao."
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "user": "tommaso",
+   "ts": "2034-03-01T20:45:00+01:00",
+   "group": "Calcetto del giovedì",
+   "participants": [
+    {
+     "name": "Simone",
+     "identity": "simone-calcetto"
+    },
+    {
+     "name": "Marco",
+     "identity": "marco-bellini"
+    },
+    {
+     "name": "Davide",
+     "identity": "davide-calcetto"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Simone",
+     "content": "Ragazzi, il calendario è uscito: la FINALE del torneo la giochiamo giovedì 16 marzo alle 21 al campo Dozza, contro i Bradipi. Tutti presenti?"
+    },
+    {
+     "role": "other",
+     "author": "Davide",
+     "content": "Presente!"
+    },
+    {
+     "role": "user",
+     "content": "Ci sono, ovviamente."
+    },
+    {
+     "role": "other",
+     "author": "Marco",
+     "content": "Ci sono. E già che ci siamo: venerdì 7 aprile faccio 40 anni, festa all'Osteria del Moro dalle 20. Siete tutti invitati, mogli e mariti compresi."
+    },
+    {
+     "role": "other",
+     "author": "Simone",
+     "content": "Grande Marco, segnato!"
+    },
+    {
+     "role": "user",
+     "content": "Ci saremo io e Chiara, grazie!"
+    },
+    {
+     "role": "other",
+     "author": "Davide",
+     "content": "Contate anche me."
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "user": "tommaso",
+   "ts": "2034-03-01T21:20:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ricordami un po' di cose. È arrivata la lettera dell'amministratore Ferri: assemblea condominiale martedì 14 marzo alle 21, nella sala della parrocchia."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnata: assemblea condominiale martedì 14 marzo alle 21 nella sala della parrocchia."
+    },
+    {
+     "role": "user",
+     "content": "Poi domenica 5 marzo pranzo da mia sorella Elisa a Ferrara, partiamo verso le 11."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno: domenica 5 marzo pranzo da Elisa a Ferrara, partenza verso le 11."
+    },
+    {
+     "role": "user",
+     "content": "E oggi ho preso i parastinchi a Pietro, 12 €. Ha perso i suoi negli spogliatoi, per l'ennesima volta."
+    },
+    {
+     "role": "assistant",
+     "content": "Magari stavolta scriviamoci sopra il nome."
+    },
+    {
+     "role": "user",
+     "content": "Col pennarello indelebile, giuro."
+    }
+   ]
+  },
+  {
+   "id": "s13",
+   "user": "tommaso",
+   "ts": "2034-03-02T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "On the 18:10 train back from Milan. First day at the Milan office this year, long but useful: we closed the scope for the Varesi integration."
+    },
+    {
+     "role": "assistant",
+     "content": "Glad it went well. Anything from today's meeting you want me to keep?"
+    },
+    {
+     "role": "user",
+     "content": "Just that the Milan team wants weekly syncs on Tuesdays at 11. And remind me tomorrow to send the minutes to Federica."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: weekly sync with the Milan team on Tuesdays at 11, and a reminder tomorrow morning to send Federica the minutes."
+    },
+    {
+     "role": "user",
+     "content": "Thanks. I'll be home around 20:30, Chiara's making lasagne."
+    },
+    {
+     "role": "assistant",
+     "content": "Enjoy dinner!"
+    }
+   ]
+  },
+  {
+   "id": "s14",
+   "user": "tommaso",
+   "ts": "2034-03-03T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera abbiamo aperto il Lambrusco che ci hanno regalato alla festa dei 70 anni di Giovanna a Modena. Buonissimo, devo chiedere a Franco dove lo prende."
+    },
+    {
+     "role": "assistant",
+     "content": "Me lo segno: chiedere a Franco dove compra quel Lambrusco."
+    },
+    {
+     "role": "user",
+     "content": "Brutta notizia invece: Elisa ha l'influenza, domenica niente Ferrara. Ci ha detto di andare domenica 12."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato. Sposto il pranzo da Elisa a domenica 12 marzo."
+    },
+    {
+     "role": "user",
+     "content": "Sì. Dille di riguardarsi... no scherzo, glielo scrivo io."
+    },
+    {
+     "role": "assistant",
+     "content": "Meglio da te. Buona serata!"
+    }
+   ]
+  },
+  {
+   "id": "s15",
+   "user": "tommaso",
+   "ts": "2034-03-04T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono tornato a correre! 5 km ai Giardini Margherita, piano piano. Le gambe sono di legno."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo inizio. Vuoi un programma per aumentare gradualmente?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, ma semplice: una corsa a settimana, aggiungo un km ogni volta."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, così arrivi a 10 km in un paio di mesi senza farti male."
+    },
+    {
+     "role": "user",
+     "content": "Altra cosa: il lavello della cucina perde. Ho sentito Sandro, l'idraulico: passa martedì 7 in mattinata. Chiara lavora, quindi aspetto io a casa."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno: Sandro l'idraulico martedì 7 marzo in mattinata per la perdita del lavello; resti a casa tu."
+    },
+    {
+     "role": "user",
+     "content": "Martedì faccio smart working allora, lo chiedo a Federica."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona idea."
+    }
+   ]
+  },
+  {
+   "id": "s16",
+   "user": "tommaso",
+   "ts": "2034-03-06T13:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pausa pranzo. Ti dico solo che da quando la Fabbri mi ha fatto la devitalizzazione il dente non mi fa più male per niente, finalmente mangio da tutte e due le parti."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sollievo!"
+    },
+    {
+     "role": "user",
+     "content": "Al lavoro invece Varesi ha chiesto di spostare la demo: non più mercoledì 8 ma mercoledì 15 marzo, stessa ora. Luca è contento, ha più tempo per l'ambiente di prova."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: demo per Varesi Logistica mercoledì 15 marzo alle 14:30."
+    },
+    {
+     "role": "user",
+     "content": "E venerdì 10 accompagno mia mamma a fare gli esami del sangue al poliambulatorio Saragozza, alle 7:30. Ricordamelo giovedì sera, che devo anche dirle di stare a digiuno."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno: venerdì 10 marzo alle 7:30 accompagni tua mamma agli esami del sangue al poliambulatorio Saragozza. Ti ricordo giovedì 9 sera di dirle del digiuno."
+    }
+   ]
+  },
+  {
+   "id": "s17",
+   "user": "tommaso",
+   "ts": "2034-03-09T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono un po' arrabbiato: il lavello perde ancora. Sandro non si è fatto vivo e non risponde, sto ancora aspettando che mi richiami. Ho messo una bacinella sotto."
+    },
+    {
+     "role": "assistant",
+     "content": "Che seccatura. Vuoi che ti cerchi un altro idraulico in zona se Sandro non richiama?"
+    },
+    {
+     "role": "user",
+     "content": "Aspetto fino a lunedì, di solito è affidabile. Poi: l'amministratore ha spostato l'assemblea condominiale a martedì 21 marzo, la sala della parrocchia il 14 è occupata."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato. Sempre alle 21?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, stessa ora e stesso posto. Ah, oggi ho prestato il trapano a Gianni del terzo piano, deve montare delle mensole."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok: trapano in prestito a Gianni del terzo piano."
+    }
+   ]
+  },
+  {
+   "id": "s18",
+   "user": "tommaso",
+   "ts": "2034-03-11T10:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Seconda corsa: 6 km, sempre ai Giardini. Meglio di sabato scorso."
+    },
+    {
+     "role": "assistant",
+     "content": "Bravo, progressione rispettata."
+    },
+    {
+     "role": "user",
+     "content": "Elisa ha ancora la febbre, quindi domani salta di nuovo Ferrara. Facciamo sabato 25 marzo, così si riposa bene."
+    },
+    {
+     "role": "assistant",
+     "content": "Spostato ancora: pranzo da Elisa a Ferrara sabato 25 marzo."
+    },
+    {
+     "role": "user",
+     "content": "Lunedì poi porto Anna dall'oculista, il dottor Melandri, alle 16:40: la maestra dice che strizza gli occhi quando legge alla lavagna."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno: lunedì 13 marzo alle 16:40 Anna dall'oculista, dottor Melandri. Porta il libretto sanitario."
+    },
+    {
+     "role": "user",
+     "content": "Ok. Speriamo niente occhiali, ci tiene troppo a non averli."
+    },
+    {
+     "role": "assistant",
+     "content": "Incrocio le dita per lei."
+    }
+   ]
+  },
+  {
+   "id": "s19",
+   "user": "tommaso",
+   "ts": "2034-03-13T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Novità nel calcio di Pietro: il mister Ruggeri lascia, si trasferisce a Imola per lavoro. Stasera ha salutato tutti alla riunione con i genitori. Dalla prossima settimana arriva uno nuovo, mi pare si chiami Bonetti."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato, Pietro gli era affezionato? Segno che Ruggeri lascia e che il nuovo allenatore è Bonetti."
+    },
+    {
+     "role": "user",
+     "content": "Molto, era quasi in lacrime. Cambiano anche i giorni di allenamento, ma ce li dicono la settimana prossima."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, aspetto i nuovi giorni prima di cambiare il promemoria."
+    },
+    {
+     "role": "user",
+     "content": "Chiara ti saluta. Stiamo guardando un documentario sui fari, bellissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Salutala! Buona visione."
+    }
+   ]
+  },
+  {
+   "id": "s20",
+   "user": "tommaso",
+   "ts": "2034-03-14T18:00:00+01:00",
+   "group": "Calcetto del giovedì",
+   "participants": [
+    {
+     "name": "Simone",
+     "identity": "simone-calcetto"
+    },
+    {
+     "name": "Marco",
+     "identity": "marco-bellini"
+    },
+    {
+     "name": "Davide",
+     "identity": "davide-calcetto"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Simone",
+     "content": "Ragazzi brutte notizie: giovedì 16 il campo Dozza ce l'hanno tolto per un altro torneo. La finale slitta a giovedì 23 marzo, stessa ora, le 21."
+    },
+    {
+     "role": "other",
+     "author": "Davide",
+     "content": "Ok per me."
+    },
+    {
+     "role": "user",
+     "content": "Va bene anche per me."
+    },
+    {
+     "role": "other",
+     "author": "Marco",
+     "content": "Ci sono, il 23 va bene."
+    },
+    {
+     "role": "other",
+     "author": "Simone",
+     "content": "Perfetto, allora giovedì 23 alle 21. Maglie blu."
+    }
+   ]
+  },
+  {
+   "id": "s21",
+   "user": "tommaso",
+   "ts": "2034-03-15T12:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mattinata surreale: la demo di oggi con Varesi è saltata ancora, il loro direttore è a Roma. Nuova data martedì 21 marzo alle 10."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: demo per Varesi Logistica martedì 21 marzo alle 10."
+    },
+    {
+     "role": "user",
+     "content": "Almeno Luca è contento. Poi con Chiara ieri sera abbiamo deciso: la Sardegna a giugno lasciamo perdere, costa troppo. Ci basta Lisbona ad aprile."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito, niente Sardegna quest'anno."
+    },
+    {
+     "role": "user",
+     "content": "Per l'estate al massimo qualche giorno al mare a Cesenatico, ma niente di deciso."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, lo tengo come idea."
+    }
+   ]
+  },
+  {
+   "id": "s22",
+   "user": "tommaso",
+   "ts": "2034-03-16T18:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Finalmente! Sandro stamattina è passato e ha cambiato il sifone del lavello. 90 € e niente più perdite."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, risolto."
+    },
+    {
+     "role": "user",
+     "content": "Sabato 18 siamo a cena da Marco e Serena. Mi ricordi domani di passare dalla pasticceria Lanzoni a prendere il tiramisù? L'ho già ordinato."
+    },
+    {
+     "role": "assistant",
+     "content": "Ti ricordo venerdì 17 marzo di ritirare il tiramisù alla pasticceria Lanzoni per la cena di sabato da Marco e Serena."
+    },
+    {
+     "role": "user",
+     "content": "Grazie. Stasera niente calcetto, la finale è spostata al 23."
+    },
+    {
+     "role": "assistant",
+     "content": "Allora serata libera."
+    }
+   ]
+  },
+  {
+   "id": "s23",
+   "user": "tommaso",
+   "ts": "2034-03-20T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sabato Pietro ha fatto doppietta! Due gol contro il San Donato, vinto 3-1."
+    },
+    {
+     "role": "assistant",
+     "content": "Fantastico! Due gol in una partita."
+    },
+    {
+     "role": "user",
+     "content": "E una correzione: il nuovo mister non si chiama Bonetti, si chiama Bonacini, Paolo Bonacini. Avevo capito male io la settimana scorsa."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: il nuovo allenatore di Pietro è Paolo Bonacini."
+    },
+    {
+     "role": "user",
+     "content": "Gli allenamenti adesso sono lunedì e mercoledì alle 17:30, sempre alla Barca. Cambia il promemoria. Il lunedì lo porta Chiara, il mercoledì io."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: promemoria allenamenti il lunedì e il mercoledì alle 17:30 alla Barca; lunedì Chiara, mercoledì tu."
+    },
+    {
+     "role": "user",
+     "content": "Ieri volevo fare la terza corsa ma diluviava, niente. Ci riprovo domenica prossima."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, la prossima settimana allora."
+    }
+   ]
+  },
+  {
+   "id": "s24",
+   "user": "tommaso",
+   "ts": "2034-03-21T19:40:00+01:00",
+   "group": "Calcetto del giovedì",
+   "participants": [
+    {
+     "name": "Simone",
+     "identity": "simone-calcetto"
+    },
+    {
+     "name": "Marco",
+     "identity": "marco-bellini"
+    },
+    {
+     "name": "Davide",
+     "identity": "davide-calcetto"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Simone",
+     "content": "Ragazzi, mazzata: il campo Dozza è allagato e la federazione non ha altre date. La finale è annullata, il torneo finisce qui: coppa ai Bradipi per la classifica del girone."
+    },
+    {
+     "role": "other",
+     "author": "Davide",
+     "content": "Ma dai!! Che rabbia."
+    },
+    {
+     "role": "other",
+     "author": "Marco",
+     "content": "Peccato, ci tenevo."
+    },
+    {
+     "role": "user",
+     "content": "Che peccato. Vabbè, ci rifacciamo col torneo di settembre."
+    },
+    {
+     "role": "other",
+     "author": "Simone",
+     "content": "Giovedì 23 ci vediamo lo stesso per una birra al Moro, chi c'è?"
+    },
+    {
+     "role": "user",
+     "content": "Io ci sono."
+    }
+   ]
+  },
+  {
+   "id": "s25",
+   "user": "tommaso",
+   "ts": "2034-03-22T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "La demo di ieri con Varesi è andata benissimo, il direttore ha detto che firmano entro aprile. Federica è al settimo cielo."
+    },
+    {
+     "role": "assistant",
+     "content": "Complimenti a te e a Luca!"
+    },
+    {
+     "role": "user",
+     "content": "Ieri sera poi assemblea condominiale: hanno approvato il rifacimento del tetto, 1.400 € a famiglia in due rate."
+    },
+    {
+     "role": "assistant",
+     "content": "Sai già le scadenze delle rate?"
+    },
+    {
+     "role": "user",
+     "content": "Giugno e novembre. E ciliegina: Chiara ha preso una multa per la ZTL con la sua Yaris, 83 €. Era entrata in via Indipendenza per lasciare un pacco."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sfortuna. Se la paga entro 5 giorni dalla notifica di solito c'è lo sconto del 30%."
+    },
+    {
+     "role": "user",
+     "content": "Glielo dico, grazie."
+    }
+   ]
+  },
+  {
+   "id": "s26",
+   "user": "tommaso",
+   "ts": "2034-03-25T20:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Siamo appena tornati da Ferrara, da Elisa. Finalmente! Pranzo lungo e poi giro in bici sulle mura con i bambini. Elisa sta benone adesso."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella giornata. Mi fa piacere che si sia ripresa."
+    },
+    {
+     "role": "user",
+     "content": "Una cosa pratica: la mamma dal 1° aprile affitta il garage di via Saragozza, quindi oggi ho spostato la Punto vecchia nel posto auto del condominio, il numero 14."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: la Punto ora è nel posto auto condominiale n. 14."
+    },
+    {
+     "role": "user",
+     "content": "Prima o poi la devo vendere, la uso due volte all'anno."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando vuoi ti aiuto a preparare l'annuncio."
+    }
+   ]
+  },
+  {
+   "id": "s27",
+   "user": "tommaso",
+   "ts": "2034-03-26T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Terza corsa: 7 km! Con l'ora legale mi sono svegliato tardissimo, ma ce l'ho fatta prima di pranzo."
+    },
+    {
+     "role": "assistant",
+     "content": "Bravo, stai tenendo il programma."
+    },
+    {
+     "role": "user",
+     "content": "Il ginocchio destro un po' si lamenta però."
+    },
+    {
+     "role": "assistant",
+     "content": "Se il fastidio resta qualche giorno, meglio una settimana di pausa o farlo vedere. Intanto ghiaccio e stretching."
+    },
+    {
+     "role": "user",
+     "content": "Ok, vediamo."
+    }
+   ]
+  },
+  {
+   "id": "s28",
+   "user": "tommaso",
+   "ts": "2034-03-28T18:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Due cambi in arrivo. Primo: in azienda cambiano lo smart working. Da lunedì 3 aprile il giorno da casa non è più il venerdì ma il lunedì, per tutti."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: dal 3 aprile lavori da casa il lunedì; il venerdì sei in ufficio."
+    },
+    {
+     "role": "user",
+     "content": "Secondo: lascio Iliad e passo a Kena, 7,99 € al mese con più giga. La portabilità è fissata per lunedì 3 aprile."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok. Tieni la vecchia SIM finché quella nuova non si attiva."
+    },
+    {
+     "role": "user",
+     "content": "Sì sì."
+    }
+   ]
+  },
+  {
+   "id": "s29",
+   "user": "tommaso",
+   "ts": "2034-03-28T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Chiara mi dice che da aprile la scuola di danza di Anna aumenta la retta: da 45 a 50 € al mese."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: retta di danza di Anna 50 € al mese da aprile."
+    },
+    {
+     "role": "user",
+     "content": "E la nostra babysitter Giorgia parte per l'Erasmus a Valencia. Dal 3 aprile viene Irina, una studentessa di infermieristica, stessi orari: martedì e giovedì pomeriggio."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: da aprile la babysitter è Irina, martedì e giovedì pomeriggio. Vuoi che salvi il suo numero?"
+    },
+    {
+     "role": "user",
+     "content": "Te lo mando dopo. Mi spiace per Giorgia, i bambini la adoravano."
+    },
+    {
+     "role": "assistant",
+     "content": "Potranno salutarla in videochiamata ogni tanto."
+    }
+   ]
+  },
+  {
+   "id": "s30",
+   "user": "tommaso",
+   "ts": "2034-03-29T21:00:00+02:00",
+   "group": "Calcetto del giovedì",
+   "participants": [
+    {
+     "name": "Simone",
+     "identity": "simone-calcetto"
+    },
+    {
+     "name": "Marco",
+     "identity": "marco-bellini"
+    },
+    {
+     "name": "Davide",
+     "identity": "davide-calcetto"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marco",
+     "content": "Ragazzi, devo darvi una brutta notizia: la festa di venerdì 7 aprile salta. Mio padre è in ospedale da ieri, niente di gravissimo ma non me la sento. La rifaremo più avanti, vi faccio sapere."
+    },
+    {
+     "role": "other",
+     "author": "Simone",
+     "content": "Ci mancherebbe Marco, forza a tuo padre!"
+    },
+    {
+     "role": "other",
+     "author": "Davide",
+     "content": "Un abbraccio, Marco."
+    },
+    {
+     "role": "user",
+     "content": "Forza Marco, un abbraccio a te e a tuo papà. Se serve qualcosa chiama."
+    },
+    {
+     "role": "other",
+     "author": "Marco",
+     "content": "Grazie ragazzi."
+    }
+   ]
+  },
+  {
+   "id": "s31",
+   "user": "tommaso",
+   "ts": "2034-03-30T20:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Back from Milan again, second time at the Milan office this year. Big news: the Dublin office wants me there in May, Monday 15 to Wednesday 17 May, for the platform kickoff."
+    },
+    {
+     "role": "assistant",
+     "content": "Exciting! Noted: Dublin from Monday 15 to Wednesday 17 May."
+    },
+    {
+     "role": "user",
+     "content": "Since I'll be in Milan more often, I bought a 10-entry card at FitHub, the gym in Porta Romana right next to the office. Obviously I'm keeping my Ercole membership in Bologna, this is just for Milan days."
+    },
+    {
+     "role": "assistant",
+     "content": "Got it: FitHub in Milan on office days, on top of Palestra Ercole in Bologna."
+    },
+    {
+     "role": "user",
+     "content": "And I finished 'Le stagioni di Ottavio' on the train. Great book, I'll give it back to Luca tomorrow."
+    },
+    {
+     "role": "assistant",
+     "content": "Glad you liked it."
+    }
+   ]
+  },
+  {
+   "id": "s32",
+   "user": "tommaso",
+   "ts": "2034-04-01T09:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi pomeriggio vernicio la ringhiera del balcone, è tutta arrugginita. Ieri ho comprato l'antiruggine e due pennelli."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon lavoro! Carteggia bene la ruggine prima e copri il pavimento."
+    },
+    {
+     "role": "user",
+     "content": "Sì, Chiara mi ha già dato i giornali vecchi. Stamattina invece portiamo i bambini al mercato."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona giornata allora."
+    }
+   ]
+  },
+  {
+   "id": "s33",
+   "user": "tommaso",
+   "ts": "2034-04-02T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi prima partita con il mister Bonacini e Pietro ha segnato di nuovo: un gol contro la Fortitudo, abbiamo vinto 2-0."
+    },
+    {
+     "role": "assistant",
+     "content": "Che inizio con il nuovo mister!"
+    },
+    {
+     "role": "user",
+     "content": "Gianni mi ha riportato il trapano stamattina, con una bottiglia di vino per ringraziare."
+    },
+    {
+     "role": "assistant",
+     "content": "Gentile Gianni."
+    },
+    {
+     "role": "user",
+     "content": "Domani primo giorno di smart working di lunedì, strano."
+    },
+    {
+     "role": "assistant",
+     "content": "Ti abitui presto."
+    }
+   ]
+  },
+  {
+   "id": "s34",
+   "user": "tommaso",
+   "ts": "2034-04-04T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "La portabilità è andata: il numero ora è su Kena, funziona tutto. Ho buttato la SIM Iliad."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto."
+    },
+    {
+     "role": "user",
+     "content": "Oggi pomeriggio primo giorno di Irina con i bambini, speriamo bene."
+    },
+    {
+     "role": "assistant",
+     "content": "Incrocio le dita, poi dimmi com'è andata."
+    },
+    {
+     "role": "user",
+     "content": "Ah, Federica mi chiede una stima per il progetto Varesi entro venerdì. Mi ricordi giovedì?"
+    },
+    {
+     "role": "assistant",
+     "content": "Ti ricordo giovedì 6 aprile la stima per Varesi da consegnare a Federica entro venerdì 7."
+    }
+   ]
+  },
+  {
+   "id": "s35",
+   "user": "tommaso",
+   "ts": "2034-04-09T11:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina quarta corsa, 8 km, ginocchio a posto. Sono contento."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, e il ginocchio regge."
+    },
+    {
+     "role": "user",
+     "content": "Ho mollato 'Nebbia sul Reno' a metà, troppo lento. Non lo finisco."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito. Vuoi un consiglio per il prossimo?"
+    },
+    {
+     "role": "user",
+     "content": "Ho già in mente un giallo in inglese che mi ha consigliato Owen, 'The Quiet Harbour'."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella scelta per tenere allenato l'inglese."
+    }
+   ]
+  },
+  {
+   "id": "s36",
+   "user": "tommaso",
+   "ts": "2034-04-10T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lunedì da casa, comodo. Intanto ho preparato i documenti per Lisbona: io viaggio con la carta d'identità nuova, Chiara con il passaporto. Il check-in si apre 48 ore prima, giusto?"
+    },
+    {
+     "role": "assistant",
+     "content": "Di solito sì, ma dipende dalla compagnia: controlla l'email di conferma. Ti metto un promemoria per giovedì 20 aprile sera?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, perfetto."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto."
+    },
+    {
+     "role": "user",
+     "content": "Poi vorrei cambiare il materasso, il nostro ha dodici anni. Mi fai una lista di cosa guardare?"
+    },
+    {
+     "role": "assistant",
+     "content": "Rigidità adatta al peso di entrambi, materiali (memory, molle insacchettate, lattice), prova in negozio di almeno dieci minuti, periodo di prova a casa, garanzia e politica di reso."
+    },
+    {
+     "role": "user",
+     "content": "Ottimo, ne parlo con Chiara."
+    }
+   ]
+  },
+  {
+   "id": "s37",
+   "user": "tommaso",
+   "ts": "2034-04-12T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Settimana piena. Sabato 15 do finalmente l'antiruggine alla ringhiera del balcone, il barattolo è lì da fine marzo che mi guarda."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno sabato 15 aprile per la ringhiera. Se piove?"
+    },
+    {
+     "role": "user",
+     "content": "Se piove si vedrà. Poi mercoledì 19 alle 16:30 ho il colloquio con la maestra di Pietro, la maestra Gentili. E giovedì 20 alle 17 vado dal commercialista Gualandi per la dichiarazione dei redditi, devo portare le spese mediche e le ricevute della danza."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnati: mercoledì 19 aprile alle 16:30 colloquio con la maestra Gentili; giovedì 20 aprile alle 17 commercialista Gualandi, con spese mediche e ricevute della danza."
+    },
+    {
+     "role": "user",
+     "content": "E prima di partire devo portare la mamma a fare la spesa grossa, ma quello lo organizzo con lei."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, fammi sapere quando."
+    }
+   ]
+  },
+  {
+   "id": "s38",
+   "user": "tommaso",
+   "ts": "2034-04-13T21:00:00+02:00",
+   "group": "Amici del liceo",
+   "participants": [
+    {
+     "name": "Giulia",
+     "identity": "giulia-liceo"
+    },
+    {
+     "name": "Andrea",
+     "identity": "andrea-liceo"
+    },
+    {
+     "name": "Stefano",
+     "identity": "stefano-liceo"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giulia",
+     "content": "Gente! Rimpatriata della 5ªC, vent'anni dopo... più o meno. Propongo venerdì 28 aprile alle 20:30 alla Trattoria del Portico. Chi c'è?"
+    },
+    {
+     "role": "other",
+     "author": "Andrea",
+     "content": "Io!"
+    },
+    {
+     "role": "user",
+     "content": "Ci sono anch'io, finalmente!"
+    },
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Il 28 sono in trasferta, ma provo."
+    },
+    {
+     "role": "other",
+     "author": "Giulia",
+     "content": "Allora prenoto per una dozzina, poi aggiusto."
+    }
+   ]
+  },
+  {
+   "id": "s39",
+   "user": "tommaso",
+   "ts": "2034-04-18T21:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Peso di oggi: 84 kg. Da 88 a febbraio non è male."
+    },
+    {
+     "role": "assistant",
+     "content": "Meno 4 kg in due mesi, ottimo!"
+    },
+    {
+     "role": "user",
+     "content": "A questo punto alzo l'asticella: nuovo obiettivo 80 kg. Ce la posso fare entro settembre."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: obiettivo 80 kg entro settembre."
+    },
+    {
+     "role": "user",
+     "content": "Altra cosa: martedì 2 maggio alle 9:30 Anna ha il richiamo del vaccino all'ASL di via Montebello. La porta Chiara ma ricordamelo il giorno prima."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno il richiamo di Anna martedì 2 maggio alle 9:30, con promemoria lunedì 1 maggio."
+    },
+    {
+     "role": "user",
+     "content": "Il primo maggio è festa e non guardo il telefono, ricordamelo domenica 30 aprile."
+    },
+    {
+     "role": "assistant",
+     "content": "Giusto, promemoria domenica 30 aprile."
+    }
+   ]
+  },
+  {
+   "id": "s40",
+   "user": "tommaso",
+   "ts": "2034-04-20T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Writing in English, just had a call with the Dublin people. The Dublin trip moves: not 15 to 17 May any more, now Monday 29 to Wednesday 31 May, they need more time to set up the platform team."
+    },
+    {
+     "role": "assistant",
+     "content": "Updated: Dublin from Monday 29 to Wednesday 31 May."
+    },
+    {
+     "role": "user",
+     "content": "Also Owen texted, he's back from Canada. We'll do a proper video call on Thursday 4 May at 8pm to catch up."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: video call with Owen on Thursday 4 May at 20:00."
+    },
+    {
+     "role": "user",
+     "content": "And next Thursday, 27 April, I'm in Milan again for the Varesi rollout planning."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: Milan office on Thursday, 27 April."
+    },
+    {
+     "role": "user",
+     "content": "Check-in for Lisbon done, by the way. Seats together."
+    },
+    {
+     "role": "assistant",
+     "content": "Great, all set for Saturday."
+    }
+   ]
+  },
+  {
+   "id": "s41",
+   "user": "tommaso",
+   "ts": "2034-04-21T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domani si parte! Mi aiuti con la lista per la valigia? Quattro giorni, clima mite."
+    },
+    {
+     "role": "assistant",
+     "content": "Ecco: documenti (la tua carta d'identità, il passaporto di Chiara), carte di pagamento, caricabatterie (in Portogallo le prese sono come le nostre), scarpe comode per le salite dell'Alfama, una giacca leggera per la sera, k-way, occhiali da sole, medicinali di base."
+    },
+    {
+     "role": "user",
+     "content": "Ottimo. I bambini li porto dalla mamma domattina alle 7."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon viaggio a tutti e due!"
+    }
+   ]
+  },
+  {
+   "id": "s42",
+   "user": "tommaso",
+   "ts": "2034-04-26T21:00:00+02:00",
+   "group": "Amici del liceo",
+   "participants": [
+    {
+     "name": "Giulia",
+     "identity": "giulia-liceo"
+    },
+    {
+     "name": "Andrea",
+     "identity": "andrea-liceo"
+    },
+    {
+     "name": "Stefano",
+     "identity": "stefano-liceo"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giulia",
+     "content": "Cambio di programma: il 28 metà di voi non può. Spostiamo la rimpatriata a venerdì 5 maggio, stessa ora e stesso posto."
+    },
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Grazie Giulia, il 5 ci sono di sicuro."
+    },
+    {
+     "role": "user",
+     "content": "Va bene anche per me."
+    },
+    {
+     "role": "other",
+     "author": "Andrea",
+     "content": "Ok!"
+    }
+   ]
+  },
+  {
+   "id": "s43",
+   "user": "tommaso",
+   "ts": "2034-04-26T21:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tomorrow's Milan trip is off: the Varesi people are coming to Bologna instead, so we'll meet them at our office."
+    },
+    {
+     "role": "assistant",
+     "content": "Okay, no Milan tomorrow; Varesi meeting in Bologna."
+    },
+    {
+     "role": "user",
+     "content": "Better for me honestly, three hours of train saved. Can you remind me at 8:30 to print the rollout plan?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sure, reminder tomorrow at 8:30."
+    }
+   ]
+  },
+  {
+   "id": "s44",
+   "user": "tommaso",
+   "ts": "2034-04-27T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi ho preso a Pietro la borsa nuova per il calcio, 25 €, la vecchia ha la cerniera rotta. E ad Anna le scarpette da danza, 30 €."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnati entrambi."
+    },
+    {
+     "role": "user",
+     "content": "Domenica 30 andiamo all'Ikea di Casalecchio con Chiara a prendere la libreria per la camera di Pietro, quella bianca alta. Ricordami di misurare la parete sabato."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno: domenica 30 aprile Ikea di Casalecchio per la libreria bianca della camera di Pietro, e sabato 29 aprile ti ricordo di misurare la parete."
+    },
+    {
+     "role": "user",
+     "content": "Grazie. Stanchissimo, buonanotte."
+    },
+    {
+     "role": "assistant",
+     "content": "Buonanotte!"
+    }
+   ]
+  },
+  {
+   "id": "s45",
+   "user": "tommaso",
+   "ts": "2034-05-01T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "SMS dell'ASL: il richiamo di Anna di domani è spostato a martedì 9 maggio, stessa ora, 9:30. Chissà perché."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: richiamo del vaccino di Anna martedì 9 maggio alle 9:30."
+    },
+    {
+     "role": "user",
+     "content": "Poi è arrivato l'avviso della scuola: la gita di Anna allo zoo è giovedì 11 maggio. Bisogna dare 15 € e il pranzo al sacco."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno: gita allo zoo di Anna giovedì 11 maggio, 15 € e pranzo al sacco."
+    },
+    {
+     "role": "user",
+     "content": "Oggi giornata di festa tranquilla, siamo stati al parco tutto il pomeriggio."
+    },
+    {
+     "role": "assistant",
+     "content": "Ci voleva."
+    }
+   ]
+  },
+  {
+   "id": "s46",
+   "user": "tommaso",
+   "ts": "2034-05-03T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera ho messo sul NAS tutte le foto di Lisbona, la cartella si chiama '2034-04 Lisbona'. Più di 600 foto, Chiara dice che devo fare una selezione."
+    },
+    {
+     "role": "assistant",
+     "content": "600 sono tante. Vuoi un'idea per organizzarle?"
+    },
+    {
+     "role": "user",
+     "content": "Dopo. Disastro invece: la lavatrice è morta, perde acqua da sotto. Ne ho ordinata una nuova da Euronics, la consegnano mercoledì 10 maggio in mattinata con ritiro della vecchia."
+    },
+    {
+     "role": "assistant",
+     "content": "Segno la consegna della lavatrice nuova mercoledì 10 maggio in mattinata."
+    },
+    {
+     "role": "user",
+     "content": "Fino ad allora lavanderia a gettoni, che gioia."
+    },
+    {
+     "role": "assistant",
+     "content": "Coraggio, è solo una settimana."
+    }
+   ]
+  },
+  {
+   "id": "s47",
+   "user": "tommaso",
+   "ts": "2034-05-03T21:30:00+02:00",
+   "group": "Amici del liceo",
+   "participants": [
+    {
+     "name": "Giulia",
+     "identity": "giulia-liceo"
+    },
+    {
+     "name": "Andrea",
+     "identity": "andrea-liceo"
+    },
+    {
+     "name": "Stefano",
+     "identity": "stefano-liceo"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giulia",
+     "content": "Ultimo cambio, lo giuro: la Trattoria del Portico il 5 è chiusa per un evento privato. Rimpatriata venerdì 12 maggio, alle 20:30, sempre lì."
+    },
+    {
+     "role": "other",
+     "author": "Andrea",
+     "content": "Ok, il 12."
+    },
+    {
+     "role": "other",
+     "author": "Stefano",
+     "content": "Ci sono."
+    },
+    {
+     "role": "user",
+     "content": "Ok Giulia, ci provo, vi faccio sapere."
+    }
+   ]
+  },
+  {
+   "id": "s48",
+   "user": "tommaso",
+   "ts": "2034-05-05T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho riletto l'avviso della scuola: la gita di Anna è venerdì 12 maggio, non giovedì 11. Avevo letto male io, la data è sempre stata il 12."
+    },
+    {
+     "role": "assistant",
+     "content": "Corretto: la gita allo zoo di Anna è venerdì 12 maggio."
+    },
+    {
+     "role": "user",
+     "content": "Oggi tra l'altro sono in ufficio, è venerdì, e c'è un silenzio strano: mezzo team è in ferie per il ponte."
+    },
+    {
+     "role": "assistant",
+     "content": "Almeno lavori in pace."
+    },
+    {
+     "role": "user",
+     "content": "Vero. Stasera pizza con i bambini, Chiara ha il turno lungo in farmacia."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona pizza!"
+    }
+   ]
+  },
+  {
+   "id": "s49",
+   "user": "tommaso",
+   "ts": "2034-05-07T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fifth run this morning: 10 km! Goal reached, I did the long loop up to San Michele in Bosco."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations, 10 km!"
+    },
+    {
+     "role": "user",
+     "content": "Now I'll just keep it up, one or two runs a week."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like a good plan."
+    }
+   ]
+  },
+  {
+   "id": "s50",
+   "user": "tommaso",
+   "ts": "2034-05-09T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Anna ha fatto il richiamo stamattina, brava, neanche una lacrima. Chiara dice che stasera magari ha qualche linea di febbre."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava Anna! Se sale la febbre, paracetamolo come l'altra volta in base al peso."
+    },
+    {
+     "role": "user",
+     "content": "Sì. Domani poi aspetto la lavatrice."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo con la consegna."
+    }
+   ]
+  },
+  {
+   "id": "s51",
+   "user": "tommaso",
+   "ts": "2034-05-11T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Third time in Milan this year, just back. Used my FitHub card at lunch, nice gym."
+    },
+    {
+     "role": "assistant",
+     "content": "Nice."
+    },
+    {
+     "role": "user",
+     "content": "Tomorrow evening Chiara is at her mother's in Modena, so I'm home with the kids: I'll probably skip the school reunion."
+    },
+    {
+     "role": "assistant",
+     "content": "Understood. Want me to tell Giulia?"
+    },
+    {
+     "role": "user",
+     "content": "No, I'll write to her myself."
+    }
+   ]
+  },
+  {
+   "id": "s52",
+   "user": "tommaso",
+   "ts": "2034-05-12T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono di nuovo alla lavanderia a gettoni, con due borsoni. Ho chiamato Euronics: dicono che la lavatrice ce la portano la settimana prossima, non sanno ancora il giorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Che seccatura. Vuoi che ti ricordi di richiamarli lunedì se non si fanno vivi?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, lunedì mattina."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto."
+    }
+   ]
+  },
+  {
+   "id": "s53",
+   "user": "tommaso",
+   "ts": "2034-05-13T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera alla fine niente rimpatriata: Chiara era a Modena e io a casa con i bambini. Giulia mi ha mandato le foto, sembravano tutti invecchiati tranne lei."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato, magari alla prossima."
+    },
+    {
+     "role": "user",
+     "content": "Oggi Pietro gioca alle 15 contro il Granarolo, vado a vederlo."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona partita!"
+    }
+   ]
+  },
+  {
+   "id": "s54",
+   "user": "tommaso",
+   "ts": "2034-05-15T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi niente donazione: all'AVIS mi hanno trovato l'emoglobina un po' bassa e mi hanno rimandato a casa. Mi hanno dato del ferro, riprovo a fine mese."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato, ma meglio così. Quando vuoi riprovare?"
+    },
+    {
+     "role": "user",
+     "content": "Mercoledì 31 maggio, la mattina presto. Domani invece alle 8:30 porto la Panda da Bertolini per il tagliando, ricordamelo stasera alle 22 che devo svuotare il bagagliaio."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnati: domani, martedì 16 maggio alle 8:30, tagliando della Panda all'officina Bertolini, con promemoria stasera alle 22; e mercoledì 31 maggio mattina nuovo tentativo all'AVIS."
+    },
+    {
+     "role": "user",
+     "content": "Grazie. Ah, Euronics ha richiamato: la lavatrice arriva venerdì."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, segno la consegna venerdì 19 maggio."
+    }
+   ]
+  },
+  {
+   "id": "s55",
+   "user": "tommaso",
+   "ts": "2034-05-18T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Finished 'The Quiet Harbour' tonight. Owen was right, the twist in the last chapter is brilliant."
+    },
+    {
+     "role": "assistant",
+     "content": "Want a similar recommendation?"
+    },
+    {
+     "role": "user",
+     "content": "Maybe later. I'm going to bed, early start tomorrow."
+    },
+    {
+     "role": "assistant",
+     "content": "Good night!"
+    }
+   ]
+  },
+  {
+   "id": "s56",
+   "user": "tommaso",
+   "ts": "2034-05-20T14:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giornata di cambiamenti: la lavatrice nuova è arrivata ieri e va benissimo, silenziosissima."
+    },
+    {
+     "role": "assistant",
+     "content": "Finalmente! Addio lavanderia."
+    },
+    {
+     "role": "user",
+     "content": "E ho venduto la Punto a Simone del calcetto, 1.200 €. È venuto a prenderla stamattina dal posto auto, passaggio di proprietà fatto in agenzia."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: la Punto è venduta a Simone."
+    },
+    {
+     "role": "user",
+     "content": "Stasera io e Chiara usciamo a cena: viene Giorgia a stare coi bambini, è tornata da Valencia per il weekend. Irina aveva un esame."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello rivederla. Buona serata!"
+    }
+   ]
+  },
+  {
+   "id": "s57",
+   "user": "tommaso",
+   "ts": "2034-05-22T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Dublin update: it slips again. The platform team isn't ready, so now it's Monday 12 to Wednesday 14 June. Flights already changed by our travel office."
+    },
+    {
+     "role": "assistant",
+     "content": "Updated: Dublin from Monday 12 to Wednesday 14 June."
+    },
+    {
+     "role": "user",
+     "content": "Chiara is not thrilled, it's the week of Pietro's end-of-season party. Nothing I can do."
+    },
+    {
+     "role": "assistant",
+     "content": "Maybe you can join by video for a few minutes."
+    }
+   ]
+  },
+  {
+   "id": "s58",
+   "user": "tommaso",
+   "ts": "2034-05-23T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Peso di stamattina: 82,5 kg."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, sei a 2,5 kg dall'obiettivo."
+    },
+    {
+     "role": "user",
+     "content": "Continuo così, senza fretta."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella costanza."
+    }
+   ]
+  },
+  {
+   "id": "s59",
+   "user": "tommaso",
+   "ts": "2034-05-25T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "SMS di Kena: dal 1° giugno l'offerta passa da 7,99 a 8,99 € al mese. Potrei recedere gratis, ma per un euro non cambio di nuovo operatore, resto."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: resti con Kena, 8,99 € al mese dal 1° giugno."
+    },
+    {
+     "role": "user",
+     "content": "Stasera cucino io, pensavo a un risotto agli asparagi."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima idea per la stagione."
+    }
+   ]
+  },
+  {
+   "id": "s60",
+   "user": "tommaso",
+   "ts": "2034-05-29T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lunedì da casa, pausa pranzo veloce. Mi dai un'idea per una cena per otto sabato sera? Vengono Elisa e suo marito Nicola con i bambini."
+    },
+    {
+     "role": "assistant",
+     "content": "Una teglia di lasagne al pesto, roast beef freddo con patate al forno e per dolce una crostata di frutta: si prepara quasi tutto il venerdì sera."
+    },
+    {
+     "role": "user",
+     "content": "Mi piace. Il roast beef lo prendo dal macellaio di via San Felice."
+    },
+    {
+     "role": "assistant",
+     "content": "Ordinalo qualche giorno prima."
+    }
+   ]
+  },
+  {
+   "id": "s61",
+   "user": "tommaso",
+   "ts": "2034-05-31T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatto, oggi all'AVIS mi hanno fatto donare: emoglobina tornata a posto col ferro."
+    },
+    {
+     "role": "assistant",
+     "content": "Benissimo!"
+    },
+    {
+     "role": "user",
+     "content": "Ora caffè e cornetto offerti e poi in ufficio."
+    },
+    {
+     "role": "assistant",
+     "content": "Meritati."
+    }
+   ]
+  },
+  {
+   "id": "s62",
+   "user": "tommaso",
+   "ts": "2034-06-02T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Festa della Repubblica, tutti a casa. Andiamo a fare un picnic ai Prati di Mugnano coi bambini. Cosa porto?"
+    },
+    {
+     "role": "assistant",
+     "content": "Telo, acqua in abbondanza, panini o piadine, frutta già tagliata, crema solare, un pallone per Pietro e qualcosa per Anna, sacchetti per i rifiuti."
+    },
+    {
+     "role": "user",
+     "content": "Il pallone Pietro non lo dimentica neanche se volesse."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon picnic!"
+    }
+   ]
+  }
+ ]
+}

@@ -60,7 +60,7 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Endpoint di embedding (misurato con `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fisso per installazione (1024 per bge-m3); cambiare modello richiede un re-embed |
 
-Modelli supportati: solo quelli che raggiungono il 95 % nella valutazione (`RESULTS.md`).
+Modelli supportati: solo quelli che raggiungono il 95 % nella valutazione — modelli misurati, punteggi e licenze dei pesi in `docs/MODELS_it.md`.
 
 ## 4. Per persona (API admin, console, o la piattaforma della persona)
 
@@ -140,5 +140,5 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 `EVAL_DATASET`, `RECORDARE_URL` / `RECORDARE_ADMIN_KEY` / `RECORDARE_DB_URL` (sistema service),
 `EVAL_SOURCE_AMBIENT_AS` (sistema service: invia le sessioni `ambient` di un set con questa sorgente, es. `voice` — il
 braccio di confronto di WORK_PLAN 6.5), `CONSOLIDATE`,
-`AGENT_SYSTEM_FILE` (modalità agente: il prompt di un agente reale), `REASONING_OFF_BODY`, `OPEN_ROUTER_API_KEY`. Le run
+`AGENT_SYSTEM_FILE` (modalità agente: il prompt di un agente reale), `REASONING_OFF_BODY`, `OPEN_ROUTER_API_KEY`; la matrice dei provider (`provider_eval.py --config profiles/<modello>.json`) legge la chiave di ogni profilo dalla variabile che nomina (`OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `LLM_API_KEY`). Le run
 dello spike costano denaro: valgono le regole del budget di valutazione in `WORK_PLAN.md`.

@@ -511,6 +511,11 @@ export class ExtractionWriter {
 
       // A pending fact only proposes the change to a stated one: applied when it is confirmed (pending.ts).
       const proposal = inferred && !!target && !(await isPending(this.tx, 'facts', target.id));
+      if (target && value === null) {
+        // Not known any more, and already not known: nothing changes (blind12: a second "stale" on an unknown fact).
+        const [{ unknown }] = await this.tx.query(`SELECT value IS NULL AS unknown FROM facts WHERE id = $1`, [target.id]);
+        if (unknown) { this.drop('fact', 'already_unknown'); continue; }
+      }
       if (target && (verdict === 'replace' || verdict === 'stale' || verdict === 'unknown')) {
         if (target.validFrom && from.at && from.at < target.validFrom) {
           // Older evidence that a value became unknown changes nothing in the newer history.

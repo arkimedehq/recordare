@@ -1,0 +1,11 @@
+{
+  "label": "openai-gpt-5.4-nano",
+  "provider": "openai-compatible",
+  "profile": "openai",
+  "baseUrl": "https://api.openai.com/v1",
+  "model": "gpt-5.4-nano",
+  "keyEnv": "OPENAI_API_KEY",
+  "reasoningOffTry": [{"reasoningOff": {"reasoning_effort": "none"}}, {"reasoningOff": {"reasoning_effort": "minimal"}}, {"reasoningOff": {"reasoning_effort": "low"}}],
+  "price": {"input": 0.20, "output": 1.25},
+  "notes": "Native OpenAI API (4.5b). Via OpenRouter it scored 77.9 % on blind5."
+}
