@@ -75,7 +75,11 @@ irrisolti, trappole di premessa) e il servizio è misurato su di esse (RESULTS.m
 seconda valutazione delle risposte salvate): su blind3 Recordare è quello che afferma meno senza fondamento (0,028; Mem0
 0,046, Cognee 0,065, D 0,065, contesto completo 0,037), ma sulle categorie H1 vere e proprie tutti i sistemi sono vicini
 a zero — questi set non mostrano H1; serve un set più difficile (piani irrisolti chiesti come se fossero avvenuti, esiti
-impliciti, storie lunghe), e restano da confrontare Zep/Graphiti, Letta, A-Mem e un archivio tipizzato stile PIS.
+impliciti, storie lunghe), e restano da confrontare Zep/Graphiti, Letta, A-Mem e un archivio tipizzato stile PIS. Quel set, `dataset_blind12` (2026-10-19, 54 domande H1, 1 run): contesto
+completo 95,4 % ma afferma un esito non confermato e scambia una correzione per un cambiamento (esiti inventati 0,077);
+Recordare 92,6 %, nessun esito inventato, piani irrisolti e correzione vs cambiamento tutti giusti; il suo errore H1 è
+un'intenzione dello stesso giorno salvata come fatta. Primo segnale che gli stati tipizzati dei piani aiutano dove il
+contesto completo sbaglia; un solo run e ancora nessun altro sistema di memoria.
 
 **Il modello dati della fase 1 deve memorizzare.** Stato del piano `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, data dello stato, episodio di evidenza); tipo di episodio

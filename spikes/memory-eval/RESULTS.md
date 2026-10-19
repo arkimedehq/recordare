@@ -502,6 +502,37 @@ judge is (blind9: "Beatrice submitted it" when Beatrice asks).
 - Single grader (DeepSeek flash), not audited by a human; stricter than the judge on secondary details. The rates are
   per answer, so a run's ±1 answer is ±0.02–0.03.
 
+### H1 harder set — `dataset_blind12` (2026-10-19, DeepSeek direct, 1 run each)
+
+A blind set built for H1 after 4.5c showed the earlier sets had too few hard items (written and audited by separate
+agents; `dataset_blind12/GOLD_AUDIT.md`): Tommaso, Bologna, Feb–Jun 2034, 62 sessions (8 English, 7 group chats), 54
+questions, all H1 — plan-unresolved 8, plan-implicit 7, plan-moved 7, premise-trap 7, accumulate 6, supersede 8,
+correction-vs-change 7, negative 4. Service through `provider_eval.py --config profiles/deepseek-flash.json` (current
+engine, `extract.v16`, one prompt version per task); answer and judge `deepseek-flash`; outcomes by `outcome_eval.py`.
+
+| System | Accuracy | Unjustified | Over-abstention | Invented on unknown (13) |
+|---|---|---|---|---|
+| Recordare | 92.6 % | **0.019** | 0.049 | **0.000** |
+| full context | **95.4 %** | 0.037 | 0.024 | 0.077 |
+
+Per category (Recordare / full context): plan-unresolved **1.00** / 0.88, plan-implicit 0.79 / 1.00, plan-moved 1.00 /
+1.00, premise-trap 0.86 / 0.93, accumulate 0.83 / 1.00, supersede 0.94 / 1.00, correction-vs-change **1.00** / 0.86,
+negative 1.00 / 1.00. Extraction: episode recall 0.97, dates 0.90, plan outcome 0.84, unsupported 17 % (blind5 9 %),
+facts 0.62 / 0.54, notes 0.50.
+
+Reading. The set separates the two where H1 says it should. Full context, with every chat in front of it, still
+asserts an outcome nobody told (h07: "Sì" to an unconfirmed car service) and takes a correction for a change (h45:
+"the trip was first set for 11 May" — it never was); Recordare's plan states and `corrects` keep both right (unresolved
+and correction-vs-change 1.00, nothing invented on unknown). Recordare's losses are of two other kinds:
+- **an intention stored as done** (h11, the one unjustified answer): "Oggi pomeriggio vernicio la ringhiera" became
+  the event "on 1 April I painted the railing"; twelve days later "Saturday 15 I'll finally do the railing, the can is
+  still there" was stored as a new plan without revising that event. The H1 error itself, made by the extraction;
+- **recall misses with the memory right** (h30 runs, h26 smart-working day): the five runs and the change of the home
+  working day are stored, but the recall did not bring them to the answer ("I have nothing on it"). Plus two partials
+  (a detail of the evidence omitted).
+One run each; with 54 questions a 3-point gap is within noise. Cost: engine 63 extraction calls, ≈ 508 k input (49 %
+cached) / 60 k output; full context ≈ 550 k input for the answers.
+
 ### WORK_PLAN 6.5 — continuous listening: extract.v16, pending facts, `heard` in recall (2026-10-15, DeepSeek direct, `amb65_runs.sh`)
 
 Dev set `dataset_dev_ambient` (NOT blind, written by an agent of the engine developer): Stefano, his son Leo, his mother

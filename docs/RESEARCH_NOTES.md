@@ -74,7 +74,11 @@ unresolved, premise traps) and the service is measured on them (RESULTS.md). The
 grading of stored answers): on blind3 Recordare asserts least without support (0.028; Mem0 0.046, Cognee 0.065, D 0.065,
 full context 0.037), but on the H1 categories themselves every system is near zero — these sets do not show H1; a
 harder set (unresolved plans asked as if done, implicit outcomes, long histories) is needed, and Zep/Graphiti, Letta,
-A-Mem and a PIS-style store are still to compare.
+A-Mem and a PIS-style store are still to compare. That set, `dataset_blind12` (2026-10-19, 54 H1 questions, 1 run):
+full context 95.4 % but asserts an unconfirmed outcome and takes a correction for a change (invented on unknown 0.077);
+Recordare 92.6 %, nothing invented on unknown, unresolved plans and correction vs change all right; its own H1 error is
+a same-day intention stored as done. First sign that the typed plan states help where full context fails; one run
+and no other memory system yet.
 
 **Phase-1 data model must store.** Plan status `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, status date, evidence episode); episode kind
