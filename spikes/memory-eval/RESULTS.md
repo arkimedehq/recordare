@@ -530,6 +530,14 @@ and correction-vs-change 1.00, nothing invented on unknown). Recordare's losses 
 - **recall misses with the memory right** (h30 runs, h26 smart-working day): the five runs and the change of the home
   working day are stored, but the recall did not bring them to the answer ("I have nothing on it"). Plus two partials
   (a detail of the evidence omitted).
+**Mem0 2.2.1** (same adapter as 4b.5, engine `deepseek-flash` thinking off, 1 run, 2026-10-19): **91.7 %**, unjustified
+**0.093**, over-abstention 0.000, **invented on unknown 0.154** (2 of 13). Per category: plan-unresolved 0.75
+(unjustified 0.25: "you were at dinner at Marco and Serena's" — a plan stored as an event), plan-implicit 0.79 (h11 the
+railing, as Recordare), accumulate 0.83, the rest 1.00. Same accuracy band as Recordare and full context, but the
+highest unjustified-assertion rate of the three and the most outcomes invented: Mem0 keeps "dinner at Marco's on
+Saturday" as a fact, with no plan state to say the outcome is unknown. Cost: 62 ingest calls, 540 k input / 13 k output,
+141 s ingest.
+
 One run each; with 54 questions a 3-point gap is within noise. Cost: engine 63 extraction calls, ≈ 508 k input (49 %
 cached) / 60 k output; full context ≈ 550 k input for the answers.
 

@@ -77,8 +77,9 @@ harder set (unresolved plans asked as if done, implicit outcomes, long histories
 A-Mem and a PIS-style store are still to compare. That set, `dataset_blind12` (2026-10-19, 54 H1 questions, 1 run):
 full context 95.4 % but asserts an unconfirmed outcome and takes a correction for a change (invented on unknown 0.077);
 Recordare 92.6 %, nothing invented on unknown, unresolved plans and correction vs change all right; its own H1 error is
-a same-day intention stored as done. First sign that the typed plan states help where full context fails; one run
-and no other memory system yet.
+a same-day intention stored as done. Mem0 on the same set (1 run): 91.7 %, but unjustified 0.093 and invented on
+unknown 0.154 — plans kept as events. First sign that the typed plan states help where full context and a fact store
+fail; one run each.
 
 **Phase-1 data model must store.** Plan status `open | confirmed | cancelled | rescheduled |
 unresolved` (+ `rescheduledTo`, status date, evidence episode); episode kind
