@@ -477,7 +477,7 @@ dichiarazione esplicita.
 | `subject_person_id` | uuid null | null = il sé della memoria. **Memorie di entità (D48)**: la persona a cui il fatto si riferisce (un contatto di quella memoria, trovato per nome o creato dallo scrittore); null = l'entità stessa. Mai impostato in una memoria personale |
 | `subject_kind`, `subject_candidates` | | Come sugli episodi (D50): `contact` con un soggetto, altrimenti `self` |
 | `key` | text → fact_slots | |
-| `value` | text **null** | null solo per `unknown_current` |
+| `value` | text **null** | mai null per `current`, sempre null per `unknown_current`; la storia (`superseded`, `corrected`) conserva quello che la riga aveva, così un periodo non noto può finire |
 | `status` | enum `current \| superseded \| corrected \| unknown_current` | `unknown_current` è una **nuova riga** (value null) che supera quella obsoleta: "il valore attuale non è noto" (D29, STALE) |
 | *time* | | `valid_from`, `valid_to`, `date_precision`, `time_expression`, `recorded_at` |
 | `expired_at` | timestamptz null | Quando Recordare ha smesso di crederlo |

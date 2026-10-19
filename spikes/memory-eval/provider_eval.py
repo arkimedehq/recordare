@@ -12,7 +12,7 @@ first when `dist/` is older than `src/`; (3) `run_eval.py --system service` (ans
 so scores compare across engines); (4) per-stage extraction scoring when the set has a gold, the answer outcomes with
 `--outcomes`; (5) the check of rule 9 — a run whose extractions carry more than one prompt version is marked
 discarded (two versions of the same prompt); (6) the engine's cost from the service's own call accounting and the profile's prices. Writes
-results/pm-<label>-<dataset>.json; the service log goes to pm_<label>.log.
+results/pm-<label>-<dataset>-<tag>.json; the service log goes to pm_<label>.log.
 
 Profile file (JSON): {"label", "provider": "openai-compatible" | "anthropic" | "claude-cli", "profile": a service
 profile name (service/src/llm/provider-profiles.ts), "baseUrl"?, "model", "keyEnv"? (the variable holding the key, in
@@ -175,7 +175,7 @@ def measure(args) -> None:
                     "model": p["model"], "baseUrl": p.get("baseUrl"), "weights": p.get("weights"),
                     "dataset": args.dataset, "tag": args.tag, "smoke": "ok" if pj is not None else "failed",
                     "profileJson": pj or None, "smokeOutput": smoke_out}
-    out = RESULTS / f"pm-{p['label']}-{args.dataset}.json"
+    out = RESULTS / f"pm-{p['label']}-{args.dataset}-{args.tag}.json"  # runs with different tags never overwrite each other
     RESULTS.mkdir(exist_ok=True)
     if pj is None or args.smoke_only:
         out.write_text(json.dumps(report, ensure_ascii=False, indent=2))
@@ -236,7 +236,7 @@ def table() -> None:
         ex = next((x.get("extraction") for x in r.get("runs", []) if x.get("extraction")), {}) or {}
         cost = [x["engine_usd"] for x in r.get("runs", []) if x.get("engine_usd") is not None]
         acc = r.get("accuracy_mean")
-        cells = [r["model"], f"{r['provider']} / {r['profile']}", r["dataset"].replace("dataset_", ""), r["smoke"],
+        cells = [r["model"], f"{r['provider']} / {r['profile']}", f"{r['dataset'].replace('dataset_', '')} ({r['tag']})", r["smoke"],
                  f"{acc * 100:.1f} %" if acc is not None else "—", ex.get("episode_recall", "—"),
                  ex.get("plan_outcome_accuracy", "—"), ex.get("unsupported_rate", "—"),
                  f"{sum(cost) / len(cost):.3f}" if cost else "—", (r.get("weights") or {}).get("licence", "API only")]

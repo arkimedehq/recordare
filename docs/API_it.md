@@ -370,7 +370,7 @@ assistant" — così l'output iniettato di uno strumento non può creare un rico
 |---|---|---|
 | `query` | string | Facoltativo per panoramiche pure di un periodo |
 | `from`, `to` | string | Date ISO (`YYYY-MM-DD`, oppure `YYYY-MM` = il mese intero), estremi inclusi, abbinate per sovrapposizione (`resolve_period` aiuta) |
-| `mode` | `"search" \| "list" \| "latest"` | `search` per rilevanza; `list` cronologico nell'intervallo; `latest` prima le corrispondenze più recenti |
+| `mode` | `"search" \| "list" \| "latest"` | `search` per rilevanza; `list` cronologico nell'intervallo (senza intervallo: gli elementi sull'argomento, scelti per rilevanza); `latest` prima le corrispondenze più recenti |
 | `include_plans` | boolean | default true |
 | `limit` | integer, 1–50 | default: search 10, list 30, latest 5 |
 

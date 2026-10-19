@@ -25,6 +25,7 @@ import { Patterns1791130000000 } from './migrations/1791130000000-Patterns';
 import { Exports1791140000000 } from './migrations/1791140000000-Exports';
 import { HolderLinks1791150000000 } from './migrations/1791150000000-HolderLinks';
 import { PendingProposals1791160000000 } from './migrations/1791160000000-PendingProposals';
+import { UnknownFactHistory1791170000000 } from './migrations/1791170000000-UnknownFactHistory';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -37,7 +38,7 @@ export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, Messa
   EntityMemory1791030000000, ConsentWaiting1791040000000, RunSummary1791050000000, NoConsent1791060000000,
   MemoryIdentity1791070000000, ContactClarification1791080000000, Sources1791090000000, Memories1791100000000,
   FactNoteTombstones1791110000000, EpisodeResolvedAt1791120000000, Patterns1791130000000, Exports1791140000000,
-  HolderLinks1791150000000, PendingProposals1791160000000];
+  HolderLinks1791150000000, PendingProposals1791160000000, UnknownFactHistory1791170000000];
 
 /**
  * Every session scans HNSW indexes iteratively (pgvector ≥ 0.8, WORK_PLAN 4.14): a vector search filtered by memory

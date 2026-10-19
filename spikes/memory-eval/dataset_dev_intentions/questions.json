@@ -1,0 +1,62 @@
+{
+ "_note": "Questions for dataset_dev_intentions (not blind).",
+ "user": "marta",
+ "holder": "Marta",
+ "questions": [
+  {
+   "id": "d01",
+   "category": "intention-contradicted",
+   "asked_at": "2026-12-01T10:00:00+01:00",
+   "q": "Ho lavato la macchina sabato 7 novembre?",
+   "expected": "No: il 7 novembre volevi lavarla nel pomeriggio, ma il 14 novembre hai detto che quel sabato aveva piovuto tutto il pomeriggio e dovevi ancora lavarla; volevi riprovarci domenica 15 novembre, e non risulta se l'hai fatto.",
+   "must_not": [
+    "la macchina è stata lavata il 7 novembre"
+   ]
+  },
+  {
+   "id": "d02",
+   "category": "intention-contradicted",
+   "asked_at": "2026-12-01T10:00:00+01:00",
+   "q": "Quando ho montato la libreria nuova?",
+   "expected": "Non risulta che tu l'abbia montata: il 16 novembre volevi montarla quel pomeriggio, ma il 26 novembre i pezzi erano ancora nello scatolone e dicevi che l'avresti montata domenica 29 novembre; non me ne hai più parlato.",
+   "must_not": [
+    "la libreria è stata montata il 16 novembre",
+    "la libreria è stata montata domenica 29 novembre"
+   ]
+  },
+  {
+   "id": "d03",
+   "category": "intention-contradicted",
+   "asked_at": "2026-12-01T10:00:00+01:00",
+   "q": "Did I call the bank about the mortgage on 17 November?",
+   "expected": "No: you meant to call that afternoon, but on 18 November you said you still hadn't called (the branch closed early) and would call on Friday 20 November; whether you did is not known.",
+   "must_not": [
+    "the bank was called on 17 November"
+   ]
+  },
+  {
+   "id": "d04",
+   "category": "same-day-kept",
+   "asked_at": "2026-12-01T10:00:00+01:00",
+   "q": "Cosa ho fatto venerdì 13 novembre sera?",
+   "expected": "Sei andata al cinema con Paolo a vedere il nuovo film di Sorrentino.",
+   "must_not": []
+  },
+  {
+   "id": "d05",
+   "category": "same-day-confirmed",
+   "asked_at": "2026-12-01T10:00:00+01:00",
+   "q": "Cosa abbiamo cucinato da Giulia, e quando?",
+   "expected": "Le lasagne, giovedì 19 novembre 2026, a cena da tua sorella Giulia.",
+   "must_not": []
+  },
+  {
+   "id": "d06",
+   "category": "same-day-done",
+   "asked_at": "2026-12-01T10:00:00+01:00",
+   "q": "Quanti km ho corso sabato 21 novembre, e dove?",
+   "expected": "8 km, al parco del Valentino.",
+   "must_not": []
+  }
+ ]
+}

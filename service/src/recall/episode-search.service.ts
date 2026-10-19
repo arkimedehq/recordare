@@ -172,25 +172,30 @@ export class EpisodeSearchService {
     };
     // A search asks for one thing, so it ranks by relevance alone and the blend only breaks ties: in the blend importance
     // and recency (up to 0.13) outweigh relevance (RRF: ~0.025 at most, nearly flat across the top ranks) and let the big
-    // events of a person push out the small item the question names (RESEARCH_NOTES H13, arm R). Lists and "latest" keep it.
-    const byRelevance = mode === 'search';
+    // events of a person push out the small item the question names (RESEARCH_NOTES H13, arm R). So does a list without a
+    // period — its topic is all it selects by (blind12 h30: five runs lost to bigger events among the relevant ones); period
+    // lists and "latest" keep the blend.
+    const byRelevance = mode === 'search' || (mode === 'list' && !hasPeriod);
     const order = (a: Row, b: Row) => (byRelevance ? (relevance.get(b.id) ?? 0) - (relevance.get(a.id) ?? 0) : 0) || score(b) - score(a);
     const limit = args.limit ?? (mode === 'list' ? 30 : mode === 'latest' ? 5 : 10);
     const candidates = rows.filter(inRange);
 
     // Relevant items first; free places are filled (M4b blind set 4: an over-strict relevance gate left the answer
-    // model with half the episodes D gave it). Search fills by raw similarity; a period list by importance.
+    // model with half the episodes D gave it). A period list fills by importance.
     const ranked = candidates.filter(relevant).sort(order);
     const rest = (by: (r: Row) => number) => candidates.filter((r) => !relevant(r)).sort((a, b) => by(b) - by(a));
     let chosen: Row[];
+    // Search fills by raw similarity, and so does a list without a period: the topic is all it has to go by (blind12
+    // h30: "corse" matched no run by its words and none passed the similarity floor, so the list held two unrelated items).
+    const bySimilarity = () => rest((r) => similarity.get(r.id) ?? -1).filter((r) => similarity.has(r.id));
     if (mode === 'list') {
-      const pool = !args.query ? rest((r) => r.importance) : hasPeriod ? [...ranked, ...rest((r) => r.importance)] : ranked;
+      const pool = !args.query ? rest((r) => r.importance) : hasPeriod ? [...ranked, ...rest((r) => r.importance)] : [...ranked, ...bySimilarity()];
       chosen = pool.slice(0, limit).sort((a, b) => (a.occurred_at?.getTime() ?? 0) - (b.occurred_at?.getTime() ?? 0));
     } else if (mode === 'latest') {
       chosen = candidates.filter(relevant).filter((r) => r.occurred_at && r.occurred_at <= now && r.kind !== 'plan')
         .sort((a, b) => (b.occurred_at?.getTime() ?? 0) - (a.occurred_at?.getTime() ?? 0)).slice(0, limit);
     } else {
-      chosen = [...ranked, ...rest((r) => similarity.get(r.id) ?? -1).filter((r) => similarity.has(r.id))].slice(0, limit);
+      chosen = [...ranked, ...bySimilarity()].slice(0, limit);
     }
     if (speaker.kind === 'contact' && mode !== 'list') {
       // An identified speaker: their own items first, then those they took part in, then the rest (each in rank order).

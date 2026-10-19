@@ -1,0 +1,169 @@
+{
+ "_note": "Same-day intentions dev set (not blind, after blind12 h11).",
+ "users": {
+  "marta": "Marta, lives in Turin"
+ },
+ "genders": {
+  "marta": "feminine"
+ },
+ "sessions": [
+  {
+   "id": "i01",
+   "user": "marta",
+   "ts": "2026-11-07T10:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi pomeriggio lavo la macchina, è piena di fango dopo la gita in montagna."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon lavoro! Ti serve un promemoria?"
+    },
+    {
+     "role": "user",
+     "content": "No grazie."
+    }
+   ]
+  },
+  {
+   "id": "i02",
+   "user": "marta",
+   "ts": "2026-11-13T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera vado al cinema con Paolo a vedere il nuovo film di Sorrentino."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona visione!"
+    }
+   ]
+  },
+  {
+   "id": "i03",
+   "user": "marta",
+   "ts": "2026-11-14T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Uffa, devo ancora lavare la macchina: sabato scorso alla fine ha piovuto tutto il pomeriggio. Ci riprovo domenica."
+    },
+    {
+     "role": "assistant",
+     "content": "Domenica 15 allora, speriamo nel sole."
+    }
+   ]
+  },
+  {
+   "id": "i04",
+   "user": "marta",
+   "ts": "2026-11-16T08:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi pomeriggio monto la libreria nuova in salotto, quella bianca presa all'Ikea."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon montaggio!"
+    }
+   ]
+  },
+  {
+   "id": "i05",
+   "user": "marta",
+   "ts": "2026-11-17T09:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "This afternoon I'm calling the bank about the mortgage rate."
+    },
+    {
+     "role": "assistant",
+     "content": "Good luck with the bank."
+    }
+   ]
+  },
+  {
+   "id": "i06",
+   "user": "marta",
+   "ts": "2026-11-18T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "I still haven't called the bank, the branch closed early yesterday. I'll call on Friday."
+    },
+    {
+     "role": "assistant",
+     "content": "Friday 20 November, noted."
+    }
+   ]
+  },
+  {
+   "id": "i07",
+   "user": "marta",
+   "ts": "2026-11-19T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera cena da mia sorella Giulia."
+    },
+    {
+     "role": "assistant",
+     "content": "Salutamela!"
+    }
+   ]
+  },
+  {
+   "id": "i08",
+   "user": "marta",
+   "ts": "2026-11-21T08:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina vado a correre al Valentino."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona corsa!"
+    },
+    {
+     "role": "user",
+     "content": "Tornata! 8 km, gambe a pezzi."
+    }
+   ]
+  },
+  {
+   "id": "i09",
+   "user": "marta",
+   "ts": "2026-11-22T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giovedì da Giulia abbiamo fatto le lasagne, buonissime."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    }
+   ]
+  },
+  {
+   "id": "i10",
+   "user": "marta",
+   "ts": "2026-11-26T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domenica finalmente monto la libreria, i pezzi sono ancora nello scatolone in corridoio."
+    },
+    {
+     "role": "assistant",
+     "content": "Domenica 29 allora."
+    }
+   ]
+  }
+ ]
+}
