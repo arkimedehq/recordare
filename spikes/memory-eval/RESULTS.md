@@ -538,6 +538,12 @@ highest unjustified-assertion rate of the three and the most outcomes invented: 
 Saturday" as a fact, with no plan state to say the outcome is unknown. Cost: 62 ingest calls, 540 k input / 13 k output,
 141 s ingest.
 
+**Mem0, 3 runs** (r1 is the run above; r2, r3 on 2026-10-19): accuracy **93.2 % ± 4.3** (91.7, 98.1, 89.8; CI95
+88.3–98.1), unjustified **0.093** mean (0.093, 0.056, 0.130), over-abstention 0.000, **invented on unknown 0.128** mean
+(0.154, 0.077, 0.154). Unjustified in every run: h05, h11, h12; in two: h34; in one: h01, h03, h38, h45. The accuracy
+band overlaps Recordare's and full context's; the outcome rates do not: Recordare invented nothing on unknown in both its
+runs, Mem0 invents in all three.
+
 One run each; with 54 questions a 3-point gap is within noise. Cost: engine 63 extraction calls, ≈ 508 k input (49 %
 cached) / 60 k output; full context ≈ 550 k input for the answers.
 
