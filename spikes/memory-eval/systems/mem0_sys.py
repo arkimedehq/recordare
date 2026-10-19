@@ -15,6 +15,9 @@ Engine: `mem0.Memory` (v3 pipeline of mem0ai 2.x): one LLM call per `add()` extr
 - Ingest: one `add()` per session, user_id = dataset user (one Mem0 user each), messages as
   user/assistant; other participants of a group chat become user-role messages prefixed with
   their name, plus a system line saying so (Mem0 has no third-party role).
+  Learned sources (WORK_PLAN 8.9; blind9–11): a document / note / page is added as one user message (title, author,
+  who provided it, text); forgetting a source deletes the memories its `add()` created (ADD-only pipeline, so they
+  are exactly the source's).
   Time: the OSS `add(timestamp=…)` is platform-only, and the extraction prompt otherwise grounds
   relative dates ("sabato", "ieri") on today's system date. The adapter passes the session date
   as the prompt's Observation Date / Current Date — the slot Mem0's own prompt reserves for it —
@@ -28,7 +31,7 @@ import os
 import time
 
 from systems.market_common import (STORE, GATEWAY, check_gateway_embeddings, engine_llm, fresh_dir, is_group,
-                                   other_text, record_usage, session_header)
+                                   other_text, record_usage, session_header, source_text)
 
 os.environ.setdefault("MEM0_TELEMETRY", "False")
 os.environ.setdefault("MEM0_DIR", str(STORE / "mem0_home"))
@@ -74,12 +77,21 @@ class Mem0System:
                 "collection_name": "memeval", "path": str(root / "qdrant"), "embedding_model_dims": dim()}},
             "history_db_path": str(root / "history.db"),
         })
+        self.by_source: dict[str, list[str]] = {}  # learned source id -> the memories its add() created
 
     def ingest(self, sessions: list[dict]) -> None:
         for s in sessions:
-            messages = [{"role": "system", "content": session_header(s)}] if is_group(s) else []
-            messages += [{"role": m["role"], "content": m["content"]} if m["role"] in ("user", "assistant")
-                         else {"role": "user", "content": other_text(m)} for m in s["messages"]]
+            if s.get("type") == "forget_source":  # delete what the source added (Mem0 has no source of its own)
+                for mid in self.by_source.pop(s["source"], []):
+                    self.memory.delete(mid)
+                print(f"  forgot {s['source']}", flush=True)
+                continue
+            if s.get("type") == "source":
+                messages = [{"role": "user", "content": source_text(s)}]
+            else:
+                messages = [{"role": "system", "content": session_header(s)}] if is_group(s) else []
+                messages += [{"role": m["role"], "content": m["content"]} if m["role"] in ("user", "assistant")
+                             else {"role": "user", "content": other_text(m)} for m in s["messages"]]
             _observation["date"] = s["ts"][:10]
             for attempt in range(ATTEMPTS):  # Mem0 raises on provider errors instead of retrying
                 try:
@@ -91,6 +103,8 @@ class Mem0System:
                         raise
                     time.sleep(5 * 2 ** attempt)
             _observation["date"] = None
+            if s.get("type") == "source":
+                self.by_source[s["id"]] = [r["id"] for r in out.get("results", []) if r.get("id")]
             print(f"  ingested {s['id']} (+{len(out.get('results', []))} memories)", flush=True)
 
     def context(self, user: str, question: dict) -> str:

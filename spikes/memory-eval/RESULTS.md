@@ -563,6 +563,32 @@ extraction, r3: episode recall 0.967, plan outcome 0.781, unsupported 0.163; eng
 One run each; with 54 questions a 3-point gap is within noise. Cost: engine 63 extraction calls, ≈ 508 k input (49 %
 cached) / 60 k output; full context ≈ 550 k input for the answers.
 
+### Mem0 on the other blind sets (WORK_PLAN 8.13, 2026-10-19, 3 runs each)
+
+Mem0 2.2.1, same adapter, engine `deepseek-flash` thinking off, same answer model, judge and grader. blind9–11 contain
+learned sources (WORK_PLAN 8.9): the adapter adds each document / note / page as one user message (title, author, who
+provided it, text) and a "forget the source" deletes exactly the memories that `add()` created (Mem0 has no source of
+its own; its add pipeline is ADD-only, so the deletion is exact). Recordare: blind5 `extract.v17` (1 run), blind7–11 the
+engine of 4.5c above (3 runs, before v17), blind12 v17 (3 runs).
+
+| Set | Recordare accuracy | Mem0 accuracy (runs) | Unjustified R / M | Invented on unknown R / M |
+|---|---|---|---|---|
+| blind5 (87 q) | 92.5 % (1 run) | 83.9 % ± 0.6 (83.9, 83.3, 84.5) | **0.011** / 0.069 | **0.000** / 0.083 |
+| blind7 (46 q) | 91.3 % | 90.2 % ± 1.1 (89.1, 91.3, 90.2) | 0.058 / 0.051 | 0.111 / 0.159 |
+| blind9 (42 q) | 97.2 % | 82.5 % ± 1.8 (82.1, 84.5, 81.0) | **0.000** / 0.057 | 0.0 / 0.0 |
+| blind10 (35 q) | 96.7 % | 90.0 % ± 2.9 (92.9, 90.0, 87.1) | **0.019** / 0.053 | **0.0** / 0.067 |
+| blind11 (40 q) | 98.8 % | 91.7 % ± 4.1 (90.0, 88.7, 96.3) | **0.017** / 0.043 | **0.0** / 0.056 |
+| blind12 (54 q) | 93.5 % | 93.2 % ± 4.3 | **0.025** / 0.093 | **0.000** / 0.128 |
+
+- Recordare is ahead in accuracy on every set but blind7 and blind12 (within noise there), by 7–15 points on blind5, 9,
+  10, 11 — the sets with the agent's own knowledge (sources, own actions, who said what) and the personal set with the
+  most questions.
+- Its unjustified-assertion rate is lower on five sets of six (blind7 is the exception, its provenance questions), and
+  it invents an outcome on an unknown plan only on blind7 (1 of 3 unknown references per run); Mem0 does on five sets.
+- Mem0 is the most stable from run to run (sd 0.6–1.8 on blind5, 7, 9).
+- Cost: Mem0's ingest is one LLM call per session (blind5 60 sessions ≈ 0.5 M input tokens per run); 15 runs on five
+  sets ≈ 6 M engine input tokens, cents per run.
+
 ### H1 follow-ups after blind12 (2026-10-19, DeepSeek direct, 1 run each)
 
 Three fixes from the blind12 failures (h11, h30 and h26 are no longer blind; the other 51 questions are):

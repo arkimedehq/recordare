@@ -60,3 +60,10 @@ def session_header(session: dict) -> str:
 def record_usage(usage) -> None:
     """Engine LLM tokens go under phase 'ingest' (as for the other engines)."""
     USAGE.add("ingest", usage)
+
+
+def source_text(source: dict) -> str:
+    """A learned source (WORK_PLAN 8.9) as one message: title, author, who provided it, then the text."""
+    by = [f"autore: {source['author']}"] if source.get("author") else []
+    by += [f"fornito da {source['provided_by']}"] if source.get("provided_by") else []
+    return f"Documento «{source['title']}»" + (f" ({', '.join(by)})" if by else "") + f":\n\n{source['text']}"
