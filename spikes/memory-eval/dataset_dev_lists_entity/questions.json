@@ -1,0 +1,126 @@
+{
+ "_note": "Dev set (not blind): things kept and changed over time (a shopping list, a packing list, guests, an appointment moved, a payment marked) — add, remove, bought, a new list, an item changed, emptied. Holder Giulia, Torino, November 2034.",
+ "user": "assistente",
+ "holder": "Giulia",
+ "questions": [
+  {
+   "id": "l01",
+   "category": "list-add",
+   "asked_at": "2034-11-08T08:00:00+01:00",
+   "q": "Mandami la lista della spesa.",
+   "expected": "Frutta, verdura e carne (la carne aggiunta il 7 novembre).",
+   "must_not": [
+    "latte"
+   ]
+  },
+  {
+   "id": "l02",
+   "category": "list-remove",
+   "asked_at": "2034-11-09T08:00:00+01:00",
+   "q": "Cosa c'è nella lista della spesa?",
+   "expected": "Frutta, carne e latte (2 litri); la verdura è stata tolta perché l'ha già presa Marco.",
+   "must_not": [
+    "la verdura è da comprare"
+   ]
+  },
+  {
+   "id": "l03",
+   "category": "list-bought",
+   "asked_at": "2034-11-11T20:00:00+01:00",
+   "q": "Cosa mi resta da comprare?",
+   "expected": "Solo il latte (2 litri): il resto l'hai preso l'11 novembre, il latte era finito.",
+   "must_not": [
+    "frutta da comprare",
+    "carne da comprare"
+   ]
+  },
+  {
+   "id": "l04",
+   "category": "list-new",
+   "asked_at": "2034-11-14T20:00:00+01:00",
+   "q": "Lista della spesa?",
+   "expected": "Pane, uova, latte e pile stilo AA (la nuova lista del 13 novembre, con le pile aggiunte il 14).",
+   "must_not": [
+    "carne",
+    "frutta",
+    "verdura"
+   ]
+  },
+  {
+   "id": "l05",
+   "category": "list-change",
+   "asked_at": "2034-11-25T10:00:00+01:00",
+   "q": "Cosa devo portare a Lisbona?",
+   "expected": "Carta d'identità (al posto del passaporto, scaduto), adattatore, caricabatterie e crema solare; l'ombrello è stato tolto.",
+   "must_not": [
+    "ombrello",
+    "passaporto da portare"
+   ]
+  },
+  {
+   "id": "l06",
+   "category": "list-history",
+   "asked_at": "2034-11-25T10:05:00+01:00",
+   "q": "Quando avevo aggiunto la carne alla lista della spesa?",
+   "expected": "Il 7 novembre 2034.",
+   "must_not": []
+  },
+  {
+   "id": "l07",
+   "category": "list-history",
+   "asked_at": "2034-11-25T10:10:00+01:00",
+   "q": "Chi aveva preso la verdura?",
+   "expected": "Marco (per questo l'avevi tolta dalla lista l'8 novembre).",
+   "must_not": []
+  },
+  {
+   "id": "l08",
+   "category": "list-history",
+   "asked_at": "2034-11-25T10:15:00+01:00",
+   "q": "Perché avevo tolto l'ombrello dalla lista per Lisbona?",
+   "expected": "Perché davano bel tempo (lo hai tolto il 17 novembre, aggiungendo la crema solare).",
+   "must_not": []
+  },
+  {
+   "id": "l09",
+   "category": "request-fact",
+   "asked_at": "2034-11-25T10:20:00+01:00",
+   "q": "Ho pagato l'affitto di novembre?",
+   "expected": "Sì, 850 € (segnato il 16 novembre).",
+   "must_not": [
+    "non risulta"
+   ]
+  },
+  {
+   "id": "l10",
+   "category": "kept-change",
+   "asked_at": "2034-11-25T10:25:00+01:00",
+   "q": "Chi viene alla festa di Leo?",
+   "expected": "Sara, i Rinaldi e Chiara; Paolo è stato tolto perché è in trasferta (20 novembre).",
+   "must_not": [
+    "Paolo viene"
+   ]
+  },
+  {
+   "id": "l11",
+   "category": "request-fact",
+   "asked_at": "2034-11-25T10:30:00+01:00",
+   "q": "Quando ho la riunione con il commercialista?",
+   "expected": "Mercoledì 29 novembre 2034 alle 15 (spostata da lunedì 27 alle 10).",
+   "must_not": [
+    "lunedì 27 alle 10 è confermata"
+   ]
+  },
+  {
+   "id": "l12",
+   "category": "list-empty",
+   "asked_at": "2034-11-25T20:00:00+01:00",
+   "q": "C'è ancora qualcosa da comprare nella lista della spesa?",
+   "expected": "No: il 25 novembre hai comprato tutto quello che c'era (pane, uova, latte, pile AA); la lista è vuota.",
+   "must_not": [
+    "pane da comprare",
+    "latte da comprare"
+   ]
+  }
+ ]
+}

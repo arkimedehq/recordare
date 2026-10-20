@@ -21,6 +21,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   the railing" is stored as done that day, as before; when a later message shows it did not happen ("Saturday I'll
   finally paint the railing, the can is still there"), the episode is now corrected instead of staying true. Entity
   memories keep their prompt.
+- **Things kept and changed over time, and requests that tell a fact** (`extract.v18`, `entity.v6`): "add milk to the
+  list", "move the meeting to Friday", "mark the rent as paid" were taken as requests for help and often not remembered;
+  they are now remembered as what they say. A shopping list, the guests of a party, a packing list is one note with its
+  whole current content, replaced at each change (the earlier content stays in its history), plus a small event per
+  change with its date and reason; it used to be stored as plans. Managing the list stays the agent's job: Recordare only
+  remembers it.
 - **A list without a period** (`search_episodes` mode `list`, no `from` / `to`) selects by its topic, like a search, and
   fills free places by similarity; it used to keep the most important items among the relevant ones and to add nothing
   else, so "how many runs did I tell you about?" got none of the runs. Period lists are unchanged.

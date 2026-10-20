@@ -1,0 +1,236 @@
+{
+ "_note": "Dev set (not blind): things kept and changed over time (a shopping list, a packing list, guests, an appointment moved, a payment marked) — add, remove, bought, a new list, an item changed, emptied. Holder Giulia, Torino, November 2034.",
+ "users": {
+  "assistente": "L'assistente di casa di Giulia"
+ },
+ "entities": [
+  "assistente"
+ ],
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "assistente",
+   "ts": "2034-11-06T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Crea la lista della spesa: frutta e verdura."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto, ho creato la lista della spesa: frutta, verdura."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "assistente",
+   "ts": "2034-11-07T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Aggiungi alla lista della spesa la carne."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiunta. Lista della spesa: frutta, verdura, carne."
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "assistente",
+   "ts": "2034-11-08T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Togli la verdura dalla lista della spesa, l'ha già presa Marco. E aggiungi il latte, due litri."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: lista della spesa con frutta, carne e latte (2 litri)."
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "user": "assistente",
+   "ts": "2034-11-11T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Ho fatto la spesa: ho preso tutto tranne il latte, era finito."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene! Allora resta solo il latte (2 litri)."
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "assistente",
+   "ts": "2034-11-13T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Nuova lista della spesa per questa settimana: pane, uova e il latte che non avevo trovato."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, nuova lista della spesa: pane, uova, latte."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "assistente",
+   "ts": "2034-11-14T10:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Also add batteries to the shopping list, AA ones."
+    },
+    {
+     "role": "assistant",
+     "content": "Added AA batteries. Shopping list: bread, eggs, milk, AA batteries."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "assistente",
+   "ts": "2034-11-15T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Per il viaggio a Lisbona del 1° dicembre fammi una lista di cose da portare: passaporto, adattatore, caricabatterie, ombrello."
+    },
+    {
+     "role": "assistant",
+     "content": "Ecco la lista per Lisbona: passaporto, adattatore, caricabatterie, ombrello."
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "user": "assistente",
+   "ts": "2034-11-17T08:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Dalla lista per Lisbona togli l'ombrello, danno bel tempo. Aggiungi la crema solare."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: passaporto, adattatore, caricabatterie, crema solare."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "assistente",
+   "ts": "2034-11-24T13:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Brutta sorpresa: il passaporto è scaduto. Per Lisbona userò la carta d'identità, mettila nella lista al posto del passaporto."
+    },
+    {
+     "role": "assistant",
+     "content": "Sostituito: carta d'identità, adattatore, caricabatterie, crema solare."
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "assistente",
+   "ts": "2034-11-16T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Segna che ho pagato l'affitto di novembre, 850 euro."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: affitto di novembre pagato, 850 €."
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "user": "assistente",
+   "ts": "2034-11-18T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Per la festa di compleanno di Leo del 30 novembre gli invitati sono Sara, Paolo e i Rinaldi."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok: invitati alla festa di Leo del 30 novembre — Sara, Paolo, i Rinaldi."
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "user": "assistente",
+   "ts": "2034-11-19T09:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Ricordami la riunione con il commercialista lunedì 27 alle 10."
+    },
+    {
+     "role": "assistant",
+     "content": "Promemoria impostato: riunione con il commercialista lunedì 27 novembre alle 10."
+    }
+   ]
+  },
+  {
+   "id": "s13",
+   "user": "assistente",
+   "ts": "2034-11-20T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Aggiungi Chiara agli invitati della festa di Leo, e togli Paolo che è in trasferta."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: Sara, i Rinaldi e Chiara."
+    }
+   ]
+  },
+  {
+   "id": "s14",
+   "user": "assistente",
+   "ts": "2034-11-21T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Sposta la riunione con il commercialista a mercoledì 29 alle 15."
+    },
+    {
+     "role": "assistant",
+     "content": "Spostata a mercoledì 29 novembre alle 15."
+    }
+   ]
+  },
+  {
+   "id": "s15",
+   "user": "assistente",
+   "ts": "2034-11-25T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Giulia. Ho comprato tutto quello che c'era nella lista della spesa."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, la lista della spesa è vuota."
+    }
+   ]
+  }
+ ]
+}

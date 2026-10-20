@@ -4,7 +4,7 @@
 changed — the way a person keeps a shopping list or a packing list in their head (maintainer, 2026-10-20). Fictional
 holder Giulia, Torino, November 2034; mostly Italian, one English turn.
 
-    python dataset_dev_lists/build.py
+    python dataset_dev_lists/build.py      # also writes dataset_dev_lists_entity (Arkimede's entity mode)
     uv run python provider_eval.py --config profiles/deepseek-flash.json --dataset dataset_dev_lists --tag lists
 """
 import json
@@ -38,6 +38,19 @@ SESSIONS = [
       ("assistant", "Fatto: passaporto, adattatore, caricabatterie, crema solare.")),
     s("s09", "24T13:40", ("user", "Brutta sorpresa: il passaporto è scaduto. Per Lisbona userò la carta d'identità, mettila nella lista al posto del passaporto."),
       ("assistant", "Sostituito: carta d'identità, adattatore, caricabatterie, crema solare.")),
+    # Not lists: a request that tells something about my life (v18), and things kept over time that are not shopping.
+    s("s10", "16T08:30", ("user", "Segna che ho pagato l'affitto di novembre, 850 euro."),
+      ("assistant", "Segnato: affitto di novembre pagato, 850 €.")),
+    s("s11", "18T17:00", ("user", "Per la festa di compleanno di Leo del 30 novembre gli invitati sono Sara, Paolo e i Rinaldi."),
+      ("assistant", "Ok: invitati alla festa di Leo del 30 novembre — Sara, Paolo, i Rinaldi.")),
+    s("s12", "19T09:10", ("user", "Ricordami la riunione con il commercialista lunedì 27 alle 10."),
+      ("assistant", "Promemoria impostato: riunione con il commercialista lunedì 27 novembre alle 10.")),
+    s("s13", "20T21:30", ("user", "Aggiungi Chiara agli invitati della festa di Leo, e togli Paolo che è in trasferta."),
+      ("assistant", "Fatto: Sara, i Rinaldi e Chiara.")),
+    s("s14", "21T12:00", ("user", "Sposta la riunione con il commercialista a mercoledì 29 alle 15."),
+      ("assistant", "Spostata a mercoledì 29 novembre alle 15.")),
+    s("s15", "25T11:00", ("user", "Ho comprato tutto quello che c'era nella lista della spesa."),
+      ("assistant", "Perfetto, la lista della spesa è vuota.")),
 ]
 
 QUESTIONS = [
@@ -61,14 +74,39 @@ QUESTIONS = [
      "expected": "Marco (per questo l'avevi tolta dalla lista l'8 novembre).", "must_not": []},
     {"id": "l08", "category": "list-history", "asked_at": f"2034-11-25T10:15:00{TZ}", "q": "Perché avevo tolto l'ombrello dalla lista per Lisbona?",
      "expected": "Perché davano bel tempo (lo hai tolto il 17 novembre, aggiungendo la crema solare).", "must_not": []},
+    {"id": "l09", "category": "request-fact", "asked_at": f"2034-11-25T10:20:00{TZ}", "q": "Ho pagato l'affitto di novembre?",
+     "expected": "Sì, 850 € (segnato il 16 novembre).", "must_not": ["non risulta"]},
+    {"id": "l10", "category": "kept-change", "asked_at": f"2034-11-25T10:25:00{TZ}", "q": "Chi viene alla festa di Leo?",
+     "expected": "Sara, i Rinaldi e Chiara; Paolo è stato tolto perché è in trasferta (20 novembre).",
+     "must_not": ["Paolo viene"]},
+    {"id": "l11", "category": "request-fact", "asked_at": f"2034-11-25T10:30:00{TZ}", "q": "Quando ho la riunione con il commercialista?",
+     "expected": "Mercoledì 29 novembre 2034 alle 15 (spostata da lunedì 27 alle 10).", "must_not": ["lunedì 27 alle 10 è confermata"]},
+    {"id": "l12", "category": "list-empty", "asked_at": f"2034-11-25T20:00:00{TZ}", "q": "C'è ancora qualcosa da comprare nella lista della spesa?",
+     "expected": "No: il 25 novembre hai comprato tutto quello che c'era (pane, uova, latte, pile AA); la lista è vuota.",
+     "must_not": ["pane da comprare", "latte da comprare"]},
 ]
 
-NOTE = "Dev set (not blind): lists in memory — add, remove, bought, a new list, an item changed. Holder Giulia, Torino, November 2034."
+NOTE = ("Dev set (not blind): things kept and changed over time (a shopping list, a packing list, guests, an appointment "
+        "moved, a payment marked) — add, remove, bought, a new list, an item changed, emptied. Holder Giulia, Torino, "
+        "November 2034.")
+
+
+def write(out: Path, entity: bool) -> None:
+    """entity: the same conversations in an entity memory (Arkimede's mode), Giulia saying who she is in each one."""
+    out.mkdir(exist_ok=True)
+    sessions = SESSIONS
+    if entity:
+        sessions = [{**x, "user": "assistente", "messages": [{**x["messages"][0], "content": "Sono Giulia. " + x["messages"][0]["content"]},
+                                                                *x["messages"][1:]]} for x in SESSIONS]
+    meta = ({"users": {"assistente": "L'assistente di casa di Giulia"}, "entities": ["assistente"]} if entity
+            else {"users": {"giulia": "Giulia, Torino"}, "genders": {"giulia": "feminine"}})
+    (out / "conversations.json").write_text(json.dumps({"_note": NOTE, **meta, "sessions": sessions}, ensure_ascii=False, indent=1))
+    (out / "questions.json").write_text(json.dumps(
+        {"_note": NOTE, "user": "assistente" if entity else "giulia", "holder": "Giulia",
+         "questions": QUESTIONS}, ensure_ascii=False, indent=1))
+
 
 if __name__ == "__main__":
-    (HERE / "conversations.json").write_text(json.dumps(
-        {"_note": NOTE, "users": {"giulia": "Giulia, Torino"}, "genders": {"giulia": "feminine"}, "sessions": SESSIONS},
-        ensure_ascii=False, indent=1))
-    (HERE / "questions.json").write_text(json.dumps(
-        {"_note": NOTE, "user": "giulia", "holder": "Giulia", "questions": QUESTIONS}, ensure_ascii=False, indent=1))
-    print(f"{len(SESSIONS)} sessions, {len(QUESTIONS)} questions")
+    write(HERE, entity=False)
+    write(HERE.parent / "dataset_dev_lists_entity", entity=True)
+    print(f"{len(SESSIONS)} sessions, {len(QUESTIONS)} questions (personal and entity)")

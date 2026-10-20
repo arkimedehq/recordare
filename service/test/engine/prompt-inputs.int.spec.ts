@@ -3,8 +3,8 @@
 
 /**
  * Prompt inputs are part of a measured version (evaluation rule 9): the personal prompts stay byte-identical to the ones
- * measured (`extract.v17`: v14's system prompt plus NOT DONE AFTER ALL; its HEARD AROUND ME line only in ambient windows, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
- * `extract.v17+entity.v5`) — a change to any of them is a new version, measured before it ships.
+ * measured (`extract.v18`: v14's system prompt plus NOT DONE AFTER ALL and v18's requests and things kept over time; its HEARD AROUND ME line only in ambient windows, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
+ * `extract.v18+entity.v6`) — a change to any of them is a new version, measured before it ships.
  */
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
@@ -47,8 +47,8 @@ describe('prompt inputs of the measured versions', () => {
     return { system: req?.messages[0]?.content ?? '', user: req?.messages[1]?.content ?? '' };
   }
 
-  it('personal prompts are the measured extract.v17 and facts.v2', () => {
-    expect(sha(EXTRACTION_SYSTEM)).toBe('1f147b276ae2e5a291ef1bc4839671c507b593f1e0b36ab5590f23dc12a88a0a');
+  it('personal prompts are the measured extract.v18 and facts.v2', () => {
+    expect(sha(EXTRACTION_SYSTEM)).toBe('93b805438bb2ba2c3dd3a436605c1e7b488a4ac999549a9c9382136a79d03be0');
     expect(sha(FACTS_SYSTEM)).toBe('309707b0c33d7fb2b05cce9fe88d434185180cf5c195135070e6f37509924d7c');
   });
 
@@ -77,7 +77,7 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-5', role: 'tool', toolName: 'web_search', content: 'Meteo: sole.', sentAt: '2026-06-08T09:04:00+02:00' },
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
-    expect(sha(second.system)).toBe('613d29b517c9b6eabe4ff6075cfe9a2db4eb40662eb5b488430b6b6e874bdbb6');
+    expect(sha(second.system)).toBe('fd06be291e36b22a961ce906ff0ba985df9e26f81e13f2374e63d5cd7840fa6a');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

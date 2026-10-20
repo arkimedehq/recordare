@@ -1,5 +1,5 @@
 {
- "_note": "Dev set (not blind): lists in memory — add, remove, bought, a new list, an item changed. Holder Giulia, Torino, November 2034.",
+ "_note": "Dev set (not blind): things kept and changed over time (a shopping list, a packing list, guests, an appointment moved, a payment marked) — add, remove, bought, a new list, an item changed, emptied. Holder Giulia, Torino, November 2034.",
  "users": {
   "giulia": "Giulia, Torino"
  },
@@ -139,6 +139,96 @@
     {
      "role": "assistant",
      "content": "Sostituito: carta d'identità, adattatore, caricabatterie, crema solare."
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "giulia",
+   "ts": "2034-11-16T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Segna che ho pagato l'affitto di novembre, 850 euro."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: affitto di novembre pagato, 850 €."
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "user": "giulia",
+   "ts": "2034-11-18T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Per la festa di compleanno di Leo del 30 novembre gli invitati sono Sara, Paolo e i Rinaldi."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok: invitati alla festa di Leo del 30 novembre — Sara, Paolo, i Rinaldi."
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "user": "giulia",
+   "ts": "2034-11-19T09:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ricordami la riunione con il commercialista lunedì 27 alle 10."
+    },
+    {
+     "role": "assistant",
+     "content": "Promemoria impostato: riunione con il commercialista lunedì 27 novembre alle 10."
+    }
+   ]
+  },
+  {
+   "id": "s13",
+   "user": "giulia",
+   "ts": "2034-11-20T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Aggiungi Chiara agli invitati della festa di Leo, e togli Paolo che è in trasferta."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: Sara, i Rinaldi e Chiara."
+    }
+   ]
+  },
+  {
+   "id": "s14",
+   "user": "giulia",
+   "ts": "2034-11-21T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sposta la riunione con il commercialista a mercoledì 29 alle 15."
+    },
+    {
+     "role": "assistant",
+     "content": "Spostata a mercoledì 29 novembre alle 15."
+    }
+   ]
+  },
+  {
+   "id": "s15",
+   "user": "giulia",
+   "ts": "2034-11-25T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho comprato tutto quello che c'era nella lista della spesa."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, la lista della spesa è vuota."
     }
    ]
   }

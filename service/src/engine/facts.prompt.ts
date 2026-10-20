@@ -7,7 +7,7 @@
  * (RESULTS.md, blind5: facts 0.62 → 0.77, notes 0.64 → 0.71 with DeepSeek V4 Pro). Runs on its own task model
  * (`facts`) when the quality profile asks for it; the episode call then leaves facts and notes to this pass.
  * Same user message as the extraction (same numbered lists), constant system prompt (prefix caching).
- * Personal memories: `facts.v2` (first person, subjects, WORK_PLAN 8.4); entity memories: `facts.v2+entity.v5` (8.5), the
+ * Personal memories: `facts.v2` (first person, subjects, WORK_PLAN 8.4); entity memories: `facts.v2+entity.v6` (8.5), the
  * same sections where they hold for both.
  */
 import { extractionSchema } from './extraction.schema';

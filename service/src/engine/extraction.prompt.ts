@@ -5,12 +5,14 @@
  * Extraction prompts. The system prompt is constant (provider prefix caching); everything variable goes in the user
  * message. Rules come from the prototype that passed the blind held-out check (spikes/memory-eval/systems/d_sys.py)
  * plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
- * - Personal memories (D50, WORK_PLAN 8.4): `extract.v17` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
+ * - Personal memories (D50, WORK_PLAN 8.4): `extract.v18` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
  *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date; v15: a group
  *   chat's name in the input, GROUP CHAT, only for group chats with one — the system prompt is v14's; v16: HEARD AROUND ME in
  *   the input, only for continuous listening, WORK_PLAN 6.5 — the system prompt is still v14's; v17: NOT DONE AFTER ALL —
- *   something told as done today that a later window shows did not happen is corrected, H1 blind12).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v17+entity.v5` — the shared agent's memory in the first person, people by
+ *   something told as done today that a later window shows did not happen is corrected, H1 blind12; v18: a request
+ *   that tells something about my life is remembered, and something kept and changed over time — a list — is one note
+ *   replaced at each change, never a plan, dev set dataset_dev_lists).
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v18+entity.v6` — the shared agent's memory in the first person, people by
  *   name or "someone"; the personal prompt's sections where they hold for both.
  */
 export interface PromptMessage {
@@ -53,7 +55,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v17';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v18';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -160,6 +162,8 @@ const P_EPISODES = `
 WHAT IS AN EPISODE
 - Events I lived or did, what happened to people close to me, and my plans. Help requests, how-tos, general knowledge \
 and small talk are NOT episodes (they stay in the chat log).
+- A request that tells something about my life is not a help request: "add milk to the list", "move the meeting to \
+Friday", "mark the rent as paid" say what I need, when the meeting is, that I paid — record that, as if I had said it.
 - News I LEARNED (from a tool result, a web page, a document, an answer, someone else: a forecast, a strike, a delay, \
 something about a person I know) is a low-importance "event" episode on the message date — "ho saputo che …", with the \
 news itself and its date — ONLY when it touches my life: one of my open plans, a person I know, something I own, or \
@@ -219,7 +223,13 @@ const NOTES = `
 NOTES (who I am, who the people I know are)
 - Preferences, habits, values, relationships, knowledge, profile, constraints — durable, not one-off events.
 - "stated" when said by the person it is about (me, or that person); "inferred" when you deduce it (use sparingly). \
-Reuse CURRENT NOTES with keep / replace / corrects instead of duplicating.`;
+Reuse CURRENT NOTES with keep / replace / corrects instead of duplicating.
+- Something kept and changed over time — things to buy, to bring or to do, the guests of a party, a wish list, a \
+collection — is ONE note (category "knowledge") with its whole current content, never a plan: it has no outcome to wait \
+for. Every change — items added, removed, bought or done, one item swapped for another, a new one replacing it — is \
+"replace" on that note with the whole new content; when nothing is left, "replace" says it is empty. Each change is \
+also a low-importance "event" episode on its date, with what changed and why ("l'8 novembre ho tolto la verdura dalla \
+lista della spesa: l'aveva già presa Marco").`;
 
 const CORRECTIONS = `
 
@@ -273,7 +283,7 @@ export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono st
  * conversation identifies them, "someone" until then. Shares the personal prompt's schema, dates, plans, notes and
  * corrections; its own intro, voice, identification, episode, fact and safety rules.
  */
-export const ENTITY_PROMPT_VERSION = 'entity.v5';
+export const ENTITY_PROMPT_VERSION = 'entity.v6';
 
 const E_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): a shared agent — a device, a place, a robot or a service — that several people talk \
@@ -326,6 +336,9 @@ WHAT IS AN EPISODE
 - What the people around me lived, did and plan, what happened to my place, and what I did that matters later (a \
 reminder set, a booking made, an answer someone relied on). Help requests, how-tos, general knowledge and small talk \
 are NOT episodes (they stay in the chat log).
+- A request that tells something about the life of the people here or my place is not a help request: "add milk to the \
+list", "move the meeting to Friday", "mark the rent as paid" say what is needed, when the meeting is, that the rent is \
+paid — record that.
 - Write who lived it in "content": a person by name, "qualcuno in casa…" (in the conversation's language) for a \
 speaker nobody identified, the first person for me. Put the people involved in "people"; never me.
 - What I did with what a person handed me or asked of me — a booking taken, a payment recorded, a note made, a place \
@@ -394,7 +407,7 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v17`, entity `extract.v17+entity.v5`). */
+/** The extraction input of both modes (personal `extract.v18`, entity `extract.v18+entity.v6`). */
 /**
  * Continuous listening (WORK_PLAN 6.5, D45): only in ambient windows, so every other input stays byte-identical. The
  * speakers' names come from voice recognition and the words from speech recognition; nobody is talking to the
