@@ -602,6 +602,42 @@ gets 0 / 3). Cost per question: Recordare's engine 63 extraction calls, ≈ 510 
 ingest; full context ≈ 105 k input. At DeepSeek's off-peak prices (deepseek-flash: 0.15 USD / M input miss, 0.003 hit,
 0.60 output; peak doubles) ≈ 0.055 USD per question for Recordare and ≈ 0.016 for full context.
 
+### LongMemEval-S, 100 questions (WORK_PLAN 8.13, 2026-10-20, 1 run, DeepSeek direct off-peak)
+
+Same adapter and harness as the pilot; 100 of 500 questions stratified by type (seed 20261020), 4,764 sessions, 49 M
+characters. Recordare `extract.v17` (single-version, rule 9), full context with the whole history
+(`FULL_CONTEXT_CHARS=600000`, ≈ 105 k tokens per question).
+
+| category (n) | Recordare | full context |
+|---|---|---|
+| temporal-reasoning (27) | **0.96** | 0.89 |
+| multi-session (24) | 0.65 | 0.71 |
+| knowledge-update (14) | **0.93** | 0.86 |
+| single-session-assistant (11) | 0.14 | **1.00** |
+| single-session-user (10) | 1.00 | 1.00 |
+| single-session-preference (6) | 0.50 | 0.58 |
+| abstention (8: user 4, knowledge-update 2, multi-session 2) | 0.88 | 0.88 |
+| **all (100)** | **76.0 %** | **84.5 %** |
+| all but single-session-assistant (89) | **83.7 %** | 82.6 % |
+
+The gap is one category. **single-session-assistant** asks what the assistant said ("you recommended a beer for the Seco
+de Cordero, which one?", "the ratio of tea tree oil you told me"). D30 asks for assistant-stated items to be extracted
+(this is Zep's known regression), but the extractor keeps the assistant's actions and the advice the holder took up, not
+the content of a general-knowledge answer, and raw assistant turns have no embeddings: the answer is not in memory (10 of
+11 answered "non mi risulta", abstaining rather than inventing). Elsewhere Recordare is
+level or ahead: dates and order (temporal 0.96), the latest value (knowledge-update 0.93). Its multi-session misses are
+counts and sums across sessions (fun runs missed, hours of games, money raised, bike expenses: one or two items of the
+set not recalled); full context misses several of the same.
+
+Cost and time: engine 9,170 LLM calls (extraction 6,213: 51.2 M input, 58 % cached, 2.8 M output), ≈ 5.5 USD;
+ingest 5.5 h (19,673 s) on one local service; recall p50 39 s (the agent's recall loop with flash). Full context ≈ 10.6 M
+answer input, ≈ 1.6 USD, no ingest. On this benchmark — single users' chats with an assistant, ~105 k tokens each, the
+assistant's answers being most of the text — reading everything still fits one model call; Recordare's memory is built
+for histories that do not.
+
+Possible follow-up (not decided): close the D30 gap — recall over assistant turns (embed them, or extract "what I told
+you" items with `assistant_stated`), measured for cost and for noise on the agent sets.
+
 ### H1 follow-ups after blind12 (2026-10-19, DeepSeek direct, 1 run each)
 
 Three fixes from the blind12 failures (h11, h30 and h26 are no longer blind; the other 51 questions are):

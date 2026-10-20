@@ -178,12 +178,14 @@ class ServiceSystem:
     def _wait_processed(self, timeout_s: int = 1800) -> None:
         """Wait until the engine extracted every message and raw embeddings exist (failed runs are reported)."""
         ids = [o["id"] for o in self.memories.values()]
-        deadline = time.time() + timeout_s
+        deadline, least = time.time() + timeout_s, None
         with psycopg.connect(DB_URL, autocommit=True) as conn:
             while time.time() < deadline:
                 (pending,) = conn.execute(
                     "SELECT count(*) FROM messages WHERE memory_id = ANY(%s) AND (extracted_run_id IS NULL OR (role <> 'assistant' AND embedding IS NULL))",
                     (ids,)).fetchone()
+                if least is None or pending < least:  # still progressing (a large batch, LongMemEval): wait on
+                    least, deadline = pending, time.time() + timeout_s
                 (failed,) = conn.execute(
                     "SELECT count(*) FROM extraction_runs WHERE memory_id = ANY(%s) AND status = 'failed'", (ids,)).fetchone()
                 if pending == 0:
