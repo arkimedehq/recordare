@@ -1,0 +1,146 @@
+{
+ "_note": "Dev set (not blind): lists in memory — add, remove, bought, a new list, an item changed. Holder Giulia, Torino, November 2034.",
+ "users": {
+  "giulia": "Giulia, Torino"
+ },
+ "genders": {
+  "giulia": "feminine"
+ },
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "giulia",
+   "ts": "2034-11-06T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Crea la lista della spesa: frutta e verdura."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto, ho creato la lista della spesa: frutta, verdura."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "giulia",
+   "ts": "2034-11-07T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Aggiungi alla lista della spesa la carne."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiunta. Lista della spesa: frutta, verdura, carne."
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "giulia",
+   "ts": "2034-11-08T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Togli la verdura dalla lista della spesa, l'ha già presa Marco. E aggiungi il latte, due litri."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: lista della spesa con frutta, carne e latte (2 litri)."
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "user": "giulia",
+   "ts": "2034-11-11T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho fatto la spesa: ho preso tutto tranne il latte, era finito."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene! Allora resta solo il latte (2 litri)."
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "giulia",
+   "ts": "2034-11-13T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Nuova lista della spesa per questa settimana: pane, uova e il latte che non avevo trovato."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, nuova lista della spesa: pane, uova, latte."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "giulia",
+   "ts": "2034-11-14T10:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Also add batteries to the shopping list, AA ones."
+    },
+    {
+     "role": "assistant",
+     "content": "Added AA batteries. Shopping list: bread, eggs, milk, AA batteries."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "giulia",
+   "ts": "2034-11-15T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Per il viaggio a Lisbona del 1° dicembre fammi una lista di cose da portare: passaporto, adattatore, caricabatterie, ombrello."
+    },
+    {
+     "role": "assistant",
+     "content": "Ecco la lista per Lisbona: passaporto, adattatore, caricabatterie, ombrello."
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "user": "giulia",
+   "ts": "2034-11-17T08:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Dalla lista per Lisbona togli l'ombrello, danno bel tempo. Aggiungi la crema solare."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto: passaporto, adattatore, caricabatterie, crema solare."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "giulia",
+   "ts": "2034-11-24T13:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Brutta sorpresa: il passaporto è scaduto. Per Lisbona userò la carta d'identità, mettila nella lista al posto del passaporto."
+    },
+    {
+     "role": "assistant",
+     "content": "Sostituito: carta d'identità, adattatore, caricabatterie, crema solare."
+    }
+   ]
+  }
+ ]
+}

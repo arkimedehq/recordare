@@ -1,0 +1,85 @@
+{
+ "_note": "Dev set (not blind): lists in memory — add, remove, bought, a new list, an item changed. Holder Giulia, Torino, November 2034.",
+ "user": "giulia",
+ "holder": "Giulia",
+ "questions": [
+  {
+   "id": "l01",
+   "category": "list-add",
+   "asked_at": "2034-11-08T08:00:00+01:00",
+   "q": "Mandami la lista della spesa.",
+   "expected": "Frutta, verdura e carne (la carne aggiunta il 7 novembre).",
+   "must_not": [
+    "latte"
+   ]
+  },
+  {
+   "id": "l02",
+   "category": "list-remove",
+   "asked_at": "2034-11-09T08:00:00+01:00",
+   "q": "Cosa c'è nella lista della spesa?",
+   "expected": "Frutta, carne e latte (2 litri); la verdura è stata tolta perché l'ha già presa Marco.",
+   "must_not": [
+    "la verdura è da comprare"
+   ]
+  },
+  {
+   "id": "l03",
+   "category": "list-bought",
+   "asked_at": "2034-11-11T20:00:00+01:00",
+   "q": "Cosa mi resta da comprare?",
+   "expected": "Solo il latte (2 litri): il resto l'hai preso l'11 novembre, il latte era finito.",
+   "must_not": [
+    "frutta da comprare",
+    "carne da comprare"
+   ]
+  },
+  {
+   "id": "l04",
+   "category": "list-new",
+   "asked_at": "2034-11-14T20:00:00+01:00",
+   "q": "Lista della spesa?",
+   "expected": "Pane, uova, latte e pile stilo AA (la nuova lista del 13 novembre, con le pile aggiunte il 14).",
+   "must_not": [
+    "carne",
+    "frutta",
+    "verdura"
+   ]
+  },
+  {
+   "id": "l05",
+   "category": "list-change",
+   "asked_at": "2034-11-25T10:00:00+01:00",
+   "q": "Cosa devo portare a Lisbona?",
+   "expected": "Carta d'identità (al posto del passaporto, scaduto), adattatore, caricabatterie e crema solare; l'ombrello è stato tolto.",
+   "must_not": [
+    "ombrello",
+    "passaporto da portare"
+   ]
+  },
+  {
+   "id": "l06",
+   "category": "list-history",
+   "asked_at": "2034-11-25T10:05:00+01:00",
+   "q": "Quando avevo aggiunto la carne alla lista della spesa?",
+   "expected": "Il 7 novembre 2034.",
+   "must_not": []
+  },
+  {
+   "id": "l07",
+   "category": "list-history",
+   "asked_at": "2034-11-25T10:10:00+01:00",
+   "q": "Chi aveva preso la verdura?",
+   "expected": "Marco (per questo l'avevi tolta dalla lista l'8 novembre).",
+   "must_not": []
+  },
+  {
+   "id": "l08",
+   "category": "list-history",
+   "asked_at": "2034-11-25T10:15:00+01:00",
+   "q": "Perché avevo tolto l'ombrello dalla lista per Lisbona?",
+   "expected": "Perché davano bel tempo (lo hai tolto il 17 novembre, aggiungendo la crema solare).",
+   "must_not": []
+  }
+ ]
+}
