@@ -210,7 +210,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
 }
 
 /**
- * The prompt version as recorded and traced (rule 9 compares these): personal memories `extract.v17`; entity memories
- * the same base plus their sections' version (`extract.v17+entity.v5`).
+ * The prompt version as recorded and traced (rule 9 compares these): personal memories `extract.v18`; entity memories
+ * the same base plus their sections' version (`extract.v18+entity.v6`).
  */
 const extractionVersion = (memory: Memory): string => memory.entity ? `${EXTRACTION_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : EXTRACTION_PROMPT_VERSION;

@@ -23,6 +23,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   pomeriggio vernicio la ringhiera" viene salvato come fatto quel giorno, come prima; quando un messaggio successivo
   mostra che non è avvenuto ("sabato vernicio finalmente la ringhiera, il barattolo è ancora lì"), ora l'episodio viene
   corretto invece di restare vero. Le memorie entity mantengono il loro prompt.
+- **Cose tenute e modificate nel tempo, e richieste che dicono un fatto** (`extract.v18`, `entity.v6`): "aggiungi il
+  latte alla lista", "sposta la riunione a venerdì", "segna che ho pagato l'affitto" erano prese per richieste di aiuto e
+  spesso non ricordate; ora si ricorda ciò che dicono. Una lista della spesa, gli invitati di una festa, le cose da
+  portare in viaggio sono una nota con tutto il contenuto attuale, sostituita a ogni modifica (il contenuto precedente
+  resta nella sua storia), più un piccolo evento per ogni modifica con data e motivo; prima venivano salvate come piani.
+  Gestire la lista resta compito dell'agente: Recordare la ricorda soltanto.
 - **Un elenco senza periodo** (`search_episodes` in modalità `list`, senza `from` / `to`) sceglie per argomento, come una
   ricerca, e riempie i posti liberi per somiglianza; prima teneva gli elementi più importanti fra quelli pertinenti e non
   aggiungeva altro, così "quante corse ti ho raccontato?" non riceveva nessuna corsa. Gli elenchi con periodo non

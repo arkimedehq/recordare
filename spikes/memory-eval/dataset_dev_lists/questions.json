@@ -1,5 +1,5 @@
 {
- "_note": "Dev set (not blind): lists in memory — add, remove, bought, a new list, an item changed. Holder Giulia, Torino, November 2034.",
+ "_note": "Dev set (not blind): things kept and changed over time (a shopping list, a packing list, guests, an appointment moved, a payment marked) — add, remove, bought, a new list, an item changed, emptied. Holder Giulia, Torino, November 2034.",
  "user": "giulia",
  "holder": "Giulia",
  "questions": [
@@ -80,6 +80,47 @@
    "q": "Perché avevo tolto l'ombrello dalla lista per Lisbona?",
    "expected": "Perché davano bel tempo (lo hai tolto il 17 novembre, aggiungendo la crema solare).",
    "must_not": []
+  },
+  {
+   "id": "l09",
+   "category": "request-fact",
+   "asked_at": "2034-11-25T10:20:00+01:00",
+   "q": "Ho pagato l'affitto di novembre?",
+   "expected": "Sì, 850 € (segnato il 16 novembre).",
+   "must_not": [
+    "non risulta"
+   ]
+  },
+  {
+   "id": "l10",
+   "category": "kept-change",
+   "asked_at": "2034-11-25T10:25:00+01:00",
+   "q": "Chi viene alla festa di Leo?",
+   "expected": "Sara, i Rinaldi e Chiara; Paolo è stato tolto perché è in trasferta (20 novembre).",
+   "must_not": [
+    "Paolo viene"
+   ]
+  },
+  {
+   "id": "l11",
+   "category": "request-fact",
+   "asked_at": "2034-11-25T10:30:00+01:00",
+   "q": "Quando ho la riunione con il commercialista?",
+   "expected": "Mercoledì 29 novembre 2034 alle 15 (spostata da lunedì 27 alle 10).",
+   "must_not": [
+    "lunedì 27 alle 10 è confermata"
+   ]
+  },
+  {
+   "id": "l12",
+   "category": "list-empty",
+   "asked_at": "2034-11-25T20:00:00+01:00",
+   "q": "C'è ancora qualcosa da comprare nella lista della spesa?",
+   "expected": "No: il 25 novembre hai comprato tutto quello che c'era (pane, uova, latte, pile AA); la lista è vuota.",
+   "must_not": [
+    "pane da comprare",
+    "latte da comprare"
+   ]
   }
  ]
 }

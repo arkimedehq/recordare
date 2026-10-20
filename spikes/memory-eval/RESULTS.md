@@ -602,6 +602,31 @@ gets 0 / 3). Cost per question: Recordare's engine 63 extraction calls, ≈ 510 
 ingest; full context ≈ 105 k input. At DeepSeek's off-peak prices (deepseek-flash: 0.15 USD / M input miss, 0.003 hit,
 0.60 output; peak doubles) ≈ 0.055 USD per question for Recordare and ≈ 0.016 for full context.
 
+### `extract.v18` / `entity.v6` — things kept and changed over time (2026-10-20, DeepSeek direct, 1 run each)
+
+Two generic rules (no list words): a request that tells something about the holder's life ("add milk to the list",
+"move the meeting", "mark the rent as paid") is recorded as what it says, not dropped as a help request; something kept
+and changed over time (things to buy / bring / do, guests, a wish list, a collection) is ONE `knowledge` note with its
+whole current content, `replace`d at each change, never a plan, plus a low-importance event per change with date and
+reason. The agent manages lists; Recordare only remembers them (maintainer, 2026-10-20).
+
+Dev set `dataset_dev_lists` (NOT blind; extended to 15 sessions, 12 questions: shopping and packing lists, a party's
+guests, a meeting moved, rent marked paid, a list emptied) and its entity twin `dataset_dev_lists_entity` (Arkimede's
+mode: an entity memory, "Sono Giulia." in each conversation):
+
+| | personal | entity | blind5 | blind12 |
+|---|---|---|---|---|
+| v17 | 12/12 | 11/12 (unjustified 0.167) | 92.5 % (1 run) | 93.5 % ± 5.2 (3 runs) |
+| v18 | 12/12 | **12/12** (0.0) | **94.3 %** (unjustified 0.011, invented 0.0) | **97.2 %** (unjustified 0.0, invented 0.0) |
+
+Every run single-version (rule 9). The memory is what changed: v17 personal kept **no note** and extracted nothing from
+the first three list commands (6–8 Nov; answers came from raw-message hits), and stored the lists as 9 plans; v17 entity
+answered l03 "what is left to buy?" with the list before the shopping. v18 writes the lists as notes replaced at each
+change (shopping list 6 versions, ending "empty: bought everything on 25 Nov"; Lisbon list 4, the guests 2, each with the
+reason of the last change) and an event per change. Residue: the Lisbon list and the guests are still also written as
+`plan` episodes (the trip and the party are plans, the list is told inside them); the answers are right and the notes
+lead. blind5 and blind12 within noise or better (1 run).
+
 ### H1 follow-ups after blind12 (2026-10-19, DeepSeek direct, 1 run each)
 
 Three fixes from the blind12 failures (h11, h30 and h26 are no longer blind; the other 51 questions are):
