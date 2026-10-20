@@ -589,6 +589,19 @@ engine of 4.5c above (3 runs, before v17), blind12 v17 (3 runs).
 - Cost: Mem0's ingest is one LLM call per session (blind5 60 sessions ≈ 0.5 M input tokens per run); 15 runs on five
   sets ≈ 6 M engine input tokens, cents per run.
 
+### LongMemEval-S pilot (WORK_PLAN 8.13, 2026-10-20, 3 questions, 1 run)
+
+`dataset_longmemeval_s/build.py` converts LongMemEval-S (MIT): one user per question with its ~48 sessions (~490 k
+characters, 88 % assistant text), the question at `question_date` — moved one minute after the last session for the
+76 of 500 questions whose history has sessions later that day. Sample stratified by type, fixed seed; public, not blind:
+no tuning on it. Answer model and judge are this harness's (answers in Italian), not the paper's GPT-4o judge.
+
+Pilot (multi-session, temporal-reasoning, knowledge-update): Recordare 3 / 3, full context 3 / 3 with the whole history
+(`FULL_CONTEXT_CHARS=600000`, ≈ 105 k tokens per question; with the default 120 k-char cap it sees the last quarter and
+gets 0 / 3). Cost per question: Recordare's engine 63 extraction calls, ≈ 510 k input (58 % cached) / 30 k output, ≈ 194 s
+ingest; full context ≈ 105 k input. At DeepSeek's off-peak prices (deepseek-flash: 0.15 USD / M input miss, 0.003 hit,
+0.60 output; peak doubles) ≈ 0.055 USD per question for Recordare and ≈ 0.016 for full context.
+
 ### H1 follow-ups after blind12 (2026-10-19, DeepSeek direct, 1 run each)
 
 Three fixes from the blind12 failures (h11, h30 and h26 are no longer blind; the other 51 questions are):

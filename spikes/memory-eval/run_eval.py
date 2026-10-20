@@ -119,7 +119,7 @@ def run_once(args, label: str, run: int | None) -> dict:
             sys_.ingest(batch)
             ingest_s += time.time() - t0
         t = time.time()
-        ctx = sys_.context(eval_user(), q)
+        ctx = sys_.context(q.get("user") or eval_user(), q)  # a set with one memory per question (LongMemEval)
         latencies.append(time.time() - t)
         ans = answer(q, ctx)
         verdict = judge(q, ans)

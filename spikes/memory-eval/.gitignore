@@ -2,3 +2,6 @@
 .engine_data/
 or-smoke-*.log
 service-8085.log
+dataset_longmemeval_s/raw/
+dataset_longmemeval_s/conversations.json
+dataset_longmemeval_s/questions.json

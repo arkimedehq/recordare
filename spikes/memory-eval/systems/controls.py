@@ -8,11 +8,13 @@
 """
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
 from evalkit.common import fmt_when
 
-FULL_CONTEXT_CHARS = 120_000
+# The most recent history that fits; LongMemEval's ~490 k-char histories need FULL_CONTEXT_CHARS=600000.
+FULL_CONTEXT_CHARS = int(os.getenv("FULL_CONTEXT_CHARS", "120000"))
 
 
 class NoMemory:
