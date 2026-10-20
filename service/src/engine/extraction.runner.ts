@@ -26,6 +26,16 @@ import { TelemetryService } from '../telemetry/telemetry.service';
 import { writeLearnedEpisode } from '../knowledge/learned-episode';
 import { storeEmbeddings } from '../db/pgvector';
 
+/**
+ * Output budget of an extraction call. 6000 tokens covers a window of a profile's size; one long message is a window of
+ * its own however long (a travel diary pasted in a chat, 21 k characters, wrote more than 6000 tokens of episodes and
+ * was cut off), so the budget grows with the window's text, up to 32000.
+ */
+export function extractionOutputBudget(window: Array<Pick<WindowMessage, 'content'>>): number {
+  const chars = window.reduce((n, m) => n + m.content.length, 0);
+  return Math.min(32_000, Math.max(6000, Math.ceil(chars / 1.5)));
+}
+
 @Injectable()
 export class EngineExtractionRunner implements ExtractionRunner {
   private readonly log = new Logger(EngineExtractionRunner.name);
@@ -106,7 +116,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
           system: memory.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
           user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
           schema: extractionSchema,
-          maxTokens: 6000,
+          maxTokens: extractionOutputBudget(window),
           task: profile.extractionTask,
           reasoning: profile.reasoning,
         }, ctx),

@@ -29,6 +29,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   cambiano.
 
 ### Corretto
+- Un messaggio lungo (un diario di viaggio di 21 k caratteri incollato in chat) faceva fallire la sua estrazione: gli
+  episodi non stavano nell'output fisso di 6000 token e venivano tagliati. Il budget di output ora cresce con il testo
+  della finestra, fino a 32000.
 - Una memoria con lingua regionale (`it-IT`, come accetta `PATCH settings`) riceveva quelle frasi e i nomi dei giorni in
   inglese.
 - Un fatto non più noto faceva fallire l'intera finestra di estrazione quando veniva ridetto non noto, riceveva un nuovo

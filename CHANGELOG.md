@@ -26,6 +26,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   else, so "how many runs did I tell you about?" got none of the runs. Period lists are unchanged.
 
 ### Fixed
+- One long message (a travel diary of 21 k characters pasted in a chat) failed its extraction: the episodes did not
+  fit the fixed 6000-token output and were cut off. The output budget now grows with the window's text, up to 32000.
 - A memory whose locale is regional (`it-IT`, as `PATCH settings` accepts) got those sentences and weekday names in
   English.
 - A fact that was not known any more failed the whole extraction window when it was said unknown again, got a new value
