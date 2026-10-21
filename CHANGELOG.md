@@ -23,7 +23,7 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   memories keep their prompt.
 - **What I told them earlier is found again** (D30): the recall also searches my own earlier replies (`fromChats` with
   `authorRole: "assistant"`), so "which beer did you recommend for that recipe?" finds the answer, which is in no
-  episode; a reply of the conversation being served is not returned. A long message shows its passage that best matches
+  episode; a reply of the conversation being served, or a short one (small talk, a confirmation), is not returned. A long message shows its passage that best matches
   the question instead of its first 400 characters. Every message now gets an embedding, and the hourly sweep queues
   the missing ones (replies stored before; migration `UnembeddedMessages`).
 - **Things kept and changed over time, and requests that tell a fact** (`extract.v18`, `entity.v6`): "add milk to the

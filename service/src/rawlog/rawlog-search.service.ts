@@ -55,6 +55,9 @@ const VECTOR_WEIGHT = 1;
 const TEXT_WEIGHT = 0.5;
 const CANDIDATES = 50;
 const EXCERPT_CHARS = 400;
+/** Shorter replies of mine are small talk or a confirmation of what the holder said ("Buona idea.", "Spostato a sabato 25"):
+ * the holder's own message holds it; what only I said — advice, a recipe, a list — is longer (blind5 / 12, 2026-10-21). */
+const MIN_REPLY_CHARS = 160;
 
 @Injectable()
 export class RawLogSearchService {
@@ -67,7 +70,7 @@ export class RawLogSearchService {
     const params: unknown[] = [memoryId, opts.from ?? null, opts.to ?? null];
     // Messages behind forgotten memories never come back through the chat search (D16); a deleted fact or note leaves
     // its messages there (4.13: one memory drawn from them was removed, not the conversation).
-    const role = opts.replies ? `m.role = 'assistant'` : `m.role <> 'assistant'`;
+    const role = opts.replies ? `m.role = 'assistant' AND length(m.content) >= ${MIN_REPLY_CHARS}` : `m.role <> 'assistant'`;
     const base = `m.memory_id = $1 AND ${role} AND c.deleted_at IS NULL
       AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.memory_id = $1 AND t.scope::text NOT IN ('fact', 'note')
         AND m.id = ANY(t.message_ids))

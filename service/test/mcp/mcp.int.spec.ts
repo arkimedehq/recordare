@@ -122,7 +122,7 @@ describe('MCP endpoint', () => {
       { id: 'o2', role: 'assistant', content: `${steps} Per una omelette alla francese servono 2 o 3 uova sbattute con un pizzico di sale.`, at: '2026-03-02T19:00:10+01:00' },
     ]);
     await send('now-chat', [
-      { id: 'n1', role: 'assistant', content: 'Le uova della omelette sono in frigo.', at: '2026-03-05T09:00:00+01:00' },
+      { id: 'n1', role: 'assistant', content: `Le uova della omelette sono in frigo. ${steps}`, at: '2026-03-05T09:00:00+01:00' },
       { id: 'n2', role: 'user', content: 'Quante uova mi avevi detto per la omelette?', at: '2026-03-05T09:01:00+01:00' },
     ]);
     const { client } = await connect(url, { authorization: `Bearer ${keyA}`, 'x-recordare-user': 'luca-a', 'x-recordare-conversation': 'now-chat' });
@@ -132,6 +132,10 @@ describe('MCP endpoint', () => {
     expect(reply?.conversation).toBe('omelette-chat');
     expect(reply?.excerpt).toContain('2 o 3 uova');
     expect(hits.some((h) => h.conversation === 'now-chat' && h.authorRole === 'assistant')).toBe(false);
+    // A short reply is small talk or a confirmation: not searched.
+    await send('ok-chat', [{ id: 'k9', role: 'assistant', content: 'Ottima omelette, buone uova!', at: '2026-03-03T09:00:00+01:00' }]);
+    const again = (await search(client, { query: 'quante uova per la omelette alla francese' }))['fromChats'] as Array<{ conversation: string }>;
+    expect(again.some((h) => h.conversation === 'ok-chat')).toBe(false);
     expect((out['notes'] as string[]).some((n) => n.includes('written by others'))).toBe(false);
     await client.close();
   });

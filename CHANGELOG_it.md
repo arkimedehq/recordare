@@ -25,7 +25,7 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   corretto invece di restare vero. Le memorie entity mantengono il loro prompt.
 - **Ciò che ho detto prima si ritrova** (D30): il richiamo cerca anche le mie risposte precedenti (`fromChats` con
   `authorRole: "assistant"`), così "che birra mi avevi consigliato per quella ricetta?" trova la risposta, che non sta in
-  nessun episodio; una risposta della conversazione servita non viene restituita. Un messaggio lungo mostra il passaggio
+  nessun episodio; una risposta della conversazione servita, o una breve (chiacchiere, una conferma), non viene restituita. Un messaggio lungo mostra il passaggio
   più vicino alla domanda invece dei primi 400 caratteri. Ogni messaggio ora ha un embedding, e lo sweep orario mette in
   coda quelli mancanti (le risposte salvate prima; migrazione `UnembeddedMessages`).
 - **Cose tenute e modificate nel tempo, e richieste che dicono un fatto** (`extract.v18`, `entity.v6`): "aggiungi il
