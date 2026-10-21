@@ -23,6 +23,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   pomeriggio vernicio la ringhiera" viene salvato come fatto quel giorno, come prima; quando un messaggio successivo
   mostra che non è avvenuto ("sabato vernicio finalmente la ringhiera, il barattolo è ancora lì"), ora l'episodio viene
   corretto invece di restare vero. Le memorie entity mantengono il loro prompt.
+- **Ciò che ho detto prima si ritrova** (D30): il richiamo cerca anche le mie risposte precedenti (`fromChats` con
+  `authorRole: "assistant"`), così "che birra mi avevi consigliato per quella ricetta?" trova la risposta, che non sta in
+  nessun episodio; una risposta della conversazione servita non viene restituita. Un messaggio lungo mostra il passaggio
+  più vicino alla domanda invece dei primi 400 caratteri. Ogni messaggio ora ha un embedding, e lo sweep orario mette in
+  coda quelli mancanti (le risposte salvate prima; migrazione `UnembeddedMessages`).
 - **Cose tenute e modificate nel tempo, e richieste che dicono un fatto** (`extract.v18`, `entity.v6`): "aggiungi il
   latte alla lista", "sposta la riunione a venerdì", "segna che ho pagato l'affitto" erano prese per richieste di aiuto e
   spesso non ricordate; ora si ricorda ciò che dicono. Una lista della spesa, gli invitati di una festa, le cose da

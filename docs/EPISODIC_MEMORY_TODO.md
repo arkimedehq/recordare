@@ -417,6 +417,9 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - Assistant turns are always extraction context, and assistant-stated items are extracted with
   `origin: assistant_stated` (extends D28's `holder_lived | holder_told | twin_experienced`),
   never merged with holder-lived memories; recall labels them ("the assistant suggested / did").
+- (2026-10-21) The content of an answer to a help request (a recipe, a ratio, a name) is in no episode — it is not the
+  holder's life — so the recall also searches my own earlier replies in the raw log, showing each one's passage that
+  best matches the query (`authorRole: assistant`); not those of the conversation being served.
 
 ### D31 — Recordare facts are state slots with a value chain (2026-10-03; notes part superseded by D34)
 - Layer 3 in Recordare = **state slots** ("car", "address", "employer", "children") with their

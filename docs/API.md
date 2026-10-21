@@ -373,7 +373,10 @@ Returns (as built):
   fromChats: Array<{ conversationId: string; conversation: string; group?: string;  // group: the group chat's name
                      heard?: true;                           // overheard in the room (source "ambient", 6.5)
                      messageId: string; at: string;
-                     authorRole: "holder" | "other" | "tool"; author?: string; excerpt: string;
+                     authorRole: "holder" | "assistant" | "other" | "tool";  // assistant: my own earlier reply (D30),
+                                                             // never one from the conversation being served
+                     author?: string;
+                     excerpt: string;                        // a long message: its passage that best matches the query
                      correctedBy?: string }>;                // the episode that corrected a memory drawn from this message
   notes: string[];                                    // e.g. unresolved plans, claims / others' excerpts notice, who is asking
   clarifications?: string[];                          // open questions about the people involved (8.4; entity: identified speaker)

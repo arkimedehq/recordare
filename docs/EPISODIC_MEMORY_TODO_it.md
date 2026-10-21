@@ -423,6 +423,10 @@ Layer 3  semantic notes durable facts (A-MEM user_memory)     ← exists; fed by
 - I turni dell'assistente sono sempre contesto di estrazione, e gli elementi dichiarati dall'assistente sono estratti con
   `origin: assistant_stated` (estende `holder_lived | holder_told | twin_experienced` di D28),
   mai fusi con i ricordi vissuti dal titolare; il richiamo li etichetta ("l'assistente ha suggerito / fatto").
+- (2026-10-21) Il contenuto di una risposta a una richiesta di aiuto (una ricetta, una proporzione, un nome) non sta in
+  nessun episodio — non è la vita del titolare — quindi il richiamo cerca anche le mie risposte precedenti nel log grezzo,
+  mostrando di ognuna il passaggio più vicino alla domanda (`authorRole: assistant`); non quelle della conversazione
+  servita.
 
 ### D31 — I fatti di Recordare sono slot di stato con una catena di valori (2026-10-03; la parte sulle note è superata da D34)
 - Lo Strato 3 in Recordare = **slot di stato** ("auto", "indirizzo", "datore di lavoro", "figli") con la loro

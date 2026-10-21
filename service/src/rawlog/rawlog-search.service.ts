@@ -2,16 +2,18 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Raw-log search (D13 fallback, Layer 0): full-text + vector over the memory's non-assistant
- * messages, fused with weighted reciprocal rank (the spike found vector retrieval more robust
- * under noise, so it weighs more). Limited to the calling client's conversations unless the
- * client's `raw_log_scope` is `all`.
+ * Raw-log search (D13 fallback, Layer 0): full-text + vector over the memory's messages, fused with weighted reciprocal
+ * rank (the spike found vector retrieval more robust under noise, so it weighs more). The holder's and others' messages,
+ * or with `replies` my own (the assistant's) earlier replies (D30: what I told them — a recipe, a ratio, a name — is in no
+ * episode). A long message shows its passage that best matches the query. Limited to the calling client's conversations
+ * unless the client's `raw_log_scope` is `all`.
  */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { memorySpeaker } from './attribution';
 import { vectorParam } from '../db/pgvector';
+import { bestExcerpt } from './excerpt';
 
 export interface RawHit {
   conversationId: string;
@@ -25,7 +27,8 @@ export interface RawHit {
   heard?: true;
   messageId: string;
   at: string;
-  authorRole: 'holder' | 'other' | 'tool';
+  /** `assistant`: my own earlier reply (search with `replies`). */
+  authorRole: 'holder' | 'assistant' | 'other' | 'tool';
   /** Who wrote it, when not the memory's own turn (people by their display name; tools by name). */
   author?: string;
   excerpt: string;
@@ -42,6 +45,9 @@ export interface RawSearchOptions {
   conversationId?: string;
   /** Only messages written by these people (folded first names of other participants): "what did Kevin ask you?". */
   authors?: string[];
+  /** My own (the assistant's) earlier replies instead of the others' messages; not those of the conversation the recall is
+   * served in (they are in front of the agent already). */
+  replies?: boolean;
 }
 
 const RRF_K = 60;
@@ -61,11 +67,13 @@ export class RawLogSearchService {
     const params: unknown[] = [memoryId, opts.from ?? null, opts.to ?? null];
     // Messages behind forgotten memories never come back through the chat search (D16); a deleted fact or note leaves
     // its messages there (4.13: one memory drawn from them was removed, not the conversation).
-    const base = `m.memory_id = $1 AND m.role <> 'assistant' AND c.deleted_at IS NULL
+    const role = opts.replies ? `m.role = 'assistant'` : `m.role <> 'assistant'`;
+    const base = `m.memory_id = $1 AND ${role} AND c.deleted_at IS NULL
       AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.memory_id = $1 AND t.scope::text NOT IN ('fact', 'note')
         AND m.id = ANY(t.message_ids))
       AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}
-      ${opts.conversationId ? `AND NOT (m.conversation_id = $${params.push(opts.conversationId)} AND m.sent_at > COALESCE(
+      ${opts.conversationId && opts.replies ? `AND m.conversation_id <> $${params.push(opts.conversationId)}` : ''}
+      ${opts.conversationId && !opts.replies ? `AND NOT (m.conversation_id = $${params.push(opts.conversationId)} AND m.sent_at > COALESCE(
         (SELECT max(a.sent_at) FROM messages a WHERE a.conversation_id = $${params.length} AND a.role = 'assistant'), '-infinity'::timestamptz))` : ''}
       ${opts.authors?.length ? `AND m.role IN ('other', 'user') AND EXISTS (SELECT 1 FROM conversation_participants ap
         WHERE ap.conversation_id = m.conversation_id AND ap.ref = m.author_ref
@@ -117,14 +125,14 @@ export class RawLogSearchService {
     return top.flatMap(([id, score]) => {
       const r = byId.get(id);
       if (!r) return [];
-      const authorRole = r.role === 'tool' ? 'tool' : r.account_speaker ? 'holder' : 'other';
+      const authorRole = r.role === 'tool' ? 'tool' : r.role === 'assistant' ? 'assistant' : r.account_speaker ? 'holder' : 'other';
       const author = authorRole === 'tool' ? r.tool_name : authorRole === 'other' ? r.author_name : null;
       return [{
         conversationId: r.conversation_id, conversation: r.external_id, ...(r.grp ? { group: r.grp } : {}), ...(r.heard ? { heard: true as const } : {}),
         messageId: r.id,
         at: r.sent_at.toISOString(), authorRole,
         ...(author ? { author } : {}),
-        excerpt: r.content.length > EXCERPT_CHARS ? `${r.content.slice(0, EXCERPT_CHARS)}…` : r.content, score,
+        excerpt: bestExcerpt(r.content, opts.query, EXCERPT_CHARS), score,
       } satisfies RawHit];
     });
   }
