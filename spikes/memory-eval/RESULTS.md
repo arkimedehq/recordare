@@ -602,6 +602,29 @@ gets 0 / 3). Cost per question: Recordare's engine 63 extraction calls, ≈ 510 
 ingest; full context ≈ 105 k input. At DeepSeek's off-peak prices (deepseek-flash: 0.15 USD / M input miss, 0.003 hit,
 0.60 output; peak doubles) ≈ 0.055 USD per question for Recordare and ≈ 0.016 for full context.
 
+### extract.v19 / entity.v7 — a plan changes no fact (2026-10-22, DeepSeek direct off-peak, 1 run each)
+
+A plan, an intention or a wish changes no fact and makes no note until a later message tells it happened; a fact's value
+is the state only (the separate facts pass `facts.v2` already had the rule; the inline prompt lacked it). New dev set
+`dataset_dev_plan_facts` (+ `_entity`, 10 sessions, 9 questions: car service, a move, a new job, a dog, a doctor's visit,
+a sale, a course, a phone operator). Every run single-version.
+
+| set | v18 (D30 code) | v19 |
+|---|---|---|
+| dev plan_facts personal | 0.778 | 0.944 |
+| dev plan_facts entity | 0.889 | 1.000 |
+| blind12 | 93.5 % (d30), 97.2 % (v18 run) | 91.7 % |
+| blind5 | 92.5 % (d30), 94.3 % (v18 run) | 92.5 % |
+
+- Dev set: v18 stored the address "via Mazzini, Bologna (trasferimento previsto…)" as current and a note "frequento il
+  corso di ceramica" from "da aprile mi iscrivo"; v19 stores neither (facts: car, employer, job title, boss only).
+- blind12 h07 (invented on unknown) is **not fixed**: the fact `auto` still carries the plan ("Panda (portata da
+  Bertolini per il tagliando il 16 maggio 2034)"), and a reminder became a `knowledge` note. Not tuned further on the
+  blind set. blind12 invented-on-unknown 0.083 (1 of 12, h07), unjustified assertions 0.019.
+- Other changes on the blind sets go both ways (blind12: h12, h14, h16 better; h13, h23, h35, h37 worse; blind5: e06,
+  e51, e60, e75 better; e09, e12, e24, e72 worse), not yet inspected one by one; one run each.
+- Cost budget (test/cost): extraction input per message +7 % (system prompt, cached).
+
 ### D30 — my own earlier replies in the recall (2026-10-21, DeepSeek direct off-peak, 1 run each)
 
 Recall-only change (`extract.v18` unchanged, every run single-version): `search_episodes` also searches my own earlier
