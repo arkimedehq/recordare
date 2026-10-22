@@ -2,14 +2,24 @@
 # Copyright © 2026 Andrea Genovese
 """System B — Graphiti (temporal knowledge graph) on FalkorDB.
 
-LLM: the spike's OpenAI-compatible endpoint (DeepSeek) in `json_object` mode.
-Embeddings: local model via EMBED_MODEL (graph name carries the dimension). No reranker LLM (passthrough).
-One episode per session, reference_time = session timestamp, group_id = user.
+LLM: the spike's OpenAI-compatible endpoint (ENGINE_MODEL; with ENGINE_NO_THINKING through the local gateway, which
+disables reasoning) in `json_object` mode. Every chat call's tokens (cache hits included) are recorded under phase
+'ingest' — Graphiti's generic client keeps no usage of its own — and calls made while answering a question under
+'search' (none with this search recipe).
+Embeddings: local model via EMBED_MODEL (graph name carries the dimension); calls counted under 'embed' (no tokens,
+local). No reranker LLM (passthrough).
+Ingest (mirrors the Mem0 adapter, `market_common`): one `message` episode per session, reference_time = session
+timestamp, group_id = user; lines are "user: …" / "assistant: …", other participants of a group chat "<name>: …"
+(Graphiti's message format is "actor: content"), and the session header says it is a group chat.
+Learned sources (WORK_PLAN 8.9; blind9–11): a document / note / page is one `text` episode (title, author, who provided
+it, text); forgetting a source is Graphiti's own `remove_episode` (the episode, the edges it created, the entities
+only it mentions).
 FalkorDB: `docker run -d --name memeval-falkordb -p 6390:6379 falkordb/falkordb:v4.22.0` (6.x breaks Graphiti fulltext indexes).
 """
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from collections.abc import Iterable
 from datetime import datetime
@@ -28,19 +38,23 @@ from graphiti_core.nodes import EpisodeType  # noqa: E402
 from graphiti_core.prompts.models import Message  # noqa: E402
 from pydantic import ValidationError  # noqa: E402
 
-from evalkit.common import USAGE, engine_model, fmt_when  # noqa: E402
+from evalkit.common import USAGE, fmt_when  # noqa: E402
 from graphiti_core.search.search_config_recipes import COMBINED_HYBRID_SEARCH_RRF  # noqa: E402
 from evalkit.embed import embed  # noqa: E402
+from systems.market_common import engine_llm, other_text, session_header, source_text  # noqa: E402
 
 NUM_RESULTS = 12
+_phase = {"name": "ingest"}
 
 
 class LocalEmbedder(EmbedderClient):
     async def create(self, input_data: str | list[str] | Iterable) -> list[float]:
+        USAGE.add("embed", None)
         text = input_data if isinstance(input_data, str) else " ".join(map(str, input_data))
         return embed([text])[0].tolist()
 
     async def create_batch(self, input_data_list: list[str]) -> list[list[float]]:
+        USAGE.add("embed", None)
         return [v.tolist() for v in embed(input_data_list)]
 
 
@@ -52,7 +66,18 @@ class PassthroughReranker(CrossEncoderClient):
 
 class ValidatingGenericClient(OpenAIGenericClient):
     """In json_object mode DeepSeek sometimes echoes the JSON schema instead of an instance:
-    validate against the response model and retry with an explicit hint."""
+    validate against the response model and retry with an explicit hint. Records every call's usage."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        create = self.client.chat.completions.create
+
+        async def counted(*a, **kw):
+            resp = await create(*a, **kw)
+            USAGE.add(_phase["name"], resp.usage)
+            return resp
+
+        self.client.chat.completions.create = counted
 
     async def _generate_response(self, messages, response_model=None, max_tokens=8192, model_size=None, **kw):
         attempt_msgs = list(messages)
@@ -72,16 +97,19 @@ class ValidatingGenericClient(OpenAIGenericClient):
         return result
 
 
+def _line(m: dict) -> str:
+    return other_text(m) if m["role"] == "other" else f"{m['role']}: {m['content']}"
+
+
 class GraphitiSystem:
     name = "graphiti"
 
     def __init__(self) -> None:
         self.loop = asyncio.new_event_loop()
+        llm = engine_llm()
         self.llm = ValidatingGenericClient(
-            config=LLMConfig(api_key=os.environ["LLM_API_KEY"],
-                             base_url=(f"http://localhost:{os.getenv('EMBED_PORT', '8790')}/v1"
-                                       if os.getenv("ENGINE_NO_THINKING") else os.environ["LLM_BASE_URL"]),
-                             model=engine_model(), small_model=engine_model(), temperature=0),
+            config=LLMConfig(api_key=llm["api_key"], base_url=llm["base_url"],
+                             model=llm["model"], small_model=llm["model"], temperature=0),
             structured_output_mode="json_object",
             max_tokens=8192,
         )
@@ -92,6 +120,8 @@ class GraphitiSystem:
             embedder=LocalEmbedder(),
             cross_encoder=PassthroughReranker(),
         )
+        self.by_source: dict[str, str] = {}  # learned source id -> its episode uuid
+        self.users: set[str] = set()
 
     def _run(self, coro):
         return self.loop.run_until_complete(coro)
@@ -99,32 +129,47 @@ class GraphitiSystem:
     def reset(self, users: set[str]) -> None:
         # Fresh state per run. The FalkorDB driver stores each group_id in its own graph, so the
         # per-user graphs must be dropped too (vector indexes keep their dimension otherwise).
+        self.users = set(users)
         for name in {self.g.driver._database, *users}:
             try:
                 self._run(self.g.driver.client.select_graph(name).delete())
             except Exception:  # noqa: BLE001 - graph does not exist yet
                 pass
         self._run(self.g.build_indices_and_constraints())
+        # Each user's graph needs its indexes before the first episode: the driver clone Graphiti makes per group_id
+        # only schedules their creation as a background task, which an interrupted event loop can leave half done.
+        for user in users:
+            self._run(self.g.driver.clone(database=user).build_indices_and_constraints())
 
     def ingest(self, sessions: list[dict]) -> None:
+        _phase["name"] = "ingest"
         for s in sessions:
-            body = "\n".join(f"{m['role']}: {m['content']}" for m in s["messages"])
-            self._run(self.g.add_episode(
-                name=s["id"],
-                episode_body=body,
-                source=EpisodeType.message,
-                source_description=f"chat session {s['id']} ({fmt_when(s['ts'])})",
-                reference_time=datetime.fromisoformat(s["ts"]),
-                group_id=s["user"],
+            if s.get("type") == "forget_source":
+                uuid = self.by_source.pop(s["source"], None)
+                if uuid:  # remove_episode works on self.g.driver; the episode lives in the user's own graph
+                    default, self.g.driver = self.g.driver, self.g.driver.clone(database=s["user"])
+                    try:
+                        self._run(self.g.remove_episode(uuid))
+                    finally:
+                        self.g.driver = default
+                print(f"  forgot {s['source']}", flush=True)
+                continue
+            if s.get("type") == "source":
+                body, kind, desc = source_text(s), EpisodeType.text, f"document provided in chat ({fmt_when(s['ts'])})"
+            else:
+                body = "\n".join(_line(m) for m in s["messages"])
+                kind, desc = EpisodeType.message, session_header(s)
+            out = self._run(self.g.add_episode(
+                name=s["id"], episode_body=body, source=kind, source_description=desc,
+                reference_time=datetime.fromisoformat(s["ts"]), group_id=s["user"],
             ))
-            print(f"  ingested {s['id']}", flush=True)
-        for prompt, u in self.llm.token_tracker.get_usage().items():
-            USAGE.calls["ingest"] = USAGE.calls.get("ingest", 0) + getattr(u, "call_count", 0)
-            USAGE.prompt["ingest"] = USAGE.prompt.get("ingest", 0) + u.total_input_tokens
-            USAGE.completion["ingest"] = USAGE.completion.get("ingest", 0) + u.total_output_tokens
+            if s.get("type") == "source":
+                self.by_source[s["id"]] = out.episode.uuid
+            print(f"  ingested {s['id']} (+{len(out.nodes)} entities, +{len(out.edges)} facts)", flush=True)
 
     def context(self, user: str, question: dict) -> str:
         """Zep-style context: facts with validity, entity summaries and source episodes."""
+        _phase["name"] = "search"
         cfg = COMBINED_HYBRID_SEARCH_RRF.model_copy(deep=True)
         cfg.limit = NUM_RESULTS
         res = self._run(self.g.search_(question["q"], config=cfg, group_ids=[user]))
@@ -141,3 +186,14 @@ class GraphitiSystem:
         out.append("EPISODI (conversazioni originali):")
         out += [f"- [{fmt_when(ep.valid_at.isoformat())}] {ep.content}" for ep in res.episodes]
         return "\n".join(out)
+
+    def dump(self) -> str:
+        """Every fact (edge) per user with its validity (results/<label>-memory.json), for inspection."""
+        out = {}
+        for user in sorted(self.users):
+            records, _, _ = self._run(self.g.driver.clone(database=user).execute_query(
+                "MATCH (a:Entity)-[e:RELATES_TO]->(b:Entity) WHERE e.group_id = $g "
+                "RETURN a.name AS a, b.name AS b, e.fact AS fact, e.valid_at AS valid_at, e.invalid_at AS invalid_at",
+                g=user))
+            out[user] = [{k: (str(v) if v is not None else None) for k, v in r.items()} for r in records]
+        return json.dumps(out, ensure_ascii=False, indent=2)

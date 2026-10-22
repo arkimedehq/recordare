@@ -42,15 +42,22 @@ class Usage:
     calls: dict[str, int] = field(default_factory=dict)
     prompt: dict[str, int] = field(default_factory=dict)
     completion: dict[str, int] = field(default_factory=dict)
+    cached: dict[str, int] = field(default_factory=dict)  # prompt tokens served from the provider's prefix cache
 
     def add(self, phase: str, usage) -> None:
         self.calls[phase] = self.calls.get(phase, 0) + 1
         if usage is not None:
             self.prompt[phase] = self.prompt.get(phase, 0) + (usage.prompt_tokens or 0)
             self.completion[phase] = self.completion.get(phase, 0) + (usage.completion_tokens or 0)
+            hit = getattr(usage, "prompt_cache_hit_tokens", None)  # DeepSeek; OpenAI's field below
+            if hit is None:
+                hit = getattr(getattr(usage, "prompt_tokens_details", None), "cached_tokens", None)
+            if hit:
+                self.cached[phase] = self.cached.get(phase, 0) + hit
 
     def as_dict(self) -> dict:
-        return {"calls": self.calls, "prompt_tokens": self.prompt, "completion_tokens": self.completion}
+        return {"calls": self.calls, "prompt_tokens": self.prompt, "completion_tokens": self.completion,
+                "cached_prompt_tokens": self.cached}
 
 
 USAGE = Usage()
