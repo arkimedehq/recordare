@@ -589,6 +589,34 @@ engine of 4.5c above (3 runs, before v17), blind12 v17 (3 runs).
 - Cost: Mem0's ingest is one LLM call per session (blind5 60 sessions ≈ 0.5 M input tokens per run); 15 runs on five
   sets ≈ 6 M engine input tokens, cents per run.
 
+### Graphiti on blind12 — pilot (2026-10-22, DeepSeek direct off-peak, 1 run)
+
+Graphiti 0.30.2 on FalkorDB 4.22, engine `deepseek-flash` thinking off (as Recordare and Mem0), bge-m3 in process, no
+reranker LLM, same answer model, judge and outcome grader. Adapter brought level with Mem0's (`systems/graphiti_sys.py`):
+every engine call's tokens recorded (Graphiti's generic client keeps none; the round-2 numbers had no cost), other
+participants of a group chat as "<name>: …" lines (Graphiti's message format) with the group-chat header, learned
+sources as `text` episodes and "forget the source" as Graphiti's own `remove_episode`; each user's graph gets its
+indexes before the first episode. Checked on two dev sets (knowledge: forget works; agent_personal: group attribution).
+
+| System | Accuracy | Unjustified | Invented on unknown | Over-abstention |
+|---|---|---|---|---|
+| Recordare v17 (3 runs, above) | 93.5 % | 0.025 | 0.000 | 0.016 |
+| Full context (3 runs) | 93.2 % | 0.062 | 0.051 | 0.008 |
+| Mem0 2.2.1 (3 runs) | 93.2 % | 0.093 | 0.128 | 0.000 |
+| **Graphiti 0.30.2 (1 run)** | **87.0 %** | 0.074 | 0.077 (1 of 13) | 0.024 |
+
+Per category: negative 1.00, plan-implicit / plan-moved / premise-trap 0.93, plan-unresolved 0.88, accumulate 0.83,
+supersede 0.81, **correction-vs-change 0.71** (the lowest). Misses: h01 the dinner at Marco and Serena's stated as
+held (invented on unknown, as Mem0); h43 the babysitter's one-off replacement taken as the new babysitter (a graph
+edge invalidated by a temporary change); h45 a correction read as a change ("first set for 11 May", as full context);
+h48 the corrected flight price kept beside the wrong one, no answer; h35 a count of office days off; four partials.
+
+Cost and time: 498 engine calls for 62 sessions (8 per session), 1.11 M input (7 % cached) / 54 k output — ≈ 17.9 k
+input and 0.9 k output per session, ≈ 0.003 USD per session, ≈ 0.19 USD ingest; ≈ 0.25 USD the whole run with answers
+and judge. Ingest 579 s (9.3 s per session, sequential), retrieval p50 319 ms. Against Mem0 on the same set (62 calls,
+540 k input): eight times the calls, twice the input tokens. One run on 54 questions: the 6-point gap to the others is
+at the edge of the noise seen between runs (Recordare's runs span 88.9–99.1).
+
 ### LongMemEval-S pilot (WORK_PLAN 8.13, 2026-10-20, 3 questions, 1 run)
 
 `dataset_longmemeval_s/build.py` converts LongMemEval-S (MIT): one user per question with its ~48 sessions (~490 k

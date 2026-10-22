@@ -86,7 +86,7 @@ def main() -> None:
 
 
 def run_once(args, label: str, run: int | None) -> dict:
-    USAGE.calls.clear(); USAGE.prompt.clear(); USAGE.completion.clear()
+    USAGE.calls.clear(); USAGE.prompt.clear(); USAGE.completion.clear(); USAGE.cached.clear()
     if run:
         label = f"{label}-r{run}"
         print(f"\n#### run {run}", flush=True)
