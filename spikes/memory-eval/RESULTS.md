@@ -602,6 +602,31 @@ gets 0 / 3). Cost per question: Recordare's engine 63 extraction calls, ≈ 510 
 ingest; full context ≈ 105 k input. At DeepSeek's off-peak prices (deepseek-flash: 0.15 USD / M input miss, 0.003 hit,
 0.60 output; peak doubles) ≈ 0.055 USD per question for Recordare and ≈ 0.016 for full context.
 
+### D30 — my own earlier replies in the recall (2026-10-21, DeepSeek direct off-peak, 1 run each)
+
+Recall-only change (`extract.v18` unchanged, every run single-version): `search_episodes` also searches my own earlier
+replies in the raw log (`authorRole: assistant`, not the served conversation's) and shows a long message's passage that
+best matches the query (`service/src/rawlog/excerpt.ts`, no LLM). Measured where it acts — the 11 single-session-assistant
+questions of the LongMemEval-S 100 sample (same questions, `build.py --types`) — and for harm on blind5 and blind12.
+
+| set | before | D30 |
+|---|---|---|
+| LongMemEval-S single-session-assistant (11) | 0.14 (v17, the 100 run) | **0.73** (8 / 11; unjustified 0.0) |
+| blind5 (87) | 92.5 % (v17) / 94.3 % (v18) | 92.5 % (unjustified 0.034, invented 0.0) |
+| blind12 (54) | 93.5 % (v17, 3 runs) / 97.2 % (v18) | 93.5 % (unjustified 0.037, invented 0.077 = 1 of 13) |
+
+- LongMemEval: the right reply is found in all three misses too; the passage shown is not the one with the answer (the
+  omelette recipe: a later step mentions eggs more often than the ingredients line with "2-3 eggs"; the back-end
+  languages and the powwow game sit in a reply passage other than the chosen one).
+- blind5 / blind12: within noise of v17 (same scores), below v18's single run. Every new miss was read: none comes from
+  a reply excerpt. h07 (invented on unknown): a **fact** written by facts extraction, `auto` = "Fiat Panda, portata da
+  Bertolini per il tagliando il 16 maggio" (a plan told as done; the episode is right, a plan with no outcome); h16 a
+  wrong detail ("Elisa stava bene") with the dates right; h14 a hedge; e06 / e60 memory as in earlier runs.
+- The replies shown on these sets were mostly small talk ("Buona idea.", "Enjoy dinner!", "Come ti senti?"): after this
+  run, replies shorter than 160 characters are not searched (a confirmation of what the holder said is in the holder's
+  message; advice, a recipe, a list are longer). Not re-measured: it only removes such excerpts.
+- Cost: no LLM call; every message is embedded (assistant text included).
+
 ### LongMemEval-S, 100 questions (WORK_PLAN 8.13, 2026-10-20, 1 run, DeepSeek direct off-peak)
 
 Same adapter and harness as the pilot; 100 of 500 questions stratified by type (seed 20261020), 4,764 sessions, 49 M

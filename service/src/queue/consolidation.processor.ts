@@ -9,7 +9,11 @@ import { DataSource } from 'typeorm';
 import { type Env } from '../config/env';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { ConsolidationService } from '../engine/consolidation.service';
-import { CONSOLIDATION_QUEUE, EXTRACTION_RUNNER, type ExtractionRunner } from './queue.port';
+import { CONSOLIDATION_QUEUE, EXTRACTION_RUNNER, QUEUE_PORT, type ExtractionRunner, type QueuePort } from './queue.port';
+
+/** Messages without an embedding queued again per sweep, and per job (a failed job, or replies stored before D30). */
+const EMBED_PER_SWEEP = 2_000;
+const EMBED_PER_JOB = 64;
 
 /**
  * The nightly "sleep" (M5): an hourly sweep consolidates every memory for whom, in their own timezone, the
@@ -17,6 +21,8 @@ import { CONSOLIDATION_QUEUE, EXTRACTION_RUNNER, type ExtractionRunner } from '.
  * Before consolidating, it extracts the messages still pending in conversations idle for longer than the idle delay
  * (WORK_PLAN 4.1): a failed call or a lost idle job leaves them behind, and they would otherwise wait for the next
  * message in that conversation. Once a day per memory, so a window that keeps failing costs one retry a day.
+ * Every sweep also queues the embeddings still missing (a job that failed for good; my replies stored before they were
+ * searched, D30), a bounded batch at a time.
  */
 @Processor(CONSOLIDATION_QUEUE)
 export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
@@ -29,6 +35,7 @@ export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
     @Inject(EXTRACTION_RUNNER) private readonly extraction: ExtractionRunner,
+    @Inject(QUEUE_PORT) private readonly jobs: QueuePort,
   ) {
     super();
   }
@@ -43,6 +50,7 @@ export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
 
   async process(_job: Job): Promise<void> {
     if (!this.config.get('CONSOLIDATION_SCHEDULE', { infer: true })) return; // a sweep queued before it was switched off
+    await this.embedMissing();
     const now = this.clock.now();
     const hour = this.config.get('CONSOLIDATION_HOUR', { infer: true });
     const due: Array<{ person_id: string }> = await this.db.query(
@@ -59,6 +67,15 @@ export class ConsolidationProcessor extends WorkerHost implements OnModuleInit {
       } catch (err) {
         this.log.warn(`consolidation failed for ${person_id}: ${(err as Error).name}`);
       }
+    }
+  }
+
+  private async embedMissing(): Promise<void> {
+    const rows: Array<{ id: string }> = await this.db.query(
+      `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
+       WHERE m.embedding IS NULL AND c.deleted_at IS NULL ORDER BY m.sent_at DESC LIMIT $1`, [EMBED_PER_SWEEP]);
+    for (let i = 0; i < rows.length; i += EMBED_PER_JOB) {
+      await this.jobs.enqueueMessageEmbeddings(rows.slice(i, i + EMBED_PER_JOB).map((r) => r.id));
     }
   }
 

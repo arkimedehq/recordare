@@ -394,7 +394,7 @@ M8, when the prompts are stable; every model kept only at ≥ 95 % on the suite 
 | D31 | Facts in Recordare | State slots with value chain; notes stay in A-MEM until migration | Done (2026-10-03) |
 | D32 | Extraction calls per window | One call (amends D2) | Done (2026-10-03) |
 | D29 | Data model / recall additions from the literature | Approved (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
-| D30 | Assistant turns | Extracted with `origin: assistant_stated` | Done (2026-10-02) |
+| D30 | Assistant turns | Extracted with `origin: assistant_stated`; **2026-10-21** my own earlier replies are searched too (raw log, their best passage), since an answer to a help request is in no episode (LongMemEval single-session-assistant) | Done (2026-10-02, replies 2026-10-21) |
 | D28 | Data model fields for research hypotheses | Reserved from v1 (`EPISODIC_MEMORY_TODO.md`) | Done (2026-10-02) |
 | D27 | LLM / embedding providers | **Any provider** via config profiles; DeepSeek + Ollama only as test setups | Done (2026-10-02) |
 | D24 | MCP transport and per-person auth for basic-level clients | **Decided (M1)**: streamable HTTP at `/mcp`; personal access tokens for header-capable clients; OAuth 2.1 per the MCP authorization spec for clients that require it (Claude Desktop / claude.ai); full level = client API key + `X-Recordare-User` (`API.md` §1) | Done (2026-10-03) |

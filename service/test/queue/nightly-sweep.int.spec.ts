@@ -9,6 +9,7 @@ import { DataSource } from 'typeorm';
 import { type Env } from '../../src/config/env';
 import { type ConsolidationService } from '../../src/engine/consolidation.service';
 import { ConsolidationProcessor } from '../../src/queue/consolidation.processor';
+import { type QueuePort } from '../../src/queue/queue.port';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
 
 describe('nightly sweep extracts the messages left behind before consolidating (WORK_PLAN 4.1)', () => {
@@ -48,6 +49,7 @@ describe('nightly sweep extracts the messages left behind before consolidating (
     await db.query(`UPDATE memories SET consolidated_at = $2 WHERE person_id = $1`, [done.memoryId, NOW]);
 
     const log: string[] = [];
+    const embedded: string[] = [];
     const settings: Partial<Env> = { CONSOLIDATION_SCHEDULE: true, CONSOLIDATION_HOUR: 3, IDLE_DELAY_SECONDS: 900 };
     const sweep = new ConsolidationProcessor(
       {} as Queue, db,
@@ -55,9 +57,14 @@ describe('nightly sweep extracts the messages left behind before consolidating (
       { get: (k: keyof Env) => settings[k] } as unknown as ConfigService<Env, true>,
       { now: () => NOW },
       { runForConversation: async (id: string) => { log.push(`extract ${id}`); } },
+      { enqueueMessageEmbeddings: async (ids: string[]) => { embedded.push(...ids); } } as unknown as QueuePort,
     );
+    // A reply stored before replies were embedded (D30) has none: the sweep queues it again.
+    await db.query(`UPDATE messages SET embedding = NULL WHERE conversation_id = $1`, [idle.conversationId]);
+    const [missing] = await db.query(`SELECT id FROM messages WHERE conversation_id = $1`, [idle.conversationId]);
     await sweep.process({} as never);
 
+    expect(embedded).toContain(missing.id);
     expect(log).toEqual([`extract ${idle.conversationId}`, `consolidate ${idle.memoryId}`]);
     expect(log.join()).not.toContain(recent.conversationId);
     expect(log.join()).not.toContain(done.conversationId);

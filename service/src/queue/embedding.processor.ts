@@ -14,7 +14,7 @@ import { storeEmbeddings } from '../db/pgvector';
 const PASSAGE_BATCH = 64;
 
 /**
- * Embeds user / other / tool messages for the raw-log fallback (assistant replies are not searched), and the passages of
+ * Embeds messages for the raw-log search (every role: my own replies are searched too, D30), and the passages of
  * learned sources (WORK_PLAN 8.9): batch after batch until none is left, then the source is ready (unless more parts
  * are still coming). A failed batch leaves the rest for the job's retry; full-text finds passages meanwhile.
  */
@@ -28,7 +28,7 @@ export class EmbeddingProcessor extends WorkerHost {
   async process(job: Job<{ messageIds: string[] } | { sourceId: string }>): Promise<void> {
     if ('sourceId' in job.data) return this.passages(job.data.sourceId);
     const rows: { id: string; content: string; memory_id: string }[] = await this.db.query(
-      `SELECT id, content, memory_id FROM messages WHERE id = ANY($1) AND role <> 'assistant' AND embedding IS NULL`,
+      `SELECT id, content, memory_id FROM messages WHERE id = ANY($1) AND embedding IS NULL`,
       [job.data.messageIds],
     );
     if (rows.length === 0) return;

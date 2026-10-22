@@ -182,7 +182,7 @@ class ServiceSystem:
         with psycopg.connect(DB_URL, autocommit=True) as conn:
             while time.time() < deadline:
                 (pending,) = conn.execute(
-                    "SELECT count(*) FROM messages WHERE memory_id = ANY(%s) AND (extracted_run_id IS NULL OR (role <> 'assistant' AND embedding IS NULL))",
+                    "SELECT count(*) FROM messages WHERE memory_id = ANY(%s) AND (extracted_run_id IS NULL OR embedding IS NULL)",
                     (ids,)).fetchone()
                 if least is None or pending < least:  # still progressing (a large batch, LongMemEval): wait on
                     least, deadline = pending, time.time() + timeout_s
@@ -385,6 +385,8 @@ def format_context(args: dict, episodes: dict, memory: dict, knowledge: dict | N
         for h in episodes["fromChats"]:
             mine = f" · scritto da qualcuno che usa {self_name}" if entity else f" · scritto da {self_name}" if personal else " · scritto dal proprietario"
             who = f" · scritto da {h['author']}" if h.get("author") else (mine if h.get("authorRole") == "holder" else "")
+            if h.get("authorRole") == "assistant":  # D30: my own earlier reply
+                who = " · risposta mia (dell'assistente) di allora"
             fix = f" (poi corretto: {h['correctedBy']})" if h.get("correctedBy") else ""
             grp = f" · gruppo «{h['group']}»" if h.get("group") else ""
             if h.get("heard"):

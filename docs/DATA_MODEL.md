@@ -359,7 +359,7 @@ joined_at` — source of every row's `audience` (recorded; no read filters on it
 | `extracted_run_id` | uuid null → extraction_runs | **null = pending extraction**; the idle / nightly jobs take pending messages by `sent_at`, so late-arriving messages (imports, out-of-order batches) are never skipped |
 | `edited_at` | timestamptz null | Previous text in `message_revisions(message_id, content, replaced_at)` |
 | `tsv` | tsvector | Generated `to_tsvector('simple', content)`, GIN (the `unaccent` extension is created but not used yet) |
-| `embedding` | vector(N) null | Raw-log fallback only (D13); computed asynchronously after ingest, for non-assistant messages |
+| `embedding` | vector(N) null | Raw-log search (D13); computed asynchronously after ingest, for every message — my own replies are searched too (D30); the hourly sweep queues the missing ones |
 
 ## Layer 1 — episodes
 

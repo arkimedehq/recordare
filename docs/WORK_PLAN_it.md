@@ -404,7 +404,7 @@ al 95 % sulla valutazione (regola del maintainer).
 | D31 | Fatti in Recordare | Slot di stato con catena di valori; le note restano in A-MEM fino alla migrazione | Fatto (2026-10-03) |
 | D32 | Chiamate di estrazione per finestra | Una chiamata (modifica D2) | Fatto (2026-10-03) |
 | D29 | Aggiunte al modello dati / al richiamo dalla letteratura | Approvato (`EPISODIC_MEMORY_TODO.md`) | Fatto (2026-10-02) |
-| D30 | Turni dell'assistente | Estratti con `origin: assistant_stated` | Fatto (2026-10-02) |
+| D30 | Turni dell'assistente | Estratti con `origin: assistant_stated`; **2026-10-21** anche le mie risposte precedenti sono cercate (log grezzo, il loro passaggio migliore), perché la risposta a una richiesta di aiuto non sta in nessun episodio (LongMemEval single-session-assistant) | Fatto (2026-10-02, risposte 2026-10-21) |
 | D28 | Campi del modello dati per le ipotesi di ricerca | Riservati dalla v1 (`EPISODIC_MEMORY_TODO.md`) | Fatto (2026-10-02) |
 | D27 | Provider LLM / di embedding | **Qualsiasi provider** tramite profili di configurazione; DeepSeek + Ollama solo come ambienti di test | Fatto (2026-10-02) |
 | D24 | Trasporto MCP e auth per persona per i client di livello basic | **Deciso (M1)**: HTTP streamable su `/mcp`; token di accesso personali per i client che supportano header; OAuth 2.1 secondo la specifica di autorizzazione MCP per i client che lo richiedono (Claude Desktop / claude.ai); livello full = chiave API del client + `X-Recordare-User` (`API.md` §1) | Fatto (2026-10-03) |

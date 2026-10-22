@@ -10,6 +10,7 @@ taken with a fixed seed (abstention questions, `_abs`, stay in their type and ar
     curl -L -o raw/longmemeval_s_cleaned.json \\
       https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json
     python dataset_longmemeval_s/build.py --n 3          # pilot
+    python dataset_longmemeval_s/build.py --n 100 --types single-session-assistant   # one type of the same sample
     EVAL_DATASET=dataset_longmemeval_s uv run python run_eval.py --system service
 
 Public benchmark, not blind: never tune prompts on it. Scores use this harness's answer model and judge, not the
@@ -53,9 +54,13 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=3)
     ap.add_argument("--seed", type=int, default=20261020)
+    ap.add_argument("--types", help="comma-separated question types: keep only these of the sample (a change measured "
+                    "where it acts, on the same questions)")
     args = ap.parse_args()
     data = json.loads((HERE / "raw" / "longmemeval_s_cleaned.json").read_text())
     chosen = sample(data, args.n, args.seed)
+    if args.types:
+        chosen = [q for q in chosen if q["question_type"] in args.types.split(",")]
 
     sessions, questions, users = [], [], {}
     for q in chosen:
@@ -75,7 +80,8 @@ def main() -> None:
                           "expected": str(q["answer"]), "must_not": []})
 
     note = ("LongMemEval-S (MIT), converted by build.py: one user per question, its haystack sessions, the question "
-            f"asked at question_date. Sample of {len(questions)} of 500, stratified by type, seed {args.seed}.")
+            f"asked at question_date. Sample of {args.n} of 500, stratified by type, seed {args.seed}"
+            f"{f'; only {args.types} ({len(questions)})' if args.types else ''}.")
     (HERE / "conversations.json").write_text(json.dumps(
         {"_note": note, "users": users, "sessions": sessions}, ensure_ascii=False, indent=1))
     (HERE / "questions.json").write_text(json.dumps({"_note": note, "questions": questions}, ensure_ascii=False, indent=1))

@@ -253,8 +253,12 @@ export class EpisodeSearchService {
       const people = await peopleInQuestion(this.db, memoryId, args.query);
       const theirs = people.length ? await this.rawLog.search(memoryId, clientId, { query: args.query, from: from ?? undefined,
         to: to ?? undefined, limit: PEOPLE_HITS, conversationId: args.conversationId, authors: people }) : [];
+      // What I (the assistant) told them is in no episode when it was an answer, not their life (D30, LongMemEval's
+      // single-session-assistant: "the beer you recommended", "the ratio you told me"): my earlier replies come along too.
+      const mine = await this.rawLog.search(memoryId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit,
+        conversationId: args.conversationId, replies: true });
       const seen = new Set(hits.map((h) => h.messageId));
-      result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId))].map(({ score: _s, ...h }) => h);
+      result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId)), ...mine].map(({ score: _s, ...h }) => h);
       // An excerpt whose episode was later corrected still says the old version (blind10, 8.11): it carries the correction.
       const corrected = await correctionsOf(this.db, memoryId, result.fromChats.map((h) => h.messageId));
       for (const h of result.fromChats) {
@@ -264,7 +268,7 @@ export class EpisodeSearchService {
       if (corrected.size) {
         result.notes.push(say.correctedExcerpts);
       }
-      if (result.fromChats.some((h) => h.authorRole !== 'holder')) {
+      if (result.fromChats.some((h) => h.authorRole === 'other' || h.authorRole === 'tool')) {
         result.notes.push(say.othersExcerpts(name));
       }
     }

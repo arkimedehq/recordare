@@ -164,15 +164,15 @@ describe('REST ingest (Layer 0)', () => {
     expect(delayed).toBe(false);
   });
 
-  it('computes embeddings for non-assistant messages in the background', { timeout: 15000 }, async () => {
+  it('computes embeddings for every message in the background, my replies too (D30)', { timeout: 15000 }, async () => {
     for (let i = 0; i < 50; i++) {
-      const [{ n }] = await db.query(`SELECT count(*)::int AS n FROM messages WHERE embedding IS NOT NULL`);
-      if (n >= 3) break;
+      const [{ n }] = await db.query(`SELECT count(*)::int AS n FROM messages WHERE embedding IS NULL`);
+      if (n === 0) break;
       await new Promise((r) => setTimeout(r, 100));
     }
-    const rows = await db.query(`SELECT role, embedding IS NOT NULL AS has FROM messages ORDER BY external_id`);
-    expect(rows.filter((r: { role: string; has: boolean }) => r.role === 'assistant').every((r: { has: boolean }) => !r.has)).toBe(true);
-    expect(rows.filter((r: { role: string; has: boolean }) => r.role === 'user').every((r: { has: boolean }) => r.has)).toBe(true);
+    const rows: Array<{ role: string; has: boolean }> = await db.query(`SELECT role, embedding IS NOT NULL AS has FROM messages ORDER BY external_id`);
+    expect(rows.some((r) => r.role === 'assistant')).toBe(true);
+    expect(rows.every((r) => r.has)).toBe(true);
   });
 
   it('edits and deletes messages and conversations of the calling client only', async () => {
