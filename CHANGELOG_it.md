@@ -28,6 +28,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   nessun episodio; una risposta della conversazione servita, o una breve (chiacchiere, una conferma), non viene restituita. Un messaggio lungo mostra il passaggio
   più vicino alla domanda invece dei primi 400 caratteri. Ogni messaggio ora ha un embedding, e lo sweep orario mette in
   coda quelli mancanti (le risposte salvate prima; migrazione `UnembeddedMessages`).
+- **Un piano non è come stanno le cose** (`extract.v19`, `entity.v7`): "il mese prossimo mi trasferisco a Bologna"
+  salvava il nuovo indirizzo come quello attuale (con il piano dentro il valore), e "da aprile mi iscrivo al corso di
+  ceramica" diventava una nota "frequento il corso di ceramica"; ora un piano, un'intenzione o un desiderio non cambia
+  nessun fatto e non crea note finché un messaggio successivo non dice che è avvenuto, e il valore di un fatto è solo lo
+  stato. Il passaggio separato dei fatti (`factsPass: separate`) aveva già questa regola.
 - **Cose tenute e modificate nel tempo, e richieste che dicono un fatto** (`extract.v18`, `entity.v6`): "aggiungi il
   latte alla lista", "sposta la riunione a venerdì", "segna che ho pagato l'affitto" erano prese per richieste di aiuto e
   spesso non ricordate; ora si ricorda ciò che dicono. Una lista della spesa, gli invitati di una festa, le cose da

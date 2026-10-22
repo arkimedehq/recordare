@@ -1,0 +1,102 @@
+{
+ "_note": "Dev set (not blind): plans about durable things (car service, a move, a new job, a dog, a doctor's visit, a sale, a course, a phone operator) — some carried out, some never mentioned again; a plan must not become a fact of something done. Holder Marta, Torino, March–April 2035.",
+ "user": "marta",
+ "holder": "Marta",
+ "questions": [
+  {
+   "id": "f01",
+   "category": "plan-unresolved",
+   "asked_at": "2035-04-02T10:00:00+01:00",
+   "q": "Ho fatto la revisione della Clio?",
+   "expected": "Non risulta: la revisione dal meccanico Ferraris era prevista per il 6 marzo alle 8, ma poi non me ne hai più parlato, quindi non so se l'hai fatta.",
+   "must_not": [
+    "sì, hai fatto la revisione",
+    "la Clio è stata revisionata",
+    "non l'hai fatta"
+   ]
+  },
+  {
+   "id": "f02",
+   "category": "fact-stable",
+   "asked_at": "2035-04-02T10:05:00+01:00",
+   "q": "Che macchina ho?",
+   "expected": "Una Renault Clio.",
+   "must_not": []
+  },
+  {
+   "id": "f03",
+   "category": "plan-unresolved",
+   "asked_at": "2035-04-02T10:10:00+01:00",
+   "q": "Dove abito adesso?",
+   "expected": "Non mi hai detto dove abiti ora (la città è Torino secondo il contesto); hai in programma di trasferirti a Bologna, con la firma del contratto in via Mazzini il 12 aprile, che non è ancora arrivata.",
+   "must_not": [
+    "abiti a Bologna",
+    "abiti in via Mazzini"
+   ]
+  },
+  {
+   "id": "f04",
+   "category": "plan-done",
+   "asked_at": "2035-04-02T10:15:00+01:00",
+   "q": "Per chi lavoro e chi è il mio capo?",
+   "expected": "Lavori in Lavazza come product manager dal 12 marzo 2035 (prima in Iren); il tuo capo è Davide Rinaldi.",
+   "must_not": [
+    "lavori in Iren"
+   ]
+  },
+  {
+   "id": "f05",
+   "category": "intention",
+   "asked_at": "2035-04-02T10:20:00+01:00",
+   "q": "Ho un cane?",
+   "expected": "No, non risulta: il 9 marzo stavi solo pensando di prendere un beagle, forse dopo il trasloco.",
+   "must_not": [
+    "sì, hai un beagle",
+    "hai un cane"
+   ]
+  },
+  {
+   "id": "f06",
+   "category": "plan-unresolved",
+   "asked_at": "2035-04-02T10:25:00+01:00",
+   "q": "Cosa ha detto il dermatologo del neo?",
+   "expected": "Non lo so: la visita dal dermatologo era fissata per il 28 marzo alle 17 per il neo sulla spalla, ma non me ne hai più parlato.",
+   "must_not": [
+    "il dermatologo ha detto",
+    "il neo è benigno"
+   ]
+  },
+  {
+   "id": "f07",
+   "category": "plan-done",
+   "asked_at": "2035-04-02T10:30:00+01:00",
+   "q": "Ho ancora la moto?",
+   "expected": "No: l'hai venduta a tuo cugino Luca per 2.800 € (conclusa il 17-18 marzo, ha già fatto il bonifico).",
+   "must_not": [
+    "sì, hai ancora la moto"
+   ]
+  },
+  {
+   "id": "f08",
+   "category": "plan-unresolved",
+   "asked_at": "2035-04-20T10:00:00+01:00",
+   "q": "Sto facendo qualche corso?",
+   "expected": "Avevi detto che da aprile ti saresti iscritta al corso di ceramica del giovedì sera al laboratorio Terra Cruda, ma non mi hai detto se hai iniziato.",
+   "must_not": [
+    "sì, frequenti il corso di ceramica",
+    "frequenti il corso"
+   ]
+  },
+  {
+   "id": "f09",
+   "category": "intention",
+   "asked_at": "2035-04-02T10:35:00+01:00",
+   "q": "Che operatore telefonico ho?",
+   "expected": "Non lo so: il 22 marzo pensavi di passare a Iliad ma dovevi ancora vedere le offerte; il tuo operatore attuale non me l'hai detto.",
+   "must_not": [
+    "hai Iliad",
+    "sei passata a Iliad"
+   ]
+  }
+ ]
+}

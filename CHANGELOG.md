@@ -26,6 +26,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   episode; a reply of the conversation being served, or a short one (small talk, a confirmation), is not returned. A long message shows its passage that best matches
   the question instead of its first 400 characters. Every message now gets an embedding, and the hourly sweep queues
   the missing ones (replies stored before; migration `UnembeddedMessages`).
+- **A plan is not how things are** (`extract.v19`, `entity.v7`): "next month I move to Bologna" stored the new address as
+  the current one (with the plan in its value), and "from April I'm enrolling in the pottery class" became a note "I
+  attend the pottery class"; a plan, an intention or a wish now changes no fact and makes no note until a later message
+  tells it happened, and a fact's value is the state only. The separate facts pass (`factsPass: separate`) already had
+  this rule.
 - **Things kept and changed over time, and requests that tell a fact** (`extract.v18`, `entity.v6`): "add milk to the
   list", "move the meeting to Friday", "mark the rent as paid" were taken as requests for help and often not remembered;
   they are now remembered as what they say. A shopping list, the guests of a party, a packing list is one note with its

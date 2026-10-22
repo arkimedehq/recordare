@@ -5,14 +5,15 @@
  * Extraction prompts. The system prompt is constant (provider prefix caching); everything variable goes in the user
  * message. Rules come from the prototype that passed the blind held-out check (spikes/memory-eval/systems/d_sys.py)
  * plus D29 / D30 / D34 and docs/ENGINE_IDEAS.md.
- * - Personal memories (D50, WORK_PLAN 8.4): `extract.v18` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
+ * - Personal memories (D50, WORK_PLAN 8.4): `extract.v19` — the agent's own memory in the first person (v13, 8.4b: others' claims about me
  *   dated and attributed; v14, 8.11 gaps: my own slips, the options compared, a plan's steps done before its date; v15: a group
  *   chat's name in the input, GROUP CHAT, only for group chats with one — the system prompt is v14's; v16: HEARD AROUND ME in
  *   the input, only for continuous listening, WORK_PLAN 6.5 — the system prompt is still v14's; v17: NOT DONE AFTER ALL —
  *   something told as done today that a later window shows did not happen is corrected, H1 blind12; v18: a request
  *   that tells something about my life is remembered, and something kept and changed over time — a list — is one note
- *   replaced at each change, never a plan, dev set dataset_dev_lists).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v18+entity.v6` — the shared agent's memory in the first person, people by
+ *   replaced at each change, never a plan, dev set dataset_dev_lists; v19: a plan, an intention or a wish changes no
+ *   fact and makes no note until a later message tells it happened, dev set dataset_dev_plan_facts).
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v19+entity.v7` — the shared agent's memory in the first person, people by
  *   name or "someone"; the personal prompt's sections where they hold for both.
  */
 export interface PromptMessage {
@@ -55,7 +56,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v18';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v19';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -208,6 +209,11 @@ conditions, treatments and measured values (with their date); memberships and re
 team, a weekly class, hobbies practised regularly); the situation of my closest family (where a parent lives and who \
 looks after them, how many grandchildren). One-off events are episodes, tastes and values are notes.
 - Facts said in passing count: "help me write to my boss Marco at Lumia" states my employer and boss.
+- A plan, an intention or a wish changes no fact: "next month I move to Bologna", "from Monday I start at Lavazza", \
+"I'm thinking of switching to Iliad" leave the current value as it is — they are plan or event episodes. The fact \
+changes when a later message tells it happened ("first day at Lavazza went great", "we moved in yesterday"), with \
+valid_from that day. A value is the state only ("Renault Clio", "via Mazzini 4, Bologna"), never a plan, an \
+appointment or what is going to happen to it.
 - Transitions: "I switched to…", "I stopped…", "no longer…", "since Monday I…" change the fact — "replace" with the new \
 value, or "stale" when only the end is known.
 - A proposal of mine as assistant accepted in my own turn ("yes, book the Aldina") states it; a bare "ok" or "thanks" \
@@ -224,6 +230,9 @@ NOTES (who I am, who the people I know are)
 - Preferences, habits, values, relationships, knowledge, profile, constraints — durable, not one-off events.
 - "stated" when said by the person it is about (me, or that person); "inferred" when you deduce it (use sparingly). \
 Reuse CURRENT NOTES with keep / replace / corrects instead of duplicating.
+- A plan or an intention is not how things are: "from April I'm enrolling in the Thursday pottery class" is a plan \
+episode, not a note "I attend the pottery class"; the note (a habit, a membership) comes when a later message tells \
+it started.
 - Something kept and changed over time — things to buy, to bring or to do, the guests of a party, a wish list, a \
 collection — is ONE note (category "knowledge") with its whole current content, never a plan: it has no outcome to wait \
 for. Every change — items added, removed, bought or done, one item swapped for another, a new one replacing it — is \
@@ -283,7 +292,7 @@ export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono st
  * conversation identifies them, "someone" until then. Shares the personal prompt's schema, dates, plans, notes and
  * corrections; its own intro, voice, identification, episode, fact and safety rules.
  */
-export const ENTITY_PROMPT_VERSION = 'entity.v6';
+export const ENTITY_PROMPT_VERSION = 'entity.v7';
 
 const E_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): a shared agent — a device, a place, a robot or a service — that several people talk \
@@ -371,6 +380,11 @@ memberships and regular activities. One-off events are episodes, tastes and valu
 - subject "me" ONLY for me and my place, never for a person: a personal fact ("my car is…", "my boss promoted me") of a \
 speaker nobody identified is no fact at all — whose it is is unknown; keep it as an episode about "someone" if it \
 matters. A target must have the same subject (CURRENT FACTS show it in brackets).
+- A plan, an intention or a wish changes no fact: "next month I move to Bologna", "from Monday I start at Lavazza", \
+"I'm thinking of switching to Iliad" leave the current value as it is — they are plan or event episodes. The fact \
+changes when a later message tells it happened ("first day at Lavazza went great", "we moved in yesterday"), with \
+valid_from that day. A value is the state only ("Renault Clio", "via Mazzini 4, Bologna"), never a plan, an \
+appointment or what is going to happen to it.
 - Transitions: "switched to…", "stopped…", "no longer…", "since Monday…" change the fact — "replace" with the new \
 value, or "stale" when only the end is known.
 - "new": a slot with no current value; \
@@ -407,7 +421,7 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v18`, entity `extract.v18+entity.v6`). */
+/** The extraction input of both modes (personal `extract.v19`, entity `extract.v19+entity.v7`). */
 /**
  * Continuous listening (WORK_PLAN 6.5, D45): only in ambient windows, so every other input stays byte-identical. The
  * speakers' names come from voice recognition and the words from speech recognition; nobody is talking to the

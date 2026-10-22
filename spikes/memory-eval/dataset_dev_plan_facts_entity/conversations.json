@@ -1,0 +1,161 @@
+{
+ "_note": "Dev set (not blind): plans about durable things (car service, a move, a new job, a dog, a doctor's visit, a sale, a course, a phone operator) — some carried out, some never mentioned again; a plan must not become a fact of something done. Holder Marta, Torino, March–April 2035.",
+ "users": {
+  "assistente": "L'assistente di casa di Marta"
+ },
+ "entities": [
+  "assistente"
+ ],
+ "sessions": [
+  {
+   "id": "s01",
+   "user": "assistente",
+   "ts": "2035-03-05T08:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Domattina alle 8 porto la Clio dal meccanico Ferraris per la revisione, ricordami di prendere il libretto."
+    },
+    {
+     "role": "assistant",
+     "content": "Promemoria: domani, 6 marzo alle 8, revisione della Clio dal meccanico Ferraris. Porta il libretto."
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "user": "assistente",
+   "ts": "2035-03-07T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Il mese prossimo mi trasferisco a Bologna, il 12 aprile firmo il contratto d'affitto in via Mazzini."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel cambiamento! Ti segno la firma del contratto in via Mazzini il 12 aprile."
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "user": "assistente",
+   "ts": "2035-03-09T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Sto pensando di prendere un cane, forse un beagle. Ma con il trasloco non so se è il momento."
+    },
+    {
+     "role": "assistant",
+     "content": "Un beagle è molto affettuoso ma ha bisogno di movimento. Puoi decidere con calma dopo il trasloco."
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "user": "assistente",
+   "ts": "2035-03-10T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. From Monday the 12th I start the new job at Lavazza as a product manager, I already handed in my notice at Iren."
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations on the new role at Lavazza! Good luck for Monday."
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "user": "assistente",
+   "ts": "2035-03-13T20:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Primo giorno in Lavazza andato benissimo, il mio capo si chiama Davide Rinaldi."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello! Davide Rinaldi sembra un buon inizio."
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "user": "assistente",
+   "ts": "2035-03-14T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Ho prenotato la visita dal dermatologo per il 28 marzo alle 17, per quel neo sulla spalla."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: visita dermatologica il 28 marzo alle 17 per il neo sulla spalla."
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "user": "assistente",
+   "ts": "2035-03-16T18:40:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Sabato vendo la moto a mio cugino Luca, ci siamo accordati per 2.800 euro."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, sabato 17 marzo vendita della moto a Luca per 2.800 €."
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "user": "assistente",
+   "ts": "2035-03-18T10:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Fatto, la moto ora è di Luca, mi ha già fatto il bonifico."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, vendita conclusa."
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "user": "assistente",
+   "ts": "2035-03-20T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Da aprile mi iscrivo al corso di ceramica del giovedì sera, al laboratorio Terra Cruda."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella idea! Il corso di ceramica del giovedì al laboratorio Terra Cruda."
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "user": "assistente",
+   "ts": "2035-03-22T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Pensavo di cambiare operatore del telefono e passare a Iliad, ma devo ancora vedere le offerte."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando vuoi confrontiamo le offerte di Iliad con il tuo piano attuale."
+    }
+   ]
+  }
+ ]
+}
