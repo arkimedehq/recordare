@@ -50,6 +50,7 @@ PLAN_SYSTEM = D_PLAN_SYSTEM.replace(
 URL = os.getenv("RECORDARE_URL", "http://localhost:8080")
 ADMIN = os.environ.get("RECORDARE_ADMIN_KEY", "")
 DB_URL = os.getenv("RECORDARE_DB_URL", "postgres://recordare:recordare@localhost:5433/recordare")
+IDLE_GIVE_UP_S = 300  # a failed window left pending: stop waiting once no extraction has run for this long
 AMBIENT_AS = os.getenv("EVAL_SOURCE_AMBIENT_AS")  # e.g. "voice": ambient sessions sent with this source instead
 
 
@@ -178,7 +179,7 @@ class ServiceSystem:
     def _wait_processed(self, timeout_s: int = 1800) -> None:
         """Wait until the engine extracted every message and raw embeddings exist (failed runs are reported)."""
         ids = [o["id"] for o in self.memories.values()]
-        deadline, least = time.time() + timeout_s, None
+        deadline, least, idle_since = time.time() + timeout_s, None, None
         with psycopg.connect(DB_URL, autocommit=True) as conn:
             while time.time() < deadline:
                 (pending,) = conn.execute(
@@ -193,10 +194,13 @@ class ServiceSystem:
                         print(f"  ! {failed} extraction runs failed", flush=True)
                     return
                 if failed and pending:
-                    # A failed window stays pending (retried by the nightly sweep): do not wait forever.
+                    # A failed window stays pending (retried by the nightly sweep): do not wait forever — but only
+                    # once nothing has run for a while; a moment between two jobs is not the end (LongMemEval
+                    # 2026-10-23: one early failure stopped the wait with 20 k messages still queued).
                     (running,) = conn.execute(
                         "SELECT count(*) FROM extraction_runs WHERE memory_id = ANY(%s) AND status = 'running'", (ids,)).fetchone()
-                    if running == 0:
+                    idle_since = (idle_since or time.time()) if running == 0 else None
+                    if idle_since and time.time() - idle_since > IDLE_GIVE_UP_S:
                         print(f"  ! {failed} extraction runs failed, {pending} messages left pending", flush=True)
                         return
                 time.sleep(1)
