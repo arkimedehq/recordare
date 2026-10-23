@@ -14,6 +14,7 @@ import os
 import json
 import time
 from datetime import datetime
+from pathlib import Path
 from collections import defaultdict
 
 from evalkit.common import DATASET, RESULTS, SCORE, USAGE, answer, eval_user, judge, load_questions, load_sessions
@@ -108,6 +109,14 @@ def run_once(args, label: str, run: int | None) -> dict:
     def when(iso: str) -> datetime:
         return datetime.fromisoformat(iso)
 
+    # EVAL_CHECKPOINT (the service's resumable runs): answers already judged are kept in <checkpoint>.rows.jsonl and
+    # not asked again; their sessions are still sent (duplicates: only a pending extraction is triggered again).
+    ck = os.getenv("EVAL_CHECKPOINT")
+    ck_rows = Path(f"{ck}.rows.jsonl") if ck else None
+    answered = {r["id"]: r for r in map(json.loads, ck_rows.read_text().splitlines())} if ck_rows and ck_rows.exists() else {}
+    if answered:
+        print(f"  resuming: {len(answered)} questions already judged", flush=True)
+
     rows, latencies, ingest_s, done = [], [], 0.0, 0
     for q in sorted(questions, key=lambda q: when(q["asked_at"])):
         batch = []
@@ -118,6 +127,9 @@ def run_once(args, label: str, run: int | None) -> dict:
             t0 = time.time()
             sys_.ingest(batch)
             ingest_s += time.time() - t0
+        if q["id"] in answered:
+            rows.append(answered[q["id"]])
+            continue
         t = time.time()
         ctx = sys_.context(q.get("user") or eval_user(), q)  # a set with one memory per question (LongMemEval)
         latencies.append(time.time() - t)
@@ -125,6 +137,9 @@ def run_once(args, label: str, run: int | None) -> dict:
         verdict = judge(q, ans)
         rows.append({"id": q["id"], "category": q["category"], "q": q["q"], "expected": q["expected"],
                      "context": ctx, "answer": ans, **verdict})
+        if ck_rows and verdict["verdict"] != "error":  # a judge failure is asked again on resume
+            with ck_rows.open("a") as f:
+                f.write(json.dumps(rows[-1], ensure_ascii=False) + "\n")
         print(f"{q['id']} [{verdict['verdict']:>7}] {q['q']}\n        → {ans[:160]}")
 
     rows.sort(key=lambda r: r["id"])

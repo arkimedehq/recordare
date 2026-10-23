@@ -27,6 +27,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import httpx
 import httpx2
@@ -50,6 +51,7 @@ PLAN_SYSTEM = D_PLAN_SYSTEM.replace(
 URL = os.getenv("RECORDARE_URL", "http://localhost:8080")
 ADMIN = os.environ.get("RECORDARE_ADMIN_KEY", "")
 DB_URL = os.getenv("RECORDARE_DB_URL", "postgres://recordare:recordare@localhost:5433/recordare")
+CHECKPOINT = os.getenv("EVAL_CHECKPOINT")  # a file: the run's client and memories, to resume it
 IDLE_GIVE_UP_S = 300  # a failed window left pending: stop waiting once no extraction has run for this long
 AMBIENT_AS = os.getenv("EVAL_SOURCE_AMBIENT_AS")  # e.g. "voice": ambient sessions sent with this source instead
 
@@ -60,11 +62,20 @@ class ServiceSystem:
     def __init__(self) -> None:
         assert ADMIN, "RECORDARE_ADMIN_KEY is required"
         self.http = httpx.Client(base_url=URL, timeout=60, headers={"authorization": f"Bearer {ADMIN}"})
-        self.run = f"eval{int(time.time())}"
-        client = self._post("/api/v1/admin/clients", {"name": f"memory-eval {self.run}", "kind": "platform"})
-        self.client_id = client["id"]
-        self.key = self._post(f"/api/v1/admin/clients/{self.client_id}/keys", {"scopes": ["ingest", "mcp", "read"]})["key"]
-        self.memories: dict[str, dict] = {}
+        # EVAL_CHECKPOINT: a run that stops (a crash, the provider's balance) resumes with the same client and memories;
+        # sessions sent again are duplicates (only their extraction is triggered again), nothing extracted is lost.
+        self.checkpoint = Path(CHECKPOINT) if CHECKPOINT else None
+        if self.checkpoint and self.checkpoint.exists():
+            st = json.loads(self.checkpoint.read_text())
+            self.run, self.client_id, self.key, self.memories = st["run"], st["client_id"], st["key"], st["memories"]
+            print(f"  resuming {self.run}: {len(self.memories)} memories", flush=True)
+        else:
+            self.run = f"eval{int(time.time())}"
+            client = self._post("/api/v1/admin/clients", {"name": f"memory-eval {self.run}", "kind": "platform"})
+            self.client_id = client["id"]
+            self.key = self._post(f"/api/v1/admin/clients/{self.client_id}/keys", {"scopes": ["ingest", "mcp", "read"]})["key"]
+            self.memories: dict[str, dict] = {}
+            self._save()
         # Entity memories (D48): memories the dataset marks as an entity (a shared device everyone talks to).
         conv = DATASET / "conversations.json"
         meta = json.loads(conv.read_text()) if conv.exists() else {}
@@ -88,7 +99,13 @@ class ServiceSystem:
             self._post("/api/v1/admin/identities", {"kind": "account", "personId": o["personId"], "clientId": self.client_id, "externalId": ext})
             tok = self._post(f"/api/v1/admin/memories/{o['personId']}/tokens", {"clientId": self.client_id, "scopes": ["mcp"]})["token"]
             self.memories[user] = {"id": o["personId"], "ext": ext, "token": tok}
+            self._save()
         return self.memories[user]
+
+    def _save(self) -> None:
+        if self.checkpoint:
+            self.checkpoint.write_text(json.dumps({"run": self.run, "client_id": self.client_id, "key": self.key,
+                                                   "memories": self.memories}, indent=1))
 
     # ── Ingest ──────────────────────────────────────────────────────────────────
 
