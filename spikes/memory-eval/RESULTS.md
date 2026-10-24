@@ -678,6 +678,11 @@ a sale, a course, a phone operator). Every run single-version.
 - blind12 h07 (invented on unknown) is **not fixed**: the fact `auto` still carries the plan ("Panda (portata da
   Bertolini per il tagliando il 16 maggio 2034)"), and a reminder became a `knowledge` note. Not tuned further on the
   blind set. blind12 invented-on-unknown 0.083 (1 of 12, h07), unjustified assertions 0.019.
+- **Known limit** (maintainer, 2026-10-24): h07's fact has `valid_from` = the message day (2034-05-15), not the plan's
+  date, so a code guard on future `valid_from` would not catch it; the plan sits inside the value text. Dropping values
+  that mention a date after their message would also drop true states ("valid until December 2035") unless "until" is
+  recognised in every language (a word list); a further prompt rule would be tuned on the blind set. Left as is: one
+  miss on blind12, the dev set at 1.000; looked at again if it shows up on new sets.
 - Other changes on the blind sets go both ways (blind12: h12, h14, h16 better; h13, h23, h35, h37 worse; blind5: e06,
   e51, e60, e75 better; e09, e12, e24, e72 worse), not yet inspected one by one; one run each.
 - Cost budget (test/cost): extraction input per message +7 % (system prompt, cached).
