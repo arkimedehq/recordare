@@ -6,7 +6,9 @@
  * holds the most of the query's words — not the message's start, where a long reply's answer seldom is ("how many eggs
  * did you say for the omelette?" sits in step 2 of a recipe). No LLM, any language: words come from `Intl.Segmenter`,
  * folded (lower case, no accents) and matched as substrings, so "egg" finds "eggs"; a word longer than five letters also
- * matches without its last two ("recommended" finds "recommend"). No word of the query found: the start, as before.
+ * matches without its last two ("recommended" finds "recommend"). The chosen run, without leading sentences that add no
+ * word, is then filled up to `max` with the sentences after it, then before it: a heading ending in ":" is followed by
+ * its answer ("Learn a back-end language: … such as Ruby, Python, or PHP"). No word of the query found: the start.
  */
 
 const SENTENCE = /(?<=[.?!。？！।؟:;])\s+|(?<=[。？！])|\n+/u;
@@ -46,6 +48,12 @@ export function bestExcerpt(content: string, query: string, max: number): string
     }
   }
   if (best.score === 0) return head();
+  // Leading sentences that add no word the rest of the run lacks are dropped, so the filling starts from the match.
+  const runWords = (from: number, to: number) => new Set(found.slice(from, to + 1).flatMap((f) => [...f]));
+  while (best.from < best.to && runWords(best.from + 1, best.to).size === best.score) best.from++;
+  const size = (from: number, to: number) => pieces.slice(from, to + 1).reduce((n, p) => n + p.length + 1, -1);
+  while (best.to + 1 < pieces.length && size(best.from, best.to + 1) <= max) best.to++;
+  while (best.from > 0 && size(best.from - 1, best.to) <= max) best.from--;
   const text = pieces.slice(best.from, best.to + 1).join(' ');
   if (text.length > max) {
     // One sentence longer than the excerpt: the stretch around its first matching word.

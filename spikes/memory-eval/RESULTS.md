@@ -687,6 +687,28 @@ a sale, a course, a phone operator). Every run single-version.
   e51, e60, e75 better; e09, e12, e24, e72 worse), not yet inspected one by one; one run each.
 - Cost budget (test/cost): extraction input per message +7 % (system prompt, cached).
 
+### Reply excerpts filled up to their size (2026-10-24, DeepSeek direct, 1 run each)
+
+Recall-only change in `bestExcerpt` (`service/src/rawlog/excerpt.ts`, no LLM): the chosen run of sentences drops leading
+sentences that add no query word, then is filled up to the 400 characters with the sentences after it, then before it
+(a heading ending in ":" was shown without the answer that follows it: "2. Learn a back-end programming language:…").
+Measured on the 11 single-session-assistant questions of the LongMemEval-S 100 sample, on the memories of the 83.5 % run
+(`EVAL_CHECKPOINT` copy: no extraction call; answer and judge only, cents).
+
+| variant | single-session-assistant (11) |
+|---|---|
+| before (the 83.5 % run) | 9 / 11 (misses: back-end languages, powwow game) |
+| + query words weighted by rarity in the message, shortest run on ties | 6 / 11 — **rejected** |
+| filled, leading sentences trimmed (kept) | 9 / 11 (misses: omelette eggs, back-end languages; unjustified 0.0) |
+
+- Weighting rare words moved the excerpt off the answer: in a recipe "omelette" and "eggs" are in every step, so they
+  counted little and incidental words won (omelette, Tanqueray chapter, SIAC_GEE, mindfulness website lost).
+- Kept variant: the powwow game is now shown ("7. Hoop Dance … performed by skilled dancers") and answered. The omelette
+  miss is the answer's choice, not the excerpt: the "3 egg omelette" reply is now shown with its ingredients, the
+  French-omelette reply with its steps, and the answer declines to mix them. The back-end miss is ranking: the reply
+  with "Ruby, Python, or PHP" is not among the replies shown at all in this run.
+- Net 0 on 11 questions, within noise of one run; no extraction change, no LLM call.
+
 ### D30 — my own earlier replies in the recall (2026-10-21, DeepSeek direct off-peak, 1 run each)
 
 Recall-only change (`extract.v18` unchanged, every run single-version): `search_episodes` also searches my own earlier

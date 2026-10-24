@@ -29,6 +29,11 @@ describe('bestExcerpt (D30: the passage of a long message that answers the query
     expect(bestExcerpt(reply, 'ティーツリーオイル 薄め', 200)).toContain('十倍');
   });
 
+  it('shows the answer after a heading ending in a colon (the run is filled with the sentences after it)', () => {
+    const reply = `${filler(12, 'Start with the basics of web development, part')} 2. Learn a back-end programming language: once you know the front end, learn a back-end programming language such as Ruby, Python or PHP. ${filler(12, 'Build projects and join a community, part')}`;
+    expect(bestExcerpt(reply, 'back-end programming languages recommended', 400)).toContain('Ruby, Python or PHP');
+  });
+
   it('keeps the start when no word of the query is in the message', () => {
     const reply = filler(60, 'Nothing about it here, line');
     expect(bestExcerpt(reply, 'zebra', 100)).toBe(`${reply.slice(0, 100)}…`);
