@@ -589,6 +589,35 @@ engine of 4.5c above (3 runs, before v17), blind12 v17 (3 runs).
 - Cost: Mem0's ingest is one LLM call per session (blind5 60 sessions ≈ 0.5 M input tokens per run); 15 runs on five
   sets ≈ 6 M engine input tokens, cents per run.
 
+### LongMemEval-S 100 again with D30 and `extract.v19` (WORK_PLAN 8.13, 2026-10-23/24, 1 run, DeepSeek direct)
+
+The 100 run of 2026-10-20 again (same questions, sessions and harness), now with D30 (my own earlier replies in the
+recall) and `extract.v19` (single-version, rule 9: every extraction `extract.v19`). Two earlier attempts were discarded:
+the harness stopped waiting at the first failed extraction window with 20 k messages still queued (fixed: it gives up
+only after 5 minutes with nothing running), then the provider balance ran out. This run used `EVAL_CHECKPOINT` (resumable)
+and was not interrupted. One extraction window failed: 12 messages of ~20 k left unextracted.
+
+| category (n) | 2026-10-20 (v17) | **v19 + D30** | full context |
+|---|---|---|---|
+| temporal-reasoning (27) | 0.96 | 0.93 | 0.89 |
+| multi-session (24) | 0.65 | 0.67 | 0.71 |
+| knowledge-update (14) | 0.93 | 0.96 | 0.86 |
+| single-session-assistant (11) | 0.14 | **0.82** | 1.00 |
+| single-session-user (10) | 1.00 | 1.00 | 1.00 |
+| single-session-preference (6) | 0.50 | 0.50 | 0.58 |
+| abstention (8) | 0.88 | 0.88 | 0.88 |
+| **all (100)** | 76.0 % | **83.5 %** | 84.5 % |
+
+- The gain is D30's: single-session-assistant 9 of 11 (the D30 run on these 11 alone: 8 of 11). The other categories
+  move by one question or less, within noise of one run.
+- Outcome rates (`--outcomes`, first time on this set): unjustified 0.11, over-abstention 0.087 (92 known), invented on
+  unknown 0.375 (3 of 8). The two graders disagree on two of the three: LongMemEval's judge accepts the answers of
+  `19b5f2b3_abs` and `a96c20ee_abs`; `031748ae_abs` answers "4 engineers" from a value said for another role (wrong for
+  both). Multi-session holds most unjustified answers (0.21: counts and sums with an item missing or added).
+- Cost and time: engine 9,545 LLM calls (extraction 6,205: 53.7 M input, 60 % cached, 3.2 M output), ≈ 5.8 USD;
+  ingest 11.1 h (40,083 s, one local service, Friday evening to Saturday) against 5.5 h on 2026-10-20 (the v19 prompt is
+  longer and the provider slower).
+
 ### Graphiti on blind12 — pilot (2026-10-22, DeepSeek direct off-peak, 1 run)
 
 Graphiti 0.30.2 on FalkorDB 4.22, engine `deepseek-flash` thinking off (as Recordare and Mem0), bge-m3 in process, no
