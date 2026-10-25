@@ -709,6 +709,25 @@ Measured on the 11 single-session-assistant questions of the LongMemEval-S 100 s
   with "Ruby, Python, or PHP" is not among the replies shown at all in this run.
 - Net 0 on 11 questions, within noise of one run; no extraction change, no LLM call.
 
+### A "counts add up" note for the answer — tried and rejected (2026-10-25, DeepSeek direct, 1 run each)
+
+Multi-session misses on the 100 sample are mostly the answer's (refusing to add, over-counting, reading two dates as a
+contradiction). Tried a context note shown when more than one episode is returned ("each episode is a separate
+occurrence: a count or a total adds up the matching ones…"). Tuned on a new dev set of 25 multi-session questions
+outside the 100 sample (`build.py --dev 25 --types multi-session` → `dataset_longmemeval_dev`, gitignored; ingest
+~1.45 USD), then checked on the 100 sample re-answered on the memories of the 83.5 % run (`EVAL_CHECKPOINT` copy, cents).
+
+| set | without | with the note |
+|---|---|---|
+| dev multi-session (25) | 0.84 (unjustified 0.04) | 0.86 (unjustified 0.0) |
+| 100 sample, multi-session (24) | 0.67 | **0.58** |
+| 100 sample, all | 83.5 % | 84.0 % (unjustified 0.09, invented on unknown 1 of 8) |
+
+- Rejected: it does not help where it aims. On the sample the art-events count went 4 → 3 (the note did not stop the
+  answer excluding a museum visit), MCU + Star Wars is still not added (2 + 1.5 weeks, "the combined time is not
+  known"), Instagram +100 turned cautious. The +0.5 overall is 9 verdicts flipping both ways, noise of one run.
+- The remaining multi-session misses are the answering model's arithmetic and caution, not missing memories.
+
 ### D30 — my own earlier replies in the recall (2026-10-21, DeepSeek direct off-peak, 1 run each)
 
 Recall-only change (`extract.v18` unchanged, every run single-version): `search_episodes` also searches my own earlier

@@ -11,9 +11,11 @@ taken with a fixed seed (abstention questions, `_abs`, stay in their type and ar
       https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json
     python dataset_longmemeval_s/build.py --n 3          # pilot
     python dataset_longmemeval_s/build.py --n 100 --types single-session-assistant   # one type of the same sample
+    python dataset_longmemeval_s/build.py --dev 25 --types multi-session   # dev set: 25 questions outside the 100 sample
     EVAL_DATASET=dataset_longmemeval_s uv run python run_eval.py --system service
 
-Public benchmark, not blind: never tune prompts on it. Scores use this harness's answer model and judge, not the
+Public benchmark, not blind: never tune prompts on the 100 sample; `--dev` writes `dataset_longmemeval_dev` with
+questions outside it (another seed), where a change may be worked out before it is measured on the sample. Scores use this harness's answer model and judge, not the
 paper's GPT-4o judge, so they are not the leaderboard's numbers.
 """
 from __future__ import annotations
@@ -56,11 +58,20 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=20261020)
     ap.add_argument("--types", help="comma-separated question types: keep only these of the sample (a change measured "
                     "where it acts, on the same questions)")
+    ap.add_argument("--dev", type=int, help="this many questions of --types outside the 100 sample (seed 20261024), "
+                    "written to dataset_longmemeval_dev")
     args = ap.parse_args()
     data = json.loads((HERE / "raw" / "longmemeval_s_cleaned.json").read_text())
-    chosen = sample(data, args.n, args.seed)
-    if args.types:
-        chosen = [q for q in chosen if q["question_type"] in args.types.split(",")]
+    out = HERE
+    if args.dev:
+        held = {q["question_id"] for q in sample(data, 100, args.seed)}
+        pool = [q for q in data if q["question_id"] not in held and (not args.types or q["question_type"] in args.types.split(","))]
+        chosen, out = random.Random(20261024).sample(pool, args.dev), HERE.parent / "dataset_longmemeval_dev"
+        out.mkdir(exist_ok=True)
+    else:
+        chosen = sample(data, args.n, args.seed)
+        if args.types:
+            chosen = [q for q in chosen if q["question_type"] in args.types.split(",")]
 
     sessions, questions, users = [], [], {}
     for q in chosen:
@@ -80,11 +91,12 @@ def main() -> None:
                           "expected": str(q["answer"]), "must_not": []})
 
     note = ("LongMemEval-S (MIT), converted by build.py: one user per question, its haystack sessions, the question "
-            f"asked at question_date. Sample of {args.n} of 500, stratified by type, seed {args.seed}"
-            f"{f'; only {args.types} ({len(questions)})' if args.types else ''}.")
-    (HERE / "conversations.json").write_text(json.dumps(
+            + (f"asked at question_date. Dev set: {args.dev} {args.types or ''} questions outside the 100 sample, seed 20261024."
+               if args.dev else f"asked at question_date. Sample of {args.n} of 500, stratified by type, seed {args.seed}"
+               f"{f'; only {args.types} ({len(questions)})' if args.types else ''}."))
+    (out / "conversations.json").write_text(json.dumps(
         {"_note": note, "users": users, "sessions": sessions}, ensure_ascii=False, indent=1))
-    (HERE / "questions.json").write_text(json.dumps({"_note": note, "questions": questions}, ensure_ascii=False, indent=1))
+    (out / "questions.json").write_text(json.dumps({"_note": note, "questions": questions}, ensure_ascii=False, indent=1))
     print(f"{len(questions)} questions, {len(sessions)} sessions, "
           f"{sum(len(m['content']) for s in sessions for m in s['messages']) / 1e6:.1f} M chars")
     for q in questions:
