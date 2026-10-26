@@ -108,11 +108,10 @@ volta sola, le cancellazioni si propagano, nome, modo e genere seguono la piatta
 fonte viene imparata a parti, elencata e dimenticata, il richiamo via MCP porta l'utente e la conversazione. I controlli di tipo lì fanno fallire la build se questo contratto si
 allontana dagli schemi del servizio.
 
-## Copia sincronizzata (Arkimede)
-Arkimede usa ancora una copia dei sorgenti invece del pacchetto npm: `scripts/sync-to.sh <dir>` copia i sorgenti nel
-repository dell'host con un'intestazione che indica il commit di origine (Arkimede: `backend/src/recordare/client/`).
-L'host non li modifica mai; si cambia la libreria qui e si sincronizza di nuovo. Passare al pacchetto npm cambia solo
-gli import.
+## Host CommonJS
+Il pacchetto è solo ESM. Un host CommonJS (il backend NestJS di Arkimede) lo carica con `require`, che Node supporta per
+i moduli ES dalla 20.19 / 22.12; con TypeScript, `"module": "nodenext"` (5.8 o successivo) controlla i tipi di
+quell'import.
 
 ## Sviluppo
 `npm ci`, `npm run typecheck`, `npm test`, `npm run build` (Node ≥ 20).

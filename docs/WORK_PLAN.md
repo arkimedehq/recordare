@@ -274,7 +274,7 @@ connectors.
 Status (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b mostly done ((5), (10) done 2026-10-13, (6) on hold, (8) done with 5.7); 6.4 partial (unit tests; no recorded regression run) *(done 2026-10-18)*; 6.5 TODO *(done: (1)–(3) 2026-10-15, (4) 2026-10-16)*; D34's A-MEM
 toggle split and the notes copy Recordare → A-MEM TODO *(done 2026-10-13: `sharedMemoryEnabled` apart from
 `autoMemoryEnabled`; Diary copies by hand or by category rule, kept in step through the notes change feed)*; Arkimede still uses the synced copy of the client library, not
-the npm package. Of the order above, 4.7 (diary
+the npm package *(done 2026-10-26: Arkimede installs `@arkimedehq/recordare-client` 0.3.0; the copy and `sync-to.sh` removed)*. Of the order above, 4.7 (diary
 part), 6.3, 4.8, 6.6, 4.12, 4.10, 4.13, 4.14, the 8.7 follow-ups (2026-10-14, D51 included) 4.4c and 6.5 (2026-10-15/16) are done; next:
 6.6b (6) when resumed.
 
@@ -341,7 +341,7 @@ runs on some clients; the maintainer gives the final OK). Criteria, all required
    published the same day (`@arkimedehq/recordare-client`, `@arkimedehq/openclaw-recordare`; proxy image on GHCR).
 6. **What goes public together**: `arkimedehq/recordare` and `arkimedehq/recordare-atlas`; `@arkimedehq/recordare-client`
    on npm (Arkimede then installs it instead of the synced copy); Arkimede's integration through its own public mirror —
-   both repositories and the npm package are public; Arkimede's move to the npm package is TODO.
+   both repositories and the npm package are public; Arkimede's move to the npm package is TODO *(done 2026-10-26)*.
 Not required for v0.1: the public profile (holder login, OAuth), connectors (6.6), phases 2+ of the vision (the
 connectors shipped with v0.1 anyway).
 

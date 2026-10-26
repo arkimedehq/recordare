@@ -51,6 +51,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   and the other two write history as they should (migration `UnknownFactHistory`).
 - `provider_eval.py` (evaluation): runs with different tags on the same set no longer overwrite each other's summary.
 
+### Removed
+- **`packages/client/scripts/sync-to.sh`**: Arkimede installs `@arkimedehq/recordare-client` from npm instead of a
+  synced copy of its sources.
+
 ## [0.3.0] — 2026-10-17
 
 Memory **quality and control**: recall ranks by relevance, recurring habits, continuous listening in the room, forgetting

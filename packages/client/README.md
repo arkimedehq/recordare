@@ -104,10 +104,9 @@ Everything else is here, the same for every client.
 deletions propagate, the name, mode and gender follow the platform, own content is marked, a source is learned in
 parts, listed and forgotten, recall over MCP carries the user and the conversation. Type checks there fail the build when this contract drifts from the service's schemas.
 
-## Synced copy (Arkimede)
-Arkimede still uses a copy of the sources instead of the npm package: `scripts/sync-to.sh <dir>` copies them into a
-host repository with a header naming the source commit (Arkimede: `backend/src/recordare/client/`). The host never
-edits them; change the library here and sync again. Switching to the npm package only changes the imports.
+## CommonJS hosts
+The package is ESM only. A CommonJS host (Arkimede's NestJS backend) loads it with `require`, which Node supports for
+ES modules from 20.19 / 22.12; with TypeScript, `"module": "nodenext"` (5.8 or later) type-checks that import.
 
 ## Development
 `npm ci`, `npm run typecheck`, `npm test`, `npm run build` (Node ≥ 20).

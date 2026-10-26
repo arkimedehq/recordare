@@ -109,9 +109,8 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
   SDK, RFC 9457, Retry-After, W3C trace context); no host-specific code. Checks: `npm run typecheck`, `npm test` in
   `packages/client`; the conformance suite runs it against the service (`service/test/conformance`, needs `npm ci` in
   `packages/client` first).
-- Published on npm (0.3.0); Arkimede still uses a synced copy
-  (`packages/client/scripts/sync-to.sh ../personalAgent/backend/src/recordare/client`) until it switches to the
-  package: never edit the copy; change the library, sync, commit in both repos.
+- Published on npm (0.3.0); Arkimede installs the package (since 2026-10-26, no synced copy): a library change reaches
+  Arkimede through a new npm release (the maintainer publishes) and a version bump there.
 
 ## Connectors (`connectors/`)
 - Claude Code plugin, Codex (hooks + MCP installer), OpenClaw plugin (npm `@arkimedehq/openclaw-recordare`), Hermes

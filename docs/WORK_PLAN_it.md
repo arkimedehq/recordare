@@ -280,7 +280,8 @@ di entità), la 4.10, poi i connettori 6.6.
 Stato (2026-10-08): 6.1, 6.2, 6.3, 6.6, 6.7, 6.8, 6.9 done; 6.6b quasi completa ((5), (10) fatti 2026-10-13, (6) in sospeso, (8) fatto con la 5.7); 6.4 partial (test unitari; nessuna esecuzione di regressione registrata) *(fatta il 2026-10-18)*; 6.5 TODO *(fatta: (1)–(3) il 2026-10-15, (4) il 2026-10-16)*; la divisione dell'interruttore A-MEM di D34 e la copia delle note Recordare → A-MEM TODO *(fatte il
 2026-10-13: `sharedMemoryEnabled` separato da `autoMemoryEnabled`; il Diario copia a mano o con una regola per categoria,
 e il feed delle modifiche delle note tiene le copie allineate)*; Arkimede usa ancora la
-copia sincronizzata della libreria client, non il pacchetto npm.
+copia sincronizzata della libreria client, non il pacchetto npm *(fatto il 2026-10-26: Arkimede installa
+`@arkimedehq/recordare-client` 0.3.0; la copia e `sync-to.sh` rimossi)*.
 Dell'ordine qui sopra sono fatte la 4.7 (parte del diario), la 6.3, la 4.8, la 6.6, la 4.12, la 4.10, la 4.13, la 4.14, i seguiti
 della 8.7 (2026-10-14, D51 compresa), la 4.4c e la 6.5 (2026-10-15/16); prossima: la 6.6b (6) quando ripresa.
 
@@ -349,7 +350,7 @@ versione funzionante gira su alcuni client; l'OK finale è del maintainer). Crit
    pubblicato lo stesso giorno (`@arkimedehq/recordare-client`, `@arkimedehq/openclaw-recordare`; immagine del proxy su GHCR).
 6. **Cosa diventa pubblico insieme**: `arkimedehq/recordare` e `arkimedehq/recordare-atlas`; `@arkimedehq/recordare-client`
    su npm (Arkimede lo installa al posto della copia sincronizzata); l'integrazione di Arkimede tramite il suo mirror
-   pubblico — entrambi i repository e il pacchetto npm sono pubblici; il passaggio di Arkimede al pacchetto npm è TODO.
+   pubblico — entrambi i repository e il pacchetto npm sono pubblici; il passaggio di Arkimede al pacchetto npm è TODO *(fatto il 2026-10-26)*.
 Non richiesti per la v0.1: il profilo pubblico (login del titolare, OAuth), i connettori (6.6), le fasi 2+ della vision
 (i connettori sono comunque usciti con la v0.1).
 

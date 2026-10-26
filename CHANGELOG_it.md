@@ -55,6 +55,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   non cambia nulla, e gli altri due casi scrivono la storia come devono (migrazione `UnknownFactHistory`).
 - `provider_eval.py` (valutazione): run con tag diversi sullo stesso set non si sovrascrivono più il riepilogo.
 
+### Rimosso
+- **`packages/client/scripts/sync-to.sh`**: Arkimede installa `@arkimedehq/recordare-client` da npm invece di una
+  copia sincronizzata dei sorgenti.
+
 ## [0.3.0] — 2026-10-17
 
 **Qualità e controllo** della memoria: il richiamo ordina per pertinenza, abitudini ricorrenti, ascolto continuo nella
