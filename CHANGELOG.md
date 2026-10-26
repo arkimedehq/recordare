@@ -6,6 +6,16 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-26
+
+**Plans apart from facts, my own replies, cards and erasure**: a plan or a wish no longer becomes a fact or a done
+event, the recall finds again what the agent itself replied earlier, the service's own sentences follow the memory's
+language, the REST contract is published as OpenAPI, and two new controls — a card of who I am and of each contact, and
+erasing a whole memory (new scope `erase`). No breaking change: the API only grows; upgrade the service first (the
+migrations run at start-up), then the client library and the connectors. Quality (DeepSeek `deepseek-flash`,
+`spikes/memory-eval/RESULTS.md`): LongMemEval-S, a 100-question sample, 83.5 % (76.0 % before D30 and `extract.v19`;
+the whole history in the prompt 84.5 %), what the assistant said 0.82 (0.14); the blind sets within the noise of one run.
+
 ### Added
 - **Cards** (WORK_PLAN 8.13): `GET api/v1/cards` — who I am and a card per contact, from the current facts and notes
   (with their ids, aliases, the last mention), no LLM; library `cards(user)`. The memory context can open with the self
