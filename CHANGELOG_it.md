@@ -7,6 +7,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Schede** (WORK_PLAN 8.13): `GET api/v1/cards` — chi sono e una scheda per ogni contatto, dai fatti e dalle note
+  attuali (con i loro id, gli alias, l'ultima menzione), senza LLM; libreria `cards(user)`. Il contesto di memoria può
+  aprirsi con la scheda di sé (`POST api/v1/context {card: true}`, libreria `context(…, { card: true })`), spento di
+  default.
 - **Cancellare un'intera memoria** (WORK_PLAN 8.13): `DELETE api/v1/admin/memories/:id` e `DELETE api/v1/me` (nuovo
   scope `erase`, per una chiave client o un token personale, dato solo se richiesto), entrambe con `?confirm=` l'id della
   memoria; libreria `eraseMemory(user, memoryId)`. Tutto ciò che la memoria contiene se ne va in una sola transazione,

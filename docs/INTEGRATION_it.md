@@ -128,7 +128,9 @@ che è successo e cercato con `search_knowledge` (`API_it.md` §2, §3).
   blocco recintato da mettere in fondo al prompt di sistema (`API_it.md` §3, WORK_PLAN 5.7) — l'agente può rispondere
   senza chiamare uno strumento. `POST api/v1/context {ingest}` (scope `read` + `ingest`; nella libreria client
   `contextWithTurn`) salva il turno dell'utente e ne restituisce il contesto in una sola chiamata — una sola andata e
-  ritorno prima di ogni turno invece di due.
+  ritorno prima di ogni turno invece di due. `card: true` (nella libreria `context(…, { card: true })`) apre il blocco con
+  la scheda di sé, spento di default. Per una pagina del Diario, `GET api/v1/cards` (nella libreria `cards`) dà chi sono e
+  una scheda per ogni contatto, ogni riga collegata al suo dettaglio.
 - Strumenti: `search_episodes`, `search_memory` (fatti e note), `search_knowledge` (fonti apprese), `resolve_period`,
   `log_episode`, `correct_episode`, `forget_episode`, `remember`, `learn_source` (§3b). Una piattaforma che invia già ogni turno può lasciare fuori `log_episode` (i connettori
   lo fanno); schemi degli strumenti: `TOOLS` nella libreria client.

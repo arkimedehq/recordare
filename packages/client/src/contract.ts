@@ -340,6 +340,28 @@ export interface Source {
 }
 
 /** `POST api/v1/context`: the memories relevant to the message a host is about to answer (WORK_PLAN 5.7). */
+/** `POST api/v1/context` options. */
+export interface ContextOptions {
+  /** Open the block with the self card — who I am: current facts and notes about me. Off by default. */
+  card?: boolean;
+}
+
+/** `GET api/v1/cards`: a person as the memory knows them now (WORK_PLAN 8.13). */
+export interface Card {
+  personId: string;
+  name: string;
+  aliases: string[];
+  facts: Array<{ id: string; key: string; value: string | null; validFrom: string | null }>;
+  notes: Array<{ id: string; category: string; content: string; pinned: boolean; pattern: boolean }>;
+  /** The day of the latest episode about this contact (null for the self). */
+  lastMentioned: string | null;
+}
+
+export interface Cards {
+  self: Card;
+  contacts: Card[];
+}
+
 export interface MemoryContext {
   /** A fenced `<memory-context>` block to append to the prompt, or null (nothing relevant, or off). */
   block: string | null;

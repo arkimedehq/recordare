@@ -44,6 +44,16 @@ describe('RecordareClient', () => {
     expect(seen[0]?.headers).toMatchObject({ authorization: 'Bearer rk_test', 'x-recordare-user': 'u1', traceparent: '00-abc-def-01' });
   });
 
+  it('asks for the self card in the memory context and reads the cards', async () => {
+    reply = () => ({ status: 200, body: { block: null, items: 0 } });
+    await client().context('u1', 'chat-1', 'Che macchina ho?', { card: true });
+    expect(seen[0]).toMatchObject({ method: 'POST', path: '/api/v1/context', body: { query: 'Che macchina ho?', card: true } });
+    const self = { personId: 'o1', name: 'Andrea', aliases: [], facts: [], notes: [], lastMentioned: null };
+    reply = () => ({ status: 200, body: { self, contacts: [] } });
+    expect(await client().cards('u1')).toEqual({ self, contacts: [] });
+    expect(seen[1]).toMatchObject({ method: 'GET', path: '/api/v1/cards' });
+  });
+
   it('erases the memory with its id as confirmation', async () => {
     const erased = { conversations: 1, messages: 2, episodes: 1, facts: 0, notes: 0, digests: 0, sources: 0, contacts: 0 };
     reply = () => ({ status: 200, body: { erased } });

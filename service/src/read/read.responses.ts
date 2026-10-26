@@ -106,6 +106,18 @@ const note = z.object({
 
 export const notesResponse = z.array(note);
 
+const card = z.object({
+  personId: z.uuid(),
+  name: z.string(),
+  aliases: z.array(z.string()),
+  facts: z.array(z.object({ id: z.uuid(), key: z.string(), value: z.string().nullable(), validFrom: z.string().nullable() })),
+  notes: z.array(z.object({ id: z.uuid(), category: z.string(), content: z.string(), pinned: z.boolean(), pattern: z.boolean() })),
+  lastMentioned: z.string().nullable().describe('The day of the latest episode about this contact (null for the self).'),
+});
+
+export const cardsResponse = z.object({ self: card, contacts: z.array(card) })
+  .describe('Who I am and who my contacts are: current facts and notes, no LLM (WORK_PLAN 8.13).');
+
 export const noteDetailResponse = note.extend({
   status: z.enum(NOTE_STATUSES),
   supersedes: z.uuid().nullable(),

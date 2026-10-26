@@ -48,14 +48,14 @@ export type AnswersFitClient = Assert<Extends<[
   Answer<typeof read.noteDetailResponse>, Answer<typeof read.noteChangesResponse>['items'], Answer<typeof read.settingsResponse>,
   Answer<typeof read.usageResponse>, Answer<typeof read.exportResponse>, Answer<typeof api.contextResponse>, Answer<typeof api.meResponse>,
   Answer<typeof api.ingestResponse>, Answer<typeof api.roomResponse>, Answer<typeof api.learnSourceResponse>, Answer<typeof api.sourcesResponse>,
-  Answer<typeof api.linkCodeResponse>, Answer<typeof api.holderIdentitiesResponse>, Answer<typeof api.erasedResponse>,
+  Answer<typeof api.linkCodeResponse>, Answer<typeof api.holderIdentitiesResponse>, Answer<typeof api.erasedResponse>, Answer<typeof read.cardsResponse>,
 ], [
   { items: client.Episode[]; nextCursor: string | null }, client.EpisodeDetail, client.Digest[],
   client.Fact[], client.FactDetail, client.Note[],
   client.NoteDetail, client.NoteChange[], client.MemorySettings,
   client.Usage, client.ExportJob, client.MemoryContext, client.Me,
   client.IngestResult, client.RoomResult, client.LearnSourceResult, client.Source[],
-  client.LinkCode, client.HolderIdentities, client.Erased,
+  client.LinkCode, client.HolderIdentities, client.Erased, client.Cards,
 ]>>;
 
 describe('client conformance (packages/client against the service)', () => {

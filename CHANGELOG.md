@@ -7,6 +7,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ## [Unreleased]
 
 ### Added
+- **Cards** (WORK_PLAN 8.13): `GET api/v1/cards` — who I am and a card per contact, from the current facts and notes
+  (with their ids, aliases, the last mention), no LLM; library `cards(user)`. The memory context can open with the self
+  card (`POST api/v1/context {card: true}`, library `context(…, { card: true })`), off by default.
 - **Erasing a whole memory** (WORK_PLAN 8.13): `DELETE api/v1/admin/memories/:id` and `DELETE api/v1/me` (new scope
   `erase`, for a client key or a personal token, given only when asked for), both with `?confirm=` the memory's id;
   library `eraseMemory(user, memoryId)`. Everything the memory holds goes in one transaction, with no tombstone; the LLM

@@ -728,6 +728,26 @@ outside the 100 sample (`build.py --dev 25 --types multi-session` → `dataset_l
   known"), Instagram +100 turned cautious. The +0.5 overall is 9 verdicts flipping both ways, noise of one run.
 - The remaining multi-session misses are the answering model's arithmetic and caution, not missing memories.
 
+### Self card in the memory context (WORK_PLAN 8.13, 2026-10-26, `dataset_dev_context`, agent mode, DeepSeek direct, 1 run)
+
+`POST api/v1/context {card: true}` opens the block with "about me" lines from the current facts and notes about the self
+(no LLM, ≤ 600 characters; a relevant item the card shows is not repeated). `agent_eval.py`, variants on the same
+ingested memory (`extract.v19` only, 5 calls); ≈ 0.04 USD in all (agent, judge, engine), off-peak.
+
+| variant | accuracy | ctx-implicit (7) | rec-explicit (2) | gen-noharm (6) | tool use | block served |
+|---|---|---|---|---|---|---|
+| tools | 100 % | 1.00 | 1.00 | 1.00 | 9 / 15 | — |
+| tools+context | 100 % | 1.00 | 1.00 | 1.00 | 9 / 15 | 7 / 15 |
+| tools+context+card | 100 % | 1.00 | 1.00 | 1.00 | 7 / 15 | 15 / 15 |
+
+- At the ceiling on this set (DeepSeek flash called the tools on every personal question in all variants, as on
+  2026-10-07), so it cannot show a gain in answers. No harm: the card is served on the six unrelated questions too
+  (circle area, Python, Oslo…) and none of their answers brings in personal memories.
+- What changes: two personal questions answered from the card alone, without a tool call (ctx07 the favourite colour,
+  rec02 the shellfish allergy and no ibuprofen), so tool use falls from 9 to 7 of 15.
+- Stays **off by default** (`card` per request): to be measured with a less tool-eager model or a voice agent, where
+  saving a tool round matters.
+
 ### D30 — my own earlier replies in the recall (2026-10-21, DeepSeek direct off-peak, 1 run each)
 
 Recall-only change (`extract.v18` unchanged, every run single-version): `search_episodes` also searches my own earlier
