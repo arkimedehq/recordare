@@ -101,9 +101,10 @@ diario self-service.
 | `write` | §4 inserimenti manuali, correzioni, oblio (anche di una fonte appresa), modifiche di fatti / note |
 | `memory_settings` | `PATCH settings` (lingua, fuso orario, profilo di qualità) — mai le chiavi API dei client. v1: il token personale della memoria (l'admin usa `PATCH api/v1/admin/memories/:id`); public profile: sessioni del titolare / token creati dal titolare |
 | `export` | §4 job di export — v1: il token personale della memoria; public profile: solo sessioni del titolare, download con scadenza |
+| `erase` | `DELETE api/v1/me` — cancella l'intera memoria (WORK_PLAN 8.13); dato solo se richiesto, a una chiave client (una piattaforma che elimina gli account dei suoi utenti) o a un token personale |
 | `admin` | `api/v1/admin/…` (come costruito: solo la credenziale `ADMIN_API_KEY`; una chiave o un token che elenca `admin` non ottiene alcuna rotta admin) |
 
-Le chiavi client si creano solo con `ingest`, `mcp`, `read`, `write` (`POST api/v1/admin/clients/:id/keys {scopes}`);
+Le chiavi client si creano solo con `ingest`, `mcp`, `read`, `write`, `erase` (`POST api/v1/admin/clients/:id/keys {scopes}`);
 `admin`, `memory_settings` ed `export` non vengono mai dati a una chiave client.
 
 Chiavi e token: hash argon2id, mostrati una sola volta, prefisso visibile, rotazione tramite crea + revoca. Un
@@ -175,7 +176,9 @@ expiresAt}`; 409 `memory_not_personal`), `POST memories/:id/link-claims/:claim/c
 memories/:id/link-claims/:claim` (→ 204), `POST memories/:id/consolidate`,
 `POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; le rotte della console sono descritte lì). Le revoche hanno effetto subito (la cache delle
-credenziali viene svuotata). Non ancora costruita: la cancellazione totale (l'export della memoria è §4).
+credenziali viene svuotata). `DELETE memories/:id?confirm=<lo stesso id>` cancella l'intera memoria (WORK_PLAN 8.13) →
+`200 {erased: {conversations, messages, episodes, facts, notes, digests, sources, contacts}}`; 400 `confirm_mismatch`
+senza l'id corrispondente, 404 se la memoria non esiste (`DATA_MODEL_it.md` → oblio e cancellazione).
 
 ## 2. Ingest REST (task 1.2) — integrazione full
 
@@ -586,6 +589,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `DELETE api/v1/sources/{id}` | write | Dimenticare una fonte (come `DELETE api/v1/ingest/sources/{externalId}`; `404` per un id che non è di questa memoria) (costruito) |
 | `GET api/v1/me` | read | Per chi agisce la richiesta: `{memoryId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, quando l'atlas è installato) (`mode` `entity` = una memoria condivisa: il client lo comunica ai suoi utenti) (con una chiave client: la memoria dell'account dietro `X-Recordare-User`, auto-provisionata se il client lo consente; `via` `client \| memory_token`) |
 | `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (una chiave client con `X-Recordare-User`, oppure il token personale della memoria — per un host senza account utente; 8.7) | Le impostazioni della memoria provenienti dalla piattaforma: il nome segue l'utente del client (sincronizzazione a ogni rinomina); `mode` `personal \| entity` (D50) solo finché la memoria non ha episodi, fatti o note → altrimenti 409 `memory_not_empty` (l'admin può comunque cambiarlo); `gender` `masculine \| feminine \| neutral` (la prima persona, dal profilo dell'account) in qualsiasi momento |
+| `DELETE api/v1/me?confirm=<memoryId>` | erase (una chiave client con `X-Recordare-User`, oppure il token personale) | Cancella l'intera memoria, subito e per sempre (WORK_PLAN 8.13): il `memoryId` di `GET api/v1/me` conferma quale → `200 {erased: {…conteggi}}` come la rotta admin; 400 `confirm_mismatch`; 404 per un utente del client senza memoria (non ne viene creata una) |
 | `POST api/v1/me/link-codes` | ingest (una chiave client con `X-Recordare-User`, oppure il token personale) | D51: un codice monouso che il titolare invia da un canale → `201 {code, expiresAt}` (`RCD-XXXX-XXXX`, base32 di Crockford, 10 min, un solo uso; un nuovo codice annulla quello non usato; salvato come hash); solo memorie personali, altrimenti 409 `memory_not_personal` |
 | `GET api/v1/me/identities` | read | D51: `{linked: [{id, channel, client, externalId, linkedAt}], pending: [{id, channel, client, externalId, displayName, claimedAt}]}` — le identità che parlano come "io" e le richieste (7 giorni) in attesa di conferma |
 | `POST api/v1/me/identities/pending/{id}/confirm`, `DELETE api/v1/me/identities/pending/{id}` | ingest | Conferma (quell'identità viene legata al sé della memoria, verificata — un legame a un contatto viene spostato; i messaggi precedenti mantengono la loro attribuzione) o rifiuta una richiesta → 204 (404 sconosciuta / scaduta) |

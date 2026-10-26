@@ -94,9 +94,10 @@ self-service diary.
 | `write` | §4 manual entries, corrections, forgetting (a learned source included), fact / note edits |
 | `memory_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: the memory's personal token (the admin uses `PATCH api/v1/admin/memories/:id`); public profile: holder sessions / holder-created tokens |
 | `export` | §4 export jobs — v1: the memory's personal token; public profile: holder sessions only, expiring download |
+| `erase` | `DELETE api/v1/me` — erase the whole memory (WORK_PLAN 8.13); given only when asked for, to a client key (a platform deleting its users' accounts) or a personal token |
 | `admin` | `api/v1/admin/…` (as built: only the `ADMIN_API_KEY` credential; a key or token listing `admin` gets no admin route) |
 
-Client keys are created with `ingest`, `mcp`, `read`, `write` only (`POST api/v1/admin/clients/:id/keys {scopes}`);
+Client keys are created with `ingest`, `mcp`, `read`, `write`, `erase` only (`POST api/v1/admin/clients/:id/keys {scopes}`);
 `admin`, `memory_settings` and `export` are never given to a client key.
 
 Keys and tokens: argon2id hashes, shown once, visible prefix, rotation by create + revoke. A
@@ -165,7 +166,9 @@ expiresAt}`; 409 `memory_not_personal`), `POST memories/:id/link-claims/:claim/c
 memories/:id/link-claims/:claim` (→ 204), `POST memories/:id/consolidate`,
 `POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; the console routes are described there). Revocations take effect at once (the credential
-cache is cleared). Not built yet: full erasure (the memory export is §4).
+cache is cleared). `DELETE memories/:id?confirm=<the same id>` erases the whole memory (WORK_PLAN 8.13) → `200 {erased:
+{conversations, messages, episodes, facts, notes, digests, sources, contacts}}`; 400 `confirm_mismatch` without the
+matching id, 404 when there is no such memory (`DATA_MODEL.md` → forgetting and deletion).
 
 ## 2. REST ingest (task 1.2) — full integration
 
@@ -568,6 +571,7 @@ account sees all of it (D48).
 | `DELETE api/v1/sources/{id}` | write | Forget a source (as `DELETE api/v1/ingest/sources/{externalId}`; `404` for an id that is not this memory's) (built) |
 | `GET api/v1/me` | read | Who the request acts for: `{memoryId, displayName, mode, gender, atlasUrl?, via, scopes}` (`atlasUrl`: `ATLAS_URL`, when the atlas is installed) (`mode` `entity` = a shared memory: the client tells its users so) (with a client key: the memory of the account behind `X-Recordare-User`, auto-provisioned if the client allows it; `via` `client \| memory_token`) |
 | `PATCH api/v1/me {displayName?, mode?, gender?}` | ingest (a client key with `X-Recordare-User`, or the memory's personal token — for a host without user accounts; 8.7) | The memory's settings from the platform: the name follows the client's user (sync on every rename); `mode` `personal \| entity` (D50) only while the memory has no episode, fact or note → else 409 `memory_not_empty` (the admin can still change it); `gender` `masculine \| feminine \| neutral` (first person, from the account's profile) any time |
+| `DELETE api/v1/me?confirm=<memoryId>` | erase (a client key with `X-Recordare-User`, or the personal token) | Erases the whole memory, at once and for good (WORK_PLAN 8.13): `memoryId` from `GET api/v1/me` confirms which → `200 {erased: {…counts}}` as the admin route; 400 `confirm_mismatch`; 404 for a client user without a memory (none is created) |
 | `POST api/v1/me/link-codes` | ingest (a client key with `X-Recordare-User`, or the personal token) | D51: a one-time code for the holder to send from a channel → `201 {code, expiresAt}` (`RCD-XXXX-XXXX`, Crockford base32, 10 min, one use; a new code cancels the unused one; stored hashed); personal memories only, else 409 `memory_not_personal` |
 | `GET api/v1/me/identities` | read | D51: `{linked: [{id, channel, client, externalId, linkedAt}], pending: [{id, channel, client, externalId, displayName, claimedAt}]}` — the identities that speak as "I" and the claims (7 days) waiting for confirmation |
 | `POST api/v1/me/identities/pending/{id}/confirm`, `DELETE api/v1/me/identities/pending/{id}` | ingest | Confirm (that identity is bound to the memory's self, verified — a binding to a contact is moved; earlier messages keep their attribution) or reject a claim → 204 (404 unknown / expired) |

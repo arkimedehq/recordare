@@ -653,6 +653,15 @@ superseded. A fact or a note keeps the evidence it has elsewhere.
   by overlap as a period search, with their correction chains; raw messages by `sent_at`; with `keepRaw` the messages
   stay but are hidden from the chat search, never extracted again and support nothing (an episode they alone told goes);
   the `period` tombstone keeps a later extraction from writing an episode dated in it.
+- **Erase a whole memory** (WORK_PLAN 8.13, maintainer's decision 2026-10-26; `DELETE api/v1/admin/memories/{id}` or
+  `DELETE api/v1/me`, both with `?confirm=` the memory's id): a memory does not forget everything about someone, it
+  dies. One transaction deletes the holder's person row and, by `ON DELETE CASCADE`, the memory and all it holds —
+  contacts, identities, tokens, link codes, conversations, messages and revisions, episodes, facts, notes and their
+  evidence, digests, sources and passages, tombstones, exports, extraction runs, the recall log. No tombstone is left:
+  no message remains to extract again. `llm_calls` keep their rows with `memory_id` null (tokens and cost, no content).
+  It first waits for a consolidation or an extraction running on the memory (their advisory locks); jobs queued later
+  find nothing. Memories about someone else inside a memory are forgotten one item at a time with the tools above —
+  never a bulk "forget everything about Marta".
 - **Delete a message / conversation** (client request): purge raw rows and revisions; for every
   episode / fact / note citing it, **drop the evidence row**; a row left without evidence is deleted (built 2026-10-12);
   no re-extraction (it could rewrite memories).

@@ -48,14 +48,14 @@ export type AnswersFitClient = Assert<Extends<[
   Answer<typeof read.noteDetailResponse>, Answer<typeof read.noteChangesResponse>['items'], Answer<typeof read.settingsResponse>,
   Answer<typeof read.usageResponse>, Answer<typeof read.exportResponse>, Answer<typeof api.contextResponse>, Answer<typeof api.meResponse>,
   Answer<typeof api.ingestResponse>, Answer<typeof api.roomResponse>, Answer<typeof api.learnSourceResponse>, Answer<typeof api.sourcesResponse>,
-  Answer<typeof api.linkCodeResponse>, Answer<typeof api.holderIdentitiesResponse>,
+  Answer<typeof api.linkCodeResponse>, Answer<typeof api.holderIdentitiesResponse>, Answer<typeof api.erasedResponse>,
 ], [
   { items: client.Episode[]; nextCursor: string | null }, client.EpisodeDetail, client.Digest[],
   client.Fact[], client.FactDetail, client.Note[],
   client.NoteDetail, client.NoteChange[], client.MemorySettings,
   client.Usage, client.ExportJob, client.MemoryContext, client.Me,
   client.IngestResult, client.RoomResult, client.LearnSourceResult, client.Source[],
-  client.LinkCode, client.HolderIdentities,
+  client.LinkCode, client.HolderIdentities, client.Erased,
 ]>>;
 
 describe('client conformance (packages/client against the service)', () => {
@@ -150,6 +150,16 @@ describe('client conformance (packages/client against the service)', () => {
        SELECT o.person_id, 'preference', 'x', 'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[o.person_id] FROM memories o
        JOIN external_identities i ON i.person_id = o.person_id WHERE i.external_id = 'user-1'`);
     await expect(rc.updateMe('user-1', { mode: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);
+  });
+
+  it('erases a user\'s whole memory with a key that has the erase scope', async () => {
+    const key = (await call(url, 'POST', `/api/v1/admin/clients/${clientId}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read', 'erase'] } })).body.key;
+    const eraser = new RecordareClient({ baseUrl: url, apiKey: key });
+    await eraser.ingest('user-erase', { conversation: { externalId: 'c' }, messages: [{ externalId: 'm', role: 'user', content: 'ciao', sentAt: '2026-10-01T10:00:00Z' }] });
+    const { memoryId } = await eraser.me('user-erase');
+    await expect(rc.eraseMemory('user-erase', memoryId)).rejects.toMatchObject({ status: 403 });
+    expect((await eraser.eraseMemory('user-erase', memoryId)).erased).toMatchObject({ conversations: 1, messages: 1 });
+    expect(await db().query(`SELECT count(*)::int AS n FROM memories WHERE person_id = $1`, [memoryId])).toEqual([{ n: 0 }]);
   });
 
   it('links the holder\'s channel identity by one-time code and confirmation (D51)', async () => {

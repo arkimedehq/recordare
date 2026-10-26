@@ -69,6 +69,11 @@ export const meResponse = z.object({
   scopes: z.array(z.string()),
 });
 
+export const erasedResponse = z.object({
+  erased: z.object({ conversations: z.number().int(), messages: z.number().int(), episodes: z.number().int(), facts: z.number().int(),
+    notes: z.number().int(), digests: z.number().int(), sources: z.number().int(), contacts: z.number().int() }),
+});
+
 export const linkCodeResponse = z.object({ code: z.string(), expiresAt: z.string() });
 
 export const holderIdentitiesResponse = z.object({

@@ -679,6 +679,16 @@ conserva l'evidenza che ha altrove.
   `sent_at`; con `keepRaw` i messaggi restano ma sono nascosti alla ricerca nelle chat, mai più estratti e non sostengono
   nulla (un episodio raccontato solo da loro sparisce); il tombstone `period` impedisce a un'estrazione successiva di
   scrivere un episodio datato in esso.
+- **Cancellare un'intera memoria** (WORK_PLAN 8.13, decisione del maintainer 2026-10-26; `DELETE
+  api/v1/admin/memories/{id}` oppure `DELETE api/v1/me`, entrambe con `?confirm=` l'id della memoria): una memoria non
+  dimentica tutto di qualcuno, muore. Una sola transazione cancella la riga persona del titolare e, con `ON DELETE
+  CASCADE`, la memoria e tutto ciò che contiene — contatti, identità, token, codici di collegamento, conversazioni,
+  messaggi e revisioni, episodi, fatti, note e le loro evidenze, digest, fonti e passaggi, tombstone, export, esecuzioni
+  di estrazione, il registro dei richiami. Non resta alcuna tombstone: non rimane nessun messaggio da estrarre di nuovo.
+  `llm_calls` tiene le sue righe con `memory_id` nullo (token e costi, nessun contenuto). Prima aspetta un consolidamento
+  o un'estrazione in corso sulla memoria (i loro advisory lock); i job accodati dopo non trovano nulla. I ricordi di
+  qualcun altro dentro una memoria si dimenticano un elemento alla volta con gli strumenti qui sopra — mai un "dimentica
+  tutto di Marta" in blocco.
 - **Cancellare un messaggio / conversazione** (richiesta del client): purge delle righe grezze e delle revisioni; per ogni
   episodio / fatto / nota che lo cita, **si elimina la riga di evidenza**; una riga rimasta senza evidenza viene cancellata (costruito 2026-10-12);
   nessuna ri-estrazione (potrebbe riscrivere i ricordi).

@@ -9,6 +9,7 @@ import { ProblemDetailsFilter } from '../common/problem-details.filter';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { MemoryResolver } from './memory-resolver.service';
+import { MemoryErasure } from '../identity/memory-erasure.service';
 
 @Global()
 @Module({
@@ -16,9 +17,10 @@ import { MemoryResolver } from './memory-resolver.service';
   providers: [
     AuthService,
     MemoryResolver,
+    MemoryErasure,
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
   ],
-  exports: [AuthService, MemoryResolver],
+  exports: [AuthService, MemoryResolver, MemoryErasure],
 })
 export class AuthModule {}

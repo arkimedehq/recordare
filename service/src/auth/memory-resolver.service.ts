@@ -37,6 +37,15 @@ export class MemoryResolver {
     }
   }
 
+  /** As resolve, never provisioning: 404 for a client user without a memory. */
+  async existing(principal: Principal, externalUserId: string | undefined): Promise<string> {
+    if (principal.kind === 'memory_token') return principal.memoryId;
+    if (principal.kind !== 'client' || !externalUserId) throw new NotFoundException();
+    const known = await this.lookup(principal.clientId, externalUserId);
+    if (known === undefined) throw new NotFoundException();
+    return known;
+  }
+
   /** Memory id for a client user id; undefined when unknown; 404 when bound to a non-memory. */
   private async lookup(clientId: string, externalUserId: string): Promise<string | undefined> {
     const identity = await this.db.getRepository(ExternalIdentity).findOne({

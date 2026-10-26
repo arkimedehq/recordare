@@ -6,9 +6,11 @@ import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { ConsolidationService } from '../engine/consolidation.service';
+import { z } from 'zod';
 import { ZodBody } from '../common/zod-body.pipe';
 import { Returns } from '../common/returns';
-import { adminList, adminObject, keyResponse, linkCodeResponse, tokenResponse } from '../openapi/responses';
+import { adminList, adminObject, erasedResponse, keyResponse, linkCodeResponse, tokenResponse } from '../openapi/responses';
+import { eraseQuery, MemoryErasure } from '../identity/memory-erasure.service';
 import { AdminService } from './admin.service';
 import {
   createClientSchema, createIdentitySchema, createKeySchema, createMemorySchema, createTokenSchema, updateClientSchema, updateMemorySchema,
@@ -21,6 +23,7 @@ export class AdminController {
   constructor(
     private readonly admin: AdminService,
     private readonly consolidation: ConsolidationService,
+    private readonly erasure: MemoryErasure,
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
@@ -118,6 +121,13 @@ export class AdminController {
   patterns(@Param('id', ParseUUIDPipe) id: string, @Headers('x-recordare-now') at?: string) {
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
     return this.consolidation.patternsNow(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
+  }
+
+  /** Erases the whole memory (`?confirm=` its id): everything it holds, at once and for good (WORK_PLAN 8.13). */
+  @Delete('memories/:id')
+  @Returns(erasedResponse)
+  async erase(@Param('id', ParseUUIDPipe) id: string, @Query(new ZodBody(eraseQuery)) q: z.infer<typeof eraseQuery>) {
+    return { erased: await this.erasure.erase(id, q.confirm) };
   }
 
   @Post('memories/:id/tokens')

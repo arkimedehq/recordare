@@ -36,6 +36,11 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   library's `PersonDirectory` keeps the name and the gender in sync with the profile on every lookup. `GET
   api/v1/me` returns `mode` and `gender` (show a shared memory as such) and `atlasUrl` when Recordare Atlas is installed
   (link it for your admins only: it shows every person's activity).
+- **Erasing a user's memory** (WORK_PLAN 8.13): when you delete an account, or the user asks, `DELETE
+  api/v1/me?confirm=<memoryId>` (library `eraseMemory(user, memoryId)`) erases their whole memory at once and for good.
+  It needs a key with the `erase` scope (the admin gives it only when asked: keep it on the key of your account
+  deletion path). Stop sending that user's messages first: with `autoProvision` a later ingest starts a new, empty
+  memory. Memories about someone else are never erased in bulk: forget them one by one (§4).
 - **Two kinds of identity** (D50, WORK_PLAN 8.3): `X-Recordare-User` is an **account** identity — it opens the memory of
   that user's account. A participant's `identity` in an ingest (`{externalUserId}` for one of your users, `{channel,
   externalId}` for a channel id) is a **participant** identity — it names a contact *inside the memory being written*

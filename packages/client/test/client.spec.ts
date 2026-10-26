@@ -44,6 +44,13 @@ describe('RecordareClient', () => {
     expect(seen[0]?.headers).toMatchObject({ authorization: 'Bearer rk_test', 'x-recordare-user': 'u1', traceparent: '00-abc-def-01' });
   });
 
+  it('erases the memory with its id as confirmation', async () => {
+    const erased = { conversations: 1, messages: 2, episodes: 1, facts: 0, notes: 0, digests: 0, sources: 0, contacts: 0 };
+    reply = () => ({ status: 200, body: { erased } });
+    expect(await client().eraseMemory('u1', 'o1')).toEqual({ erased });
+    expect(seen[0]).toMatchObject({ method: 'DELETE', path: '/api/v1/me?confirm=o1' });
+  });
+
   it('maps a refused mode change to MemoryNotEmptyError and problem details to RecordareHttpError', async () => {
     reply = () => ({ status: 409, body: { type: 'about:blank', title: 'Conflict', status: 409, code: 'memory_not_empty' } });
     await expect(client().updateMe('u1', { mode: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);

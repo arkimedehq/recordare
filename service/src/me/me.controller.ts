@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { Body, ConflictException, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, ConflictException, Controller, Delete, ForbiddenException, Get, Headers, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { z } from 'zod';
@@ -10,7 +10,8 @@ import { MemoryResolver, USER_HEADER } from '../auth/memory-resolver.service';
 import { type Principal } from '../auth/principal';
 import { ZodBody } from '../common/zod-body.pipe';
 import { Returns } from '../common/returns';
-import { holderIdentitiesResponse, linkCodeResponse, meResponse } from '../openapi/responses';
+import { erasedResponse, holderIdentitiesResponse, linkCodeResponse, meResponse } from '../openapi/responses';
+import { eraseQuery, MemoryErasure } from '../identity/memory-erasure.service';
 import { type Env } from '../config/env';
 import { MEMORY_GENDERS, MEMORY_MODES } from '../identity/identity.entities';
 import { confirmClaim, createLinkCode, holderIdentities, rejectClaim, unlinkHolderIdentity } from '../identity/holder-links';
@@ -26,7 +27,10 @@ const settingsSchema = z.object({
 /** Who am I acting as: lets a client verify its credential and memory mapping. */
 @Controller('api/v1/me')
 export class MeController {
-  constructor(private readonly memories: MemoryResolver, private readonly db: DataSource, private readonly config: ConfigService<Env, true>) {}
+  constructor(
+    private readonly memories: MemoryResolver, private readonly db: DataSource, private readonly config: ConfigService<Env, true>,
+    private readonly erasure: MemoryErasure,
+  ) {}
 
   @Get()
   @RequireScopes('read')
@@ -71,6 +75,19 @@ export class MeController {
       if (body.gender) await tx.query(`UPDATE memories SET gender = $1 WHERE person_id = $2`, [body.gender, memoryId]);
       if (body.displayName) await tx.query(`UPDATE persons SET display_name = $1 WHERE id = $2`, [body.displayName, memoryId]);
     });
+  }
+
+  /**
+   * Erases the whole memory (`?confirm=` its id, from `GET me`): a platform deleting one of its users' accounts, or the
+   * holder with a personal token. Needs the `erase` scope, given only when asked for; never creates the memory it erases.
+   */
+  @Delete()
+  @RequireScopes('erase')
+  @Returns(erasedResponse)
+  async erase(@CurrentPrincipal() principal: Principal, @Headers(USER_HEADER) user: string | undefined,
+    @Query(new ZodBody(eraseQuery)) q: z.infer<typeof eraseQuery>) {
+    if (principal.kind === 'admin') throw new ForbiddenException();
+    return { erased: await this.erasure.erase(await this.memories.existing(principal, user), q.confirm) };
   }
 
   /**
