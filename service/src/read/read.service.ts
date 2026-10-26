@@ -14,6 +14,7 @@ import { localDate, periodEnd, type Precision, zonedMidnight, addDays } from '..
 import { toOrTsQuery } from '../rawlog/rawlog-search.service';
 import { confirmPending } from '../engine/pending';
 import { type NoteCategory, type NoteChangeKind, type NoteStatus } from './read.responses';
+import { buildCards, type Cards } from '../recall/cards';
 
 export type PlanStatus = 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
 
@@ -246,6 +247,12 @@ export class ReadService {
         history: rs.map((r) => ({ id: r.id, value: r.value, from: day(r.valid_from), to: day(r.valid_to), status: r.status })),
       }];
     });
+  }
+
+  async cards(memoryId: string): Promise<Cards> {
+    const cards = await buildCards(this.db, memoryId);
+    if (!cards) throw new NotFoundException();
+    return cards;
   }
 
   async notes(memoryId: string, query: { category?: string; pinned?: boolean; includePending?: boolean }) {

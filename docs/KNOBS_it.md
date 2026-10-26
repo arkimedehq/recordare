@@ -41,6 +41,7 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `MAX_REQUEST_BYTES` | 16 MB (16 777 216) | Corpo JSON più grande accettato in una richiesta (≥ 100 000); oltre → `413` `payload_too_large`. Una fonte appresa più grande arriva a parti (`learnSource` invia parti da 4 MB, `SOURCE_PART_BYTES`); nessun limite per fonte né per memoria (WORK_PLAN 8.9) |
 | `IDLE_DELAY_SECONDS` | 900 | Silenzio prima che una conversazione venga estratta (un nuovo messaggio fa ripartire l'attesa) |
 | `CONTEXT_MIN_FACT_SIMILARITY`, `…_EPISODE_…`, `…_PLAN_…`, `…_PERIOD_…` | 0.50, 0.55, 0.45, 0.35 | Contesto di memoria (`POST api/v1/context`): similarità minima per fatti e note, episodi, piani imminenti, episodi di un periodo nominato. Soglie più basse (0.45 / 0.48 / 0.42) misurate: nessun guadagno (RESULTS 5.7) |
+| `card` (corpo di `POST api/v1/context`) | false | La scheda di sé in cima al contesto di memoria (WORK_PLAN 8.13; circa 150 token in più). Non ancora misurato |
 | `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Contesto di memoria: similarità minima per l'unico passaggio di una fonte appresa che può contenere (tagliato a 300 caratteri, `- learned (from «titolo»): …`; WORK_PLAN 8.9). Primo valore, da misurare |
 | `CONSOLIDATION_SCHEDULE` | on | Consolidamento notturno automatico, preceduto dall'estrazione dei messaggi rimasti in attesa (4.1); off = solo su richiesta (valutazioni) |
 | `CONSOLIDATION_HOUR` | 3 | Ora locale (fuso della persona) dopo la quale gira la notte |

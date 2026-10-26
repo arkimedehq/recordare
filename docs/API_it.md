@@ -505,7 +505,10 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 `ALLOW_CLOCK_OVERRIDE` è impostato — test e valutazioni). Nessun LLM. Parametri `now?` / `locale?`: non costruiti.
 
 ### Contesto di memoria prima del turno (WORK_PLAN 5.7) — costruito
-`POST api/v1/context {query?, ingest?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
+`POST api/v1/context {query?, ingest?, card?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
+`card: true` apre il blocco con la scheda di sé (WORK_PLAN 8.13: righe "about me" dai fatti e dalle note attuali su di sé,
+circa 150 token in più, nell'ordine di `GET api/v1/cards`; un elemento pertinente già nella scheda non viene ripetuto);
+spento di default.
 `ingest` (il corpo di `POST api/v1/ingest/messages`, serve anche lo scope `ingest`) salva prima il turno e risponde per
 quella conversazione, con `query` che per default è il suo ultimo messaggio dell'utente — una sola andata e ritorno prima
 di ogni turno invece di due (`400` quando non ci sono né una `query` né un messaggio dell'utente; `403` per `ingest`
@@ -579,6 +582,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Fatti in sospeso (D20) |
 | `GET api/v1/plans?status` | read | Piani aperti / irrisolti |
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true` (D26: della memoria stessa, nulla da confermare) |
+| `GET api/v1/cards` | read | Chi sono e chi sono i miei contatti (WORK_PLAN 8.13), senza LLM: `{self, contacts}`, ognuno `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — i fatti e le note attuali e confermati su quella persona (prima le note fissate, poi per supporto), i contatti nominati più di recente per primi; ogni id apre il suo dettaglio (`GET api/v1/facts/{id}`, `notes/{id}`) con le evidenze |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Gestire le note |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed per i client che tengono copie (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | lingua, fuso orario, profilo di qualità |

@@ -112,7 +112,9 @@ searched with `search_knowledge` (`API.md` §2, §3).
 - Optional, per agent: `POST api/v1/context {query}` before an answer returns the relevant memories as a fenced
   block for the end of the system prompt (`API.md` §3, WORK_PLAN 5.7) — the agent may answer without a tool call.
   `POST api/v1/context {ingest}` (scopes `read` + `ingest`; client library `contextWithTurn`) stores the user's turn
-  and returns its context in one call — one round trip before each turn instead of two.
+  and returns its context in one call — one round trip before each turn instead of two. `card: true` (library
+  `context(…, { card: true })`) opens the block with the self card, off by default. For a Diary page, `GET api/v1/cards`
+  (library `cards`) gives who I am and a card per contact, each line linked to its detail.
 - Tools: `search_episodes`, `search_memory` (facts and notes), `search_knowledge` (learned sources), `resolve_period`,
   `log_episode`, `correct_episode`, `forget_episode`, `remember`, `learn_source` (§3b). A platform that already ingests every turn may leave `log_episode` out (the
   connectors do); tool schemas: `TOOLS` in the client library.

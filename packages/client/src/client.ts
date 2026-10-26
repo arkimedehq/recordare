@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import {
-  CONVERSATION_HEADER, type Digest, type Episode, type Erased, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
+  type Cards, type ContextOptions, CONVERSATION_HEADER, type Digest, type Episode, type Erased, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
   type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
@@ -136,18 +136,18 @@ export class RecordareClient {
   /**
    * The memories relevant to `query` (the message about to be answered) as a fenced block to append to the prompt — or
    * null. Append it at the end of the system prompt (it changes every turn: keep the stable part first for prompt
-   * caching); never store it as a chat message.
+   * caching); never store it as a chat message. `card`: open it with the self card (who I am), off by default.
    */
-  context(user: string, conversation: string, query: string): Promise<MemoryContext> {
-    return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { query }, headers: { [CONVERSATION_HEADER]: conversation } });
+  context(user: string, conversation: string, query: string, opts: ContextOptions = {}): Promise<MemoryContext> {
+    return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { query, ...opts }, headers: { [CONVERSATION_HEADER]: conversation } });
   }
 
   /**
    * Stores the turn and returns the memory context for it in one round trip (needs the `ingest` and `read` scopes):
    * the context is computed for the ingested conversation, from `query` or else the turn's last user message.
    */
-  contextWithTurn(user: string, turn: IngestRequest, query?: string): Promise<MemoryContext> {
-    return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { ingest: turn, ...(query ? { query } : {}) } });
+  contextWithTurn(user: string, turn: IngestRequest, query?: string, opts: ContextOptions = {}): Promise<MemoryContext> {
+    return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { ingest: turn, ...(query ? { query } : {}), ...opts } });
   }
 
   /** The conversation ended (session closed, /new): extraction runs now. A conversation Recordare never had is done. */
@@ -232,6 +232,11 @@ export class RecordareClient {
 
   facts(user: string, query: { key?: string; asOf?: string; includePending?: boolean } = {}): Promise<Fact[]> {
     return this.http.request('GET', `api/v1/facts${qs(query)}`, { user });
+  }
+
+  /** Who I am and who my contacts are: current facts and notes of the self and of each contact (no LLM). */
+  cards(user: string): Promise<Cards> {
+    return this.http.request<Cards>('GET', 'api/v1/cards', { user });
   }
 
   notes(user: string, query: { category?: Note['category']; pinned?: boolean; includePending?: boolean } = {}): Promise<Note[]> {

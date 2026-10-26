@@ -490,7 +490,9 @@ synonyms); Monday-based weeks, the memory's timezone; "now" is the server clock 
 `ALLOW_CLOCK_OVERRIDE` is set — tests and evaluations). No LLM. `now?` / `locale?` parameters: not built.
 
 ### Pre-turn memory context (WORK_PLAN 5.7) — built
-`POST api/v1/context {query?, ingest?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
+`POST api/v1/context {query?, ingest?, card?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
+`card: true` opens the block with the self card (WORK_PLAN 8.13: "about me" lines from the current facts and notes about
+the self, ≈ 150 tokens more, in `GET api/v1/cards` order; a relevant item the card shows is not repeated); off by default.
 `ingest` (the body of `POST api/v1/ingest/messages`, scope `ingest` too) stores the turn first and answers for that
 conversation, `query` defaulting to its last user message — one round trip before each turn instead of two (`400` when
 there is neither a `query` nor a user message; `403` for `ingest` without the `ingest` scope). With a personal token, a conversation not stored yet counts as
@@ -561,6 +563,7 @@ account sees all of it (D48).
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Pending facts (D20) |
 | `GET api/v1/plans?status` | read | Open / unresolved plans |
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34); recurring patterns are notes with `pattern: true` (D26: the memory's own, nothing to confirm) |
+| `GET api/v1/cards` | read | Who I am and who my contacts are (WORK_PLAN 8.13), no LLM: `{self, contacts}`, each `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — the current, confirmed facts and notes about that person (pinned notes first, then by support), contacts most recently mentioned first; each id opens its detail (`GET api/v1/facts/{id}`, `notes/{id}`) with the evidence |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Manage notes |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed for clients keeping copies (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | locale, timezone, quality profile |

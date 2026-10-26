@@ -22,7 +22,7 @@ import { QUALITY_PROFILES } from '../engine/quality-profile';
 import { ExportsService } from './exports.service';
 import {
   createdResponse, digestsResponse, episodeDetailResponse, episodesResponse, exportResponse, factDetailResponse, factsResponse, forgetPeriodResponse,
-  noteChangesResponse, noteDetailResponse, notesResponse, plansResponse, settingsResponse, usageResponse,
+  cardsResponse, noteChangesResponse, noteDetailResponse, notesResponse, plansResponse, settingsResponse, usageResponse,
 } from './read.responses';
 import { ReadService } from './read.service';
 import { SettingsService } from './settings.service';
@@ -292,6 +292,15 @@ export class ReadController {
   async rejectNote(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('id', ParseUUIDPipe) id: string) {
     const { memoryId } = await this.who(p, user);
     await this.read.decide(memoryId, 'notes', id, false);
+  }
+
+  /** Who I am and who my contacts are (WORK_PLAN 8.13): current facts and notes, no LLM. */
+  @Get('cards')
+  @RequireScopes('read')
+  @Returns(cardsResponse)
+  async cards(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined) {
+    const { memoryId } = await this.who(p, user);
+    return this.read.cards(memoryId);
   }
 
   @Get('plans')

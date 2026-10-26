@@ -27,6 +27,8 @@ const contextSchema = z.object({
    * before each turn instead of two; the conversation is then the one ingested.
    */
   ingest: ingestSchema.optional(),
+  /** Open the block with the self card — who I am: current facts and notes about me (WORK_PLAN 8.13). Off by default. */
+  card: z.boolean().optional(),
 });
 
 /** `POST api/v1/context` — the pre-turn memory context for the message a host is about to answer (WORK_PLAN 5.7). */
@@ -65,7 +67,7 @@ export class ContextController {
     const ctx = await this.conversations.resolve(principal, memoryId, conversation);
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
     const now = override && !Number.isNaN(override.getTime()) ? override : this.clock.now();
-    return this.context.build(memoryId, query.trim().slice(0, 8_000), ctx.conversationId, now);
+    return this.context.build(memoryId, query.trim().slice(0, 8_000), ctx.conversationId, now, { card: body.card });
   }
 }
 
