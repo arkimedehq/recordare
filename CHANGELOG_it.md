@@ -6,6 +6,17 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.4.0] — 2026-10-26
+
+**I piani separati dai fatti, le mie risposte, le schede e la cancellazione**: un piano o un desiderio non diventa più un
+fatto o un evento compiuto, il richiamo ritrova ciò che l'agente stesso ha risposto prima, le frasi del servizio seguono
+la lingua della memoria, il contratto REST è pubblicato come OpenAPI, e due nuovi controlli — una scheda di chi sono e
+di ogni contatto, e la cancellazione di un'intera memoria (nuovo scope `erase`). Nessuna modifica incompatibile: l'API
+cresce soltanto; aggiorna prima il servizio (le migrazioni partono all'avvio), poi la libreria client e i connettori.
+Qualità (DeepSeek `deepseek-flash`, `spikes/memory-eval/RESULTS.md`): LongMemEval-S, un campione di 100 domande,
+83,5 % (76,0 % prima di D30 e di `extract.v19`; tutta la cronologia nel prompt 84,5 %), ciò che ha detto l'assistente
+0,82 (0,14); i set ciechi entro il rumore di una run.
+
 ### Aggiunto
 - **Schede** (WORK_PLAN 8.13): `GET api/v1/cards` — chi sono e una scheda per ogni contatto, dai fatti e dalle note
   attuali (con i loro id, gli alias, l'ultima menzione), senza LLM; libreria `cards(user)`. Il contesto di memoria può
