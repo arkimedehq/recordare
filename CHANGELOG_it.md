@@ -6,6 +6,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Corretto
+- Modificare, cancellare o chiudere una conversazione per un utente senza memoria non ne crea più una vuota
+  (`autoProvision`): risponde 404 come per una conversazione sconosciuta, così una cancellazione tardiva non riporta in
+  vita una memoria cancellata.
+
 ## [0.4.0] — 2026-10-26
 
 **I piani separati dai fatti, le mie risposte, le schede e la cancellazione**: un piano o un desiderio non diventa più un

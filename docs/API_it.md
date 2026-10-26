@@ -60,7 +60,9 @@ dei dati.
 
 ### Autenticazione del titolare (public profile)
 **v1**: le memorie sono create dall'admin (`POST api/v1/admin/memories`), oppure auto-provisionate alla prima richiesta
-di un client che lo consente (`autoProvision`, con il nome dell'id utente del client finché il client non le rinomina);
+di un client che lo consente (`autoProvision`, con il nome dell'id utente del client finché il client non le rinomina;
+modificare, cancellare o chiudere una conversazione non crea mai una memoria: 404 per un utente senza memoria, come per una
+conversazione sconosciuta);
 i token personali e i collegamenti di identità sono gestiti tramite l'API admin (e la
 sua console, §6) — come costruito nessuna rotta permette a un personal token di cambiarli; non esistono pagine
 del titolare. Il consolidamento notturno si avvia da solo (`CONSOLIDATION_HOUR`, fuso orario della memoria); `POST api/v1/admin/memories/:id/consolidate` lo esegue subito (rispetta `X-Recordare-Now` dove consentito); `POST api/v1/admin/memories/:id/review-facts` esegue subito la sola revisione dei fatti (WORK_PLAN 5.6, stesso lock del consolidamento); `POST api/v1/admin/memories/:id/patterns` esegue subito il solo passaggio dei pattern ricorrenti, qualunque sia il profilo (WORK_PLAN 5.4, stesso lock; → `{calls, written, retired, failed}`). Profilo di qualità (D35): `qualityProfile` `economy | balanced | full` alla creazione della memoria /

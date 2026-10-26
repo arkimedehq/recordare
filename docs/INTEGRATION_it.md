@@ -45,7 +45,8 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   api/v1/me?confirm=<memoryId>` (libreria `eraseMemory(user, memoryId)`) cancella la sua intera memoria, subito e per
   sempre. Serve una chiave con lo scope `erase` (l'admin lo dà solo se richiesto: tienilo sulla chiave del percorso di
   eliminazione degli account). Prima smetti di inviare i messaggi di quell'utente: con `autoProvision` un ingest successivo
-  crea una memoria nuova e vuota. I ricordi di qualcun altro non si cancellano mai in blocco: si dimenticano uno alla
+  crea una memoria nuova e vuota (modifiche, cancellazioni e chiusure arrivate dopo no: rispondono 404, che la libreria
+  tratta come già fatto). I ricordi di qualcun altro non si cancellano mai in blocco: si dimenticano uno alla
   volta (§4).
 - **Due tipi di identità** (D50, WORK_PLAN 8.3): `X-Recordare-User` è un'identità di **account** — apre la memoria
   dell'account di quell'utente. L'`identity` di un partecipante in un ingest (`{externalUserId}` per uno dei propri

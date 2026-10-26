@@ -6,6 +6,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Fixed
+- Editing, deleting or ending a conversation for a user without a memory no longer creates an empty one (`autoProvision`):
+  it answers 404 like an unknown conversation, so a late deletion never brings an erased memory back.
+
 ## [0.4.0] — 2026-10-26
 
 **Plans apart from facts, my own replies, cards and erasure**: a plan or a wish no longer becomes a fact or a done

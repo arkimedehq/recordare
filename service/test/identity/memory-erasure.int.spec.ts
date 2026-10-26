@@ -94,6 +94,13 @@ describe('erasing a whole memory (WORK_PLAN 8.13)', () => {
     expect(res.status).toBe(200);
     expect(res.body.erased.messages).toBe(1);
     expect(await left(c)).toEqual({});
+
+    // A late edit, deletion or end from the platform finds nothing, and never brings the memory back as an empty one.
+    expect((await call(url, 'PATCH', '/api/v1/ingest/conversations/chat/messages/a', { ...as(plainKey, 'u-c'), body: { content: 'x' } })).status).toBe(404);
+    expect((await call(url, 'DELETE', '/api/v1/ingest/conversations/chat/messages/a', as(plainKey, 'u-c'))).status).toBe(404);
+    expect((await call(url, 'POST', '/api/v1/ingest/conversations/chat/end', as(plainKey, 'u-c'))).status).toBe(404);
+    expect((await call(url, 'DELETE', '/api/v1/ingest/conversations/chat', as(plainKey, 'u-c'))).status).toBe(404);
+    expect((await db.query(`SELECT count(*)::int AS n FROM external_identities WHERE external_id = 'u-c'`))[0].n).toBe(0);
   });
 
   it('a personal token with the erase scope erases its own memory, and stops working', async () => {

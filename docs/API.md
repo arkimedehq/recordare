@@ -54,7 +54,8 @@ migration.
 
 ### Holder authentication (public profile)
 **v1**: memories are created by the admin (`POST api/v1/admin/memories`), or auto-provisioned at a client's first
-request when that client allows it (`autoProvision`, named after the client's user id until the client renames them);
+request when that client allows it (`autoProvision`, named after the client's user id until the client renames them;
+editing, deleting or ending a conversation never provisions: 404 for a user without a memory, like an unknown conversation);
 personal tokens and identity bindings are managed through the admin API (and its console,
 §6) — as built no route lets a personal token change them; there are no holder pages. Nightly consolidation runs on its own (`CONSOLIDATION_HOUR`, the memory's timezone); `POST api/v1/admin/memories/:id/consolidate` runs it now (honours `X-Recordare-Now` where allowed); `POST api/v1/admin/memories/:id/review-facts` runs the facts review alone now (WORK_PLAN 5.6, same lock as the consolidation); `POST api/v1/admin/memories/:id/patterns` runs the recurring-pattern pass alone now, whatever the profile (WORK_PLAN 5.4, same lock; → `{calls, written, retired, failed}`). Quality profile (D35): `qualityProfile` `economy | balanced | full` on memory create /
 `PATCH api/v1/admin/memories/:id` (`null` = the installation default `QUALITY_PROFILE`, `balanced` unless set). The same

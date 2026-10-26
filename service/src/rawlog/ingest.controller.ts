@@ -51,14 +51,14 @@ export class IngestController {
     @CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
     @Param('conv') conv: string, @Param('msg') msg: string, @Body(new ZodBody(editMessageSchema)) body: { content: string },
   ): Promise<void> {
-    const { clientId, memoryId } = await this.scope(p, user);
+    const { clientId, memoryId } = await this.scope(p, user, false);
     await this.ingestion.edit(clientId, memoryId, conv, msg, body.content);
   }
 
   @Delete('conversations/:conv/messages/:msg')
   @HttpCode(202)
   async deleteMessage(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('conv') conv: string, @Param('msg') msg: string): Promise<void> {
-    const { clientId, memoryId } = await this.scope(p, user);
+    const { clientId, memoryId } = await this.scope(p, user, false);
     await this.ingestion.deleteMessage(clientId, memoryId, conv, msg);
   }
 
@@ -66,20 +66,24 @@ export class IngestController {
   @Post('conversations/:conv/end')
   @HttpCode(202)
   async end(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('conv') conv: string): Promise<void> {
-    const { clientId, memoryId } = await this.scope(p, user);
+    const { clientId, memoryId } = await this.scope(p, user, false);
     await this.ingestion.end(clientId, memoryId, conv);
   }
 
   @Delete('conversations/:conv')
   @HttpCode(202)
   async deleteConversation(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined, @Param('conv') conv: string): Promise<void> {
-    const { clientId, memoryId } = await this.scope(p, user);
+    const { clientId, memoryId } = await this.scope(p, user, false);
     await this.ingestion.deleteConversation(clientId, memoryId, conv);
   }
 
-  /** Ingest acts for a client: client keys name the memory; personal tokens ingest for their memory. */
-  private async scope(p: Principal, user: string | undefined): Promise<{ clientId: string; memoryId: string }> {
+  /**
+   * Ingest acts for a client: client keys name the memory; personal tokens ingest for their memory. Only new messages
+   * provision a memory: editing, deleting or ending a conversation of a user without one is a 404, like an unknown
+   * conversation (nothing to change), so a late deletion never brings an erased memory back as an empty one.
+   */
+  private async scope(p: Principal, user: string | undefined, provision = true): Promise<{ clientId: string; memoryId: string }> {
     if (p.kind === 'admin') throw new ForbiddenException();
-    return { clientId: p.clientId, memoryId: await this.memories.resolve(p, user) };
+    return { clientId: p.clientId, memoryId: await (provision ? this.memories.resolve(p, user) : this.memories.existing(p, user)) };
   }
 }
