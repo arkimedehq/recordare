@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import {
-  CONVERSATION_HEADER, type Digest, type Episode, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
+  CONVERSATION_HEADER, type Digest, type Episode, type Erased, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
   type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
@@ -48,6 +48,14 @@ export class RecordareClient {
       if (err instanceof RecordareHttpError && err.status === 409) throw new MemoryNotEmptyError();
       throw err;
     }
+  }
+
+  /**
+   * Erases the whole memory behind `user`, at once and for good (needs the `erase` scope): everything it holds goes.
+   * `memoryId` (from `me`) confirms which memory; a user without a memory answers 404, none is created.
+   */
+  eraseMemory(user: string, memoryId: string): Promise<Erased> {
+    return this.http.request<Erased>('DELETE', `api/v1/me${qs({ confirm: memoryId })}`, { user });
   }
 
   /** A one-time code for the holder to send from a channel (D51; personal memories only, else 409). */

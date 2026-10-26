@@ -23,9 +23,12 @@ export const updateClientSchema = z.object({
   disabled: z.boolean().optional(),
 });
 
-/** Client keys never carry `admin`, `memory_settings` or `export` (installation-level powers stay with the admin). */
+/**
+ * Client keys never carry `admin`, `memory_settings` or `export` (installation-level powers stay with the admin);
+ * `erase` lets the platform erase its users' memories (e.g. when it deletes an account).
+ */
 export const createKeySchema = z.object({
-  scopes: z.array(z.enum(['ingest', 'mcp', 'read', 'write'])).min(1),
+  scopes: z.array(z.enum(['ingest', 'mcp', 'read', 'write', 'erase'])).min(1),
 });
 
 export const createMemorySchema = z.object({

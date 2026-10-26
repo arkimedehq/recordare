@@ -38,6 +38,8 @@ await rc.ingestRoom({ conversation: { externalId: 'kitchen-1' }, recipients: ['u
   messages: [{ externalId: 'k1', speakerRef: 'c', content: 'Mi hanno preso in squadra!', sentAt: new Date().toISOString() }] });
 // Modo (solo finché la memoria è vuota, altrimenti MemoryNotEmptyError) e genere della prima persona, dal profilo.
 await rc.updateMe('user-42', { gender: 'feminine' });
+// L'account viene eliminato: si cancella l'intera memoria (una chiave con lo scope erase; l'id della memoria conferma quale).
+await rc.eraseMemory('user-42', (await rc.me('user-42')).memoryId);
 
 // Richiamo: una sessione MCP per utente E conversazione (prove delle scritture, il turno corrente), entrambi fissati nel codice.
 const tools = await rc.mcp.listTools('user-42', 'chat-1'); // gli strumenti dell'agente nascono da questi schemi

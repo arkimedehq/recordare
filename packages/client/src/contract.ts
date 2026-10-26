@@ -37,6 +37,11 @@ export interface Me {
   scopes: string[];
 }
 
+/** `DELETE api/v1/me`: what erasing the whole memory took, by kind. */
+export interface Erased {
+  erased: { conversations: number; messages: number; episodes: number; facts: number; notes: number; digests: number; sources: number; contacts: number };
+}
+
 /** `PATCH api/v1/me`: the person's settings from their platform. */
 export interface MeSettings {
   /** Follows the platform's profile: send it again whenever the user renames themselves. */

@@ -5,7 +5,8 @@
 import { Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
 import { type QualityProfileName } from '../engine/quality-profile';
 
-export const SCOPES = ['ingest', 'mcp', 'read', 'write', 'memory_settings', 'export', 'admin'] as const;
+/** `erase`: erase the whole memory (WORK_PLAN 8.13) — given only when asked for, to a client key or a personal token. */
+export const SCOPES = ['ingest', 'mcp', 'read', 'write', 'memory_settings', 'export', 'erase', 'admin'] as const;
 export type Scope = (typeof SCOPES)[number];
 
 /**

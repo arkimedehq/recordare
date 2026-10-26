@@ -7,6 +7,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **Cancellare un'intera memoria** (WORK_PLAN 8.13): `DELETE api/v1/admin/memories/:id` e `DELETE api/v1/me` (nuovo
+  scope `erase`, per una chiave client o un token personale, dato solo se richiesto), entrambe con `?confirm=` l'id della
+  memoria; libreria `eraseMemory(user, memoryId)`. Tutto ciò che la memoria contiene se ne va in una sola transazione,
+  senza tombstone; il registro delle chiamate LLM tiene le sue righe senza la memoria. I ricordi di qualcun altro si
+  dimenticano uno alla volta, mai in blocco.
 - **OpenAPI** (API.md): `GET api/v1/openapi.json`, senza autenticazione — il contratto REST come OpenAPI 3.1, generato
   dalle rotte: percorsi, scope (`x-recordare-scopes`), parametri di percorso e di query e corpi delle richieste dagli
   schemi zod che li validano, le risposte JSON dagli schemi di risposta delle rotte (`@Returns`; quelle dell'admin e di

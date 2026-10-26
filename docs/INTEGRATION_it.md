@@ -41,6 +41,12 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   client tiene nome e genere allineati al profilo a ogni lookup. `GET api/v1/me` restituisce `mode` e
   `gender` (mostrare una memoria condivisa come tale) e `atlasUrl` quando Recordare Atlas è installato (collegarlo solo
   per i propri amministratori: mostra l'attività di ogni persona).
+- **Cancellare la memoria di un utente** (WORK_PLAN 8.13): quando elimini un account, o l'utente lo chiede, `DELETE
+  api/v1/me?confirm=<memoryId>` (libreria `eraseMemory(user, memoryId)`) cancella la sua intera memoria, subito e per
+  sempre. Serve una chiave con lo scope `erase` (l'admin lo dà solo se richiesto: tienilo sulla chiave del percorso di
+  eliminazione degli account). Prima smetti di inviare i messaggi di quell'utente: con `autoProvision` un ingest successivo
+  crea una memoria nuova e vuota. I ricordi di qualcun altro non si cancellano mai in blocco: si dimenticano uno alla
+  volta (§4).
 - **Due tipi di identità** (D50, WORK_PLAN 8.3): `X-Recordare-User` è un'identità di **account** — apre la memoria
   dell'account di quell'utente. L'`identity` di un partecipante in un ingest (`{externalUserId}` per uno dei propri
   utenti, `{channel, externalId}` per un id di canale) è un'identità di **partecipante** — nomina un contatto *dentro la

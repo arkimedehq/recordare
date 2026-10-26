@@ -7,6 +7,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ## [Unreleased]
 
 ### Added
+- **Erasing a whole memory** (WORK_PLAN 8.13): `DELETE api/v1/admin/memories/:id` and `DELETE api/v1/me` (new scope
+  `erase`, for a client key or a personal token, given only when asked for), both with `?confirm=` the memory's id;
+  library `eraseMemory(user, memoryId)`. Everything the memory holds goes in one transaction, with no tombstone; the LLM
+  call log keeps its rows without the memory. Memories about someone else are forgotten one by one, never in bulk.
 - **OpenAPI** (API.md): `GET api/v1/openapi.json`, no authentication — the REST contract as OpenAPI 3.1, generated from
   the routes: paths, scopes (`x-recordare-scopes`), path and query parameters and request bodies from the zod schemas
   that validate them, the JSON answers from the routes' response schemas (`@Returns`; the admin and Atlas answers are
