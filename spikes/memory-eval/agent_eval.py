@@ -7,7 +7,8 @@ decides by itself whether to call them — as a real client's agent does. Varian
   tools          tools only (today's behaviour)
   tools+context  the same, plus the `<memory-context>` block Recordare serves for the question (`POST api/v1/context`),
                  appended to the system prompt
-Both variants answer every question of the same ingested memory; the judge is the usual one.
+  tools+context+card  the same block opened with the self card (`card: true`, WORK_PLAN 8.13)
+Every variant answers every question of the same ingested memory; the judge is the usual one.
 
   EVAL_DATASET=dataset_dev_context uv run python agent_eval.py [--variants tools,tools+context]
 """
@@ -54,8 +55,8 @@ async def mcp_call(token: str, now: str, name: str, args: dict) -> str:
     return "\n".join(c.text for c in res.content if getattr(c, "type", "") == "text") or "{}"
 
 
-def memory_context(token: str, question: dict) -> tuple[str | None, int]:
-    r = httpx.post(f"{URL}/api/v1/context", json={"query": question["q"]}, timeout=60,
+def memory_context(token: str, question: dict, card: bool = False) -> tuple[str | None, int]:
+    r = httpx.post(f"{URL}/api/v1/context", json={"query": question["q"], **({"card": True} if card else {})}, timeout=60,
                    headers={"authorization": f"Bearer {token}", "x-recordare-now": question["asked_at"]})
     r.raise_for_status()
     body = r.json()
@@ -71,11 +72,11 @@ def system_prompt(question: dict) -> str:
     return SYSTEM.replace("TODAY", today)
 
 
-def run_agent(question: dict, token: str, tools: list[dict], with_context: bool) -> dict:
+def run_agent(question: dict, token: str, tools: list[dict], with_context: bool, card: bool = False) -> dict:
     system = system_prompt(question)
     items = 0
     if with_context:
-        block, items = memory_context(token, question)
+        block, items = memory_context(token, question, card)
         if block:
             system = f"{system}\n\n{block}"
     messages: list[dict] = [{"role": "system", "content": system}, {"role": "user", "content": question["q"]}]
@@ -128,7 +129,7 @@ def main() -> None:
     results: dict[str, list[dict]] = defaultdict(list)
     for q in questions:
         for v in variants:
-            out = run_agent(q, token, tools, with_context=v == "tools+context")
+            out = run_agent(q, token, tools, with_context=v.startswith("tools+context"), card=v == "tools+context+card")
             verdict = judge(q, out["answer"])
             results[v].append({"id": q["id"], "category": q["category"], **out, "verdict": verdict.get("verdict"), "reason": verdict.get("reason")})
             print(f"{q['id']} {v:14s} [{verdict.get('verdict'):>7s}] calls={out['calls']} ctx_items={out['items']}\n"
