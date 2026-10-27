@@ -6,6 +6,16 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-10-27
+
+**Private memories**: a person can keep what they said between themselves and the agent — by a flag from the client
+(a message, or a whole chat) or in their own words ("keep it between us") — and every read follows it: a private
+memory is told only to whoever it belongs to and, in a personal memory, to the holder; the admin reads everything (D52).
+No breaking change: the API only grows; upgrade the service first (the migration `PrivateMessages` runs at start-up),
+then the client library and the connectors. Quality (DeepSeek `deepseek-flash`, `spikes/memory-eval/RESULTS.md`): the
+blind sets within the noise of one run (blind12 95.4 %, blind5 90.7 %, entity blind11 95.0 %), no message made private
+on them by mistake.
+
 ### Added
 - Private messages (D52, first step): `private` on a message or a whole request (`conversation.private`); the agent's
   reply and tool turns after it follow, for the same person; `PATCH …/messages/{id} {private}` (library

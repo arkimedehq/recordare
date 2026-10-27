@@ -37,7 +37,7 @@ export interface SessionKinds {
   isSubagent: (key: string | undefined) => boolean;
 }
 
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 const TOOL_TIMEOUT_MS = 20_000;
 /**
  * Background retries of captured messages: 16 attempts, waits doubling from 2 s up to an hour (jittered) — about 2–5
