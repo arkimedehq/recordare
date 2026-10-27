@@ -84,7 +84,10 @@ the platform's UI; `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`,
 `correctFact`, `correctNote` keep the wrong version as history. `noteChanges` is the change feed for a platform keeping a
 copy of the notes (pass `next` back as `since`). `settings`, `usage` read the memory's settings and the LLM calls spent on
 it; `updateSettings` and the export (`startExport` → `exportJob` → `exportArchive`) need the memory's personal token
-(scopes `memory_settings`, `export`; pass `user` empty).
+(scopes `memory_settings`, `export`; pass `user` empty). Private memories (D52): a private item carries `private: {by}`
+(whose it is) where the reader may see it — the holder of a personal memory; in an entity memory the account reads the
+public ones and `privateItems(user)` lists the private ones without their content (forget one with `forgetEpisode` /
+`delete`).
 
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,

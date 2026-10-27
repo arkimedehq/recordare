@@ -774,7 +774,9 @@ salvo ciò che viene dichiarato privato**.
   **ogni** messaggio dietro di lui è privato di qualcun altro — ciò che è stato detto apertamente almeno una volta resta
   pubblico (altrimenti un fatto pubblico che Marta ripete in privato sparirebbe per tutti); una correzione mantiene la
   privacy di ciò che corregge; chi legge è l'autore dell'ultimo turno di una persona nella conversazione (come
-  `speakerOf`), ma chi non è identificato legge solo il pubblico, anche in una memoria personale.
+  `speakerOf`), ma chi non è identificato legge solo il pubblico, anche in una memoria personale. Poi i segni nel Diario
+  (`private: {by}` sugli elementi, `GET api/v1/private` per una memoria entity) e il diario e gli schemi solo dai ricordi
+  pubblici (un cambio di privacy riscrive i suoi giorni). Resta: la regola nell'estrazione (passo 4).
 
 ## Questioni aperte (da discutere)
 

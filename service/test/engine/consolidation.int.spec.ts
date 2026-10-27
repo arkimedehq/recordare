@@ -121,6 +121,27 @@ describe('nightly consolidation (M5): day and month digests', () => {
     await client.close();
   });
 
+  it('writes the diary from public memories only (D52)', async () => {
+    const [{ id: clientId }] = await db.query(`SELECT id FROM clients LIMIT 1`);
+    const at = '2026-03-17T10:00:00+01:00';
+    const [conv] = await db.query(`INSERT INTO conversations (memory_id, client_id, external_id, started_at, last_message_at)
+      VALUES ($1, $2, 'priv', $3, $3) RETURNING id`, [memoryId, clientId, at]);
+    const message = async (id: string, content: string, hush: boolean) => (await db.query(
+      `INSERT INTO messages (conversation_id, memory_id, external_id, role, author_kind, attribution_method, content, content_hash, sent_at, private, private_owner_id)
+       VALUES ($1, $2, $3, 'user', 'self', 'account', $4, '\\x00', $5, $6, $7) RETURNING id`,
+      [conv.id, memoryId, id, content, at, hush, hush ? memoryId : null]))[0].id as string;
+    const swim = await episode('Ho nuotato in piscina', at);
+    const exam = await episode('Ho fatto un esame medico', '2026-03-17T11:00:00+01:00');
+    await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2), ($3, $4)`,
+      [swim, await message('o', 'Ho nuotato', false), exam, await message('h', 'Ho fatto un esame medico', true)]);
+    llm.queue.push({ summary: 'Il 17 ho nuotato.' }, { summary: 'Marzo: calcetto, corsa, nuoto.' });
+    const before = llm.requests.length;
+    await consolidate();
+    const sent = JSON.stringify(llm.requests.slice(before));
+    expect(sent).toContain('Ho nuotato in piscina');
+    expect(sent).not.toContain('esame medico');
+  });
+
   async function connectMemory(): Promise<{ client: Client }> {
     const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), { requestInit: { headers: { authorization: `Bearer ${token}` } } });
     const client = new Client({ name: 'test', version: '1' });

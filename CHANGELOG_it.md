@@ -13,7 +13,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   §1): raccontato solo a chi appartiene — chi parla nell'ultimo turno della conversazione — e al titolare di una memoria
   personale; in una memoria entity l'account legge solo il pubblico. Episodi, fatti e note seguono i loro messaggi
   (nascosti solo quando ogni messaggio dietro di loro è privato di qualcun altro); una correzione mantiene la privacy di
-  ciò che corregge.
+  ciò che corregge. L'API di lettura segna gli elementi privati (`private: {by}`) e `GET api/v1/private` (libreria
+  `privateItems`) li elenca senza contenuto per il Diario di una memoria entity; il diario e gli schemi ricorrenti si
+  scrivono solo dai ricordi pubblici.
 
 ### Corretto
 - Modificare, cancellare o chiudere una conversazione per un utente senza memoria non ne crea più una vuota

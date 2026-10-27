@@ -750,7 +750,9 @@ from others; D50's "no viewer filter" stays the default: **everything is public 
   building: an item is hidden only when **every** message behind it is private to someone else — what was said in the
   open at least once stays public (otherwise a public fact Marta repeats in private would vanish for everyone); a
   correction keeps the privacy of what it corrects; the reader is the author of the conversation's latest person's turn
-  (as `speakerOf`), but someone unidentified reads the public only, in a personal memory too.
+  (as `speakerOf`), but someone unidentified reads the public only, in a personal memory too. Then the Diary marks
+  (`private: {by}` on items, `GET api/v1/private` for an entity memory) and the diary and patterns from public memories
+  only (a privacy change rewrites its days). Left: the extraction rule (step 4).
 
 ## Open questions (to discuss)
 

@@ -28,6 +28,7 @@ import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
 import { PatternsService } from './patterns.service';
 import { PATTERNS_VERSION } from './patterns.prompt';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
+import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { resolveNearDuplicates } from './episode-resolver';
 import { expireClarifications } from './clarifications';
 import { subjectLabel } from './subjects';
@@ -110,6 +111,7 @@ export class ConsolidationService {
         undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }), this.config.get('PATTERNS', { infer: true }));
       // Same event told twice where no check could see both (5.3): resolved before the diary is written from them.
       report.duplicates = await this.resolveUnseen(memoryId, ctx, profile, report);
+      // The diary is read by anyone the memory talks to: written from public memories only (D52).
       const episodes: EpisodeRow[] = await this.db.query(
         `SELECT e.id, e.kind, e.content, e.occurred_at, e.occurred_until, e.date_precision, e.plan_status,
                 (SELECT (r.occurred_at AT TIME ZONE $2)::date::text FROM episodes r WHERE r.id = e.rescheduled_to) AS rescheduled_to_day,
@@ -119,7 +121,7 @@ export class ConsolidationService {
          FROM episodes e
          WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
            AND NOT (e.author_role = 'other' AND e.stance = 'inferred') AND e.occurred_at IS NOT NULL AND e.occurred_at < $3
-           AND e.date_precision IN ('day', 'approximate', 'month')
+           AND e.date_precision IN ('day', 'approximate', 'month') AND ${episodeVisible('e', PUBLIC_ONLY)}
          ORDER BY e.occurred_at, e.id`, [memoryId, tz, now]);
 
       // Group by local day (multi-day items on each day) and month-only items by month.

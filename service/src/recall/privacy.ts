@@ -62,23 +62,41 @@ function evidenceVisible(from: string, r: Reader): string {
   return `NOT (EXISTS (SELECT 1 ${from} AND ${hidden('pm', r)}) AND NOT EXISTS (SELECT 1 ${from} AND NOT ${hidden('pm', r)}))`;
 }
 
-/** SQL predicate: the episode `e` (an alias or the table name) may be told to the reader. */
-export function episodeVisible(e: string, r: Reader): string {
-  return evidenceVisible(`FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id WHERE pv.episode_id = ${e}.id`, r);
+export type Kind = 'episodes' | 'facts' | 'notes';
+
+/** The messages behind an item of `kind` (alias `a`), as `pm`: directly, or for facts and notes through an episode. */
+function evidence(kind: Kind, a: string): string {
+  if (kind === 'episodes') return `FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id WHERE pv.episode_id = ${a}.id`;
+  const [table, column] = kind === 'facts' ? ['fact_evidence', 'fact_id'] : ['note_evidence', 'note_id'];
+  return `FROM ${table} pv JOIN messages pm ON pm.id = pv.message_id
+    OR pm.id IN (SELECT pe.message_id FROM episode_evidence pe WHERE pe.episode_id = pv.episode_id) WHERE pv.${column} = ${a}.id`;
 }
 
-/** Facts and notes rest on messages directly or through an episode. */
-function itemVisible(table: 'fact_evidence' | 'note_evidence', column: 'fact_id' | 'note_id', alias: string, r: Reader): string {
-  return evidenceVisible(`FROM ${table} pv JOIN messages pm ON pm.id = pv.message_id
-    OR pm.id IN (SELECT pe.message_id FROM episode_evidence pe WHERE pe.episode_id = pv.episode_id) WHERE pv.${column} = ${alias}.id`, r);
+/** SQL predicate: the item of `kind` (an alias or the table name) may be told to the reader. */
+export function visible(kind: Kind, a: string, r: Reader): string {
+  return evidenceVisible(evidence(kind, a), r);
+}
+
+/** SQL predicate: the episode `e` (an alias or the table name) may be told to the reader. */
+export function episodeVisible(e: string, r: Reader): string {
+  return visible('episodes', e, r);
 }
 
 /** SQL predicate: the fact `f` (an alias or the table name) may be told to the reader. */
 export function factVisible(f: string, r: Reader): string {
-  return itemVisible('fact_evidence', 'fact_id', f, r);
+  return visible('facts', f, r);
 }
 
 /** SQL predicate: the note `n` (an alias or the table name) may be told to the reader. */
 export function noteVisible(n: string, r: Reader): string {
-  return itemVisible('note_evidence', 'note_id', n, r);
+  return visible('notes', n, r);
+}
+
+/**
+ * SQL expression: null when the item is public; else the names of whose private thing it is (a person nobody
+ * identified gives no name) — the Diary's mark (D52).
+ */
+export function privateBy(kind: Kind, a: string): string {
+  return `CASE WHEN ${visible(kind, a, PUBLIC_ONLY)} THEN NULL ELSE ARRAY(SELECT DISTINCT (SELECT o.display_name FROM persons o
+    WHERE o.id = pm.private_owner_id) ${evidence(kind, a)} AND pm.private AND pm.private_owner_id IS NOT NULL) END`;
 }

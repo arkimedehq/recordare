@@ -61,6 +61,12 @@ describe('RecordareClient', () => {
     expect(seen[0]).toMatchObject({ method: 'DELETE', path: '/api/v1/me?confirm=o1' });
   });
 
+  it('lists the private memories without their content (D52)', async () => {
+    reply = () => ({ status: 200, body: [{ kind: 'episode', id: 'e1', by: ['Marta'], recordedAt: '2026-10-27T10:00:00Z' }] });
+    expect(await client().privateItems('u1')).toEqual([{ kind: 'episode', id: 'e1', by: ['Marta'], recordedAt: '2026-10-27T10:00:00Z' }]);
+    expect(seen[0]).toMatchObject({ method: 'GET', path: '/api/v1/private' });
+  });
+
   it('makes a message private or public again (D52)', async () => {
     reply = () => ({ status: 204 });
     await client().setMessagePrivate('u1', 'chat 1', 'm/1', true);

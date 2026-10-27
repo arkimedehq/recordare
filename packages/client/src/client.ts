@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import {
-  type Cards, type ContextOptions, CONVERSATION_HEADER, type Digest, type Episode, type Erased, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
+  type Cards, type ContextOptions, type PrivateItem, CONVERSATION_HEADER, type Digest, type Episode, type Erased, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
   type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
@@ -245,6 +245,11 @@ export class RecordareClient {
   /** Who I am and who my contacts are: current facts and notes of the self and of each contact (no LLM). */
   cards(user: string): Promise<Cards> {
     return this.http.request<Cards>('GET', 'api/v1/cards', { user });
+  }
+
+  /** The private memories (D52): that they exist and whose they are, never their content; forget one with its delete. */
+  privateItems(user: string): Promise<PrivateItem[]> {
+    return this.http.request<PrivateItem[]>('GET', 'api/v1/private', { user });
   }
 
   notes(user: string, query: { category?: Note['category']; pinned?: boolean; includePending?: boolean } = {}): Promise<Note[]> {

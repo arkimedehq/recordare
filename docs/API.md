@@ -572,7 +572,11 @@ pending one) removes the row with its evidence and leaves a `fact` / `note` tomb
 Scoped to the memory, and the reader is the holder themself in the host's UI (memory-direct): a client key names the person
 with `X-Recordare-User` (scope `read` to read, `write` to edit), a personal token is the person; no conversation header,
 no conversation resolution. In an entity memory everyone using the
-account sees all of it (D48).
+account sees all of it (D48), private memories apart (D52): in a personal memory the account is the holder and reads
+them, each marked `private: {by: [names]}` (whose it is); in an entity memory only the agent knows them, so the account
+reads the public ones and `GET api/v1/private` lists the private ones without their content (forgotten with the item's
+`DELETE`). The diary (`digests`) and the recurring patterns are written from public memories only; making a message
+private or public again (§2) has its days written again.
 
 | Method + path | Scope | Purpose |
 |---|---|---|
@@ -589,6 +593,7 @@ account sees all of it (D48).
 | `GET api/v1/plans?status` | read | Open / unresolved plans |
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34); recurring patterns are notes with `pattern: true` (D26: the memory's own, nothing to confirm) |
 | `GET api/v1/cards` | read | Who I am and who my contacts are (WORK_PLAN 8.13), no LLM: `{self, contacts}`, each `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — the current, confirmed facts and notes about that person (pinned notes first, then by support), contacts most recently mentioned first; each id opens its detail (`GET api/v1/facts/{id}`, `notes/{id}`) with the evidence |
+| `GET api/v1/private` | read | The private memories (D52): `[{kind: episode \| fact \| note, id, by: [names], recordedAt}]`, never their content; an entity memory's Diary shows them so (forget one with its `DELETE`) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Manage notes |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed for clients keeping copies (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | locale, timezone, quality profile |

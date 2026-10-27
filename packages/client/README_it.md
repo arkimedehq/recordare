@@ -86,7 +86,9 @@ persona (dichiarati, suoi); `correctFact`, `correctNote` tengono la versione sba
 feed delle modifiche per una piattaforma che tiene una copia delle note (si ripassa `next` come `since`). `settings`,
 `usage` leggono le impostazioni della memoria e le chiamate LLM spese per essa; `updateSettings` e l'export
 (`startExport` → `exportJob` → `exportArchive`) richiedono il token personale della memoria (scope `memory_settings`,
-`export`; `user` vuoto).
+`export`; `user` vuoto). Ricordi privati (D52): un elemento privato porta `private: {by}` (di chi è) dove chi legge può
+vederlo — il titolare di una memoria personale; in una memoria entity l'account legge quelli pubblici e
+`privateItems(user)` elenca quelli privati senza il loro contenuto (se ne dimentica uno con `forgetEpisode` / `delete`).
 
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:

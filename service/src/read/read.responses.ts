@@ -19,6 +19,10 @@ export type NoteStatus = (typeof NOTE_STATUSES)[number];
 
 export const createdResponse = z.object({ id: z.uuid() }).describe('The new row (a correction is a new row that replaces the old one).');
 
+/** D52: present only on a private item — whose it is (no name when nobody identified said it). */
+const privateMark = z.object({ by: z.array(z.string()) }).optional()
+  .describe('Private (D52): told only to these people and to a personal memory\'s holder.');
+
 export const episodeResponse = z.object({
   id: z.uuid(),
   kind: z.enum(['event', 'plan', 'state_change']),
@@ -39,6 +43,7 @@ export const episodeResponse = z.object({
   inferred: z.boolean(),
   corrected: z.boolean().describe('This row replaced an earlier, wrong version (see the detail\'s history).'),
   recordedAt: z.string(),
+  private: privateMark,
 });
 
 export const episodesResponse = z.object({ items: z.array(episodeResponse), nextCursor: z.string().nullable() });
@@ -79,6 +84,7 @@ const fact = z.object({
   pending: z.boolean(),
   inferred: z.boolean(),
   history: z.array(z.object({ id: z.uuid(), value: z.string().nullable(), from: z.string().nullable(), to: z.string().nullable(), status: z.string() })),
+  private: privateMark,
 });
 
 export const factsResponse = z.array(fact);
@@ -102,6 +108,7 @@ const note = z.object({
   authorRole: z.string(),
   supportCount: z.number().int(),
   recordedAt: z.string(),
+  private: privateMark,
 });
 
 export const notesResponse = z.array(note);
@@ -114,6 +121,10 @@ const card = z.object({
   notes: z.array(z.object({ id: z.uuid(), category: z.string(), content: z.string(), pinned: z.boolean(), pattern: z.boolean() })),
   lastMentioned: z.string().nullable().describe('The day of the latest episode about this contact (null for the self).'),
 });
+
+export const privateItemsResponse = z.array(z.object({
+  kind: z.enum(['episode', 'fact', 'note']), id: z.uuid(), by: z.array(z.string()), recordedAt: z.string(),
+})).describe('Private memories (D52): that they exist and whose they are, never their content; they can be forgotten.');
 
 export const cardsResponse = z.object({ self: card, contacts: z.array(card) })
   .describe('Who I am and who my contacts are: current facts and notes, no LLM (WORK_PLAN 8.13).');

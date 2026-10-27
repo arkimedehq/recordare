@@ -595,7 +595,7 @@ una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichi
 
 Con ambito limitato alla memoria, e chi legge è il titolare stesso nell'interfaccia dell'host (memory-direct): una chiave
 client indica la persona con `X-Recordare-User` (scope `read` per leggere, `write` per modificare), un token personale è
-la persona; nessuna intestazione di conversazione, nessuna risoluzione della conversazione. In una memoria di entità chiunque usi l'account la vede tutta (D48).
+la persona; nessuna intestazione di conversazione, nessuna risoluzione della conversazione. In una memoria di entità chiunque usi l'account la vede tutta (D48), salvo i ricordi privati (D52): in una memoria personale l'account è il titolare e li legge, ciascuno segnato `private: {by: [nomi]}` (di chi è); in una memoria entity li conosce solo l'agente, quindi l'account legge quelli pubblici e `GET api/v1/private` elenca quelli privati senza il loro contenuto (si dimenticano con il `DELETE` dell'elemento). Il diario (`digests`) e gli schemi ricorrenti si scrivono solo dai ricordi pubblici; rendere un messaggio privato o di nuovo pubblico (§2) fa riscrivere i suoi giorni.
 
 | Metodo + percorso | Scope | Scopo |
 |---|---|---|
@@ -612,6 +612,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/plans?status` | read | Piani aperti / irrisolti |
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true` (D26: della memoria stessa, nulla da confermare) |
 | `GET api/v1/cards` | read | Chi sono e chi sono i miei contatti (WORK_PLAN 8.13), senza LLM: `{self, contacts}`, ognuno `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — i fatti e le note attuali e confermati su quella persona (prima le note fissate, poi per supporto), i contatti nominati più di recente per primi; ogni id apre il suo dettaglio (`GET api/v1/facts/{id}`, `notes/{id}`) con le evidenze |
+| `GET api/v1/private` | read | I ricordi privati (D52): `[{kind: episode \| fact \| note, id, by: [nomi], recordedAt}]`, mai il loro contenuto; il Diario di una memoria entity li mostra così (se ne dimentica uno con il suo `DELETE`) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Gestire le note |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed per i client che tengono copie (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | lingua, fuso orario, profilo di qualità |
