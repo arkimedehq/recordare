@@ -22,7 +22,7 @@ import { QUALITY_PROFILES } from '../engine/quality-profile';
 import { ExportsService } from './exports.service';
 import {
   createdResponse, digestsResponse, episodeDetailResponse, episodesResponse, exportResponse, factDetailResponse, factsResponse, forgetPeriodResponse,
-  cardsResponse, noteChangesResponse, noteDetailResponse, notesResponse, plansResponse, settingsResponse, usageResponse,
+  cardsResponse, privateItemsResponse, noteChangesResponse, noteDetailResponse, notesResponse, plansResponse, settingsResponse, usageResponse,
 } from './read.responses';
 import { ReadService } from './read.service';
 import { SettingsService } from './settings.service';
@@ -301,6 +301,15 @@ export class ReadController {
   async cards(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined) {
     const { memoryId } = await this.who(p, user);
     return this.read.cards(memoryId);
+  }
+
+  /** The private memories (D52): that they exist and whose they are, never their content; forgotten with the item's DELETE. */
+  @Get('private')
+  @RequireScopes('read')
+  @Returns(privateItemsResponse)
+  async privateItems(@CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined) {
+    const { memoryId } = await this.who(p, user);
+    return this.read.privateItems(memoryId);
   }
 
   @Get('plans')

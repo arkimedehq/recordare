@@ -27,6 +27,7 @@ import { relevantClarifications } from '../engine/clarifications';
 import { type MemoryMode, type SubjectKind } from '../identity/identity.entities';
 import { vectorParam } from '../db/pgvector';
 import { messages } from '../lang';
+import { episodeVisible, readerOf, type Reader } from './privacy';
 
 export interface EpisodeSearchArgs {
   /** The conversation the recall is served in (recall log: lets the extractor recognise answers from memory). */
@@ -135,6 +136,7 @@ export class EpisodeSearchService {
     const [memory] = await this.db.query(
       `SELECT o.locale, o.timezone, o.quality_profile, o.mode, p.display_name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     const speaker: Speaker = await speakerOf(this.db, args.conversationId, now, memory.mode);
+    const reader = await readerOf(this.db, memoryId, args.conversationId, now);
     const theirs = speaker.kind === 'contact' ? new Set<string>((await this.db.query(
       `SELECT DISTINCT ep.episode_id FROM episode_people ep JOIN episodes e ON e.id = ep.episode_id WHERE e.memory_id = $1 AND ep.person_id = $2`,
       [memoryId, speaker.id])).map((r: { episode_id: string }) => r.episode_id)) : new Set<string>();
@@ -152,7 +154,7 @@ export class EpisodeSearchService {
               importance, feelings, opinion, recorded_at, subject_kind, subject_person_id, subject_candidates
        FROM episodes
        WHERE memory_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL
-         AND ($2::boolean OR kind <> 'plan')`,
+         AND ($2::boolean OR kind <> 'plan') AND ${episodeVisible('episodes', reader)}`,
       [memoryId, args.includePlans ?? true],
     );
     const { scores: relevance, similarity } = args.query
@@ -247,20 +249,20 @@ export class EpisodeSearchService {
       const best = Math.max(0, ...chosen.map((r) => relevance.get(r.id) ?? 0));
       const limit = chosen.length < FALLBACK_BELOW || best < 0.02 ? Math.max(RAW_HITS, profile.rawHitsAlongside) : profile.rawHitsAlongside;
       const hits = await this.rawLog.search(memoryId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit,
-        conversationId: args.conversationId });
+        conversationId: args.conversationId, reader });
       // A question about someone ("what did my mother ask you?") also gets what that person wrote in the holder's chats:
       // their words rarely contain the relation or the question's terms.
       const people = await peopleInQuestion(this.db, memoryId, args.query);
       const theirs = people.length ? await this.rawLog.search(memoryId, clientId, { query: args.query, from: from ?? undefined,
-        to: to ?? undefined, limit: PEOPLE_HITS, conversationId: args.conversationId, authors: people }) : [];
+        to: to ?? undefined, limit: PEOPLE_HITS, conversationId: args.conversationId, authors: people, reader }) : [];
       // What I (the assistant) told them is in no episode when it was an answer, not their life (D30, LongMemEval's
       // single-session-assistant: "the beer you recommended", "the ratio you told me"): my earlier replies come along too.
       const mine = await this.rawLog.search(memoryId, clientId, { query: args.query, from: from ?? undefined, to: to ?? undefined, limit,
-        conversationId: args.conversationId, replies: true });
+        conversationId: args.conversationId, replies: true, reader });
       const seen = new Set(hits.map((h) => h.messageId));
       result.fromChats = [...hits, ...theirs.filter((h) => !seen.has(h.messageId)), ...mine].map(({ score: _s, ...h }) => h);
       // An excerpt whose episode was later corrected still says the old version (blind10, 8.11): it carries the correction.
-      const corrected = await correctionsOf(this.db, memoryId, result.fromChats.map((h) => h.messageId));
+      const corrected = await correctionsOf(this.db, memoryId, result.fromChats.map((h) => h.messageId), reader);
       for (const h of result.fromChats) {
         const by = corrected.get(h.messageId);
         if (by) h.correctedBy = by;
@@ -392,14 +394,14 @@ function firstOfNextMonth(yyyyMm: string): string {
 }
 
 /** For chat messages behind an invalidated episode, the content of the episode that corrected it (the latest current one). */
-async function correctionsOf(db: DataSource, memoryId: string, messageIds: string[]): Promise<Map<string, string>> {
+async function correctionsOf(db: DataSource, memoryId: string, messageIds: string[], reader: Reader): Promise<Map<string, string>> {
   if (!messageIds.length) return new Map();
   const rows: Array<{ message_id: string; content: string }> = await db.query(
     `SELECT DISTINCT ON (ev.message_id) ev.message_id, c.content
      FROM episode_evidence ev
      JOIN episodes old ON old.id = ev.episode_id AND old.memory_id = $1 AND old.invalidated_at IS NOT NULL
      JOIN episodes c ON c.corrects = old.id AND c.memory_id = $1 AND c.deleted_at IS NULL AND c.invalidated_at IS NULL
-     WHERE ev.message_id = ANY($2)
+     WHERE ev.message_id = ANY($2) AND ${episodeVisible('c', reader)}
      ORDER BY ev.message_id, c.recorded_at DESC`, [memoryId, messageIds]);
   return new Map(rows.map((r) => [r.message_id, r.content]));
 }

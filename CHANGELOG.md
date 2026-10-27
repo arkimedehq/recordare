@@ -6,6 +6,18 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- Private messages (D52, first step): `private` on a message or a whole request (`conversation.private`); the agent's
+  reply and tool turns after it follow, for the same person; `PATCH …/messages/{id} {private}` (library
+  `setMessagePrivate`) makes it private or public again. Every read follows it (`API.md` §1): told only to whoever it
+  belongs to — the speaker of the conversation's latest turn — and to a personal memory's holder; in an entity memory the
+  account reads the public only. Episodes, facts and notes follow their messages (hidden when any message behind them is
+  private to someone else); a correction keeps the privacy of what it corrects. The read API marks private
+  items (`private: {by}`) and `GET api/v1/private` (library `privateItems`) lists them without their content for an
+  entity memory's Diary; the diary and the recurring patterns are written from public memories only. A person asking in
+  words that what they said stay between us makes their own messages private, and freeing it makes them public again
+  (`extract.v20`, `entity.v8`: section PRIVATE).
+
 ### Fixed
 - Editing, deleting or ending a conversation for a user without a memory no longer creates an empty one (`autoProvision`):
   it answers 404 like an unknown conversation, so a late deletion never brings an erased memory back.

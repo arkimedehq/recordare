@@ -6,7 +6,7 @@
  * relevant to it, as one fenced block the host appends to its prompt — so the agent has them even when it would not
  * think of calling a recall tool. No LLM call. Minimal by design (the risk is distraction): no fixed profile card,
  * only items above a relevance threshold, a small character budget, empty when nothing is relevant; the whole memory
- * in every conversation (D50: no viewer filter for now). Always available, like the recall tools: whether to use it — for which
+ * in every conversation (D50), private memories only for whoever they belong to (D52, `privacy.ts`). Always available, like the recall tools: whether to use it — for which
  * agent — is the client's choice (Arkimede: per agent, off by default). Both modes (8.4, 8.5): the block speaks to the
  * agent as the memory's self (first-person items are its own), names the contact of other people's items, and may end
  * with one open clarification to ask if natural ("which Marco?", vision L1; entity memories: an identified speaker).
@@ -25,6 +25,7 @@ import { relevantClarifications } from '../engine/clarifications';
 import { speakerOf } from './subjects';
 import { vectorParam } from '../db/pgvector';
 import { buildCards, selfCardLines } from './cards';
+import { episodeVisible, factVisible, noteVisible, readerOf } from './privacy';
 
 /**
  * Minimum query ↔ memory similarity (bge-m3) for an item to enter the block: above the recall tools' floors (0.35),
@@ -109,18 +110,20 @@ export class ContextService {
     const at = (k: number) => `$${vectors.length + 2 + k}`; // parameters after the vectors
     const tz = memory.timezone;
     const day = (d: Date | null) => (d ? localDate(d, tz) : null);
+    const reader = await readerOf(this.db, memoryId, conversationId, now);
 
     const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null; about: string | null }> = await this.db.query(
       `SELECT f.id, f.key, f.value, f.valid_from, s.display_name AS about FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
        WHERE f.memory_id = $1 AND f.status = 'current' AND NOT f.pending AND f.deleted_at IS NULL AND f.embedding IS NOT NULL
-         AND ${sim('f.embedding')} >= ${at(0)}
+         AND ${sim('f.embedding')} >= ${at(0)} AND ${factVisible('f', reader)}
        ORDER BY ${sim('f.embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_FACTS]);
     const notes: Array<{ id: string; content: string; about: string | null; pattern: boolean }> = await this.db.query(
       `SELECT id, content, 'pattern' = ANY(tags) AS pattern, (SELECT display_name FROM persons WHERE id = notes.subject_person_id) AS about FROM notes
        WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND embedding IS NOT NULL
-         AND ${sim('embedding')} >= ${at(0)}
+         AND ${sim('embedding')} >= ${at(0)} AND ${noteVisible('notes', reader)}
        ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_NOTES]);
-    const visible = `memory_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL AND embedding IS NOT NULL`;
+    const visible = `memory_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL AND embedding IS NOT NULL
+      AND ${episodeVisible('episodes', reader)}`;
     const plans: Array<{ content: string; occurred_at: Date | null; date_precision: Precision }> = await this.db.query(
       `SELECT content, occurred_at, date_precision FROM episodes
        WHERE ${visible} AND kind = 'plan' AND plan_status = 'open'
@@ -145,7 +148,7 @@ export class ContextService {
     // Other people's items carry their name (first-person items are the agent's own).
     const whose = (about: string | null) => (about ? `[${about}] ` : '');
     // The self card (when asked for) comes first; a relevant fact or note it already shows is not repeated.
-    const card = withCard ? await buildCards(this.db, memoryId) : null;
+    const card = withCard ? await buildCards(this.db, memoryId, reader) : null;
     const top = card ? selfCardLines(card.self, CARD_CHARS) : { lines: [], ids: new Set<string>() };
     const lines: string[] = [];
     for (const f of facts.filter((x) => !top.ids.has(x.id))) {

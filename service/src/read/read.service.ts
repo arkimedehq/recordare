@@ -6,7 +6,9 @@
  * episodes, an episode's detail, the day / month diary, facts with their history, notes and plans; plus the person's
  * own edits (correct or forget an episode, pin or delete a note, confirm or reject what is pending). The reader is the
  * person themself in the platform's UI (memory-direct), never a conversation: no conversation resolution here. Quotes of
- * messages are limited to the client's own conversations unless its raw-log scope is `all`.
+ * messages are limited to the client's own conversations unless its raw-log scope is `all`. Private memories (D52): the
+ * account is the holder of a personal memory and reads everything; in an entity memory only the agent knows them, so the
+ * account reads the public ones.
  */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -15,6 +17,7 @@ import { toOrTsQuery } from '../rawlog/rawlog-search.service';
 import { confirmPending } from '../engine/pending';
 import { type NoteCategory, type NoteChangeKind, type NoteStatus } from './read.responses';
 import { buildCards, type Cards } from '../recall/cards';
+import { episodeVisible, factVisible, messageVisible, noteVisible, privateBy, readerOf, type Reader } from '../recall/privacy';
 
 export type PlanStatus = 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
 
@@ -58,7 +61,7 @@ interface EpisodeRow {
   date_precision: Precision; time_expression: string | null; place: string | null; plan_status: string | null;
   importance: number; valence: number | null; feelings: string[] | null; opinion: string | null; origin: string;
   author_role: string; stance: string; corrects: string | null; recorded_at: Date; confirmed_by: string | null;
-  rescheduled_to: string | null; sort_at?: Date;
+  rescheduled_to: string | null; sort_at?: Date; private_by: string[] | null;
 }
 interface EvidenceRow {
   evidence_kind: string; message_id: string; role: string; content: string; sent_at: Date; conversation: string;
@@ -69,18 +72,23 @@ interface PlanEventRow { patch: string; note: string | null; created_at: Date }
 interface DigestRow { id: string; level: 'day' | 'month'; period_start: string; period_end: string; content: string; created_at: Date }
 interface FactRow {
   id: string; key: string; value: string | null; status: string; valid_from: Date | null; valid_to: Date | null;
-  pending: boolean; stance: string; author_role: string; about: string | null;
+  pending: boolean; stance: string; author_role: string; about: string | null; private_by?: string[] | null;
 }
 interface NoteRow {
   id: string; category: NoteCategory; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; author_role: string;
-  support_count: number; recorded_at: Date;
+  support_count: number; recorded_at: Date; private_by: string[] | null;
 }
 
-const NOTE_COLUMNS = `id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, support_count, recorded_at`;
+const NOTE_COLUMNS = `id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, support_count, recorded_at,
+  ${privateBy('notes', 'notes')} AS private_by`;
+/** An episode with its privacy mark (D52). */
+const EPISODE_COLUMNS = `e.*, ${privateBy('episodes', 'e')} AS private_by`;
+const mark = (by: string[] | null | undefined) => (by ? { private: { by } } : {});
 
 function noteView(r: NoteRow) {
   return { id: r.id, category: r.category, content: r.content, pinned: r.pinned, pending: r.pending, inferred: r.stance === 'inferred',
-    pattern: r.pattern, authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString() };
+    pattern: r.pattern, authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString(),
+    ...mark(r.private_by) };
 }
 
 const VISIBLE = `e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL`;
@@ -95,6 +103,11 @@ function decodeCursor(cursor: string): { at: string; id: string } | null {
 @Injectable()
 export class ReadService {
   constructor(private readonly db: DataSource) {}
+
+  /** Who reads through this API: the account itself (D52). */
+  private reader(memoryId: string, now = new Date()): Promise<Reader> {
+    return readerOf(this.db, memoryId, undefined, now);
+  }
 
   private async memory(memoryId: string): Promise<Memory> {
     const [o] = await this.db.query(`SELECT timezone, locale FROM memories WHERE person_id = $1`, [memoryId]);
@@ -129,6 +142,7 @@ export class ReadService {
         people: people.filter((p) => p.episode_id === r.id).map((p) => p.alias),
         origin: r.origin, authorRole: r.author_role, inferred: r.stance === 'inferred', corrected: !!r.corrects,
         recordedAt: (r.recorded_at as Date).toISOString(),
+        ...mark(r.private_by),
       };
     });
   }
@@ -137,7 +151,7 @@ export class ReadService {
   async episodes(memoryId: string, query: EpisodeQuery, now: Date): Promise<{ items: EpisodeItem[]; nextCursor: string | null }> {
     const o = await this.memory(memoryId);
     const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
-    const where = [`e.memory_id = $1`, VISIBLE];
+    const where = [`e.memory_id = $1`, VISIBLE, episodeVisible('e', await this.reader(memoryId, now))];
     const params: unknown[] = [memoryId];
     const p = (v: unknown) => `$${params.push(v)}`;
     // Sort key: the event's date, else when it was recorded.
@@ -154,7 +168,7 @@ export class ReadService {
     const cursor = query.cursor ? decodeCursor(query.cursor) : null;
     if (cursor) where.push(`(${at}, e.id) < (${p(cursor.at)}::timestamptz, ${p(cursor.id)}::uuid)`);
     const rows: EpisodeRow[] = await this.db.query(
-      `SELECT e.*, ${at} AS sort_at FROM episodes e WHERE ${where.join(' AND ')} ORDER BY sort_at DESC, e.id DESC LIMIT ${p(limit + 1)}`, params);
+      `SELECT ${EPISODE_COLUMNS}, ${at} AS sort_at FROM episodes e WHERE ${where.join(' AND ')} ORDER BY sort_at DESC, e.id DESC LIMIT ${p(limit + 1)}`, params);
     const page = rows.slice(0, limit);
     let items = await this.items(page, o, now);
     if (query.planStatus === 'open' || query.planStatus === 'unresolved') items = items.filter((i) => i.planStatus === query.planStatus);
@@ -166,7 +180,9 @@ export class ReadService {
    * versions it corrected and, for a plan, its outcome and its history. */
   async episode(memoryId: string, clientId: string, id: string, now: Date) {
     const o = await this.memory(memoryId);
-    const [row]: EpisodeRow[] = await this.db.query(`SELECT e.* FROM episodes e WHERE e.id = $1 AND e.memory_id = $2 AND e.deleted_at IS NULL`, [id, memoryId]);
+    const reader = await this.reader(memoryId, now);
+    const [row]: EpisodeRow[] = await this.db.query(
+      `SELECT ${EPISODE_COLUMNS} FROM episodes e WHERE e.id = $1 AND e.memory_id = $2 AND e.deleted_at IS NULL AND ${episodeVisible('e', reader)}`, [id, memoryId]);
     if (!row) throw new NotFoundException();
     const [item] = await this.items([row], o, now) as [EpisodeItem];
     const [client] = await this.db.query(`SELECT raw_log_scope FROM clients WHERE id = $1`, [clientId]);
@@ -176,18 +192,19 @@ export class ReadService {
        FROM episode_evidence ev JOIN messages m ON m.id = ev.message_id JOIN conversations c ON c.id = m.conversation_id
        LEFT JOIN persons p ON p.id = m.author_person_id
        LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
-       WHERE ev.episode_id = $1 ORDER BY m.sent_at`, [id, clientId]);
+       WHERE ev.episode_id = $1 AND ${messageVisible('m', reader)} ORDER BY m.sent_at`, [id, clientId]);
     const history: HistoryRow[] = await this.db.query(
       `WITH RECURSIVE prev AS (
          SELECT id, content, occurred_at, date_precision, recorded_at, corrects FROM episodes WHERE id = (SELECT corrects FROM episodes WHERE id = $1)
          UNION ALL
          SELECT e.id, e.content, e.occurred_at, e.date_precision, e.recorded_at, e.corrects FROM episodes e JOIN prev ON e.id = prev.corrects)
-       SELECT id, content, occurred_at, date_precision, recorded_at FROM prev`, [id]);
+       SELECT id, content, occurred_at, date_precision, recorded_at FROM prev WHERE ${episodeVisible('prev', reader)}`, [id]);
     const planEvents: PlanEventRow[] = row.kind === 'plan'
       ? await this.db.query(`SELECT patch, note, created_at FROM plan_events WHERE plan_id = $1 ORDER BY created_at`, [id]) : [];
     const linked = async (linkId: string | null) => {
       if (!linkId) return null;
-      const [l]: EpisodeRow[] = await this.db.query(`SELECT e.* FROM episodes e WHERE e.id = $1 AND e.memory_id = $2 AND e.deleted_at IS NULL`, [linkId, memoryId]);
+      const [l]: EpisodeRow[] = await this.db.query(
+        `SELECT ${EPISODE_COLUMNS} FROM episodes e WHERE e.id = $1 AND e.memory_id = $2 AND e.deleted_at IS NULL AND ${episodeVisible('e', reader)}`, [linkId, memoryId]);
       return l ? (await this.items([l], o, now))[0] : null;
     };
     const showAll = client?.raw_log_scope === 'all';
@@ -229,9 +246,11 @@ export class ReadService {
     const params: unknown[] = [memoryId, query.includePending ?? false];
     const keyFilter = query.key ? `AND f.key = $${params.push(query.key)}` : '';
     const rows: FactRow[] = await this.db.query(
-      `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, f.stance, f.author_role, s.display_name AS about
+      `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, f.stance, f.author_role, s.display_name AS about,
+              ${privateBy('facts', 'f')} AS private_by
        FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
        WHERE f.memory_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected' AND ($2::boolean OR NOT f.pending) ${keyFilter}
+         AND ${factVisible('f', await this.reader(memoryId, now))}
        ORDER BY s.display_name NULLS FIRST, f.key, f.valid_from NULLS FIRST, f.recorded_at`, params);
     const day = (d: Date | null) => (d ? localDate(d, o.tz) : null);
     const slots = new Map<string, FactRow[]>();
@@ -245,14 +264,34 @@ export class ReadService {
         status: at.status === 'unknown_current' ? 'unknown' : at.status, validFrom: day(at.valid_from), validTo: day(at.valid_to),
         pending: at.pending, inferred: at.stance === 'inferred',
         history: rs.map((r) => ({ id: r.id, value: r.value, from: day(r.valid_from), to: day(r.valid_to), status: r.status })),
+        ...mark(at.private_by),
       }];
     });
   }
 
   async cards(memoryId: string): Promise<Cards> {
-    const cards = await buildCards(this.db, memoryId);
+    const cards = await buildCards(this.db, memoryId, await this.reader(memoryId));
     if (!cards) throw new NotFoundException();
     return cards;
+  }
+
+  /**
+   * The private memories (D52): that they exist and whose they are, never their content — the Diary of an entity memory
+   * (where only the agent knows them) shows them so, and they can be forgotten.
+   */
+  async privateItems(memoryId: string) {
+    await this.memory(memoryId);
+    const [any] = await this.db.query(`SELECT 1 FROM messages WHERE memory_id = $1 AND private LIMIT 1`, [memoryId]);
+    if (!any) return [];
+    const rows: Array<{ kind: 'episode' | 'fact' | 'note'; id: string; by: string[]; recorded_at: Date }> = await this.db.query(
+      `SELECT * FROM (
+         SELECT 'episode' AS kind, e.id, ${privateBy('episodes', 'e')} AS by, e.recorded_at FROM episodes e WHERE e.memory_id = $1 AND ${VISIBLE}
+         UNION ALL SELECT 'fact', f.id, ${privateBy('facts', 'f')}, f.recorded_at FROM facts f
+           WHERE f.memory_id = $1 AND f.deleted_at IS NULL AND f.status IN ('current', 'unknown_current')
+         UNION ALL SELECT 'note', n.id, ${privateBy('notes', 'n')}, n.recorded_at FROM notes n
+           WHERE n.memory_id = $1 AND n.deleted_at IS NULL AND n.status = 'current') x
+       WHERE by IS NOT NULL ORDER BY recorded_at DESC`, [memoryId]);
+    return rows.map((r) => ({ kind: r.kind, id: r.id, by: r.by, recordedAt: r.recorded_at.toISOString() }));
   }
 
   async notes(memoryId: string, query: { category?: string; pinned?: boolean; includePending?: boolean }) {
@@ -265,6 +304,7 @@ export class ReadService {
     const rows: NoteRow[] = await this.db.query(
       `SELECT ${NOTE_COLUMNS} FROM notes
        WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($2::boolean OR NOT pending) ${extra}
+         AND ${noteVisible('notes', await this.reader(memoryId))}
        ORDER BY pinned DESC, recorded_at DESC`, params);
     return rows.map(noteView);
   }
@@ -273,7 +313,7 @@ export class ReadService {
   async plans(memoryId: string, query: { status?: PlanStatus }, now: Date): Promise<EpisodeItem[]> {
     const o = await this.memory(memoryId);
     const rows: EpisodeRow[] = await this.db.query(
-      `SELECT e.* FROM episodes e WHERE e.memory_id = $1 AND ${VISIBLE} AND e.kind = 'plan'
+      `SELECT ${EPISODE_COLUMNS} FROM episodes e WHERE e.memory_id = $1 AND ${VISIBLE} AND e.kind = 'plan' AND ${episodeVisible('e', await this.reader(memoryId, now))}
        ORDER BY e.occurred_at NULLS LAST, e.recorded_at`, [memoryId]);
     const items = await this.items(rows, o, now);
     return items.filter((i) => (query.status ? i.planStatus === query.status : i.planStatus === 'open' || i.planStatus === 'unresolved'));
@@ -326,14 +366,16 @@ export class ReadService {
    */
   async fact(memoryId: string, clientId: string, id: string) {
     const o = await this.memory(memoryId);
+    const reader = await this.reader(memoryId);
     const [f]: Array<FactRow & { subject_person_id: string | null; corrects: string | null; recorded_at: Date }> = await this.db.query(
       `SELECT f.id, f.key, f.value, f.status, f.valid_from, f.valid_to, f.pending, f.stance, f.author_role, f.subject_person_id, f.corrects,
-         f.recorded_at, s.display_name AS about
-       FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id WHERE f.id = $1 AND f.memory_id = $2 AND f.deleted_at IS NULL`, [id, memoryId]);
+         f.recorded_at, s.display_name AS about, ${privateBy('facts', 'f')} AS private_by
+       FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
+       WHERE f.id = $1 AND f.memory_id = $2 AND f.deleted_at IS NULL AND ${factVisible('f', reader)}`, [id, memoryId]);
     if (!f) throw new NotFoundException();
     const history: FactRow[] = await this.db.query(
       `SELECT id, key, value, status, valid_from, valid_to, pending, stance, author_role FROM facts
-       WHERE memory_id = $1 AND key = $2 AND subject_person_id IS NOT DISTINCT FROM $3 AND deleted_at IS NULL
+       WHERE memory_id = $1 AND key = $2 AND subject_person_id IS NOT DISTINCT FROM $3 AND deleted_at IS NULL AND ${factVisible('facts', reader)}
        ORDER BY valid_from NULLS FIRST, recorded_at`, [memoryId, f.key, f.subject_person_id]);
     const day = (d: Date | null) => (d ? localDate(d, o.tz) : null);
     return {
@@ -342,20 +384,23 @@ export class ReadService {
       pending: f.pending, inferred: f.stance === 'inferred', authorRole: f.author_role, corrects: f.corrects,
       recordedAt: f.recorded_at.toISOString(),
       history: history.map((r) => ({ id: r.id, value: r.value, from: day(r.valid_from), to: day(r.valid_to), status: r.status })),
-      ...(await this.itemEvidence('facts', id, clientId)),
+      ...mark(f.private_by),
+      ...(await this.itemEvidence('facts', id, clientId, reader)),
     };
   }
 
   /** One note (any status) with its evidence, as `fact`. */
   async note(memoryId: string, clientId: string, id: string) {
     await this.memory(memoryId);
+    const reader = await this.reader(memoryId);
     const [n]: Array<NoteRow & { status: NoteStatus; supersedes: string | null; corrects: string | null }> = await this.db.query(
-      `SELECT ${NOTE_COLUMNS}, status::text, supersedes, corrects FROM notes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL`, [id, memoryId]);
+      `SELECT ${NOTE_COLUMNS}, status::text, supersedes, corrects FROM notes
+       WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL AND ${noteVisible('notes', reader)}`, [id, memoryId]);
     if (!n) throw new NotFoundException();
-    return { ...noteView(n), status: n.status, supersedes: n.supersedes, corrects: n.corrects, ...(await this.itemEvidence('notes', id, clientId)) };
+    return { ...noteView(n), status: n.status, supersedes: n.supersedes, corrects: n.corrects, ...(await this.itemEvidence('notes', id, clientId, reader)) };
   }
 
-  private async itemEvidence(table: 'facts' | 'notes', id: string, clientId: string) {
+  private async itemEvidence(table: 'facts' | 'notes', id: string, clientId: string, reader: Reader) {
     const [client] = await this.db.query(`SELECT raw_log_scope FROM clients WHERE id = $1`, [clientId]);
     const showAll = client?.raw_log_scope === 'all';
     const x = table === 'facts' ? 'fact_evidence' : 'note_evidence';
@@ -366,7 +411,7 @@ export class ReadService {
        FROM ${x} ev JOIN messages m ON m.id = ev.message_id JOIN conversations c ON c.id = m.conversation_id
        LEFT JOIN persons p ON p.id = m.author_person_id
        LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref
-       WHERE ev.${owner} = $1 ORDER BY m.sent_at`, [id, clientId]);
+       WHERE ev.${owner} = $1 AND ${messageVisible('m', reader)} ORDER BY m.sent_at`, [id, clientId]);
     const episodes: Array<{ episode_id: string }> = await this.db.query(
       `SELECT episode_id FROM ${x} WHERE ${owner} = $1 AND episode_id IS NOT NULL`, [id]);
     return {
@@ -389,7 +434,8 @@ export class ReadService {
       `SELECT seq::text, note_id, change::text, at FROM note_changes WHERE memory_id = $1 AND seq > $2 ORDER BY seq LIMIT $3`,
       [memoryId, query.since ?? 0, limit]);
     const notes: Array<NoteRow & { status: NoteStatus }> = rows.length ? await this.db.query(
-      `SELECT ${NOTE_COLUMNS}, status::text FROM notes WHERE id = ANY($1) AND memory_id = $2 AND deleted_at IS NULL`,
+      `SELECT ${NOTE_COLUMNS}, status::text FROM notes WHERE id = ANY($1) AND memory_id = $2 AND deleted_at IS NULL
+         AND ${noteVisible('notes', await this.reader(memoryId))}`,
       [[...new Set(rows.map((r) => r.note_id))], memoryId]) : [];
     const byId = new Map(notes.map((n) => [n.id, { ...noteView(n), status: n.status }]));
     // Read apart from the note: a forgotten note keeps what it replaced.

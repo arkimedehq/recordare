@@ -32,6 +32,11 @@ await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
 await rc.ingest('user-42', { conversation: { externalId: 'doc-1', source: 'document' }, messages: [
   { externalId: 'd1', role: 'user', own: true, content: 'La caldaia va revisionata ogni due anni.', sentAt: new Date().toISOString() },
 ] });
+// Privato (D52): raccontato solo a chi l'ha detto (e al titolare di una memoria personale); `conversation.private` per un'intera chat.
+await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
+  { externalId: 'm2', role: 'user', private: true, content: 'Non dirlo a nessuno: cambio lavoro', sentAt: new Date().toISOString() },
+] });
+await rc.setMessagePrivate('user-42', 'chat-1', 'm2', false); // "ora puoi dirlo"
 // Una trascrizione di stanza (ascolto continuo): Recordare la distribuisce alle memorie delle persone presenti.
 await rc.ingestRoom({ conversation: { externalId: 'kitchen-1' }, recipients: ['user-42', 'user-7'],
   speakers: [{ ref: 'a', user: 'user-42' }, { ref: 'b', user: 'user-7' }, { ref: 'c', displayName: 'Leo', identity: { channel: 'voice', externalId: 'leo' } }],
@@ -81,7 +86,9 @@ persona (dichiarati, suoi); `correctFact`, `correctNote` tengono la versione sba
 feed delle modifiche per una piattaforma che tiene una copia delle note (si ripassa `next` come `since`). `settings`,
 `usage` leggono le impostazioni della memoria e le chiamate LLM spese per essa; `updateSettings` e l'export
 (`startExport` → `exportJob` → `exportArchive`) richiedono il token personale della memoria (scope `memory_settings`,
-`export`; `user` vuoto).
+`export`; `user` vuoto). Ricordi privati (D52): un elemento privato porta `private: {by}` (di chi è) dove chi legge può
+vederlo — il titolare di una memoria personale; in una memoria entity l'account legge quelli pubblici e
+`privateItems(user)` elenca quelli privati senza il loro contenuto (se ne dimentica uno con `forgetEpisode` / `delete`).
 
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:

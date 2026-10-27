@@ -32,6 +32,11 @@ await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
 await rc.ingest('user-42', { conversation: { externalId: 'doc-1', source: 'document' }, messages: [
   { externalId: 'd1', role: 'user', own: true, content: 'La caldaia va revisionata ogni due anni.', sentAt: new Date().toISOString() },
 ] });
+// Private (D52): told only to whoever said it (and to a personal memory's holder); `conversation.private` for a whole chat.
+await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
+  { externalId: 'm2', role: 'user', private: true, content: 'Non dirlo a nessuno: cambio lavoro', sentAt: new Date().toISOString() },
+] });
+await rc.setMessagePrivate('user-42', 'chat-1', 'm2', false); // "now you can say it"
 // A room transcript (continuous listening): Recordare fans it out to the memories of the people present.
 await rc.ingestRoom({ conversation: { externalId: 'kitchen-1' }, recipients: ['user-42', 'user-7'],
   speakers: [{ ref: 'a', user: 'user-42' }, { ref: 'b', user: 'user-7' }, { ref: 'c', displayName: 'Leo', identity: { channel: 'voice', externalId: 'leo' } }],
@@ -79,7 +84,10 @@ the platform's UI; `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `pinNote`,
 `correctFact`, `correctNote` keep the wrong version as history. `noteChanges` is the change feed for a platform keeping a
 copy of the notes (pass `next` back as `since`). `settings`, `usage` read the memory's settings and the LLM calls spent on
 it; `updateSettings` and the export (`startExport` → `exportJob` → `exportArchive`) need the memory's personal token
-(scopes `memory_settings`, `export`; pass `user` empty).
+(scopes `memory_settings`, `export`; pass `user` empty). Private memories (D52): a private item carries `private: {by}`
+(whose it is) where the reader may see it — the holder of a personal memory; in an entity memory the account reads the
+public ones and `privateItems(user)` lists the private ones without their content (forget one with `forgetEpisode` /
+`delete`).
 
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,

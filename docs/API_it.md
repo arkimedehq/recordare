@@ -114,13 +114,28 @@ client non può mai emettere token per un altro client. I replay di `Idempotency
 `(credential, memory, method + path)`; la v1 li tiene in Redis per 24 h (tabella persistente nel
 public profile).
 
-### Contesto di conversazione — nessun filtro su chi legge (D50, WORK_PLAN 8.2)
+### Contesto di conversazione — nessun filtro su chi legge, salvo i ricordi privati (D50, WORK_PLAN 8.2; D52)
 **Comportamento attuale (2026-10-09)**: ogni risposta — richiamo via MCP, contesto di memoria — usa **tutta la
 memoria**, in ogni conversazione: quella in cui c'è solo il titolare, una conversazione condivisa o di gruppo, una che
 Recordare non ha ancora salvato, o nessuna conversazione. Chi può sapere cosa (privacy, riservatezza) verrà dopo
 (WORK_PLAN 8.12); le colonne `audience` / `disclosure` continuano a essere scritte, così quel lavoro partirà da dati
 registrati. **L'isolamento tra memorie resta**: una richiesta apre solo la memoria indicata dalla sua credenziale e da
 `X-Recordare-User`.
+
+**Ricordi privati (D52, 2026-10-27)**: un messaggio dichiarato privato (§2) viene raccontato solo a chi appartiene e, in
+una memoria personale, al titolare; l'admin legge tutto. **Chi legge** è l'autore dell'ultimo turno di una persona nella
+conversazione (`user` / `other`, all'ora della richiesta): il titolare di una memoria personale (un turno `user` non
+dichiarato, il sé, il contenuto `own`) legge tutto, un contatto identificato il pubblico e il suo, chiunque non sia
+identificato ("qualcuno", e in una memoria entity ogni interlocutore non dichiarato) solo il pubblico. Senza conversazione
+(§4, un token personale) chi legge è l'account: il titolare di una memoria personale; in una memoria entity le cose
+private le conosce solo l'agente, quindi solo il pubblico. Episodi, fatti e note seguono i messaggi su cui si basano (le
+loro evidenze, dirette o attraverso un episodio): uno è nascosto quando anche un solo messaggio dietro di lui è privato di
+qualcun altro (in caso di dubbio si nasconde: un "non dico niente" pubblico accanto al segreto non deve renderlo
+pubblico); un elemento senza messaggi dietro è pubblico. Una correzione mantiene la privacy di ciò che corregge. Vale per ogni lettura: il richiamo MCP
+(`search_episodes` con i suoi estratti di chat e le mie risposte, `search_memory`, gli episodi di `search_knowledge`), il
+contesto di memoria e la sua scheda di sé, l'API di lettura (§4, dettagli e loro evidenze, schede, il feed delle note: una
+nota che chi legge non può vedere arriva come `note: null`), le esportazioni; `correct_episode` / `forget_episode` vedono
+solo ciò che il loro lettore può vedere (altrimenti 404). Una memoria senza messaggi privati si legge come prima.
 
 La conversazione è ancora **risolta da Recordare, mai dichiarata dal client o dall'LLM**, da
 `X-Recordare-Conversation: <externalConversationId>` (le chiamate MCP possono portarla invece come
@@ -201,6 +216,7 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
     channel?: string; title?: string;              // title: a group chat's name, given to the extraction
     direct?: boolean;                              // a one-to-one chat (true) or a group (false); unknown when
                                                    // missing (D51: a link code is never accepted in a group)
+    private?: boolean;                             // a private chat (D52): every message of the request is private
     participants?: Array<{
       ref: string; role: "holder" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
@@ -219,6 +235,8 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
     upsert?: boolean;                     // true: same externalId with new content = edit
     own?: boolean;                        // the agent's own content (knowledge given to it, its
                                           // perceptions, a document); role user | other only
+    private?: boolean;                    // D52: told only to whoever said it (and to a personal
+                                          // memory's holder); replies after it follow (see below)
   }>;
   hints?: { conversationEnded?: boolean };
 }
@@ -227,6 +245,13 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
 `{conversationId, accepted, duplicates, conflicts: [externalId…]}`.
 - Stesso `externalId` e stesso contenuto → duplicato (ignorato). Stesso `externalId`, contenuto diverso →
   elencato in `conflicts` (stile `409` per elemento) a meno che `upsert: true`, che registra una modifica.
+- **Messaggi privati** (D52): un messaggio è privato quando lo dice lui (`private: true`) o la sua richiesta
+  (`conversation.private`), o quando il suo autore chiede a parole che resti tra noi (l'estrazione, `extract.v20`: solo i
+  suoi messaggi; "ora puoi dirlo" li libera di nuovo); appartiene al suo autore (il sé, un contatto, o nessuno di identificato). I turni
+  dell'agente e degli strumenti che seguono un messaggio privato (l'ultimo `user` / `other` prima di loro) sono privati
+  per la stessa persona, a meno che dicano `private: false`. Ciò che si estrae da messaggi privati è privato in lettura
+  attraverso le sue evidenze (nessuna copia del flag); un cambio di privacy non richiede una nuova estrazione. Chi può
+  leggere cosa: §1, contesto di conversazione (D52).
 - **Nessun flag di consenso** (D50): ogni messaggio accettato viene memorizzato, estratto e consolidato. Se una memoria
   è attiva lo decide l'interruttore della piattaforma client: quando è spento, il client non invia. I ricordi esistenti
   restano finché non vengono cancellati.
@@ -248,8 +273,11 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   mittente, è un fallimento — cinque annullano i codici aperti della memoria.
 
 ### Modifiche e cancellazioni
-- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` se
-  sconosciuto); il testo precedente va in `message_revisions` e il messaggio viene estratto di nuovo.
+- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content?, private?}` (almeno uno)
+  → `204` (`404` se sconosciuto); nuovo contenuto: il testo precedente va in `message_revisions` e il messaggio viene
+  estratto di nuovo; `private` (D52, libreria `setMessagePrivate`): il messaggio di una persona porta con sé le risposte
+  che gli rispondono (i turni dell'agente e degli strumenti dopo di lui, fino al messaggio successivo di una persona),
+  una risposta cambia da sola; nessuna estrazione.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
   purge (`DATA_MODEL.md` → Forgetting and deletion: spariscono anche gli episodi, i fatti, le note e gli stati dei piani
   sostenuti solo da quei messaggi). Come costruito: la purge viene eseguita in modo sincrono e restituisce `202` senza
@@ -419,7 +447,7 @@ type Episode = {
   sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
-Lo stesso in ogni conversazione, anche in quelle a cui partecipano altri (D50: nessun filtro su chi legge).
+Lo stesso in ogni conversazione, anche in quelle a cui partecipano altri (D50: nessun filtro su chi legge), salvo i ricordi privati (D52, §1).
 **Sentito nella stanza (WORK_PLAN 6.5)**: un episodio le cui prove vengono tutte da conversazioni `ambient`, e un estratto
 di chat di una di esse, riportano `heard: true` — sentito da un dispositivo in ascolto, non detto all'agente, chi parlava
 forse riconosciuto male. La descrizione di `search_episodes` dice all'agente di raccontarlo come sentito in casa e che
@@ -568,7 +596,7 @@ una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichi
 
 Con ambito limitato alla memoria, e chi legge è il titolare stesso nell'interfaccia dell'host (memory-direct): una chiave
 client indica la persona con `X-Recordare-User` (scope `read` per leggere, `write` per modificare), un token personale è
-la persona; nessuna intestazione di conversazione, nessuna risoluzione della conversazione. In una memoria di entità chiunque usi l'account la vede tutta (D48).
+la persona; nessuna intestazione di conversazione, nessuna risoluzione della conversazione. In una memoria di entità chiunque usi l'account la vede tutta (D48), salvo i ricordi privati (D52): in una memoria personale l'account è il titolare e li legge, ciascuno segnato `private: {by: [nomi]}` (di chi è); in una memoria entity li conosce solo l'agente, quindi l'account legge quelli pubblici e `GET api/v1/private` elenca quelli privati senza il loro contenuto (si dimenticano con il `DELETE` dell'elemento). Il diario (`digests`) e gli schemi ricorrenti si scrivono solo dai ricordi pubblici; rendere un messaggio privato o di nuovo pubblico (§2) fa riscrivere i suoi giorni.
 
 | Metodo + percorso | Scope | Scopo |
 |---|---|---|
@@ -585,6 +613,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/plans?status` | read | Piani aperti / irrisolti |
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true` (D26: della memoria stessa, nulla da confermare) |
 | `GET api/v1/cards` | read | Chi sono e chi sono i miei contatti (WORK_PLAN 8.13), senza LLM: `{self, contacts}`, ognuno `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — i fatti e le note attuali e confermati su quella persona (prima le note fissate, poi per supporto), i contatti nominati più di recente per primi; ogni id apre il suo dettaglio (`GET api/v1/facts/{id}`, `notes/{id}`) con le evidenze |
+| `GET api/v1/private` | read | I ricordi privati (D52): `[{kind: episode \| fact \| note, id, by: [nomi], recordedAt}]`, mai il loro contenuto; il Diario di una memoria entity li mostra così (se ne dimentica uno con il suo `DELETE`) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Gestire le note |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed per i client che tengono copie (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | lingua, fuso orario, profilo di qualità |

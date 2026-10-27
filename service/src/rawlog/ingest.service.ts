@@ -13,12 +13,13 @@ import { createHash } from 'node:crypto';
 import { DataSource, type EntityManager } from 'typeorm';
 import { type Env } from '../config/env';
 import { QUEUE_PORT, type QueuePort } from '../queue/queue.port';
-import { type IngestRequest, type IngestResult } from './ingest.schemas';
+import { type EditMessage, type IngestRequest, type IngestResult } from './ingest.schemas';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { type MemoryMode } from '../identity/identity.entities';
 import { type Attribution, SOMEONE } from './attribution';
 import { askSameContact, matchUnboundContacts, sameContactQuestion } from '../engine/contacts';
 import { dropUnsupported, supportedBy } from '../recall/forgetting';
+import { isReply, setPrivate } from './message-privacy';
 import { claimLinkCode, type Claimant } from '../identity/holder-links';
 
 type Participant = IngestRequest['conversation']['participants'][number];
@@ -45,6 +46,25 @@ export function attribute(m: IngestMessage, participants: Map<string, Attributio
 function claimant(participants: Participant[], m: IngestMessage): Claimant | null {
   const p = m.authorRef !== undefined ? participants.find((x) => x.ref === m.authorRef) : undefined;
   return p?.identity && p.role === 'other' ? { identity: p.identity, displayName: p.displayName } : null;
+}
+
+/**
+ * A message's privacy (D52): a person's message is private when it or its conversation says so, and belongs to its
+ * author (null: someone unidentified). A reply follows the person's message it answers — the latest one before it —
+ * unless it says otherwise, and belongs to the same person.
+ */
+async function privacyOf(tx: EntityManager, conversationId: string, m: IngestMessage, author: Attribution, privateChat: boolean | undefined)
+  : Promise<{ private: boolean; owner: string | null }> {
+  if (!isReply(m.role)) {
+    const isPrivate = m.private ?? privateChat ?? false;
+    return { private: isPrivate, owner: isPrivate ? author.personId : null };
+  }
+  const [asked] = await tx.query(
+    `SELECT private, private_owner_id, author_person_id FROM messages
+     WHERE conversation_id = $1 AND role IN ('user', 'other') AND sent_at <= $2 ORDER BY sent_at DESC LIMIT 1`,
+    [conversationId, new Date(m.sentAt)]);
+  const isPrivate = m.private ?? (privateChat || !!asked?.private);
+  return { private: isPrivate, owner: isPrivate ? (asked?.private ? asked.private_owner_id : asked?.author_person_id ?? null) : null };
 }
 
 export function contentHash(content: string): Buffer {
@@ -104,14 +124,15 @@ export class IngestService {
         }
         const hash = contentHash(m.content);
         const author = attribute(m, participants, memoryId, mode);
+        const privacy = await privacyOf(tx, conversationId, m, author, req.conversation.private);
         const [inserted] = await tx.query(
           `INSERT INTO messages (conversation_id, memory_id, external_id, role, tool_name, author_person_id, author_ref, author_kind,
-             attribution_method, attribution_confidence, content, content_hash, sent_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+             attribution_method, attribution_confidence, content, content_hash, sent_at, private, private_owner_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
            ON CONFLICT (conversation_id, external_id) DO NOTHING
            RETURNING id`,
           [conversationId, memoryId, m.externalId, m.role, m.toolName ?? null, author.personId, m.authorRef ?? null, author.kind,
-            author.method, author.confidence, m.content, hash, new Date(m.sentAt)],
+            author.method, author.confidence, m.content, hash, new Date(m.sentAt), privacy.private, privacy.owner],
         );
         if (inserted) {
           accepted++;
@@ -125,6 +146,7 @@ export class IngestService {
           duplicates++;
         } else if (m.upsert) {
           await this.applyEdit(tx, existing.id, existing.content, m.content);
+          if (m.private !== undefined) await setPrivate(tx, existing.id, m.private);
           accepted++;
           newIds.push(existing.id);
         } else {
@@ -150,18 +172,24 @@ export class IngestService {
     return { conversationId: outcome.conversationId, accepted: outcome.accepted, duplicates: outcome.duplicates, conflicts: outcome.conflicts };
   }
 
-  async edit(clientId: string, memoryId: string, conversationExternalId: string, messageExternalId: string, content: string): Promise<void> {
-    const conversationId = await this.db.transaction(async (tx) => {
+  /**
+   * An edited message: new content (re-extracted after the idle delay) and / or a new privacy (D52). What was extracted
+   * from it follows its privacy at read time, so a privacy change needs no extraction.
+   */
+  async edit(clientId: string, memoryId: string, conversationExternalId: string, messageExternalId: string, edit: EditMessage): Promise<void> {
+    const changed = await this.db.transaction(async (tx) => {
       const [row] = await tx.query(
         `SELECT m.id, m.content, m.conversation_id FROM messages m JOIN conversations c ON c.id = m.conversation_id
          WHERE c.client_id = $1 AND c.memory_id = $2 AND c.external_id = $3 AND m.external_id = $4 AND c.deleted_at IS NULL`,
         [clientId, memoryId, conversationExternalId, messageExternalId],
       );
       if (!row) throw new NotFoundException();
-      if (row.content !== content) await this.applyEdit(tx, row.id, row.content, content);
+      if (edit.private !== undefined) await setPrivate(tx, row.id, edit.private);
+      if (edit.content === undefined || row.content === edit.content) return null;
+      await this.applyEdit(tx, row.id, row.content, edit.content);
       return row.conversation_id as string;
     });
-    await this.queue.scheduleIdleExtraction(conversationId, this.idleDelayMs);
+    if (changed) await this.queue.scheduleIdleExtraction(changed, this.idleDelayMs);
   }
 
   /** Physical purge of one message; what only it supported goes too (`forgetting.ts`, WORK_PLAN 5.5). */

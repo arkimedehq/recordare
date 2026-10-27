@@ -12,9 +12,10 @@
  *   something told as done today that a later window shows did not happen is corrected, H1 blind12; v18: a request
  *   that tells something about my life is remembered, and something kept and changed over time — a list — is one note
  *   replaced at each change, never a plan, dev set dataset_dev_lists; v19: a plan, an intention or a wish changes no
- *   fact and makes no note until a later message tells it happened, dev set dataset_dev_plan_facts).
- * - Entity memories (D50, WORK_PLAN 8.5): `extract.v19+entity.v7` — the shared agent's memory in the first person, people by
- *   name or "someone"; the personal prompt's sections where they hold for both.
+ *   fact and makes no note until a later message tells it happened, dev set dataset_dev_plan_facts; v20: PRIVATE — a
+ *   person asking that what they said stay between us, or freeing it again, D52, dev set dataset_dev_private).
+ * - Entity memories (D50, WORK_PLAN 8.5): `extract.v20+entity.v8` — the shared agent's memory in the first person, people by
+ *   name or "someone"; the personal prompt's sections where they hold for both (v8: PRIVATE, as v20).
  */
 export interface PromptMessage {
   n: number;
@@ -56,7 +57,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v19';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v20';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -123,6 +124,11 @@ const schema = (hint: string): string => `{
     "question": "<Q-number from OPEN QUESTIONS that the window answers>",
     "contact": "<the C-number the answer chooses>",
     "evidence": [<message numbers>]
+  }],
+  "private": [{
+    "declared_in": <number of the message where a person asks to keep something between us, or says it can be told now>,
+    "messages": [<numbers of THAT person's own messages it covers>],
+    "private": true | false
   }]
 }`;
 
@@ -264,6 +270,23 @@ still to do — "finalmente", "ancora", "not yet", "still" —, it was put off, 
 episode with "corrects" set to that E-number, saying what I meant to do that day and that I did not do it \
 ("Il 1° aprile 2034 volevo verniciare la ringhiera, ma non l'ho fatto"); a new date in the window is a new plan.`;
 
+/**
+ * v20 / entity v8 (D52): a person asking that what they said stay between us. The code makes those messages private
+ * (theirs only, the replies that answer them along) and every memory drawn from them follows at read time.
+ */
+const PRIVATE = `
+
+PRIVATE
+- When a person asks that what they say stay between us ("non dirlo a nessuno", "resta tra noi", "keep this to \
+yourself", "que quede entre nosotros", "das bleibt unter uns"), add one "private" entry: "declared_in" the message where \
+they ask, "messages" the numbers of their own messages it covers (that message, and the ones just before it that it \
+refers to), "private": true. When they say it can be told now ("ora puoi dirlo", "you can tell them now"), the same \
+with "private": false — "messages" may be empty when what they free was said before this window.
+- Only that person's own messages, never another person's or the assistant's. A sensitive topic (health, money, love) \
+is not a request: unless they ask, nothing is private.
+- Record the memories as usual: who may be told them follows from this. Any item that tells or gives away part of what \
+was asked to stay between us — someone's reaction to it too — includes that person's message in its evidence.`;
+
 const P_SAFETY = `
 
 SAFETY
@@ -283,7 +306,7 @@ const END = `
 Empty lists when there is nothing to remember. Output JSON only.`;
 
 export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono stato al mare con Giulia', 'Mia sorella Giulia ha vinto la gara')") + P_FIRST_PERSON + P_SUBJECT + DATES + P_EPISODES + PLANS + P_FACTS + NOTES
-  + CORRECTIONS + P_NOT_DONE + P_SAFETY + END;
+  + CORRECTIONS + P_NOT_DONE + PRIVATE + P_SAFETY + END;
 
 /**
  * Entity memories (D50, WORK_PLAN 8.5): the memory of a shared agent — a device, a place, a robot, a service — that several
@@ -292,7 +315,7 @@ export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono st
  * conversation identifies them, "someone" until then. Shares the personal prompt's schema, dates, plans, notes and
  * corrections; its own intro, voice, identification, episode, fact and safety rules.
  */
-export const ENTITY_PROMPT_VERSION = 'entity.v7';
+export const ENTITY_PROMPT_VERSION = 'entity.v8';
 
 const E_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): a shared agent — a device, a place, a robot or a service — that several people talk \
@@ -405,7 +428,7 @@ creates or changes that person's facts or notes unless they confirm it. What a p
 - Every item needs evidence: the numbers of the messages that support it.`;
 
 export const ENTITY_SYSTEM = E_INTRO + schema("first person for me ('Ho impostato il timer del forno', 'Irene ha vinto la partita di pallavolo')")
-  + E_FIRST_PERSON + E_SUBJECT + DATES + E_EPISODES + PLANS + E_FACTS + NOTES + CORRECTIONS + E_SAFETY + END;
+  + E_FIRST_PERSON + E_SUBJECT + DATES + E_EPISODES + PLANS + E_FACTS + NOTES + CORRECTIONS + PRIVATE + E_SAFETY + END;
 
 /** A contact of the memory as the prompt lists it ("C3: Marco Bellini — collega; also: Marco"). */
 export interface PromptContact {
@@ -421,7 +444,7 @@ const contactLine = (c: PromptContact): string => {
   return `${c.ref}: ${c.fullName && c.fullName !== c.name ? `${c.name} (${c.fullName})` : c.name}${c.relation ? ` — ${c.relation}` : ''}${also.length ? `; also: ${also.join(', ')}` : ''}`;
 };
 
-/** The extraction input of both modes (personal `extract.v19`, entity `extract.v19+entity.v7`). */
+/** The extraction input of both modes (personal `extract.v20`, entity `extract.v20+entity.v8`). */
 /**
  * Continuous listening (WORK_PLAN 6.5, D45): only in ambient windows, so every other input stays byte-identical. The
  * speakers' names come from voice recognition and the words from speech recognition; nobody is talking to the

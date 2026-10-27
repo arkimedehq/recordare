@@ -67,6 +67,13 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   `own: true` on the message (`user` or `other` role), with `source: document | perception | ambient` when that is the
   conversation's nature. (Until WORK_PLAN 8.4 the extraction reads own content like your user's turns.) A text the
   agent should keep as knowledge to look things up in (a manual, a document) is a learned source instead (§3b).
+- **Private messages** (D52): when your platform knows something is private — a chat the user marked private, a
+  message they flagged — send `private: true` on the message or `conversation.private: true` on the request; the
+  agent's replies that follow are private too. It is told only to whoever said it (and to the holder of a personal
+  memory); `setMessagePrivate` (library) makes it private or public again. Recordare works out who is asking from the
+  conversation (the latest person's turn), so ingest the turn before recalling for it (`contextWithTurn`, or flush your
+  outbox) — in a shared chat a stale turn would read as the previous speaker. In an entity memory your diary UI reads the
+  public only: private things are the agent's and the person's who said them.
 - **Continuous listening** (a home device that hears the room, D45, WORK_PLAN 6.5): send the transcript as a
   conversation with `source: "ambient"` — the person whose memory it is as `user`, the others as `other` participants
   (with an identity when your voice recognition knows them), never `own`. The extraction is told it reads speech heard

@@ -106,12 +106,26 @@ client can never mint tokens for another client. `Idempotency-Key` replays are s
 `(credential, memory, method + path)`; v1 keeps them in Redis for 24 h (persistent table in the
 public profile).
 
-### Conversation context — no viewer filter (D50, WORK_PLAN 8.2)
+### Conversation context — no viewer filter, private memories apart (D50, WORK_PLAN 8.2; D52)
 **Behaviour now (2026-10-09)**: every answer — MCP recall, the memory context — uses the **whole memory**, in every
 conversation: one only the holder takes part in, a shared or group conversation, a conversation Recordare has not stored,
 or no conversation at all. Who may be told what (privacy, disclosure) comes later (WORK_PLAN 8.12); the `audience` /
 `disclosure` columns are still written, so that work starts from recorded data. **Per-memory isolation stays**: a
 request only ever opens the memory its credential and `X-Recordare-User` name.
+
+**Private memories (D52, 2026-10-27)**: a message declared private (§2) is told only to whoever it belongs to and, in a
+personal memory, to the holder; the admin reads everything. **Who reads** is the author of the conversation's latest
+person's turn (`user` / `other`, as of the request's time): the holder of a personal memory (an undeclared `user` turn,
+the self, `own` content) reads everything, an identified contact the public and their own, anyone unidentified ("someone",
+and in an entity memory every undeclared speaker) the public only. Without a conversation (§4, a personal token) the
+reader is the account: the holder of a personal memory; in an entity memory nobody but the agent knows private things, so
+the public only. Episodes, facts and notes follow the messages they rest on (their evidence, directly or through an
+episode): one is hidden when any message behind it is private to someone else (it fails closed: a public "I won't say a
+word" next to the secret must not make it public); an item with no message behind it is public. A correction keeps the privacy of what it
+corrects. This applies to every read: MCP recall (`search_episodes` with its chat excerpts and my replies,
+`search_memory`, `search_knowledge`'s episodes), the memory context and its self card, the read API (§4, details and
+their evidence, cards, the notes feed: a note the reader may not see comes as `note: null`), exports; `correct_episode` /
+`forget_episode` see only what their reader may see (404 otherwise). A memory with no private message is read as before.
 
 The conversation is still **resolved by Recordare, never asserted by the client or the LLM**, from
 `X-Recordare-Conversation: <externalConversationId>` (MCP calls may carry it as `_meta.recordare.conversation` instead),
@@ -189,6 +203,7 @@ connectors for one person). The admin credential cannot ingest (403).
     channel?: string; title?: string;              // title: a group chat's name, given to the extraction
     direct?: boolean;                              // a one-to-one chat (true) or a group (false); unknown when
                                                    // missing (D51: a link code is never accepted in a group)
+    private?: boolean;                             // a private chat (D52): every message of the request is private
     participants?: Array<{
       ref: string; role: "holder" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
@@ -207,6 +222,8 @@ connectors for one person). The admin credential cannot ingest (403).
     upsert?: boolean;                     // true: same externalId with new content = edit
     own?: boolean;                        // the agent's own content (knowledge given to it, its
                                           // perceptions, a document); role user | other only
+    private?: boolean;                    // D52: told only to whoever said it (and to a personal
+                                          // memory's holder); replies after it follow (see below)
   }>;
   hints?: { conversationEnded?: boolean };
 }
@@ -227,6 +244,12 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   (`assistant`), `tool`, `own` (`own: true`) — with a confidence (1, or none when nothing was established). Not exposed
   by the read API yet. The extraction prompts show it (8.4, 8.5): `own` content and the assistant's turns are the
   agent's own ("me") in both modes.
+- **Private messages** (D52): a message is private when it says so (`private: true`) or its request does
+  (`conversation.private`), or when its author asks in words that it stay between us (the extraction, `extract.v20`:
+  only their own messages; "now you can say it" frees them again); it belongs to its author (the self, a contact, or nobody identified). The agent's and tools'
+  turns that follow a private message (the latest `user` / `other` before them) are private for the same person unless
+  they say `private: false`. What is extracted from private messages is private at read time through its evidence (no
+  copy of the flag); a privacy change needs no new extraction. Who may read what: §1, conversation context (D52).
 - **Link codes** (D51): in a personal memory, a `user` / `other` message (not `own`) that is only a link code
   (`RCD-XXXX-XXXX`, any case, dashes and a final dot optional) is **never stored** (not counted in `accepted`). When its
   author is a participant with an `identity` and `conversation.direct` is not `false`, it becomes a *claim* (that
@@ -235,8 +258,10 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   claimed code from another sender, is a failure — five cancel the memory's open codes.
 
 ### Edits and deletions
-- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` when
-  unknown); the previous text goes to `message_revisions` and the message is extracted again.
+- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content?, private?}` (at least one)
+  → `204` (`404` when unknown); new content: the previous text goes to `message_revisions` and the message is extracted
+  again; `private` (D52, library `setMessagePrivate`): a person's message takes the replies that answer it along (the
+  agent's and tools' turns after it, until the next person's message), a reply changes alone; no extraction.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
   purge (`DATA_MODEL.md` → Forgetting and deletion: the episodes, facts, notes and plan states only those messages
   supported go too). As built: the purge runs synchronously and returns `202` with no
@@ -401,7 +426,7 @@ type Episode = {
   sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
-The same in every conversation, including those others take part in (D50: no viewer filter).
+The same in every conversation, including those others take part in (D50: no viewer filter), private memories apart (D52, §1).
 **Heard in the room (WORK_PLAN 6.5)**: an episode whose evidence all comes from `ambient` conversations, and a chat
 excerpt from one, carry `heard: true` — overheard by a listening device, not said to the agent, the speaker possibly
 misrecognised. The `search_episodes` description tells the agent to tell it as heard at home and that what it says of
@@ -548,7 +573,11 @@ pending one) removes the row with its evidence and leaves a `fact` / `note` tomb
 Scoped to the memory, and the reader is the holder themself in the host's UI (memory-direct): a client key names the person
 with `X-Recordare-User` (scope `read` to read, `write` to edit), a personal token is the person; no conversation header,
 no conversation resolution. In an entity memory everyone using the
-account sees all of it (D48).
+account sees all of it (D48), private memories apart (D52): in a personal memory the account is the holder and reads
+them, each marked `private: {by: [names]}` (whose it is); in an entity memory only the agent knows them, so the account
+reads the public ones and `GET api/v1/private` lists the private ones without their content (forgotten with the item's
+`DELETE`). The diary (`digests`) and the recurring patterns are written from public memories only; making a message
+private or public again (§2) has its days written again.
 
 | Method + path | Scope | Purpose |
 |---|---|---|
@@ -565,6 +594,7 @@ account sees all of it (D48).
 | `GET api/v1/plans?status` | read | Open / unresolved plans |
 | `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34); recurring patterns are notes with `pattern: true` (D26: the memory's own, nothing to confirm) |
 | `GET api/v1/cards` | read | Who I am and who my contacts are (WORK_PLAN 8.13), no LLM: `{self, contacts}`, each `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — the current, confirmed facts and notes about that person (pinned notes first, then by support), contacts most recently mentioned first; each id opens its detail (`GET api/v1/facts/{id}`, `notes/{id}`) with the evidence |
+| `GET api/v1/private` | read | The private memories (D52): `[{kind: episode \| fact \| note, id, by: [names], recordedAt}]`, never their content; an entity memory's Diary shows them so (forget one with its `DELETE`) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Manage notes |
 | `GET api/v1/notes/changes?since=<seq>` | read | Change feed for clients keeping copies (Arkimede → A-MEM, D34) |
 | `GET api/v1/settings`, `PATCH api/v1/settings` | read / memory_settings | locale, timezone, quality profile |

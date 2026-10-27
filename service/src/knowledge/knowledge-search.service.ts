@@ -16,6 +16,7 @@ import { logRecall } from '../recall/recall-log';
 import { type MemoryMode } from '../identity/identity.entities';
 import { vectorParam } from '../db/pgvector';
 import { messages } from '../lang';
+import { episodeVisible, readerOf } from '../recall/privacy';
 
 const RRF_K = 60;
 const CANDIDATES = 50;
@@ -51,6 +52,7 @@ export class KnowledgeSearchService {
   async search(memoryId: string, args: { query: string; limit?: number; conversationId?: string }, now: Date): Promise<KnowledgeResult> {
     const [memory]: Array<{ display_name: string; mode: MemoryMode; locale: string; timezone: string }> = await this.db.query(
       `SELECT p.display_name, o.mode, o.locale, o.timezone FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
+    const reader = await readerOf(this.db, memoryId, args.conversationId, now);
     const ranked = await this.rank(memoryId, args.query);
     const top = [...ranked.scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, args.limit ?? 5).map(([id]) => id);
     const rows: Array<{ id: string; heading: string | null; content: string; source_id: string; title: string; kind: string; author: string | null;
@@ -79,7 +81,8 @@ export class KnowledgeSearchService {
            SELECT e.id, es.source_id, e.content, e.occurred_at, e.date_precision,
              row_number() OVER (PARTITION BY es.source_id ORDER BY e.occurred_at DESC NULLS LAST) AS n
            FROM episode_sources es JOIN episodes e ON e.id = es.episode_id
-           WHERE es.source_id = ANY($1) AND e.memory_id = $2 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL) r
+           WHERE es.source_id = ANY($1) AND e.memory_id = $2 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL
+             AND ${episodeVisible('e', reader)}) r
          WHERE n <= $3 ORDER BY occurred_at`, [sourceIds, memoryId, EPISODES_PER_SOURCE])
       : [];
     const notes = passages.length ? [messages(memory?.locale ?? 'en').passages] : [];

@@ -34,6 +34,7 @@ import { localDate, toStored, type Precision } from './time';
 import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 import { askClarification, resolveClarification } from './clarifications';
 import { confirmPending, isPending } from './pending';
+import { setPrivate } from '../rawlog/message-privacy';
 
 type AuthorRole = 'holder' | 'assistant' | 'other' | 'tool';
 
@@ -109,6 +110,7 @@ export class ExtractionWriter {
     await this.writeFacts(out);
     await this.writeNotes(out);
     await this.applyAnswers(out);
+    await this.applyPrivacy(out);
     await this.tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [this.ctx.runId, this.input.messages.map((m) => m.id)]);
     for (const w of this.written) {
       await this.tx.query(`INSERT INTO run_outputs (run_id, table_name, row_id) VALUES ($1, $2, $3)`, [this.ctx.runId, w.table, w.id]);
@@ -136,12 +138,12 @@ export class ExtractionWriter {
     for (const w of this.written) written[w.table] = (written[w.table] ?? 0) + 1;
     return {
       returned: { episodes: raw.episodes.length, plan_patches: raw.plan_patches.length, facts: raw.facts.length, notes: raw.notes.length,
-        answers: raw.answers.length },
+        answers: raw.answers.length, private: raw.private.length },
       written, dropped: this.dropped, leaks: this.leaks, clarifications: this.clarified,
     };
   }
 
-  private drop(kind: 'episode' | 'plan_patch' | 'fact' | 'note' | 'answer', reason: string): void {
+  private drop(kind: 'episode' | 'plan_patch' | 'fact' | 'note' | 'answer' | 'private', reason: string): void {
     const k = (this.dropped[kind] ??= {});
     k[reason] = (k[reason] ?? 0) + 1;
   }
@@ -733,6 +735,26 @@ export class ExtractionWriter {
     }
     if (/^C\d+$/i.test(text)) return true; // unknown reference: dropped as such
     return this.namedInWindow(text) || this.input.messages.some((m) => m.authorName && fold(m.authorName) === fold(withoutRelation(text)));
+  }
+
+  /**
+   * A person asking that what they said stay between us, or freeing it again (D52): only their own messages — the asking
+   * message's author, identified, or that very message when nobody is —, never a reply or a tool turn (those follow the
+   * message they answer). Freed again ("now you can say it"), it covers too what that person kept private earlier in this
+   * conversation, which is no longer in the window. What was drawn from them follows at read time.
+   */
+  private async applyPrivacy(out: ExtractionOutput): Promise<void> {
+    for (const p of out.private) {
+      const [asking] = this.evidence([p.declared_in]);
+      if (!asking || asking.role === 'assistant' || asking.role === 'tool') { this.drop('private', 'not_a_person'); continue; }
+      const theirs = this.evidence(p.messages).filter((m) => m.role !== 'assistant' && m.role !== 'tool'
+        && (asking.authorPersonId ? m.authorPersonId === asking.authorPersonId : m.id === asking.id));
+      if (theirs.length < p.messages.length) this.drop('private', 'not_their_own');
+      const earlier: Array<{ id: string }> = !p.private && asking.authorPersonId ? await this.tx.query(
+        `SELECT id FROM messages WHERE conversation_id = $1 AND private AND author_person_id = $2 AND sent_at < $3`,
+        [this.ctx.conversationId, asking.authorPersonId, asking.sentAt]) : [];
+      for (const id of new Set([...theirs.map((m) => m.id), ...earlier.map((m) => m.id)])) await setPrivate(this.tx, id, p.private);
+    }
   }
 
   /** Answers to OPEN QUESTIONS: the chosen contact becomes the item's subject (the text is not rewritten). */

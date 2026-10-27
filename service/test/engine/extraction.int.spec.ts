@@ -178,7 +178,7 @@ describe('extraction engine (fake LLM: code-side rules)', () => {
       `SELECT r.id, r.memory_id, r.conversation_id, r.summary FROM extraction_runs r JOIN conversations c ON c.id = r.conversation_id
        WHERE c.external_id = 'sum1'`);
     expect(run.summary).toEqual({
-      returned: { episodes: 2, plan_patches: 0, facts: 0, notes: 1, answers: 0 },
+      returned: { episodes: 2, plan_patches: 0, facts: 0, notes: 1, answers: 0, private: 0 },
       written: { episodes: 1 },
       dropped: { episode: { no_evidence: 1 }, note: { no_evidence: 1 } },
       leaks: { episodes: 1, notes: 0, name: 1, stand_in: 0 }, // "Luca ha comprato…" names the self

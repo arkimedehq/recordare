@@ -9,6 +9,7 @@
  */
 import { type DataSource } from 'typeorm';
 import { localDate } from '../engine/time';
+import { episodeVisible, factVisible, noteVisible, type Reader } from './privacy';
 
 export interface CardFact { id: string; key: string; value: string | null; validFrom: string | null }
 export interface CardNote { id: string; category: string; content: string; pinned: boolean; pattern: boolean }
@@ -23,8 +24,8 @@ export interface Card {
 }
 export interface Cards { self: Card; contacts: Card[] }
 
-/** The self card and one card per contact, contacts most recently mentioned first. */
-export async function buildCards(db: DataSource, memoryId: string): Promise<Cards | null> {
+/** The self card and one card per contact, contacts most recently mentioned first; what the reader may be told (D52). */
+export async function buildCards(db: DataSource, memoryId: string, reader: Reader): Promise<Cards | null> {
   const [memory] = await db.query(
     `SELECT o.timezone, p.display_name AS name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
   if (!memory) return null;
@@ -33,16 +34,18 @@ export async function buildCards(db: DataSource, memoryId: string): Promise<Card
   const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null; who: string }> = await db.query(
     `SELECT id, key, value, valid_from, COALESCE(subject_person_id, $1) AS who FROM facts
      WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND subject_kind IN ('self', 'contact')
+       AND ${factVisible('facts', reader)}
      ORDER BY key, valid_from NULLS FIRST`, [memoryId]);
   // Pinned first, then what more messages support, then the newest.
   const notes: Array<{ id: string; category: string; content: string; pinned: boolean; pattern: boolean; who: string }> = await db.query(
     `SELECT id, category, content, pinned, 'pattern' = ANY(tags) AS pattern, COALESCE(subject_person_id, $1) AS who FROM notes
      WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND subject_kind IN ('self', 'contact')
+       AND ${noteVisible('notes', reader)}
      ORDER BY pinned DESC, support_count DESC, recorded_at DESC`, [memoryId]);
   const contacts: Array<{ id: string; name: string; aliases: string[] | null; last: Date | null }> = await db.query(
     `SELECT p.id, p.display_name AS name,
             (SELECT array_agg(a.alias ORDER BY a.alias) FROM person_aliases a WHERE a.person_id = p.id) AS aliases,
-            (SELECT max(e.occurred_at) FROM episodes e WHERE e.memory_id = $1 AND e.deleted_at IS NULL
+            (SELECT max(e.occurred_at) FROM episodes e WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND ${episodeVisible('e', reader)}
                AND (e.subject_person_id = p.id OR EXISTS (SELECT 1 FROM episode_people ep WHERE ep.episode_id = e.id AND ep.person_id = p.id))) AS last
      FROM persons p WHERE p.memory_id = $1
      ORDER BY last DESC NULLS LAST, p.display_name`, [memoryId]);

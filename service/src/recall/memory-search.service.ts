@@ -21,6 +21,7 @@ import { type MemoryView } from './episode-search.service';
 import { type SubjectKind } from '../identity/identity.entities';
 import { vectorParam } from '../db/pgvector';
 import { messages } from '../lang';
+import { factVisible, noteVisible, readerOf } from './privacy';
 
 export interface MemorySearchArgs {
   /** The conversation the recall is served in (see EpisodeSearchArgs). */
@@ -77,6 +78,7 @@ export class MemorySearchService {
     const asOfDay = args.asOf ? (args.asOf.length === 7 ? `${args.asOf}-01` : args.asOf.slice(0, 10)) : null;
     const asOf = asOfDay ? zonedMidnight(addDays(asOfDay, 1), tz) : now; // end of that day
     const limit = args.limit ?? 8;
+    const reader = await readerOf(this.db, memoryId, args.conversationId, now);
     let vec: number[] | undefined;
     try {
       [vec] = await this.embeddings.embed([args.query], 'query');
@@ -91,7 +93,8 @@ export class MemorySearchService {
         `SELECT id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, subject_kind, subject_person_id, subject_candidates,
                 CASE WHEN $2::text IS NULL OR embedding IS NULL THEN NULL ELSE 1 - (embedding <=> $2::vector) END AS sim,
                 ($3::text <> '' AND to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')) @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
-         FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)`,
+         FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)
+           AND ${noteVisible('notes', reader)}`,
         [memoryId, vec ? vectorParam(vec) : null, tsq, args.includePending ?? false]);
     const notes = noteRows.filter((n) => n.pinned || n.fts || (n.sim ?? 0) >= MIN_VECTOR_SIMILARITY)
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || (b.sim ?? 0) + (b.fts ? 0.1 : 0) - ((a.sim ?? 0) + (a.fts ? 0.1 : 0)))
@@ -107,7 +110,7 @@ export class MemorySearchService {
                 @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
        FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
        WHERE f.memory_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected'
-         AND ($4::boolean OR NOT f.pending)
+         AND ($4::boolean OR NOT f.pending) AND ${factVisible('f', reader)}
        ORDER BY f.key, f.valid_from NULLS FIRST, f.recorded_at`,
       [memoryId, vec ? vectorParam(vec) : null, tsq, args.includePending ?? false]);
     // One slot per (person, key): Andrea's car and Marta's car are two histories.

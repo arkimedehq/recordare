@@ -81,6 +81,12 @@ export const extractionSchema = z.object({
     contact: z.string().max(20),
     evidence,
   })).default([]),
+  /** D52: a person asking to keep their own messages between us (or freeing them again): the message they ask in, those it covers. */
+  private: z.array(z.object({
+    declared_in: z.number().int().positive(),
+    messages: z.array(z.number().int().positive()).max(50).default([]),
+    private: z.boolean().default(true),
+  })).default([]),
 });
 
 export type ExtractionOutput = z.infer<typeof extractionSchema>;

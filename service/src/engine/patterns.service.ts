@@ -24,6 +24,7 @@ import { ENTITY_PATTERNS_SUFFIX, ENTITY_PATTERNS_SYSTEM, PATTERNS_SYSTEM, PATTER
 import { localDate } from './time';
 import { subjectLabel } from './subjects';
 import { vectorParam } from '../db/pgvector';
+import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 
 /** Episodes looked at: those of the last LOOKBACK_DAYS, the newest MAX_EPISODES. */
 const LOOKBACK_DAYS = 90;
@@ -79,6 +80,7 @@ export class PatternsService {
          AND e.kind IN ('event', 'state_change') AND e.occurred_at IS NOT NULL
          AND e.occurred_at <= $2 AND e.occurred_at > $2::timestamptz - make_interval(days => $3)
          AND e.origin <> 'assistant_stated' AND e.author_role <> 'tool' AND NOT (e.author_role = 'other' AND e.stance = 'inferred')
+         AND ${episodeVisible('e', PUBLIC_ONLY)} -- a pattern is drawn from public memories only (D52)
        ORDER BY e.occurred_at DESC, e.id DESC LIMIT $4`, [memoryId, now, LOOKBACK_DAYS, MAX_EPISODES]) as EpisodeRow[]).reverse();
     // Nothing new since the last pass, or too little to repeat itself: no call.
     if (!episodes.some((e) => e.fresh) || episodes.length < MIN_PATTERN_EPISODES) return report;

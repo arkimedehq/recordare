@@ -741,9 +741,24 @@ from others; D50's "no viewer filter" stays the default: **everything is public 
 - **Back and forth**: whoever declared it may make it public ("now you can say it"), or private again.
 - Not adopted (for now): conversation scopes / groups declared by the client (Honcho), the five disclosure tiers
   (`holder … public`, VISION). Finer groups ("the family yes, guests no") can be added later if a real case asks.
-- To build (8.13): a privacy column on raw messages and derived rows (owner person id), the asker on read paths, the
-  extraction rule (a small dev set first), the Diary marks, client flags and library options; `audience` / `disclosure`
-  stay recorded as they are.
+- To build (8.13): privacy on raw messages only (`private`, the owner person id) — episodes, facts and notes inherit it
+  at read time through their evidence, so making a message public again needs no rewrite —, the asker on read paths,
+  the extraction rule (a small dev set first), the Diary marks, client flags and library options; `audience` /
+  `disclosure` stay recorded as they are. **Built so far** (2026-10-27): the message columns, the ingest flags
+  (`private`, `conversation.private`, replies following), `PATCH …/messages/{id} {private}`, library
+  `setMessagePrivate`; every read path (`service/src/recall/privacy.ts`; the rules in `API.md` §1). Decided while
+  building: an item is hidden when **any** message behind it is private to someone else — it fails closed (first built
+  the other way, "public once said in the open", so that a public fact Marta repeats in private would not vanish; the
+  dev set showed the leak that rule allows: Sara's public "Non dico niente" next to Klaus's secret made the episode
+  public); a correction keeps the privacy of what it corrects; the reader is the author of the conversation's latest person's turn
+  (as `speakerOf`), but someone unidentified reads the public only, in a personal memory too. Then the Diary marks
+  (`private: {by}` on items, `GET api/v1/private` for an entity memory) and the diary and patterns from public memories
+  only (a privacy change rewrites its days). Then the extraction (`extract.v20`, `entity.v8`, section PRIVATE): a person
+  asking in words that what they said stay between us ("non dirlo a nessuno", any language) gives a `private` entry —
+  the asking message and the messages it covers; the code makes private only that person's own messages (an
+  unidentified speaker: only that very message), never another person's or a reply; freeing it again ("ora puoi dirlo")
+  also covers what that person kept private earlier in the same conversation, no longer in the window. A sensitive
+  topic told without asking stays public. Dev set `dataset_dev_private` (RESULTS.md).
 
 ## Open questions (to discuss)
 

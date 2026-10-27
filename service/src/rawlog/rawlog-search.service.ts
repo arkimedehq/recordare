@@ -14,6 +14,7 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { memorySpeaker } from './attribution';
 import { vectorParam } from '../db/pgvector';
 import { bestExcerpt } from './excerpt';
+import { messageVisible, type Reader } from '../recall/privacy';
 
 export interface RawHit {
   conversationId: string;
@@ -48,6 +49,8 @@ export interface RawSearchOptions {
   /** My own (the assistant's) earlier replies instead of the others' messages; not those of the conversation the recall is
    * served in (they are in front of the agent already). */
   replies?: boolean;
+  /** Who reads (D52): private messages only for whoever they belong to. */
+  reader: Reader;
 }
 
 const RRF_K = 60;
@@ -71,7 +74,7 @@ export class RawLogSearchService {
     // Messages behind forgotten memories never come back through the chat search (D16); a deleted fact or note leaves
     // its messages there (4.13: one memory drawn from them was removed, not the conversation).
     const role = opts.replies ? `m.role = 'assistant' AND length(m.content) >= ${MIN_REPLY_CHARS}` : `m.role <> 'assistant'`;
-    const base = `m.memory_id = $1 AND ${role} AND c.deleted_at IS NULL
+    const base = `m.memory_id = $1 AND ${role} AND c.deleted_at IS NULL AND ${messageVisible('m', opts.reader)}
       AND NOT EXISTS (SELECT 1 FROM forget_tombstones t WHERE t.memory_id = $1 AND t.scope::text NOT IN ('fact', 'note')
         AND m.id = ANY(t.message_ids))
       AND ($2::timestamptz IS NULL OR m.sent_at >= $2) AND ($3::timestamptz IS NULL OR m.sent_at < $3) ${scope.sql(params)}

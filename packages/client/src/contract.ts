@@ -81,6 +81,8 @@ export interface IngestConversation {
   title?: string;
   /** A one-to-one chat (true) or a group (false), when the platform knows: a link code is never accepted in a group (D51). */
   direct?: boolean;
+  /** A private chat (D52): every message of the request is private. */
+  private?: boolean;
   participants?: IngestParticipant[];
 }
 
@@ -108,6 +110,11 @@ export interface IngestMessage {
   upsert?: boolean;
   /** The agent's own content (knowledge given to it, its perceptions, a document); `user` or `other` messages only. */
   own?: boolean;
+  /**
+   * Private (D52): told only to whoever said it (and to a personal memory's holder). The agent's reply and tool turns
+   * after a private message are private too, unless they say otherwise.
+   */
+  private?: boolean;
 }
 
 export interface IngestRequest {
@@ -167,6 +174,12 @@ export interface RoomResult {
 // ── The diary: read / write API for host UIs (API.md §4) ─────────────────────────────────────────────────────────
 
 export type PlanStatus = 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
+
+/** D52: on a private item only — whose it is (told only to them and to a personal memory's holder; no name when nobody identified said it). */
+export interface PrivateMark { by: string[] }
+
+/** A private memory as an entity memory's Diary shows it (D52): that it exists and whose it is, never its content. */
+export interface PrivateItem { kind: 'episode' | 'fact' | 'note'; id: string; by: string[]; recordedAt: string }
 export type Precision = 'minute' | 'day' | 'month' | 'year' | 'approximate' | 'unknown';
 
 export interface Episode {
@@ -190,6 +203,7 @@ export interface Episode {
   inferred: boolean;
   corrected: boolean;
   recordedAt: string;
+  private?: PrivateMark;
 }
 
 export interface EpisodeDetail extends Episode {
@@ -226,6 +240,7 @@ export interface Fact {
   pending: boolean;
   inferred: boolean;
   history: Array<{ id: string; value: string | null; from: string | null; to: string | null; status: string }>;
+  private?: PrivateMark;
 }
 
 export interface Note {
@@ -240,6 +255,7 @@ export interface Note {
   authorRole: string;
   supportCount: number;
   recordedAt: string;
+  private?: PrivateMark;
 }
 
 /** The messages behind a fact or a note; text only from the client's own conversations (`otherClient` otherwise). */

@@ -175,6 +175,49 @@ describe('REST ingest (Layer 0)', () => {
     expect(rows.every((r) => r.has)).toBe(true);
   });
 
+  it('private messages (D52): whoever says it owns it, the replies that answer it follow, and it can be made public again', async () => {
+    const at = (min: number) => `2026-01-19T10:${String(min).padStart(2, '0')}:00+01:00`;
+    const marta = { ref: 'marta', role: 'other', displayName: 'Marta', identity: { channel: 'tg', externalId: 'marta-p' } };
+    const send = (conv: string, msgs: Array<Record<string, unknown>>, extra: Record<string, unknown> = {}) =>
+      call(url, 'POST', '/api/v1/ingest/messages', { ...as('luca'), body: batch(conv, msgs, { participants: [marta], ...extra }) });
+    expect((await send('p1', [
+      msg('a', 'Ciao a tutti', 'user', at(0)),
+      { ...msg('b', 'Vi dico una cosa, ho un debito', 'other', at(1)), authorRef: 'marta', private: true },
+      msg('c', 'Grazie della fiducia', 'assistant', at(2)),
+      { ...msg('d', '{"ok":true}', 'tool', at(3)), toolName: 'remember' },
+      msg('e', 'Andiamo a cena?', 'user', at(4)),
+      msg('f', 'Volentieri', 'assistant', at(5)),
+    ])).body.accepted).toBe(6);
+    const rows = async (conv: string) => Object.fromEntries((await db.query(
+      `SELECT m.external_id, m.private, m.private_owner_id, m.author_person_id FROM messages m JOIN conversations c ON c.id = m.conversation_id
+       WHERE c.external_id = $1`, [conv])).map((r: Record<string, unknown>) => [r.external_id, r]));
+    const p1 = await rows('p1');
+    const martaId = p1.b.author_person_id as string;
+    expect(martaId).toBeTruthy();
+    const owner = (r: Record<string, unknown>) => (r.private ? r.private_owner_id : 'public');
+    expect(Object.fromEntries(Object.entries(p1).map(([k, r]) => [k, owner(r)])))
+      .toEqual({ a: 'public', b: martaId, c: martaId, d: martaId, e: 'public', f: 'public' });
+
+    // A private chat: everything in it is private, the holder's turns are the holder's.
+    await send('p2', [msg('a', 'Una cosa mia', 'user', at(10)), msg('b', 'Capito', 'assistant', at(11))], { private: true });
+    const p2 = await rows('p2');
+    expect([owner(p2.a), owner(p2.b)]).toEqual([memoryId, memoryId]);
+
+    // "Now you can say it": the message and the replies that answer it become public; a reply alone follows its own flag.
+    const patch = (conv: string, id: string, body: object) =>
+      call(url, 'PATCH', `/api/v1/ingest/conversations/${conv}/messages/${id}`, { ...as('luca'), body });
+    expect((await patch('p1', 'b', { private: false })).status).toBe(204);
+    expect(Object.values(await rows('p1')).every((r) => !r.private && r.private_owner_id === null)).toBe(true);
+    expect((await patch('p1', 'c', { private: true })).status).toBe(204);
+    const again = await rows('p1');
+    expect([owner(again.b), owner(again.c), owner(again.d)]).toEqual(['public', martaId, 'public']);
+    expect((await patch('p1', 'c', {})).status).toBe(400);
+    // A privacy change alone needs no new extraction: the message keeps its content and extraction state.
+    expect(await db.query(`SELECT content FROM messages WHERE external_id = 'c' AND private`)).toEqual([{ content: 'Grazie della fiducia' }]);
+    await call(url, 'DELETE', '/api/v1/ingest/conversations/p1', as('luca'));
+    await call(url, 'DELETE', '/api/v1/ingest/conversations/p2', as('luca'));
+  });
+
   it('edits and deletes messages and conversations of the calling client only', async () => {
     expect((await call(url, 'PATCH', '/api/v1/ingest/conversations/c1/messages/m1', { ...as('luca'), body: { content: 'Ieri a Livigno' } })).status).toBe(204);
     expect(await db.query(`SELECT content, extracted_run_id FROM messages WHERE external_id = 'm1'`)).toEqual([{ content: 'Ieri a Livigno', extracted_run_id: null }]);

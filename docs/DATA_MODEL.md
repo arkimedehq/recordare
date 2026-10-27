@@ -358,6 +358,8 @@ joined_at` — source of every row's `audience` (recorded; no read filters on it
 | `received_at` | timestamptz | |
 | `extracted_run_id` | uuid null → extraction_runs | **null = pending extraction**; the idle / nightly jobs take pending messages by `sent_at`, so late-arriving messages (imports, out-of-order batches) are never skipped |
 | `edited_at` | timestamptz null | Previous text in `message_revisions(message_id, content, replaced_at)` |
+| `private` | boolean, default false | Declared private (D52): told only to `private_owner_id` and, in a personal memory, the holder (and the admin); what is extracted from it inherits it at read time through its evidence |
+| `private_owner_id` | uuid null → persons, `ON DELETE SET NULL` | Whose it is: the author, or for a reply the person it answers; null when nobody identified said it (then only the holder of a personal memory and the admin) |
 | `tsv` | tsvector | Generated `to_tsvector('simple', content)`, GIN (the `unaccent` extension is created but not used yet) |
 | `embedding` | vector(N) null | Raw-log search (D13); computed asynchronously after ingest, for every message — my own replies are searched too (D30); the hourly sweep queues the missing ones |
 
