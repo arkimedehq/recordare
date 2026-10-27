@@ -781,7 +781,12 @@ people (`asker`). Three runs, each a different code or prompt state (not repeats
   e70, e75 — partials on plan details, a forbidden date on e70; one judge call failed). Within the run-to-run noise seen
   before (blind5 92.5–94.3 % across versions). **No false positive**: 122 extraction windows on the blind sets returned no
   `private` entry and no message became private. Every run single-version (`extract.v20`).
-- Not measured yet: the entity prompt (`entity.v8`, same PRIVATE section).
+- Entity prompt (`extract.v20+entity.v8`, blind11, 1 run, ≈ 0.06 USD): **95.0 %** (entity.v5 runs 100 / 97.5 / 98.8 %).
+  Two misses, neither from privacy: q38 is right in substance (Marco Tomasi never signed up, Rhys dropped out on 28
+  October) but its "quel giorno" read as the 28th to the judge; q09 (closed for inventory on Monday 15 November) was
+  extracted right — an episode dated 15–16 November and a fact `chiusura_inventario` — but neither reached the answer's
+  context, which held only the winter opening hours (a recall miss). **No false positive**: 148 messages, none private.
+  Single-version run.
 
 ### D30 — my own earlier replies in the recall (2026-10-21, DeepSeek direct off-peak, 1 run each)
 
