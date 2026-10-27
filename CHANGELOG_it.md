@@ -6,6 +6,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.5.0] — 2026-10-27
+
+**Memorie private**: una persona può tenere ciò che ha detto tra sé e l'agente — con un flag del client (un messaggio
+o un'intera chat) o con parole sue ("resti tra noi") — e ogni lettura lo rispetta: una memoria privata è detta solo a
+chi appartiene e, in una memoria personale, al titolare; l'admin legge tutto (D52). Nessuna modifica incompatibile:
+l'API cresce soltanto; aggiornare prima il servizio (la migrazione `PrivateMessages` gira all'avvio), poi la libreria
+client e i connettori. Qualità (DeepSeek `deepseek-flash`, `spikes/memory-eval/RESULTS.md`): i set ciechi entro il
+rumore di una run (blind12 95,4 %, blind5 90,7 %, entity blind11 95,0 %), nessun messaggio reso privato per errore.
+
 ### Aggiunto
 - Messaggi privati (D52, primo passo): `private` su un messaggio o su un'intera richiesta (`conversation.private`); la
   risposta dell'agente e i turni degli strumenti che seguono lo diventano, per la stessa persona; `PATCH …/messages/{id}

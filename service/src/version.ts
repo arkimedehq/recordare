@@ -2,4 +2,4 @@
 // Copyright © 2026 Andrea Genovese
 
 /** The service version, as in package.json (bumped together at each release): MCP server info, OpenAPI `info.version`. */
-export const VERSION = '0.4.0';
+export const VERSION = '0.5.0';

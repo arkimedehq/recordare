@@ -99,7 +99,7 @@ export class RecordareMcp {
       },
       requestInit: { headers: { ...this.http.headers(user), [CONVERSATION_HEADER]: conversation } },
     });
-    const client = new Client(this.options.clientInfo ?? { name: 'recordare-client', version: '0.4.0' });
+    const client = new Client(this.options.clientInfo ?? { name: 'recordare-client', version: '0.5.0' });
     await client.connect(transport);
     return client;
   }
