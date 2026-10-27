@@ -741,9 +741,12 @@ from others; D50's "no viewer filter" stays the default: **everything is public 
 - **Back and forth**: whoever declared it may make it public ("now you can say it"), or private again.
 - Not adopted (for now): conversation scopes / groups declared by the client (Honcho), the five disclosure tiers
   (`holder … public`, VISION). Finer groups ("the family yes, guests no") can be added later if a real case asks.
-- To build (8.13): a privacy column on raw messages and derived rows (owner person id), the asker on read paths, the
-  extraction rule (a small dev set first), the Diary marks, client flags and library options; `audience` / `disclosure`
-  stay recorded as they are.
+- To build (8.13): privacy on raw messages only (`private`, the owner person id) — episodes, facts and notes inherit it
+  at read time through their evidence (the most restrictive wins), so making a message public again needs no rewrite —,
+  the asker on read paths, the extraction rule (a small dev set first), the Diary marks, client flags and library
+  options; `audience` / `disclosure` stay recorded as they are. **Built so far** (2026-10-27): the message columns, the
+  ingest flags (`private`, `conversation.private`, replies following), `PATCH …/messages/{id} {private}`, library
+  `setMessagePrivate`.
 
 ## Open questions (to discuss)
 

@@ -8,7 +8,7 @@ import { type Principal } from '../auth/principal';
 import { ZodBody } from '../common/zod-body.pipe';
 import { Returns } from '../common/returns';
 import { ingestResponse, roomResponse } from '../openapi/responses';
-import { editMessageSchema, ingestSchema, type IngestRequest, type IngestResult, roomSchema, type RoomRequest, type RoomResult } from './ingest.schemas';
+import { type EditMessage, editMessageSchema, ingestSchema, type IngestRequest, type IngestResult, roomSchema, type RoomRequest, type RoomResult } from './ingest.schemas';
 import { roomFor } from './room';
 import { IngestService } from './ingest.service';
 
@@ -49,10 +49,10 @@ export class IngestController {
   @HttpCode(204)
   async edit(
     @CurrentPrincipal() p: Principal, @Headers(USER_HEADER) user: string | undefined,
-    @Param('conv') conv: string, @Param('msg') msg: string, @Body(new ZodBody(editMessageSchema)) body: { content: string },
+    @Param('conv') conv: string, @Param('msg') msg: string, @Body(new ZodBody(editMessageSchema)) body: EditMessage,
   ): Promise<void> {
     const { clientId, memoryId } = await this.scope(p, user, false);
-    await this.ingestion.edit(clientId, memoryId, conv, msg, body.content);
+    await this.ingestion.edit(clientId, memoryId, conv, msg, body);
   }
 
   @Delete('conversations/:conv/messages/:msg')

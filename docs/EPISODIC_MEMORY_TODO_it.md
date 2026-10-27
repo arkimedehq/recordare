@@ -764,9 +764,12 @@ salvo ciò che viene dichiarato privato**.
 - Non adottati (per ora): ambiti / gruppi di conversazioni dichiarati dal client (Honcho), i cinque livelli di
   disclosure (`holder … public`, VISION). Gruppi più fini ("la famiglia sì, gli ospiti no") si possono aggiungere dopo,
   se un caso reale lo chiede.
-- Da costruire (8.13): una colonna di privacy sui messaggi grezzi e sulle righe derivate (id della persona proprietaria),
-  chi chiede nei percorsi di lettura, la regola nell'estrazione (prima un piccolo set di sviluppo), i segni nel Diario, i
-  flag dei client e le opzioni della libreria; `audience` / `disclosure` restano registrati come sono.
+- Da costruire (8.13): la privacy solo sui messaggi grezzi (`private`, l'id della persona proprietaria) — episodi, fatti
+  e note la ereditano in lettura attraverso le loro evidenze (vince la più restrittiva), così rendere di nuovo pubblico
+  un messaggio non richiede riscritture —, chi chiede nei percorsi di lettura, la regola nell'estrazione (prima un
+  piccolo set di sviluppo), i segni nel Diario, i flag dei client e le opzioni della libreria; `audience` / `disclosure`
+  restano registrati come sono. **Costruito finora** (2026-10-27): le colonne dei messaggi, i flag di ingest (`private`,
+  `conversation.private`, le risposte che seguono), `PATCH …/messages/{id} {private}`, libreria `setMessagePrivate`.
 
 ## Questioni aperte (da discutere)
 

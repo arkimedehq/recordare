@@ -18,6 +18,8 @@ export const ingestSchema = z.object({
     title: z.string().max(500).optional(),
     /** A one-to-one chat (true) or a group (false); unknown when missing. A link code is never accepted in a group (D51). */
     direct: z.boolean().optional(),
+    /** Every message of this request is private (D52): a private chat. */
+    private: z.boolean().optional(),
     participants: z.array(z.object({
       ref: z.string().min(1).max(200),
       role: z.enum(['holder', 'assistant', 'other']),
@@ -36,6 +38,11 @@ export const ingestSchema = z.object({
     upsert: z.boolean().default(false),
     /** The agent's own content (knowledge given to it, its perceptions, a document) — D50; only on `user` / `other` turns. */
     own: z.boolean().optional(),
+    /**
+     * Private (D52): told only to whoever said it (and to a personal memory's holder). The agent's reply and the tool
+     * turns that follow a private message are private too, for the same person.
+     */
+    private: z.boolean().optional(),
   }).refine((m) => !m.own || m.role === 'user' || m.role === 'other', { message: 'own applies to user or other messages', path: ['own'] }))
     .min(1).max(500),
   hints: z.object({ conversationEnded: z.boolean().optional() }).default({}),
@@ -50,7 +57,10 @@ export interface IngestResult {
   conflicts: string[];
 }
 
-export const editMessageSchema = z.object({ content: z.string().min(1).max(64 * 1024) });
+/** An edit: new content, a new privacy (D52), or both. */
+export const editMessageSchema = z.object({ content: z.string().min(1).max(64 * 1024).optional(), private: z.boolean().optional() })
+  .refine((e) => e.content !== undefined || e.private !== undefined, { message: 'content or private is required' });
+export type EditMessage = z.infer<typeof editMessageSchema>;
 
 /**
  * A room transcript (continuous listening, WORK_PLAN 6.5 (4)): what a home device heard, fanned out by the service to

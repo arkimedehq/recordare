@@ -81,6 +81,8 @@ export interface IngestConversation {
   title?: string;
   /** A one-to-one chat (true) or a group (false), when the platform knows: a link code is never accepted in a group (D51). */
   direct?: boolean;
+  /** A private chat (D52): every message of the request is private. */
+  private?: boolean;
   participants?: IngestParticipant[];
 }
 
@@ -108,6 +110,11 @@ export interface IngestMessage {
   upsert?: boolean;
   /** The agent's own content (knowledge given to it, its perceptions, a document); `user` or `other` messages only. */
   own?: boolean;
+  /**
+   * Private (D52): told only to whoever said it (and to a personal memory's holder). The agent's reply and tool turns
+   * after a private message are private too, unless they say otherwise.
+   */
+  private?: boolean;
 }
 
 export interface IngestRequest {

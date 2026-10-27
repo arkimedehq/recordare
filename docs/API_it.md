@@ -201,6 +201,7 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
     channel?: string; title?: string;              // title: a group chat's name, given to the extraction
     direct?: boolean;                              // a one-to-one chat (true) or a group (false); unknown when
                                                    // missing (D51: a link code is never accepted in a group)
+    private?: boolean;                             // a private chat (D52): every message of the request is private
     participants?: Array<{
       ref: string; role: "holder" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
@@ -219,6 +220,8 @@ connettori per una sola persona). La credenziale admin non può fare ingest (403
     upsert?: boolean;                     // true: same externalId with new content = edit
     own?: boolean;                        // the agent's own content (knowledge given to it, its
                                           // perceptions, a document); role user | other only
+    private?: boolean;                    // D52: told only to whoever said it (and to a personal
+                                          // memory's holder); replies after it follow (see below)
   }>;
   hints?: { conversationEnded?: boolean };
 }
@@ -227,6 +230,12 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
 `{conversationId, accepted, duplicates, conflicts: [externalId…]}`.
 - Stesso `externalId` e stesso contenuto → duplicato (ignorato). Stesso `externalId`, contenuto diverso →
   elencato in `conflicts` (stile `409` per elemento) a meno che `upsert: true`, che registra una modifica.
+- **Messaggi privati** (D52): un messaggio è privato quando lo dice lui (`private: true`) o la sua richiesta
+  (`conversation.private`); appartiene al suo autore (il sé, un contatto, o nessuno di identificato). I turni
+  dell'agente e degli strumenti che seguono un messaggio privato (l'ultimo `user` / `other` prima di loro) sono privati
+  per la stessa persona, a meno che dicano `private: false`. Ciò che si estrae da messaggi privati è privato in lettura
+  attraverso le sue evidenze (nessuna copia del flag); un cambio di privacy non richiede una nuova estrazione. Chi può
+  leggere cosa è nel §4 (D52).
 - **Nessun flag di consenso** (D50): ogni messaggio accettato viene memorizzato, estratto e consolidato. Se una memoria
   è attiva lo decide l'interruttore della piattaforma client: quando è spento, il client non invia. I ricordi esistenti
   restano finché non vengono cancellati.
@@ -248,8 +257,11 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   mittente, è un fallimento — cinque annullano i codici aperti della memoria.
 
 ### Modifiche e cancellazioni
-- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` se
-  sconosciuto); il testo precedente va in `message_revisions` e il messaggio viene estratto di nuovo.
+- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content?, private?}` (almeno uno)
+  → `204` (`404` se sconosciuto); nuovo contenuto: il testo precedente va in `message_revisions` e il messaggio viene
+  estratto di nuovo; `private` (D52, libreria `setMessagePrivate`): il messaggio di una persona porta con sé le risposte
+  che gli rispondono (i turni dell'agente e degli strumenti dopo di lui, fino al messaggio successivo di una persona),
+  una risposta cambia da sola; nessuna estrazione.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
   purge (`DATA_MODEL.md` → Forgetting and deletion: spariscono anche gli episodi, i fatti, le note e gli stati dei piani
   sostenuti solo da quei messaggi). Come costruito: la purge viene eseguita in modo sincrono e restituisce `202` senza

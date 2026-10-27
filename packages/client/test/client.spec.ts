@@ -61,6 +61,12 @@ describe('RecordareClient', () => {
     expect(seen[0]).toMatchObject({ method: 'DELETE', path: '/api/v1/me?confirm=o1' });
   });
 
+  it('makes a message private or public again (D52)', async () => {
+    reply = () => ({ status: 204 });
+    await client().setMessagePrivate('u1', 'chat 1', 'm/1', true);
+    expect(seen[0]).toMatchObject({ method: 'PATCH', path: '/api/v1/ingest/conversations/chat%201/messages/m%2F1', body: { private: true } });
+  });
+
   it('maps a refused mode change to MemoryNotEmptyError and problem details to RecordareHttpError', async () => {
     reply = () => ({ status: 409, body: { type: 'about:blank', title: 'Conflict', status: 409, code: 'memory_not_empty' } });
     await expect(client().updateMe('u1', { mode: 'entity' })).rejects.toBeInstanceOf(MemoryNotEmptyError);

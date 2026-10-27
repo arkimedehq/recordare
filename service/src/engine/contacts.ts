@@ -112,6 +112,7 @@ export async function mergeContacts(db: Queryable, memoryId: string, from: strin
   await db.query(`UPDATE conversation_participants cp SET person_id = $3 FROM conversations c
     WHERE c.id = cp.conversation_id AND c.memory_id = $1 AND cp.person_id = $2`, args);
   await db.query(`UPDATE messages SET author_person_id = $3 WHERE memory_id = $1 AND author_person_id = $2`, args);
+  await db.query(`UPDATE messages SET private_owner_id = $3 WHERE memory_id = $1 AND private_owner_id = $2`, args);
   await db.query(`UPDATE episode_people ep SET person_id = $3 FROM episodes e
     WHERE e.id = ep.episode_id AND e.memory_id = $1 AND ep.person_id = $2`, args);
 

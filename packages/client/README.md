@@ -32,6 +32,11 @@ await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
 await rc.ingest('user-42', { conversation: { externalId: 'doc-1', source: 'document' }, messages: [
   { externalId: 'd1', role: 'user', own: true, content: 'La caldaia va revisionata ogni due anni.', sentAt: new Date().toISOString() },
 ] });
+// Private (D52): told only to whoever said it (and to a personal memory's holder); `conversation.private` for a whole chat.
+await rc.ingest('user-42', { conversation: { externalId: 'chat-1' }, messages: [
+  { externalId: 'm2', role: 'user', private: true, content: 'Non dirlo a nessuno: cambio lavoro', sentAt: new Date().toISOString() },
+] });
+await rc.setMessagePrivate('user-42', 'chat-1', 'm2', false); // "now you can say it"
 // A room transcript (continuous listening): Recordare fans it out to the memories of the people present.
 await rc.ingestRoom({ conversation: { externalId: 'kitchen-1' }, recipients: ['user-42', 'user-7'],
   speakers: [{ ref: 'a', user: 'user-42' }, { ref: 'b', user: 'user-7' }, { ref: 'c', displayName: 'Leo', identity: { channel: 'voice', externalId: 'leo' } }],

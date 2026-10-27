@@ -6,6 +6,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- Private messages (D52, first step): `private` on a message or a whole request (`conversation.private`); the agent's
+  reply and tool turns after it follow, for the same person; `PATCH …/messages/{id} {private}` (library
+  `setMessagePrivate`) makes it private or public again. Stored only: no read path filters on it yet.
+
 ### Fixed
 - Editing, deleting or ending a conversation for a user without a memory no longer creates an empty one (`autoProvision`):
   it answers 404 like an unknown conversation, so a late deletion never brings an erased memory back.

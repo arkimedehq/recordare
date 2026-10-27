@@ -160,6 +160,14 @@ export class RecordareClient {
     await this.http.request('PATCH', `api/v1/ingest/conversations/${enc(conversation)}/messages/${enc(message)}`, { user, body: { content } });
   }
 
+  /**
+   * Makes a message private or public again (D52; whoever said it decides). A person's message carries the replies that
+   * answer it; what was extracted from it follows at once, with no new extraction.
+   */
+  async setMessagePrivate(user: string, conversation: string, message: string, isPrivate: boolean): Promise<void> {
+    await this.http.request('PATCH', `api/v1/ingest/conversations/${enc(conversation)}/messages/${enc(message)}`, { user, body: { private: isPrivate } });
+  }
+
   /** A deleted message: Recordare forgets it and what came only from it. A message it never had counts as done. */
   async deleteMessage(user: string, conversation: string, message: string): Promise<void> {
     await this.gone(this.http.request('DELETE', `api/v1/ingest/conversations/${enc(conversation)}/messages/${enc(message)}`, { user }));

@@ -6,6 +6,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- Messaggi privati (D52, primo passo): `private` su un messaggio o su un'intera richiesta (`conversation.private`); la
+  risposta dell'agente e i turni degli strumenti che seguono lo diventano, per la stessa persona; `PATCH …/messages/{id}
+  {private}` (libreria `setMessagePrivate`) lo rende privato o di nuovo pubblico. Solo registrato: nessun percorso di
+  lettura lo filtra ancora.
+
 ### Corretto
 - Modificare, cancellare o chiudere una conversazione per un utente senza memoria non ne crea più una vuota
   (`autoProvision`): risponde 404 come per una conversazione sconosciuta, così una cancellazione tardiva non riporta in

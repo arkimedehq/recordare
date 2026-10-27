@@ -378,6 +378,8 @@ joined_at` — fonte dell'`audience` di ogni riga (registrata; dal D50 nessuna l
 | `received_at` | timestamptz | |
 | `extracted_run_id` | uuid null → extraction_runs | **null = estrazione in attesa**; i job idle / notturni prendono i messaggi in attesa per `sent_at`, così i messaggi in arrivo in ritardo (import, batch fuori ordine) non vengono mai saltati |
 | `edited_at` | timestamptz null | Testo precedente in `message_revisions(message_id, content, replaced_at)` |
+| `private` | boolean, default false | Dichiarato privato (D52): raccontato solo a `private_owner_id` e, in una memoria personale, al titolare (e all'admin); ciò che se ne estrae lo eredita in lettura attraverso le sue evidenze |
+| `private_owner_id` | uuid null → persons, `ON DELETE SET NULL` | Di chi è: l'autore, o per una risposta la persona a cui risponde; null quando non l'ha detto nessuno di identificato (allora solo il titolare di una memoria personale e l'admin) |
 | `tsv` | tsvector | Generato `to_tsvector('simple', content)`, GIN (l'estensione `unaccent` è creata ma non ancora usata) |
 | `embedding` | vector(N) null | Ricerca nel log grezzo (D13); calcolato in modo asincrono dopo l'ingest, per ogni messaggio — anche le mie risposte sono cercate (D30); lo sweep orario mette in coda quelli mancanti |
 

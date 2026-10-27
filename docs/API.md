@@ -189,6 +189,7 @@ connectors for one person). The admin credential cannot ingest (403).
     channel?: string; title?: string;              // title: a group chat's name, given to the extraction
     direct?: boolean;                              // a one-to-one chat (true) or a group (false); unknown when
                                                    // missing (D51: a link code is never accepted in a group)
+    private?: boolean;                             // a private chat (D52): every message of the request is private
     participants?: Array<{
       ref: string; role: "holder" | "assistant" | "other"; displayName?: string;
       identity?: { channel: string; externalId: string } | { externalUserId: string };
@@ -207,6 +208,8 @@ connectors for one person). The admin credential cannot ingest (403).
     upsert?: boolean;                     // true: same externalId with new content = edit
     own?: boolean;                        // the agent's own content (knowledge given to it, its
                                           // perceptions, a document); role user | other only
+    private?: boolean;                    // D52: told only to whoever said it (and to a personal
+                                          // memory's holder); replies after it follow (see below)
   }>;
   hints?: { conversationEnded?: boolean };
 }
@@ -227,6 +230,11 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   (`assistant`), `tool`, `own` (`own: true`) — with a confidence (1, or none when nothing was established). Not exposed
   by the read API yet. The extraction prompts show it (8.4, 8.5): `own` content and the assistant's turns are the
   agent's own ("me") in both modes.
+- **Private messages** (D52): a message is private when it says so (`private: true`) or its request does
+  (`conversation.private`); it belongs to its author (the self, a contact, or nobody identified). The agent's and tools'
+  turns that follow a private message (the latest `user` / `other` before them) are private for the same person unless
+  they say `private: false`. What is extracted from private messages is private at read time through its evidence (no
+  copy of the flag); a privacy change needs no new extraction. Who may read what is §4 (D52).
 - **Link codes** (D51): in a personal memory, a `user` / `other` message (not `own`) that is only a link code
   (`RCD-XXXX-XXXX`, any case, dashes and a final dot optional) is **never stored** (not counted in `accepted`). When its
   author is a participant with an `identity` and `conversation.direct` is not `false`, it becomes a *claim* (that
@@ -235,8 +243,10 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   claimed code from another sender, is a failure — five cancel the memory's open codes.
 
 ### Edits and deletions
-- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content}` → `204` (`404` when
-  unknown); the previous text goes to `message_revisions` and the message is extracted again.
+- `PATCH api/v1/ingest/conversations/{externalId}/messages/{messageExternalId}` `{content?, private?}` (at least one)
+  → `204` (`404` when unknown); new content: the previous text goes to `message_revisions` and the message is extracted
+  again; `private` (D52, library `setMessagePrivate`): a person's message takes the replies that answer it along (the
+  agent's and tools' turns after it, until the next person's message), a reply changes alone; no extraction.
 - `DELETE …/messages/{messageExternalId}`, `DELETE api/v1/ingest/conversations/{externalId}` →
   purge (`DATA_MODEL.md` → Forgetting and deletion: the episodes, facts, notes and plan states only those messages
   supported go too). As built: the purge runs synchronously and returns `202` with no

@@ -162,6 +162,16 @@ describe('client conformance (packages/client against the service)', () => {
     expect(await db().query(`SELECT count(*)::int AS n FROM memories WHERE person_id = $1`, [memoryId])).toEqual([{ n: 0 }]);
   });
 
+  it('sends private messages and makes them public again (D52)', async () => {
+    await rc.ingest('user-1', { conversation: { externalId: 'priv', private: true }, messages: [
+      { externalId: 'p1', role: 'user', content: 'Una cosa mia', sentAt: '2026-10-02T10:00:00Z' },
+      { externalId: 'p2', role: 'assistant', content: 'Capito', sentAt: '2026-10-02T10:01:00Z' }] });
+    const flags = () => db().query(`SELECT external_id, private FROM messages WHERE external_id IN ('p1', 'p2') ORDER BY external_id`);
+    expect(await flags()).toEqual([{ external_id: 'p1', private: true }, { external_id: 'p2', private: true }]);
+    await rc.setMessagePrivate('user-1', 'priv', 'p1', false);
+    expect(await flags()).toEqual([{ external_id: 'p1', private: false }, { external_id: 'p2', private: false }]);
+  });
+
   it('links the holder\'s channel identity by one-time code and confirmation (D51)', async () => {
     const { code } = await rc.linkCode('user-link');
     expect(isLinkCode(code)).toBe(true); // the library recognises what the service makes

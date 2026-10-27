@@ -203,6 +203,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     expect(await episode('%Levante%')).toMatchObject({ subject_kind: 'contact', subject: 'Giulia', stance: 'stated', author_role: 'other' });
     expect((await db.query(`SELECT subject_person_id FROM episodes WHERE content LIKE '%Levante%'`))[0].subject_person_id).toBe(newcomer);
 
+    await db.query(`UPDATE messages SET private = true, private_owner_id = $1 WHERE external_id = 'grp-1'`, [newcomer]); // D52
     // A later window answers it: the same person → the new contact is merged into the sister (every reference moves).
     const answer = await ingest('grp-ans', [{ id: 'ga-1', content: 'La Giulia del gruppo è mia sorella.', at: '2026-09-22T19:00:00+02:00' }]);
     llm.queue.push({ answers: [{ question: 'Q1', contact: 'C1', evidence: [1] }] });
@@ -212,7 +213,8 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
       .toEqual({ status: 'resolved', resolved_person_id: sister, resolution: 'same person' });
     expect(await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Giulia'`, [me])).toEqual([{ id: sister }]);
     expect(await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'giulia-1'`)).toEqual([{ person_id: sister }]);
-    expect(await db.query(`SELECT author_person_id FROM messages WHERE external_id = 'grp-1'`)).toEqual([{ author_person_id: sister }]);
+    expect(await db.query(`SELECT author_person_id, private_owner_id FROM messages WHERE external_id = 'grp-1'`))
+      .toEqual([{ author_person_id: sister, private_owner_id: sister }]);
     expect(await db.query(`SELECT person_id FROM conversation_participants WHERE ref = 'g'`)).toEqual([{ person_id: sister }]);
     expect((await db.query(`SELECT subject_person_id FROM episodes WHERE content LIKE '%Levante%'`))[0].subject_person_id).toBe(sister);
     expect(await db.query(`SELECT alias_norm FROM person_aliases WHERE person_id = $1`, [sister])).toEqual([{ alias_norm: 'giulia' }]);

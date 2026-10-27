@@ -56,4 +56,7 @@ export class Message {
   @Column({ name: 'received_at', type: 'timestamptz', default: () => 'now()' }) receivedAt!: Date;
   @Column({ name: 'extracted_run_id', type: 'uuid', nullable: true }) extractedRunId!: string | null;
   @Column({ name: 'edited_at', type: 'timestamptz', nullable: true }) editedAt!: Date | null;
+  /** Declared private (D52): told only to `privateOwnerId` (and to a personal memory's holder). */
+  @Column({ type: 'boolean', default: false }) private!: boolean;
+  @Column({ name: 'private_owner_id', type: 'uuid', nullable: true }) privateOwnerId!: string | null;
 }
