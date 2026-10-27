@@ -717,6 +717,34 @@ the holder is **never inferred** from names or content.
   Built 2026-10-14: `service/src/identity/holder-links.ts`, migration `HolderLinks1791150000000`; contract `API.md`
   (`/me` link codes and identities, admin link claims, `conversation.direct`), data `DATA_MODEL.md` (`link_codes`).
 
+### D52 — Private memories: whoever says "private" decides (maintainer's decision, 2026-10-27)
+WORK_PLAN 8.13 (COMPETITORS.md §6.5). Replaces the viewer rule and the disclosure tiers as the way to keep something
+from others; D50's "no viewer filter" stays the default: **everything is public unless declared private**.
+- **Rule**: a memory declared *private* by the person who said it is told only to that person and to the memory's
+  holder. In a **personal** memory the holder is "I", so a private thing Marta says is known to Marta and to the holder
+  (if Marta tells me something, I know it). In an **entity** memory "I" is the agent itself: Marta's private thing is
+  known to the agent (it understands with it) but told **only to Marta** — nobody else, not even in the Diary. A private
+  thing the holder says (personal) stays the holder's.
+- **How it is declared** (both count): by the speaker in words ("don't tell anyone", "this stays between us"),
+  recognised by the extraction in any language; or by the client, as a flag on a message or on a whole conversation
+  (a private chat).
+- **Who is reading**: recall needs the asker again — the identified speaker of the current turn. An undeclared speaker
+  is the holder in a personal memory and "someone" in an entity memory; "someone" gets public memories only.
+- **What inherits it**: everything extracted from a private message (episodes, facts, notes) and the agent's reply in
+  that turn (the "my own replies" recall would leak it otherwise). Day / month digests and recurring patterns are built
+  from public memories only.
+- **The Diary**: in a personal memory the holder sees private items with their content, marked "private, Marta"; in an
+  entity memory a private item shows only that it exists and whose it is, and can be forgotten, not read.
+- **The admin sees everything**: whoever runs Recordare (the admin key and its console) reads, corrects and forgets
+  every memory, private ones included, in every mode — the admin is responsible for the installation. Platform admins
+  act through their client key like anyone else.
+- **Back and forth**: whoever declared it may make it public ("now you can say it"), or private again.
+- Not adopted (for now): conversation scopes / groups declared by the client (Honcho), the five disclosure tiers
+  (`holder … public`, VISION). Finer groups ("the family yes, guests no") can be added later if a real case asks.
+- To build (8.13): a privacy column on raw messages and derived rows (owner person id), the asker on read paths, the
+  extraction rule (a small dev set first), the Diary marks, client flags and library options; `audience` / `disclosure`
+  stay recorded as they are.
+
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 decided 2026-10-12 with WORK_PLAN 5.4). Open work is tracked

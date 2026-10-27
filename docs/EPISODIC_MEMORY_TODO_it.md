@@ -737,6 +737,37 @@ certo possibile; il titolare **non viene mai dedotto** da nomi o contenuti.
   contratto `API.md` (codici di collegamento e identità in `/me`, richieste di collegamento admin, `conversation.direct`),
   dati `DATA_MODEL.md` (`link_codes`).
 
+### D52 — Ricordi privati: decide chi dice "privato" (decisione del maintainer, 2026-10-27)
+WORK_PLAN 8.13 (COMPETITORS_it.md §6.5). Sostituisce la regola sugli spettatori e i livelli di disclosure come modo di
+tenere qualcosa lontano dagli altri; resta il default di D50 "nessun filtro sugli spettatori": **tutto è pubblico
+salvo ciò che viene dichiarato privato**.
+- **Regola**: un ricordo dichiarato *privato* da chi lo ha detto viene raccontato solo a quella persona e al titolare
+  della memoria. In una memoria **personale** il titolare è "io": una cosa privata detta da Marta la conoscono Marta e il
+  titolare (se Marta dice qualcosa a me, io lo so). In una memoria **entity** "io" è l'agente stesso: la cosa privata di
+  Marta la conosce l'agente (la usa per capire) ma la racconta **solo a Marta** — a nessun altro, nemmeno nel Diario. Una
+  cosa privata detta dal titolare (personale) resta del titolare.
+- **Come si dichiara** (valgono entrambi): dalla persona a parole ("non dirlo a nessuno", "resta tra noi"),
+  riconosciuto dall'estrazione in ogni lingua; oppure dal client, con un flag su un messaggio o su un'intera
+  conversazione (una chat privata).
+- **Chi sta leggendo**: il richiamo torna a sapere chi chiede — chi parla nel turno corrente, se identificato. Chi
+  parla senza dichiararsi è il titolare in una memoria personale e "qualcuno" in una entity; "qualcuno" riceve solo i
+  ricordi pubblici.
+- **Cosa la eredita**: tutto ciò che si estrae da un messaggio privato (episodi, fatti, note) e la risposta dell'agente
+  in quel turno (altrimenti il richiamo delle "mie risposte" la farebbe trapelare). Le pagine di diario del giorno / mese
+  e gli schemi ricorrenti si costruiscono solo dai ricordi pubblici.
+- **Il Diario**: in una memoria personale il titolare vede i ricordi privati con il contenuto, segnati "privato,
+  Marta"; in una entity un ricordo privato mostra solo che esiste e di chi è, e si può dimenticare, non leggere.
+- **L'admin vede tutto**: chi gestisce Recordare (la chiave admin e la sua console) legge, corregge e dimentica ogni
+  ricordo, privati compresi, in ogni modalità — l'admin risponde dell'installazione. Gli admin di una piattaforma
+  agiscono con la chiave del loro client come chiunque altro.
+- **Avanti e indietro**: chi lo ha dichiarato può renderlo pubblico ("ora puoi dirlo"), o di nuovo privato.
+- Non adottati (per ora): ambiti / gruppi di conversazioni dichiarati dal client (Honcho), i cinque livelli di
+  disclosure (`holder … public`, VISION). Gruppi più fini ("la famiglia sì, gli ospiti no") si possono aggiungere dopo,
+  se un caso reale lo chiede.
+- Da costruire (8.13): una colonna di privacy sui messaggi grezzi e sulle righe derivate (id della persona proprietaria),
+  chi chiede nei percorsi di lettura, la regola nell'estrazione (prima un piccolo set di sviluppo), i segni nel Diario, i
+  flag dei client e le opzioni della libreria; `audience` / `disclosure` restano registrati come sono.
+
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 decisa il 2026-10-12 con WORK_PLAN 5.4). Il lavoro aperto è tracciato
