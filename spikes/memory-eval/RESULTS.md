@@ -776,8 +776,12 @@ people (`asker`). Three runs, each a different code or prompt state (not repeats
 - The stored extraction runs returned one `private` entry per window (some `private: false`, from "potete dirlo a
   tutti"); no `not_their_own` drops. Messages made private: Marta's, Luis's, Klaus's, Gino's secrets and Sara's (with
   the assistant's reply); Emma's diagnosis and Luis's marathon message stayed public.
-- Not measured yet: the entity prompt (`entity.v8`, same PRIVATE section) and a regression check of v20 on the blind
-  sets (one run each, a budget to approve).
+- Regression check (v20b, the shipped text; blind sets base, 1 run each, ≈ 0.32 USD): blind12 **95.4 %** (v19 91.7 %;
+  better h07, h13, h23, h37, worse h12, h26), blind5 **90.7 %** (v19 92.5 %; better e12, e24, e72, worse e13, e56, e57,
+  e70, e75 — partials on plan details, a forbidden date on e70; one judge call failed). Within the run-to-run noise seen
+  before (blind5 92.5–94.3 % across versions). **No false positive**: 122 extraction windows on the blind sets returned no
+  `private` entry and no message became private. Every run single-version (`extract.v20`).
+- Not measured yet: the entity prompt (`entity.v8`, same PRIVATE section).
 
 ### D30 — my own earlier replies in the recall (2026-10-21, DeepSeek direct off-peak, 1 run each)
 
