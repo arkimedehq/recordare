@@ -22,6 +22,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - Modificare, cancellare o chiudere una conversazione per un utente senza memoria non ne crea più una vuota
   (`autoProvision`): risponde 404 come per una conversazione sconosciuta, così una cancellazione tardiva non riporta in
   vita una memoria cancellata.
+- `search_episodes` in modalità `list` senza `query` non restituiva alcun episodio: ora elenca gli episodi del periodo
+  (o tutti), prima i più importanti.
 
 ## [0.4.0] — 2026-10-26
 

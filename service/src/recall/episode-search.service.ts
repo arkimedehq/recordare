@@ -191,7 +191,8 @@ export class EpisodeSearchService {
     // h30: "corse" matched no run by its words and none passed the similarity floor, so the list held two unrelated items).
     const bySimilarity = () => rest((r) => similarity.get(r.id) ?? -1).filter((r) => similarity.has(r.id));
     if (mode === 'list') {
-      const pool = !args.query ? rest((r) => r.importance) : hasPeriod ? [...ranked, ...rest((r) => r.importance)] : [...ranked, ...bySimilarity()];
+      // Without a query every item is relevant: the list is all of them, by importance.
+      const pool = !args.query ? [...candidates].sort((a, b) => b.importance - a.importance) : hasPeriod ? [...ranked, ...rest((r) => r.importance)] : [...ranked, ...bySimilarity()];
       chosen = pool.slice(0, limit).sort((a, b) => (a.occurred_at?.getTime() ?? 0) - (b.occurred_at?.getTime() ?? 0));
     } else if (mode === 'latest') {
       chosen = candidates.filter(relevant).filter((r) => r.occurred_at && r.occurred_at <= now && r.kind !== 'plan')

@@ -63,4 +63,11 @@ describe('search_episodes ranking by the question type (H13)', () => {
     const eps = await search({ query: 'Tommaso Ducati colloquio', mode: 'list', limit: 3 });
     expect(eps.map((e) => e.id)).toContain(ids[0]);
   });
+
+  it('a list without a query holds the period\'s items, the important ones first', async () => {
+    const from = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+    const to = new Date().toISOString().slice(0, 10);
+    expect((await search({ mode: 'list', from, to })).map((e) => e.id).sort()).toEqual([...ids].sort());
+    expect((await search({ mode: 'list', limit: 5 })).map((e) => e.id)).not.toContain(ids[0]);
+  });
 });

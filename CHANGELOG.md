@@ -21,6 +21,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Fixed
 - Editing, deleting or ending a conversation for a user without a memory no longer creates an empty one (`autoProvision`):
   it answers 404 like an unknown conversation, so a late deletion never brings an erased memory back.
+- `search_episodes` in mode `list` without a `query` returned no episode: it now lists the period's episodes (or all
+  of them), the important ones first.
 
 ## [0.4.0] — 2026-10-26
 
