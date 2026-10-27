@@ -120,8 +120,8 @@ the self, `own` content) reads everything, an identified contact the public and 
 and in an entity memory every undeclared speaker) the public only. Without a conversation (§4, a personal token) the
 reader is the account: the holder of a personal memory; in an entity memory nobody but the agent knows private things, so
 the public only. Episodes, facts and notes follow the messages they rest on (their evidence, directly or through an
-episode): one is hidden only when every message behind it is private to someone else — what was said in the open at
-least once stays public; an item with no message behind it is public. A correction keeps the privacy of what it
+episode): one is hidden when any message behind it is private to someone else (it fails closed: a public "I won't say a
+word" next to the secret must not make it public); an item with no message behind it is public. A correction keeps the privacy of what it
 corrects. This applies to every read: MCP recall (`search_episodes` with its chat excerpts and my replies,
 `search_memory`, `search_knowledge`'s episodes), the memory context and its self card, the read API (§4, details and
 their evidence, cards, the notes feed: a note the reader may not see comes as `note: null`), exports; `correct_episode` /
@@ -245,7 +245,8 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   by the read API yet. The extraction prompts show it (8.4, 8.5): `own` content and the assistant's turns are the
   agent's own ("me") in both modes.
 - **Private messages** (D52): a message is private when it says so (`private: true`) or its request does
-  (`conversation.private`); it belongs to its author (the self, a contact, or nobody identified). The agent's and tools'
+  (`conversation.private`), or when its author asks in words that it stay between us (the extraction, `extract.v20`:
+  only their own messages; "now you can say it" frees them again); it belongs to its author (the self, a contact, or nobody identified). The agent's and tools'
   turns that follow a private message (the latest `user` / `other` before them) are private for the same person unless
   they say `private: false`. What is extracted from private messages is private at read time through its evidence (no
   copy of the flag); a privacy change needs no new extraction. Who may read what: §1, conversation context (D52).

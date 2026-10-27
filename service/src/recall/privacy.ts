@@ -4,9 +4,9 @@
 /**
  * Private memories at read time (D52): a message declared private is told only to whoever it belongs to
  * (`private_owner_id`) and, in a personal memory, to the holder; the admin reads everything. Episodes, facts and notes
- * follow the messages they rest on (their evidence): an item is hidden from a reader only when every message behind it is
- * a private one that reader may not see — what was said in the open at least once stays public. An item with no message
- * behind it is public.
+ * follow the messages they rest on (their evidence): an item is hidden from a reader when any message behind it is a
+ * private one that reader may not see — it fails closed (measured, dataset_dev_private: a public "I won't say a word"
+ * next to the secret made it public under the opposite rule). An item with no message behind it is public.
  */
 import { type DataSource } from 'typeorm';
 
@@ -56,10 +56,10 @@ export function messageVisible(m: string, r: Reader): string {
   return r.all ? 'true' : `NOT ${hidden(m, r)}`;
 }
 
-/** Not every message behind it is hidden: `from` joins the item's evidence messages as `pm`. */
+/** No message behind it is hidden: `from` joins the item's evidence messages as `pm`. */
 function evidenceVisible(from: string, r: Reader): string {
   if (r.all) return 'true';
-  return `NOT (EXISTS (SELECT 1 ${from} AND ${hidden('pm', r)}) AND NOT EXISTS (SELECT 1 ${from} AND NOT ${hidden('pm', r)}))`;
+  return `NOT EXISTS (SELECT 1 ${from} AND ${hidden('pm', r)})`;
 }
 
 export type Kind = 'episodes' | 'facts' | 'notes';

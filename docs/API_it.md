@@ -129,9 +129,9 @@ dichiarato, il sé, il contenuto `own`) legge tutto, un contatto identificato il
 identificato ("qualcuno", e in una memoria entity ogni interlocutore non dichiarato) solo il pubblico. Senza conversazione
 (§4, un token personale) chi legge è l'account: il titolare di una memoria personale; in una memoria entity le cose
 private le conosce solo l'agente, quindi solo il pubblico. Episodi, fatti e note seguono i messaggi su cui si basano (le
-loro evidenze, dirette o attraverso un episodio): uno è nascosto solo quando ogni messaggio dietro di lui è privato di
-qualcun altro — ciò che è stato detto apertamente almeno una volta resta pubblico; un elemento senza messaggi dietro è
-pubblico. Una correzione mantiene la privacy di ciò che corregge. Vale per ogni lettura: il richiamo MCP
+loro evidenze, dirette o attraverso un episodio): uno è nascosto quando anche un solo messaggio dietro di lui è privato di
+qualcun altro (in caso di dubbio si nasconde: un "non dico niente" pubblico accanto al segreto non deve renderlo
+pubblico); un elemento senza messaggi dietro è pubblico. Una correzione mantiene la privacy di ciò che corregge. Vale per ogni lettura: il richiamo MCP
 (`search_episodes` con i suoi estratti di chat e le mie risposte, `search_memory`, gli episodi di `search_knowledge`), il
 contesto di memoria e la sua scheda di sé, l'API di lettura (§4, dettagli e loro evidenze, schede, il feed delle note: una
 nota che chi legge non può vedere arriva come `note: null`), le esportazioni; `correct_episode` / `forget_episode` vedono
@@ -246,7 +246,8 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
 - Stesso `externalId` e stesso contenuto → duplicato (ignorato). Stesso `externalId`, contenuto diverso →
   elencato in `conflicts` (stile `409` per elemento) a meno che `upsert: true`, che registra una modifica.
 - **Messaggi privati** (D52): un messaggio è privato quando lo dice lui (`private: true`) o la sua richiesta
-  (`conversation.private`); appartiene al suo autore (il sé, un contatto, o nessuno di identificato). I turni
+  (`conversation.private`), o quando il suo autore chiede a parole che resti tra noi (l'estrazione, `extract.v20`: solo i
+  suoi messaggi; "ora puoi dirlo" li libera di nuovo); appartiene al suo autore (il sé, un contatto, o nessuno di identificato). I turni
   dell'agente e degli strumenti che seguono un messaggio privato (l'ultimo `user` / `other` prima di loro) sono privati
   per la stessa persona, a meno che dicano `private: false`. Ciò che si estrae da messaggi privati è privato in lettura
   attraverso le sue evidenze (nessuna copia del flag); un cambio di privacy non richiede una nuova estrazione. Chi può

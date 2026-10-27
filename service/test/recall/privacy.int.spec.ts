@@ -12,8 +12,8 @@ import { MemoryWriteService } from '../../src/recall/memory-write.service';
 
 /**
  * Private memories at read time (D52): Marta says something private in a group of the holder's; it is told to Marta and
- * to the holder of a personal memory, never to Gino; in an entity memory only to Marta. What rests on a public message
- * too stays public; a correction keeps the privacy of what it corrects.
+ * to the holder of a personal memory, never to Gino; in an entity memory only to Marta. What rests on her private message
+ * is hidden even when a public one is behind it too (fails closed); a correction keeps the privacy of what it corrects.
  */
 describe('private memories at read time (D52)', () => {
   let app: INestApplication;
@@ -92,7 +92,7 @@ describe('private memories at read time (D52)', () => {
     const all = [m.secret, m.open, m.both].sort();
     expect(await episodes('q-holder')).toEqual(all);
     expect(await episodes('q-marta')).toEqual(all);
-    expect(await episodes('q-gino')).toEqual([m.open, m.both].sort()); // rests on a public message too: public
+    expect(await episodes('q-gino')).toEqual([m.open]); // `both` rests on her private message too: hidden
 
     const known = async (conversation: string) => {
       const r = await app.get(MemorySearchService).search(m.memoryId, { conversationId: m.conv[conversation], query: 'banca soldi debt' }, NOW);
@@ -119,7 +119,7 @@ describe('private memories at read time (D52)', () => {
     const items: Array<{ id: string; private?: { by: string[] } }> = (await call(url, 'GET', '/api/v1/episodes', as('u-personal'))).body.items;
     expect(items.map((e) => e.id)).toEqual(expect.arrayContaining(all));
     expect(Object.fromEntries(items.filter((e) => all.includes(e.id)).map((e) => [e.id, e.private ?? null])))
-      .toEqual({ [m.secret]: { by: ['Marta'] }, [m.open]: null, [m.both]: null });
+      .toEqual({ [m.secret]: { by: ['Marta'] }, [m.open]: null, [m.both]: { by: ['Marta'] } });
     expect((await call(url, 'GET', '/api/v1/facts', as('u-personal'))).body.find((f: { key: string }) => f.key === 'debt').private).toEqual({ by: ['Marta'] });
     expect((await call(url, 'GET', `/api/v1/notes/${m.note}`, as('u-personal'))).body.private).toEqual({ by: ['Marta'] });
     expect((await call(url, 'GET', '/api/v1/private', as('u-personal'))).body.map((x: { kind: string; id: string; by: string[] }) => [x.kind, x.id, x.by]))
@@ -135,27 +135,26 @@ describe('private memories at read time (D52)', () => {
     const episodes = (conversation: string) => app.get(EpisodeSearchService)
       .search(m.memoryId, null, { conversationId: m.conv[conversation], query: 'Marta Gino' }, NOW).then((r) => [...r.episodes, ...r.claims].map((e) => e.id).sort());
     expect(await episodes('q-marta')).toEqual([m.secret, m.open, m.both].sort());
-    expect(await episodes('q-holder')).toEqual([m.open, m.both].sort()); // in an entity memory an undeclared speaker is someone
-    expect(await episodes('q-gino')).toEqual([m.open, m.both].sort());
+    expect(await episodes('q-holder')).toEqual([m.open]); // in an entity memory an undeclared speaker is someone
+    expect(await episodes('q-gino')).toEqual([m.open]);
 
     const timeline = (await call(url, 'GET', '/api/v1/episodes', as('u-entity'))).body.items.map((e: { id: string }) => e.id).sort();
-    expect(timeline).toEqual([m.open, m.both].sort());
+    expect(timeline).toEqual([m.open]);
     expect((await call(url, 'GET', `/api/v1/episodes/${m.secret}`, as('u-entity'))).status).toBe(404);
     expect((await call(url, 'GET', `/api/v1/facts/${m.fact}`, as('u-entity'))).status).toBe(404);
     expect((await call(url, 'GET', `/api/v1/notes/${m.note}`, as('u-entity'))).status).toBe(404);
     expect((await call(url, 'GET', '/api/v1/notes', as('u-entity'))).body).toEqual([]);
-    // The detail of the shared episode shows Gino's message, not Marta's.
-    const both = (await call(url, 'GET', `/api/v1/episodes/${m.both}`, as('u-entity'))).body;
-    expect(both.evidence.map((e: { text: string }) => e.text)).toEqual(['Io parto per Lisbona']);
+    expect((await call(url, 'GET', `/api/v1/episodes/${m.both}`, as('u-entity'))).status).toBe(404);
+    expect((await call(url, 'GET', `/api/v1/episodes/${m.open}`, as('u-entity'))).body.evidence.map((e: { text: string }) => e.text)).toEqual(['Io parto per Lisbona']);
     // Correcting what the account may not read is refused.
     expect((await call(url, 'POST', `/api/v1/episodes/${m.secret}/corrections`, { ...as('u-entity'), body: { content: 'x' } })).status).toBe(404);
     // The Diary shows that they exist and whose they are, never their content, and may forget them.
     const hidden = (await call(url, 'GET', '/api/v1/private', as('u-entity'))).body;
     expect(hidden.map((x: { kind: string; id: string }) => `${x.kind}:${x.id}`).sort())
-      .toEqual([`episode:${m.secret}`, `fact:${m.fact}`, `note:${m.note}`].sort());
+      .toEqual([`episode:${m.secret}`, `episode:${m.both}`, `fact:${m.fact}`, `note:${m.note}`].sort());
     expect(JSON.stringify(hidden)).not.toContain('debito');
     expect((await call(url, 'DELETE', `/api/v1/facts/${m.fact}`, as('u-entity'))).status).toBe(204);
-    expect((await call(url, 'GET', '/api/v1/private', as('u-entity'))).body.map((x: { kind: string }) => x.kind).sort()).toEqual(['episode', 'note']);
+    expect((await call(url, 'GET', '/api/v1/private', as('u-entity'))).body.map((x: { kind: string }) => x.kind).sort()).toEqual(['episode', 'episode', 'note']);
 
     // A personal token of the entity memory exports it (the account's reading: the public only).
     const token = (await call(url, 'POST', `/api/v1/admin/memories/${m.memoryId}/tokens`, { token: ADMIN_KEY, body: { clientId, scopes: ['read', 'export'] } })).body.token;

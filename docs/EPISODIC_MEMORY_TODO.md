@@ -747,12 +747,18 @@ from others; D50's "no viewer filter" stays the default: **everything is public 
   `disclosure` stay recorded as they are. **Built so far** (2026-10-27): the message columns, the ingest flags
   (`private`, `conversation.private`, replies following), `PATCH …/messages/{id} {private}`, library
   `setMessagePrivate`; every read path (`service/src/recall/privacy.ts`; the rules in `API.md` §1). Decided while
-  building: an item is hidden only when **every** message behind it is private to someone else — what was said in the
-  open at least once stays public (otherwise a public fact Marta repeats in private would vanish for everyone); a
-  correction keeps the privacy of what it corrects; the reader is the author of the conversation's latest person's turn
+  building: an item is hidden when **any** message behind it is private to someone else — it fails closed (first built
+  the other way, "public once said in the open", so that a public fact Marta repeats in private would not vanish; the
+  dev set showed the leak that rule allows: Sara's public "Non dico niente" next to Klaus's secret made the episode
+  public); a correction keeps the privacy of what it corrects; the reader is the author of the conversation's latest person's turn
   (as `speakerOf`), but someone unidentified reads the public only, in a personal memory too. Then the Diary marks
   (`private: {by}` on items, `GET api/v1/private` for an entity memory) and the diary and patterns from public memories
-  only (a privacy change rewrites its days). Left: the extraction rule (step 4).
+  only (a privacy change rewrites its days). Then the extraction (`extract.v20`, `entity.v8`, section PRIVATE): a person
+  asking in words that what they said stay between us ("non dirlo a nessuno", any language) gives a `private` entry —
+  the asking message and the messages it covers; the code makes private only that person's own messages (an
+  unidentified speaker: only that very message), never another person's or a reply; freeing it again ("ora puoi dirlo")
+  also covers what that person kept private earlier in the same conversation, no longer in the window. A sensitive
+  topic told without asking stays public. Dev set `dataset_dev_private` (RESULTS.md).
 
 ## Open questions (to discuss)
 

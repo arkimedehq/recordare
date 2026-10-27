@@ -770,13 +770,20 @@ salvo ciò che viene dichiarato privato**.
   segni nel Diario, i flag dei client e le opzioni della libreria; `audience` / `disclosure` restano registrati come
   sono. **Costruito finora** (2026-10-27): le colonne dei messaggi, i flag di ingest (`private`, `conversation.private`,
   le risposte che seguono), `PATCH …/messages/{id} {private}`, libreria `setMessagePrivate`; ogni percorso di lettura
-  (`service/src/recall/privacy.ts`; le regole in `API.md` §1). Deciso costruendo: un elemento è nascosto solo quando
-  **ogni** messaggio dietro di lui è privato di qualcun altro — ciò che è stato detto apertamente almeno una volta resta
-  pubblico (altrimenti un fatto pubblico che Marta ripete in privato sparirebbe per tutti); una correzione mantiene la
-  privacy di ciò che corregge; chi legge è l'autore dell'ultimo turno di una persona nella conversazione (come
+  (`service/src/recall/privacy.ts`; le regole in `API.md` §1). Deciso costruendo: un elemento è nascosto quando
+  **anche un solo** messaggio dietro di lui è privato di qualcun altro — in caso di dubbio si nasconde (costruito prima
+  al contrario, "pubblico se detto apertamente almeno una volta", perché un fatto pubblico che Marta ripete in privato
+  non sparisse; il set di sviluppo ha mostrato la fuga che quella regola permette: il "Non dico niente" pubblico di Sara
+  accanto al segreto di Klaus rendeva pubblico l'episodio); una correzione mantiene la privacy di ciò che corregge; chi legge è l'autore dell'ultimo turno di una persona nella conversazione (come
   `speakerOf`), ma chi non è identificato legge solo il pubblico, anche in una memoria personale. Poi i segni nel Diario
   (`private: {by}` sugli elementi, `GET api/v1/private` per una memoria entity) e il diario e gli schemi solo dai ricordi
-  pubblici (un cambio di privacy riscrive i suoi giorni). Resta: la regola nell'estrazione (passo 4).
+  pubblici (un cambio di privacy riscrive i suoi giorni). Poi l'estrazione (`extract.v20`, `entity.v8`, sezione PRIVATE):
+  una persona che chiede a parole che ciò che ha detto resti tra noi ("non dirlo a nessuno", in ogni lingua) dà una voce
+  `private` — il messaggio in cui lo chiede e i messaggi che copre; il codice rende privati solo i messaggi di quella
+  persona (chi non è identificato: solo quel messaggio), mai quelli di un altro o una risposta; liberarlo di nuovo ("ora
+  puoi dirlo") copre anche ciò che quella persona aveva tenuto privato prima nella stessa conversazione, non più nella
+  finestra. Un argomento delicato raccontato senza chiederlo resta pubblico. Set di sviluppo `dataset_dev_private`
+  (RESULTS.md).
 
 ## Questioni aperte (da discutere)
 

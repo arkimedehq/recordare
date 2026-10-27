@@ -3,8 +3,8 @@
 
 /**
  * Prompt inputs are part of a measured version (evaluation rule 9): the personal prompts stay byte-identical to the ones
- * measured (`extract.v19`: v14's system prompt plus NOT DONE AFTER ALL, v18's requests and things kept over time and v19's plans that change no fact; its HEARD AROUND ME line only in ambient windows, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
- * `extract.v19+entity.v7`) — a change to any of them is a new version, measured before it ships.
+ * measured (`extract.v20`: v14's system prompt plus NOT DONE AFTER ALL, v18's requests and things kept over time, v19's plans that change no fact and v20's PRIVATE; its HEARD AROUND ME line only in ambient windows, `facts.v2`), and the entity prompt and user message of a fixed scenario are pinned (8.5,
+ * `extract.v20+entity.v8`) — a change to any of them is a new version, measured before it ships.
  */
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
@@ -47,8 +47,8 @@ describe('prompt inputs of the measured versions', () => {
     return { system: req?.messages[0]?.content ?? '', user: req?.messages[1]?.content ?? '' };
   }
 
-  it('personal prompts are the measured extract.v19 and facts.v2', () => {
-    expect(sha(EXTRACTION_SYSTEM)).toBe('610519dba99b724584eacdba394b4ee35a9c041297ab63fccf71b3f729c55877');
+  it('personal prompts are the measured extract.v20 and facts.v2', () => {
+    expect(sha(EXTRACTION_SYSTEM)).toBe('ef6f26c6e70247ddc7255464201f903e35bf076c4ebed98fad5dbec93f599f56');
     expect(sha(FACTS_SYSTEM)).toBe('309707b0c33d7fb2b05cce9fe88d434185180cf5c195135070e6f37509924d7c');
   });
 
@@ -77,7 +77,7 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-5', role: 'tool', toolName: 'web_search', content: 'Meteo: sole.', sentAt: '2026-06-08T09:04:00+02:00' },
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
-    expect(sha(second.system)).toBe('a879c6c711f42ede333054d961fe8e77770f50b7da611488df8313bd39286891');
+    expect(sha(second.system)).toBe('545d96d92645f098e3bf8b5f4c2a7098282581d90d1c9e93cb479eea7fbf88c4');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

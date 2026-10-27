@@ -12,10 +12,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   {private}` (libreria `setMessagePrivate`) lo rende privato o di nuovo pubblico. Ogni lettura lo rispetta (`API.md`
   §1): raccontato solo a chi appartiene — chi parla nell'ultimo turno della conversazione — e al titolare di una memoria
   personale; in una memoria entity l'account legge solo il pubblico. Episodi, fatti e note seguono i loro messaggi
-  (nascosti solo quando ogni messaggio dietro di loro è privato di qualcun altro); una correzione mantiene la privacy di
+  (nascosti quando anche un solo messaggio dietro di loro è privato di qualcun altro); una correzione mantiene la privacy di
   ciò che corregge. L'API di lettura segna gli elementi privati (`private: {by}`) e `GET api/v1/private` (libreria
   `privateItems`) li elenca senza contenuto per il Diario di una memoria entity; il diario e gli schemi ricorrenti si
-  scrivono solo dai ricordi pubblici.
+  scrivono solo dai ricordi pubblici. Una persona che chiede a parole che ciò che ha detto resti tra noi rende privati i
+  suoi messaggi, e liberandolo li rende di nuovo pubblici (`extract.v20`, `entity.v8`: sezione PRIVATE).
 
 ### Corretto
 - Modificare, cancellare o chiudere una conversazione per un utente senza memoria non ne crea più una vuota

@@ -19,25 +19,20 @@ import { memorySpeaker } from '../rawlog/attribution';
 import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
 import { dropUnsupported, supersedeDigests, supportedBy } from './forgetting';
 import { storeEmbeddings } from '../db/pgvector';
-import { episodeVisible, factVisible, noteVisible, PUBLIC_ONLY, readerOf } from './privacy';
+import { episodeVisible, readerOf } from './privacy';
 
 type Table = 'episodes' | 'facts' | 'notes';
 
-/**
- * A correction keeps the privacy of what it corrects (D52): when nothing behind the old row is public, the new row rests
- * on the same private messages (and not on the correcting one); null when the old row is public.
- */
-async function privateEvidence(tx: EntityManager, table: Table, id: string): Promise<string[] | null> {
-  const visible = table === 'episodes' ? episodeVisible('t', PUBLIC_ONLY) : table === 'facts' ? factVisible('t', PUBLIC_ONLY) : noteVisible('t', PUBLIC_ONLY);
-  const [row]: Array<{ open: boolean }> = await tx.query(`SELECT ${visible} AS open FROM ${table} t WHERE t.id = $1`, [id]);
-  if (!row || row.open) return null;
+/** A correction keeps the privacy of what it corrects (D52): the private messages behind the old row, to rest the new one on. */
+async function privateEvidence(tx: EntityManager, table: Table, id: string): Promise<string[]> {
   const evidence = table === 'episodes'
     ? `SELECT message_id AS m FROM episode_evidence WHERE episode_id = $1`
     : `SELECT message_id AS m FROM ${table === 'facts' ? 'fact_evidence' : 'note_evidence'} WHERE ${table === 'facts' ? 'fact_id' : 'note_id'} = $1
          AND message_id IS NOT NULL
        UNION SELECT ee.message_id FROM ${table === 'facts' ? 'fact_evidence' : 'note_evidence'} x JOIN episode_evidence ee ON ee.episode_id = x.episode_id
          WHERE x.${table === 'facts' ? 'fact_id' : 'note_id'} = $1`;
-  const rows: Array<{ m: string }> = await tx.query(`SELECT DISTINCT m FROM (${evidence}) s`, [id]);
+  const rows: Array<{ m: string }> = await tx.query(
+    `SELECT DISTINCT s.m FROM (${evidence}) s JOIN messages x ON x.id = s.m WHERE x.private`, [id]);
   return rows.map((r) => r.m);
 }
 
@@ -144,7 +139,7 @@ export class MemoryWriteService {
         [input.id, memoryId, input.content ?? old.content, at.at, at.precision]);
       await tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1`, [input.id]);
       await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, input.id]);
-      for (const m of kept ?? [messageId]) {
+      for (const m of [messageId, ...kept]) {
         await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, m]);
       }
       return row.id as string;
@@ -175,7 +170,7 @@ export class MemoryWriteService {
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'corrects', false, 'holder_lived', 'holder', 'stated', 1, 'holder', $8, $9, $10, $11) RETURNING id`,
         [memoryId, old.key, input.value, input.value === null ? 'unknown_current' : 'current', from.at, from.precision, input.id,
           [memoryId], old.subject_kind, old.subject_person_id, old.subject_candidates]);
-      for (const m of kept ?? []) await tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m]);
+      for (const m of kept) await tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m]);
       return { id: row.id as string, text: `${old.about ? `${old.about} — ` : ''}${old.key}: ${input.value ?? '(unknown)'}` };
     });
     await this.embed('facts', id, text);
@@ -195,7 +190,7 @@ export class MemoryWriteService {
          VALUES ($1, $2, $3, $4, $5, false, $6, 'holder_lived', 'holder', 'stated', 1, 'holder', $7, $8, $9, $10) RETURNING id`,
         [memoryId, input.category ?? old.category, input.content, old.pinned, input.id, old.valid_from, [memoryId], old.subject_kind,
           old.subject_person_id, old.subject_candidates]);
-      for (const m of kept ?? []) await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m]);
+      for (const m of kept) await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m]);
       await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'corrected')`, [memoryId, row.id]);
       return row.id as string;
     });
