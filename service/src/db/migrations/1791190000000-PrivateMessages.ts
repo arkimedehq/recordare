@@ -14,9 +14,12 @@ export class PrivateMessages1791190000000 implements MigrationInterface {
   async up(q: QueryRunner): Promise<void> {
     await q.query(`ALTER TABLE messages ADD COLUMN private boolean NOT NULL DEFAULT false,
       ADD COLUMN private_owner_id uuid REFERENCES persons(id) ON DELETE SET NULL`);
+    // Every recall asks whether the memory has a private message at all (none: no filter).
+    await q.query(`CREATE INDEX messages_private_idx ON messages (memory_id) WHERE private`);
   }
 
   async down(q: QueryRunner): Promise<void> {
+    await q.query(`DROP INDEX messages_private_idx`);
     await q.query(`ALTER TABLE messages DROP COLUMN private_owner_id, DROP COLUMN private`);
   }
 }

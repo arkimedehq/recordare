@@ -9,8 +9,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ### Aggiunto
 - Messaggi privati (D52, primo passo): `private` su un messaggio o su un'intera richiesta (`conversation.private`); la
   risposta dell'agente e i turni degli strumenti che seguono lo diventano, per la stessa persona; `PATCH …/messages/{id}
-  {private}` (libreria `setMessagePrivate`) lo rende privato o di nuovo pubblico. Solo registrato: nessun percorso di
-  lettura lo filtra ancora.
+  {private}` (libreria `setMessagePrivate`) lo rende privato o di nuovo pubblico. Ogni lettura lo rispetta (`API.md`
+  §1): raccontato solo a chi appartiene — chi parla nell'ultimo turno della conversazione — e al titolare di una memoria
+  personale; in una memoria entity l'account legge solo il pubblico. Episodi, fatti e note seguono i loro messaggi
+  (nascosti solo quando ogni messaggio dietro di loro è privato di qualcun altro); una correzione mantiene la privacy di
+  ciò che corregge.
 
 ### Corretto
 - Modificare, cancellare o chiudere una conversazione per un utente senza memoria non ne crea più una vuota

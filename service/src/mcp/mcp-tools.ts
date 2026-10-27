@@ -3,7 +3,8 @@
 
 /**
  * MCP tools (docs/API.md §3). Schemas stay in the provider-neutral subset (flat objects, enums,
- * plain strings — D27). Reads use the whole memory in every conversation (D50: no viewer filter for now); writes
+ * plain strings — D27). Reads use the whole memory in every conversation (D50), except private memories (D52): told only
+ * to whoever they belong to — the speaker of the conversation's latest turn — and to a personal memory's holder; writes
  * need a resolvable conversation (an ingested one, or none with a personal token) to bind their evidence.
  */
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -208,7 +209,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   }, async (args, extra) => {
     const ctx = await context(extra);
     if (!writable(ctx)) return result({ error: 'cannot write here' });
-    await deps.writes.forgetEpisode(deps.memoryId, args.id);
+    await deps.writes.forgetEpisode(deps.memoryId, args.id, { conversationId: ctx.conversationId });
     return result({ forgotten: true });
   });
 }

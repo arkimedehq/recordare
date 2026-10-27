@@ -6,12 +6,15 @@
  * settings, the people it knows, the raw log (conversations and messages, except those a forgotten period hides),
  * episodes with their evidence, people and plan events, the diary, facts, notes, learned sources with their text,
  * clarifications and the recurring patterns. Vectors are left out (they are derived). Built in the background and kept
- * gzipped for KEEP_DAYS; a build that did not finish within STALE_MINUTES (the service restarted) counts as failed.
+ * gzipped for KEEP_DAYS; a build that did not finish within STALE_MINUTES (the service restarted) counts as failed. Private
+ * memories (D52) as for every read by the account: all of them in a personal memory, none in an entity memory (only the
+ * agent knows them).
  */
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { promisify } from 'node:util';
 import { gzip } from 'node:zlib';
 import { DataSource } from 'typeorm';
+import { episodeVisible, factVisible, messageVisible, noteVisible, readerOf } from '../recall/privacy';
 
 const KEEP_DAYS = 7;
 const STALE_MINUTES = 60;
@@ -69,9 +72,12 @@ export class ExportsService {
   async collect(memoryId: string): Promise<Record<string, unknown>> {
     const rows = async (sql: string): Promise<unknown[]> =>
       (await this.db.query(`SELECT to_jsonb(t) ${DERIVED} AS r FROM (${sql}) t`, [memoryId])).map((x: { r: unknown }) => x.r);
+    const reader = await readerOf(this.db, memoryId, undefined, new Date());
     // Messages a forgotten period keeps but hides (keepRaw) stay out, as they do from every read.
     const hidden = `SELECT unnest(message_ids) FROM forget_tombstones WHERE memory_id = $1 AND scope = 'period'`;
-    const episodes = `SELECT id FROM episodes WHERE memory_id = $1 AND deleted_at IS NULL`;
+    const episodes = `SELECT id FROM episodes e WHERE memory_id = $1 AND deleted_at IS NULL AND ${episodeVisible('e', reader)}`;
+    const facts = `SELECT id FROM facts f WHERE memory_id = $1 AND deleted_at IS NULL AND ${factVisible('f', reader)}`;
+    const notes = `SELECT id FROM notes n WHERE memory_id = $1 AND deleted_at IS NULL AND ${noteVisible('n', reader)}`;
     return {
       format: 'recordare-export/1',
       exportedAt: new Date().toISOString(),
@@ -82,16 +88,16 @@ export class ExportsService {
       conversations: await rows(`SELECT * FROM conversations WHERE memory_id = $1 AND deleted_at IS NULL ORDER BY started_at`),
       conversationParticipants: await rows(`SELECT cp.* FROM conversation_participants cp JOIN conversations c ON c.id = cp.conversation_id
         WHERE c.memory_id = $1 AND c.deleted_at IS NULL`),
-      messages: await rows(`SELECT * FROM messages WHERE memory_id = $1 AND id NOT IN (${hidden}) ORDER BY sent_at`),
-      episodes: await rows(`SELECT * FROM episodes WHERE memory_id = $1 AND deleted_at IS NULL ORDER BY occurred_at NULLS LAST, recorded_at`),
+      messages: await rows(`SELECT * FROM messages m WHERE memory_id = $1 AND id NOT IN (${hidden}) AND ${messageVisible('m', reader)} ORDER BY sent_at`),
+      episodes: await rows(`SELECT * FROM episodes WHERE id IN (${episodes}) ORDER BY occurred_at NULLS LAST, recorded_at`),
       episodeEvidence: await rows(`SELECT * FROM episode_evidence WHERE episode_id IN (${episodes})`),
       episodePeople: await rows(`SELECT * FROM episode_people WHERE episode_id IN (${episodes})`),
       planEvents: await rows(`SELECT * FROM plan_events WHERE plan_id IN (${episodes}) ORDER BY created_at`),
       digests: await rows(`SELECT * FROM digests WHERE memory_id = $1 AND superseded_at IS NULL ORDER BY period_start, level`),
-      facts: await rows(`SELECT * FROM facts WHERE memory_id = $1 AND deleted_at IS NULL ORDER BY recorded_at`),
-      factEvidence: await rows(`SELECT x.* FROM fact_evidence x JOIN facts f ON f.id = x.fact_id WHERE f.memory_id = $1`),
-      notes: await rows(`SELECT * FROM notes WHERE memory_id = $1 AND deleted_at IS NULL ORDER BY recorded_at`),
-      noteEvidence: await rows(`SELECT x.* FROM note_evidence x JOIN notes n ON n.id = x.note_id WHERE n.memory_id = $1`),
+      facts: await rows(`SELECT * FROM facts WHERE id IN (${facts}) ORDER BY recorded_at`),
+      factEvidence: await rows(`SELECT * FROM fact_evidence WHERE fact_id IN (${facts})`),
+      notes: await rows(`SELECT * FROM notes WHERE id IN (${notes}) ORDER BY recorded_at`),
+      noteEvidence: await rows(`SELECT * FROM note_evidence WHERE note_id IN (${notes})`),
       patterns: await rows(`SELECT * FROM episode_promotions WHERE memory_id = $1 ORDER BY created_at`),
       sources: await rows(`SELECT * FROM sources WHERE memory_id = $1 ORDER BY learned_at`),
       sourcePassages: await rows(`SELECT * FROM source_passages WHERE memory_id = $1 ORDER BY source_id, ordinal`),

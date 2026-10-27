@@ -742,11 +742,15 @@ from others; D50's "no viewer filter" stays the default: **everything is public 
 - Not adopted (for now): conversation scopes / groups declared by the client (Honcho), the five disclosure tiers
   (`holder … public`, VISION). Finer groups ("the family yes, guests no") can be added later if a real case asks.
 - To build (8.13): privacy on raw messages only (`private`, the owner person id) — episodes, facts and notes inherit it
-  at read time through their evidence (the most restrictive wins), so making a message public again needs no rewrite —,
-  the asker on read paths, the extraction rule (a small dev set first), the Diary marks, client flags and library
-  options; `audience` / `disclosure` stay recorded as they are. **Built so far** (2026-10-27): the message columns, the
-  ingest flags (`private`, `conversation.private`, replies following), `PATCH …/messages/{id} {private}`, library
-  `setMessagePrivate`.
+  at read time through their evidence, so making a message public again needs no rewrite —, the asker on read paths,
+  the extraction rule (a small dev set first), the Diary marks, client flags and library options; `audience` /
+  `disclosure` stay recorded as they are. **Built so far** (2026-10-27): the message columns, the ingest flags
+  (`private`, `conversation.private`, replies following), `PATCH …/messages/{id} {private}`, library
+  `setMessagePrivate`; every read path (`service/src/recall/privacy.ts`; the rules in `API.md` §1). Decided while
+  building: an item is hidden only when **every** message behind it is private to someone else — what was said in the
+  open at least once stays public (otherwise a public fact Marta repeats in private would vanish for everyone); a
+  correction keeps the privacy of what it corrects; the reader is the author of the conversation's latest person's turn
+  (as `speakerOf`), but someone unidentified reads the public only, in a personal memory too.
 
 ## Open questions (to discuss)
 

@@ -9,7 +9,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Added
 - Private messages (D52, first step): `private` on a message or a whole request (`conversation.private`); the agent's
   reply and tool turns after it follow, for the same person; `PATCH …/messages/{id} {private}` (library
-  `setMessagePrivate`) makes it private or public again. Stored only: no read path filters on it yet.
+  `setMessagePrivate`) makes it private or public again. Every read follows it (`API.md` §1): told only to whoever it
+  belongs to — the speaker of the conversation's latest turn — and to a personal memory's holder; in an entity memory the
+  account reads the public only. Episodes, facts and notes follow their messages (hidden only when every message behind
+  them is private to someone else); a correction keeps the privacy of what it corrects.
 
 ### Fixed
 - Editing, deleting or ending a conversation for a user without a memory no longer creates an empty one (`autoProvision`):

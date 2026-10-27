@@ -19,6 +19,27 @@ import { memorySpeaker } from '../rawlog/attribution';
 import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
 import { dropUnsupported, supersedeDigests, supportedBy } from './forgetting';
 import { storeEmbeddings } from '../db/pgvector';
+import { episodeVisible, factVisible, noteVisible, PUBLIC_ONLY, readerOf } from './privacy';
+
+type Table = 'episodes' | 'facts' | 'notes';
+
+/**
+ * A correction keeps the privacy of what it corrects (D52): when nothing behind the old row is public, the new row rests
+ * on the same private messages (and not on the correcting one); null when the old row is public.
+ */
+async function privateEvidence(tx: EntityManager, table: Table, id: string): Promise<string[] | null> {
+  const visible = table === 'episodes' ? episodeVisible('t', PUBLIC_ONLY) : table === 'facts' ? factVisible('t', PUBLIC_ONLY) : noteVisible('t', PUBLIC_ONLY);
+  const [row]: Array<{ open: boolean }> = await tx.query(`SELECT ${visible} AS open FROM ${table} t WHERE t.id = $1`, [id]);
+  if (!row || row.open) return null;
+  const evidence = table === 'episodes'
+    ? `SELECT message_id AS m FROM episode_evidence WHERE episode_id = $1`
+    : `SELECT message_id AS m FROM ${table === 'facts' ? 'fact_evidence' : 'note_evidence'} WHERE ${table === 'facts' ? 'fact_id' : 'note_id'} = $1
+         AND message_id IS NOT NULL
+       UNION SELECT ee.message_id FROM ${table === 'facts' ? 'fact_evidence' : 'note_evidence'} x JOIN episode_evidence ee ON ee.episode_id = x.episode_id
+         WHERE x.${table === 'facts' ? 'fact_id' : 'note_id'} = $1`;
+  const rows: Array<{ m: string }> = await tx.query(`SELECT DISTINCT m FROM (${evidence}) s`, [id]);
+  return rows.map((r) => r.m);
+}
 
 /**
  * The agent's text is backed by a message of the holder when the two overlap as a whole (trigram similarity ≥ 0.2) or
@@ -104,8 +125,11 @@ export class MemoryWriteService {
 
   async correctEpisode(memoryId: string, ev: Evidence, input: { id: string; content?: string; occurredAt?: string; datePrecision?: Precision }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
-      const [old] = await tx.query(`SELECT * FROM episodes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL`, [input.id, memoryId]);
+      const reader = await readerOf(this.db, memoryId, ev.conversationId, new Date());
+      const [old] = await tx.query(`SELECT * FROM episodes e WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL AND ${episodeVisible('e', reader)}`,
+        [input.id, memoryId]);
       if (!old) throw new NotFoundException();
+      const kept = await privateEvidence(tx, 'episodes', input.id);
       const [memory] = await tx.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
       const { messageId } = await this.bindEvidence(tx, memoryId, ev, input.content ?? old.content);
       const at = input.occurredAt ? toStored(input.occurredAt, input.datePrecision, memory.timezone) : { at: old.occurred_at, precision: old.date_precision };
@@ -120,7 +144,9 @@ export class MemoryWriteService {
         [input.id, memoryId, input.content ?? old.content, at.at, at.precision]);
       await tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1`, [input.id]);
       await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id, role) SELECT $1, alias, person_id, role FROM episode_people WHERE episode_id = $2`, [row.id, input.id]);
-      await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, messageId]);
+      for (const m of kept ?? [messageId]) {
+        await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, 'message') ON CONFLICT DO NOTHING`, [row.id, m]);
+      }
       return row.id as string;
     });
     const [row] = await this.db.query(`SELECT content FROM episodes WHERE id = $1`, [id]);
@@ -141,6 +167,7 @@ export class MemoryWriteService {
       if (!old) throw new NotFoundException();
       const [memory] = await tx.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
       const from = input.validFrom ? toStored(input.validFrom, input.datePrecision, memory.timezone) : { at: old.valid_from, precision: old.date_precision };
+      const kept = await privateEvidence(tx, 'facts', input.id);
       await tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1`, [input.id]);
       const [row] = await tx.query(
         `INSERT INTO facts (memory_id, key, value, status, valid_from, date_precision, corrects, verdict, pending, origin, author_role, stance,
@@ -148,6 +175,7 @@ export class MemoryWriteService {
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'corrects', false, 'holder_lived', 'holder', 'stated', 1, 'holder', $8, $9, $10, $11) RETURNING id`,
         [memoryId, old.key, input.value, input.value === null ? 'unknown_current' : 'current', from.at, from.precision, input.id,
           [memoryId], old.subject_kind, old.subject_person_id, old.subject_candidates]);
+      for (const m of kept ?? []) await tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m]);
       return { id: row.id as string, text: `${old.about ? `${old.about} — ` : ''}${old.key}: ${input.value ?? '(unknown)'}` };
     });
     await this.embed('facts', id, text);
@@ -159,6 +187,7 @@ export class MemoryWriteService {
     const id = await this.db.transaction(async (tx) => {
       const [old] = await tx.query(`SELECT * FROM notes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL AND status = 'current'`, [input.id, memoryId]);
       if (!old) throw new NotFoundException();
+      const kept = await privateEvidence(tx, 'notes', input.id);
       await tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1`, [input.id]);
       const [row] = await tx.query(
         `INSERT INTO notes (memory_id, category, content, pinned, corrects, pending, valid_from, origin, author_role, stance, confidence, disclosure,
@@ -166,6 +195,7 @@ export class MemoryWriteService {
          VALUES ($1, $2, $3, $4, $5, false, $6, 'holder_lived', 'holder', 'stated', 1, 'holder', $7, $8, $9, $10) RETURNING id`,
         [memoryId, input.category ?? old.category, input.content, old.pinned, input.id, old.valid_from, [memoryId], old.subject_kind,
           old.subject_person_id, old.subject_candidates]);
+      for (const m of kept ?? []) await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m]);
       await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'corrected')`, [memoryId, row.id]);
       return row.id as string;
     });
@@ -173,9 +203,17 @@ export class MemoryWriteService {
     return id;
   }
 
-  /** Physical forgetting of an episode and its correction chain; never recreated (tombstone). */
-  async forgetEpisode(memoryId: string, id: string): Promise<void> {
+  /**
+   * Physical forgetting of an episode and its correction chain; never recreated (tombstone). From a conversation
+   * (`asker`), only an episode its reader may be told of (D52); the host's UI may forget any, private ones included.
+   */
+  async forgetEpisode(memoryId: string, id: string, asker?: { conversationId?: string }): Promise<void> {
     let forgotten: string[] = [];
+    if (asker) {
+      const reader = await readerOf(this.db, memoryId, asker.conversationId, new Date());
+      const [seen] = await this.db.query(`SELECT 1 FROM episodes e WHERE e.id = $1 AND e.memory_id = $2 AND ${episodeVisible('e', reader)}`, [id, memoryId]);
+      if (!seen) throw new NotFoundException();
+    }
     await this.db.transaction(async (tx) => {
       const chain = await this.chainOf(tx, memoryId, [id]);
       if (chain.length === 0) throw new NotFoundException();

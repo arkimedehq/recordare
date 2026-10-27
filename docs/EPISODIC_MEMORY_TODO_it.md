@@ -765,11 +765,16 @@ salvo ciò che viene dichiarato privato**.
   disclosure (`holder … public`, VISION). Gruppi più fini ("la famiglia sì, gli ospiti no") si possono aggiungere dopo,
   se un caso reale lo chiede.
 - Da costruire (8.13): la privacy solo sui messaggi grezzi (`private`, l'id della persona proprietaria) — episodi, fatti
-  e note la ereditano in lettura attraverso le loro evidenze (vince la più restrittiva), così rendere di nuovo pubblico
-  un messaggio non richiede riscritture —, chi chiede nei percorsi di lettura, la regola nell'estrazione (prima un
-  piccolo set di sviluppo), i segni nel Diario, i flag dei client e le opzioni della libreria; `audience` / `disclosure`
-  restano registrati come sono. **Costruito finora** (2026-10-27): le colonne dei messaggi, i flag di ingest (`private`,
-  `conversation.private`, le risposte che seguono), `PATCH …/messages/{id} {private}`, libreria `setMessagePrivate`.
+  e note la ereditano in lettura attraverso le loro evidenze, così rendere di nuovo pubblico un messaggio non richiede
+  riscritture —, chi chiede nei percorsi di lettura, la regola nell'estrazione (prima un piccolo set di sviluppo), i
+  segni nel Diario, i flag dei client e le opzioni della libreria; `audience` / `disclosure` restano registrati come
+  sono. **Costruito finora** (2026-10-27): le colonne dei messaggi, i flag di ingest (`private`, `conversation.private`,
+  le risposte che seguono), `PATCH …/messages/{id} {private}`, libreria `setMessagePrivate`; ogni percorso di lettura
+  (`service/src/recall/privacy.ts`; le regole in `API.md` §1). Deciso costruendo: un elemento è nascosto solo quando
+  **ogni** messaggio dietro di lui è privato di qualcun altro — ciò che è stato detto apertamente almeno una volta resta
+  pubblico (altrimenti un fatto pubblico che Marta ripete in privato sparirebbe per tutti); una correzione mantiene la
+  privacy di ciò che corregge; chi legge è l'autore dell'ultimo turno di una persona nella conversazione (come
+  `speakerOf`), ma chi non è identificato legge solo il pubblico, anche in una memoria personale.
 
 ## Questioni aperte (da discutere)
 

@@ -106,12 +106,26 @@ client can never mint tokens for another client. `Idempotency-Key` replays are s
 `(credential, memory, method + path)`; v1 keeps them in Redis for 24 h (persistent table in the
 public profile).
 
-### Conversation context — no viewer filter (D50, WORK_PLAN 8.2)
+### Conversation context — no viewer filter, private memories apart (D50, WORK_PLAN 8.2; D52)
 **Behaviour now (2026-10-09)**: every answer — MCP recall, the memory context — uses the **whole memory**, in every
 conversation: one only the holder takes part in, a shared or group conversation, a conversation Recordare has not stored,
 or no conversation at all. Who may be told what (privacy, disclosure) comes later (WORK_PLAN 8.12); the `audience` /
 `disclosure` columns are still written, so that work starts from recorded data. **Per-memory isolation stays**: a
 request only ever opens the memory its credential and `X-Recordare-User` name.
+
+**Private memories (D52, 2026-10-27)**: a message declared private (§2) is told only to whoever it belongs to and, in a
+personal memory, to the holder; the admin reads everything. **Who reads** is the author of the conversation's latest
+person's turn (`user` / `other`, as of the request's time): the holder of a personal memory (an undeclared `user` turn,
+the self, `own` content) reads everything, an identified contact the public and their own, anyone unidentified ("someone",
+and in an entity memory every undeclared speaker) the public only. Without a conversation (§4, a personal token) the
+reader is the account: the holder of a personal memory; in an entity memory nobody but the agent knows private things, so
+the public only. Episodes, facts and notes follow the messages they rest on (their evidence, directly or through an
+episode): one is hidden only when every message behind it is private to someone else — what was said in the open at
+least once stays public; an item with no message behind it is public. A correction keeps the privacy of what it
+corrects. This applies to every read: MCP recall (`search_episodes` with its chat excerpts and my replies,
+`search_memory`, `search_knowledge`'s episodes), the memory context and its self card, the read API (§4, details and
+their evidence, cards, the notes feed: a note the reader may not see comes as `note: null`), exports; `correct_episode` /
+`forget_episode` see only what their reader may see (404 otherwise). A memory with no private message is read as before.
 
 The conversation is still **resolved by Recordare, never asserted by the client or the LLM**, from
 `X-Recordare-Conversation: <externalConversationId>` (MCP calls may carry it as `_meta.recordare.conversation` instead),
@@ -234,7 +248,7 @@ Response **`200`** after the raw rows are written synchronously (extraction is a
   (`conversation.private`); it belongs to its author (the self, a contact, or nobody identified). The agent's and tools'
   turns that follow a private message (the latest `user` / `other` before them) are private for the same person unless
   they say `private: false`. What is extracted from private messages is private at read time through its evidence (no
-  copy of the flag); a privacy change needs no new extraction. Who may read what is §4 (D52).
+  copy of the flag); a privacy change needs no new extraction. Who may read what: §1, conversation context (D52).
 - **Link codes** (D51): in a personal memory, a `user` / `other` message (not `own`) that is only a link code
   (`RCD-XXXX-XXXX`, any case, dashes and a final dot optional) is **never stored** (not counted in `accepted`). When its
   author is a participant with an `identity` and `conversation.direct` is not `false`, it becomes a *claim* (that
@@ -411,7 +425,7 @@ type Episode = {
   sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
-The same in every conversation, including those others take part in (D50: no viewer filter).
+The same in every conversation, including those others take part in (D50: no viewer filter), private memories apart (D52, §1).
 **Heard in the room (WORK_PLAN 6.5)**: an episode whose evidence all comes from `ambient` conversations, and a chat
 excerpt from one, carry `heard: true` — overheard by a listening device, not said to the agent, the speaker possibly
 misrecognised. The `search_episodes` description tells the agent to tell it as heard at home and that what it says of

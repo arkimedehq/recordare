@@ -114,13 +114,28 @@ client non può mai emettere token per un altro client. I replay di `Idempotency
 `(credential, memory, method + path)`; la v1 li tiene in Redis per 24 h (tabella persistente nel
 public profile).
 
-### Contesto di conversazione — nessun filtro su chi legge (D50, WORK_PLAN 8.2)
+### Contesto di conversazione — nessun filtro su chi legge, salvo i ricordi privati (D50, WORK_PLAN 8.2; D52)
 **Comportamento attuale (2026-10-09)**: ogni risposta — richiamo via MCP, contesto di memoria — usa **tutta la
 memoria**, in ogni conversazione: quella in cui c'è solo il titolare, una conversazione condivisa o di gruppo, una che
 Recordare non ha ancora salvato, o nessuna conversazione. Chi può sapere cosa (privacy, riservatezza) verrà dopo
 (WORK_PLAN 8.12); le colonne `audience` / `disclosure` continuano a essere scritte, così quel lavoro partirà da dati
 registrati. **L'isolamento tra memorie resta**: una richiesta apre solo la memoria indicata dalla sua credenziale e da
 `X-Recordare-User`.
+
+**Ricordi privati (D52, 2026-10-27)**: un messaggio dichiarato privato (§2) viene raccontato solo a chi appartiene e, in
+una memoria personale, al titolare; l'admin legge tutto. **Chi legge** è l'autore dell'ultimo turno di una persona nella
+conversazione (`user` / `other`, all'ora della richiesta): il titolare di una memoria personale (un turno `user` non
+dichiarato, il sé, il contenuto `own`) legge tutto, un contatto identificato il pubblico e il suo, chiunque non sia
+identificato ("qualcuno", e in una memoria entity ogni interlocutore non dichiarato) solo il pubblico. Senza conversazione
+(§4, un token personale) chi legge è l'account: il titolare di una memoria personale; in una memoria entity le cose
+private le conosce solo l'agente, quindi solo il pubblico. Episodi, fatti e note seguono i messaggi su cui si basano (le
+loro evidenze, dirette o attraverso un episodio): uno è nascosto solo quando ogni messaggio dietro di lui è privato di
+qualcun altro — ciò che è stato detto apertamente almeno una volta resta pubblico; un elemento senza messaggi dietro è
+pubblico. Una correzione mantiene la privacy di ciò che corregge. Vale per ogni lettura: il richiamo MCP
+(`search_episodes` con i suoi estratti di chat e le mie risposte, `search_memory`, gli episodi di `search_knowledge`), il
+contesto di memoria e la sua scheda di sé, l'API di lettura (§4, dettagli e loro evidenze, schede, il feed delle note: una
+nota che chi legge non può vedere arriva come `note: null`), le esportazioni; `correct_episode` / `forget_episode` vedono
+solo ciò che il loro lettore può vedere (altrimenti 404). Una memoria senza messaggi privati si legge come prima.
 
 La conversazione è ancora **risolta da Recordare, mai dichiarata dal client o dall'LLM**, da
 `X-Recordare-Conversation: <externalConversationId>` (le chiamate MCP possono portarla invece come
@@ -235,7 +250,7 @@ Risposta **`200`** dopo che le righe grezze sono state scritte in modo sincrono 
   dell'agente e degli strumenti che seguono un messaggio privato (l'ultimo `user` / `other` prima di loro) sono privati
   per la stessa persona, a meno che dicano `private: false`. Ciò che si estrae da messaggi privati è privato in lettura
   attraverso le sue evidenze (nessuna copia del flag); un cambio di privacy non richiede una nuova estrazione. Chi può
-  leggere cosa è nel §4 (D52).
+  leggere cosa: §1, contesto di conversazione (D52).
 - **Nessun flag di consenso** (D50): ogni messaggio accettato viene memorizzato, estratto e consolidato. Se una memoria
   è attiva lo decide l'interruttore della piattaforma client: quando è spento, il client non invia. I ricordi esistenti
   restano finché non vengono cancellati.
@@ -431,7 +446,7 @@ type Episode = {
   sources?: Array<{ id: string; title: string } | { forgotten: true }>;  // learned sources it refers to (8.9)
 };
 ```
-Lo stesso in ogni conversazione, anche in quelle a cui partecipano altri (D50: nessun filtro su chi legge).
+Lo stesso in ogni conversazione, anche in quelle a cui partecipano altri (D50: nessun filtro su chi legge), salvo i ricordi privati (D52, §1).
 **Sentito nella stanza (WORK_PLAN 6.5)**: un episodio le cui prove vengono tutte da conversazioni `ambient`, e un estratto
 di chat di una di esse, riportano `heard: true` — sentito da un dispositivo in ascolto, non detto all'agente, chi parlava
 forse riconosciuto male. La descrizione di `search_episodes` dice all'agente di raccontarlo come sentito in casa e che

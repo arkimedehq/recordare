@@ -78,6 +78,14 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   | perception | ambient` quando è la natura della conversazione. (Fino al WORK_PLAN 8.4 l'estrazione legge il contenuto
   proprio come i turni del proprio utente.) Un testo che l'agente deve tenere come conoscenza da consultare (un
   manuale, un documento) è invece una fonte appresa (§3b).
+- **Messaggi privati** (D52): quando la piattaforma sa che qualcosa è privato — una chat che l'utente ha segnato come
+  privata, un messaggio che ha contrassegnato — invia `private: true` sul messaggio o `conversation.private: true` sulla
+  richiesta; anche le risposte dell'agente che seguono sono private. Viene raccontato solo a chi l'ha detto (e al
+  titolare di una memoria personale); `setMessagePrivate` (libreria) lo rende privato o di nuovo pubblico. Recordare
+  ricava chi sta chiedendo dalla conversazione (l'ultimo turno di una persona), quindi invia il turno prima di fare il
+  richiamo per lui (`contextWithTurn`, o svuota la tua outbox) — in una chat condivisa un turno non ancora arrivato
+  verrebbe letto come quello di chi ha parlato prima. In una memoria entity l'interfaccia del diario legge solo il
+  pubblico: le cose private sono dell'agente e di chi le ha dette.
 - **Ascolto continuo** (un dispositivo di casa che sente la stanza, D45, WORK_PLAN 6.5): inviare la trascrizione come
   conversazione con `source: "ambient"` — la persona di cui è la memoria come `user`, gli altri come partecipanti `other`
   (con un'identità quando il riconoscimento vocale li conosce), mai `own`. All'estrazione viene detto che legge parlato
