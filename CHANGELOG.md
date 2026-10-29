@@ -6,6 +6,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- The admin reads a memory's items (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`), `…/facts`,
+  `…/notes` — the diary's lists read as the whole memory, private items marked whose they are — and forgets one
+  (`DELETE …/episodes|facts|notes/{id}`). Admin key only; Recordare Atlas lists and forgets with them.
+
 ## [0.5.0] — 2026-10-27
 
 **Private memories**: a person can keep what they said between themselves and the agent — by a flag from the client

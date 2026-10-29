@@ -669,6 +669,14 @@ da una persona; i ricordi restano). Per il resto la console usa le altre rotte a
 genere della memoria, profilo di qualità, nome, identità, token personali, chiavi dei client, consolidamento); è in italiano e in
 inglese.
 
+**Gli elementi di una memoria, per l'admin** (D52: l'admin di Recordare legge e dimentica tutto) — le stesse liste del
+diario della persona (§4), lette come l'intera memoria: compresi gli elementi privati, ciascuno segnato `private: {by}`.
+`GET api/v1/admin/memories/{id}/episodes` (la query della §4, più `source=own|claims`: le affermazioni sono ciò che hanno
+detto altri — autori `other` / `tool`), `GET …/facts`, `GET …/notes`; `DELETE …/episodes/{episodeId}` (dimenticato come
+lo dimentica la persona, con le sue correzioni; `episode.forgotten`), `DELETE …/facts/{factId}`, `DELETE …/notes/{noteId}`.
+Restituiscono contenuto della memoria: solo la chiave admin, mai la chiave di un client o un token personale. Recordare
+Atlas le usa quando l'admin digita la chiave nella pagina (`ATLAS_EVENTS_it.md`).
+
 ### Telemetria live (M5b, solo admin)
 `GET api/v1/admin/telemetry/stream[?memory=<memoryId>]` — Server-Sent Events, uno per ogni passo reale all'interno del servizio:
 `message.ingested`, `extraction.started` / `extraction.finished`, `work.started` / `work.finished` (op: `embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`; id, durata — lavoro senza chiamata LLM), `llm.started` (id del prompt, task — la chiamata è partita) e `llm.call` (id del prompt, modello, token, latenza, stato),

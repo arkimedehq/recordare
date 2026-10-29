@@ -18,6 +18,7 @@ import { ZodBody } from '../common/zod-body.pipe';
 import { type Env } from '../config/env';
 import { NOW_HEADER } from '../mcp/mcp-tools';
 import { MemoryWriteService } from '../recall/memory-write.service';
+import { EVERYTHING } from '../recall/privacy';
 import { QUALITY_PROFILES } from '../engine/quality-profile';
 import { ExportsService } from './exports.service';
 import {
@@ -379,5 +380,57 @@ export class ReadController {
   }
 }
 
-@Module({ controllers: [ReadController], providers: [ReadService, MemoryWriteService, SettingsService, ExportsService] })
+const adminEpisodesQuery = episodesQuery.extend({ source: z.enum(['own', 'claims']).optional() });
+
+/**
+ * The admin's view of one memory's items (D52: the Recordare admin reads, corrects and forgets everything, private items
+ * too, each marked whose it is): the same lists as the person's diary, read as the whole memory, and forgetting one.
+ * No @RequireScopes: the admin credential only.
+ */
+@Controller('api/v1/admin/memories/:memory')
+export class AdminMemoryItemsController {
+  constructor(
+    private readonly read: ReadService,
+    private readonly writes: MemoryWriteService,
+    @Inject(CLOCK_PORT) private readonly clock: ClockPort,
+  ) {}
+
+  @Get('episodes')
+  @Returns(episodesResponse)
+  episodes(@Param('memory', ParseUUIDPipe) memory: string, @Query(new ZodBody(adminEpisodesQuery)) q: z.infer<typeof adminEpisodesQuery>) {
+    return this.read.episodes(memory, q, this.clock.now(), EVERYTHING);
+  }
+
+  @Get('facts')
+  @Returns(factsResponse)
+  facts(@Param('memory', ParseUUIDPipe) memory: string, @Query(new ZodBody(factsQuery)) q: z.infer<typeof factsQuery>) {
+    return this.read.facts(memory, q, this.clock.now(), EVERYTHING);
+  }
+
+  @Get('notes')
+  @Returns(notesResponse)
+  notes(@Param('memory', ParseUUIDPipe) memory: string, @Query(new ZodBody(notesQuery)) q: z.infer<typeof notesQuery>) {
+    return this.read.notes(memory, q, EVERYTHING);
+  }
+
+  @Delete('episodes/:id')
+  @HttpCode(204)
+  async forget(@Param('memory', ParseUUIDPipe) memory: string, @Param('id', ParseUUIDPipe) id: string) {
+    await this.writes.forgetEpisode(memory, id);
+  }
+
+  @Delete('facts/:id')
+  @HttpCode(204)
+  async deleteFact(@Param('memory', ParseUUIDPipe) memory: string, @Param('id', ParseUUIDPipe) id: string) {
+    await this.read.deleteRow(memory, 'facts', id);
+  }
+
+  @Delete('notes/:id')
+  @HttpCode(204)
+  async deleteNote(@Param('memory', ParseUUIDPipe) memory: string, @Param('id', ParseUUIDPipe) id: string) {
+    await this.read.deleteRow(memory, 'notes', id);
+  }
+}
+
+@Module({ controllers: [ReadController, AdminMemoryItemsController], providers: [ReadService, MemoryWriteService, SettingsService, ExportsService] })
 export class ReadModule {}

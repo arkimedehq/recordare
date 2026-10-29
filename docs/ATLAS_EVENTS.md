@@ -22,6 +22,11 @@ the first contract, with those old names.
 | `GET api/v1/admin/memories/:id/atlas` | Snapshot of one memory: episodes (kind, author role, importance, day, plan status, hidden state, `xyz` position by meaning), real edges (`similar`, `corrects`, `duplicate`, `outcome`, `rescheduled`, `people`), facts / notes / digests (ids and kinds), lifetime `totals` (LLM calls, input / output tokens, recalls) |
 | `GET api/v1/admin/telemetry/stream[?memory=<id>]` | Server-Sent Events, one per step below (`event:` = type, `data:` = JSON) |
 
+**Content, admin only** (optional; `API.md`, admin console): the atlas lists a memory's episodes, claims, facts and notes
+and forgets one only with the admin key typed into the page — its server never adds the key it holds to these routes:
+`GET api/v1/admin/memories/:id/episodes?source=own|claims`, `GET …/facts`, `GET …/notes`, and `DELETE` of one episode,
+fact or note. Everything above stays metadata only.
+
 ## Events
 
 | Type | Fields (besides `v`, `at`, `memoryId`) | Emitted when |
