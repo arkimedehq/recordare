@@ -785,6 +785,43 @@ salvo ciò che viene dichiarato privato**.
   finestra. Un argomento delicato raccontato senza chiederlo resta pubblico. Set di sviluppo `dataset_dev_private`
   (RESULTS.md).
 
+### D53 — La mente dell'agente: pensieri, modello di sé, intenti e iniziativa, procedure (decisione del maintainer, 2026-11-01)
+WORK_PLAN 8.12. Ricerca: `docs/literature/reflection-and-initiative_it.md` (cosa ha Recordare, cosa fanno gli altri,
+come la mente umana riflette e prende iniziativa). L'obiettivo è una mente per un agente — un robot come un assistente
+in chat — che lavora da sola e spinge, non una memoria che si limita a rispondere.
+- **Autonoma** (D26 esteso a tutto): nessuna proposta e nessuna conferma; ciò che la mente conclude, intende o impara è
+  suo; un client può dimenticarlo, mai approvarlo.
+- **Pensieri** (riflessione): intuizioni, domande e opinioni dell'agente su ciò che ha vissuto, ciascuno con gli episodi
+  su cui si basa e una confidenza. Nuova origine `reflected` (la ricevono anche i pattern ricorrenti: oggi sono salvati
+  come `holder_lived`, che mescola il vissuto con il concluso). Parte quando i nuovi episodi pubblici dall'ultima
+  riflessione hanno accumulato abbastanza importanza — altrimenti nessuna chiamata. Concreti e rivolti a cosa fare
+  dopo, non rimuginio: nessun pensiero nuovo senza prove nuove; pensieri su pensieri al massimo di un livello; un
+  pensiero guadagna sostegno quando nuovi episodi concordano, lo perde quando lo contraddicono, ed è ritirato a zero;
+  quando un episodio su cui poggia è corretto o dimenticato viene rivisto.
+- **Detti alle persone**: l'agente dice i suoi pensieri, segnati come suoi ("penso che…", nel recall e nel contesto di
+  memoria). Nascono solo da memorie pubbliche (D52). Mai un tratto di personalità di una persona salvato come fatto. Le
+  opinioni possono dissentire dal titolare quando le prove lo sostengono (H9: non compiacente).
+- **Modello di sé**: ciò che l'agente sa di sé — cosa fa bene, i suoi errori, il suo stile, le sue relazioni — costruito
+  dai risultati (correzioni ricevute, errori segnalati, le proprie risposte), non dall'introspezione; scritto con
+  prudenza. La scheda di sé diventa "chi sono come agente".
+- **Intenti e iniziativa, spinta**: Recordare lavora e spinge da solo. Gli intenti dell'agente — promesse ("ti faccio
+  sapere"), richieste che ha preso in carico, intenti propri, piani aperti da riprendere — sono righe con un segnale
+  ("se X, allora Y": una persona, un tema, un evento, un orario) e un ciclo di vita (in attesa → armato → scattato →
+  fatto / scaduto), riconsiderati solo su un segnale (prove nuove, una scadenza passata, un conflitto). Una passata di
+  iniziativa li trasforma in messaggi che vale la pena dire — valore × confidenza contro il costo dell'interruzione, nel
+  momento adatto, con il motivo — e li **spinge** al client (il meccanismo fa parte del progetto; il client li consegna
+  alla persona, su qualsiasi canale). Cosa ne è stato (detto, ignorato, rifiutato) è registrato e orienta i successivi;
+  una cosa lasciata a metà è offerta una volta, poi lasciata finché qualcosa cambia; limiti di frequenza e le ore di
+  quiete della memoria.
+- **Procedure**: "quando X, faccio così", imparate solo quando un risultato lo dice (una correzione, una conferma, un
+  piano fatto); richiamate per situazione, mai dette come fatti del mondo.
+- **Percezione** (foto, audio, video, sensori): più avanti, un passo a sé (chi descrive, cosa si conserva).
+- **Costo** (D35): economy — l'iniziativa da piani aperti e intenti armati senza LLM; balanced — più i pensieri; full —
+  più una passata libera che collega problemi aperti e materiale nuovo.
+- **Ordine**: (a) pensieri e origine dei pattern, (b) modello di sé, (c) intenti e iniziativa spinta, (d) procedure,
+  (e) percezione. Ogni passo con un dev set prima: pensieri sostenuti da ciò che citano (tasso di pensieri falsi),
+  precisione e falsi allarmi dell'iniziativa, nessun aumento della compiacenza, accuratezza del modello di sé.
+
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 decisa il 2026-10-12 con WORK_PLAN 5.4). Il lavoro aperto è tracciato
