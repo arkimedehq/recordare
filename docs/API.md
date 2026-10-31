@@ -646,6 +646,14 @@ once), `DELETE api/v1/admin/identities/:id` (unlinks a client's user from a pers
 the other admin routes of §1 for the rest (memory mode and gender, quality profile, name, identities, personal tokens,
 client keys, consolidate); it is in Italian and English.
 
+**A memory's items, for the admin** (D52: the Recordare admin reads and forgets everything) — the same lists as the
+person's diary (§4), read as the whole memory: private items included, each marked `private: {by}`.
+`GET api/v1/admin/memories/{id}/episodes` (the §4 query, plus `source=own|claims`: claims are what others said —
+`other` / `tool` authors), `GET …/facts`, `GET …/notes`; `DELETE …/episodes/{episodeId}` (forgotten as by the person,
+with its corrections; `episode.forgotten`), `DELETE …/facts/{factId}`, `DELETE …/notes/{noteId}`. They return memory
+content: only the admin key, never a client key or a personal token. Recordare Atlas uses them when the admin types the
+key into the page (`ATLAS_EVENTS.md`).
+
 ### Live telemetry (M5b, admin only)
 `GET api/v1/admin/telemetry/stream[?memory=<memoryId>]` — Server-Sent Events, one per real step inside the service:
 `message.ingested`, `extraction.started` / `extraction.finished`, `work.started` / `work.finished` (op: `embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`; id, duration — work without an LLM call), `llm.started` (prompt id, task — the call left) and `llm.call` (prompt id, model, tokens, latency, status),

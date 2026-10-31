@@ -6,6 +6,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- L'admin legge gli elementi di una memoria (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`),
+  `…/facts`, `…/notes` — le liste del diario lette come l'intera memoria, gli elementi privati segnati con di chi sono — e
+  ne dimentica uno (`DELETE …/episodes|facts|notes/{id}`). Solo chiave admin; Recordare Atlas li elenca e li dimentica con
+  queste rotte.
+
 ## [0.5.0] — 2026-10-27
 
 **Memorie private**: una persona può tenere ciò che ha detto tra sé e l'agente — con un flag del client (un messaggio

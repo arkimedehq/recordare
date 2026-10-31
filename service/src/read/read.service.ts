@@ -50,6 +50,8 @@ export interface EpisodeQuery {
   kind?: EpisodeItem['kind'];
   planStatus?: PlanStatus;
   q?: string;
+  /** Only what others said (claims: `other` / `tool` authors), or everything but them. */
+  source?: 'own' | 'claims';
   cursor?: string;
   limit?: number;
 }
@@ -148,10 +150,11 @@ export class ReadService {
   }
 
   /** The timeline, newest first; `from` / `to` are local dates (inclusive), `q` a full-text filter. */
-  async episodes(memoryId: string, query: EpisodeQuery, now: Date): Promise<{ items: EpisodeItem[]; nextCursor: string | null }> {
+  async episodes(memoryId: string, query: EpisodeQuery, now: Date, reader?: Reader): Promise<{ items: EpisodeItem[]; nextCursor: string | null }> {
     const o = await this.memory(memoryId);
     const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
-    const where = [`e.memory_id = $1`, VISIBLE, episodeVisible('e', await this.reader(memoryId, now))];
+    const where = [`e.memory_id = $1`, VISIBLE, episodeVisible('e', reader ?? await this.reader(memoryId, now))];
+    if (query.source) where.push(`e.author_role ${query.source === 'claims' ? '' : 'NOT '}IN ('other', 'tool')`);
     const params: unknown[] = [memoryId];
     const p = (v: unknown) => `$${params.push(v)}`;
     // Sort key: the event's date, else when it was recorded.
@@ -240,7 +243,7 @@ export class ReadService {
   }
 
   /** Facts as slots (per person in an entity memory), each with its value as of `asOf` (default now) and its history. */
-  async facts(memoryId: string, query: { key?: string; asOf?: string; includePending?: boolean }, now: Date) {
+  async facts(memoryId: string, query: { key?: string; asOf?: string; includePending?: boolean }, now: Date, reader?: Reader) {
     const o = await this.memory(memoryId);
     const asOf = query.asOf ? zonedMidnight(addDays(query.asOf.slice(0, 10), 1), o.tz) : now;
     const params: unknown[] = [memoryId, query.includePending ?? false];
@@ -250,7 +253,7 @@ export class ReadService {
               ${privateBy('facts', 'f')} AS private_by
        FROM facts f LEFT JOIN persons s ON s.id = f.subject_person_id
        WHERE f.memory_id = $1 AND f.deleted_at IS NULL AND f.status <> 'corrected' AND ($2::boolean OR NOT f.pending) ${keyFilter}
-         AND ${factVisible('f', await this.reader(memoryId, now))}
+         AND ${factVisible('f', reader ?? await this.reader(memoryId, now))}
        ORDER BY s.display_name NULLS FIRST, f.key, f.valid_from NULLS FIRST, f.recorded_at`, params);
     const day = (d: Date | null) => (d ? localDate(d, o.tz) : null);
     const slots = new Map<string, FactRow[]>();
@@ -294,7 +297,7 @@ export class ReadService {
     return rows.map((r) => ({ kind: r.kind, id: r.id, by: r.by, recordedAt: r.recorded_at.toISOString() }));
   }
 
-  async notes(memoryId: string, query: { category?: string; pinned?: boolean; includePending?: boolean }) {
+  async notes(memoryId: string, query: { category?: string; pinned?: boolean; includePending?: boolean }, reader?: Reader) {
     await this.memory(memoryId);
     const params: unknown[] = [memoryId, query.includePending ?? false];
     const extra = [
@@ -304,7 +307,7 @@ export class ReadService {
     const rows: NoteRow[] = await this.db.query(
       `SELECT ${NOTE_COLUMNS} FROM notes
        WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($2::boolean OR NOT pending) ${extra}
-         AND ${noteVisible('notes', await this.reader(memoryId))}
+         AND ${noteVisible('notes', reader ?? await this.reader(memoryId))}
        ORDER BY pinned DESC, recorded_at DESC`, params);
     return rows.map(noteView);
   }

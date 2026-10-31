@@ -25,6 +25,11 @@ visualizzatore ignora i tipi che non conosce.
 | `GET api/v1/admin/memories/:id/atlas` | Snapshot di una memoria: episodi (tipo, ruolo dell'autore, importanza, giorno, stato del piano, stato nascosto, posizione `xyz` per significato), archi reali (`similar`, `corrects`, `duplicate`, `outcome`, `rescheduled`, `people`), fatti / note / digest (id e tipi), `totals` complessivi (chiamate LLM, token di input / output, richiami) |
 | `GET api/v1/admin/telemetry/stream[?memory=<id>]` | Server-Sent Events, uno per ciascun passo sotto (`event:` = tipo, `data:` = JSON) |
 
+**Contenuto, solo admin** (facoltativo; `API_it.md`, console admin): l'atlas elenca episodi, affermazioni, fatti e note di
+una memoria e ne dimentica uno solo con la chiave admin digitata nella pagina — il suo server non aggiunge mai la chiave
+che detiene a queste rotte: `GET api/v1/admin/memories/:id/episodes?source=own|claims`, `GET …/facts`, `GET …/notes`, e
+la `DELETE` di un episodio, fatto o nota. Tutto il resto sopra resta solo metadati.
+
 ## Eventi
 
 | Tipo | Campi (oltre a `v`, `at`, `memoryId`) | Emesso quando |
