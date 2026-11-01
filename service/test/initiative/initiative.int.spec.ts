@@ -136,7 +136,10 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     expect(received.slice(before).some((d) => JSON.parse(d.body).type === 'initiative.expired')).toBe(true);
   });
 
-  it('quiet hours: a due initiative waits for the morning', () => {
+  it('quiet hours: a due initiative waits for the morning; the admin sets them', async () => {
+    const r = await call(url, 'PATCH', `/api/v1/admin/memories/${memoryId}`, { token: ADMIN_KEY, body: { quietFrom: 21, quietTo: 7 } });
+    expect(r.status).toBe(200);
+    expect((await db.query(`SELECT quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]))[0]).toEqual({ quiet_from: 21, quiet_to: 7 });
     const lateEvening = new Date('2026-10-12T21:30:00Z'); // 23:30 in Rome
     expect(afterQuiet(lateEvening, 'Europe/Rome', 22, 8).toISOString()).toBe('2026-10-13T06:00:00.000Z'); // 08:00 Rome
     expect(afterQuiet(NOW, 'Europe/Rome', 22, 8)).toBe(NOW);

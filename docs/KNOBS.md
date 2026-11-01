@@ -44,6 +44,8 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Memory context: minimum similarity for the one passage of a learned source it may hold (cut at 300 characters, `- learned (from «title»): …`; WORK_PLAN 8.9). First value, to measure |
 | `CONSOLIDATION_SCHEDULE` | on | Nightly consolidation on its own, preceded by the extraction of messages left pending (4.1); off = only on demand (evaluations) |
 | `CONSOLIDATION_HOUR` | 3 | Local hour (person's timezone) after which the night runs |
+| `INITIATIVE_DAILY_LIMIT` | 3 | Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow |
+| `WEBHOOK_ALLOW_PRIVATE` | false | Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
 | `LOG_LLM_CALLS` | on | One `llm_calls` row per call (tokens, latency; never content) |
 | `ALLOW_CLOCK_OVERRIDE` | off | Evaluations / tests only: honour `X-Recordare-Now` |
@@ -73,6 +75,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `displayName` | follows the platform's profile (synced) | the client's user id | The person's name |
 | `qualityProfile` | admin | installation default | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Language of the memories, local dates and the night |
+| `quietFrom`, `quietTo` | admin | 22, 8 | The memory's quiet hours (local): no initiative is due inside them (D53, 8.12c) |
 
 ## 5. Per client (admin API or console)
 
@@ -83,6 +86,8 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `rawLogScope` | `own` | Raw-log excerpts from this client's conversations only, or all |
 | `disabled` | off | Every key and token of the client stops at once |
 | Key scopes | — | `ingest`, `mcp`, `read`, `write` (never admin, memory settings or export) |
+
+Webhooks (D53, 8.12c): `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?, description?}` registers where a client receives the agent's initiatives (Standard Webhooks, the `whsec_` secret shown once); `GET …/webhooks`, `DELETE api/v1/admin/webhooks/{id}`. `API.md` §4b.
 
 ## 6. Installation scripts (`deploy/`)
 

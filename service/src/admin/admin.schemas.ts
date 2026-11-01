@@ -60,6 +60,9 @@ export const updateMemorySchema = z.object({
   timezone: z.string().min(1).optional(),
   /** null = back to the installation default. */
   qualityProfile: z.enum(QUALITY_PROFILES).nullable().optional(),
+  /** The memory's quiet hours, local (D53, 8.12c): no initiative is due inside them. */
+  quietFrom: z.number().int().min(0).max(23).optional(),
+  quietTo: z.number().int().min(0).max(23).optional(),
 });
 
 /**

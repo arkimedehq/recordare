@@ -830,6 +830,14 @@ works on its own and pushes, not a memory that only answers.
   agent", told to everyone like the other thoughts. Dev set `dataset_dev_self`: 11–12 / 15 in three runs, no false self
   note; known limits: lessons come from friction, not from what went well (trust, reliance), and two different single
   mistakes may be bundled into one lesson (RESULTS.md).
+- **Built so far** (2026-11-01, step c, first cut without a model): `intents` and `initiatives` (DATA_MODEL), the hourly
+  sweep (arm from open plans, upcoming plans and the questions the agent holds; fire when due after the quiet hours and
+  within the daily limit; expire quietly), Standard Webhooks per client with the SSRF guard and the retry schedule, the
+  feed `GET api/v1/initiatives`, the outcome report and the intent's lifecycle (declined → cancelled, ignored → once
+  more a week later, failed → next day), library `initiatives` / `reportInitiative` / `verifyWebhook`, the sentences in
+  the memory's language (`lang/initiative.ts`, every locale). Next, with a model and a dev set (budget): promises and
+  requests taken on in conversation as intents (extraction), the wording and value × confidence of an initiative in
+  balanced and full, the look-up's answer closing the question.
 
 ## Open questions (to discuss)
 

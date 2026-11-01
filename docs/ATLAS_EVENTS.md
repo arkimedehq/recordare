@@ -42,6 +42,8 @@ fact or note. Everything above stays metadata only.
 | `digest.written` | `level` (`day`, `month`), `period`, `sources` | a nightly diary written |
 | `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | a memory's consolidation ends |
 | `episode.forgotten` | `ids` | episodes forgotten |
+| `initiative.created` | `id`, `kind` (`say` / `ask` / `lookup` / `do`) | the agent decided to say or do something on its own (D53, 8.12c) |
+| `initiative.outcome` | `id`, `status` (`said` / `asked` / `ignored` / `declined` / `done` / `failed` / `expired`) | what the client reported of an initiative |
 
 Client platforms (agents, their LLM calls, tools) reach the atlas on their own channel — OpenTelemetry GenAI traces —
 not through this stream (WORK_PLAN 5b.8).

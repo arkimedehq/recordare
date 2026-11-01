@@ -43,6 +43,9 @@ export class Memory {
   @Column({ type: 'text', default: 'Europe/Rome' }) timezone!: string;
   /** D35: null = installation default. */
   @Column({ name: 'quality_profile', type: 'text', nullable: true }) qualityProfile!: QualityProfileName | null;
+  /** The memory's quiet hours, local (D53, 8.12c). */
+  @Column({ name: 'quiet_from', type: 'smallint', default: 22 }) quietFrom!: number;
+  @Column({ name: 'quiet_to', type: 'smallint', default: 8 }) quietTo!: number;
   @Column({ type: 'enum', enumName: 'memory_mode', enum: MEMORY_MODES, default: 'personal' }) mode!: MemoryMode;
   @Column({ type: 'enum', enumName: 'memory_gender', enum: MEMORY_GENDERS, default: 'masculine' }) gender!: MemoryGender;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
