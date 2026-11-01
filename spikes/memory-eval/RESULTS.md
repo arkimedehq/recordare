@@ -790,6 +790,9 @@ episodes it cites back it (yes / partly / no — "no" is a **false thought**, wh
 - Known limits: the memory's language is the default one in the harness, so Hannah and Javier think in Italian (a
   harness setting, not the service's); the "no new thought without new evidence" rule means a quiet memory never
   thinks — open loops in a quiet memory are the initiative's job (8.12c).
+- Regression check (blind12, 1 run, the thought pass on as in balanced, ≈ 0.15 USD): **97.2 %** (v20 without thoughts
+  95.4 %, v19 91.7 %) — within noise, no answer lost to a thought; 6 thought calls over the run (one per night with
+  enough new importance).
 
 ### Private memories — `extract.v20` and the read filter (D52, WORK_PLAN 8.13, 2026-10-27, DeepSeek direct off-peak)
 
