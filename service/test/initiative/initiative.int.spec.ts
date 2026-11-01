@@ -48,7 +48,7 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     });
     await new Promise<void>((r) => receiver.listen(0, '127.0.0.1', r));
     const { port } = receiver.address() as { port: number };
-    testEnv({ EMBEDDING_BASE_URL: fake.url, WEBHOOK_ALLOW_PRIVATE: 'true', INITIATIVE_DAILY_LIMIT: '3', CONSOLIDATION_SCHEDULE: 'false' });
+    testEnv({ EMBEDDING_BASE_URL: fake.url, WEBHOOK_ALLOW_PRIVATE: 'true', INITIATIVE_DAILY_LIMIT: '3', CONSOLIDATION_SCHEDULE: 'false', INITIATIVE_WORDING: 'false' });
     await resetSchema();
     ({ app, url } = await startApp());
     db = app.get(DataSource);

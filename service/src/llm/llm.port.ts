@@ -12,9 +12,10 @@ import { type z } from 'zod';
  * - `facts`: the separate facts-and-notes pass (when the quality profile runs it);
  * - `digest`: nightly consolidation — the diary of a day and of a month (M5);
  * - `patterns`: nightly consolidation — the recurring patterns drawn from the episodes (WORK_PLAN 5.4);
- * - `thoughts`: nightly consolidation — the agent's own thoughts about what it lived (D53, WORK_PLAN 8.12a).
+ * - `thoughts`: nightly consolidation — the agent's own thoughts about what it lived (D53, WORK_PLAN 8.12a);
+ * - `initiative`: the wording and the worth of what the agent says on its own (D53, WORK_PLAN 8.12c; balanced and full).
  */
-export const LLM_TASKS = ['extract', 'extract_economy', 'resolve', 'facts', 'digest', 'patterns', 'thoughts'] as const;
+export const LLM_TASKS = ['extract', 'extract_economy', 'resolve', 'facts', 'digest', 'patterns', 'thoughts', 'initiative'] as const;
 export type LlmTask = (typeof LLM_TASKS)[number];
 
 export interface JsonCompletionRequest<T> {

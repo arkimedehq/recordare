@@ -66,6 +66,8 @@ const baseSchema = z.object({
   PATTERNS: bool.optional(),
   /** Installation override of the quality profile's nightly thought pass (D53, WORK_PLAN 8.12a). */
   THOUGHTS: bool.optional(),
+  /** Installation override of the quality profile's initiative wording by the model (D53, WORK_PLAN 8.12c). */
+  INITIATIVE_WORDING: bool.optional(),
   /** Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow. */
   INITIATIVE_DAILY_LIMIT: z.coerce.number().int().min(0).max(50).default(3),
   /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */

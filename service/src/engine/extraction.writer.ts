@@ -111,6 +111,7 @@ export class ExtractionWriter {
     await this.writeNotes(out);
     await this.applyAnswers(out);
     await this.applyPrivacy(out);
+    await this.applyIntents(out);
     await this.tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [this.ctx.runId, this.input.messages.map((m) => m.id)]);
     for (const w of this.written) {
       await this.tx.query(`INSERT INTO run_outputs (run_id, table_name, row_id) VALUES ($1, $2, $3)`, [this.ctx.runId, w.table, w.id]);
@@ -137,13 +138,13 @@ export class ExtractionWriter {
     const written: Record<string, number> = {};
     for (const w of this.written) written[w.table] = (written[w.table] ?? 0) + 1;
     return {
-      returned: { episodes: raw.episodes.length, plan_patches: raw.plan_patches.length, facts: raw.facts.length, notes: raw.notes.length,
+      returned: { episodes: raw.episodes.length, plan_patches: raw.plan_patches.length, facts: raw.facts.length, notes: raw.notes.length, intents: raw.intents.length,
         answers: raw.answers.length, private: raw.private.length },
       written, dropped: this.dropped, leaks: this.leaks, clarifications: this.clarified,
     };
   }
 
-  private drop(kind: 'episode' | 'plan_patch' | 'fact' | 'note' | 'answer' | 'private', reason: string): void {
+  private drop(kind: 'episode' | 'plan_patch' | 'intent' | 'fact' | 'note' | 'answer' | 'private', reason: string): void {
     const k = (this.dropped[kind] ??= {});
     k[reason] = (k[reason] ?? 0) + 1;
   }
@@ -754,6 +755,38 @@ export class ExtractionWriter {
         `SELECT id FROM messages WHERE conversation_id = $1 AND private AND author_person_id = $2 AND sent_at < $3`,
         [this.ctx.conversationId, asking.authorPersonId, asking.sentAt]) : [];
       for (const id of new Set([...theirs.map((m) => m.id), ...earlier.map((m) => m.id)])) await setPrivate(this.tx, id, p.private);
+    }
+  }
+
+  /**
+   * INTENTS (D53, 8.12c): a promise of mine or a request to me, due on a date, becomes an armed intent the initiative sweep
+   * fires that morning (one per message and kind); a withdrawn request cancels the armed one its words match best.
+   */
+  private async applyIntents(out: ExtractionOutput): Promise<void> {
+    for (const i of out.intents) {
+      const [m] = this.evidence(i.evidence);
+      if (!m || m.role === 'tool') { this.drop('intent', 'no_evidence'); continue; }
+      // Whom it concerns: a contact by C-number or name (a new name becomes a contact, as a person in an episode would); the self is nobody.
+      const who = i.for?.trim() ? await this.book.resolve(i.for) : null;
+      const forId = who?.subject.kind === 'contact' ? who.subject.personId ?? null : null;
+      const content = i.content.trim();
+      if (!content) { this.drop('intent', 'no_content'); continue; }
+      if (i.cancel) {
+        const hit: Array<{ id: string }> = await this.tx.query(
+          `SELECT id FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status = 'armed'
+             AND for_person_id IS NOT DISTINCT FROM $2 AND to_tsvector('simple', content) @@ plainto_tsquery('simple', $3)
+           ORDER BY ts_rank(to_tsvector('simple', content), plainto_tsquery('simple', $3)) DESC, created_at DESC LIMIT 1`, [this.ctx.memoryId, forId, content]);
+        if (!hit.length) { this.drop('intent', 'nothing_to_cancel'); continue; }
+        await this.tx.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [hit[0]!.id]);
+        continue;
+      }
+      const due = toStored(i.due ?? null, 'day', this.ctx.timezone);
+      if (!due.at || i.due === null || i.due === undefined) { this.drop('intent', 'no_date'); continue; }
+      // Due at the local midnight of its day: the sweep moves it past the quiet hours, to the morning.
+      await this.tx.query(
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $6::timestamptz + interval '1 day') ON CONFLICT (message_id, kind) WHERE message_id IS NOT NULL DO NOTHING`,
+        [this.ctx.memoryId, i.kind, content, forId, m.id, due.at]);
     }
   }
 

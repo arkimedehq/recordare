@@ -15,11 +15,14 @@
  * (D52: an initiative addresses a person; a private plan would be told to the wrong one). All SQL is parameterised; the
  * only interpolations are constant column lists and the privacy predicate.
  */
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource, type EntityManager } from 'typeorm';
 import { type Env } from '../config/env';
+import { LLM_PORT, type LlmPort } from '../llm/llm.port';
+import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
 import { localDate } from '../engine/time';
+import { INITIATIVE_SYSTEM, INITIATIVE_VERSION, type InitiativeOutput, initiativeSchema } from './initiative.prompt';
 import { initiativeText } from '../lang/initiative';
 import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { TelemetryService } from '../telemetry/telemetry.service';
@@ -52,6 +55,8 @@ const LOOKUP_KEEP_DAYS = 14;
 const RETRY_AFTER_DAYS = 7;
 const MAX_ATTEMPTS = 2;
 const DAY_MS = 86_400_000;
+/** Below this worth (the model's, balanced and full) an initiative is not said — and its intent is dropped, not postponed. */
+const WORTH_FLOOR = 0.3;
 
 /** The rows of an UPDATE … RETURNING as TypeORM hands them back (`[rows, count]`). */
 function updated<T>(res: unknown): T[] {
@@ -75,6 +80,7 @@ export class InitiativeService {
     private readonly config: ConfigService<Env, true>,
     private readonly webhooks: WebhooksService,
     private readonly telemetry: TelemetryService,
+    @Inject(LLM_PORT) private readonly llm: LlmPort,
   ) {}
 
   /** Every memory with something that could be due: arm, fire, expire. Hourly (the initiative processor) and on demand. */
@@ -153,12 +159,13 @@ export class InitiativeService {
 
   /** Armed intents that are due become initiatives — outside the quiet hours, within the day's limit per person. */
   private async fire(memoryId: string, now: Date): Promise<number> {
-    const [memory]: Array<{ timezone: string; locale: string; quiet_from: number; quiet_to: number }> = await this.db.query(
-      `SELECT timezone, locale, quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]);
+    const [memory]: Array<{ timezone: string; locale: string; quiet_from: number; quiet_to: number; quality_profile: string | null; display_name: string; mode: string }> = await this.db.query(
+      `SELECT o.timezone, o.locale, o.quiet_from, o.quiet_to, o.quality_profile, o.mode, p.display_name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory) return 0;
-    const due: Array<{ id: string; kind: string; content: string; for_person_id: string | null; episode_id: string | null; note_id: string | null; expires_at: Date; occurred_at: Date | null }> =
+    const due: Array<{ id: string; kind: string; content: string; for_person_id: string | null; for_name: string | null; episode_id: string | null; note_id: string | null; expires_at: Date; due_at: Date; occurred_at: Date | null }> =
       await this.db.query(
-        `SELECT t.id, t.kind::text, t.content, t.for_person_id, t.episode_id, t.note_id, t.expires_at, e.occurred_at
+        `SELECT t.id, t.kind::text, t.content, t.for_person_id, (SELECT display_name FROM persons WHERE id = t.for_person_id) AS for_name,
+           t.episode_id, t.note_id, t.expires_at, t.due_at, e.occurred_at
          FROM intents t LEFT JOIN episodes e ON e.id = t.episode_id
          WHERE t.memory_id = $1 AND t.status = 'armed' AND t.due_at <= $2 AND (t.reconsider_at IS NULL OR t.reconsider_at <= $2)
          ORDER BY t.due_at`, [memoryId, now]);
@@ -167,17 +174,31 @@ export class InitiativeService {
     const day = (d: Date) => new Intl.DateTimeFormat(memory.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: memory.timezone }).format(d);
     const when = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to);
     const limit = this.config.get('INITIATIVE_DAILY_LIMIT', { infer: true }) ?? 3; // counted on the day they are due (the memory's clock)
+    const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
+      undefined, undefined, undefined, undefined, undefined, undefined, this.config.get('INITIATIVE_WORDING', { infer: true }));
+    const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
     let fired = 0;
     for (const t of due) {
       if (t.expires_at <= when) continue; // due only after it lapses: left to expire
+      const w = worded.get(t.id);
+      if (w && (w.skip || w.worth < WORTH_FLOOR)) {
+        // Not worth saying: dropped, not postponed (a request or a promise is never skipped: the prompt says so, the code too).
+        if (t.kind === 'promise' || t.kind === 'request') { /* owed: said anyway */ } else {
+          await this.db.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [t.id]);
+          this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: t.id, status: 'not_worth' });
+          continue;
+        }
+      }
       const counted: Array<{ n: number }> = await this.db.query(
         `SELECT count(*)::int AS n FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2
            AND (due_at AT TIME ZONE $3)::date = ($4::timestamptz AT TIME ZONE $3)::date`, [memoryId, t.for_person_id, memory.timezone, when]);
       if ((counted[0]?.n ?? 0) >= limit) continue; // the day's share is spent: tomorrow
       const plan = t.content.trim().replace(/([^.!?])$/, '$1.');
-      const [kind, content, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
+      const [kind, fallback, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
         : t.kind === 'upcoming_plan' ? ['say', text.remindPlan(plan, day(t.occurred_at!)), 'a plan coming up']
-          : ['lookup', text.lookup(t.content), 'a question I hold'];
+          : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']
+            : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
+      const content = w?.text?.trim() || fallback;
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
           `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at)
@@ -193,6 +214,34 @@ export class InitiativeService {
       fired++;
     }
     return fired;
+  }
+
+  /** The model words each due intent as the agent would say it and weighs it (balanced, full); on a failure, the templates. */
+  private async word(memoryId: string, memory: { locale: string; timezone: string; display_name: string; mode: string },
+    due: Array<{ id: string; kind: string; content: string; for_name: string | null; due_at: Date; occurred_at: Date | null }>, now: Date,
+  ): Promise<Map<string, { text: string | null; worth: number; skip: boolean }>> {
+    const out = new Map<string, { text: string | null; worth: number; skip: boolean }>();
+    if (!due.length) return out;
+    const kindOf = (k: string) => (k === 'open_plan' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date' : k === 'upcoming_plan' ? 'a plan of theirs coming up'
+      : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me' : 'a question I hold');
+    const user = [
+      `ME: ${memory.display_name}${memory.mode === 'entity' ? ' (a shared agent several people talk to)' : ''}`,
+      `MEMORY LANGUAGE: ${memory.locale}`,
+      `TODAY: ${localDate(now, memory.timezone)}`,
+      `CANDIDATES:\n${due.map((t, i) => `C${i + 1}. kind ${kindOf(t.kind)} · FOR ${t.for_name ?? (memory.mode === 'entity' ? 'anyone' : 'holder')} · WHAT ${t.content} · WHEN ${localDate(t.occurred_at ?? t.due_at, memory.timezone)} · SOURCE ${sourceOf(t.kind)}`).join('\n')}`,
+    ].join('\n\n');
+    try {
+      const res: InitiativeOutput = await this.llm.completeJson({ promptId: INITIATIVE_VERSION, system: INITIATIVE_SYSTEM, user, schema: initiativeSchema, maxTokens: 1500, task: 'initiative' }, { memoryId });
+      for (const r of res.initiatives) {
+        const n = Number(String(r.candidate).replace(/^\s*C/i, ''));
+        const t = due[n - 1];
+        if (t) out.set(t.id, { text: r.text ?? null, worth: r.worth, skip: r.skip });
+      }
+    } catch (err) {
+      this.log.warn(`initiative wording skipped: ${(err as Error).name}`);
+    }
+    return out;
   }
 
   /** The feed: initiatives after `since` (seq), in order; `next` goes back as `since`, `more` when a page was full. */
@@ -216,6 +265,13 @@ export class InitiativeService {
     if (intent_id) {
       if (status === 'said' || status === 'asked' || status === 'done') {
         await this.db.query(`UPDATE intents SET status = 'done', updated_at = now() WHERE id = $1`, [intent_id]);
+        // A look-up done: the question it came from is answered — retired, like the thought pass would.
+        if (status === 'done') {
+          await this.db.query(
+            `UPDATE notes SET status = 'superseded' WHERE id = (SELECT note_id FROM intents WHERE id = $1 AND kind = 'lookup') AND status = 'current'`, [intent_id]);
+          await this.db.query(
+            `UPDATE episode_promotions SET status = 'retired', updated_at = now() WHERE note_id = (SELECT note_id FROM intents WHERE id = $1 AND kind = 'lookup') AND status = 'active'`, [intent_id]);
+        }
       } else if (status === 'declined') {
         await this.db.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [intent_id]);
       } else if (status === 'ignored' || status === 'expired') {

@@ -48,27 +48,30 @@ export interface QualityProfile {
    * backed by the episodes they rest on — one call per memory when the new episodes gathered enough importance, none
    * otherwise. On in balanced and full; off in economy. */
   thoughts: boolean;
+  /** Initiatives worded and weighed by the model (D53, 8.12c): one call when intents are due; off, the service's own
+   * sentences in the memory's language. On in balanced and full. */
+  initiativeWording: boolean;
 }
 
 const PROFILES: Record<QualityProfileName, QualityProfile> = {
   economy: {
     name: 'economy', windowChars: 16_000, extractionTask: 'extract_economy', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1, recallDigests: false, factsReview: false, patterns: false, thoughts: false,
+    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1, recallDigests: false, factsReview: false, patterns: false, thoughts: false, initiativeWording: false,
   },
   balanced: {
     name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3, recallDigests: false, factsReview: false, patterns: true, thoughts: true,
+    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3, recallDigests: false, factsReview: false, patterns: true, thoughts: true, initiativeWording: true,
   },
   full: {
     name: 'full', windowChars: 8_000, extractionTask: 'extract', reasoning: true, factsPass: 'inline',
-    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5, recallDigests: false, factsReview: false, patterns: true, thoughts: true,
+    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5, recallDigests: false, factsReview: false, patterns: true, thoughts: true, initiativeWording: true,
   },
 };
 
 /** The memory's profile, else the installation default; explicit installation settings override single knobs. */
 export function qualityProfile(memoryChoice: string | null | undefined, installationDefault: QualityProfileName,
   windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass'], recallDigestsOverride?: boolean,
-  factsReviewOverride?: boolean, patternsOverride?: boolean, thoughtsOverride?: boolean): QualityProfile {
+  factsReviewOverride?: boolean, patternsOverride?: boolean, thoughtsOverride?: boolean, initiativeWordingOverride?: boolean): QualityProfile {
   const name = (QUALITY_PROFILES as readonly string[]).includes(memoryChoice ?? '') ? memoryChoice as QualityProfileName : installationDefault;
   const p = PROFILES[name];
   return {
@@ -79,5 +82,6 @@ export function qualityProfile(memoryChoice: string | null | undefined, installa
     ...(factsReviewOverride !== undefined ? { factsReview: factsReviewOverride } : {}),
     ...(patternsOverride !== undefined ? { patterns: patternsOverride } : {}),
     ...(thoughtsOverride !== undefined ? { thoughts: thoughtsOverride } : {}),
+    ...(initiativeWordingOverride !== undefined ? { initiativeWording: initiativeWordingOverride } : {}),
   };
 }

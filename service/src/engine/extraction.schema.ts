@@ -87,6 +87,15 @@ export const extractionSchema = z.object({
     messages: z.array(z.number().int().positive()).max(50).default([]),
     private: z.boolean().default(true),
   })).default([]),
+  /** D53 (8.12c): a promise I made or a request made to me, with its date; `cancel` withdraws a request. */
+  intents: z.array(z.object({
+    kind: z.enum(['promise', 'request']).catch('request'),
+    content: z.string().max(500),
+    due: z.string().max(40).nullable().optional(),
+    for: z.string().max(200).nullable().optional(),
+    cancel: z.boolean().default(false),
+    evidence,
+  })).default([]),
 });
 
 export type ExtractionOutput = z.infer<typeof extractionSchema>;
