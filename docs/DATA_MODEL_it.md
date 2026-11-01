@@ -37,7 +37,7 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 
 | Colonna | Tipo | Note |
 |---|---|---|
-| `origin` | enum `holder_lived \| holder_told \| assistant_stated` | Chi l'ha vissuto / detto (D28, D30, H3). `holder_told` = ciò che il titolare riferisce sugli altri, e i messaggi scritti da altri all'interno degli import del titolare. `twin_experienced` viene aggiunto con le fasi del twin |
+| `origin` | enum `holder_lived \| holder_told \| assistant_stated \| reflected` | Chi l'ha vissuto / detto (D28, D30, H3). `holder_told` = ciò che il titolare riferisce sugli altri, e i messaggi scritti da altri all'interno degli import del titolare. `reflected` (D53, migrazione `Thoughts1791200000000`) = ciò che la memoria ha concluso da sola — i pattern ricorrenti e i pensieri propri dell'agente — mai vissuto né detto da nessuno. `twin_experienced` viene aggiunto con le fasi del twin |
 | `stance` | enum `stated \| inferred` | Gli elementi inferiti restano a bassa confidenza / pending (D29) |
 | `author_role` | enum `holder \| assistant \| other \| tool` | Chi ha scritto l'evidenza. Gli elementi la cui unica evidenza proviene da messaggi `other` / `tool` (membri di un gruppo, output di strumenti, corpi di mail importate) sono contesto di estrazione, mai `stance: stated`: al massimo `inferred` (fatti: `pending`) — protezione contro l'avvelenamento; il recall li etichetta. Una risposta dell'assistente dopo l'output di uno strumento non di Recordare, nel suo turno, conta come `tool` (taint del turno, WORK_PLAN 5.7; origine `assistant_stated`) |
 | `confidence` | real 0–1 | |
@@ -117,6 +117,7 @@ come stringhe "Nome (relazione)" (`episode_people.alias`), che il recall consape
 | `consolidated_at` | timestamptz null | Ultimo consolidamento notturno (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark della revisione notturna dei fatti (WORK_PLAN 5.6, sull'orologio di registrazione) |
 | `patterns_upto` | timestamptz null | Watermark del passaggio notturno dei pattern (WORK_PLAN 5.4, sull'orologio di registrazione) |
+| `thoughts_upto` | timestamptz null | Watermark della passata dei pensieri (D53, WORK_PLAN 8.12a, sull'orologio di registrazione): l'importanza degli episodi registrati dopo di esso decide se l'agente pensa di nuovo |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = default dell'installazione (`QUALITY_PROFILE`) |
 | `mode` | enum `personal \| entity`, default `personal` | D50: `personal` — ciò che arriva senza identità dichiarata è del sé della memoria (il titolare dell'account è l'"io"); `entity` (D48) — un dispositivo condiviso, un robot o un luogo: ciò che arriva non dichiarato è di "qualcuno". Il client lo cambia solo finché la memoria è vuota (`PATCH api/v1/me`), l'admin in qualsiasi momento |
 | `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | La prima persona nelle lingue con genere (D50; usato dall'8.4 del WORK_PLAN) |
@@ -432,14 +433,30 @@ patch tipizzate; transizioni nel codice (D29). Come costruito, `unresolved` è c
 confermato è mostrato come unresolved); nessun job lo scrive e la patch `expire` non è usata. Le patch richiedono evidenza su
 quel piano (D37).
 
-### episode_promotions (D20, D26) — costruita il 2026-10-12 (WORK_PLAN 5.4, migrazione `Patterns1791130000000`)
+### episode_promotions (D20, D26, D53) — costruita il 2026-10-12 (WORK_PLAN 5.4, migrazione `Patterns1791130000000`; `kind` il 2026-11-01, `Thoughts1791200000000`)
 `id, memory_id, note_id uuid null → notes (SET NULL), pattern text, episode_ids uuid[], subject_person_id null,
-status enum (active|retired|forgotten), created_at, updated_at` — il registro dei pattern ricorrenti che la memoria ha
-dedotto da sola (passaggio notturno dei pattern, opzione `patterns` del profilo di qualità). Ognuno è una nota della
-memoria (`stance` inferred, mai `pending`, `tags` `{pattern}`, prove = gli episodi, fiducia 0,7 con tre o quattro
-episodi, 0,85 da cinque); `retired` quando ha smesso di valere (o è stato sostituito da una nuova forma, o la sua nota è
+status enum (active|retired|forgotten), kind text (pattern|thought), created_at, updated_at` — il registro di ciò che la
+memoria ha tratto da sola: i pattern ricorrenti (passaggio notturno dei pattern, opzione `patterns` del profilo di
+qualità) e i pensieri propri dell'agente (passata dei pensieri, opzione `thoughts`, sotto). Ognuno è una nota della
+memoria (`origin` `reflected`, `stance` inferred, mai `pending`, `tags` `{pattern}` / `{thought}`, prove = gli episodi;
+la fiducia di un pattern è 0,7 con tre o quattro episodi, 0,85 da cinque); `retired` quando ha smesso di valere (o è stato sostituito da una nuova forma, o la sua nota è
 stata sostituita / corretta), `forgotten` quando la sua nota è stata cancellata — mai più dedotto dagli stessi episodi
 (ne servono almeno due altri). Un pattern rimasto con meno di tre dei suoi episodi viene eliminato con la sua nota.
+
+**Pensieri** (D53, WORK_PLAN 8.12a, `kind = thought`): le intuizioni, le domande e le opinioni proprie dell'agente su ciò
+che ha vissuto — note di categoria `insight` / `question` / `opinion`, tratte dalla passata dei pensieri dagli episodi
+pubblici (D52), vissuti o riferiti, degli ultimi 60 giorni, mai dalle parole dell'assistente o di uno strumento né da
+altri pensieri (profondità uno). La passata parte quando gli episodi registrati dopo `memories.thoughts_upto` raccolgono
+un'importanza di 20 o più (altrimenti nessuna chiamata); il modello propone `new` / `support` / `revise` / `weaken` /
+`retire`, il codice tiene una nuova intuizione o opinione solo con almeno un episodio nuovo e episodi in due giorni, una
+domanda anche su episodi più vecchi (il silenzio su qualcosa che si attende è la sua prova), al massimo quattro nuovi a
+passata, niente che ripeta una nota che la memoria ha già (un'abitudine a parte: un pensiero può poggiare su un
+pattern), niente di simile a un pensiero dimenticato o ritirato senza un episodio nuovo; un nuovo pensiero sullo stesso
+soggetto con somiglianza di almeno 0,8 a uno tenuto lo rivede (superseded, mai due pensieri opposti affiancati).
+`support_count` sale con gli episodi a favore e scende con quelli contro (`note_evidence.against`); a zero il pensiero è
+ritirato; la fiducia è 0,4 / 0,6 / 0,8 dal low / medium / high del modello. Un pensiero la cui nota è stata cancellata è
+`forgotten`; uno rimasto senza alcun episodio dietro è eliminato con la sua nota. I piani aperti ancora davanti
+partecipano una volta detto il loro racconto.
 
 ## Layer 2 — digest
 
@@ -510,16 +527,16 @@ Note semantiche: chi è il sé della memoria, oltre gli slot di stato.
 | `status` | enum `current \| superseded \| corrected` | Cronologia conservata, mai riscritta |
 | `supersedes`, `corrects` | uuid null → notes (`SET NULL`) | |
 | `support_count` | int | Riaffermazioni contate |
-| `pending` | bool | Le note inferite attendono conferma; escluse dal recall salvo richiesta. I pattern ricorrenti (5.4) sono inferiti ma mai in attesa: il recall li etichetta |
+| `pending` | bool | Le note inferite attendono conferma; escluse dal recall salvo richiesta. I pattern ricorrenti (5.4) e i pensieri dell'agente (D53) sono inferiti ma mai in attesa: il recall li etichetta |
 | *time* | | `valid_from`, `recorded_at` |
 | *provenance*, *disclosure*, *embedding* | | |
 | `deleted_at` | timestamptz null | |
 
-`note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`;
+`note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote, against bool default false)` (`against`: un episodio che va contro un pensiero, D53);
 `note_changes(seq bigserial, memory_id, note_id uuid, change enum (created|updated|corrected|
 confirmed|forgotten|retired), at)` — il change feed che i client usano per tenere allineate le copie (le note dimenticate
 sono eliminate, il feed conserva solo il loro id). Come costruito l'estrazione scrive `created` / `updated` /
-`corrected`, `remember` scrive `created`, il passaggio dei pattern `created` / `updated` / `retired` (un pattern che ha
+`corrected`, `remember` scrive `created`, le passate dei pattern e dei pensieri `created` / `updated` / `retired` (un pattern o un pensiero che ha
 smesso di valere) / `forgotten`; cancellare o rifiutare una nota (API di lettura, `API.md` §4, o oblio) scrive
 `forgotten`, confermarla non scrive alcuna voce, e la rotta del feed (`GET api/v1/notes/changes`) non è ancora costruita.
 

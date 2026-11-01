@@ -35,7 +35,7 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 
 | Column | Type | Notes |
 |---|---|---|
-| `origin` | enum `holder_lived \| holder_told \| assistant_stated` | Who lived / said it (D28, D30, H3). `holder_told` = what the holder reports about others, and messages written by others inside the holder's imports. `twin_experienced` is added with the twin phases |
+| `origin` | enum `holder_lived \| holder_told \| assistant_stated \| reflected` | Who lived / said it (D28, D30, H3). `holder_told` = what the holder reports about others, and messages written by others inside the holder's imports. `reflected` (D53, migration `Thoughts1791200000000`) = what the memory concluded by itself — the recurring patterns and the agent's own thoughts — never lived or said by anyone. `twin_experienced` is added with the twin phases |
 | `stance` | enum `stated \| inferred` | Inferred items stay low-confidence / pending (D29) |
 | `author_role` | enum `holder \| assistant \| other \| tool` | Who wrote the evidence. Items whose only evidence comes from `other` / `tool` messages (group members, tool outputs, imported mail bodies) are extraction context, never `stance: stated`: at most `inferred` (facts: `pending`) — poisoning guard; recall labels them. An assistant reply after a non-Recordare tool's output in its turn counts as `tool` (turn taint, WORK_PLAN 5.7; origin `assistant_stated`) |
 | `confidence` | real 0–1 | |
@@ -114,6 +114,7 @@ writer's episode-subject rule reads them. Episodes still keep people as "Name (r
 | `consolidated_at` | timestamptz null | Last nightly consolidation (M5) |
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `patterns_upto` | timestamptz null | Watermark of the nightly pattern pass (WORK_PLAN 5.4, on the recording clock) |
+| `thoughts_upto` | timestamptz null | Watermark of the thought pass (D53, WORK_PLAN 8.12a, on the recording clock): the importance of the episodes recorded after it decides whether the agent thinks again |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `mode` | enum `personal \| entity`, default `personal` | D50: `personal` — undeclared input is the memory's self (the account holder is "I"); `entity` (D48) — a shared device, robot or place: undeclared input is "someone"'s. Changed by the client only while the memory is empty (`PATCH api/v1/me`), by the admin any time |
 | `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | The first person in gendered languages (D50; used from WORK_PLAN 8.4) |
@@ -412,14 +413,28 @@ typed patches; transitions in code (D29). As built, `unresolved` is computed at 
 confirmed is shown as unresolved); no job writes it and the `expire` patch is unused. Patches need evidence about
 that plan (D37).
 
-### episode_promotions (D20, D26) — built 2026-10-12 (WORK_PLAN 5.4, migration `Patterns1791130000000`)
+### episode_promotions (D20, D26, D53) — built 2026-10-12 (WORK_PLAN 5.4, migration `Patterns1791130000000`; `kind` 2026-11-01, `Thoughts1791200000000`)
 `id, memory_id, note_id uuid null → notes (SET NULL), pattern text, episode_ids uuid[], subject_person_id null,
-status enum (active|retired|forgotten), created_at, updated_at` — the register of the recurring patterns the memory drew
-on its own (nightly pattern pass, quality-profile knob `patterns`). Each one is a note of the memory (`stance` inferred,
-never `pending`, `tags` `{pattern}`, evidence = the episodes, confidence 0.7 with three or four episodes, 0.85 from five);
+status enum (active|retired|forgotten), kind text (pattern|thought), created_at, updated_at` — the register of what the memory drew
+on its own: the recurring patterns (nightly pattern pass, quality-profile knob `patterns`) and the agent's own thoughts
+(thought pass, knob `thoughts`, below). Each one is a note of the memory (`origin` `reflected`, `stance` inferred,
+never `pending`, `tags` `{pattern}` / `{thought}`, evidence = the episodes; a pattern's confidence 0.7 with three or four episodes, 0.85 from five);
 `retired` when it stopped holding (or was replaced by a new form, or its note was replaced / corrected), `forgotten`
 when its note was deleted — never drawn again from the same episodes (at least two others needed). A pattern left with
 fewer than three of its episodes is dropped with its note.
+
+**Thoughts** (D53, WORK_PLAN 8.12a, `kind = thought`): the agent's own insights, questions and opinions about what it
+lived — notes of category `insight` / `question` / `opinion`, drawn by the thought pass from the public (D52), lived or
+told episodes of the last 60 days, never from the assistant's or a tool's words nor from thoughts (depth one). The pass
+runs when the episodes recorded since `memories.thoughts_upto` gather an importance of 20 or more (no call otherwise);
+the model proposes `new` / `support` / `revise` / `weaken` / `retire`, the code keeps a new insight or opinion only with
+at least one new episode and episodes on two days, a question also on older episodes (silence about something awaited is
+its evidence), at most four new a pass, nothing that restates a note the memory holds (a habit apart: a thought may
+build on a pattern), nothing like a forgotten or retired thought without a new episode; a new thought on the same
+subject at least 0.8 similar to one held revises it (superseded, never two opposite thoughts side by side). `support_count`
+rises with the episodes for it and falls with those against it (`note_evidence.against`); at zero the thought is retired;
+confidence 0.4 / 0.6 / 0.8 from the model's low / medium / high. A thought whose note was deleted is `forgotten`; one
+left with no episode behind it is dropped with its note. Open plans still ahead take part once their telling was said.
 
 ## Layer 2 — digests
 
@@ -489,16 +504,16 @@ Semantic notes: who the memory's self is, beyond state slots.
 | `status` | enum `current \| superseded \| corrected` | History kept, never rewritten |
 | `supersedes`, `corrects` | uuid null → notes (`SET NULL`) | |
 | `support_count` | int | Restatements counted |
-| `pending` | bool | Inferred notes await confirmation; excluded from recall unless asked. Recurring patterns (5.4) are inferred but never pending: recall labels them |
+| `pending` | bool | Inferred notes await confirmation; excluded from recall unless asked. Recurring patterns (5.4) and the agent's thoughts (D53) are inferred but never pending: recall labels them |
 | *time* | | `valid_from`, `recorded_at` |
 | *provenance*, *disclosure*, *embedding* | | |
 | `deleted_at` | timestamptz null | |
 
-`note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote)`;
+`note_evidence(note_id CASCADE, message_id null CASCADE, episode_id null CASCADE, quote, against bool default false)` (`against`: an episode that goes against a thought, D53);
 `note_changes(seq bigserial, memory_id, note_id uuid, change enum (created|updated|corrected|
 confirmed|forgotten|retired), at)` — the change feed clients use to keep copies aligned (forgotten notes are
 purged, the feed keeps only their id). As built the extraction writes `created` / `updated` / `corrected`,
-`remember` writes `created`, the pattern pass `created` / `updated` / `retired` (a pattern that stopped holding) /
+`remember` writes `created`, the pattern and thought passes `created` / `updated` / `retired` (a pattern or thought that stopped holding) /
 `forgotten`; deleting or rejecting a note (read API, `API.md` §4, or forgetting) writes `forgotten`, confirming writes no
 entry, and the feed route (`GET api/v1/notes/changes`) is not built yet.
 

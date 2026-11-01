@@ -191,7 +191,7 @@ channel (esattamente uno), externalId, verified?}`, `DELETE identities/:id`,
 `POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/link-codes` (D51 → `{code,
 expiresAt}`; 409 `memory_not_personal`), `POST memories/:id/link-claims/:claim/confirm` / `DELETE
 memories/:id/link-claims/:claim` (→ 204), `POST memories/:id/consolidate`,
-`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
+`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `POST memories/:id/thoughts` (la sola passata dei pensieri, D53), `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; le rotte della console sono descritte lì). Le revoche hanno effetto subito (la cache delle
 credenziali viene svuotata). `DELETE memories/:id?confirm=<lo stesso id>` cancella l'intera memoria (WORK_PLAN 8.13) →
 `200 {erased: {conversations, messages, episodes, facts, notes, digests, sources, contacts}}`; 400 `confirm_mismatch`
@@ -501,7 +501,11 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   memoria conosce, in entrambe le modalità; ognuno riporta il suo `subject` (`self` — in una memoria di entità l'agente e il
   suo luogo — oppure `{kind: "contact", name}`; le note possono essere anche `undecided`). Una nota riporta `inferred`
   (dedotta, non detta) e `pattern` (un pattern ricorrente che la memoria ha notato nei suoi episodi, WORK_PLAN 5.4 —
-  inferito, mai in attesa: l'agente lo racconta come un'abitudine che ha notato).
+  inferito, mai in attesa: l'agente lo racconta come un'abitudine che ha notato) oppure `thought` (un pensiero proprio
+  dell'agente, D53 / WORK_PLAN 8.12a: un `insight`, una `question` o un'`opinion` — la `category` — tratto dalla
+  passata notturna dei pensieri dagli episodi pubblici, ognuno poggiato sugli episodi che cita; l'agente lo racconta
+  come un pensiero proprio, mai come qualcosa che è stato detto; un'opinione può differire da ciò che dice il titolare
+  quando gli episodi mostrano altro).
 
 ### `search_knowledge` e `learn_source` (D49, WORK_PLAN 8.9 — fonti apprese)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passaggi delle fonti che l'agente ha imparato, ordinati
@@ -586,8 +590,8 @@ lingua sconosciuti), uso (`GET usage?from&to` giorni locali, default gli ultimi 
 JSON `format: "recordare-export/1"`, inviato compresso gzip, `404` finché non è pronto; conservato 7 giorni; scope
 `export`). Le modifiche rispondono `204` (`404` per un id che non è di questa memoria); pagina solo
 `GET episodes` (`{items, nextCursor}`, default 50), le altre liste sono array. Elementi di `GET notes`: `{id, category,
-content, pinned, pending, inferred, pattern, authorRole, supportCount, recordedAt}` (`pattern`: un pattern ricorrente,
-WORK_PLAN 5.4). Come costruito, cancellare un fatto o una
+content, pinned, pending, inferred, pattern, thought, authorRole, supportCount, recordedAt}` (`pattern`: un pattern
+ricorrente, WORK_PLAN 5.4; `thought`: un pensiero proprio dell'agente, categorie `insight` / `question` / `opinion`, D53). Come costruito, cancellare un fatto o una
 nota (e rifiutarne uno in sospeso) rimuove la riga con le sue evidenze e lascia un tombstone `fact` / `note` (4.13) —
 una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichiarata (`pending` false). Libreria client:
 `packages/client` (`episodes`, `episode`, `digests`, `facts`, `fact`, `notes`, `note`, `plans`, `addEpisode`, `addNote`,
@@ -611,7 +615,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Correggere o dimenticare un fatto |
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Fatti in sospeso (D20) |
 | `GET api/v1/plans?status` | read | Piani aperti / irrisolti |
-| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true` (D26: della memoria stessa, nulla da confermare) |
+| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true`, i pensieri propri dell'agente note con `thought: true` (categorie `insight` / `question` / `opinion`; D26, D53: della memoria stessa, nulla da confermare — si dimentica uno con `DELETE`) |
 | `GET api/v1/cards` | read | Chi sono e chi sono i miei contatti (WORK_PLAN 8.13), senza LLM: `{self, contacts}`, ognuno `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — i fatti e le note attuali e confermati su quella persona (prima le note fissate, poi per supporto), i contatti nominati più di recente per primi; ogni id apre il suo dettaglio (`GET api/v1/facts/{id}`, `notes/{id}`) con le evidenze |
 | `GET api/v1/private` | read | I ricordi privati (D52): `[{kind: episode \| fact \| note, id, by: [nomi], recordedAt}]`, mai il loro contenuto; il Diario di una memoria entity li mostra così (se ne dimentica uno con il suo `DELETE`) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Gestire le note |

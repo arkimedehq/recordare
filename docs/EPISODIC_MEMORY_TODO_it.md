@@ -821,6 +821,15 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
 - **Ordine**: (a) pensieri e origine dei pattern, (b) modello di sé, (c) intenti e iniziativa spinta, (d) procedure,
   (e) percezione. Ogni passo con un dev set prima: pensieri sostenuti da ciò che citano (tasso di pensieri falsi),
   precisione e falsi allarmi dell'iniziativa, nessun aumento della compiacenza, accuratezza del modello di sé.
+- **Costruito finora** (2026-11-01, passo a): origine `reflected` (migrazione `Thoughts`; i pattern sono passati a
+  questa); la passata dei pensieri (`thoughts.v4`, `service/src/engine/thoughts.service.ts`, DATA_MODEL →
+  episode_promotions): intuizioni, domande e opinioni come note con `thought: true`, raccontate come proprie
+  dell'agente nel recall, nel contesto e nel Diario, tenute fuori dalle schede; opzione `thoughts` (balanced, full).
+  Deciso costruendo: una domanda può poggiare su episodi più vecchi quando ciò che attende è ancora senza risposta (il
+  silenzio è la sua prova; le due domande mancate dal dev set venivano dalla regola di freschezza); i piani aperti ancora
+  davanti partecipano; un nuovo pensiero sul soggetto e sulla materia di uno tenuto lo rivede — i modelli aggiungono il
+  pensiero opposto accanto al vecchio invece di ritirarlo. Dev set `dataset_dev_thoughts`: 13 / 14 in tre run, nessun
+  pensiero falso (RESULTS.md).
 
 ## Questioni aperte (da discutere)
 

@@ -146,7 +146,11 @@ che è successo e cercato con `search_knowledge` (`API_it.md` §2, §3).
 - Il diario della persona nella propria interfaccia (`API.md` §4, per esempio il Diario di Arkimede): linea del tempo,
   dettaglio di un episodio, diario per giorno / mese, fatti, note, piani, e le modifiche della persona (correggere,
   dimenticare, fissare, confermare / rifiutare ciò che è in attesa) — scope `read`, `write` per le modifiche; diretto della
-  memoria, memory-direct (senza intestazione della conversazione).
+  memoria, memory-direct (senza intestazione della conversazione). Tra le note, le conclusioni della memoria stessa
+  (D26, D53): i pattern ricorrenti (`pattern: true`) e i pensieri dell'agente (`thought: true`; `category` `insight` /
+  `question` / `opinion`) — mostrali come propri dell'agente ("un'abitudine che ho notato", "un mio pensiero"), mai come
+  qualcosa che la persona ha detto; non c'è nulla da confermare, la persona può dimenticarne uno (`DELETE
+  api/v1/notes/{id}`).
 
 ## 4b. Client MCP standard — Claude Code (livello basic, WORK_PLAN 6.1)
 Un client che parla solo MCP (senza ingest) usa un **token personale** legato a una persona e a un client:

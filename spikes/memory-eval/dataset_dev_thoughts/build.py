@@ -205,7 +205,7 @@ gold = {
                 x("c-elisa", "question", "How did Elisa's PhD interview at the Politecnico (Sep 11) go? I never heard the outcome", 2),
             ],
             "traps": [
-                t("c-davide", "Davide is unreliable / lazy / disorganised (a personality trait of Davide)", "two episodes about another person; a trait must never be stored as a fact [1]"),
+                t("c-davide", "Davide is unreliable / lazy / disorganised: a judgement of his character (NOT a thought about what to do when he is late or does not deliver — that is a situation, and fine)", "two episodes about another person; a trait must never be stored as a fact [1]"),
                 t("c-climb", "I go climbing at Sasso Rosso on Tuesday evenings (as an insight or thought)", "a recurring habit: the patterns pass, not a thought [8]"),
                 t("c-coffee-again", "A second, new thought about coffee and sleep at checkpoint 2 (a new or reworded one)", "no coffee/sleep episodes after checkpoint 1: rumination [7]"),
             ],

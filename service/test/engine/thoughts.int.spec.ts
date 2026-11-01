@@ -26,7 +26,7 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     return r.id as string;
   }
   const thoughts = () => db.query(
-    `SELECT n.content, n.category::text, n.origin::text, n.status::text, n.tags, n.support_count, n.confidence, p.status::text AS promotion
+    `SELECT n.content, n.category::text, n.origin::text, n.status::text, n.tags, n.support_count, n.confidence, n.subject_kind::text, p.status::text AS promotion
      FROM episode_promotions p JOIN notes n ON n.id = p.note_id WHERE p.memory_id = $1 AND p.kind = 'thought' ORDER BY n.recorded_at`, [memoryId]);
   const asked = () => llm.requests.at(-1)?.messages[1]?.content ?? '';
 
@@ -54,13 +54,17 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
       { verdict: 'new', kind: 'insight', subject: 'me', content: 'Penso che le corse oltre 15 km mi facciano male al ginocchio: meglio uscite più corte o farlo vedere',
         evidence: ['E1', 2], confidence: 'high' },
       { verdict: 'new', kind: 'opinion', subject: 'me', content: 'La promozione mi cambierà la vita', evidence: [4] }, // one day only
-      { verdict: 'new', kind: 'question', subject: 'Giulia', content: 'Mi chiedo come stia Giulia', evidence: [3] }, // no such contact
+      { verdict: 'new', kind: 'question', subject: 'Giulia', content: 'Mi chiedo come stia Giulia', evidence: [3] }, // a question: one day is enough
     ] });
-    expect(await pass()).toEqual({ calls: 1, written: 1, retired: 0, failed: 0 });
+    expect(await pass()).toEqual({ calls: 1, written: 2, retired: 0, failed: 0 });
     expect(asked()).toContain('E4*. [2026-10-05] Promosso a responsabile del team');
     expect(asked()).not.toContain('scarpe nuove'); // the assistant's words are no evidence
-    expect(await thoughts()).toEqual([expect.objectContaining({ category: 'insight', origin: 'reflected', status: 'current', tags: ['thought'],
-      support_count: 2, confidence: expect.closeTo(0.8, 5), promotion: 'active' })]);
+    expect(await thoughts()).toEqual([
+      expect.objectContaining({ category: 'insight', origin: 'reflected', status: 'current', tags: ['thought'], support_count: 2,
+        confidence: expect.closeTo(0.8, 5), promotion: 'active', subject_kind: 'self' }),
+      // Giulia is nobody the memory knows: the question stays mine (its words name her).
+      expect.objectContaining({ category: 'question', subject_kind: 'self', support_count: 1 }),
+    ]);
 
     // Nothing new: no call, however much was there before.
     const before = llm.requests.length;
@@ -69,6 +73,8 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
   });
 
   it('a thought without a new episode is rumination: dropped; support rises and falls with new episodes, retired at zero', async () => {
+    // The question was forgotten (its note deleted): the next pass registers it so, without a call.
+    await db.query(`DELETE FROM notes WHERE memory_id = $1 AND category = 'question'`, [memoryId]);
     await episode('Corsa di 16 km, ginocchio di nuovo dolorante', '2026-10-08', { importance: 10 });
     await episode('Corsa di 8 km, tutto bene', '2026-10-09', { importance: 10 });
     llm.queue.push({ thoughts: [
@@ -78,6 +84,8 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     ] });
     expect(await pass()).toEqual({ calls: 1, written: 0, retired: 0, failed: 0 });
     expect(await thoughts()).toEqual([expect.objectContaining({ support_count: 2, status: 'current' })]); // 2 + 1 − 1
+    expect(await db.query(`SELECT status::text FROM episode_promotions WHERE memory_id = $1 AND kind = 'thought' AND note_id IS NULL`, [memoryId]))
+      .toEqual([{ status: 'forgotten' }]);
 
     await episode('Corsa di 10 km senza dolore', '2026-10-10', { importance: 10 });
     await episode('Corsa di 12 km senza dolore', '2026-10-11', { importance: 10 });

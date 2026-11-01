@@ -7,6 +7,16 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ## [Unreleased]
 
 ### Added
+- **The agent's own thoughts** (D53, WORK_PLAN 8.12a — the first step of the agent's own mind): a nightly thought pass
+  draws insights, questions and opinions from what the agent lived (public episodes only), each resting on the episodes
+  it cites; it runs only when the new episodes gathered enough importance, never thinks without new evidence (a question
+  about something awaited apart), supports, weakens, revises and retires its thoughts as later episodes come in. They
+  are notes with `thought: true` (categories `insight` / `question` / `opinion`), told as the agent's own thoughts in
+  the recall tools, the memory context and the Diary (`GET api/v1/notes`), never as something said; an opinion may
+  differ from what the holder says. Nothing to confirm (D26): a client may forget one (`DELETE api/v1/notes/{id}`).
+  What the memory concludes by itself now has its own origin, `reflected` — the recurring patterns move to it (they
+  were stored as lived by the holder). Quality-profile knob `thoughts` (on in balanced and full), `THOUGHTS` override,
+  LLM task `thoughts`; admin `POST api/v1/admin/memories/{id}/thoughts` runs the pass alone. Migration `Thoughts`.
 - The admin reads a memory's items (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`), `…/facts`,
   `…/notes` — the diary's lists read as the whole memory, private items marked whose they are — and forgets one
   (`DELETE …/episodes|facts|notes/{id}`). Admin key only; Recordare Atlas lists and forgets with them.

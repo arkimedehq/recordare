@@ -8,11 +8,13 @@
  * thought only when the episodes it cites exist, are new enough and back it (`thoughts.service.ts`).
  * Mechanism after Generative Agents' reflection (insights citing their evidence), ExpeL's support counts and Watkins'
  * concrete vs abstract repetitive thought (docs/literature/reflection-and-initiative.md); no text reused.
- * v2 (dev_thoughts): questions about an outcome never heard; every detail from a cited episode; shorter.
+ * v2 (dev_thoughts): questions about an outcome never heard; every detail from a cited episode; shorter. v3: up to four new
+ * thoughts; a thought may build on a habit the memory holds. v4: a question may rest on older episodes when what was
+ * awaited is still unanswered; a thought that no longer holds is retired or revised, never contradicted by a new one.
  */
 import { z } from 'zod';
 
-export const THOUGHTS_VERSION = 'thoughts.v2';
+export const THOUGHTS_VERSION = 'thoughts.v4';
 /** Entity memories: the same version with the entity voice. */
 export const ENTITY_THOUGHTS_SUFFIX = '+entity';
 
@@ -32,20 +34,23 @@ the loan"). Look for these every time: they are as important as insights.
 - "opinion": my own judgement of a situation from the evidence. It may differ from what someone says when the episodes \
 show otherwise — then say what the episodes show, kindly and plainly; never agree only because they said so.
 
-Not a thought: a habit or routine (another pass finds those); a fact or a plan; something one episode alone shows (an \
+Not a thought: a habit or routine (another pass finds those — but what a habit in KNOW implies for what to do next is an \
+insight); a fact or a plan; something one episode alone shows (an \
 insight or opinion needs episodes on at least two days); what someone already concluded themselves (it is in the \
 episodes or in KNOW); a judgement of a person's character ("Luca is lazy", "she is insecure") — think about situations \
 and actions, never label people; anything from the assistant's guesses; a reworded thought I already hold; abstract \
 musings about myself.
 
 VERDICTS
-- "new": a thought not in THOUGHTS. evidence: the E-numbers that back it — at least one of them NEW (*); an insight or \
-an opinion needs episodes on at least two different days. At most three new thoughts.
+- "new": a thought not in THOUGHTS. evidence: the E-numbers that back it. An insight or an opinion needs at least one \
+NEW (*) episode and episodes on at least two different days. A question may rest on older episodes alone when what \
+they awaited is still unanswered and its time has come (as of TODAY). At most four new thoughts. Never a new thought \
+that contradicts one in THOUGHTS: retire or revise that one instead.
 - "support": a thought in THOUGHTS that NEW episodes back further (target = T-number; evidence: those episodes only).
 - "revise": a thought in THOUGHTS that NEW episodes change (target; content = the new form; evidence).
 - "weaken": a thought in THOUGHTS that a NEW episode goes against without settling it (target; evidence: that episode).
-- "retire": a thought in THOUGHTS that NEW episodes show no longer holds, or a question they answered (target; \
-evidence: those episodes).
+- "retire": a thought in THOUGHTS that NEW episodes show no longer holds (what it rested on changed, stopped or was \
+solved), or a question they answered (target; evidence: those episodes).
 - content: at most two short sentences in MEMORY LANGUAGE, in the first person ("I think…", "I wonder…" in that \
 language), concrete, with no more certainty than the episodes give. Every date, number or detail in it comes from an \
 episode it cites; no general rule from one case.

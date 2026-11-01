@@ -795,6 +795,14 @@ works on its own and pushes, not a memory that only answers.
 - **Order**: (a) thoughts and the patterns' origin, (b) self-model, (c) intents and pushed initiative, (d) procedures,
   (e) perception. Each step with a dev set first: thoughts supported by what they cite (the false-thought rate),
   initiative precision and false alarms, no rise in sycophancy, self-model accuracy.
+- **Built so far** (2026-11-01, step a): origin `reflected` (migration `Thoughts`; the patterns moved to it); the thought
+  pass (`thoughts.v4`, `service/src/engine/thoughts.service.ts`, DATA_MODEL → episode_promotions): insights, questions
+  and opinions as notes with `thought: true`, told as the agent's own in recall, context and Diary, kept out of the cards;
+  knob `thoughts` (balanced, full). Decided while building: a question may rest on older episodes when what it awaits is
+  still unanswered (silence is its evidence; the dev set's two missed questions came from the freshness rule); open plans
+  still ahead take part; a new thought on a held one's subject and matter revises it — the models add the opposite
+  thought beside the old one instead of retiring it. Dev set `dataset_dev_thoughts`: 13 / 14 in three runs, no false
+  thought (RESULTS.md).
 
 ## Open questions (to discuss)
 

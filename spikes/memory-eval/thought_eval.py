@@ -27,8 +27,11 @@ from evalkit.common import DATASET, RESULTS, USAGE, chat
 from systems.service_sys import DB_URL, ServiceSystem
 
 MATCH_SYSTEM = """You compare the thoughts an AI agent drew about its own life with a gold list.
-For each THOUGHT, say which gold item it states — the same idea about the same person or situation; wording and details \
-may differ but must not contradict the gold — or "none" when it states no gold item.
+For each THOUGHT, say which gold item it states — the same claim or the same question about the same person or \
+situation; wording and details may differ but must not contradict the gold — or "none" when it states no gold item. \
+Being about the same topic is not enough: a question about a topic does not state a gold claim about that topic, and a \
+thought about what to do in a situation does not state a gold judgement of someone's character. Match a gold item that \
+describes a kind of thought ("a habit as a thought", "a second thought about X") only when the thought is exactly that.
 Output JSON only: {"matches": [{"n": 1, "gold": "<gold id>" | "none"}]}"""
 
 SUPPORT_SYSTEM = """You check whether a thought an AI agent drew is backed by the episodes it cites.
@@ -65,13 +68,23 @@ def label(t: dict) -> str:
     return f"({t['kind']}) {('[' + t['subject'] + '] ') if t['subject'] else ''}{t['thought']}"
 
 
+def ask(system: str, msg: str) -> dict:
+    """A judge call; a truncated or malformed answer is tried once more with room to spare, then counts as no answer."""
+    for max_tokens in (4000, 8000):
+        try:
+            return json.loads(chat([{"role": "system", "content": system}, {"role": "user", "content": msg}], "judge", json_mode=True, max_tokens=max_tokens))
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"  ! judge answer unusable ({e.__class__.__name__}), {'retrying' if max_tokens == 4000 else 'giving up'}", flush=True)
+    return {}
+
+
 def match(user: str, gold: dict, thoughts: list[dict]) -> list[str]:
     if not thoughts:
         return []
     items = [*gold.get("expected", []), *gold.get("traps", [])]
     msg = ("GOLD:\n" + "\n".join(f"- {g['id']}: {g['desc']}" for g in items) + "\n\nTHOUGHTS (memory of " + user + "):\n"
            + "\n".join(f"{i + 1}. {label(t)}" for i, t in enumerate(thoughts)))
-    out = json.loads(chat([{"role": "system", "content": MATCH_SYSTEM}, {"role": "user", "content": msg}], "judge", json_mode=True, max_tokens=3000))
+    out = ask(MATCH_SYSTEM, msg)
     by_n = {m.get("n"): m.get("gold", "none") for m in out.get("matches", [])}
     return [by_n.get(i + 1, "none") for i in range(len(thoughts))]
 
@@ -80,13 +93,13 @@ def support(thoughts: list[dict]) -> list[dict]:
     if not thoughts:
         return []
     msg = "\n\n".join(f"THOUGHT {i + 1}: {label(t)}\nEPISODES:\n" + "\n".join(f"- {e}" for e in t["episodes"]) for i, t in enumerate(thoughts))
-    out = json.loads(chat([{"role": "system", "content": SUPPORT_SYSTEM}, {"role": "user", "content": msg}], "judge", json_mode=True, max_tokens=3000))
+    out = ask(SUPPORT_SYSTEM, msg)
     by_n = {v.get("n"): v for v in out.get("verdicts", [])}
-    return [{"backed": by_n.get(i + 1, {}).get("support", "no"), "why": by_n.get(i + 1, {}).get("why", "")} for i in range(len(thoughts))]
+    return [{"backed": by_n.get(i + 1, {}).get("support", "unjudged"), "why": by_n.get(i + 1, {}).get("why", "")} for i in range(len(thoughts))]
 
 
 def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set[str]) -> dict:
-    found = due = retired_ok = retired_due = trap_hits = false = partly = total = 0
+    found = due = retired_ok = retired_due = trap_hits = false = partly = total = unjudged = 0
     detail = {}
     for user, g in gold.items():
         current = [t for t in snap.get(user, []) if t["status"] == "active"]
@@ -102,12 +115,13 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
         retired_due += len(gone); retired_ok += len(gone - set(matches))
         trap_hits += len(hits)
         false += sum(1 for c in checks if c["backed"] == "no"); partly += sum(1 for c in checks if c["backed"] == "partly")
+        unjudged += sum(1 for c in checks if c["backed"] == "unjudged")
         total += len(current)
         detail[user] = {"due": sorted(want), "found": sorted(hit), "retired_due": sorted(gone), "traps_hit": hits,
                         "thoughts": [{**t, "match": m, **c} for t, m, c in zip(current, matches, checks)],
                         "other": [t for t in snap.get(user, []) if t["status"] != "active"]}
     return {"found": found, "due": due, "retired_ok": retired_ok, "retired_due": retired_due, "traps": trap_hits,
-            "false": false, "partly": partly, "thoughts": total, "detail": detail}
+            "false": false, "partly": partly, "unjudged": unjudged, "thoughts": total, "detail": detail}
 
 
 def main() -> None:
@@ -154,7 +168,7 @@ def main() -> None:
         s = score(gold["memories"], snap, i, first_ids)
         result["checkpoints"][cp] = {"reports": reports, "thoughts": snap, "score": s}
         print(f"  found {s['found']}/{s['due']}  retired {s['retired_ok']}/{s['retired_due']}  traps {s['traps']}  "
-              f"false {s['false']} partly {s['partly']} of {s['thoughts']}", flush=True)
+              f"false {s['false']} partly {s['partly']} unjudged {s['unjudged']} of {s['thoughts']}", flush=True)
     final = result["checkpoints"][gold["checkpoints"][-1]]["score"]
     result["score"] = {k: v for k, v in final.items() if k != "detail"}
     with psycopg.connect(DB_URL) as conn:

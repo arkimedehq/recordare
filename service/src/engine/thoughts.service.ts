@@ -9,8 +9,10 @@
  * model only proposes; the code decides:
  * - every cited episode exists and is visible to anyone (public, D52), lived or told — never the assistant's or a
  *   tool's words, never others' inferred claims;
- * - a new thought cites at least one new episode (no new thought without new evidence: not rumination); an insight or an
- *   opinion needs episodes on two days; at most MAX_NEW a pass;
+ * - a new insight or opinion cites at least one new episode (no new thought without new evidence: not rumination) and
+ *   episodes on two days; a question may rest on older ones — silence about something awaited is its evidence (what was
+ *   asked once stays until answered: the list of held thoughts and the restatement check keep it from being asked again);
+ *   at most MAX_NEW a pass;
  * - nothing that restates a note the memory holds, nothing like a thought it was told to forget or that stopped holding
  *   unless a new episode backs it;
  * - support rises with the episodes that back it and falls with those against it; at zero the thought is retired
@@ -36,9 +38,12 @@ const MAX_KNOWN_NOTES = 150;
 const MAX_PAST = 50;
 /** Importance (1–10 per episode) the new episodes must gather before the agent thinks again. */
 export const THOUGHT_IMPORTANCE = 20;
-const MAX_NEW = 3;
+const MAX_NEW = 4;
 /** A thought at least this similar (cosine) to a note or a past thought restates it. */
 const SAME_SIMILARITY = 0.88;
+/** A new thought at least this similar to one I hold, on the same subject, is that thought revised (the models add an
+ * opposite thought next to the old one instead of retiring it: the train that is late, then the train that is on time). */
+const REVISE_SIMILARITY = 0.8;
 const CONFIDENCE = { low: 0.4, medium: 0.6, high: 0.8 } as const;
 
 export interface ThoughtsReport { calls: number; written: number; retired: number; failed: number }
@@ -74,7 +79,8 @@ export class ThoughtsService {
     const entity = memory.mode === 'entity';
     await this.sync(memoryId);
 
-    // Dated or not (a told opinion has no date): the lived and told episodes of the last weeks, public only (D52).
+    // Dated or not (a told opinion has no date): the lived and told episodes of the last weeks, public only (D52); an open
+    // plan still ahead comes along once its telling was said (what is awaited or prepared is food for thought).
     const episodes: EpisodeRow[] = (await this.db.query(
       `SELECT e.id, e.content, e.occurred_at, e.recorded_at, e.subject_kind, e.subject_person_id, e.importance,
          (SELECT display_name FROM persons WHERE id = e.subject_person_id) AS subject,
@@ -82,7 +88,9 @@ export class ThoughtsService {
          e.recorded_at > COALESCE((SELECT thoughts_upto FROM memories WHERE person_id = $1), '-infinity'::timestamptz) AS fresh
        FROM episodes e
        WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
-         AND COALESCE(e.occurred_at, e.recorded_at) <= $2 AND COALESCE(e.occurred_at, e.recorded_at) > $2::timestamptz - make_interval(days => $3)
+         AND (COALESCE(e.occurred_at, e.recorded_at) <= $2 OR (e.kind = 'plan' AND e.plan_status = 'open'
+           AND EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id WHERE pv.episode_id = e.id AND pm.sent_at <= $2)))
+         AND COALESCE(e.occurred_at, e.recorded_at) > $2::timestamptz - make_interval(days => $3)
          AND e.origin <> 'assistant_stated' AND e.author_role <> 'tool' AND NOT (e.author_role = 'other' AND e.stance = 'inferred')
          AND ${episodeVisible('e', PUBLIC_ONLY)}
        ORDER BY COALESCE(e.occurred_at, e.recorded_at) DESC, e.id DESC LIMIT $4`, [memoryId, now, LOOKBACK_DAYS, MAX_EPISODES]) as EpisodeRow[]).reverse();
@@ -139,7 +147,7 @@ export class ThoughtsService {
     let vectors: number[][] = [];
     if (contents.length) {
       try {
-        vectors = await this.embeddings.embed([...contents, ...past.map((f) => f.pattern)], 'document');
+        vectors = await this.embeddings.embed([...contents, ...past.map((f) => f.pattern), ...active.map((a) => a.content)], 'document');
       } catch (err) {
         report.failed++;
         this.log.warn(`thought pass skipped: embeddings failed (${(err as Error).message})`);
@@ -148,6 +156,7 @@ export class ThoughtsService {
     }
     const vectorOf = new Map(contents.map((c, i) => [c, vectors[i]!]));
     const pastVectors = past.map((f, i) => ({ episode_ids: f.episode_ids, vector: vectors[contents.length + i]! }));
+    const activeVector = new Map(active.map((a, i) => [a.id, vectors[contents.length + past.length + i]!]));
 
     const byNumber = new Map(episodes.map((e, i) => [i + 1, e]));
     const target = (raw: string | null | undefined): ActiveRow | undefined => active[Number((raw ?? '').match(/^\s*T?(\d+)\s*$/i)?.[1]) - 1];
@@ -167,18 +176,20 @@ export class ThoughtsService {
         }
         const content = t.content?.trim();
         if (!content) { this.drop('no_content'); continue; }
-        if (t.verdict === 'new' && added >= MAX_NEW) { this.drop('too_many'); continue; }
-        if (!fresh.length) { this.drop('nothing_new'); continue; }
+        if (t.verdict === 'new' && added >= MAX_NEW) { this.drop('too_many', t); continue; }
+        if (!fresh.length && t.kind !== 'question') { this.drop('nothing_new', t); continue; }
         const days = new Set(ev.map((e) => localDate(e.occurred_at ?? e.recorded_at, tz))).size;
-        if (t.kind !== 'question' && days < 2) { this.drop('one_day'); continue; }
-        const subjectId = this.subject(t, ev);
-        if (subjectId === undefined) { this.drop('wrong_subject'); continue; }
+        if (t.kind !== 'question' && days < 2) { this.drop('one_day', t); continue; }
+        const subjectId = await this.subject(tx, t, ev);
         const vector = vectorOf.get(content)!;
-        const replaced = t.verdict === 'revise' ? old : undefined;
-        if (t.verdict === 'revise' && !replaced) { this.drop('no_target'); continue; }
-        if (await this.restates(tx, memoryId, vector, replaced?.note_id)) { this.drop('known'); continue; }
+        if (t.verdict === 'revise' && !old) { this.drop('no_target', t); continue; }
+        // A new thought on the same subject and matter as one I hold revises it (it is not added beside it).
+        const alike = t.verdict === 'new'
+          ? active.find((a) => a.subject_person_id === subjectId && cosine(activeVector.get(a.id)!, vector) >= REVISE_SIMILARITY) : undefined;
+        const replaced = t.verdict === 'revise' ? old : alike;
+        if (await this.restates(tx, memoryId, vector, replaced?.note_id)) { this.drop('known', t); continue; }
         const like = pastVectors.find((f) => cosine(f.vector, vector) >= SAME_SIMILARITY);
-        if (like && !fresh.some((e) => !like.episode_ids.includes(e.id))) { this.drop('past'); continue; }
+        if (like && !ev.some((e) => !like.episode_ids.includes(e.id))) { this.drop('past', t); continue; }
         if (replaced) await this.retire(tx, memoryId, replaced, true);
         await this.write(tx, memoryId, runId, t, content, ev, subjectId, vector, replaced?.note_id ?? null);
         if (t.verdict === 'new') added++;
@@ -190,18 +201,27 @@ export class ThoughtsService {
     return report;
   }
 
-  /** Whom the thought is about: null for me (or my place), a contact's id, undefined when the name is not in its episodes. */
-  private subject(t: Proposal, ev: EpisodeRow[]): string | null | undefined {
+  /**
+   * Whom the thought is about: null for me (or my place), else the contact named — the subject of a cited episode, or a
+   * person named in one (a thought about my sister rests on episodes of mine). A name none of them carries: the thought
+   * stays mine (its words say whom it concerns).
+   */
+  private async subject(tx: EntityManager, t: Proposal, ev: EpisodeRow[]): Promise<string | null> {
     const said = (t.subject ?? '').trim().toLowerCase();
     if (said === '' || said === 'me') return null;
     const match = ev.find((e) => e.subject_kind === 'contact' && e.subject?.toLowerCase() === said);
-    return match ? match.subject_person_id : undefined;
+    if (match) return match.subject_person_id;
+    const [named]: Array<{ person_id: string }> = await tx.query(
+      `SELECT ep.person_id FROM episode_people ep JOIN persons p ON p.id = ep.person_id
+       WHERE ep.episode_id = ANY($1) AND (lower(ep.alias) = $2 OR lower(p.display_name) = $2) LIMIT 1`, [ev.map((e) => e.id), said]);
+    return named?.person_id ?? null;
   }
 
+  /** Restates a note the memory holds — a habit apart: a thought may build on a pattern ("the flour is late on Thursdays: order on Wednesday"). */
   private async restates(tx: EntityManager, memoryId: string, vector: number[], except?: string): Promise<boolean> {
     const rows: unknown[] = await tx.query(
       `SELECT 1 FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND embedding IS NOT NULL
-         AND id IS DISTINCT FROM $3 AND 1 - (embedding <=> $2::vector) >= $4 LIMIT 1`,
+         AND NOT 'pattern' = ANY(tags) AND id IS DISTINCT FROM $3 AND 1 - (embedding <=> $2::vector) >= $4 LIMIT 1`,
       [memoryId, vectorParam(vector), except ?? null, SAME_SIMILARITY]);
     return rows.length > 0;
   }
@@ -260,7 +280,7 @@ export class ThoughtsService {
     });
   }
 
-  private drop(reason: string): void {
-    this.log.debug(`thought dropped: ${reason}`);
+  private drop(reason: string, t?: Proposal): void {
+    this.log.debug(`thought dropped: ${reason}${t ? ` (${t.kind}, ${t.evidence.length} ep.)` : ''}`);
   }
 }
