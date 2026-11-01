@@ -68,13 +68,21 @@ def label(i: dict) -> str:
 
 
 def match(user: str, gold: dict, items: list[dict]) -> list[str]:
+    """Which gold item each initiative is; a judge call that fails is split in halves down to single items."""
     if not items:
         return []
     lines = [f"- {g['id']}: [{g['kind']}, for {g.get('for', 'holder')}, due {g.get('due_day', '?')}] {g['desc']}" for g in gold.get("expected", [])]
     lines += [f"- {t['id']} (TRAP): {t['desc']}" for t in gold.get("traps", [])]
-    msg = "GOLD:\n" + "\n".join(lines) + f"\n\nINITIATIVES (memory of {user}):\n" + "\n".join(f"{n + 1}. {label(i)}" for n, i in enumerate(items))
-    out = ask(MATCH_SYSTEM, msg)
-    by_n = {m.get("n"): m.get("gold", "none") for m in out.get("matches", []) if isinstance(m, dict)}
+    head = "GOLD:\n" + "\n".join(lines) + f"\n\nINITIATIVES (memory of {user}):\n"
+
+    def go(lo: int, hi: int) -> dict[int, str]:
+        msg = head + "\n".join(f"{n + 1}. {label(items[n])}" for n in range(lo, hi))
+        out = ask(MATCH_SYSTEM, msg)
+        if out or hi - lo <= 1:
+            return {m.get("n"): m.get("gold", "none") for m in out.get("matches", []) if isinstance(m, dict)}
+        mid = (lo + hi) // 2
+        return {**go(lo, mid), **go(mid, hi)}
+    by_n = go(0, len(items))
     return [by_n.get(n + 1, "none") for n in range(len(items))]
 
 
@@ -107,7 +115,29 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int) -> dict:
     return {"found": found, "due": due, "traps": traps, "false": false, "wrong_day": wrong_day, "wrong_for": wrong_for, "initiatives": total, "detail": detail}
 
 
+def rescore(path: str) -> None:
+    """Judge a saved run again (RESCORE=<result.json>): no ingest, no passes, only the judges."""
+    r = json.loads(Path(path).read_text())
+    gold = json.loads((DATASET / "initiatives_gold.json").read_text())
+    cps = list(r["checkpoints"])
+    for i, cp in enumerate(cps):
+        s = score(gold["memories"], r["checkpoints"][cp]["initiatives"], i)
+        r["checkpoints"][cp]["score"] = s
+        print(f"  {cp}: found {s['found']}/{s['due']}  traps {s['traps']}  false {s['false']}  wrong day {s['wrong_day']}  of {s['initiatives']}", flush=True)
+    final = r["checkpoints"][cps[-1]]["score"]
+    r["score"] = {k: v for k, v in final.items() if k != "detail"}
+    r["rescored"] = True
+    for user, d in final["detail"].items():
+        print(f"{user}: found {d['found']} of {d['due']}; missed {d['missed']}; traps hit {d['traps_hit']}")
+        for it in d["initiatives"]:
+            print(f"  [{it['match']}{'' if it['day_ok'] else ' DAY?'}] {label(it)}")
+    print(f"FOUND {final['found']}/{final['due']}  TRAPS {final['traps']}  FALSE {final['false']}  of {final['initiatives']}")
+    Path(path).write_text(json.dumps(r, ensure_ascii=False, indent=1, default=str))
+
+
 def main() -> None:
+    if os.getenv("RESCORE"):
+        return rescore(os.environ["RESCORE"])
     conv = json.loads((DATASET / "conversations.json").read_text())
     gold = json.loads((DATASET / "initiatives_gold.json").read_text())
     tz = gold.get("timezone", "Europe/Rome")

@@ -131,6 +131,14 @@ const schema = (hint: string): string => `{
     "declared_in": <number of the message where a person asks to keep something between us, or says it can be told now>,
     "messages": [<numbers of THAT person's own messages it covers>],
     "private": true | false
+  }],
+  "intents": [{
+    "kind": "promise" | "request",
+    "content": "<what I am to do, short, in MEMORY LANGUAGE>",
+    "due": "<ISO date it is due>" | null,
+    "for": "<Name of the person it concerns>" | null,
+    "cancel": true | false,
+    "evidence": [<message numbers>]
   }]
 }`;
 

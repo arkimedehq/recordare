@@ -112,7 +112,7 @@ export class InitiativeService {
        FROM episodes e
        WHERE e.memory_id = $1 AND e.kind = 'plan' AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
          AND e.occurred_at IS NOT NULL AND e.author_role <> 'tool' AND e.origin <> 'assistant_stated'
-         AND ((e.plan_status = 'open' AND e.occurred_at < $2::timestamptz - interval '1 day' AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
+         AND ((e.plan_status IN ('open', 'confirmed') AND e.occurred_at < $2::timestamptz - interval '1 day' AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
            OR (e.plan_status IN ('open', 'confirmed') AND e.occurred_at > $2 AND e.occurred_at < $2::timestamptz + make_interval(hours => $4)))
          AND ${episodeVisible('e', PUBLIC_ONLY)}`, [memoryId, now, ASK_BACK_DAYS, REMIND_AHEAD_HOURS]);
     for (const p of plans) {
@@ -145,7 +145,7 @@ export class InitiativeService {
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM episodes e
        WHERE t.memory_id = $1 AND t.status IN ('armed', 'fired') AND t.episode_id = e.id
-         AND ((t.kind = 'open_plan' AND e.plan_status <> 'open') OR (t.kind = 'upcoming_plan' AND e.plan_status NOT IN ('open', 'confirmed'))
+         AND ((t.kind = 'open_plan' AND e.plan_status NOT IN ('open', 'confirmed')) OR (t.kind = 'upcoming_plan' AND e.plan_status NOT IN ('open', 'confirmed'))
               OR e.deleted_at IS NOT NULL OR e.invalidated_at IS NOT NULL)`, [memoryId]);
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM notes n
@@ -179,15 +179,20 @@ export class InitiativeService {
          WHERE t.memory_id = $1 AND t.status = 'armed' AND t.due_at <= $2 AND (t.reconsider_at IS NULL OR t.reconsider_at <= $2)
          ORDER BY t.due_at`, [memoryId, now]);
     if (!due.length) return 0;
+    // One thing, one initiative: a request or promise about a plan of theirs the same day says it once — the owed one
+    // ("ricordami giovedì di ordinare la farina" is also her plan to order flour: the reminder is the request's).
+    const dueOnce = due.filter((t) => !(t.kind === 'upcoming_plan' && due.some((o) => (o.kind === 'promise' || o.kind === 'request')
+      && o.for_person_id === t.for_person_id && Math.abs(o.due_at.getTime() - t.due_at.getTime()) <= 2 * DAY_MS && overlap(o.content, t.content))));
+    for (const t of due) if (!dueOnce.includes(t)) await this.db.query(`UPDATE intents SET status = 'done', updated_at = now() WHERE id = $1`, [t.id]);
     const text = initiativeText(memory.locale);
     const day = (d: Date) => new Intl.DateTimeFormat(memory.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: memory.timezone }).format(d);
     const when = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to);
     const limit = this.config.get('INITIATIVE_DAILY_LIMIT', { infer: true }) ?? 3; // counted on the day they are due (the memory's clock)
     const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
       undefined, undefined, undefined, undefined, undefined, undefined, this.config.get('INITIATIVE_WORDING', { infer: true }));
-    const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
+    const worded = profile.initiativeWording ? await this.word(memoryId, memory, dueOnce, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
     let fired = 0;
-    for (const t of due) {
+    for (const t of dueOnce) {
       if (t.expires_at <= when) continue; // due only after it lapses: left to expire
       const w = worded.get(t.id);
       if (w && (w.skip || w.worth < WORTH_FLOOR)) {
@@ -297,6 +302,15 @@ export class InitiativeService {
     await this.webhooks.notify(memoryId, 'initiative.updated', v, id);
     return v;
   }
+}
+
+/** Two short texts about the same thing: they share most of their longer words (an order of flour, a reminder of it). */
+export function overlap(a: string, b: string): boolean {
+  const words = (s: string) => new Set(s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4));
+  const wa = words(a), wb = words(b);
+  if (!wa.size || !wb.size) return false;
+  const shared = [...wa].filter((w) => wb.has(w)).length;
+  return shared / Math.min(wa.size, wb.size) >= 0.5;
 }
 
 /** `now`, or the end of the quiet hours when `now` falls inside them (the memory's local hours `from` → `to`). */

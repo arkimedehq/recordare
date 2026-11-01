@@ -48,7 +48,7 @@ describe('prompt inputs of the measured versions', () => {
   }
 
   it('personal prompts are the measured extract.v21 and facts.v2', () => {
-    expect(sha(EXTRACTION_SYSTEM)).toBe('e5fee936533b475c192739f120ba7c2fea8b6af2ce6ede8a132b3107a05f324d');
+    expect(sha(EXTRACTION_SYSTEM)).toBe('e6dd571d83175cc8327dc3785c48a1996ee9aacc8d0bcbf8e5922fd789824686');
     expect(sha(FACTS_SYSTEM)).toBe('309707b0c33d7fb2b05cce9fe88d434185180cf5c195135070e6f37509924d7c');
   });
 
@@ -77,7 +77,7 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-5', role: 'tool', toolName: 'web_search', content: 'Meteo: sole.', sentAt: '2026-06-08T09:04:00+02:00' },
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
-    expect(sha(second.system)).toBe('64dd251455ac91ed6e718a377c1c6d41aa51e56074fa012293215a189a5cbca2');
+    expect(sha(second.system)).toBe('4ebae1a305552f971bb8facf84140567359c97655c9ee10949cf6a99078e060d');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

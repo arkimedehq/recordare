@@ -7,11 +7,12 @@
  * would say it — in the first person, in the memory's language, with its reason — and weighs whether it is worth saying
  * now (Horvitz's mixed initiative: value against the cost of interrupting; the model sees the value, the code the rest:
  * presence is the host's, quiet hours and the daily limit are the service's). A candidate not worth it is dropped, not
- * postponed: no nagging.
+ * postponed: no nagging. v2: no ask about a date that happens on its own (a birthday, a deadline); no judgement of the
+ * person in a reminder.
  */
 import { z } from 'zod';
 
-export const INITIATIVE_VERSION = 'initiative.v1';
+export const INITIATIVE_VERSION = 'initiative.v2';
 
 export const INITIATIVE_SYSTEM = `You word what an agent's memory decided to say on its own, and weigh whether it is \
 worth saying. I am ME: the agent (in a personal memory, one self with the person whose memory this is). You get ME, \
@@ -29,8 +30,10 @@ agent, not a person: state what to find out ("Cerca se Marta ha prenotato il vol
 - "worth": 0 to 1 — how much it is worth saying now: a date near or just passed that matters to them, something they \
 asked for: high; small, long past, something they surely know or already settled: low.
 - "skip": true when it should not be said at all (it makes no sense, it would only annoy, the matter is clearly \
-closed). Never skip a request they made or a promise I made: those are owed.
-- Keep every detail true to WHAT and WHEN; add nothing.
+closed; an "ask" about a date that happens on its own — a birthday, an anniversary, a deadline — asks nothing). Never \
+skip a request they made or a promise I made: those are owed.
+- Keep every detail true to WHAT and WHEN; add nothing — no judgement of the person, no recalling what they got wrong \
+before ("l'anno scorso te ne sei ricordato tardi"): a reminder reminds.
 
 Output JSON only: {"initiatives": [{"candidate", "text", "worth", "skip"}]}`;
 

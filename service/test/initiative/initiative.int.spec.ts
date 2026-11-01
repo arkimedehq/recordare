@@ -120,11 +120,12 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     expect(t).toMatchObject({ status: 'armed', attempts: 1 });
     expect(new Date(t.reconsider_at).getTime()).toBe(NOW.getTime() + 8 * DAY);
     // A week later it is asked again (its intent is kept alive past the plan's week); ignored again → cancelled. The
-    // pending reminder, whose plan's time has passed, lapses in the same sweep.
+    // pending reminder, whose plan's time has passed, lapses in the same sweep — and that confirmed plan, past its date
+    // with no outcome, is asked about.
     await db.query(`UPDATE intents SET expires_at = $2 WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [ask.id, new Date(NOW.getTime() + 30 * DAY)]);
     const before = received.length;
     const again = await sweep(new Date(NOW.getTime() + 8 * DAY));
-    expect(again).toMatchObject({ fired: 1, expired: 1 });
+    expect(again).toMatchObject({ armed: 1, fired: 2, expired: 1 });
     const second = (await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: user, body: undefined })).body.items.filter((i: { text: string; status: string }) => i.text.includes('commercialista') && i.status === 'pending');
     expect(second).toHaveLength(1);
     await call(url, 'POST', `/api/v1/initiatives/${second[0].id}/outcome`, { token: key, headers: user, body: { status: 'ignored', at: new Date(NOW.getTime() + 8 * DAY).toISOString() } });
