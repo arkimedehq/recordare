@@ -786,7 +786,11 @@ works on its own and pushes, not a memory that only answers.
   confidence against the cost of interrupting, at a fitting moment, with the reason — and **pushes** them to the client
   (the mechanism is part of the design; the client delivers them to the person, in any channel). What happened to each
   (said, ignored, declined) is recorded and steers the next ones; an open loop is offered once, then left until
-  something changes; rate limits and the memory's quiet hours.
+  something changes; rate limits and the memory's quiet hours. **When to speak** (maintainer, 2026-11-01): the best
+  moment is when someone is there who can answer — the person it concerns, or anyone when it concerns everyone. Presence
+  is the body's knowledge (a chat open now, a voice recognised in the room, someone at the panel), so an initiative is
+  pushed with whom it is for and until when, and the agent delivers it when that person is present; Recordare adds what
+  it hears itself (continuous listening: someone is in the room, often who). Nobody comes in time: it lapses, quietly.
 - **Procedures**: "when X, I do it this way", learned only when an outcome says so (a correction, a confirmation, a plan
   done); recalled by situation, never told as facts about the world.
 - **Perception** (photos, audio, video, sensors): later, its own step (who describes, what is kept).

@@ -812,7 +812,11 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   momento adatto, con il motivo — e li **spinge** al client (il meccanismo fa parte del progetto; il client li consegna
   alla persona, su qualsiasi canale). Cosa ne è stato (detto, ignorato, rifiutato) è registrato e orienta i successivi;
   una cosa lasciata a metà è offerta una volta, poi lasciata finché qualcosa cambia; limiti di frequenza e le ore di
-  quiete della memoria.
+  quiete della memoria. **Quando parlare** (maintainer, 2026-11-01): il momento migliore è quando c'è qualcuno che può
+  rispondere — la persona a cui la cosa riguarda, o chiunque quando riguarda tutti. La presenza la conosce il corpo (una
+  chat aperta adesso, una voce riconosciuta nella stanza, qualcuno davanti al pannello): un'iniziativa è spinta con il
+  destinatario e la scadenza, e l'agente la consegna quando quella persona è presente; Recordare aggiunge ciò che sente
+  da sé (ascolto continuo: c'è qualcuno nella stanza, spesso chi). Se nessuno arriva in tempo, decade, in silenzio.
 - **Procedure**: "quando X, faccio così", imparate solo quando un risultato lo dice (una correzione, una conferma, un
   piano fatto); richiamate per situazione, mai dette come fatti del mondo.
 - **Percezione** (foto, audio, video, sensori): più avanti, un passo a sé (chi descrive, cosa si conserva).
