@@ -791,6 +791,16 @@ works on its own and pushes, not a memory that only answers.
   is the body's knowledge (a chat open now, a voice recognised in the room, someone at the panel), so an initiative is
   pushed with whom it is for and until when, and the agent delivers it when that person is present; Recordare adds what
   it hears itself (continuous listening: someone is in the room, often who). Nobody comes in time: it lapses, quietly.
+  **The push mechanism** (maintainer, 2026-11-01: a standard if there is one, else ours): no agent protocol pushes to a
+  client that is not connected (MCP 2026-07-28 is stateless; A2A pushes only updates of a task the client started;
+  CloudEvents' webhook spec has no signature). So: transport and signature by **Standard Webhooks** verbatim (the headers
+  `webhook-id` / `webhook-timestamp` / `webhook-signature`, HMAC-SHA256, a `whsec_` secret per client endpoint, 5-minute
+  tolerance, retries with backoff over days, `410` disables, SSRF rules with a deployer's knob for private ranges) — what
+  OpenAI and Anthropic use —, a **pull feed** (`GET api/v1/initiatives?since=`) as the second leg for clients behind NAT,
+  the plain envelope `{type, timestamp, data}` with types `initiative.created | updated | expired`, registration fields
+  named as A2A's (`url`, `token`, `authentication`); ours, because nothing covers them: the initiative (`id`, `kind`
+  say | ask | lookup | do, `for`, `text`, `reason`, `due_at`, `expires_at`) and the outcome report
+  (`POST api/v1/initiatives/{id}/outcome {status: said | asked | ignored | declined | done | failed | expired, at, reply?}`).
 - **Procedures**: "when X, I do it this way", learned only when an outcome says so (a correction, a confirmation, a plan
   done); recalled by situation, never told as facts about the world.
 - **Perception** (photos, audio, video, sensors): later, its own step (who describes, what is kept).

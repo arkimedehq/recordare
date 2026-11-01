@@ -817,6 +817,17 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   chat aperta adesso, una voce riconosciuta nella stanza, qualcuno davanti al pannello): un'iniziativa è spinta con il
   destinatario e la scadenza, e l'agente la consegna quando quella persona è presente; Recordare aggiunge ciò che sente
   da sé (ascolto continuo: c'è qualcuno nella stanza, spesso chi). Se nessuno arriva in tempo, decade, in silenzio.
+  **Il meccanismo di spinta** (maintainer, 2026-11-01: uno standard se c'è, altrimenti il nostro): nessun protocollo per
+  agenti spinge a un client non connesso (MCP 2026-07-28 è stateless; A2A spinge solo aggiornamenti di un task avviato
+  dal client; lo spec webhook di CloudEvents non ha firma). Quindi: trasporto e firma secondo **Standard Webhooks** alla
+  lettera (le intestazioni `webhook-id` / `webhook-timestamp` / `webhook-signature`, HMAC-SHA256, un segreto `whsec_` per
+  endpoint del client, tolleranza di 5 minuti, ritentativi con backoff per giorni, `410` disattiva, regole anti-SSRF con
+  un'opzione del deployer per gli indirizzi privati) — ciò che usano OpenAI e Anthropic —, un **feed in lettura**
+  (`GET api/v1/initiatives?since=`) come seconda gamba per i client dietro NAT, la busta semplice `{type, timestamp,
+  data}` con tipi `initiative.created | updated | expired`, i campi di registrazione con i nomi di A2A (`url`, `token`,
+  `authentication`); nostri, perché nessuno li copre: l'iniziativa (`id`, `kind` say | ask | lookup | do, `for`, `text`,
+  `reason`, `due_at`, `expires_at`) e il riscontro (`POST api/v1/initiatives/{id}/outcome {status: said | asked |
+  ignored | declined | done | failed | expired, at, reply?}`).
 - **Procedure**: "quando X, faccio così", imparate solo quando un risultato lo dice (una correzione, una conferma, un
   piano fatto); richiamate per situazione, mai dette come fatti del mondo.
 - **Percezione** (foto, audio, video, sensori): più avanti, un passo a sé (chi descrive, cosa si conserva).
