@@ -10,8 +10,8 @@ import { z } from 'zod';
 import { QUALITY_PROFILES } from '../engine/quality-profile';
 
 const PRECISIONS = ['minute', 'day', 'month', 'year', 'approximate', 'unknown'] as const;
-/** The last three are the agent's own thoughts (D53). */
-const NOTE_CATEGORIES = ['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint', 'insight', 'question', 'opinion'] as const;
+/** From `insight` on: the agent's own thoughts (D53); `self` = what it learned about itself as an agent (8.12b). */
+const NOTE_CATEGORIES = ['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint', 'insight', 'question', 'opinion', 'self'] as const;
 const NOTE_CHANGES = ['created', 'updated', 'corrected', 'confirmed', 'forgotten', 'retired'] as const;
 const NOTE_STATUSES = ['current', 'superseded', 'corrected'] as const;
 export type NoteCategory = (typeof NOTE_CATEGORIES)[number];
@@ -106,7 +106,7 @@ const note = z.object({
   pending: z.boolean(),
   inferred: z.boolean(),
   pattern: z.boolean().describe('A recurring pattern the memory drew from its episodes (inferred, never pending).'),
-  thought: z.boolean().describe('One of the agent\'s own thoughts — an insight, a question or an opinion (category) drawn from its episodes (D53).'),
+  thought: z.boolean().describe('One of the agent\'s own thoughts — an insight, a question, an opinion or a self note (category) drawn from its episodes and replies (D53).'),
   authorRole: z.string(),
   supportCount: z.number().int(),
   recordedAt: z.string(),

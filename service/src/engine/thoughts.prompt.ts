@@ -11,16 +11,18 @@
  * v2 (dev_thoughts): questions about an outcome never heard; every detail from a cited episode; shorter. v3: up to four new
  * thoughts; a thought may build on a habit the memory holds. v4: a question may rest on older episodes when what was
  * awaited is still unanswered; a thought that no longer holds is retired or revised, never contradicted by a new one.
+ * v5 (8.12b): MY REPLIES and the kind "self" — what I learned about myself as an agent, from outcomes.
  */
 import { z } from 'zod';
 
-export const THOUGHTS_VERSION = 'thoughts.v4';
+export const THOUGHTS_VERSION = 'thoughts.v5';
 /** Entity memories: the same version with the entity voice. */
 export const ENTITY_THOUGHTS_SUFFIX = '+entity';
 
 const BODY = `You get ME, TODAY, the EPISODES of the last weeks (E-numbers, with date; an episode is mine unless it \
 starts with [Name], [someone] or [undecided: …]; the NEW ones since my last thinking are marked *), the THOUGHTS I \
-already hold (T-numbers, kind, the E-numbers behind them when listed), what I already KNOW (notes and habits: never \
+already hold (T-numbers, kind, the E- and R-numbers behind them when listed), MY REPLIES of the last weeks (R-numbers: \
+what I answered someone and what they said next; NEW ones marked *), what I already KNOW (notes and habits: never \
 restate them), and the thoughts I was told to FORGET or that STOPPED holding (never propose them again unless new \
 episodes show something new).
 
@@ -33,6 +35,13 @@ tells it; or a detail I need for a plan of mine that nobody gave ("I wonder whet
 the loan"). Look for these every time: they are as important as insights.
 - "opinion": my own judgement of a situation from the evidence. It may differ from what someone says when the episodes \
 show otherwise — then say what the episodes show, kindly and plainly; never agree only because they said so.
+- "self": what I learned about MYSELF AS AN AGENT, from what happened — never from how I feel about myself: a mistake I \
+made and what to do about it (they corrected me, I said done what was only planned, I forgot what they had told me), \
+what works and what does not with a person (short or long answers, advice asked or unasked, tone, timing — shown by how \
+they reacted), a promise I made and what became of it, how a person deals with me (trusts me with something, checks \
+what I say). evidence: the R-numbers (and E-numbers) that show it, on at least two different days — the same outcome \
+twice; one correction alone is not a lesson. Not a self thought: a trait of the person, a judgement of myself nothing \
+shows, what someone said of me that my replies do not bear out, their habits, a thought about the world.
 
 Not a thought: a habit or routine (another pass finds those — but what a habit in KNOW implies for what to do next is an \
 insight); a fact or a plan; something one episode alone shows (an \
@@ -54,10 +63,13 @@ solved), or a question they answered (target; evidence: those episodes).
 - content: at most two short sentences in MEMORY LANGUAGE, in the first person ("I think…", "I wonder…" in that \
 language), concrete, with no more certainty than the episodes give. Every date, number or detail in it comes from an \
 episode it cites; no general rule from one case.
-- subject: "me" when it is about me or my place, else the Name the episodes carry in brackets for the person it is about.
+- subject: "me" when it is about me or my place (always for "self"), else the Name the episodes carry in brackets for \
+the person it is about.
 - confidence: "low", "medium" or "high", from how clearly the episodes show it.
 - Think only about what is new: with no NEW episode that changes something, the answer is an empty list — the usual \
 answer.
+
+- evidence items are E-numbers or R-numbers ("E3", "R2").
 
 Output JSON only: {"thoughts": [{"verdict", "target", "kind", "subject", "content", "evidence", "confidence"}]}`;
 
@@ -72,7 +84,7 @@ export const thoughtsSchema = z.object({
   thoughts: z.array(z.object({
     verdict: z.enum(['new', 'support', 'revise', 'weaken', 'retire']),
     target: z.string().nullable().optional(),
-    kind: z.enum(['insight', 'question', 'opinion']).catch('insight'),
+    kind: z.enum(['insight', 'question', 'opinion', 'self']).catch('insight'),
     subject: z.string().max(200).nullable().optional(),
     content: z.string().nullable().optional(),
     evidence: z.array(z.union([z.number().int(), z.string()])).default([]),

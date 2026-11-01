@@ -6,6 +6,9 @@ import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { ConsolidationService } from '../../src/engine/consolidation.service';
 import { ReadService } from '../../src/read/read.service';
+import { buildCards } from '../../src/recall/cards';
+import { EVERYTHING } from '../../src/recall/privacy';
+import { createHash } from 'node:crypto';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened and retired (D53, 8.12a)', () => {
@@ -14,6 +17,7 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
   let llm: Awaited<ReturnType<typeof startFakeLlm>>;
   let db: DataSource;
   let memoryId: string;
+  let clientId: string;
   const NOW = new Date('2026-10-12T20:00:00Z');
   const pass = () => app.get(ConsolidationService).thoughtsNow(memoryId, NOW);
 
@@ -40,6 +44,7 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     ({ app, url } = await startApp());
     db = app.get(DataSource);
     memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Marco' } })).body.personId;
+    clientId = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } })).body.id;
   });
   afterAll(async () => { await app?.close(); llm?.server.close(); emb?.close(); });
 
@@ -94,9 +99,37 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     expect(await thoughts()).toEqual([expect.objectContaining({ status: 'superseded', promotion: 'retired' })]);
   });
 
+  it('learns about itself from its replies and how they went (8.12b): a self note, in the self card', async () => {
+    const [conv] = await db.query(`INSERT INTO conversations (memory_id, client_id, external_id, started_at, last_message_at)
+      VALUES ($1, $2, 'c1', '2026-10-01T09:00:00Z', '2026-10-03T09:00:00Z') RETURNING id`, [memoryId, clientId]);
+    const say = async (id: string, role: string, content: string, at: string) => db.query(
+      `INSERT INTO messages (conversation_id, memory_id, external_id, role, content, content_hash, sent_at, author_kind, attribution_method, attribution_confidence, author_person_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'account', 1, $9)`,
+      [conv.id, memoryId, id, role, content, createHash('sha256').update(content).digest(), at, role === 'user' ? 'self' : 'agent', role === 'user' ? memoryId : null]);
+    await say('a1', 'assistant', 'Ecco un lungo riepilogo di tutto quello che potresti fare domani, con tre opzioni…', '2026-10-01T09:00:00Z');
+    await say('u1', 'user', 'Troppo lungo, dimmi solo l\'orario.', '2026-10-01T09:01:00Z');
+    await say('a2', 'assistant', 'Il dentista è alle 15, ma ti spiego anche come arrivarci e cosa portare…', '2026-10-03T09:00:00Z');
+    await say('u2', 'user', 'Basta l\'orario, grazie.', '2026-10-03T09:01:00Z');
+    await episode('Dal dentista', '2026-10-03', { importance: 10 });
+    await episode('Spesa al mercato', '2026-10-04', { importance: 10 });
+    llm.queue.push({ thoughts: [
+      { verdict: 'new', kind: 'self', subject: 'me', content: 'Con Marco funzionano le risposte brevi: due volte mi ha chiesto solo l\'orario', evidence: ['R1', 'R2'], confidence: 'medium' },
+      { verdict: 'new', kind: 'self', subject: 'me', content: 'Sono bravo a ricordare gli appuntamenti', evidence: [9] }, // no reply behind it
+    ] });
+    expect(await pass()).toMatchObject({ calls: 1, written: 1 });
+    expect(asked()).toContain('R1*. [2026-10-01] ME: Ecco un lungo riepilogo');
+    expect(asked()).toContain('→ Marco: Troppo lungo, dimmi solo l\'orario.');
+    const [self] = await db.query(`SELECT n.id, n.category::text, n.subject_kind::text, n.support_count, n.confidence,
+        (SELECT count(*)::int FROM note_evidence x WHERE x.note_id = n.id AND x.message_id IS NOT NULL) AS messages
+      FROM notes n WHERE n.memory_id = $1 AND n.category = 'self'`, [memoryId]);
+    expect(self).toMatchObject({ category: 'self', subject_kind: 'self', support_count: 2, messages: 4, confidence: expect.closeTo(0.6, 5) });
+    const cards = await buildCards(db, memoryId, EVERYTHING);
+    expect(cards!.self.notes.map((n) => n.category)).toEqual(['self']); // the other thoughts stay out of the card
+  });
+
   it('the Diary and the recall tell it as my own thought', async () => {
     await db.query(`UPDATE notes SET status = 'current' WHERE 'thought' = ANY(tags)`);
     const notes = await app.get(ReadService).notes(memoryId, {});
-    expect(notes).toEqual([expect.objectContaining({ category: 'insight', thought: true, pattern: false, inferred: true })]);
+    expect(notes.map((n) => [n.category, n.thought, n.pattern, n.inferred])).toEqual([['self', true, false, true], ['insight', true, false, true]]);
   });
 });

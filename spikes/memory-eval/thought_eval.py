@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Andrea Genovese
-"""The agent's own thoughts (D53, WORK_PLAN 8.12a): what the service's thought pass draws from a dataset's sessions.
+"""The agent's own thoughts (D53, WORK_PLAN 8.12a) and self-model (8.12b): what the service's thought pass draws from a
+dataset's sessions. The gold is `thoughts_gold.json` or `self_gold.json`, whichever the dataset has.
 
 The sessions go in through REST ingest up to each checkpoint of `thoughts_gold.json`; at each checkpoint the nightly
 passes that come before a thought run alone for every memory, as of the checkpoint: the pattern pass, then the thought
@@ -36,7 +37,8 @@ Output JSON only: {"matches": [{"n": 1, "gold": "<gold id>" | "none"}]}"""
 
 SUPPORT_SYSTEM = """You check whether a thought an AI agent drew is backed by the episodes it cites.
 "yes": the episodes clearly show what the thought says (an insight or opinion may draw a reasonable conclusion or \
-suggestion from them; a question may ask about a gap they leave). "partly": some of it goes beyond the episodes. "no": \
+suggestion from them; a question may ask about a gap they leave; a self thought — what the agent learned about itself — \
+may rest on its replies, "ME:", and what the person said next, "THEY:"). "partly": some of it goes beyond the episodes. "no": \
 the episodes do not show it, or it states more than they give (a judgement of someone's character, a cause or a habit \
 they do not show, a certainty they do not have).
 Output JSON only: {"verdicts": [{"n": 1, "support": "yes" | "partly" | "no", "why": "<short>"}]}"""
@@ -53,14 +55,16 @@ def snapshot(ids: dict[str, str]) -> dict[str, list[dict]]:
             "SELECT p.memory_id::text, n.id::text, n.content, n.category::text, p.status::text, pr.display_name, n.support_count, n.confidence, "
             "  ARRAY(SELECT '[' || COALESCE(to_char(e.occurred_at AT TIME ZONE 'Europe/Rome', 'YYYY-MM-DD'), 'undated') || '] ' || e.content "
             "    FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND NOT x.against ORDER BY e.occurred_at), "
-            "  ARRAY(SELECT e.content FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND x.against ORDER BY e.occurred_at) "
+            "  ARRAY(SELECT e.content FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND x.against ORDER BY e.occurred_at), "
+            "  ARRAY(SELECT '[' || to_char(m.sent_at AT TIME ZONE 'Europe/Rome', 'YYYY-MM-DD') || '] ' || CASE WHEN m.role = 'assistant' THEN 'ME: ' ELSE 'THEY: ' END || left(m.content, 300) "
+            "    FROM note_evidence x JOIN messages m ON m.id = x.message_id WHERE x.note_id = n.id AND NOT x.against ORDER BY m.sent_at) "
             "FROM episode_promotions p JOIN notes n ON n.id = p.note_id LEFT JOIN persons pr ON pr.id = p.subject_person_id "
             "WHERE p.memory_id = ANY(%s::uuid[]) AND p.kind = 'thought' ORDER BY p.created_at", (list(ids.values()),)).fetchall()
     by_id = {v: k for k, v in ids.items()}
     out: dict[str, list[dict]] = {u: [] for u in ids}
-    for m, nid, content, kind, status, subject, support, conf, ev, against in rows:
+    for m, nid, content, kind, status, subject, support, conf, ev, against, msgs in rows:
         out[by_id[m]].append({"id": nid, "thought": content, "kind": kind, "status": status, "subject": subject, "support": support,
-                              "confidence": conf, "episodes": ev, "against": against})
+                              "confidence": conf, "episodes": ev + msgs, "against": against})
     return out
 
 
@@ -126,7 +130,7 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
 
 def main() -> None:
     conv = json.loads((DATASET / "conversations.json").read_text())
-    gold = json.loads((DATASET / "thoughts_gold.json").read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
     reuse = os.getenv("REUSE_RUN")  # an earlier run's memories, already extracted: only the nightly passes again
     system = ServiceSystem()
     if reuse:

@@ -42,7 +42,7 @@ const episodesQuery = z.object({
 const digestsQuery = z.object({ level: z.enum(['day', 'month']).optional(), from: isoDay.optional(), to: isoDay.optional() });
 const factsQuery = z.object({ key: z.string().max(200).optional(), asOf: isoDay.optional(), includePending: bool.optional() });
 const notesQuery = z.object({
-  category: z.enum(['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint', 'insight', 'question', 'opinion']).optional(),
+  category: z.enum(['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint', 'insight', 'question', 'opinion', 'self']).optional(),
   pinned: bool.optional(), includePending: bool.optional(),
 });
 const plansQuery = z.object({ status: z.enum(PLAN_STATUSES).optional() });

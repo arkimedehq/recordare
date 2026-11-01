@@ -40,7 +40,7 @@ export async function buildCards(db: DataSource, memoryId: string, reader: Reade
   const notes: Array<{ id: string; category: string; content: string; pinned: boolean; pattern: boolean; who: string }> = await db.query(
     `SELECT id, category, content, pinned, 'pattern' = ANY(tags) AS pattern, COALESCE(subject_person_id, $1) AS who FROM notes
      WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND subject_kind IN ('self', 'contact')
-       AND NOT 'thought' = ANY(tags) -- my thoughts are not who someone is (D53)
+       AND (NOT 'thought' = ANY(tags) OR category = 'self') -- my thoughts are not who someone is; what I learned of myself as an agent is (D53)
        AND ${noteVisible('notes', reader)}
      ORDER BY pinned DESC, support_count DESC, recorded_at DESC`, [memoryId]);
   const contacts: Array<{ id: string; name: string; aliases: string[] | null; last: Date | null }> = await db.query(
@@ -67,7 +67,7 @@ export function selfCardLines(card: Card, budget: number): { lines: string[]; id
   const all: Array<[string, string]> = [
     ...card.facts.filter((f) => f.value !== null)
       .map((f): [string, string] => [f.id, `- about me: ${f.key.replace(/_/g, ' ')} = ${f.value}${f.validFrom ? ` (since ${f.validFrom})` : ''}`]),
-    ...card.notes.map((n): [string, string] => [n.id, `- about me${n.pattern ? ' (a pattern I noticed)' : ''}: ${n.content}`]),
+    ...card.notes.map((n): [string, string] => [n.id, `- about me${n.pattern ? ' (a pattern I noticed)' : n.category === 'self' ? ' as an agent (learned from how it went)' : ''}: ${n.content}`]),
   ];
   const lines: string[] = [];
   const ids = new Set<string>();
