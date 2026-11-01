@@ -25,7 +25,7 @@ describe('recurring patterns: the memory draws, keeps, retires its own conclusio
     return r.id as string;
   }
   const patterns = () => db.query(
-    `SELECT n.id, n.content, n.status::text, n.pending, n.stance::text, n.tags, n.confidence, n.support_count, p.status::text AS promotion,
+    `SELECT n.id, n.content, n.status::text, n.pending, n.stance::text, n.origin::text, n.tags, n.confidence, n.support_count, p.status::text AS promotion,
        (SELECT count(*)::int FROM note_evidence x WHERE x.note_id = n.id AND x.episode_id IS NOT NULL) AS episodes
      FROM episode_promotions p JOIN notes n ON n.id = p.note_id WHERE p.memory_id = $1 ORDER BY n.recorded_at`, [memoryId]);
   const asked = () => llm.requests.at(-1)?.messages[1]?.content ?? '';
@@ -66,7 +66,7 @@ describe('recurring patterns: the memory draws, keeps, retires its own conclusio
     expect(asked()).toContain('- Bevo il caffè amaro');
     expect(asked()).not.toContain('correre ogni giorno'); // the assistant's words are no evidence
     expect(await patterns()).toEqual([expect.objectContaining({ content: 'Corro al parco la domenica', status: 'current', pending: false,
-      stance: 'inferred', tags: ['pattern'], support_count: 3, episodes: 3, promotion: 'active' })]);
+      stance: 'inferred', origin: 'reflected', tags: ['pattern'], support_count: 3, episodes: 3, promotion: 'active' })]);
 
     // Nothing new: no call.
     const before = llm.requests.length;

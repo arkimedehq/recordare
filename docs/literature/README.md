@@ -11,6 +11,7 @@ quoting them externally. Licences of reusable code: `../LICENSING.md`.
 | Card | Source | Topic |
 |---|---|---|
 | [pis-typed-intention-stores](pis-typed-intention-stores.md) | Zhao & Wu, arXiv:2609.01272 | Plan / intention lifecycle in code |
+| [reflection-and-initiative](reflection-and-initiative.md) | Survey: Recordare, agent systems, cognitive science (2026-11-01) | Thoughts, self-model, procedures, intents and initiative (D53) |
 | [statemembench-state-tracking](statemembench-state-tracking.md) | Fan et al., arXiv:2608.19652 | Evolving state, anti-traps, derived facts |
 | [stale-implicit-conflict](stale-implicit-conflict.md) | Chao et al., arXiv:2605.06527 | Implicit invalidation, premise resistance |
 | [zep-temporal-kg](zep-temporal-kg.md) | Rasmussen et al., arXiv:2501.13956 | Bi-temporal facts |

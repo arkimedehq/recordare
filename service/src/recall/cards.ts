@@ -40,6 +40,7 @@ export async function buildCards(db: DataSource, memoryId: string, reader: Reade
   const notes: Array<{ id: string; category: string; content: string; pinned: boolean; pattern: boolean; who: string }> = await db.query(
     `SELECT id, category, content, pinned, 'pattern' = ANY(tags) AS pattern, COALESCE(subject_person_id, $1) AS who FROM notes
      WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND subject_kind IN ('self', 'contact')
+       AND NOT 'thought' = ANY(tags) -- my thoughts are not who someone is (D53)
        AND ${noteVisible('notes', reader)}
      ORDER BY pinned DESC, support_count DESC, recorded_at DESC`, [memoryId]);
   const contacts: Array<{ id: string; name: string; aliases: string[] | null; last: Date | null }> = await db.query(

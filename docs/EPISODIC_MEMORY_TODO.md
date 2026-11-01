@@ -760,6 +760,50 @@ from others; D50's "no viewer filter" stays the default: **everything is public 
   also covers what that person kept private earlier in the same conversation, no longer in the window. A sensitive
   topic told without asking stays public. Dev set `dataset_dev_private` (RESULTS.md).
 
+### D53 — The agent's own mind: thoughts, self-model, intents and initiative, procedures (maintainer's decision, 2026-11-01)
+WORK_PLAN 8.12. Research: `docs/literature/reflection-and-initiative.md` (what Recordare has, what others do, how the
+human mind reflects and takes initiative). The goal is a mind for an agent — a robot as much as a chat assistant — that
+works on its own and pushes, not a memory that only answers.
+- **Autonomous** (D26 extended to all of it): no proposal and no confirmation anywhere; what the mind concludes,
+  intends or learns is its own; a client may forget it, never approve it.
+- **Thoughts** (reflection): the agent's own insights, questions and opinions about what it lived, each with the
+  episodes it rests on and a confidence. New origin `reflected` (the recurring patterns get it too: today they are
+  stored as `holder_lived`, which mixes what was lived with what was concluded). Triggered by the importance gathered by
+  new public episodes since the last reflection — zero calls otherwise. Concrete and aimed at what to do next, not
+  rumination: no new thought without new evidence; thoughts on thoughts at most one level deep; a thought gains support
+  when new episodes agree, loses it when they contradict, and is retired at zero; when an episode it rests on is
+  corrected or forgotten it is reviewed.
+- **Told to people**: the agent says its thoughts, marked as its own ("I think…", in recall and in the memory context).
+  They are built from public memories only (D52). Never a person's personality trait stored as a fact. Opinions may
+  disagree with the holder when the evidence supports it (H9: not sycophantic).
+- **Self-model**: what the agent knows of itself — what it does well, its mistakes, its style, its relations — built
+  from outcomes (corrections it received, errors pointed out, its own replies), not from introspection; worded with
+  caution. The self card grows into "who I am as an agent".
+- **Intents and initiative, pushed**: Recordare works and pushes by itself. The agent's intents — promises ("I'll let
+  you know"), requests it took on, intents of its own, open plans to resume — are rows with a cue ("if X, then Y": a
+  person, a topic, an event, a time) and a lifecycle (pending → armed → fired → done / expired), reconsidered only on a
+  cue (new evidence, a passed deadline, a conflict). An initiative pass turns them into messages worth saying — value ×
+  confidence against the cost of interrupting, at a fitting moment, with the reason — and **pushes** them to the client
+  (the mechanism is part of the design; the client delivers them to the person, in any channel). What happened to each
+  (said, ignored, declined) is recorded and steers the next ones; an open loop is offered once, then left until
+  something changes; rate limits and the memory's quiet hours.
+- **Procedures**: "when X, I do it this way", learned only when an outcome says so (a correction, a confirmation, a plan
+  done); recalled by situation, never told as facts about the world.
+- **Perception** (photos, audio, video, sensors): later, its own step (who describes, what is kept).
+- **Cost** (D35): economy — the initiative from open plans and armed intents without LLM; balanced — plus thoughts;
+  full — plus a free pass that links open problems with new material.
+- **Order**: (a) thoughts and the patterns' origin, (b) self-model, (c) intents and pushed initiative, (d) procedures,
+  (e) perception. Each step with a dev set first: thoughts supported by what they cite (the false-thought rate),
+  initiative precision and false alarms, no rise in sycophancy, self-model accuracy.
+- **Built so far** (2026-11-01, step a): origin `reflected` (migration `Thoughts`; the patterns moved to it); the thought
+  pass (`thoughts.v4`, `service/src/engine/thoughts.service.ts`, DATA_MODEL → episode_promotions): insights, questions
+  and opinions as notes with `thought: true`, told as the agent's own in recall, context and Diary, kept out of the cards;
+  knob `thoughts` (balanced, full). Decided while building: a question may rest on older episodes when what it awaits is
+  still unanswered (silence is its evidence; the dev set's two missed questions came from the freshness rule); open plans
+  still ahead take part; a new thought on a held one's subject and matter revises it — the models add the opposite
+  thought beside the old one instead of retiring it. Dev set `dataset_dev_thoughts`: 13 / 14 in three runs, no false
+  thought (RESULTS.md).
+
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 decided 2026-10-12 with WORK_PLAN 5.4). Open work is tracked

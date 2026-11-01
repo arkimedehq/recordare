@@ -1,0 +1,1634 @@
+{
+ "_note": "dev_thoughts (WORK_PLAN 8.12a, D53): the agent's own thoughts (insights, questions, opinions) drawn from what it lived, and the thoughts it must not have. Fictional. Not blind.",
+ "users": {
+  "chiara": "Chiara, Torino",
+  "lorenzo": "Lorenzo, Bologna",
+  "hannah": "Hannah, Manchester",
+  "javier": "Javier, Sevilla",
+  "forno_ferri": "Forno Ferri, Torino"
+ },
+ "genders": {
+  "chiara": "feminine",
+  "lorenzo": "masculine",
+  "hannah": "feminine",
+  "javier": "masculine"
+ },
+ "entities": [
+  "forno_ferri"
+ ],
+ "sessions": [
+  {
+   "id": "forno_ferri-2026-08-01-0730",
+   "user": "forno_ferri",
+   "ts": "2026-08-01T07:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Da oggi la focaccia genovese costa 2,50 al pezzo, aggiorna il listino."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto, Paola: focaccia a 2,50."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-02-1930",
+   "user": "chiara",
+   "ts": "2026-08-02T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Gita al lago di Avigliana con Fede, abbiamo noleggiato il pedalò. Mi sono pure scottata le spalle."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella giornata! Mettici un po' di crema dopo la doccia."
+    },
+    {
+     "role": "user",
+     "content": "Già fatto, grazie."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-02-1900",
+   "user": "hannah",
+   "ts": "2026-08-02T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Back from Mum's in Stockport. She sent me home with half her garden's courgettes, again."
+    },
+    {
+     "role": "assistant",
+     "content": "Courgette soup week, then!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-03-0630",
+   "user": "forno_ferri",
+   "ts": "2026-08-03T06:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, ho pulito il forno grande prima di accenderlo."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Gino."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-03-1300",
+   "user": "lorenzo",
+   "ts": "2026-08-03T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Da oggi digiuno intermittente 16:8: mangio solo tra mezzogiorno e le otto di sera. Me l'ha consigliato Gabriele in ufficio, dice che ha perso sei chili."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo! Vuoi che ti ricordi gli orari?"
+    },
+    {
+     "role": "user",
+     "content": "No, ce la faccio da solo."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-04-0800",
+   "user": "javier",
+   "ts": "2026-08-04T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Anoche intenté estudiar inglés a las once, al volver del curro. A los diez minutos me quedé dormido encima del libro."
+    },
+    {
+     "role": "assistant",
+     "content": "Normal, venías reventado."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-04-2230",
+   "user": "chiara",
+   "ts": "2026-08-04T22:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rientrata ora dall'arrampicata al Sasso Rosso, finalmente ho chiuso il blocco giallo che provavo da settimane."
+    },
+    {
+     "role": "assistant",
+     "content": "Grande! Te lo meriti."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-05-0910",
+   "user": "chiara",
+   "ts": "2026-08-05T09:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il regionale delle 8:12 per Ivrea oggi è partito con venti minuti di ritardo. Sono entrata in ufficio a riunione iniziata."
+    },
+    {
+     "role": "assistant",
+     "content": "Che seccatura. Ti serve qualcosa per la riunione?"
+    },
+    {
+     "role": "user",
+     "content": "No, ormai è andata."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-05-2200",
+   "user": "hannah",
+   "ts": "2026-08-05T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Evening at the community studio. Threw six mugs and a jug, the jug's a bit wonky but I like it."
+    },
+    {
+     "role": "assistant",
+     "content": "Wonky jugs have character!"
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-06-0820",
+   "user": "chiara",
+   "ts": "2026-08-06T08:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri alle cinque mi sono presa un caffè alla macchinetta per reggere il pomeriggio. Stanotte mi sono addormentata alle due, sono uno straccio."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi dispiace. Oggi prenditela con calma, se puoi."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-06-0845",
+   "user": "lorenzo",
+   "ts": "2026-08-06T08:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "La Panda stamattina non partiva. Batteria andata: 120 euro dal meccanico sotto casa."
+    },
+    {
+     "role": "assistant",
+     "content": "Che sfortuna. Almeno adesso riparte?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, tutto ok."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-06-0915",
+   "user": "javier",
+   "ts": "2026-08-06T09:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hoy me he puesto con el inglés de siete a ocho, antes de ir a trabajar. Dos unidades enteras y me acuerdo de todo."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Muy bien!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-06-1115",
+   "user": "forno_ferri",
+   "ts": "2026-08-06T11:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino. La farina del Mulino Bosco doveva arrivare alle sette, è arrivata adesso. Ho dovuto rimandare il secondo impasto."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato il ritardo, Gino."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-08-1730",
+   "user": "hannah",
+   "ts": "2026-08-08T17:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Levenshulme market today: all 20 mugs gone by noon. Not one of the big vases sold though, carted all six home again."
+    },
+    {
+     "role": "assistant",
+     "content": "Busy day! Did you have a good spot?"
+    },
+    {
+     "role": "user",
+     "content": "Right by the coffee van, so lots of people."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-09-1600",
+   "user": "lorenzo",
+   "ts": "2026-08-09T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pranzo dai miei. Mia sorella Marta ci ha annunciato che a ottobre si trasferisce a Lisbona per lavoro!"
+    },
+    {
+     "role": "assistant",
+     "content": "Che notizia! Come l'hanno presa i tuoi?"
+    },
+    {
+     "role": "user",
+     "content": "Mia madre ha pianto, mio padre ha aperto il prosecco."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-09-2000",
+   "user": "javier",
+   "ts": "2026-08-09T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Dani se ha ido al pueblo el finde y ha dejado el fregadero lleno de platos. Me ha tocado fregar a mí."
+    },
+    {
+     "role": "assistant",
+     "content": "Vaya faena. ¿Se lo has dicho?"
+    },
+    {
+     "role": "user",
+     "content": "Le he mandado una foto, ja."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-10-0715",
+   "user": "forno_ferri",
+   "ts": "2026-08-10T07:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, consegna del Mulino arrivata alle sette spaccate, tutto a posto."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, grazie."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-10-2030",
+   "user": "lorenzo",
+   "ts": "2026-08-10T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prima settimana di 16:8 fatta! Funziona alla grande. La bilancia dice ancora 84, ma all'inizio è normale."
+    },
+    {
+     "role": "assistant",
+     "content": "Una settimana è già un traguardo."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-11-2215",
+   "user": "chiara",
+   "ts": "2026-08-11T22:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Arrampicata stasera, c'era un sacco di gente nuova al Sasso Rosso."
+    },
+    {
+     "role": "assistant",
+     "content": "Bello, la palestra si riempie!"
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-12-0830",
+   "user": "javier",
+   "ts": "2026-08-12T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Anoche otra vez con el inglés después de cenar. Nada, leía la misma frase tres veces y no me enteraba."
+    },
+    {
+     "role": "assistant",
+     "content": "Qué rabia cuando pasa eso."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-12-0905",
+   "user": "chiara",
+   "ts": "2026-08-12T09:05:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Indovina: l'8:12 di nuovo in ritardo, mezz'ora stavolta, guasto a un passaggio a livello. Ho dovuto scrivere al capo che arrivavo tardi."
+    },
+    {
+     "role": "assistant",
+     "content": "Accidenti. Gli hai già scritto?"
+    },
+    {
+     "role": "user",
+     "content": "Sì sì, tutto a posto."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-12-2210",
+   "user": "hannah",
+   "ts": "2026-08-12T22:10:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Studio night. Trimmed last week's mugs and started on some bowls."
+    },
+    {
+     "role": "assistant",
+     "content": "Nice, a productive one."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-13-0840",
+   "user": "chiara",
+   "ts": "2026-08-13T08:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Altra notte in bianco, sveglia fino all'una e mezza. Ieri pomeriggio riunione infinita e mi sono bevuta due caffè per stare sveglia."
+    },
+    {
+     "role": "assistant",
+     "content": "Che fatica. Stasera magari vai a letto presto."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-14-1200",
+   "user": "forno_ferri",
+   "ts": "2026-08-14T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Stamattina la cassa si è bloccata due volte, abbiamo fatto gli scontrini a mano per un'ora."
+    },
+    {
+     "role": "assistant",
+     "content": "Che mattinata. Adesso funziona?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, dopo il riavvio è ripartita."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-14-1200",
+   "user": "hannah",
+   "ts": "2026-08-14T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ordered my glazes from Glazeworks Direct this time instead of Brindle. About 30% cheaper, which really adds up."
+    },
+    {
+     "role": "assistant",
+     "content": "Done. When do they arrive?"
+    },
+    {
+     "role": "user",
+     "content": "Monday, they said."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-14-1800",
+   "user": "javier",
+   "ts": "2026-08-14T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ya estoy apuntado al B2 First del sábado 24 de octubre. La fecha del speaking me la mandan por correo, dicen."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Genial, ya es oficial! ¿Dónde es el examen?"
+    },
+    {
+     "role": "user",
+     "content": "En una academia de la Avenida de la Constitución."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-15-2100",
+   "user": "chiara",
+   "ts": "2026-08-15T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ferragosto a casa dei miei a Pinerolo, grigliata in giardino con i cugini."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon Ferragosto!"
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-15-2100",
+   "user": "javier",
+   "ts": "2026-08-15T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Día de playa en Matalascañas con los primos. Había medio Sevilla allí."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué bien, con este calor!"
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-15-2130",
+   "user": "lorenzo",
+   "ts": "2026-08-15T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ferragosto sull'Appennino a Monghidoro con gli amici, tortelloni e una camminata fino al crinale."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel modo di passarlo!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-17-0630",
+   "user": "forno_ferri",
+   "ts": "2026-08-17T06:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, forno grande pulito."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie, Gino."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-18-1310",
+   "user": "chiara",
+   "ts": "2026-08-18T13:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Figuraccia stamattina: Davide è arrivato con un quarto d'ora di ritardo alla call con il cliente e ho dovuto tenere banco io."
+    },
+    {
+     "role": "assistant",
+     "content": "Che situazione. Com'è andata la call alla fine?"
+    },
+    {
+     "role": "user",
+     "content": "Bene dai, il cliente non ha detto niente."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-18-1600",
+   "user": "hannah",
+   "ts": "2026-08-18T16:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lovely chat with Nadia, who runs the Bean There café on Burton Road. She wants 40 mugs with their logo on! Said she'd confirm after the bank holiday."
+    },
+    {
+     "role": "assistant",
+     "content": "That's exciting! A big order."
+    },
+    {
+     "role": "user",
+     "content": "I know, fingers crossed."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-18-2230",
+   "user": "chiara",
+   "ts": "2026-08-18T22:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera arrampicata, mi fanno ancora male le dita dalla settimana scorsa."
+    },
+    {
+     "role": "assistant",
+     "content": "Riposale un po'!"
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-19-0900",
+   "user": "chiara",
+   "ts": "2026-08-19T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "8:12 in ritardo anche oggi, quindici minuti. Ormai in stazione ci conosciamo tutti, i pendolari dell'8:12."
+    },
+    {
+     "role": "assistant",
+     "content": "Almeno c'è compagnia!"
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-19-0900",
+   "user": "lorenzo",
+   "ts": "2026-08-19T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera a mezzanotte ho svuotato mezzo pacco di biscotti, avevo una fame da lupi. Comunque la dieta va benissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "Capita. Oggi come ti senti?"
+    },
+    {
+     "role": "user",
+     "content": "Bene bene."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-19-0900",
+   "user": "javier",
+   "ts": "2026-08-19T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hoy he madrugado otra vez para estudiar: en una hora he hecho todos los ejercicios de phrasal verbs."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué productivo!"
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-19-2200",
+   "user": "hannah",
+   "ts": "2026-08-19T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Studio again tonight, glazed the bowls with the new celadon from Glazeworks."
+    },
+    {
+     "role": "assistant",
+     "content": "Can't wait to see them out of the kiln."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-20-0830",
+   "user": "lorenzo",
+   "ts": "2026-08-20T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri sera alle undici mi è arrivata una mail del capo sul budget. L'ho letta a letto e non ho più chiuso occhio."
+    },
+    {
+     "role": "assistant",
+     "content": "Che nervi. Era urgente?"
+    },
+    {
+     "role": "user",
+     "content": "Macché, poteva aspettare stamattina."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-20-1210",
+   "user": "forno_ferri",
+   "ts": "2026-08-20T12:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Anche oggi il Mulino Bosco in ritardo: la consegna è arrivata a mezzogiorno. Li ho chiamati, dicono che il giovedì fanno il giro lungo."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato. Mancava qualcosa per oggi?"
+    },
+    {
+     "role": "user",
+     "content": "Abbiamo fatto meno pane in cassetta."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-21-0815",
+   "user": "chiara",
+   "ts": "2026-08-21T08:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stanotte dormito benissimo, otto ore filate. Ieri giornata tranquilla, niente caffè dopo pranzo."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello svegliarsi riposati!"
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-21-2300",
+   "user": "javier",
+   "ts": "2026-08-21T23:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cumpleaños de mi madre, la llevamos a cenar a Triana. Le regalamos un viaje a Lisboa."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Felicidades a tu madre!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-22-1000",
+   "user": "forno_ferri",
+   "ts": "2026-08-22T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, avete ancora il pane di segale?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, sono rimaste due pagnotte sul bancone."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, ne prendo una."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-22-1700",
+   "user": "hannah",
+   "ts": "2026-08-22T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Market again. Mugs sold out by eleven, someone even asked if I take orders. Vases: zero, again."
+    },
+    {
+     "role": "assistant",
+     "content": "What did you tell the person about orders?"
+    },
+    {
+     "role": "user",
+     "content": "Gave them my card."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-23-1800",
+   "user": "lorenzo",
+   "ts": "2026-08-23T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Voglio organizzare una cena d'addio per Marta con i suoi amici dell'università, magari all'osteria in via del Pratello. Però lei ancora non sa il giorno preciso in cui parte."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella idea, l'osteria le piacerà."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-24-0710",
+   "user": "forno_ferri",
+   "ts": "2026-08-24T07:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, farina del Mulino arrivata puntuale."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, segnato."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-24-2100",
+   "user": "javier",
+   "ts": "2026-08-24T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Gimnasio a las siete de la tarde: veinte minutos esperando la prensa de piernas. Estaba a reventar."
+    },
+    {
+     "role": "assistant",
+     "content": "Qué paciencia."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-25-1830",
+   "user": "lorenzo",
+   "ts": "2026-08-25T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Di nuovo dal meccanico con la Panda: pastiglie e dischi dei freni, 340 euro."
+    },
+    {
+     "role": "assistant",
+     "content": "Ahi. Almeno adesso frena bene."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-25-2220",
+   "user": "chiara",
+   "ts": "2026-08-25T22:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Arrampicata con Fede stasera al Sasso Rosso, lei ha fatto il nero al primo colpo."
+    },
+    {
+     "role": "assistant",
+     "content": "Fede è un fenomeno!"
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-26-0920",
+   "user": "chiara",
+   "ts": "2026-08-26T09:20:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "L'8:12 oggi è proprio saltato, soppresso. Ho preso quello dopo e sono arrivata alle dieci."
+    },
+    {
+     "role": "assistant",
+     "content": "Che giornata storta. Ce l'hai fatta per gli appuntamenti?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, il primo era alle dieci e mezza per fortuna."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-26-2100",
+   "user": "lorenzo",
+   "ts": "2026-08-26T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho capito una cosa: le mail di lavoro dopo cena mi rovinano la serata. Da oggi le notifiche del lavoro si spengono alle otto, punto."
+    },
+    {
+     "role": "assistant",
+     "content": "Vuoi che ti aiuti a impostare la modalità non disturbare?"
+    },
+    {
+     "role": "user",
+     "content": "Già fatto."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-08-27-0830",
+   "user": "chiara",
+   "ts": "2026-08-27T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ieri alle sei aperitivo con Elisa e ho preso un caffè invece dello spritz, che genio. Notte quasi in bianco."
+    },
+    {
+     "role": "assistant",
+     "content": "Oggi ti serve un pisolino!"
+    },
+    {
+     "role": "user",
+     "content": "Magari."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-27-0930",
+   "user": "hannah",
+   "ts": "2026-08-27T09:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Opened the kiln this morning. Half the bowls with the new celadon have crazed all over. Gutted."
+    },
+    {
+     "role": "assistant",
+     "content": "Oh no, I'm sorry. All of them?"
+    },
+    {
+     "role": "user",
+     "content": "About half. Probably my firing schedule, I'll tweak it next time."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-27-1040",
+   "user": "forno_ferri",
+   "ts": "2026-08-27T10:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino. Farina arrivata alle dieci e mezza, di nuovo. Stamattina niente grissini."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Gino."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-08-28-1230",
+   "user": "lorenzo",
+   "ts": "2026-08-28T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stamattina mal di testa fino a mezzogiorno, terza volta questa settimana. Ma il 16:8 è fantastico, mi sento molto più disciplinato."
+    },
+    {
+     "role": "assistant",
+     "content": "Mi dispiace per il mal di testa."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-08-29-1330",
+   "user": "javier",
+   "ts": "2026-08-29T13:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Primer examen de prueba del B2: gramática y vocabulario 82 %, listening 54 %. Tengo que darle caña a la gramática, es mi punto débil."
+    },
+    {
+     "role": "assistant",
+     "content": "Ya tienes una primera referencia."
+    },
+    {
+     "role": "user",
+     "content": "Sí, ahora a por ello."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-08-30-2000",
+   "user": "hannah",
+   "ts": "2026-08-30T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bank holiday weekend in the Lake District with Sam. Walked up Catbells in the drizzle, worth it for the view."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds wonderful!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-08-31-0630",
+   "user": "forno_ferri",
+   "ts": "2026-08-31T06:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, pulito il forno grande."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-01-1800",
+   "user": "hannah",
+   "ts": "2026-09-01T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Posted the new speckled mugs on Instagram today."
+    },
+    {
+     "role": "assistant",
+     "content": "They look great. I think posting on Fridays would bring you more orders, people plan their weekend shopping then."
+    },
+    {
+     "role": "user",
+     "content": "Maybe, I'll see."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-02-2200",
+   "user": "lorenzo",
+   "ts": "2026-09-02T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ti dico una cosa, però non dirlo a nessuno: Marta è incinta. Lo sappiamo solo io e i miei genitori."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, resta tra noi."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-09-02-2200",
+   "user": "javier",
+   "ts": "2026-09-02T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "He llegado a la conclusión de que ir al gimnasio a las siete es imposible, siempre está a tope. A partir de ahora voy a mediodía."
+    },
+    {
+     "role": "assistant",
+     "content": "Apuntado."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-02-2200",
+   "user": "hannah",
+   "ts": "2026-09-02T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Studio tonight, made a batch of small planters to try something new."
+    },
+    {
+     "role": "assistant",
+     "content": "Fun! Different from the mugs."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-03-1100",
+   "user": "forno_ferri",
+   "ts": "2026-09-03T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, il Mulino è arrivato alle undici. Ho dovuto dire a due clienti di ripassare per le pagnotte."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato il ritardo, Paola."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-03-2000",
+   "user": "chiara",
+   "ts": "2026-09-03T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Davide non ha consegnato le slide per la presentazione di domani, le ho finite io stasera."
+    },
+    {
+     "role": "assistant",
+     "content": "Che stress. Sono pronte adesso?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, finalmente."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-05-1100",
+   "user": "forno_ferri",
+   "ts": "2026-09-05T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. Alle dieci e mezza la focaccia era già finita, tre clienti sono andati via a mani vuote."
+    },
+    {
+     "role": "assistant",
+     "content": "Peccato, segnato."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-05-1715",
+   "user": "hannah",
+   "ts": "2026-09-05T17:15:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sold out of mugs again at the market. One vase went, to my aunt, so I'm not sure that counts."
+    },
+    {
+     "role": "assistant",
+     "content": "Ha, family sales still count a little!"
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-05-2345",
+   "user": "lorenzo",
+   "ts": "2026-09-05T23:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Concerto in piazza Maggiore stasera, l'orchestra del Comunale con le colonne sonore di Morricone. Pelle d'oca."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata!"
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-09-06-1930",
+   "user": "javier",
+   "ts": "2026-09-06T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Otra vez el fregadero lleno de platos de Dani, este fin de semana tenía invitados."
+    },
+    {
+     "role": "assistant",
+     "content": "¿Habéis hablado de turnos?"
+    },
+    {
+     "role": "user",
+     "content": "Todavía no."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-07-0705",
+   "user": "forno_ferri",
+   "ts": "2026-09-07T07:05:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, consegna del lunedì arrivata in orario."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, grazie Gino."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-07-0815",
+   "user": "lorenzo",
+   "ts": "2026-09-07T08:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cinque settimane di digiuno: 84 chili, esattamente come all'inizio. Però mi sento leggero, quindi funziona."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, ho segnato il peso di oggi."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-07-0900",
+   "user": "chiara",
+   "ts": "2026-09-07T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Da oggi c'è l'orario nuovo dei treni. L'8:12 è arrivato a Ivrea puntuale al minuto, non ci credevo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo inizio di settimana!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-08-1500",
+   "user": "forno_ferri",
+   "ts": "2026-09-08T15:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. Ti dico una cosa, ma non dirlo a nessuno, soprattutto a Paola: a dicembre me ne vado, ho trovato un posto a Milano."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Sara, resta tra noi."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-08-2230",
+   "user": "chiara",
+   "ts": "2026-09-08T22:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ripresa l'arrampicata dopo una settimana di stop, che bello."
+    },
+    {
+     "role": "assistant",
+     "content": "Bentornata in parete!"
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-10-1000",
+   "user": "hannah",
+   "ts": "2026-09-10T10:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fired a new batch with a slower cool, like people on the forum suggested. Still crazing and pinholes on everything with the Glazeworks glazes."
+    },
+    {
+     "role": "assistant",
+     "content": "That's frustrating."
+    },
+    {
+     "role": "user",
+     "content": "Ah well, they're so much cheaper, I'll keep at it."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-10-1900",
+   "user": "chiara",
+   "ts": "2026-09-10T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Elisa domani ha il colloquio al Politecnico per il dottorato, è agitatissima. Le ho detto di chiamarmi appena esce."
+    },
+    {
+     "role": "assistant",
+     "content": "Incrocio le dita per lei!"
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-11-1900",
+   "user": "hannah",
+   "ts": "2026-09-11T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Put a reel of the planters on Instagram, got a few likes."
+    },
+    {
+     "role": "assistant",
+     "content": "Fridays are your best day for orders, I reckon."
+    },
+    {
+     "role": "user",
+     "content": "We'll see."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-12-1110",
+   "user": "forno_ferri",
+   "ts": "2026-09-12T11:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara, di nuovo senza focaccia prima delle undici. La signora del terzo piano si è pure lamentata."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, grazie Sara."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-09-12-1300",
+   "user": "javier",
+   "ts": "2026-09-12T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Segundo examen de prueba: gramática 85 %, listening 57 %. La gramática todavía me falla, esta semana más ejercicios de condicionales."
+    },
+    {
+     "role": "assistant",
+     "content": "Has subido en las dos partes."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-14-0630",
+   "user": "forno_ferri",
+   "ts": "2026-09-14T06:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, forno grande pulito anche oggi."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie, Gino."
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-14-1800",
+   "user": "lorenzo",
+   "ts": "2026-09-14T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il meccanico dice che la frizione della Panda è da rifare: preventivo 900 euro. Ha diciassette anni questa macchina, poverina."
+    },
+    {
+     "role": "assistant",
+     "content": "Ti ha dato tempo per decidere?"
+    },
+    {
+     "role": "user",
+     "content": "Dice che per un mese ce la fa ancora."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-15-2230",
+   "user": "chiara",
+   "ts": "2026-09-15T22:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Arrampicata stasera, nuovo record di tre blocchi rossi di fila."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava!"
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-16-0900",
+   "user": "lorenzo",
+   "ts": "2026-09-16T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Altra abbuffata notturna ieri: pane e nutella alle undici e mezza. Il 16:8 resta la scelta migliore che abbia fatto quest'anno."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-16-0905",
+   "user": "chiara",
+   "ts": "2026-09-16T09:05:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Terza settimana con l'orario nuovo e l'8:12 sempre in orario. Mai arrivata così presto in ufficio."
+    },
+    {
+     "role": "assistant",
+     "content": "Finalmente!"
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-16-2200",
+   "user": "hannah",
+   "ts": "2026-09-16T22:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Studio night, finished glazing the planters."
+    },
+    {
+     "role": "assistant",
+     "content": "Looking forward to the result!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-17-1130",
+   "user": "forno_ferri",
+   "ts": "2026-09-17T11:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino. Mulino Bosco arrivato alle undici e un quarto, la seconda infornata è slittata a mezzogiorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-17-1100",
+   "user": "hannah",
+   "ts": "2026-09-17T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Used up my last tub of the old Brindle glaze on a test batch. Same kiln, same schedule. They came out perfect, not a single crack."
+    },
+    {
+     "role": "assistant",
+     "content": "Lovely, they must look great."
+    },
+    {
+     "role": "user",
+     "content": "Weird, though."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-09-18-2315",
+   "user": "javier",
+   "ts": "2026-09-18T23:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hemos visto el partido del Betis en el bar de abajo. Empate a uno en el último minuto."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué sufrimiento!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-19-1100",
+   "user": "forno_ferri",
+   "ts": "2026-09-19T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, oggi ero io al banco: focaccia finita alle dieci e quaranta."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Paola."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-19-1300",
+   "user": "chiara",
+   "ts": "2026-09-19T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giro al mercato di Porta Palazzo stamattina, ho preso un chilo di fichi e i peperoni per la peperonata."
+    },
+    {
+     "role": "assistant",
+     "content": "Che buono!"
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-19-1600",
+   "user": "hannah",
+   "ts": "2026-09-19T16:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Proper downpour at the market, hardly anyone came. Sold six mugs and packed up early."
+    },
+    {
+     "role": "assistant",
+     "content": "Rough day. Get warm and dry!"
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-20-1900",
+   "user": "lorenzo",
+   "ts": "2026-09-20T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono passato da Marta, ha già mezza casa negli scatoloni. Il volo però ancora non l'ha prenotato."
+    },
+    {
+     "role": "assistant",
+     "content": "Che effetto vederla fare gli scatoloni."
+    },
+    {
+     "role": "user",
+     "content": "Strano davvero."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-22-1730",
+   "user": "forno_ferri",
+   "ts": "2026-09-22T17:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. La signora Bertolino ha ordinato una torta per sabato 3 ottobre, per la nipote che è intollerante. Mi ha detto se al glutine o al lattosio, ma non me lo ricordo più."
+    },
+    {
+     "role": "assistant",
+     "content": "Ho segnato l'ordine per sabato 3 ottobre."
+    },
+    {
+     "role": "user",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-23-0900",
+   "user": "chiara",
+   "ts": "2026-09-23T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "8:12 puntuale anche oggi. Sto riprendendo fiducia nei treni."
+    },
+    {
+     "role": "assistant",
+     "content": "Era ora!"
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-24-1245",
+   "user": "lorenzo",
+   "ts": "2026-09-24T12:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Di nuovo mal di testa stamattina in riunione, non riuscivo a seguire niente. Il digiuno comunque procede alla grande."
+    },
+    {
+     "role": "assistant",
+     "content": "Bevi un po' d'acqua, magari aiuta."
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-25-1800",
+   "user": "forno_ferri",
+   "ts": "2026-09-25T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola: domenica 27 restiamo chiusi per la festa di via Nizza."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: domenica 27 chiuso."
+    }
+   ]
+  },
+  {
+   "id": "javier-2026-09-26-1345",
+   "user": "javier",
+   "ts": "2026-09-26T13:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tercer examen de prueba: use of English 84 %, listening 52 %. ¡Esa gramática! Mañana repaso los tiempos verbales."
+    },
+    {
+     "role": "assistant",
+     "content": "Ánimo, ya queda menos."
+    }
+   ]
+  },
+  {
+   "id": "hannah-2026-09-26-2330",
+   "user": "hannah",
+   "ts": "2026-09-26T23:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Jo's wedding today in Didsbury. Danced until midnight, my feet are destroyed."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like a brilliant day!"
+    }
+   ]
+  },
+  {
+   "id": "lorenzo-2026-09-27-1630",
+   "user": "lorenzo",
+   "ts": "2026-09-27T16:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pranzo della domenica dalla nonna: tortellini in brodo fatti a mano, ne ho mangiati due piatti."
+    },
+    {
+     "role": "assistant",
+     "content": "Che fortuna!"
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-27-1800",
+   "user": "chiara",
+   "ts": "2026-09-27T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domenica di pulizie: ho svuotato l'armadio e portato due sacchi di vestiti alla raccolta."
+    },
+    {
+     "role": "assistant",
+     "content": "Che soddisfazione!"
+    }
+   ]
+  },
+  {
+   "id": "forno_ferri-2026-09-28-0630",
+   "user": "forno_ferri",
+   "ts": "2026-09-28T06:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, forno grande pulito."
+    },
+    {
+     "role": "assistant",
+     "content": "Grazie, Gino."
+    }
+   ]
+  }
+ ]
+}

@@ -127,7 +127,10 @@ searched with `search_knowledge` (`API.md` §2, §3).
   connectors do); tool schemas: `TOOLS` in the client library.
 - The person's own diary in your UI (`API.md` §4, e.g. the Arkimede Diary): timeline, episode detail, day / month
   diary, facts, notes, plans, and the person's edits (correct, forget, pin, confirm / reject what is pending) — scope
-  `read`, `write` for edits; memory-direct (no conversation header).
+  `read`, `write` for edits; memory-direct (no conversation header). Among the notes, the memory's own conclusions
+  (D26, D53): recurring patterns (`pattern: true`) and the agent's thoughts (`thought: true`; `category` `insight` /
+  `question` / `opinion`) — show them as the agent's own ("a habit I noticed", "a thought of mine"), never as something
+  the person said; there is nothing to confirm, the person may forget one (`DELETE api/v1/notes/{id}`).
 
 ## 4b. Standard MCP clients — Claude Code (basic level, WORK_PLAN 6.1)
 A client that only speaks MCP (no ingest) uses a **personal token** bound to one person and one client:

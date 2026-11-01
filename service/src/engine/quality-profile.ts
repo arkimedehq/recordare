@@ -44,27 +44,31 @@ export interface QualityProfile {
    * Measured 2026-10-12 (dev_patterns, patterns.v2, 3 runs): 20 of 21 habits found, no false pattern — on in balanced
    * and full; off in economy (one more call a night). */
   patterns: boolean;
+  /** Nightly thought pass (D53, WORK_PLAN 8.12a): the agent's own insights, questions and opinions about what it lived,
+   * backed by the episodes they rest on — one call per memory when the new episodes gathered enough importance, none
+   * otherwise. On in balanced and full; off in economy. */
+  thoughts: boolean;
 }
 
 const PROFILES: Record<QualityProfileName, QualityProfile> = {
   economy: {
     name: 'economy', windowChars: 16_000, extractionTask: 'extract_economy', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1, recallDigests: false, factsReview: false, patterns: false,
+    recentEpisodes: 6, relatedEpisodes: 6, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 1, recallDigests: false, factsReview: false, patterns: false, thoughts: false,
   },
   balanced: {
     name: 'balanced', windowChars: 12_000, extractionTask: 'extract', reasoning: false, factsPass: 'inline',
-    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3, recallDigests: false, factsReview: false, patterns: true,
+    recentEpisodes: 8, relatedEpisodes: 10, resolverWindowDays: 3, resolverSimilarity: 0.7, rawHitsAlongside: 3, recallDigests: false, factsReview: false, patterns: true, thoughts: true,
   },
   full: {
     name: 'full', windowChars: 8_000, extractionTask: 'extract', reasoning: true, factsPass: 'inline',
-    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5, recallDigests: false, factsReview: false, patterns: true,
+    recentEpisodes: 12, relatedEpisodes: 20, resolverWindowDays: 7, resolverSimilarity: 0.6, rawHitsAlongside: 5, recallDigests: false, factsReview: false, patterns: true, thoughts: true,
   },
 };
 
 /** The memory's profile, else the installation default; explicit installation settings override single knobs. */
 export function qualityProfile(memoryChoice: string | null | undefined, installationDefault: QualityProfileName,
   windowCharsOverride?: number, factsPassOverride?: QualityProfile['factsPass'], recallDigestsOverride?: boolean,
-  factsReviewOverride?: boolean, patternsOverride?: boolean): QualityProfile {
+  factsReviewOverride?: boolean, patternsOverride?: boolean, thoughtsOverride?: boolean): QualityProfile {
   const name = (QUALITY_PROFILES as readonly string[]).includes(memoryChoice ?? '') ? memoryChoice as QualityProfileName : installationDefault;
   const p = PROFILES[name];
   return {
@@ -74,5 +78,6 @@ export function qualityProfile(memoryChoice: string | null | undefined, installa
     ...(recallDigestsOverride !== undefined ? { recallDigests: recallDigestsOverride } : {}),
     ...(factsReviewOverride !== undefined ? { factsReview: factsReviewOverride } : {}),
     ...(patternsOverride !== undefined ? { patterns: patternsOverride } : {}),
+    ...(thoughtsOverride !== undefined ? { thoughts: thoughtsOverride } : {}),
   };
 }

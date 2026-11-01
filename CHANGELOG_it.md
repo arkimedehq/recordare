@@ -7,6 +7,17 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **I pensieri dell'agente** (D53, WORK_PLAN 8.12a — il primo passo della mente dell'agente): una passata notturna di
+  pensiero trae intuizioni, domande e opinioni da ciò che l'agente ha vissuto (solo episodi pubblici), ognuna poggiata
+  sugli episodi che cita; parte solo quando gli episodi nuovi hanno raccolto abbastanza importanza, non pensa mai senza
+  prove nuove (una domanda su qualcosa che si attende fa eccezione), sostiene, indebolisce, rivede e ritira i suoi
+  pensieri man mano che arrivano nuovi episodi. Sono note con `thought: true` (categorie `insight` / `question` /
+  `opinion`), raccontate come pensieri propri dell'agente negli strumenti di recall, nel contesto di memoria e nel
+  Diario (`GET api/v1/notes`), mai come qualcosa che è stato detto; un'opinione può differire da ciò che dice il
+  titolare. Nulla da confermare (D26): un client può dimenticarne uno (`DELETE api/v1/notes/{id}`). Ciò che la memoria
+  conclude da sola ha ora una propria origine, `reflected` — i pattern ricorrenti passano a questa (erano salvati come
+  vissuti dal titolare). Opzione del profilo di qualità `thoughts` (attiva in balanced e full), override `THOUGHTS`,
+  task LLM `thoughts`; l'admin `POST api/v1/admin/memories/{id}/thoughts` esegue la sola passata. Migrazione `Thoughts`.
 - L'admin legge gli elementi di una memoria (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`),
   `…/facts`, `…/notes` — le liste del diario lette come l'intera memoria, gli elementi privati segnati con di chi sono — e
   ne dimentica uno (`DELETE …/episodes|facts|notes/{id}`). Solo chiave admin; Recordare Atlas li elenca e li dimentica con

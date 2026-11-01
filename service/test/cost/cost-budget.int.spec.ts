@@ -20,6 +20,7 @@ import { EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
 import { QUALITY_PROFILES, type QualityProfileName } from '../../src/engine/quality-profile';
 import { DAY_DIGEST_SYSTEM, MONTH_DIGEST_SYSTEM } from '../../src/engine/consolidation.prompt';
 import { PATTERNS_SYSTEM } from '../../src/engine/patterns.prompt';
+import { THOUGHTS_SYSTEM } from '../../src/engine/thoughts.prompt';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 interface Measure {
@@ -86,6 +87,7 @@ describe('cost budget per idle window and per night (WORK_PLAN 4.4c)', () => {
       if (system === EXTRACTION_SYSTEM) return extraction(req.messages[1]?.content ?? '', ++windows);
       if (system === DAY_DIGEST_SYSTEM || system === MONTH_DIGEST_SYSTEM) return { summary: 'Una giornata di lavoro, una corsa al parco e una cena con Marco.' };
       if (system === PATTERNS_SYSTEM) return { patterns: [] };
+      if (system === THOUGHTS_SYSTEM) return { thoughts: [] };
       return {};
     });
     const fake = await startFakeEmbeddings();

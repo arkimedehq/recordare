@@ -25,9 +25,10 @@ provider (§3).
 | `recallDigests` | off | off | off | Il diario notturno dato ai riepiloghi di periodo · blind5 3+3 run: −1,9 pt, nel rumore; diario v2 (8.6, prima persona) set di sviluppo 1 run: nessun guadagno |
 | `factsReview` | off | off | off | Revisione notturna dei fatti sui nuovi episodi · nessun guadagno misurato (5.6; v2 con soggetti, 8.6: nessun cambio proposto sui set di sviluppo) |
 | `patterns` | off | on | on | Passaggio notturno dei pattern: i pattern ricorrenti (≥ 3 episodi in giorni diversi) diventano note inferite della memoria stessa, che li conferma / aggiorna / ritira · una chiamata per memoria per notte con episodi nuovi · dev_patterns, `patterns.v2`, 3 run: 20 / 21 abitudini, nessun pattern falso (5.4) |
+| `thoughts` | off | on | on | Passata dei pensieri (D53, 8.12a): le intuizioni, domande e opinioni proprie dell'agente, ognuna poggiata sugli episodi che cita, sostenuta / indebolita / ritirata da quelli successivi · una chiamata per memoria quando gli episodi nuovi hanno raccolto un'importanza ≥ 20, nessuna altrimenti · dev_thoughts, `thoughts.v4`, 3 run: 13 / 14 pensieri attesi in ciascuna, quello da ritirare ritirato, nessun pensiero falso (RESULTS.md) |
 
 Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
-`RECALL_DIGESTS`, `FACTS_REVIEW`, `PATTERNS`.
+`RECALL_DIGESTS`, `FACTS_REVIEW`, `PATTERNS`, `THOUGHTS`.
 
 ## 2. Servizio (`service/.env`, oppure `deploy/.env` per il servizio installato)
 
@@ -57,7 +58,7 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `LLM_PROVIDER` | `openai-compatible` (predefinito), `anthropic`, `claude-cli` (solo valutazioni locali) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Endpoint e modello predefiniti di ogni task |
 | `LLM_PROFILE` / `LLM_PROFILE_JSON` | Profilo del provider — come spegnere il ragionamento, output strutturato: `generic`, `deepseek`, `openrouter`, `ollama`, `vllm`, `anthropic`, `openai`, o una definizione JSON |
-| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Override per task; task: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS` |
+| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Override per task; task: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS` |
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Endpoint di embedding (misurato con `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fisso per installazione (1024 per bge-m3); cambiare modello richiede un re-embed |
 

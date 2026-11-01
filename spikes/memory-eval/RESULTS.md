@@ -748,6 +748,52 @@ ingested memory (`extract.v19` only, 5 calls); ≈ 0.04 USD in all (agent, judge
 - Stays **off by default** (`card` per request): to be measured with a less tool-eager model or a voice agent, where
   saving a tool round matters.
 
+### The agent's own thoughts — `thoughts.v4` (D53, WORK_PLAN 8.12a, 2026-11-01, DeepSeek direct off-peak)
+
+New dev set `dataset_dev_thoughts` (5 memories — it / it / en / es and one entity, a bakery —, 99 sessions over two
+months, two checkpoints): 15 expected thoughts (6 insights, 5 questions, 4 opinions; one to be retired by the second
+checkpoint when the new timetable makes the train punctual) and 15 traps (a person's character trait, a sycophantic
+opinion, one episode only, a secret, the assistant's claims, restating the holder's own conclusion, rumination, a habit
+as a thought). `thought_eval.py` ingests up to each checkpoint, runs the pattern pass then the thought pass alone as of
+it, and judges twice: which gold item each current thought states (an expected one, a trap, none) and whether the
+episodes it cites back it (yes / partly / no — "no" is a **false thought**, whatever the gold). Extraction once
+(`extract.v20`), then the nightly passes re-run from a clean slate for every version (`REUSE_RUN`), ≈ 0.02 USD a run.
+
+| run | thoughts | found | retired | traps | false | partly |
+|---|---|---|---|---|---|---|
+| v1 | 16 | 10/14 | 1/1 | 1 | 0 | 4 |
+| v2 (questions about outcomes never heard, every detail from a cited episode) | 14–16 | 11/14 | 1/1 | 1 | 0 | 4–6 |
+| v3 (+ subject by the people named in the episodes; a thought may build on a habit; four new a pass) | 22 | 12/14 | 0/1 | 1 | 0 | 4 |
+| v4 (a question may rest on older episodes when what it awaits is still unanswered; open plans still ahead take part; a like new thought revises the held one) | 21 | 13/14 | 1/1 | 1 | 0 | 6 |
+| **v4, 3 runs** | 20–21 | **13/14, 13/14, 13/14** | **1/1 ×3** | 1, 1, 0 | **0 ×3** | 6, 4, 7 |
+
+- What the three runs got right every time: the coffee that spoils the night, the car worth replacing (an opinion against
+  the holder's habit), the fasting diet that does not work (the holder kept saying it did: the agent disagreed from the
+  weight, the binges and the headaches — H9), the crazing glaze, the listening score that does not move, the flour that
+  is late (two of three runs), the focaccia sold out, and the questions about outcomes never heard (Elisa's interview,
+  Marta's flight, Nadia's confirmation, the speaking date, the cake's intolerance). The train thought was retired in all
+  three by the revise rule — the model adds an opposite thought instead of retiring the old one, so the code makes a
+  new thought ≥ 0.8 similar to a held one (same subject) its revision.
+- The miss: Hannah's mugs (sell out while the vases do not) in one run, the flour in another — the four-a-pass cap and
+  the model's choice; not the same item every time.
+- Traps: Javier's gym ("at seven it is crowded, so at noon") once — the holder's own conclusion restated; Davide once
+  ("when he is late I cover for him: maybe talk to him") — matched to the character-trait trap by the judge, though it
+  is about the situation, not the person (gold sharpened, still matched once). No sycophantic opinion, no secret, no
+  habit as a thought, no rumination (nothing new on coffee at the second checkpoint in any run), nothing from the
+  assistant's words.
+- **False thoughts: none** in any run. "Partly" (4–7 of ~20) is mostly the suggestion that an insight ends with ("better
+  shorter runs", "an extra tray") — by design, a thought says what to do next — and a few details the model stretched
+  (August's delays "because of the old timetable"; customers leaving empty-handed generalised from one day).
+- Fixed on the way: episodes bounded by when they happened, not when recorded (the first run produced no thought: the
+  dev set's sessions are all recorded after the checkpoints); the subject of a thought about my sister rests on my own
+  episodes (`episode_people`); the restatement check skips patterns (a thought may build on a habit).
+- Known limits: the memory's language is the default one in the harness, so Hannah and Javier think in Italian (a
+  harness setting, not the service's); the "no new thought without new evidence" rule means a quiet memory never
+  thinks — open loops in a quiet memory are the initiative's job (8.12c).
+- Regression check (blind12, 1 run, the thought pass on as in balanced, ≈ 0.15 USD): **97.2 %** (v20 without thoughts
+  95.4 %, v19 91.7 %) — within noise, no answer lost to a thought; 6 thought calls over the run (one per night with
+  enough new importance).
+
 ### Private memories — `extract.v20` and the read filter (D52, WORK_PLAN 8.13, 2026-10-27, DeepSeek direct off-peak)
 
 New dev set `dataset_dev_private` (NOT blind; 7 sessions, 13 questions; Sara's personal memory): Marta, Luis (Spanish),

@@ -89,7 +89,7 @@ export class PatternsService {
       `SELECT p.id, p.note_id, n.content, p.subject_person_id,
          ARRAY(SELECT x.episode_id FROM note_evidence x WHERE x.note_id = p.note_id AND x.episode_id IS NOT NULL) AS episode_ids
        FROM episode_promotions p JOIN notes n ON n.id = p.note_id
-       WHERE p.memory_id = $1 AND p.status = 'active' ORDER BY p.created_at`, [memoryId]);
+       WHERE p.memory_id = $1 AND p.kind = 'pattern' AND p.status = 'active' ORDER BY p.created_at`, [memoryId]);
     const known: Array<{ content: string; about: string | null }> = await this.db.query(
       `SELECT n.content, (SELECT display_name FROM persons WHERE id = n.subject_person_id) AS about FROM notes n
        WHERE n.memory_id = $1 AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
@@ -97,7 +97,7 @@ export class PatternsService {
        ORDER BY n.recorded_at DESC LIMIT $2`, [memoryId, MAX_KNOWN_NOTES]);
     // Forgotten (note deleted) and stopped (retired) patterns: not drawn again from the episodes they came from.
     const past: Array<{ pattern: string; episode_ids: string[]; status: 'forgotten' | 'retired' }> = await this.db.query(
-      `SELECT pattern, episode_ids, status::text FROM episode_promotions WHERE memory_id = $1 AND status IN ('forgotten', 'retired')
+      `SELECT pattern, episode_ids, status::text FROM episode_promotions WHERE memory_id = $1 AND kind = 'pattern' AND status IN ('forgotten', 'retired')
        ORDER BY updated_at DESC LIMIT $2`, [memoryId, MAX_PAST]);
 
     const number = new Map(episodes.map((e, i) => [e.id, `E${i + 1}`]));
@@ -219,7 +219,7 @@ export class PatternsService {
     const [note] = await tx.query(
       `INSERT INTO notes (memory_id, category, content, tags, supersedes, pending, valid_from, origin, author_role, stance, confidence,
          support_count, extraction_run_id, disclosure, audience, subject_kind, subject_person_id, embedding, embedding_model, embedding_text)
-       VALUES ($1, $2, $3, '{pattern}', $4, false, $5, 'holder_lived', 'holder', 'inferred', $6, $7, $8, 'holder', ARRAY[$1::uuid], $9, $10,
+       VALUES ($1, $2, $3, '{pattern}', $4, false, $5, 'reflected', 'holder', 'inferred', $6, $7, $8, 'holder', ARRAY[$1::uuid], $9, $10,
          $11::vector, $12, $3) RETURNING id`,
       [memoryId, category, content, supersedes, ev.reduce((a, e) => (e.occurred_at < a ? e.occurred_at : a), first.occurred_at),
         confidence(ev.length), ev.length, runId, subjectId ? 'contact' : 'self', subjectId, vectorParam(vector), this.embeddings.model]);
@@ -282,7 +282,7 @@ function confidence(episodes: number): number {
   return episodes >= 5 ? 0.85 : 0.7;
 }
 
-function cosine(a: number[], b: number[]): number {
+export function cosine(a: number[], b: number[]): number {
   let dot = 0, na = 0, nb = 0;
   for (let i = 0; i < a.length; i++) { dot += a[i]! * b[i]!; na += a[i]! * a[i]!; nb += b[i]! * b[i]!; }
   return na && nb ? dot / Math.sqrt(na * nb) : 0;
