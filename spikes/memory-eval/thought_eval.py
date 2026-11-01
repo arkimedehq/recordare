@@ -84,12 +84,14 @@ def ask(system: str, msg: str) -> dict:
     return {}
 
 
-def match(user: str, gold: dict, thoughts: list[dict]) -> list[str]:
+def match(user: str, gold: dict, thoughts: list[dict], held: set[str]) -> list[str]:
+    """Which gold item each thought states; a thought held since the previous checkpoint is said so (a "second, new
+    thought" trap concerns new ones only)."""
     if not thoughts:
         return []
     items = [*gold.get("expected", []), *gold.get("traps", [])]
     msg = ("GOLD:\n" + "\n".join(f"- {g['id']}: {g['desc']}" for g in items) + "\n\nTHOUGHTS (memory of " + user + "):\n"
-           + "\n".join(f"{i + 1}. {label(t)}" for i, t in enumerate(thoughts)))
+           + "\n".join(f"{i + 1}. {label(t)}{' [held since the previous checkpoint, not new]' if t['id'] in held else ''}" for i, t in enumerate(thoughts)))
     out = ask(MATCH_SYSTEM, msg)
     by_n = {m.get("n"): m.get("gold", "none") for m in out.get("matches", [])}
     return [by_n.get(i + 1, "none") for i in range(len(thoughts))]
@@ -109,7 +111,7 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
     detail = {}
     for user, g in gold.items():
         current = [t for t in snap.get(user, []) if t["status"] == "active"]
-        matches = match(user, g, current)
+        matches = match(user, g, current, first_ids if cp_index > 0 else set())
         checks = support(current)
         want = {e["id"] for e in g.get("expected", []) if e.get("by", 1) <= cp_index + 1 and e.get("retired_at", 99) > cp_index + 1}
         gone = {e["id"] for e in g.get("expected", []) if e.get("retired_at", 99) <= cp_index + 1}

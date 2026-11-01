@@ -13,8 +13,8 @@
  *   episodes on two days; a question may rest on older ones — silence about something awaited is its evidence (what was
  *   asked once stays until answered: the list of held thoughts and the restatement check keep it from being asked again);
  *   at most MAX_NEW a pass;
- * - nothing that restates a note the memory holds, nothing like a thought it was told to forget or that stopped holding
- *   unless a new episode backs it;
+ * - nothing that restates a note the memory holds or an episode it cites (a conclusion the person drew themselves is no
+ *   thought of mine), nothing like a thought it was told to forget or that stopped holding unless a new episode backs it;
  * - support rises with the episodes that back it and falls with those against it; at zero the thought is retired
  *   (superseded, never deleted); one whose note was deleted is `forgotten`.
  * Thoughts are never drawn from thoughts (the depth stays one).
@@ -230,6 +230,7 @@ export class ThoughtsService {
           ? active.find((a) => a.subject_person_id === subjectId && cosine(activeVector.get(a.id)!, vector) >= REVISE_SIMILARITY) : undefined;
         const replaced = t.verdict === 'revise' ? old : alike;
         if (await this.restates(tx, memoryId, vector, replaced?.note_id)) { this.drop('known', t); continue; }
+        if (await this.restatesEpisode(tx, c.ev, vector)) { this.drop('restates_episode', t); continue; }
         const like = pastVectors.find((f) => cosine(f.vector, vector) >= SAME_SIMILARITY);
         if (like && !c.ids.some((id) => !like.episode_ids.includes(id))) { this.drop('past', t); continue; }
         if (replaced) await this.retire(tx, memoryId, replaced, true);
@@ -265,6 +266,15 @@ export class ThoughtsService {
       `SELECT 1 FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND embedding IS NOT NULL
          AND NOT 'pattern' = ANY(tags) AND id IS DISTINCT FROM $3 AND 1 - (embedding <=> $2::vector) >= $4 LIMIT 1`,
       [memoryId, vectorParam(vector), except ?? null, SAME_SIMILARITY]);
+    return rows.length > 0;
+  }
+
+  /** Says what one of its own episodes already says (the person's own conclusion or measure, retold as a thought). */
+  private async restatesEpisode(tx: EntityManager, ev: EpisodeRow[], vector: number[]): Promise<boolean> {
+    if (!ev.length) return false;
+    const rows: unknown[] = await tx.query(
+      `SELECT 1 FROM episodes WHERE id = ANY($1) AND embedding IS NOT NULL AND 1 - (embedding <=> $2::vector) >= $3 LIMIT 1`,
+      [ev.map((e) => e.id), vectorParam(vector), SAME_SIMILARITY]);
     return rows.length > 0;
   }
 

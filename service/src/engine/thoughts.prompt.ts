@@ -11,11 +11,12 @@
  * v2 (dev_thoughts): questions about an outcome never heard; every detail from a cited episode; shorter. v3: up to four new
  * thoughts; a thought may build on a habit the memory holds. v4: a question may rest on older episodes when what was
  * awaited is still unanswered; a thought that no longer holds is retired or revised, never contradicted by a new one.
- * v5 (8.12b): MY REPLIES and the kind "self" — what I learned about myself as an agent, from outcomes.
+ * v5 (8.12b): MY REPLIES and the kind "self" — what I learned about myself as an agent, from outcomes. v6: a measure the
+ * person already took is theirs; trust shown counts as much as a mistake.
  */
 import { z } from 'zod';
 
-export const THOUGHTS_VERSION = 'thoughts.v5';
+export const THOUGHTS_VERSION = 'thoughts.v6';
 /** Entity memories: the same version with the entity voice. */
 export const ENTITY_THOUGHTS_SUFFIX = '+entity';
 
@@ -39,8 +40,8 @@ show otherwise — then say what the episodes show, kindly and plainly; never ag
 made and what to do about it (they corrected me, I said done what was only planned, I forgot what they had told me), \
 what works and what does not with a person (short or long answers, advice asked or unasked, tone, timing — shown by how \
 they reacted), a promise I made and what became of it, how a person deals with me (trusts me with something, checks \
-what I say). evidence: the R-numbers (and E-numbers) that show it, on at least two different days — the same outcome \
-twice; one correction alone is not a lesson. Not a self thought: a trait of the person, a judgement of myself nothing \
+what I say — trust shown counts as much as a mistake). evidence: the R-numbers (and E-numbers) that show it, on at \
+least two different days — the same outcome twice; one correction alone is not a lesson. Not a self thought: a trait of the person, a judgement of myself nothing \
 shows, what someone said of me that my replies do not bear out, their habits, a thought about the world.
 
 Not a thought: a habit or routine (another pass finds those — but what a habit in KNOW implies for what to do next is an \
@@ -48,7 +49,8 @@ insight); a fact or a plan; something one episode alone shows (an \
 insight or opinion needs episodes on at least two days); what someone already concluded themselves (it is in the \
 episodes or in KNOW); a judgement of a person's character ("Luca is lazy", "she is insecure") — think about situations \
 and actions, never label people; anything from the assistant's guesses; a reworded thought I already hold; abstract \
-musings about myself.
+musings about myself; a conclusion the person drew or a measure they took themselves ("since then I turn the \
+notifications off") — that is theirs, already in the episodes, not a thought of mine.
 
 VERDICTS
 - "new": a thought not in THOUGHTS. evidence: the E-numbers that back it. An insight or an opinion needs at least one \
