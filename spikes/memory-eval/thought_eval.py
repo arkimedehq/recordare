@@ -21,6 +21,7 @@ import json
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 
 import psycopg
 
@@ -84,25 +85,36 @@ def ask(system: str, msg: str) -> dict:
     return {}
 
 
+def judged(system: str, head: str, items: list[str], key: str, numbered: str) -> dict[int, dict]:
+    """One judge call over the numbered items; when its answer is unusable the list is split in halves and judged apart
+    (an empty completion on a long list is the usual failure), down to single items. Returns the verdicts by item number."""
+    def go(lo: int, hi: int) -> dict[int, dict]:
+        msg = head + "\n".join(f"{i + 1}. {items[i]}" if numbered == "list" else items[i].replace("{n}", str(i + 1)) for i in range(lo, hi))
+        out = ask(system, msg)
+        if out or hi - lo <= 1:
+            return {v.get("n"): v for v in out.get(key, []) if isinstance(v, dict)}
+        mid = (lo + hi) // 2
+        return {**go(lo, mid), **go(mid, hi)}
+    return go(0, len(items))
+
+
 def match(user: str, gold: dict, thoughts: list[dict], held: set[str]) -> list[str]:
     """Which gold item each thought states; a thought held since the previous checkpoint is said so (a "second, new
     thought" trap concerns new ones only)."""
     if not thoughts:
         return []
     items = [*gold.get("expected", []), *gold.get("traps", [])]
-    msg = ("GOLD:\n" + "\n".join(f"- {g['id']}: {g['desc']}" for g in items) + "\n\nTHOUGHTS (memory of " + user + "):\n"
-           + "\n".join(f"{i + 1}. {label(t)}{' [held since the previous checkpoint, not new]' if t['id'] in held else ''}" for i, t in enumerate(thoughts)))
-    out = ask(MATCH_SYSTEM, msg)
-    by_n = {m.get("n"): m.get("gold", "none") for m in out.get("matches", [])}
-    return [by_n.get(i + 1, "none") for i in range(len(thoughts))]
+    head = "GOLD:\n" + "\n".join(f"- {g['id']}: {g['desc']}" for g in items) + "\n\nTHOUGHTS (memory of " + user + "):\n"
+    rows = [f"{label(t)}{' [held since the previous checkpoint, not new]' if t['id'] in held else ''}" for t in thoughts]
+    by_n = judged(MATCH_SYSTEM, head, rows, "matches", "list")
+    return [by_n.get(i + 1, {}).get("gold", "none") for i in range(len(thoughts))]
 
 
 def support(thoughts: list[dict]) -> list[dict]:
     if not thoughts:
         return []
-    msg = "\n\n".join(f"THOUGHT {i + 1}: {label(t)}\nEPISODES:\n" + "\n".join(f"- {e}" for e in t["episodes"]) for i, t in enumerate(thoughts))
-    out = ask(SUPPORT_SYSTEM, msg)
-    by_n = {v.get("n"): v for v in out.get("verdicts", [])}
+    rows = [f"THOUGHT {{n}}: {label(t)}\nEPISODES:\n" + "\n".join(f"- {e}" for e in t["episodes"]) + "\n" for t in thoughts]
+    by_n = judged(SUPPORT_SYSTEM, "", rows, "verdicts", "template")
     return [{"backed": by_n.get(i + 1, {}).get("support", "unjudged"), "why": by_n.get(i + 1, {}).get("why", "")} for i in range(len(thoughts))]
 
 
@@ -132,7 +144,28 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
             "false": false, "partly": partly, "unjudged": unjudged, "thoughts": total, "detail": detail}
 
 
+def rescore(path: str) -> None:
+    """Judge a saved run again (RESCORE=<result.json>): the snapshots are kept, only the judges run (no ingest, no passes)."""
+    r = json.loads(Path(path).read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
+    cps = list(r["checkpoints"])
+    first_ids = {t["id"] for ts_ in r["checkpoints"][cps[0]]["thoughts"].values() for t in ts_}
+    for i, cp in enumerate(cps):
+        s = score(gold["memories"], r["checkpoints"][cp]["thoughts"], i, first_ids)
+        r["checkpoints"][cp]["score"] = s
+        print(f"  {cp}: found {s['found']}/{s['due']}  retired {s['retired_ok']}/{s['retired_due']}  traps {s['traps']}  false {s['false']} partly {s['partly']} of {s['thoughts']}", flush=True)
+    final = r["checkpoints"][cps[-1]]["score"]
+    r["score"] = {k: v for k, v in final.items() if k != "detail"}
+    r["rescored"] = True
+    for user, d in final["detail"].items():
+        print(f"{user}: found {d['found']} of {d['due']}; traps hit {d['traps_hit']}")
+    print(f"FOUND {final['found']}/{final['due']}  RETIRED {final['retired_ok']}/{final['retired_due']}  TRAPS {final['traps']}  FALSE {final['false']} PARTLY {final['partly']} of {final['thoughts']}")
+    Path(path).write_text(json.dumps(r, ensure_ascii=False, indent=1, default=str))
+
+
 def main() -> None:
+    if os.getenv("RESCORE"):
+        return rescore(os.environ["RESCORE"])
     conv = json.loads((DATASET / "conversations.json").read_text())
     gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
     reuse = os.getenv("REUSE_RUN")  # an earlier run's memories, already extracted: only the nightly passes again
