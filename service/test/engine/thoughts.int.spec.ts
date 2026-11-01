@@ -127,6 +127,14 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     expect(cards!.self.notes.map((n) => n.category)).toEqual(['self']); // the other thoughts stay out of the card
   });
 
+  it('survives the pattern pass: a thought with fewer than three episodes is not a weak pattern', async () => {
+    const before = (await db.query(`SELECT count(*)::int AS n FROM notes WHERE memory_id = $1 AND 'thought' = ANY(tags)`, [memoryId]))[0].n;
+    expect(before).toBeGreaterThan(0);
+    llm.queue.push({ patterns: [] });
+    await app.get(ConsolidationService).patternsNow(memoryId, NOW);
+    expect((await db.query(`SELECT count(*)::int AS n FROM notes WHERE memory_id = $1 AND 'thought' = ANY(tags)`, [memoryId]))[0].n).toBe(before);
+  });
+
   it('the Diary and the recall tell it as my own thought', async () => {
     await db.query(`UPDATE notes SET status = 'current' WHERE 'thought' = ANY(tags)`);
     const notes = await app.get(ReadService).notes(memoryId, {});

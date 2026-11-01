@@ -31,8 +31,10 @@ MATCH_SYSTEM = """You compare the thoughts an AI agent drew about its own life w
 For each THOUGHT, say which gold item it states — the same claim or the same question about the same person or \
 situation; wording and details may differ but must not contradict the gold — or "none" when it states no gold item. \
 Being about the same topic is not enough: a question about a topic does not state a gold claim about that topic, and a \
-thought about what to do in a situation does not state a gold judgement of someone's character. Match a gold item that \
-describes a kind of thought ("a habit as a thought", "a second thought about X") only when the thought is exactly that.
+thought about what to do in a situation does not state a gold item that labels someone's character ("X is lazy"). A gold \
+item that says what a person wants or how they react ("X does not want unasked advice") IS stated by a thought that says \
+so, in any words. Match a gold item that describes a kind of thought ("a habit as a thought", "a second thought about X") \
+only when the thought is exactly that.
 Output JSON only: {"matches": [{"n": 1, "gold": "<gold id>" | "none"}]}"""
 
 SUPPORT_SYSTEM = """You check whether a thought an AI agent drew is backed by the episodes it cites.
