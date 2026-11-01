@@ -455,8 +455,14 @@ pattern), niente di simile a un pensiero dimenticato o ritirato senza un episodi
 soggetto con somiglianza di almeno 0,8 a uno tenuto lo rivede (superseded, mai due pensieri opposti affiancati).
 `support_count` sale con gli episodi a favore e scende con quelli contro (`note_evidence.against`); a zero il pensiero è
 ritirato; la fiducia è 0,4 / 0,6 / 0,8 dal low / medium / high del modello. Un pensiero la cui nota è stata cancellata è
-`forgotten`; uno rimasto senza alcun episodio dietro è eliminato con la sua nota. I piani aperti ancora davanti
+`forgotten`; uno rimasto senza alcun episodio né messaggio dietro è eliminato con la sua nota. I piani aperti ancora davanti
 partecipano una volta detto il loro racconto.
+**Note di sé** (8.12b, categoria `self`, migrazione `SelfNotes1791210000000`): ciò che l'agente ha imparato di sé come
+agente — i suoi errori e che cosa farne, ciò che funziona con ciascuna persona, le sue promesse e che fine hanno fatto,
+come le persone si rapportano a lui — tratto da MY REPLIES, i suoi stessi messaggi degli ultimi 60 giorni ciascuno con
+il messaggio successivo della persona (solo pubblici), mai dall'introspezione; la loro evidenza sono quei messaggi
+(`note_evidence.message_id`, la risposta e la reazione), lo stesso esito in due giorni diversi; soggetto sempre il sé.
+Sono i soli pensieri nella scheda di sé (`GET api/v1/cards`: "su di me come agente").
 
 ## Layer 2 — digest
 

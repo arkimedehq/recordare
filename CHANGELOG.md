@@ -17,9 +17,19 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   What the memory concludes by itself now has its own origin, `reflected` — the recurring patterns move to it (they
   were stored as lived by the holder). Quality-profile knob `thoughts` (on in balanced and full), `THOUGHTS` override,
   LLM task `thoughts`; admin `POST api/v1/admin/memories/{id}/thoughts` runs the pass alone. Migration `Thoughts`.
+- **The agent's self-model** (D53, WORK_PLAN 8.12b): the thought pass also learns about the agent itself from its own
+  replies and how the person reacted — a mistake to avoid ("I keep getting her shifts wrong: check the rota first"),
+  what works with a person (short answers, lists, no unasked advice), a promise and what became of it, trust shown —
+  never from introspection: notes of category `self` (`thought: true`), backed by those messages, the same outcome on
+  two days; told in recall and the memory context as what it learned about itself, and in the self card as "about me as
+  an agent" (`GET api/v1/cards`). Migration `SelfNotes`.
 - The admin reads a memory's items (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`), `…/facts`,
   `…/notes` — the diary's lists read as the whole memory, private items marked whose they are — and forgets one
   (`DELETE …/episodes|facts|notes/{id}`). Admin key only; Recordare Atlas lists and forgets with them.
+
+### Fixed
+- The nightly pattern pass deleted the agent's thoughts written the night before as "weak patterns" (fewer than three
+  episodes): its sync now looks only at patterns.
 
 ## [0.5.0] — 2026-10-27
 

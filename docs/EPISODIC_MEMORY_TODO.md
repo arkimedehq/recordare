@@ -807,7 +807,15 @@ works on its own and pushes, not a memory that only answers.
   still unanswered (silence is its evidence; the dev set's two missed questions came from the freshness rule); open plans
   still ahead take part; a new thought on a held one's subject and matter revises it — the models add the opposite
   thought beside the old one instead of retiring it. Dev set `dataset_dev_thoughts`: 13 / 14 in three runs, no false
-  thought (RESULTS.md).
+  thought (RESULTS.md) — 14 / 14, 14 / 14, 13 / 14 once the pattern pass stopped deleting them (its sync took every
+  register row with fewer than three episodes for a weak pattern; fixed 2026-11-01).
+- **Built so far** (2026-11-01, step b): the self-model as the kind `self` of the same pass (`thoughts.v6`): MY REPLIES —
+  the agent's own messages with the person's next message, public only — are shown to it, and what it learned about
+  itself as an agent (mistakes, what works with whom, promises, trust) becomes a note of category `self` with those
+  messages as evidence, the same outcome on two days; in the self card and the memory context as "about me as an
+  agent", told to everyone like the other thoughts. Dev set `dataset_dev_self`: 11–12 / 15 in three runs, no false self
+  note; known limits: lessons come from friction, not from what went well (trust, reliance), and two different single
+  mistakes may be bundled into one lesson (RESULTS.md).
 
 ## Open questions (to discuss)
 

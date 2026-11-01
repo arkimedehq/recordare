@@ -484,7 +484,9 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   agent tells it as a habit it noticed) or `thought` (one of the agent's own thoughts, D53 / WORK_PLAN 8.12a: an
   `insight`, a `question` or an `opinion` — the `category` — drawn by the nightly thought pass from the public episodes,
   each resting on the episodes it cites; the agent tells it as its own thought, never as something said; an opinion may
-  differ from what the holder says when the episodes show otherwise).
+  differ from what the holder says when the episodes show otherwise; or `self`, 8.12b — what it learned about itself as
+  an agent from its own replies and how they went: a mistake to avoid, what works with a person, a promise, trust shown;
+  these alone also enter the self card and the memory context's self block as "about me as an agent").
 
 ### `search_knowledge` and `learn_source` (D49, WORK_PLAN 8.9 — learned sources)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passages of the sources the agent learned, ranked by
@@ -567,7 +569,7 @@ the note this one took the place of, so a copy of it can follow; ask again with 
 days; scope `export`). Edits answer `204` (`404` for an id that is not this memory's); only `GET episodes` pages
 (`{items, nextCursor}`, default 50), the other lists are arrays. `GET notes` items: `{id, category, content, pinned,
 pending, inferred, pattern, thought, authorRole, supportCount, recordedAt}` (`pattern`: a recurring pattern, WORK_PLAN 5.4;
-`thought`: one of the agent's own thoughts, categories `insight` / `question` / `opinion`, D53). As built, deleting a fact or a note (and rejecting a
+`thought`: one of the agent's own thoughts, categories `insight` / `question` / `opinion` / `self`, D53). As built, deleting a fact or a note (and rejecting a
 pending one) removes the row with its evidence and leaves a `fact` / `note` tombstone (4.13) — a note also a
 `forgotten` entry in `note_changes`; confirming makes it stated (`pending` false). Client library: `packages/client`
 (`episodes`, `episode`, `digests`, `facts`, `fact`, `notes`, `note`, `plans`, `addEpisode`, `addNote`, `correctEpisode`,
@@ -596,7 +598,7 @@ private or public again (§2) has its days written again.
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Fix or forget a fact |
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Pending facts (D20) |
 | `GET api/v1/plans?status` | read | Open / unresolved plans |
-| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34); recurring patterns are notes with `pattern: true`, the agent's own thoughts notes with `thought: true` (categories `insight` / `question` / `opinion`; D26, D53: the memory's own, nothing to confirm — forget one with `DELETE`) |
+| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Semantic notes (D34); recurring patterns are notes with `pattern: true`, the agent's own thoughts notes with `thought: true` (categories `insight` / `question` / `opinion` / `self`; D26, D53: the memory's own, nothing to confirm — forget one with `DELETE`) |
 | `GET api/v1/cards` | read | Who I am and who my contacts are (WORK_PLAN 8.13), no LLM: `{self, contacts}`, each `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — the current, confirmed facts and notes about that person (pinned notes first, then by support), contacts most recently mentioned first; each id opens its detail (`GET api/v1/facts/{id}`, `notes/{id}`) with the evidence |
 | `GET api/v1/private` | read | The private memories (D52): `[{kind: episode \| fact \| note, id, by: [names], recordedAt}]`, never their content; an entity memory's Diary shows them so (forget one with its `DELETE`) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Manage notes |
