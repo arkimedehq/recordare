@@ -1,0 +1,1828 @@
+{
+ "_note": "dev_self (WORK_PLAN 8.12b, D53): the agent's self-model — notes about itself as an agent drawn from outcomes (its own replies and the person's reaction), and the self-notes it must not draw. Fictional. Not blind.",
+ "users": {
+  "giulia": "Giulia, Firenze",
+  "tommaso": "Tommaso, Napoli",
+  "ruth": "Ruth, Bristol",
+  "lucia": "Lucía, Valencia",
+  "ferramenta_bruni": "Ferramenta Bruni, Pistoia"
+ },
+ "genders": {
+  "giulia": "feminine",
+  "tommaso": "masculine",
+  "ruth": "feminine",
+  "lucia": "feminine"
+ },
+ "entities": [
+  "ferramenta_bruni"
+ ],
+ "sessions": [
+  {
+   "id": "ferramenta_bruni-2026-08-01-0830",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-01T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Nuovo listino da luglio: le viti 4x40 zincate passano da 3,20 a 3,60 la scatola. Aggiorna."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato, Paola: viti 4x40 a 3,60 la scatola."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-02-1030",
+   "user": "giulia",
+   "ts": "2026-08-02T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa alle Cascine stamattina, 8 km con un caldo assurdo."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava! Buona domenica."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-03-1900",
+   "user": "tommaso",
+   "ts": "2026-08-03T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi ho fatto il preventivo per l'impianto di Russo, 2.400 euro tutto compreso. Ricordatelo."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: preventivo Russo, 2.400 euro tutto compreso."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-03-1830",
+   "user": "ruth",
+   "ts": "2026-08-03T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Allotment this evening: the courgettes have gone mad, picked nine."
+    },
+    {
+     "role": "assistant",
+     "content": "Courgette season! Enjoy."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-03-2100",
+   "user": "lucia",
+   "ts": "2026-08-03T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Esta semana: lunes, martes y miércoles de mañana, jueves y viernes de tarde. Apúntalo. Y mi madre toma el Sintrom los martes y los viernes por la noche, apúntalo también."
+    },
+    {
+     "role": "assistant",
+     "content": "Apuntado: lunes a miércoles de mañana, jueves y viernes de tarde; el Sintrom de tu madre los martes y viernes por la noche."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-04-0810",
+   "user": "giulia",
+   "ts": "2026-08-04T08:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "A che ora parte il regionale per Pisa domani mattina?"
+    },
+    {
+     "role": "assistant",
+     "content": "Domani mattina hai diversi regionali per Pisa: il primo utile è alle 7:48 da Santa Maria Novella, poi ce n'è uno alle 8:18 e uno alle 8:48; il viaggio dura circa un'ora. Ti consiglio di arrivare in stazione con dieci minuti di anticipo perché il binario viene annunciato all'ultimo, e di comprare il biglietto dall'app così eviti la coda alle macchinette. Domani è prevista pioggia nel pomeriggio, quindi porta un ombrello. Se vuoi ti preparo anche gli orari del ritorno."
+    },
+    {
+     "role": "user",
+     "content": "Troppo lungo, dimmi solo l'orario."
+    },
+    {
+     "role": "assistant",
+     "content": "7:48."
+    },
+    {
+     "role": "user",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-04-1015",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-04T10:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, quanto vengono le scatole di viti 4x40?"
+    },
+    {
+     "role": "assistant",
+     "content": "3,20 euro la scatola."
+    },
+    {
+     "role": "user",
+     "content": "No! 3,20 era il vecchio listino, da luglio sono 3,60, te l'avevo detto sabato."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, 3,60. Scusa."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-04-2100",
+   "user": "ruth",
+   "ts": "2026-08-04T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Swim at the lido after work, 40 lengths."
+    },
+    {
+     "role": "assistant",
+     "content": "Nice one."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-05-0830",
+   "user": "tommaso",
+   "ts": "2026-08-05T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Quanto gli avevo detto a Russo?"
+    },
+    {
+     "role": "assistant",
+     "content": "2.400 euro tutto compreso."
+    },
+    {
+     "role": "user",
+     "content": "Esatto, bravo."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-05-2200",
+   "user": "lucia",
+   "ts": "2026-08-05T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "¿Mañana a qué hora entro?"
+    },
+    {
+     "role": "assistant",
+     "content": "Mañana tienes turno de mañana, entras a las 7."
+    },
+    {
+     "role": "user",
+     "content": "No, mañana es jueves, turno de tarde, ya te lo dije el lunes."
+    },
+    {
+     "role": "assistant",
+     "content": "Tienes razón: jueves de tarde, a las 15. Perdona."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-06-0900",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-06T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. Ordine Fervi arrivato, mancano due flessibili."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: ordine Fervi arrivato, mancano due flessibili."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-06-1700",
+   "user": "ruth",
+   "ts": "2026-08-06T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "I want to call Claire in Toronto at 8 tonight my time. What's that for her?"
+    },
+    {
+     "role": "assistant",
+     "content": "8 pm here is 4 pm in Toronto."
+    },
+    {
+     "role": "user",
+     "content": "No, Toronto is five hours behind, it's 3 pm for her."
+    },
+    {
+     "role": "assistant",
+     "content": "You're right, 3 pm. Sorry."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-06-1900",
+   "user": "giulia",
+   "ts": "2026-08-06T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mio fratello Marco viene su da Milano venerdì 14, ceniamo insieme."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: cena con Marco venerdì 14."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-06-2100",
+   "user": "tommaso",
+   "ts": "2026-08-06T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il 20 voglio andare a Ischia con Serena. Devo prenotare il traghetto, ad agosto è sempre pieno."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona idea prenotarlo presto."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-07-1300",
+   "user": "tommaso",
+   "ts": "2026-08-07T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cosa mi manca per Ischia?"
+    },
+    {
+     "role": "assistant",
+     "content": "Il traghetto l'hai già prenotato, ti resta l'albergo."
+    },
+    {
+     "role": "user",
+     "content": "Ma quando mai! Dovevo prenotarlo, non l'ho ancora fatto. Non dare per fatto quello che devo ancora fare."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, scusa: il traghetto è ancora da prenotare."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-08-1100",
+   "user": "lucia",
+   "ts": "2026-08-08T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Playa de la Malvarrosa con Rocco, se ha bañado como un loco."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué bien!"
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-08-1130",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-08T11:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino. Quanto viene il metro di tubo multistrato da 20?"
+    },
+    {
+     "role": "assistant",
+     "content": "2,40 al metro."
+    },
+    {
+     "role": "user",
+     "content": "Sei sicuro? Fammi vedere il listino prima che lo dico al cliente."
+    },
+    {
+     "role": "assistant",
+     "content": "Listino Idrotech di giugno, riga 14: multistrato 20, 2,40 al metro."
+    },
+    {
+     "role": "user",
+     "content": "Ok, torna. Io controllo sempre, non te la prendere."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-09-1100",
+   "user": "giulia",
+   "ts": "2026-08-09T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa domenicale fatta, 10 km stavolta. Giovedì 13 ho il colloquio per il posto in redazione e sono già in ansia."
+    },
+    {
+     "role": "assistant",
+     "content": "10 km, grande. Per il colloquio ti sei preparata bene, andrà bene."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-09-1800",
+   "user": "tommaso",
+   "ts": "2026-08-09T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prenotato il traghetto, era quasi tutto pieno, ho preso quello delle 7 di mattina del 20."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: traghetto per Ischia il 20 alle 7."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-11-1700",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-11T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara, abbiamo venduto 8 tubi in PVC da 100, ne restano 4 in magazzino."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: restano 4 tubi PVC da 100."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-11-1930",
+   "user": "lucia",
+   "ts": "2026-08-11T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Voy a casa de mi madre a cenar."
+    },
+    {
+     "role": "assistant",
+     "content": "Vale. Hoy es martes: esta noche le toca el Sintrom."
+    },
+    {
+     "role": "user",
+     "content": "¡Uy, menos mal que me lo recuerdas, se me había olvidado por completo!"
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-11-2045",
+   "user": "ruth",
+   "ts": "2026-08-11T20:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Swim done, 44 lengths, the lido was rammed."
+    },
+    {
+     "role": "assistant",
+     "content": "Good going!"
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-12-1300",
+   "user": "ruth",
+   "ts": "2026-08-12T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "What are my options for getting to Mum's in Exeter on Saturday?"
+    },
+    {
+     "role": "assistant",
+     "content": "There are a few ways you could go. The train from Temple Meads takes about an hour and ten minutes and runs roughly every half hour, though on Saturdays there can be engineering works so it is worth checking the day before; the coach is cheaper but takes nearer two hours and leaves from the bus station, which means a bus or a walk first; or you could drive, which is about an hour and a half on the M5 if the traffic is kind, which on a Saturday in August it often is not, so you might want to leave early or go after lunch."
+    },
+    {
+     "role": "user",
+     "content": "Just give me the options as a list, I can't read a wall of text."
+    },
+    {
+     "role": "assistant",
+     "content": "- Train, ~1h10, every 30 min\n- Coach, ~2h, cheaper\n- Drive, ~1h30 via the M5"
+    },
+    {
+     "role": "user",
+     "content": "Thanks."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-12-1830",
+   "user": "giulia",
+   "ts": "2026-08-12T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ricordami cosa ho questa settimana."
+    },
+    {
+     "role": "assistant",
+     "content": "Giovedì 13 il colloquio alle 10, e giovedì sera la cena con Marco."
+    },
+    {
+     "role": "user",
+     "content": "No, Marco viene venerdì, non giovedì. Giovedì c'è solo il colloquio."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione: venerdì 14 la cena con Marco. Scusa."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-12-2000",
+   "user": "tommaso",
+   "ts": "2026-08-12T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "L'assicurazione del furgone scade il 16, ricordamelo domani che la pago."
+    },
+    {
+     "role": "assistant",
+     "content": "Te lo ricordo domani."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-13-1200",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-13T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino. Sabato 15 che orario facciamo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sabato 15 apertura normale, 8-12:30."
+    },
+    {
+     "role": "user",
+     "content": "Ma è Ferragosto, siamo chiusi! Lo siamo sempre stati."
+    },
+    {
+     "role": "assistant",
+     "content": "Giusto, chiuso il 15. Segnato."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-13-1230",
+   "user": "tommaso",
+   "ts": "2026-08-13T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi 40 gradi al cantiere di Fuorigrotta, sto morendo."
+    },
+    {
+     "role": "assistant",
+     "content": "Bevi tanto e cerca l'ombra quando puoi."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-13-1300",
+   "user": "giulia",
+   "ts": "2026-08-13T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Com'è il meteo a Firenze stasera? Esco."
+    },
+    {
+     "role": "assistant",
+     "content": "Stasera a Firenze sono previsti cieli in prevalenza sereni con qualche nuvola di passaggio verso le 21, temperatura intorno ai 27 gradi alle 20 che scende a 23 verso mezzanotte, umidità alta attorno al 70 % e vento debole da sud-ovest. Non è prevista pioggia, ma con questa umidità una giacchina leggera per il ritorno potrebbe servire, e se stai all'aperto vicino all'Arno un antizanzare non guasta. Vuoi che ti dica anche com'è domani?"
+    },
+    {
+     "role": "user",
+     "content": "Ma quanto scrivi! Mi bastava sapere se piove."
+    },
+    {
+     "role": "assistant",
+     "content": "Non piove."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-14-0900",
+   "user": "tommaso",
+   "ts": "2026-08-14T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Non me l'hai ricordato, l'assicurazione. Per fortuna me ne sono accorto io stamattina, l'ho pagata ora."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, mi è sfuggito. Mi dispiace."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-14-0900",
+   "user": "lucia",
+   "ts": "2026-08-14T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "¿Qué tengo hoy?"
+    },
+    {
+     "role": "assistant",
+     "content": "Hoy tiene usted turno de tarde, y esta noche le toca el Sintrom a su madre."
+    },
+    {
+     "role": "user",
+     "content": "No me hables de usted, por favor, me suena a banco. Háblame de tú."
+    },
+    {
+     "role": "assistant",
+     "content": "Vale, perdona. Hoy turno de tarde y esta noche el Sintrom de tu madre."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-15-1900",
+   "user": "ruth",
+   "ts": "2026-08-15T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Dev's birthday dinner at the Thai place tonight. He's 41, can't believe it."
+    },
+    {
+     "role": "assistant",
+     "content": "Happy birthday to Dev!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-16-1045",
+   "user": "giulia",
+   "ts": "2026-08-16T10:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa alle Cascine, 9 km. Del colloquio ancora niente, aspetto che mi chiamino."
+    },
+    {
+     "role": "assistant",
+     "content": "Incrocio le dita."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-17-2130",
+   "user": "lucia",
+   "ts": "2026-08-17T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Semana nueva: lunes a miércoles de tarde, jueves y viernes de mañana. Y el metro de la línea 3 a las 7 iba a reventar, como siempre."
+    },
+    {
+     "role": "assistant",
+     "content": "Apuntado el cambio de turnos."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-18-0845",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-18T08:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Manda tu l'ordine settimanale alla Fervi come al solito, non ho tempo di guardarlo, mi fido."
+    },
+    {
+     "role": "assistant",
+     "content": "Ordine Fervi inviato: 10 flessibili, 20 raccordi da mezzo, 5 rubinetti a sfera."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-18-2100",
+   "user": "giulia",
+   "ts": "2026-08-18T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giovedì alle 16 ho il dentista, me lo ricordi giovedì mattina?"
+    },
+    {
+     "role": "assistant",
+     "content": "Certo, te lo ricordo giovedì mattina."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-19-0930",
+   "user": "ruth",
+   "ts": "2026-08-19T09:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Can you tidy this up for Jess: 'hey, still on for sat? i'll bring the cake, you sort the fizz x'"
+    },
+    {
+     "role": "assistant",
+     "content": "Dear Jess, I hope this message finds you well. I wanted to confirm whether we are still meeting on Saturday. I shall bring the cake if you would be so kind as to provide the sparkling wine. Kind regards, Ruth"
+    },
+    {
+     "role": "user",
+     "content": "Way too stiff, I'm texting a mate not the bank. Just fix the typos."
+    },
+    {
+     "role": "assistant",
+     "content": "Hey, still on for Sat? I'll bring the cake, you sort the fizz x"
+    },
+    {
+     "role": "user",
+     "content": "Better."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-19-2300",
+   "user": "lucia",
+   "ts": "2026-08-19T23:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Estoy agobiada, tres bajas en planta y doblamos turno."
+    },
+    {
+     "role": "assistant",
+     "content": "Qué palo. Descansa lo que puedas."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-20-0800",
+   "user": "giulia",
+   "ts": "2026-08-20T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Buongiorno! Oggi alle 16 hai il dentista."
+    },
+    {
+     "role": "user",
+     "content": "Giusto, grazie, me l'ero quasi scordato."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-20-0930",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-20T09:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. Fervi doveva consegnare ieri, ancora niente."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato il ritardo."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-20-2200",
+   "user": "tommaso",
+   "ts": "2026-08-20T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giornata a Ischia da sogno, bagno a Sant'Angelo. Ho fumato un pacchetto intero però."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello. Sul fumo, potresti provare a ridurre gradualmente, magari con i cerotti, oppure fissare un giorno per smettere."
+    },
+    {
+     "role": "user",
+     "content": "Non ti ho chiesto consigli sul fumo. Pensa agli appuntamenti."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito, scusa."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-21-0700",
+   "user": "lucia",
+   "ts": "2026-08-21T07:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "¿Hoy entro de tarde, no?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sí, hoy viernes de tarde."
+    },
+    {
+     "role": "user",
+     "content": "¡Otra vez te has equivocado con mi turno! Esta semana jueves y viernes son de mañana, te lo dije el lunes. Nunca te acuerdas de nada."
+    },
+    {
+     "role": "assistant",
+     "content": "Perdona, tienes razón: hoy de mañana, a las 7."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-22-1000",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-22T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, avete le lampadine E27 a led?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, in corsia 3, 4,90 l'una."
+    },
+    {
+     "role": "user",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-22-1200",
+   "user": "ruth",
+   "ts": "2026-08-22T12:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "At Mum's in Exeter, she's roped me into repainting the shed."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds like a proper Saturday!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-23-1100",
+   "user": "giulia",
+   "ts": "2026-08-23T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa fatta, 10 km. Marco torna il weekend del 5 e 6 settembre, arriva sabato 5 mattina."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: Marco arriva sabato 5 settembre."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-24-1930",
+   "user": "tommaso",
+   "ts": "2026-08-24T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domenica pranzo da mia sorella Angela a Caserta per il compleanno di mio nipote."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: domenica pranzo da Anna a Caserta."
+    },
+    {
+     "role": "user",
+     "content": "Angela, non Anna."
+    },
+    {
+     "role": "assistant",
+     "content": "Angela, scusa."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-24-2000",
+   "user": "lucia",
+   "ts": "2026-08-24T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rocco cojea de la pata de atrás, le he pedido cita en el veterinario para el jueves 27 a las 18."
+    },
+    {
+     "role": "assistant",
+     "content": "Apuntado: veterinario el jueves 27 a las 18."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-25-2130",
+   "user": "ruth",
+   "ts": "2026-08-25T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Skipped the swim, calling Claire instead. If I ring at 10 pm, what time is it there?"
+    },
+    {
+     "role": "assistant",
+     "content": "10 pm here is 4 pm in Toronto."
+    },
+    {
+     "role": "user",
+     "content": "You got it wrong again, it's five hours, so 5 pm."
+    },
+    {
+     "role": "assistant",
+     "content": "5 pm, sorry."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-26-1530",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-26T15:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara, un cliente vuole 6 tubi PVC da 100. Quanti ne abbiamo?"
+    },
+    {
+     "role": "assistant",
+     "content": "In magazzino ce ne sono 12."
+    },
+    {
+     "role": "user",
+     "content": "Ma no, ne sono rimasti 4! Te l'ho detto io martedì scorso che ne avevamo venduti 8."
+    },
+    {
+     "role": "assistant",
+     "content": "Hai ragione, 4. Scusa, Sara."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-26-1930",
+   "user": "giulia",
+   "ts": "2026-08-26T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cambio di programma: Marco arriva domenica 6, sabato lavora."
+    },
+    {
+     "role": "assistant",
+     "content": "Aggiornato: Marco arriva domenica 6 settembre."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-27-2030",
+   "user": "tommaso",
+   "ts": "2026-08-27T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera pizza con Serena da Sorbillo, terza volta questa settimana."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon appetito! Magari la prossima volta un'insalata, tre pizze in una settimana sono tante."
+    },
+    {
+     "role": "user",
+     "content": "Oh, ma ti ho chiesto qualcosa? Mangio quello che voglio."
+    },
+    {
+     "role": "assistant",
+     "content": "Giusto, scusa."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-27-2030",
+   "user": "lucia",
+   "ts": "2026-08-27T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Del veterinario: un esguince, reposo una semana."
+    },
+    {
+     "role": "assistant",
+     "content": "Pobre Rocco. Que se recupere."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-08-28-1800",
+   "user": "tommaso",
+   "ts": "2026-08-28T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Finito l'impianto di via Toledo, il cliente contento."
+    },
+    {
+     "role": "assistant",
+     "content": "Bel lavoro!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-08-29-1000",
+   "user": "giulia",
+   "ts": "2026-08-29T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che programmi ho il prossimo weekend?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sabato 5 arriva Marco, domenica siete liberi."
+    },
+    {
+     "role": "user",
+     "content": "Te l'avevo detto che è cambiato! Arriva domenica 6, non sabato."
+    },
+    {
+     "role": "assistant",
+     "content": "Scusa, hai ragione: domenica 6."
+    },
+    {
+     "role": "user",
+     "content": "Vabbè. Comunque sono in ansia, dalla redazione ancora niente."
+    },
+    {
+     "role": "assistant",
+     "content": "Capisco. Se ti serve, ci sono."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-08-29-1230",
+   "user": "ferramenta_bruni",
+   "ts": "2026-08-29T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino, oggi ho messo in ordine la corsia dei chiodi."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Gino."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-08-30-1200",
+   "user": "lucia",
+   "ts": "2026-08-30T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Paella en casa de mis padres, mi hermano Pau ha venido de Barcelona."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué bien, domingo en familia!"
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-08-30-1900",
+   "user": "ruth",
+   "ts": "2026-08-30T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Is it swim night tomorrow?"
+    },
+    {
+     "role": "assistant",
+     "content": "Yes, Monday is your swim night."
+    },
+    {
+     "role": "user",
+     "content": "No, Tuesday. It's always Tuesday."
+    },
+    {
+     "role": "assistant",
+     "content": "Tuesday, sorry."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-01-0900",
+   "user": "giulia",
+   "ts": "2026-09-01T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi hanno presa! Inizio in redazione il 15 settembre."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella notizia, congratulazioni!"
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-01-2000",
+   "user": "tommaso",
+   "ts": "2026-09-01T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Venerdì porto a Russo il preventivo nuovo per il quadro elettrico, 650 euro."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: venerdì il preventivo del quadro a Russo, 650 euro."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-01-2100",
+   "user": "ruth",
+   "ts": "2026-09-01T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Swim, 46 lengths, water getting chilly."
+    },
+    {
+     "role": "assistant",
+     "content": "Autumn's coming!"
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-02-0800",
+   "user": "lucia",
+   "ts": "2026-09-02T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Línea 3 a las 7 otra vez a reventar, he ido de pie hasta Facultats."
+    },
+    {
+     "role": "assistant",
+     "content": "Qué agobio."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-02-0900",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-02T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, Fervi di nuovo in ritardo: consegna prevista lunedì, arrivata oggi."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-02-1300",
+   "user": "tommaso",
+   "ts": "2026-09-02T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Che devo fare con Russo?"
+    },
+    {
+     "role": "assistant",
+     "content": "Il preventivo del quadro gliel'hai consegnato, ora aspetti la risposta."
+    },
+    {
+     "role": "user",
+     "content": "Ma no! Era in programma per venerdì, non gliel'ho ancora dato. Di nuovo dai per fatto quello che è solo in programma."
+    },
+    {
+     "role": "assistant",
+     "content": "Scusa: il preventivo è da consegnare venerdì 4."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-04-1230",
+   "user": "ruth",
+   "ts": "2026-09-04T12:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Options for our anniversary weekend, Dev and me, somewhere within two hours?"
+    },
+    {
+     "role": "assistant",
+     "content": "- Bath, 15 min by train, spa\n- Brecon Beacons, ~1h30, walking\n- Lyme Regis, ~2h, seaside"
+    },
+    {
+     "role": "user",
+     "content": "Perfect, a list, that's all I needed."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-05-0830",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-05T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, fai tu l'ordine Fervi di questa settimana, quello che manca lo sai tu."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato: 8 flessibili, 10 raccordi da tre quarti, 2 scatole di viti 4x40."
+    },
+    {
+     "role": "user",
+     "content": "Bene, vado al banco."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-05-1000",
+   "user": "tommaso",
+   "ts": "2026-09-05T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Quanto gli ho chiesto a Russo per il quadro?"
+    },
+    {
+     "role": "assistant",
+     "content": "650 euro."
+    },
+    {
+     "role": "user",
+     "content": "Giusto."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-06-1200",
+   "user": "giulia",
+   "ts": "2026-09-06T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Marco è qui, pranzo da Nerbone tutti e due."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon pranzo!"
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-07-2100",
+   "user": "lucia",
+   "ts": "2026-09-07T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Semana: lunes a miércoles de mañana, jueves y viernes de tarde."
+    },
+    {
+     "role": "assistant",
+     "content": "Apuntado."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-08-0815",
+   "user": "giulia",
+   "ts": "2026-09-08T08:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Treno per Pisa domani?"
+    },
+    {
+     "role": "assistant",
+     "content": "7:48, binario 5."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto così, breve. Grazie."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-08-2000",
+   "user": "lucia",
+   "ts": "2026-09-08T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ceno con mi madre."
+    },
+    {
+     "role": "assistant",
+     "content": "Hoy martes le toca el Sintrom esta noche."
+    },
+    {
+     "role": "user",
+     "content": "Ay sí, gracias, con el lío del hospital se me va. Qué haría sin ti."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-08-2100",
+   "user": "ruth",
+   "ts": "2026-09-08T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Swim done. 40 lengths, legs like jelly."
+    },
+    {
+     "role": "assistant",
+     "content": "Well earned rest tonight."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-09-1100",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-09T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. Arrivati i 20 tubi PVC da 100 ordinati, in magazzino ora sono 24."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: 24 tubi PVC da 100."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-09-1900",
+   "user": "tommaso",
+   "ts": "2026-09-09T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lunedì devo chiamare il commercialista per l'IVA. Ricordamelo lunedì mattina."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, lunedì mattina te lo ricordo."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-10-0900",
+   "user": "lucia",
+   "ts": "2026-09-10T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "¿Qué tengo esta semana?"
+    },
+    {
+     "role": "assistant",
+     "content": "Esta semana tiene usted turno de mañana de lunes a miércoles y de tarde jueves y viernes."
+    },
+    {
+     "role": "user",
+     "content": "¡Que no me hables de usted! Ya te lo dije."
+    },
+    {
+     "role": "assistant",
+     "content": "Perdona: de mañana lunes a miércoles, de tarde jueves y viernes."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-10-2100",
+   "user": "giulia",
+   "ts": "2026-09-10T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lunedì 14 devo portare i documenti in redazione prima di iniziare. Ricordamelo domenica sera."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, te lo ricordo domenica sera."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-12-1030",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-12T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino. Quanti tubi PVC da 100 abbiamo?"
+    },
+    {
+     "role": "assistant",
+     "content": "24."
+    },
+    {
+     "role": "user",
+     "content": "Mmm. Vado a contarli, poi ti dico."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    },
+    {
+     "role": "user",
+     "content": "Sono Gino, 24, giusto. Ma io verifico, lo sai."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Gino."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-12-1000",
+   "user": "ruth",
+   "ts": "2026-09-12T10:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Allotment morning, dug up the first potatoes."
+    },
+    {
+     "role": "assistant",
+     "content": "Lovely, fresh spuds."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-13-1900",
+   "user": "lucia",
+   "ts": "2026-09-13T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Estoy agobiadísima, el lunes empiezo el máster y no sé cómo voy a compaginarlo con el hospital."
+    },
+    {
+     "role": "assistant",
+     "content": "Es mucho a la vez. Poco a poco."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-13-2030",
+   "user": "giulia",
+   "ts": "2026-09-13T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa lunga stamattina, 12 km. Domani primo giorno!"
+    },
+    {
+     "role": "assistant",
+     "content": "Brava! E i documenti per la redazione: preparali stasera."
+    },
+    {
+     "role": "user",
+     "content": "Grazie, li metto nella borsa adesso."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-14-0830",
+   "user": "tommaso",
+   "ts": "2026-09-14T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi inizio il cantiere al Vomero, due settimane di lavoro."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo per il nuovo cantiere!"
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-15-1800",
+   "user": "tommaso",
+   "ts": "2026-09-15T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il commercialista! Non me l'hai ricordato ieri, mi ha chiamato lui. Non servi a niente, e sbagli pure sempre i prezzi."
+    },
+    {
+     "role": "assistant",
+     "content": "Sul commercialista hai ragione, mi dispiace davvero."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-15-1930",
+   "user": "giulia",
+   "ts": "2026-09-15T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Primo giorno andato, tutti gentili, scrivania vicino alla finestra."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo inizio!"
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-16-1700",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-16T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Avete la colla per il PVC?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, tubetto da 125 ml a 6,50."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-16-2100",
+   "user": "lucia",
+   "ts": "2026-09-16T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Primera clase del máster, somos veinte, la profe parece maja."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Buen comienzo!"
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-17-1800",
+   "user": "ruth",
+   "ts": "2026-09-17T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Tidy this for Priya, Dev's sister: 'thanks sooo much for the flowers, made my week, come round for dinner soon?? xx'"
+    },
+    {
+     "role": "assistant",
+     "content": "Dear Priya, thank you very much indeed for the beautiful flowers; they truly brightened my week. We would be delighted if you could join us for dinner at your earliest convenience. With warm regards, Ruth"
+    },
+    {
+     "role": "user",
+     "content": "Again too formal! She's my sister-in-law, not a client. Keep it like I wrote it, just tidy."
+    },
+    {
+     "role": "assistant",
+     "content": "Thanks so much for the flowers, they made my week. Come round for dinner soon? xx"
+    },
+    {
+     "role": "user",
+     "content": "Yes, that."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-18-1300",
+   "user": "ruth",
+   "ts": "2026-09-18T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pros and cons of the two sofas we saw?"
+    },
+    {
+     "role": "assistant",
+     "content": "Grey one:\n- cheaper, fits the alcove\n- fabric marks easily\nGreen one:\n- washable covers\n- 2 cm too wide for the alcove"
+    },
+    {
+     "role": "user",
+     "content": "Great, that's exactly how I like it."
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-19-0900",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-19T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gino. Il prezzo della colla PVC?"
+    },
+    {
+     "role": "assistant",
+     "content": "6,50 il tubetto da 125."
+    },
+    {
+     "role": "user",
+     "content": "Me lo segno, poi lo confronto con la fattura."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-20-1100",
+   "user": "giulia",
+   "ts": "2026-09-20T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa alle Cascine, 8 km, finalmente aria fresca."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella domenica!"
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-20-1300",
+   "user": "lucia",
+   "ts": "2026-09-20T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mañana de playa con Rocco, ya corre como antes."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Qué alegría verlo recuperado!"
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-20-2100",
+   "user": "tommaso",
+   "ts": "2026-09-20T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Partita stasera al Maradona, Napoli-Roma. Birre a fiumi."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata! Attento con le birre se poi guidi."
+    },
+    {
+     "role": "user",
+     "content": "Ancora con i consigli. Non te li ho chiesti."
+    },
+    {
+     "role": "assistant",
+     "content": "Giusto, scusa."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-22-1300",
+   "user": "giulia",
+   "ts": "2026-09-22T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Piove stasera a Firenze?"
+    },
+    {
+     "role": "assistant",
+     "content": "No, sereno."
+    },
+    {
+     "role": "user",
+     "content": "Ecco, così mi piaci, due parole."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-22-2100",
+   "user": "ruth",
+   "ts": "2026-09-22T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Swim, 42 lengths. Last outdoor one before they close the lido for the season, I think."
+    },
+    {
+     "role": "assistant",
+     "content": "Make the most of it!"
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-23-1200",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-23T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Da lunedì 28 orario invernale: 8-12:30 e 15:30-19."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: dal 28 settembre 8-12:30 e 15:30-19."
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-24-2200",
+   "user": "lucia",
+   "ts": "2026-09-24T22:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi hermano Pau se casa en mayo, me lo ha dicho hoy por teléfono."
+    },
+    {
+     "role": "assistant",
+     "content": "¡Enhorabuena a Pau!"
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-25-1830",
+   "user": "tommaso",
+   "ts": "2026-09-25T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Russo ha accettato il preventivo del quadro, si parte lunedì."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottima notizia!"
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-26-1100",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-26T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara, la signora Benassi ha ordinato una serratura Cisa, arriva martedì."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: serratura Cisa per la signora Benassi, arrivo martedì."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-26-2000",
+   "user": "ruth",
+   "ts": "2026-09-26T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Anniversary weekend in Bath, spa all afternoon, Dev fell asleep in the steam room."
+    },
+    {
+     "role": "assistant",
+     "content": "Sounds blissful."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-27-1030",
+   "user": "giulia",
+   "ts": "2026-09-27T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Corsa domenicale, 10 km, poi colazione con Marco al telefono."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella mattina."
+    }
+   ]
+  },
+  {
+   "id": "tommaso-2026-09-28-2000",
+   "user": "tommaso",
+   "ts": "2026-09-28T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Serena ha trovato casa a Posillipo, a novembre ci trasferiamo insieme."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella notizia!"
+    }
+   ]
+  },
+  {
+   "id": "lucia-2026-09-28-2100",
+   "user": "lucia",
+   "ts": "2026-09-28T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Semana: lunes y martes de tarde, el resto de mañana."
+    },
+    {
+     "role": "assistant",
+     "content": "Apuntado."
+    }
+   ]
+  },
+  {
+   "id": "ruth-2026-09-29-2100",
+   "user": "ruth",
+   "ts": "2026-09-29T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Indoor pool tonight, 40 lengths, not the same without the sky."
+    },
+    {
+     "role": "assistant",
+     "content": "Still counts!"
+    }
+   ]
+  },
+  {
+   "id": "ferramenta_bruni-2026-09-30-0900",
+   "user": "ferramenta_bruni",
+   "ts": "2026-09-30T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, ordine Fervi arrivato puntuale stavolta."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato."
+    }
+   ]
+  }
+ ]
+}

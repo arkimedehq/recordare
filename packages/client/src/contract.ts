@@ -245,8 +245,8 @@ export interface Fact {
 
 export interface Note {
   id: string;
-  /** `insight`, `question` and `opinion` are the agent's own thoughts (`thought`, D53). */
-  category: 'preference' | 'habit' | 'value' | 'relationship' | 'knowledge' | 'profile' | 'constraint' | 'insight' | 'question' | 'opinion';
+  /** `insight`, `question`, `opinion` and `self` (what the agent learned about itself as an agent) are the agent's own thoughts (`thought`, D53). */
+  category: 'preference' | 'habit' | 'value' | 'relationship' | 'knowledge' | 'profile' | 'constraint' | 'insight' | 'question' | 'opinion' | 'self';
   content: string;
   pinned: boolean;
   pending: boolean;

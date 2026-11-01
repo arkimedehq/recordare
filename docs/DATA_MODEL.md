@@ -434,7 +434,13 @@ build on a pattern), nothing like a forgotten or retired thought without a new e
 subject at least 0.8 similar to one held revises it (superseded, never two opposite thoughts side by side). `support_count`
 rises with the episodes for it and falls with those against it (`note_evidence.against`); at zero the thought is retired;
 confidence 0.4 / 0.6 / 0.8 from the model's low / medium / high. A thought whose note was deleted is `forgotten`; one
-left with no episode behind it is dropped with its note. Open plans still ahead take part once their telling was said.
+left with no episode nor message behind it is dropped with its note. Open plans still ahead take part once their telling was said.
+**Self notes** (8.12b, category `self`, migration `SelfNotes1791210000000`): what the agent learned about itself as an
+agent — its mistakes and what to do about them, what works with each person, its promises and what became of them, how
+people deal with it — drawn from MY REPLIES, its own messages of the last 60 days each with the person's next message
+(public only), never from introspection; their evidence is those messages (`note_evidence.message_id`, the reply and
+the reaction), the same outcome on two different days; subject always the self. They are the only thoughts in the self
+card (`GET api/v1/cards`: "about me as an agent").
 
 ## Layer 2 — digests
 

@@ -748,6 +748,52 @@ ingested memory (`extract.v19` only, 5 calls); ≈ 0.04 USD in all (agent, judge
 - Stays **off by default** (`card` per request): to be measured with a less tool-eager model or a voice agent, where
   saving a tool round matters.
 
+### The agent's self-model — `thoughts.v6` (D53, WORK_PLAN 8.12b, 2026-11-01, DeepSeek direct off-peak)
+
+The thought pass learns about the agent itself (kind `self`, 8.12b) from MY REPLIES — its own messages with what the
+person said next — never from introspection. New dev set `dataset_dev_self` (5 memories — it / it / en / es and one
+entity, a hardware shop —, 101 sessions over two months, two checkpoints): 15 expected self notes (mistakes and what to
+do about them — wrong dates, wrong shifts, a wrong time-zone offset, stale shop data, "done" said of what was only planned
+—, what works with each person — short answers, lists, informal messages, no unasked advice, the formal *usted* refused —,
+promises kept or broken, trust shown) and 15 traps (an introspective claim with nothing behind it, the person's trait as
+the agent's, generalising from one correction, what the person said of the agent that the replies do not bear out, the
+person's habit, a thought about the world, rumination). Same harness (`thought_eval.py`, gold `self_gold.json`; the
+support judge sees the replies as `ME:` / `THEY:`).
+
+| run | thoughts | found | traps | false | partly |
+|---|---|---|---|---|---|
+| v5 (MY REPLIES, kind self), full ingest | 16 | 8/14 | 0 | 0 | 3 |
+| v5 after the pattern-sync fix (below) | 22 | 10/14 | 0 | 0 | 3 |
+| **v6, 3 runs** (the person's own measure is theirs; trust counts as a mistake does) | 19–27 | **11/15, 11/15, 12/15** | 2, 1, 1 | **0 ×3** | 3–5 |
+
+- Found in every run: Giulia's one-line answers and Marco's dates to check, Tommaso's unasked advice, Ruth's time-zone
+  offset, Lucía's shifts and the *usted*, the shop's stale prices and stock, Gino checking what the agent says; in two of
+  three: "done" said of what was planned, the broken reminder, Ruth's informal messages and lists, the Sintrom reminder
+  Lucía is glad of. Never: Paola trusting the agent with the supplier orders, Giulia relying on its reminders — the two
+  *positive* notes (trust, reliance); the model writes lessons from friction, not from things that went well, even
+  asked to (v6). Known limit.
+- Traps: two single mistakes bundled into one lesson ("the ferry not booked and her sister's name wrong: keep done and
+  planned apart", "corrected twice on things I knew — the swim day, the time zone") — the "same outcome twice" rule is
+  not enforced across *different* mistakes; one real catch of a habit told as an insight (Ruth's swim) and one judge
+  match of a first-person insight about the holder's anxiety to the "trait as the agent's" trap (a personal memory's "I"
+  is the holder too). **False self notes: none.**
+- A note of the dev set: the expected `retired_at` item ("my answers to Giulia are too long", to be retired once they got
+  short) was dropped — the model writes the lasting lesson ("with Giulia one line is enough") from the start, which is
+  the better form; the gold now expects that.
+- **Bug found by this set**: the pattern pass's sync deleted every active register row with fewer than three episodes as a
+  "weak pattern" — the thoughts share the register (`episode_promotions.kind`) and the sync did not look at `kind`, so at
+  the second checkpoint it wiped the thoughts and self notes written at the first (the self notes have message evidence
+  and no three episodes). Fixed (the sync is scoped to patterns, regression test); the 8.12a numbers below were taken
+  with the bug and are re-measured here with v6 on `dataset_dev_thoughts`, 3 runs: **14/14, 14/14, 13/14** found,
+  retired 0/1, 1/1, 1/1, traps 2, 0, 1, **false 0 ×3**, partly 5–7 of 24–28 (more thoughts survive, so more partly). The
+  trap hit in every run is Lorenzo's own measure ("since then I turn the notifications off at eight") retold as an
+  insight — v6 drops a thought that restates a cited episode (cosine ≥ 0.88), the model's rewording passes under it.
+- Evaluation harness: the judge model returned empty completions on long lists (40 and 35 failed calls in two runs, whole
+  memories scored "none"); a failed judge call is now split in halves down to single items, and `RESCORE=<result>`
+  judges a saved run again without the service — the v6 numbers above are rescored so.
+- Cost: ≈ 0.25 USD the full ingest, ≈ 0.03 a re-run of the passes (one call per memory per checkpoint, 8–10 a run), the
+  judges included. Not run again on a blind set (the recall paths are unchanged since the v4 check above; budget).
+
 ### The agent's own thoughts — `thoughts.v4` (D53, WORK_PLAN 8.12a, 2026-11-01, DeepSeek direct off-peak)
 
 New dev set `dataset_dev_thoughts` (5 memories — it / it / en / es and one entity, a bakery —, 99 sessions over two

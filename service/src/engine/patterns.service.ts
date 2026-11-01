@@ -255,13 +255,14 @@ export class PatternsService {
    * episodes (the others forgotten) is dropped with its note.
    */
   private async sync(memoryId: string): Promise<void> {
-    await this.db.query(`UPDATE episode_promotions SET status = 'forgotten', updated_at = now() WHERE memory_id = $1 AND status = 'active' AND note_id IS NULL`, [memoryId]);
+    // Patterns only: the thoughts share the register (`kind`) and have their own pass and rules (D53).
+    await this.db.query(`UPDATE episode_promotions SET status = 'forgotten', updated_at = now() WHERE memory_id = $1 AND kind = 'pattern' AND status = 'active' AND note_id IS NULL`, [memoryId]);
     await this.db.query(
       `UPDATE episode_promotions p SET status = 'retired', updated_at = now() FROM notes n
-       WHERE p.memory_id = $1 AND p.status = 'active' AND n.id = p.note_id AND (n.status <> 'current' OR n.deleted_at IS NOT NULL)`, [memoryId]);
+       WHERE p.memory_id = $1 AND p.kind = 'pattern' AND p.status = 'active' AND n.id = p.note_id AND (n.status <> 'current' OR n.deleted_at IS NOT NULL)`, [memoryId]);
     const weak: Array<{ id: string; note_id: string }> = await this.db.query(
       `SELECT p.id, p.note_id FROM episode_promotions p
-       WHERE p.memory_id = $1 AND p.status = 'active' AND (
+       WHERE p.memory_id = $1 AND p.kind = 'pattern' AND p.status = 'active' AND (
          SELECT count(*) FROM note_evidence x JOIN episodes e ON e.id = x.episode_id
          WHERE x.note_id = p.note_id AND e.deleted_at IS NULL AND e.invalidated_at IS NULL) < $2`, [memoryId, MIN_PATTERN_EPISODES]);
     if (!weak.length) return;

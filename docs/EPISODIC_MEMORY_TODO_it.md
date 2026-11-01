@@ -816,6 +816,11 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
 - **Procedure**: "quando X, faccio così", imparate solo quando un risultato lo dice (una correzione, una conferma, un
   piano fatto); richiamate per situazione, mai dette come fatti del mondo.
 - **Percezione** (foto, audio, video, sensori): più avanti, un passo a sé (chi descrive, cosa si conserva).
+- **Le fonti esterne passano sempre dall'agente** (maintainer, 2026-11-01): il web, la camera, il microfono e ogni altro
+  senso o strumento sono dell'agente che ospita Recordare (una piattaforma, un robot) — Recordare è la mente, non il
+  corpo. Non cerca mai sul web né legge un sensore da sé: la sua curiosità diventa un **intento di cercare** (una
+  domanda che tiene → "cerca X", "guarda", "ascolta") spinto all'agente, che agisce con i propri strumenti e permessi e
+  riporta il risultato come fonte imparata (D49) o percezione; la passata dei pensieri ritira poi la domanda come risposta.
 - **Costo** (D35): economy — l'iniziativa da piani aperti e intenti armati senza LLM; balanced — più i pensieri; full —
   più una passata libera che collega problemi aperti e materiale nuovo.
 - **Ordine**: (a) pensieri e origine dei pattern, (b) modello di sé, (c) intenti e iniziativa spinta, (d) procedure,
@@ -829,7 +834,16 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   silenzio è la sua prova; le due domande mancate dal dev set venivano dalla regola di freschezza); i piani aperti ancora
   davanti partecipano; un nuovo pensiero sul soggetto e sulla materia di uno tenuto lo rivede — i modelli aggiungono il
   pensiero opposto accanto al vecchio invece di ritirarlo. Dev set `dataset_dev_thoughts`: 13 / 14 in tre run, nessun
-  pensiero falso (RESULTS.md).
+  pensiero falso (RESULTS.md) — 14 / 14, 14 / 14, 13 / 14 da quando la passata dei pattern ha smesso di cancellarli (la
+  sua sincronizzazione prendeva ogni riga del registro con meno di tre episodi per un pattern debole; corretto il
+  2026-11-01).
+- **Costruito finora** (2026-11-01, passo b): il modello di sé come tipo `self` della stessa passata (`thoughts.v6`):
+  MY REPLIES — i messaggi dell'agente con il messaggio successivo della persona, solo pubblici — gli vengono mostrati, e
+  ciò che ha imparato di sé come agente (errori, cosa funziona con chi, promesse, fiducia) diventa una nota di categoria
+  `self` con quei messaggi come evidenza, lo stesso esito in due giorni; nella scheda di sé e nel contesto di memoria come
+  "su di me come agente", raccontato a tutti come gli altri pensieri. Dev set `dataset_dev_self`: 11–12 / 15 in tre run,
+  nessuna falsa nota di sé; limiti noti: le lezioni vengono dall'attrito, non da ciò che è andato bene (fiducia,
+  affidamento), e due errori singoli diversi possono essere raggruppati in un'unica lezione (RESULTS.md).
 
 ## Questioni aperte (da discutere)
 

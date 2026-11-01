@@ -18,10 +18,20 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   conclude da sola ha ora una propria origine, `reflected` — i pattern ricorrenti passano a questa (erano salvati come
   vissuti dal titolare). Opzione del profilo di qualità `thoughts` (attiva in balanced e full), override `THOUGHTS`,
   task LLM `thoughts`; l'admin `POST api/v1/admin/memories/{id}/thoughts` esegue la sola passata. Migrazione `Thoughts`.
+- **Il modello di sé dell'agente** (D53, WORK_PLAN 8.12b): la passata dei pensieri impara anche sull'agente stesso dalle
+  sue risposte e da come la persona ha reagito — un errore da evitare ("sbaglio sempre i suoi turni: prima controllare il
+  piano turni"), ciò che funziona con una persona (risposte brevi, elenchi, nessun consiglio non richiesto), una promessa
+  e che fine ha fatto, la fiducia dimostrata — mai dall'introspezione: note di categoria `self` (`thought: true`),
+  sostenute da quei messaggi, lo stesso esito in due giorni; raccontate nel recall e nel contesto di memoria come ciò che
+  ha imparato di sé, e nella scheda di sé come "su di me come agente" (`GET api/v1/cards`). Migrazione `SelfNotes`.
 - L'admin legge gli elementi di una memoria (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`),
   `…/facts`, `…/notes` — le liste del diario lette come l'intera memoria, gli elementi privati segnati con di chi sono — e
   ne dimentica uno (`DELETE …/episodes|facts|notes/{id}`). Solo chiave admin; Recordare Atlas li elenca e li dimentica con
   queste rotte.
+
+### Corretto
+- La passata notturna dei pattern cancellava i pensieri dell'agente scritti la notte prima come "pattern deboli" (meno
+  di tre episodi): la sua sincronizzazione ora guarda solo i pattern.
 
 ## [0.5.0] — 2026-10-27
 

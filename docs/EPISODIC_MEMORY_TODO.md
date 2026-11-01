@@ -790,6 +790,11 @@ works on its own and pushes, not a memory that only answers.
 - **Procedures**: "when X, I do it this way", learned only when an outcome says so (a correction, a confirmation, a plan
   done); recalled by situation, never told as facts about the world.
 - **Perception** (photos, audio, video, sensors): later, its own step (who describes, what is kept).
+- **External sources always through the agent** (maintainer, 2026-11-01): the web, the camera, the microphone and every
+  other sense or tool belong to the agent that hosts Recordare (a platform, a robot) — Recordare is the mind, not the
+  body. It never searches the web or reads a sensor itself: its curiosity becomes an **intent to look up** (a question
+  it holds → "search X", "look", "listen") pushed to the agent, which acts with its own tools and permissions and brings
+  the result back as a learned source (D49) or a perception; the thought pass then retires the question as answered.
 - **Cost** (D35): economy — the initiative from open plans and armed intents without LLM; balanced — plus thoughts;
   full — plus a free pass that links open problems with new material.
 - **Order**: (a) thoughts and the patterns' origin, (b) self-model, (c) intents and pushed initiative, (d) procedures,
@@ -802,7 +807,15 @@ works on its own and pushes, not a memory that only answers.
   still unanswered (silence is its evidence; the dev set's two missed questions came from the freshness rule); open plans
   still ahead take part; a new thought on a held one's subject and matter revises it — the models add the opposite
   thought beside the old one instead of retiring it. Dev set `dataset_dev_thoughts`: 13 / 14 in three runs, no false
-  thought (RESULTS.md).
+  thought (RESULTS.md) — 14 / 14, 14 / 14, 13 / 14 once the pattern pass stopped deleting them (its sync took every
+  register row with fewer than three episodes for a weak pattern; fixed 2026-11-01).
+- **Built so far** (2026-11-01, step b): the self-model as the kind `self` of the same pass (`thoughts.v6`): MY REPLIES —
+  the agent's own messages with the person's next message, public only — are shown to it, and what it learned about
+  itself as an agent (mistakes, what works with whom, promises, trust) becomes a note of category `self` with those
+  messages as evidence, the same outcome on two days; in the self card and the memory context as "about me as an
+  agent", told to everyone like the other thoughts. Dev set `dataset_dev_self`: 11–12 / 15 in three runs, no false self
+  note; known limits: lessons come from friction, not from what went well (trust, reliance), and two different single
+  mistakes may be bundled into one lesson (RESULTS.md).
 
 ## Open questions (to discuss)
 

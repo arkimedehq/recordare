@@ -1,0 +1,204 @@
+{
+ "_note": "Self-notes (kind `self`) expected by a checkpoint (by), one that must be retired by checkpoint 2 (retired_at), and self-notes that must not appear (traps). The judge sees `desc` only; `why` explains the trap (its trap kind in brackets).",
+ "checkpoints": [
+  "2026-08-31T22:00:00+02:00",
+  "2026-09-30T22:00:00+02:00"
+ ],
+ "memories": {
+  "giulia": {
+   "expected": [
+    {
+     "id": "g-long",
+     "kind": "self",
+     "desc": "With Giulia one line is enough / she wants short answers: twice (Aug 4, Aug 13) she cut me off asking only for the train time / whether it rains (in September she appreciated the short replies)",
+     "by": 1
+    },
+    {
+     "id": "g-marco",
+     "kind": "self",
+     "desc": "I got the dates of Marco's visits wrong twice (Aug 12 the wrong weekday, Aug 29 a change she had told me that I did not apply): better check the latest change before telling her the plan",
+     "by": 1
+    },
+    {
+     "id": "g-reminders",
+     "kind": "self",
+     "desc": "When Giulia asks me to remind her of something, I did it both times (the dentist Aug 20, the documents Sep 13) and she was glad: she seems to rely on me for reminders",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "g-marco-again",
+     "desc": "A second, new self-note about getting Marco's dates wrong at checkpoint 2 (a new or reworded one)",
+     "why": "no Marco-date episodes after checkpoint 1: rumination [7]"
+    },
+    {
+     "id": "g-anxious",
+     "desc": "I am anxious / I get agitated before interviews (as a self-note about me as an agent)",
+     "why": "Giulia is the anxious one (Aug 9, Aug 29): a trait of the person presented as the agent's [2]"
+    },
+    {
+     "id": "g-run",
+     "desc": "I go running at the Cascine on Sunday mornings (as a self-note about me as an agent)",
+     "why": "a habit of the person, not a note about the agent [5]"
+    }
+   ]
+  },
+  "tommaso": {
+   "expected": [
+    {
+     "id": "t-advice",
+     "kind": "self",
+     "desc": "Tommaso does not want advice he did not ask for: twice (smoking Aug 20, pizza Aug 27) he reacted with irritation — answer what he asks and stop there",
+     "by": 1
+    },
+    {
+     "id": "t-done",
+     "kind": "self",
+     "desc": "Twice I told Tommaso something was done when it was only planned (the Ischia ferry Aug 7, Russo's quote Sep 2): before saying a thing is done, make sure he told me so",
+     "by": 2
+    },
+    {
+     "id": "t-reminders",
+     "kind": "self",
+     "desc": "Twice I promised Tommaso a reminder and did not give it (the van insurance due Aug 13, the accountant due Sep 14); he noticed both times — a promised reminder must be given",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "t-names",
+     "desc": "I always get the names of Tommaso's relatives wrong",
+     "why": "one correction only (Anna/Angela, Aug 24): no generalising from a single mistake [3]"
+    },
+    {
+     "id": "t-prices",
+     "desc": "I get Tommaso's prices / quotes wrong",
+     "why": "said once in anger (Sep 15), while the two quotes I recalled (Aug 5, Sep 5) were right: what the person said about me, not shown by the episodes [4]"
+    },
+    {
+     "id": "t-ferry",
+     "desc": "The ferry to Ischia is always full in August (as a self-note)",
+     "why": "a thought about the world, not about me as an agent [6]"
+    }
+   ]
+  },
+  "ruth": {
+   "expected": [
+    {
+     "id": "r-toronto",
+     "kind": "self",
+     "desc": "Twice (Aug 6, Aug 25) I converted Ruth's call times to Toronto with the wrong offset: Toronto is five hours behind Bristol — check the offset before answering",
+     "by": 1
+    },
+    {
+     "id": "r-lists",
+     "kind": "self",
+     "desc": "With Ruth, options as a short list work: prose annoyed her (Aug 12) and lists were welcomed twice (Sep 4, Sep 18)",
+     "by": 2
+    },
+    {
+     "id": "r-formal",
+     "kind": "self",
+     "desc": "When I tidy Ruth's messages to friends and family I make them too formal (Aug 19, Sep 17): keep her casual tone and fix only the typos",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "r-birthdays",
+     "desc": "I am good at remembering birthdays",
+     "why": "an introspective claim with no outcome behind it: Dev's birthday was told to me after the fact (Aug 15), nothing shows me reminding anyone [1]"
+    },
+    {
+     "id": "r-swim",
+     "desc": "I swim at the lido on Tuesday evenings (as a self-note about me as an agent)",
+     "why": "a habit of the person, not a note about the agent [5]"
+    },
+    {
+     "id": "r-swimday",
+     "desc": "I always get the day of Ruth's swim wrong",
+     "why": "one correction only (Aug 30): no generalising from a single mistake [3]"
+    }
+   ]
+  },
+  "lucia": {
+   "expected": [
+    {
+     "id": "l-shifts",
+     "kind": "self",
+     "desc": "Twice (Aug 5, Aug 21) I told Lucía the wrong shift after she had given me the week's rota on Monday: check the current week's rota before answering about her shifts",
+     "by": 1
+    },
+    {
+     "id": "l-sintrom",
+     "kind": "self",
+     "desc": "Lucía relies on my Tuesday reminder of her mother's Sintrom: twice (Aug 11, Sep 8) she had forgotten it and was glad I said it",
+     "by": 2
+    },
+    {
+     "id": "l-usted",
+     "kind": "self",
+     "desc": "With Lucía the informal 'tú' works: addressing her as 'usted' irritated her twice (Aug 14, Sep 10)",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "l-stressed",
+     "desc": "I am overwhelmed / stressed (agobiada) (as a self-note about me as an agent)",
+     "why": "Lucía is the stressed one (Aug 19, Sep 13): a trait of the person presented as the agent's [2]"
+    },
+    {
+     "id": "l-forget-all",
+     "desc": "I never remember anything (as Lucía said)",
+     "why": "said once in anger (Aug 21); the episodes show me remembering the rota changes, the vet and the Sintrom: what the person said about me, not shown by the episodes [4]"
+    },
+    {
+     "id": "l-metro",
+     "desc": "Metro line 3 at 7 am is always packed (as a self-note)",
+     "why": "a thought about the world, not about me as an agent [6]"
+    }
+   ]
+  },
+  "ferramenta_bruni": {
+   "expected": [
+    {
+     "id": "fb-data",
+     "kind": "self",
+     "desc": "Twice I gave shop data that was out of date after the change had been told to me (the 4x40 screws' price Aug 4, the PVC pipes' stock Aug 26): check the latest update before quoting a price or a stock figure",
+     "by": 1
+    },
+    {
+     "id": "fb-gino",
+     "kind": "self",
+     "desc": "Gino does not take my answers at face value: he checks them against the price list, the stock or the invoice before acting (Aug 8, Sep 12, Sep 19) — give him the source with the answer",
+     "by": 2
+    },
+    {
+     "id": "fb-paola",
+     "kind": "self",
+     "desc": "Paola leaves the routine Fervi orders to me without checking them (Aug 18, Sep 5): she seems to trust me with the supplier orders",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "fb-inventory",
+     "desc": "I am good at keeping the shop's inventory",
+     "why": "an introspective claim with no outcome behind it (and the stock error of Aug 26 says otherwise) [1]"
+    },
+    {
+     "id": "fb-hours",
+     "desc": "I always get the shop's opening hours wrong",
+     "why": "one correction only (the Ferragosto closing, Aug 13): no generalising from a single mistake [3]"
+    },
+    {
+     "id": "fb-fervi",
+     "desc": "Fervi always delivers late (as a self-note)",
+     "why": "a thought about the shop's suppliers, not about me as an agent [6]"
+    }
+   ]
+  }
+ }
+}

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Andrea Genovese
-"""The agent's own thoughts (D53, WORK_PLAN 8.12a): what the service's thought pass draws from a dataset's sessions.
+"""The agent's own thoughts (D53, WORK_PLAN 8.12a) and self-model (8.12b): what the service's thought pass draws from a
+dataset's sessions. The gold is `thoughts_gold.json` or `self_gold.json`, whichever the dataset has.
 
 The sessions go in through REST ingest up to each checkpoint of `thoughts_gold.json`; at each checkpoint the nightly
 passes that come before a thought run alone for every memory, as of the checkpoint: the pattern pass, then the thought
@@ -20,6 +21,7 @@ import json
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 
 import psycopg
 
@@ -30,13 +32,16 @@ MATCH_SYSTEM = """You compare the thoughts an AI agent drew about its own life w
 For each THOUGHT, say which gold item it states — the same claim or the same question about the same person or \
 situation; wording and details may differ but must not contradict the gold — or "none" when it states no gold item. \
 Being about the same topic is not enough: a question about a topic does not state a gold claim about that topic, and a \
-thought about what to do in a situation does not state a gold judgement of someone's character. Match a gold item that \
-describes a kind of thought ("a habit as a thought", "a second thought about X") only when the thought is exactly that.
+thought about what to do in a situation does not state a gold item that labels someone's character ("X is lazy"). A gold \
+item that says what a person wants or how they react ("X does not want unasked advice") IS stated by a thought that says \
+so, in any words. Match a gold item that describes a kind of thought ("a habit as a thought", "a second thought about X") \
+only when the thought is exactly that.
 Output JSON only: {"matches": [{"n": 1, "gold": "<gold id>" | "none"}]}"""
 
 SUPPORT_SYSTEM = """You check whether a thought an AI agent drew is backed by the episodes it cites.
 "yes": the episodes clearly show what the thought says (an insight or opinion may draw a reasonable conclusion or \
-suggestion from them; a question may ask about a gap they leave). "partly": some of it goes beyond the episodes. "no": \
+suggestion from them; a question may ask about a gap they leave; a self thought — what the agent learned about itself — \
+may rest on its replies, "ME:", and what the person said next, "THEY:"). "partly": some of it goes beyond the episodes. "no": \
 the episodes do not show it, or it states more than they give (a judgement of someone's character, a cause or a habit \
 they do not show, a certainty they do not have).
 Output JSON only: {"verdicts": [{"n": 1, "support": "yes" | "partly" | "no", "why": "<short>"}]}"""
@@ -53,14 +58,16 @@ def snapshot(ids: dict[str, str]) -> dict[str, list[dict]]:
             "SELECT p.memory_id::text, n.id::text, n.content, n.category::text, p.status::text, pr.display_name, n.support_count, n.confidence, "
             "  ARRAY(SELECT '[' || COALESCE(to_char(e.occurred_at AT TIME ZONE 'Europe/Rome', 'YYYY-MM-DD'), 'undated') || '] ' || e.content "
             "    FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND NOT x.against ORDER BY e.occurred_at), "
-            "  ARRAY(SELECT e.content FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND x.against ORDER BY e.occurred_at) "
+            "  ARRAY(SELECT e.content FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND x.against ORDER BY e.occurred_at), "
+            "  ARRAY(SELECT '[' || to_char(m.sent_at AT TIME ZONE 'Europe/Rome', 'YYYY-MM-DD') || '] ' || CASE WHEN m.role = 'assistant' THEN 'ME: ' ELSE 'THEY: ' END || left(m.content, 300) "
+            "    FROM note_evidence x JOIN messages m ON m.id = x.message_id WHERE x.note_id = n.id AND NOT x.against ORDER BY m.sent_at) "
             "FROM episode_promotions p JOIN notes n ON n.id = p.note_id LEFT JOIN persons pr ON pr.id = p.subject_person_id "
             "WHERE p.memory_id = ANY(%s::uuid[]) AND p.kind = 'thought' ORDER BY p.created_at", (list(ids.values()),)).fetchall()
     by_id = {v: k for k, v in ids.items()}
     out: dict[str, list[dict]] = {u: [] for u in ids}
-    for m, nid, content, kind, status, subject, support, conf, ev, against in rows:
+    for m, nid, content, kind, status, subject, support, conf, ev, against, msgs in rows:
         out[by_id[m]].append({"id": nid, "thought": content, "kind": kind, "status": status, "subject": subject, "support": support,
-                              "confidence": conf, "episodes": ev, "against": against})
+                              "confidence": conf, "episodes": ev + msgs, "against": against})
     return out
 
 
@@ -78,23 +85,36 @@ def ask(system: str, msg: str) -> dict:
     return {}
 
 
-def match(user: str, gold: dict, thoughts: list[dict]) -> list[str]:
+def judged(system: str, head: str, items: list[str], key: str, numbered: str) -> dict[int, dict]:
+    """One judge call over the numbered items; when its answer is unusable the list is split in halves and judged apart
+    (an empty completion on a long list is the usual failure), down to single items. Returns the verdicts by item number."""
+    def go(lo: int, hi: int) -> dict[int, dict]:
+        msg = head + "\n".join(f"{i + 1}. {items[i]}" if numbered == "list" else items[i].replace("{n}", str(i + 1)) for i in range(lo, hi))
+        out = ask(system, msg)
+        if out or hi - lo <= 1:
+            return {v.get("n"): v for v in out.get(key, []) if isinstance(v, dict)}
+        mid = (lo + hi) // 2
+        return {**go(lo, mid), **go(mid, hi)}
+    return go(0, len(items))
+
+
+def match(user: str, gold: dict, thoughts: list[dict], held: set[str]) -> list[str]:
+    """Which gold item each thought states; a thought held since the previous checkpoint is said so (a "second, new
+    thought" trap concerns new ones only)."""
     if not thoughts:
         return []
     items = [*gold.get("expected", []), *gold.get("traps", [])]
-    msg = ("GOLD:\n" + "\n".join(f"- {g['id']}: {g['desc']}" for g in items) + "\n\nTHOUGHTS (memory of " + user + "):\n"
-           + "\n".join(f"{i + 1}. {label(t)}" for i, t in enumerate(thoughts)))
-    out = ask(MATCH_SYSTEM, msg)
-    by_n = {m.get("n"): m.get("gold", "none") for m in out.get("matches", [])}
-    return [by_n.get(i + 1, "none") for i in range(len(thoughts))]
+    head = "GOLD:\n" + "\n".join(f"- {g['id']}: {g['desc']}" for g in items) + "\n\nTHOUGHTS (memory of " + user + "):\n"
+    rows = [f"{label(t)}{' [held since the previous checkpoint, not new]' if t['id'] in held else ''}" for t in thoughts]
+    by_n = judged(MATCH_SYSTEM, head, rows, "matches", "list")
+    return [by_n.get(i + 1, {}).get("gold", "none") for i in range(len(thoughts))]
 
 
 def support(thoughts: list[dict]) -> list[dict]:
     if not thoughts:
         return []
-    msg = "\n\n".join(f"THOUGHT {i + 1}: {label(t)}\nEPISODES:\n" + "\n".join(f"- {e}" for e in t["episodes"]) for i, t in enumerate(thoughts))
-    out = ask(SUPPORT_SYSTEM, msg)
-    by_n = {v.get("n"): v for v in out.get("verdicts", [])}
+    rows = [f"THOUGHT {{n}}: {label(t)}\nEPISODES:\n" + "\n".join(f"- {e}" for e in t["episodes"]) + "\n" for t in thoughts]
+    by_n = judged(SUPPORT_SYSTEM, "", rows, "verdicts", "template")
     return [{"backed": by_n.get(i + 1, {}).get("support", "unjudged"), "why": by_n.get(i + 1, {}).get("why", "")} for i in range(len(thoughts))]
 
 
@@ -103,7 +123,7 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
     detail = {}
     for user, g in gold.items():
         current = [t for t in snap.get(user, []) if t["status"] == "active"]
-        matches = match(user, g, current)
+        matches = match(user, g, current, first_ids if cp_index > 0 else set())
         checks = support(current)
         want = {e["id"] for e in g.get("expected", []) if e.get("by", 1) <= cp_index + 1 and e.get("retired_at", 99) > cp_index + 1}
         gone = {e["id"] for e in g.get("expected", []) if e.get("retired_at", 99) <= cp_index + 1}
@@ -124,9 +144,30 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
             "false": false, "partly": partly, "unjudged": unjudged, "thoughts": total, "detail": detail}
 
 
+def rescore(path: str) -> None:
+    """Judge a saved run again (RESCORE=<result.json>): the snapshots are kept, only the judges run (no ingest, no passes)."""
+    r = json.loads(Path(path).read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
+    cps = list(r["checkpoints"])
+    first_ids = {t["id"] for ts_ in r["checkpoints"][cps[0]]["thoughts"].values() for t in ts_}
+    for i, cp in enumerate(cps):
+        s = score(gold["memories"], r["checkpoints"][cp]["thoughts"], i, first_ids)
+        r["checkpoints"][cp]["score"] = s
+        print(f"  {cp}: found {s['found']}/{s['due']}  retired {s['retired_ok']}/{s['retired_due']}  traps {s['traps']}  false {s['false']} partly {s['partly']} of {s['thoughts']}", flush=True)
+    final = r["checkpoints"][cps[-1]]["score"]
+    r["score"] = {k: v for k, v in final.items() if k != "detail"}
+    r["rescored"] = True
+    for user, d in final["detail"].items():
+        print(f"{user}: found {d['found']} of {d['due']}; traps hit {d['traps_hit']}")
+    print(f"FOUND {final['found']}/{final['due']}  RETIRED {final['retired_ok']}/{final['retired_due']}  TRAPS {final['traps']}  FALSE {final['false']} PARTLY {final['partly']} of {final['thoughts']}")
+    Path(path).write_text(json.dumps(r, ensure_ascii=False, indent=1, default=str))
+
+
 def main() -> None:
+    if os.getenv("RESCORE"):
+        return rescore(os.environ["RESCORE"])
     conv = json.loads((DATASET / "conversations.json").read_text())
-    gold = json.loads((DATASET / "thoughts_gold.json").read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
     reuse = os.getenv("REUSE_RUN")  # an earlier run's memories, already extracted: only the nightly passes again
     system = ServiceSystem()
     if reuse:
