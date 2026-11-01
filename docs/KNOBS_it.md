@@ -46,6 +46,8 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Contesto di memoria: similarità minima per l'unico passaggio di una fonte appresa che può contenere (tagliato a 300 caratteri, `- learned (from «titolo»): …`; WORK_PLAN 8.9). Primo valore, da misurare |
 | `CONSOLIDATION_SCHEDULE` | on | Consolidamento notturno automatico, preceduto dall'estrazione dei messaggi rimasti in attesa (4.1); off = solo su richiesta (valutazioni) |
 | `CONSOLIDATION_HOUR` | 3 | Ora locale (fuso della persona) dopo la quale gira la notte |
+| `INITIATIVE_DAILY_LIMIT` | 3 | Iniziative che una persona riceve al giorno al massimo (D53, 8.12c); le altre aspettano domani |
+| `WEBHOOK_ALLOW_PRIVATE` | false | I webhook possono puntare a indirizzi privati e a http semplice (un client ospitato insieme a Recordare); spento: solo https pubblico |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
 | `LOG_LLM_CALLS` | on | Una riga `llm_calls` per chiamata (token, latenza; mai il contenuto) |
 | `ALLOW_CLOCK_OVERRIDE` | off | Solo valutazioni / test: rispetta `X-Recordare-Now` |
@@ -75,6 +77,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `displayName` | segue il profilo sulla piattaforma (sincronizzato) | l'id utente del client | Il nome della persona |
 | `qualityProfile` | admin | predefinito dell'installazione | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |
+| `quietFrom`, `quietTo` | admin | 22, 8 | Le ore di quiete della memoria (locali): nessuna iniziativa scatta al loro interno (D53, 8.12c) |
 
 ## 5. Per client (API admin o console)
 
@@ -85,6 +88,8 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `rawLogScope` | `own` | Estratti del registro grezzo solo dalle conversazioni di questo client, o da tutte |
 | `disabled` | off | Tutte le chiavi e i token del client smettono subito di funzionare |
 | Permessi delle chiavi | — | `ingest`, `mcp`, `read`, `write` (mai admin, impostazioni della memoria o export) |
+
+Webhook (D53, 8.12c): `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?, description?}` registra dove un client riceve le iniziative dell'agente (Standard Webhooks, il segreto `whsec_` mostrato una sola volta); `GET …/webhooks`, `DELETE api/v1/admin/webhooks/{id}`. `API.md` §4b.
 
 ## 6. Script di installazione (`deploy/`)
 

@@ -197,6 +197,27 @@ Claude Code e Codex: la memoria del token personale (il suo utente è il titolar
 client, oppure il token personale della memoria con `ingest`), non i connettori. Un partecipante noto che compare con un
 nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 
+## 4d. Iniziative — ciò che l'agente dice da sé (D53, WORK_PLAN 8.12c)
+Recordare spinge ciò che l'agente ha deciso di dire, chiedere o cercare (`API.md` §4b). La tua piattaforma lo consegna
+**quando la persona c'è** (la presenza è tua: una chat aperta ora, una voce riconosciuta nella stanza, qualcuno al
+pannello), riporta che fine ha fatto e svolge le ricerche con i propri strumenti.
+1. Registra un webhook per il tuo client (admin): `POST api/v1/admin/clients/{id}/webhooks {url}` — conserva il segreto
+   `whsec_` che restituisce. Oppure leggi il feed (`client.initiatives(user, {since})`, ogni pochi minuti, un cursore per
+   utente) quando la tua piattaforma non può ricevere chiamate; entrambi portano gli stessi oggetti.
+2. A ogni consegna, verificala (`verifyWebhook(rawBody, headers, secret)` dalla libreria — Standard Webhooks; rispondi 2xx
+   subito, lavora dopo) e leggi `data.user` (il tuo id per la persona) e `data.for` (a chi è destinata; null: il
+   titolare, o chiunque per la memoria di un agente condiviso).
+3. Consegnala quando quella persona è presente, nei tuoi canali — un messaggio dell'agente nella chat segnato come sua
+   iniziativa, una scheda su un pannello, la voce se ne hai una — e mai dopo `expiresAt`. Un `lookup` è per il tuo
+   agente: eseguilo (una ricerca sul web, uno sguardo alla stanza) e restituisci il risultato come fonte appresa
+   (`learnSource`) o come percezione; la domanda dell'agente allora si chiude.
+4. Riporta l'esito: `client.reportInitiative(user, id, 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed')`.
+   Guida l'agente: declined è definitivo, ignored viene riproposta una volta a una settimana di distanza, poi lasciata
+   cadere.
+5. Le ore di quiete (`quietFrom` / `quietTo`, admin `PATCH api/v1/admin/memories/{id}`) e il limite giornaliero per
+   persona (`INITIATIVE_DAILY_LIMIT`) sono di Recordare; il tuo non disturbare e i tuoi limiti di frequenza sono ben
+   accetti in più.
+
 ## 5. Osservabilità (opzionale)
 Recordare Atlas mostra il lavoro di Recordare stesso dal suo flusso di telemetria; i propri agenti (chiamate LLM,
 strumenti) compaiono quando si esportano le tracce OpenTelemetry GenAI verso l'atlas (README di `recordare-atlas`) —
