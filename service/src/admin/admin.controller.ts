@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { Body, Controller, Delete, Get, Headers, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Headers, HttpCode, Inject, NotFoundException, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
@@ -12,9 +12,12 @@ import { Returns } from '../common/returns';
 import { adminList, adminObject, erasedResponse, keyResponse, linkCodeResponse, tokenResponse } from '../openapi/responses';
 import { eraseQuery, MemoryErasure } from '../identity/memory-erasure.service';
 import { AdminService } from './admin.service';
+import { InitiativeService } from '../initiative/initiative.service';
+import { WebhooksService } from '../initiative/webhooks.service';
+import { webhookCreatedResponse, webhooksResponse } from '../initiative/initiative.responses';
 import {
-  createClientSchema, createIdentitySchema, createKeySchema, createMemorySchema, createTokenSchema, updateClientSchema, updateMemorySchema,
-  type CreateClient, type CreateIdentity, type CreateKey, type CreateMemory, type CreateToken, type UpdateClient, type UpdateMemory,
+  createClientSchema, createIdentitySchema, createKeySchema, createMemorySchema, createTokenSchema, registerWebhookSchema, updateClientSchema, updateMemorySchema,
+  type CreateClient, type RegisterWebhook, type CreateIdentity, type CreateKey, type CreateMemory, type CreateToken, type UpdateClient, type UpdateMemory,
 } from './admin.schemas';
 
 /** Admin API (no @RequireScopes → admin credential only). */
@@ -24,6 +27,8 @@ export class AdminController {
     private readonly admin: AdminService,
     private readonly consolidation: ConsolidationService,
     private readonly erasure: MemoryErasure,
+    private readonly initiatives: InitiativeService,
+    private readonly webhooks: WebhooksService,
     private readonly config: ConfigService<Env, true>,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
   ) {}
@@ -79,6 +84,38 @@ export class AdminController {
   @HttpCode(204)
   revokeKey(@Param('id', ParseUUIDPipe) id: string) {
     return this.admin.revokeKey(id);
+  }
+
+  /** A client's webhook for its initiatives (D53, 8.12c): the signing secret is shown once. */
+  @Post('clients/:id/webhooks')
+  @Returns(webhookCreatedResponse)
+  async registerWebhook(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(registerWebhookSchema)) body: RegisterWebhook) {
+    try {
+      return await this.webhooks.register(id, body);
+    } catch (err) {
+      if (err instanceof NotFoundException) throw err;
+      throw new BadRequestException((err as Error).message);
+    }
+  }
+
+  @Get('clients/:id/webhooks')
+  @Returns(webhooksResponse)
+  listWebhooks(@Param('id', ParseUUIDPipe) id: string) {
+    return this.webhooks.list(id);
+  }
+
+  @Delete('webhooks/:id')
+  @HttpCode(204)
+  removeWebhook(@Param('id', ParseUUIDPipe) id: string) {
+    return this.webhooks.remove(id);
+  }
+
+  /** Run the initiative sweep for one memory now (operators and evaluations; honours X-Recordare-Now when allowed). */
+  @Post('memories/:id/initiatives')
+  @Returns(adminObject)
+  sweepInitiatives(@Param('id', ParseUUIDPipe) id: string, @Headers('x-recordare-now') at?: string) {
+    const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
+    return this.initiatives.sweep(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
   }
 
   @Post('memories')

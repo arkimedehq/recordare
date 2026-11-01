@@ -27,6 +27,15 @@ export const updateClientSchema = z.object({
  * Client keys never carry `admin`, `memory_settings` or `export` (installation-level powers stay with the admin);
  * `erase` lets the platform erase its users' memories (e.g. when it deletes an account).
  */
+/** A client's webhook (D53, 8.12c; Standard Webhooks): where its initiatives are delivered. `token` and `authentication` as A2A names them. */
+export const registerWebhookSchema = z.object({
+  url: z.string().url().max(2_000),
+  token: z.string().min(8).max(200).optional(),
+  authentication: z.object({ scheme: z.string().min(1).max(40), credentials: z.string().max(2_000).optional() }).optional(),
+  description: z.string().trim().max(200).optional(),
+});
+export type RegisterWebhook = z.infer<typeof registerWebhookSchema>;
+
 export const createKeySchema = z.object({
   scopes: z.array(z.enum(['ingest', 'mcp', 'read', 'write', 'erase'])).min(1),
 });

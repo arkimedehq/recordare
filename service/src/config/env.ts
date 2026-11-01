@@ -66,6 +66,10 @@ const baseSchema = z.object({
   PATTERNS: bool.optional(),
   /** Installation override of the quality profile's nightly thought pass (D53, WORK_PLAN 8.12a). */
   THOUGHTS: bool.optional(),
+  /** Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow. */
+  INITIATIVE_DAILY_LIMIT: z.coerce.number().int().min(0).max(50).default(3),
+  /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */
+  WEBHOOK_ALLOW_PRIVATE: bool.default(false),
   /** Local hour (memory's timezone) after which the nightly consolidation runs (M5). */
   CONSOLIDATION_HOUR: z.coerce.number().int().min(0).max(23).default(3),
   /** Installation default quality profile (D35); memories may override it. */
