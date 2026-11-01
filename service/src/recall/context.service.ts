@@ -117,8 +117,8 @@ export class ContextService {
        WHERE f.memory_id = $1 AND f.status = 'current' AND NOT f.pending AND f.deleted_at IS NULL AND f.embedding IS NOT NULL
          AND ${sim('f.embedding')} >= ${at(0)} AND ${factVisible('f', reader)}
        ORDER BY ${sim('f.embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_FACTS]);
-    const notes: Array<{ id: string; content: string; about: string | null; pattern: boolean }> = await this.db.query(
-      `SELECT id, content, 'pattern' = ANY(tags) AS pattern, (SELECT display_name FROM persons WHERE id = notes.subject_person_id) AS about FROM notes
+    const notes: Array<{ id: string; category: string; content: string; about: string | null; pattern: boolean; thought: boolean }> = await this.db.query(
+      `SELECT id, category::text, content, 'pattern' = ANY(tags) AS pattern, 'thought' = ANY(tags) AS thought, (SELECT display_name FROM persons WHERE id = notes.subject_person_id) AS about FROM notes
        WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND embedding IS NOT NULL
          AND ${sim('embedding')} >= ${at(0)} AND ${noteVisible('notes', reader)}
        ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_NOTES]);
@@ -154,8 +154,9 @@ export class ContextService {
     for (const f of facts.filter((x) => !top.ids.has(x.id))) {
       lines.push(`- fact: ${f.about ? `[${f.about}] ` : ''}${f.key.replace(/_/g, ' ')} = ${f.value}${f.valid_from ? ` (since ${day(f.valid_from)})` : ''}`);
     }
-    // A recurring pattern is the memory's own conclusion (WORK_PLAN 5.4), not something said: labelled so.
-    for (const n of notes.filter((x) => !top.ids.has(x.id))) lines.push(`- ${n.pattern ? 'pattern I noticed' : 'note'}: ${whose(n.about)}${n.content}`);
+    // A recurring pattern (WORK_PLAN 5.4) and a thought (D53) are the memory's own conclusions, not something said: labelled so.
+    const label = (n: { pattern: boolean; thought: boolean; category: string }) => (n.thought ? `my own thought (${n.category})` : n.pattern ? 'pattern I noticed' : 'note');
+    for (const n of notes.filter((x) => !top.ids.has(x.id))) lines.push(`- ${label(n)}: ${whose(n.about)}${n.content}`);
     for (const p of plans) lines.push(`- plan: ${p.content} (${when(p.occurred_at, p.date_precision, tz, memory.locale)})`);
     // Overheard in the room (6.5): not said to me, its speaker possibly misrecognised.
     for (const e of episodes) lines.push(`- episode${e.heard ? ' (heard in the room; the speaker may be misrecognised)' : ''}: ${whose(e.about)}${e.content} (${when(e.occurred_at, e.date_precision, tz, memory.locale)})`);

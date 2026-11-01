@@ -245,13 +245,16 @@ export interface Fact {
 
 export interface Note {
   id: string;
-  category: 'preference' | 'habit' | 'value' | 'relationship' | 'knowledge' | 'profile' | 'constraint';
+  /** `insight`, `question` and `opinion` are the agent's own thoughts (`thought`, D53). */
+  category: 'preference' | 'habit' | 'value' | 'relationship' | 'knowledge' | 'profile' | 'constraint' | 'insight' | 'question' | 'opinion';
   content: string;
   pinned: boolean;
   pending: boolean;
   inferred: boolean;
   /** A recurring pattern the memory drew from its episodes (inferred, never pending; WORK_PLAN 5.4). */
   pattern: boolean;
+  /** One of the agent's own thoughts, drawn from its episodes (D53): told as such, never as something said. */
+  thought: boolean;
   authorRole: string;
   supportCount: number;
   recordedAt: string;

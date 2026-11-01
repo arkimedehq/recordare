@@ -47,8 +47,9 @@ export interface MemorySearchResult {
   memory: MemoryView;
   /** Who is asking (see search_episodes). */
   speaker: { kind: 'self' } | { kind: 'someone' } | { kind: 'contact'; name: string };
-  /** `inferred`: drawn by the memory, not said (a recurring pattern — `pattern` — or a pending note). */
-  notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; inferred: boolean; pattern: boolean; authorRole: string; subject: SubjectView }>;
+  /** `inferred`: drawn by the memory, not said (a recurring pattern — `pattern` —, one of my own thoughts — `thought`, D53 — or a
+   * pending note). */
+  notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; inferred: boolean; pattern: boolean; thought: boolean; authorRole: string; subject: SubjectView }>;
   facts: FactView[];
   notes_info: string[];
   /** Open questions about the people involved, to ask if natural (entity memories: only to an identified speaker). */
@@ -87,10 +88,10 @@ export class MemorySearchService {
     }
     const tsq = toOrTsQuery(args.query);
 
-    const noteRows: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; author_role: string; sim: number | null; fts: boolean }
+    const noteRows: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; thought: boolean; author_role: string; sim: number | null; fts: boolean }
       & SubjectRow> =
       await this.db.query(
-        `SELECT id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, subject_kind, subject_person_id, subject_candidates,
+        `SELECT id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, 'thought' = ANY(tags) AS thought, author_role, subject_kind, subject_person_id, subject_candidates,
                 CASE WHEN $2::text IS NULL OR embedding IS NULL THEN NULL ELSE 1 - (embedding <=> $2::vector) END AS sim,
                 ($3::text <> '' AND to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')) @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
          FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)
@@ -148,7 +149,7 @@ export class MemorySearchService {
     const result: MemorySearchResult = {
       memory: { name: memory.display_name, mode: memory.mode },
       speaker: speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : speaker,
-      notes: notes.map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, inferred: n.stance === 'inferred', pattern: n.pattern, authorRole: n.author_role,
+      notes: notes.map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, inferred: n.stance === 'inferred', pattern: n.pattern, thought: n.thought, authorRole: n.author_role,
         subject: subjectView(n, names) })),
       facts, notes_info: info,
     };

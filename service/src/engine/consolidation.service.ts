@@ -27,6 +27,8 @@ import { FactsReviewService } from './facts-review.service';
 import { FACTS_REVIEW_VERSION } from './facts-review.prompt';
 import { PatternsService } from './patterns.service';
 import { PATTERNS_VERSION } from './patterns.prompt';
+import { ThoughtsService } from './thoughts.service';
+import { THOUGHTS_VERSION } from './thoughts.prompt';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
 import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { resolveNearDuplicates } from './episode-resolver';
@@ -47,6 +49,8 @@ export interface ConsolidationReport { days: number; months: number; superseded:
   duplicates: number;
   /** Recurring patterns written (new or updated) and retired by the nightly pattern pass (5.4). */
   patterns: number;
+  /** The agent's own thoughts written (new or revised) and retired by the thought pass (D53). */
+  thoughts: number;
   /** Digests still naming the self in the third person (counts only, like the extraction's). */
   leaks: number }
 
@@ -64,12 +68,13 @@ export class ConsolidationService {
     private readonly telemetry: TelemetryService,
     private readonly factsReview: FactsReviewService,
     private readonly patterns: PatternsService,
+    private readonly thoughts: ThoughtsService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
   /** Consolidate every complete day (in the memory's timezone) before `now`. Idempotent; one run per memory at a time. */
   async consolidateMemory(memoryId: string, now: Date): Promise<ConsolidationReport> {
-    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0, patterns: 0 };
+    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0, patterns: 0, thoughts: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
@@ -108,7 +113,8 @@ export class ConsolidationService {
     const ctx = { memoryId, runId: run.id as string };
     try {
       const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
-        undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }), this.config.get('PATTERNS', { infer: true }));
+        undefined, undefined, undefined, this.config.get('FACTS_REVIEW', { infer: true }), this.config.get('PATTERNS', { infer: true }),
+        this.config.get('THOUGHTS', { infer: true }));
       // Same event told twice where no check could see both (5.3): resolved before the diary is written from them.
       report.duplicates = await this.resolveUnseen(memoryId, ctx, profile, report);
       // The diary is read by anyone the memory talks to: written from public memories only (D52).
@@ -189,9 +195,14 @@ export class ConsolidationService {
         const r = await this.patterns.review(memoryId, now, ctx.runId);
         report.patterns += r.written + r.retired; report.llmCalls += r.calls; report.failed += r.failed;
       }
+      // The agent's own thoughts, after the patterns (it does not restate a habit as a thought; quality-profile knob).
+      if (profile.thoughts) {
+        const r = await this.thoughts.think(memoryId, now, ctx.runId);
+        report.thoughts += r.written + r.retired; report.llmCalls += r.calls; report.failed += r.failed;
+      }
       await this.db.query(`UPDATE extraction_runs SET status = 'done', finished_at = now(), summary = $2 WHERE id = $1`, [ctx.runId,
         { days: report.days, months: report.months, superseded: report.superseded, failed: report.failed, facts: report.facts, leaks: report.leaks,
-          duplicates: report.duplicates, patterns: report.patterns }]);
+          duplicates: report.duplicates, patterns: report.patterns, thoughts: report.thoughts }]);
       await this.db.query(`UPDATE memories SET consolidated_at = $2 WHERE person_id = $1`, [memoryId, now]);
       this.telemetry.emit({ type: 'consolidation.finished', memoryId, days: report.days, months: report.months, llmCalls: report.llmCalls, failed: report.failed });
     } catch (err) {
@@ -212,6 +223,12 @@ export class ConsolidationService {
   /** The pattern pass alone, now (operators and evaluations), whatever the profile says. */
   async patternsNow(memoryId: string, now: Date): Promise<{ calls: number; written: number; retired: number; failed: number }> {
     return (await this.alone(memoryId, now, 'task:patterns', PATTERNS_VERSION, (runId) => this.patterns.review(memoryId, now, runId)))
+      ?? { calls: 0, written: 0, retired: 0, failed: 0 };
+  }
+
+  /** The thought pass alone, now (operators and evaluations), whatever the profile says. */
+  async thoughtsNow(memoryId: string, now: Date): Promise<{ calls: number; written: number; retired: number; failed: number }> {
+    return (await this.alone(memoryId, now, 'task:thoughts', THOUGHTS_VERSION, (runId) => this.thoughts.think(memoryId, now, runId)))
       ?? { calls: 0, written: 0, retired: 0, failed: 0 };
   }
 

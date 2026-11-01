@@ -123,6 +123,14 @@ export class AdminController {
     return this.consolidation.patternsNow(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
   }
 
+  /** Run the thought pass alone now (operators and evaluations; honours X-Recordare-Now when allowed). */
+  @Post('memories/:id/thoughts')
+  @Returns(adminObject)
+  thoughts(@Param('id', ParseUUIDPipe) id: string, @Headers('x-recordare-now') at?: string) {
+    const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
+    return this.consolidation.thoughtsNow(id, override && !Number.isNaN(override.getTime()) ? override : this.clock.now());
+  }
+
   /** Erases the whole memory (`?confirm=` its id): everything it holds, at once and for good (WORK_PLAN 8.13). */
   @Delete('memories/:id')
   @Returns(erasedResponse)

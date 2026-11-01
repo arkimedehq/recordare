@@ -77,11 +77,11 @@ interface FactRow {
   pending: boolean; stance: string; author_role: string; about: string | null; private_by?: string[] | null;
 }
 interface NoteRow {
-  id: string; category: NoteCategory; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; author_role: string;
+  id: string; category: NoteCategory; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; thought: boolean; author_role: string;
   support_count: number; recorded_at: Date; private_by: string[] | null;
 }
 
-const NOTE_COLUMNS = `id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, author_role, support_count, recorded_at,
+const NOTE_COLUMNS = `id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, 'thought' = ANY(tags) AS thought, author_role, support_count, recorded_at,
   ${privateBy('notes', 'notes')} AS private_by`;
 /** An episode with its privacy mark (D52). */
 const EPISODE_COLUMNS = `e.*, ${privateBy('episodes', 'e')} AS private_by`;
@@ -89,7 +89,7 @@ const mark = (by: string[] | null | undefined) => (by ? { private: { by } } : {}
 
 function noteView(r: NoteRow) {
   return { id: r.id, category: r.category, content: r.content, pinned: r.pinned, pending: r.pending, inferred: r.stance === 'inferred',
-    pattern: r.pattern, authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString(),
+    pattern: r.pattern, thought: r.thought, authorRole: r.author_role, supportCount: r.support_count, recordedAt: (r.recorded_at as Date).toISOString(),
     ...mark(r.private_by) };
 }
 
