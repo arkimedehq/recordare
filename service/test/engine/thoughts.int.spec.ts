@@ -19,8 +19,9 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
 
   async function episode(content: string, day: string, extra: { origin?: string; role?: string; importance?: number } = {}): Promise<string> {
     const [r] = await db.query(
-      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, importance, recorded_at)
-       VALUES ($1, 'event', $2, $3, $4, 'stated', ARRAY[$1::uuid], $5, 'day', $6, $5) RETURNING id`,
+      // Recorded now, after the pass's "now" as in an evaluation run: the episodes are bounded by when they happened.
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, importance)
+       VALUES ($1, 'event', $2, $3, $4, 'stated', ARRAY[$1::uuid], $5, 'day', $6) RETURNING id`,
       [memoryId, content, extra.origin ?? 'holder_lived', extra.role ?? 'holder', `${day}T10:00:00Z`, extra.importance ?? 5]);
     return r.id as string;
   }

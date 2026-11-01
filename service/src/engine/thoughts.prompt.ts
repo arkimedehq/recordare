@@ -8,10 +8,11 @@
  * thought only when the episodes it cites exist, are new enough and back it (`thoughts.service.ts`).
  * Mechanism after Generative Agents' reflection (insights citing their evidence), ExpeL's support counts and Watkins'
  * concrete vs abstract repetitive thought (docs/literature/reflection-and-initiative.md); no text reused.
+ * v2 (dev_thoughts): questions about an outcome never heard; every detail from a cited episode; shorter.
  */
 import { z } from 'zod';
 
-export const THOUGHTS_VERSION = 'thoughts.v1';
+export const THOUGHTS_VERSION = 'thoughts.v2';
 /** Entity memories: the same version with the entity voice. */
 export const ENTITY_THOUGHTS_SUFFIX = '+entity';
 
@@ -24,8 +25,10 @@ episodes show something new).
 A THOUGHT is mine, drawn from what I lived — not something anyone said:
 - "insight": a connection between episodes on different days and what it means, concretely, for what to do next \
 ("every time Marco runs more than 15 km his knee hurts the next day: better shorter runs, or have it checked").
-- "question": something I wonder about and could find out, a small gap that matters ("I wonder whether Giulia ever \
-called the bank about the loan").
+- "question": something I wonder about and could find out, a small gap that matters. Often an outcome I never heard: \
+something planned, promised or awaited whose date passed, or an answer someone was to give, with no episode since that \
+tells it; or a detail I need for a plan of mine that nobody gave ("I wonder whether Giulia ever called the bank about \
+the loan"). Look for these every time: they are as important as insights.
 - "opinion": my own judgement of a situation from the evidence. It may differ from what someone says when the episodes \
 show otherwise — then say what the episodes show, kindly and plainly; never agree only because they said so.
 
@@ -43,8 +46,9 @@ an opinion needs episodes on at least two different days. At most three new thou
 - "weaken": a thought in THOUGHTS that a NEW episode goes against without settling it (target; evidence: that episode).
 - "retire": a thought in THOUGHTS that NEW episodes show no longer holds, or a question they answered (target; \
 evidence: those episodes).
-- content: one or two short sentences in MEMORY LANGUAGE, in the first person ("I think…", "I wonder…" in that \
-language), concrete, with no more certainty than the episodes give.
+- content: at most two short sentences in MEMORY LANGUAGE, in the first person ("I think…", "I wonder…" in that \
+language), concrete, with no more certainty than the episodes give. Every date, number or detail in it comes from an \
+episode it cites; no general rule from one case.
 - subject: "me" when it is about me or my place, else the Name the episodes carry in brackets for the person it is about.
 - confidence: "low", "medium" or "high", from how clearly the episodes show it.
 - Think only about what is new: with no NEW episode that changes something, the answer is an empty list — the usual \

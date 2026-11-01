@@ -82,7 +82,7 @@ export class ThoughtsService {
          e.recorded_at > COALESCE((SELECT thoughts_upto FROM memories WHERE person_id = $1), '-infinity'::timestamptz) AS fresh
        FROM episodes e
        WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
-         AND e.recorded_at <= $2 AND COALESCE(e.occurred_at, e.recorded_at) > $2::timestamptz - make_interval(days => $3)
+         AND COALESCE(e.occurred_at, e.recorded_at) <= $2 AND COALESCE(e.occurred_at, e.recorded_at) > $2::timestamptz - make_interval(days => $3)
          AND e.origin <> 'assistant_stated' AND e.author_role <> 'tool' AND NOT (e.author_role = 'other' AND e.stance = 'inferred')
          AND ${episodeVisible('e', PUBLIC_ONLY)}
        ORDER BY COALESCE(e.occurred_at, e.recorded_at) DESC, e.id DESC LIMIT $4`, [memoryId, now, LOOKBACK_DAYS, MAX_EPISODES]) as EpisodeRow[]).reverse();

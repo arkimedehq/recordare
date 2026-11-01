@@ -1,23 +1,23 @@
 {
   "economy": {
     "extractionCalls": 6,
-    "extractionInputPerMessage": 256,
+    "extractionInputPerMessage": 265,
     "nightlyCalls": 4,
     "nightlyInput": 11529,
-    "monthlyInput": 1110879
+    "monthlyInput": 1139670
   },
   "balanced": {
     "extractionCalls": 6,
-    "extractionInputPerMessage": 259,
-    "nightlyCalls": 5,
-    "nightlyInput": 16371,
-    "monthlyInput": 1266993
+    "extractionInputPerMessage": 268,
+    "nightlyCalls": 6,
+    "nightlyInput": 22045,
+    "monthlyInput": 1465979
   },
   "full": {
     "extractionCalls": 8,
-    "extractionInputPerMessage": 327,
-    "nightlyCalls": 5,
-    "nightlyInput": 15130,
-    "monthlyInput": 1433597
+    "extractionInputPerMessage": 341,
+    "nightlyCalls": 6,
+    "nightlyInput": 20813,
+    "monthlyInput": 1643513
   }
 }
