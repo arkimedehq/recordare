@@ -816,6 +816,11 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
 - **Procedure**: "quando X, faccio così", imparate solo quando un risultato lo dice (una correzione, una conferma, un
   piano fatto); richiamate per situazione, mai dette come fatti del mondo.
 - **Percezione** (foto, audio, video, sensori): più avanti, un passo a sé (chi descrive, cosa si conserva).
+- **Le fonti esterne passano sempre dall'agente** (maintainer, 2026-11-01): il web, la camera, il microfono e ogni altro
+  senso o strumento sono dell'agente che ospita Recordare (una piattaforma, un robot) — Recordare è la mente, non il
+  corpo. Non cerca mai sul web né legge un sensore da sé: la sua curiosità diventa un **intento di cercare** (una
+  domanda che tiene → "cerca X", "guarda", "ascolta") spinto all'agente, che agisce con i propri strumenti e permessi e
+  riporta il risultato come fonte imparata (D49) o percezione; la passata dei pensieri ritira poi la domanda come risposta.
 - **Costo** (D35): economy — l'iniziativa da piani aperti e intenti armati senza LLM; balanced — più i pensieri; full —
   più una passata libera che collega problemi aperti e materiale nuovo.
 - **Ordine**: (a) pensieri e origine dei pattern, (b) modello di sé, (c) intenti e iniziativa spinta, (d) procedure,

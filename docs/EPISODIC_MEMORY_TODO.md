@@ -790,6 +790,11 @@ works on its own and pushes, not a memory that only answers.
 - **Procedures**: "when X, I do it this way", learned only when an outcome says so (a correction, a confirmation, a plan
   done); recalled by situation, never told as facts about the world.
 - **Perception** (photos, audio, video, sensors): later, its own step (who describes, what is kept).
+- **External sources always through the agent** (maintainer, 2026-11-01): the web, the camera, the microphone and every
+  other sense or tool belong to the agent that hosts Recordare (a platform, a robot) — Recordare is the mind, not the
+  body. It never searches the web or reads a sensor itself: its curiosity becomes an **intent to look up** (a question
+  it holds → "search X", "look", "listen") pushed to the agent, which acts with its own tools and permissions and brings
+  the result back as a learned source (D49) or a perception; the thought pass then retires the question as answered.
 - **Cost** (D35): economy — the initiative from open plans and armed intents without LLM; balanced — plus thoughts;
   full — plus a free pass that links open problems with new material.
 - **Order**: (a) thoughts and the patterns' origin, (b) self-model, (c) intents and pushed initiative, (d) procedures,
