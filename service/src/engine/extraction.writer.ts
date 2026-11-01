@@ -30,6 +30,7 @@ import { type EntityManager } from 'typeorm';
 import { type ExtractionInput, isMemoryTool, type WindowMessage } from './extraction.context';
 import { type ExtractionOutput } from './extraction.schema';
 import { selfLeak } from '../lang';
+import { overlap } from '../lang/overlap';
 import { localDate, toStored, type Precision } from './time';
 import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 import { askClarification, resolveClarification } from './clarifications';
@@ -772,12 +773,13 @@ export class ExtractionWriter {
       const content = i.content.trim();
       if (!content) { this.drop('intent', 'no_content'); continue; }
       if (i.cancel) {
-        const hit: Array<{ id: string }> = await this.tx.query(
-          `SELECT id FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status = 'armed'
-             AND for_person_id IS NOT DISTINCT FROM $2 AND to_tsvector('simple', content) @@ plainto_tsquery('simple', $3)
-           ORDER BY ts_rank(to_tsvector('simple', content), plainto_tsquery('simple', $3)) DESC, created_at DESC LIMIT 1`, [this.ctx.memoryId, forId, content]);
-        if (!hit.length) { this.drop('intent', 'nothing_to_cancel'); continue; }
-        await this.tx.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [hit[0]!.id]);
+        // The armed request or promise of that person whose words it shares (the latest when several).
+        const armed: Array<{ id: string; content: string }> = await this.tx.query(
+          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status = 'armed'
+             AND for_person_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`, [this.ctx.memoryId, forId]);
+        const hit = armed.find((a) => overlap(a.content, content));
+        if (!hit) { this.drop('intent', 'nothing_to_cancel'); continue; }
+        await this.tx.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [hit.id]);
         continue;
       }
       const due = toStored(i.due ?? null, 'day', this.ctx.timezone);

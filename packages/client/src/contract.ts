@@ -305,6 +305,8 @@ export interface Initiative {
   /** In the memory's language, ready to be said. */
   text: string;
   reason: string;
+  /** How much the model found it worth saying, 0–1 (balanced and full); null when the sentence is the service's own. */
+  worth: number | null;
   episodeIds: string[];
   /** From when it may be delivered (after the memory's quiet hours). */
   dueAt: string;

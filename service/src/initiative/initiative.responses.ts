@@ -14,6 +14,7 @@ export const initiative = z.object({
   for: z.object({ personId: z.uuid(), name: z.string() }).nullable().describe('Whom it is for; null: the holder, or anyone in an entity memory.'),
   text: z.string().describe('In the memory\'s language, ready to be said.'),
   reason: z.string(),
+  worth: z.number().min(0).max(1).nullable().describe('How much the model found it worth saying (balanced, full); null when the sentence is the service\'s own.'),
   episodeIds: z.array(z.uuid()).describe('The memories behind it.'),
   dueAt: z.string().describe('From when it may be delivered (after the quiet hours).'),
   expiresAt: z.string().describe('Until when; then it lapses, quietly.'),

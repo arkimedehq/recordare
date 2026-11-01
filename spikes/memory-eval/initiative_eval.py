@@ -53,18 +53,19 @@ def snapshot(ids: dict[str, str], tz: str) -> dict[str, list[dict]]:
     with psycopg.connect(DB_URL) as conn:
         rows = conn.execute(
             "SELECT i.memory_id::text, i.id::text, i.kind::text, i.text, i.status::text, p.display_name, "
-            "  to_char(i.due_at AT TIME ZONE %s, 'YYYY-MM-DD'), i.reason, i.created_at "
+            "  to_char(i.due_at AT TIME ZONE %s, 'YYYY-MM-DD'), i.reason, i.created_at, i.worth "
             "FROM initiatives i LEFT JOIN persons p ON p.id = i.for_person_id WHERE i.memory_id = ANY(%s::uuid[]) ORDER BY i.seq",
             (tz, list(ids.values()))).fetchall()
     by_id = {v: k for k, v in ids.items()}
     out: dict[str, list[dict]] = {u: [] for u in ids}
-    for m, iid, kind, text, status, who, day, reason, created in rows:
-        out[by_id[m]].append({"id": iid, "kind": kind, "text": text, "status": status, "for": who or "holder", "due_day": day, "reason": reason, "created": str(created)})
+    for m, iid, kind, text, status, who, day, reason, created, worth in rows:
+        out[by_id[m]].append({"id": iid, "kind": kind, "text": text, "status": status, "for": who or "holder", "due_day": day, "reason": reason,
+                              "created": str(created), "worth": worth})
     return out
 
 
 def label(i: dict) -> str:
-    return f"({i['kind']}, for {i['for']}, due {i['due_day']}) {i['text']}"
+    return f"({i['kind']}, for {i['for']}, due {i['due_day']}{'' if i.get('worth') is None else f', worth {i[chr(119)+chr(111)+chr(114)+chr(116)+chr(104)]:.2f}'}) {i['text']}"
 
 
 def match(user: str, gold: dict, items: list[dict]) -> list[str]:

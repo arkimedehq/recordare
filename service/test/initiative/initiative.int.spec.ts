@@ -98,7 +98,7 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     await plan('Dentista alle 15', new Date(NOW.getTime() + DAY), 'confirmed');
     await db.query(`INSERT INTO notes (memory_id, category, content, origin, author_role, stance, audience, tags)
       VALUES ($1, 'question', 'Mi chiedo se Marta abbia prenotato il volo', 'reflected', 'holder', 'inferred', ARRAY[$1::uuid], '{thought}')`, [memoryId]);
-    await plan('Chiamare il commercialista', new Date(NOW.getTime() - 2 * DAY)); // a third for today: over the limit of 3 with the first test's
+    await plan('Chiamare il commercialista', new Date(NOW.getTime() - 4 * DAY)); // past two days: asked about; a third for today, over the limit of 3 with the first test's
     const r = await sweep();
     expect(r.armed).toBe(3);
     expect(r.fired).toBe(2);

@@ -24,6 +24,7 @@ import { qualityProfile, type QualityProfileName } from '../engine/quality-profi
 import { localDate, periodEnd, type Precision } from '../engine/time';
 import { INITIATIVE_SYSTEM, INITIATIVE_VERSION, type InitiativeOutput, initiativeSchema } from './initiative.prompt';
 import { initiativeText } from '../lang/initiative';
+import { overlap } from '../lang/overlap';
 import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { WebhooksService } from './webhooks.service';
@@ -33,21 +34,23 @@ export type InitiativeStatus = 'pending' | 'said' | 'asked' | 'ignored' | 'decli
 export const OUTCOMES = ['said', 'asked', 'ignored', 'declined', 'done', 'failed', 'expired'] as const;
 
 export interface InitiativeView {
-  id: string; seq: number; kind: InitiativeKind; for: { personId: string; name: string } | null; text: string; reason: string;
+  id: string; seq: number; kind: InitiativeKind; for: { personId: string; name: string } | null; text: string; reason: string; worth: number | null;
   episodeIds: string[]; dueAt: string; expiresAt: string; status: InitiativeStatus; outcomeAt: string | null; reply: string | null;
   createdAt: string;
 }
 
 interface Row {
-  id: string; seq: string; kind: InitiativeKind; for_person_id: string | null; for_name: string | null; text: string; reason: string;
+  id: string; seq: string; kind: InitiativeKind; for_person_id: string | null; for_name: string | null; text: string; reason: string; worth: number | null;
   episode_ids: string[]; due_at: Date; expires_at: Date; status: InitiativeStatus; outcome_at: Date | null; reply: string | null; created_at: Date;
 }
 
 const COLUMNS = `i.id, i.seq::text, i.kind::text, i.for_person_id, (SELECT display_name FROM persons WHERE id = i.for_person_id) AS for_name,
-  i.text, i.reason, i.episode_ids, i.due_at, i.expires_at, i.status::text, i.outcome_at, i.reply, i.created_at`;
+  i.text, i.reason, i.worth, i.episode_ids, i.due_at, i.expires_at, i.status::text, i.outcome_at, i.reply, i.created_at`;
 
-/** How far back a past plan is still asked about, how far ahead a plan is reminded of. */
+/** How far back a past plan is still asked about, how far ahead a plan is reminded of; the ask waits two days after the
+ * plan's end — people tell how it went the day after on their own, and asking first is a nag. */
 const ASK_BACK_DAYS = 30;
+const ASK_AFTER_DAYS = 2;
 const REMIND_AHEAD_HOURS = 48;
 const ASK_KEEP_DAYS = 7;
 const LOOKUP_KEEP_DAYS = 14;
@@ -66,7 +69,7 @@ function updated<T>(res: unknown): T[] {
 export function view(r: Row): InitiativeView {
   return {
     id: r.id, seq: Number(r.seq), kind: r.kind, for: r.for_person_id ? { personId: r.for_person_id, name: r.for_name ?? '' } : null,
-    text: r.text, reason: r.reason, episodeIds: r.episode_ids, dueAt: r.due_at.toISOString(), expiresAt: r.expires_at.toISOString(),
+    text: r.text, reason: r.reason, worth: r.worth, episodeIds: r.episode_ids, dueAt: r.due_at.toISOString(), expiresAt: r.expires_at.toISOString(),
     status: r.status, outcomeAt: r.outcome_at?.toISOString() ?? null, reply: r.reply, createdAt: r.created_at.toISOString(),
   };
 }
@@ -106,18 +109,23 @@ export class InitiativeService {
     let armed = 0;
     const [m]: Array<{ timezone: string }> = await this.db.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
     const memoryTz = m?.timezone ?? 'UTC';
-    const plans: Array<{ id: string; content: string; occurred_at: Date; date_precision: Precision; subject_person_id: string | null; past: boolean }> = await this.db.query(
-      `SELECT e.id, e.content, e.occurred_at, e.date_precision::text, CASE WHEN e.subject_kind = 'contact' THEN e.subject_person_id END AS subject_person_id,
+    const plans: Array<{ id: string; content: string; occurred_at: Date; ends_at: Date; date_precision: Precision; subject_person_id: string | null; past: boolean }> = await this.db.query(
+      `SELECT e.id, e.content, e.occurred_at, COALESCE(e.occurred_until, e.occurred_at) AS ends_at, e.date_precision::text,
+         CASE WHEN e.subject_kind = 'contact' THEN e.subject_person_id END AS subject_person_id,
          e.occurred_at < $2 AS past
        FROM episodes e
        WHERE e.memory_id = $1 AND e.kind = 'plan' AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
          AND e.occurred_at IS NOT NULL AND e.author_role <> 'tool' AND e.origin <> 'assistant_stated'
-         AND ((e.plan_status IN ('open', 'confirmed') AND e.occurred_at < $2::timestamptz - interval '1 day' AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
+         AND ((e.plan_status IN ('open', 'confirmed') AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $5) AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
            OR (e.plan_status IN ('open', 'confirmed') AND e.occurred_at > $2 AND e.occurred_at < $2::timestamptz + make_interval(hours => $4)))
-         AND ${episodeVisible('e', PUBLIC_ONLY)}`, [memoryId, now, ASK_BACK_DAYS, REMIND_AHEAD_HOURS]);
+         AND ${episodeVisible('e', PUBLIC_ONLY)}`, [memoryId, now, ASK_BACK_DAYS, REMIND_AHEAD_HOURS, ASK_AFTER_DAYS]);
+    // A request or a promise about the same thing, for the same person, around the same days: that one speaks, not the plan.
+    const owed: Array<{ content: string; for_person_id: string | null; due_at: Date }> = plans.length ? await this.db.query(
+      `SELECT content, for_person_id, due_at FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status IN ('armed', 'fired', 'done')`, [memoryId]) : [];
     for (const p of plans) {
+      if (owed.some((o) => o.for_person_id === p.subject_person_id && Math.abs(o.due_at.getTime() - p.occurred_at.getTime()) < 3 * DAY_MS && overlap(o.content, p.content))) continue;
       const kind = p.past ? 'open_plan' : 'upcoming_plan';
-      const due = p.past ? new Date(p.occurred_at.getTime() + DAY_MS) : new Date(Math.max(now.getTime(), p.occurred_at.getTime() - DAY_MS));
+      const due = p.past ? new Date(p.ends_at.getTime() + ASK_AFTER_DAYS * DAY_MS) : new Date(Math.max(now.getTime(), p.occurred_at.getTime() - DAY_MS));
       // A reminder holds until the plan's time — the end of its day when the plan has a day, not an hour (a day's plan
       // would otherwise lapse at its midnight, before the morning the reminder may be said).
       const expires = p.past ? new Date(due.getTime() + ASK_KEEP_DAYS * DAY_MS) : periodEnd(p.occurred_at, p.date_precision, memoryTz);
@@ -133,6 +141,8 @@ export class InitiativeService {
       `SELECT n.id, n.content FROM notes n
        WHERE n.memory_id = $1 AND n.category = 'question' AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
          AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND e.kind = 'plan')
+         -- a question about my own doings (it rests on my replies: did I keep my promise?) is no look-up for the host
+         AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN messages m ON m.id = x.message_id WHERE x.note_id = n.id AND m.role = 'assistant')
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'lookup' AND t.note_id = n.supersedes)`, [memoryId]);
     for (const q of questions) {
       const r = await this.db.query(
@@ -215,10 +225,10 @@ export class InitiativeService {
       const content = w?.text?.trim() || fallback;
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
-          `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *)
+          `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at, worth)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
-          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > when ? t.due_at : when, t.expires_at]);
+          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > when ? t.due_at : when, t.expires_at, w?.worth ?? null]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
       });
@@ -302,15 +312,6 @@ export class InitiativeService {
     await this.webhooks.notify(memoryId, 'initiative.updated', v, id);
     return v;
   }
-}
-
-/** Two short texts about the same thing: they share most of their longer words (an order of flour, a reminder of it). */
-export function overlap(a: string, b: string): boolean {
-  const words = (s: string) => new Set(s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4));
-  const wa = words(a), wb = words(b);
-  if (!wa.size || !wb.size) return false;
-  const shared = [...wa].filter((w) => wb.has(w)).length;
-  return shared / Math.min(wa.size, wb.size) >= 0.5;
 }
 
 /** `now`, or the end of the quiet hours when `now` falls inside them (the memory's local hours `from` → `to`). */
