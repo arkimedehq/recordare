@@ -21,7 +21,7 @@ import { DataSource, type EntityManager } from 'typeorm';
 import { type Env } from '../config/env';
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
-import { localDate } from '../engine/time';
+import { localDate, periodEnd, type Precision } from '../engine/time';
 import { INITIATIVE_SYSTEM, INITIATIVE_VERSION, type InitiativeOutput, initiativeSchema } from './initiative.prompt';
 import { initiativeText } from '../lang/initiative';
 import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
@@ -104,8 +104,10 @@ export class InitiativeService {
   /** Intents from what the memory holds; sources that moved on (a plan confirmed or cancelled, a question retired) close theirs. */
   private async arm(memoryId: string, now: Date): Promise<number> {
     let armed = 0;
-    const plans: Array<{ id: string; content: string; occurred_at: Date; subject_person_id: string | null; past: boolean }> = await this.db.query(
-      `SELECT e.id, e.content, e.occurred_at, CASE WHEN e.subject_kind = 'contact' THEN e.subject_person_id END AS subject_person_id,
+    const [m]: Array<{ timezone: string }> = await this.db.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
+    const memoryTz = m?.timezone ?? 'UTC';
+    const plans: Array<{ id: string; content: string; occurred_at: Date; date_precision: Precision; subject_person_id: string | null; past: boolean }> = await this.db.query(
+      `SELECT e.id, e.content, e.occurred_at, e.date_precision::text, CASE WHEN e.subject_kind = 'contact' THEN e.subject_person_id END AS subject_person_id,
          e.occurred_at < $2 AS past
        FROM episodes e
        WHERE e.memory_id = $1 AND e.kind = 'plan' AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
@@ -116,15 +118,22 @@ export class InitiativeService {
     for (const p of plans) {
       const kind = p.past ? 'open_plan' : 'upcoming_plan';
       const due = p.past ? new Date(p.occurred_at.getTime() + DAY_MS) : new Date(Math.max(now.getTime(), p.occurred_at.getTime() - DAY_MS));
-      const expires = p.past ? new Date(due.getTime() + ASK_KEEP_DAYS * DAY_MS) : p.occurred_at;
+      // A reminder holds until the plan's time — the end of its day when the plan has a day, not an hour (a day's plan
+      // would otherwise lapse at its midnight, before the morning the reminder may be said).
+      const expires = p.past ? new Date(due.getTime() + ASK_KEEP_DAYS * DAY_MS) : periodEnd(p.occurred_at, p.date_precision, memoryTz);
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, episode_id, due_at, expires_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (episode_id, kind) WHERE episode_id IS NOT NULL DO NOTHING RETURNING id`,
         [memoryId, kind, p.content, p.subject_person_id, p.id, due, expires]);
       armed += r.length;
     }
+    // A question the agent holds becomes a look-up — unless it asks about the outcome of a plan (the ask the day after
+    // covers it), or the question it supersedes (the thought pass revised it) was already looked up.
     const questions: Array<{ id: string; content: string }> = await this.db.query(
-      `SELECT id, content FROM notes WHERE memory_id = $1 AND category = 'question' AND status = 'current' AND deleted_at IS NULL AND NOT pending`, [memoryId]);
+      `SELECT n.id, n.content FROM notes n
+       WHERE n.memory_id = $1 AND n.category = 'question' AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
+         AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND e.kind = 'plan')
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'lookup' AND t.note_id = n.supersedes)`, [memoryId]);
     for (const q of questions) {
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, note_id, due_at, expires_at) VALUES ($1, 'lookup', $2, $3, $4, $5)
@@ -204,7 +213,7 @@ export class InitiativeService {
           `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
-          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], when, t.expires_at]);
+          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > when ? t.due_at : when, t.expires_at]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
       });
