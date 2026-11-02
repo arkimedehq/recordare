@@ -78,12 +78,17 @@ def label(t: dict) -> str:
 
 def ask(system: str, msg: str) -> dict:
     """A judge call; a truncated or malformed answer is tried once more with room to spare, then counts as no answer."""
-    for max_tokens in (4000, 8000):
+    # The judge model reasons before answering and its reasoning counts in max_tokens: on long lists 4000 left nothing for
+    # the answer (empty completions). More room, the same judge.
+    for max_tokens in (8000, 16000):
         try:
             return json.loads(chat([{"role": "system", "content": system}, {"role": "user", "content": msg}], "judge", json_mode=True, max_tokens=max_tokens))
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"  ! judge answer unusable ({e.__class__.__name__}), {'retrying' if max_tokens == 4000 else 'giving up'}", flush=True)
+            print(f"  ! judge answer unusable ({e.__class__.__name__}), {'retrying' if max_tokens == 8000 else 'giving up'}", flush=True)
     return {}
+
+
+CHUNK = 10
 
 
 def judged(system: str, head: str, items: list[str], key: str, numbered: str) -> dict[int, dict]:
@@ -96,7 +101,11 @@ def judged(system: str, head: str, items: list[str], key: str, numbered: str) ->
             return {v.get("n"): v for v in out.get(key, []) if isinstance(v, dict)}
         mid = (lo + hi) // 2
         return {**go(lo, mid), **go(mid, hi)}
-    return go(0, len(items))
+    # Ten at a time from the start: a long list is where the judge ran out of room.
+    out: dict[int, dict] = {}
+    for lo in range(0, len(items), CHUNK):
+        out.update(go(lo, min(lo + CHUNK, len(items))))
+    return out
 
 
 def match(user: str, gold: dict, thoughts: list[dict], held: set[str]) -> list[str]:

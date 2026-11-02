@@ -40,11 +40,13 @@ def ts(x: str) -> datetime:
 
 
 def ask(system: str, msg: str) -> dict:
-    for max_tokens in (4000, 8000):
+    # The judge model reasons before answering and its reasoning counts in max_tokens: on long lists 4000 left nothing for
+    # the answer (empty completions). More room, the same judge.
+    for max_tokens in (8000, 16000):
         try:
             return json.loads(chat([{"role": "system", "content": system}, {"role": "user", "content": msg}], "judge", json_mode=True, max_tokens=max_tokens))
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"  ! judge answer unusable ({e.__class__.__name__}), {'retrying' if max_tokens == 4000 else 'giving up'}", flush=True)
+            print(f"  ! judge answer unusable ({e.__class__.__name__}), {'retrying' if max_tokens == 8000 else 'giving up'}", flush=True)
     return {}
 
 
@@ -83,7 +85,9 @@ def match(user: str, gold: dict, items: list[dict]) -> list[str]:
             return {m.get("n"): m.get("gold", "none") for m in out.get("matches", []) if isinstance(m, dict)}
         mid = (lo + hi) // 2
         return {**go(lo, mid), **go(mid, hi)}
-    by_n = go(0, len(items))
+    by_n: dict[int, str] = {}
+    for lo in range(0, len(items), 10):  # ten at a time from the start: a long list is where the judge ran out of room
+        by_n.update(go(lo, min(lo + 10, len(items))))
     return [by_n.get(n + 1, "none") for n in range(len(items))]
 
 
