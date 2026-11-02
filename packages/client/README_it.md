@@ -90,6 +90,15 @@ feed delle modifiche per una piattaforma che tiene una copia delle note (si ripa
 vederlo — il titolare di una memoria personale; in una memoria entity l'account legge quelli pubblici e
 `privateItems(user)` elenca quelli privati senza il loro contenuto (se ne dimentica uno con `forgetEpisode` / `delete`).
 
+## Iniziative — ciò che l'agente dice da sé (D53)
+`initiatives(user, {since})` è il feed di ciò che l'agente ha deciso di dire, chiedere o cercare (si ripassa `next` come
+`since`); gli stessi oggetti arrivano al tuo webhook (admin `POST api/v1/admin/clients/{id}/webhooks`) come Standard
+Webhooks — verifica una consegna con `verifyWebhook(rawBody, headers, secret)` (il corpo grezzo, il segreto `whsec_`
+restituito dalla registrazione; lancia `WebhookVerificationError`). Consegna un'iniziativa quando la persona a cui è
+destinata (`for`, o il titolare) è presente e prima di `expiresAt`; un `lookup` è per gli strumenti propri del tuo
+agente; poi `reportInitiative(user, id, outcome)` con `said` / `asked` / `ignored` / `declined` / `done` / `failed`
+(API.md §4b, INTEGRATION.md §4d).
+
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:
 `linkCode(user)` → `{code, expiresAt}` (`RCD-XXXX-XXXX`, dieci minuti, un solo uso) — il titolare invia il codice da

@@ -6,6 +6,7 @@ import {
   type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
+  type Initiative, type InitiativeOutcome,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
@@ -307,6 +308,16 @@ export class RecordareClient {
   /** The notes change feed, for a platform keeping a copy: pass `next` back as `since`; `more` when the page was full. */
   noteChanges(user: string, query: { since?: number; limit?: number } = {}): Promise<{ items: NoteChange[]; next: number; more: boolean }> {
     return this.http.request('GET', `api/v1/notes/changes${qs(query)}`, { user });
+  }
+
+  /** The initiatives feed (D53): pass `next` back as `since`; `more` when the page was full. The webhooks carry the same objects. */
+  initiatives(user: string, query: { since?: number; limit?: number; status?: Initiative['status'] } = {}): Promise<{ items: Initiative[]; next: number; more: boolean }> {
+    return this.http.request('GET', `api/v1/initiatives${qs(query)}`, { user });
+  }
+
+  /** What became of an initiative: said / asked (delivered), ignored, declined, done (a lookup or an action), failed. */
+  reportInitiative(user: string, id: string, status: InitiativeOutcome, extra: { at?: string; reply?: string } = {}): Promise<Initiative> {
+    return this.http.request('POST', `api/v1/initiatives/${enc(id)}/outcome`, { user, body: { status, ...extra } });
   }
 
   settings(user: string): Promise<MemorySettings> {

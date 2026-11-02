@@ -4,6 +4,7 @@
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
+import { InitiativeModule } from '../initiative/initiative.module';
 
-@Module({ controllers: [AdminController], providers: [AdminService] })
+@Module({ imports: [InitiativeModule], controllers: [AdminController], providers: [AdminService] })
 export class AdminModule {}

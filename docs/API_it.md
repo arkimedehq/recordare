@@ -191,7 +191,7 @@ channel (esattamente uno), externalId, verified?}`, `DELETE identities/:id`,
 `POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/link-codes` (D51 → `{code,
 expiresAt}`; 409 `memory_not_personal`), `POST memories/:id/link-claims/:claim/confirm` / `DELETE
 memories/:id/link-claims/:claim` (→ 204), `POST memories/:id/consolidate`,
-`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `POST memories/:id/thoughts` (la sola passata dei pensieri, D53), `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
+`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `POST memories/:id/thoughts` (la sola passata dei pensieri, D53), `POST memories/:id/initiatives` (il solo giro delle iniziative, 8.12c), `POST / GET clients/:id/webhooks`, `DELETE webhooks/:id` (§4b), `GET memories` (memorie con la loro dimensione, per l'atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; le rotte della console sono descritte lì). Le revoche hanno effetto subito (la cache delle
 credenziali viene svuotata). `DELETE memories/:id?confirm=<lo stesso id>` cancella l'intera memoria (WORK_PLAN 8.13) →
 `200 {erased: {conversations, messages, episodes, facts, notes, digests, sources, contacts}}`; 400 `confirm_mismatch`
@@ -635,6 +635,53 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `GET api/v1/me/identities` | read | D51: `{linked: [{id, channel, client, externalId, linkedAt}], pending: [{id, channel, client, externalId, displayName, claimedAt}]}` — le identità che parlano come "io" e le richieste (7 giorni) in attesa di conferma |
 | `POST api/v1/me/identities/pending/{id}/confirm`, `DELETE api/v1/me/identities/pending/{id}` | ingest | Conferma (quell'identità viene legata al sé della memoria, verificata — un legame a un contatto viene spostato; i messaggi precedenti mantengono la loro attribuzione) o rifiuta una richiesta → 204 (404 sconosciuta / scaduta) |
 | `DELETE api/v1/me/identities/{id}` | ingest | Scollega un'identità collegata → 204: quel mittente torna un partecipante come gli altri (un nuovo contatto) |
+
+## 4b. Iniziative — ciò che l'agente dice o fa da sé (D53, WORK_PLAN 8.12c) — prima versione costruita il 2026-11-01
+
+La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o
+fare, per una persona, da quando e fino a quando. Le sue fonti: un piano oltre la sua data senza esito raccontato diventa un `ask` due giorni
+dopo la sua fine ("è successo?", tenuto una settimana; nessuno se hanno raccontato com'è andata); un piano in arrivo un
+`say` il giorno prima (un promemoria, fino alla fine del giorno del piano); una **promessa che ho fatto o una richiesta
+fattami** con una data ("ricordami giovedì di ordinare la farina", "te lo ricordo venerdì" — gli INTENTS dell'estrazione,
+`extract.v21`) un `say` quel giorno, per la persona a cui si riferisce — ritirata ("lascia stare") o fatta in
+conversazione, si chiude; quando una richiesta e un piano sono la stessa cosa, parla la richiesta; una domanda che
+l'agente tiene (un pensiero di tipo `question`, 8.12a, non sull'esito di un piano né sulle mie azioni) un `lookup` per
+l'agente ospite, che lo scopre con i propri strumenti — il web, la stanza — e porta la
+risposta come fonte appresa o come percezione (D53: le fonti esterne passano sempre dall'agente). Ogni fonte arma un
+solo intento, una volta; scatta quando è dovuto, dopo le **ore di quiete** della memoria (`quietFrom` / `quietTo`,
+locali, default 22–8) e nel **limite giornaliero** per persona (`INITIATIVE_DAILY_LIMIT`, 3). **Quando consegnare lo
+decide l'ospite**: il momento migliore è quando c'è qualcuno che può rispondere — la persona a cui è destinata (`for`),
+oppure chiunque quando è destinata al titolare di una memoria di entità; l'ospite conosce la presenza (una chat aperta
+ora, una voce nella stanza, qualcuno al pannello). Se nessuno arriva prima di `expiresAt`, decade in silenzio.
+
+In balanced e full il modello formula ogni iniziativa dovuta come la direbbe l'agente e le dà un `worth` (0–1;
+`initiative.v2`, task LLM `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): sotto 0,3 il promemoria o la
+domanda di un piano viene scartato, mai una richiesta o una promessa (dovute); in economy il testo è la frase del
+servizio.
+
+Due vie portano lo stesso oggetto:
+- **Webhook** (admin, per client: `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?: {scheme,
+  credentials?}, description?}` → l'endpoint con il suo **segreto** `whsec_`, **mostrato una sola volta**; `GET …/webhooks`,
+  `DELETE api/v1/admin/webhooks/{id}`), consegnati come **Standard Webhooks** (https://www.standardwebhooks.com/):
+  intestazioni `webhook-id`, `webhook-timestamp` (secondi Unix), `webhook-signature` (`v1,` + HMAC-SHA256 in base64 di
+  `id.timestamp.body` con i byte del segreto), tolleranza di 5 minuti, nuovi tentativi con ritardo crescente per un
+  giorno e mezzo, `410 Gone` disabilita l'endpoint; `token` viene rimandato come `X-Recordare-Token`, `authentication`
+  come intestazione `Authorization` (i nomi di A2A). Solo `https` verso un indirizzo pubblico, a meno che chi installa
+  imposti `WEBHOOK_ALLOW_PRIVATE` (un client ospitato insieme a Recordare). Il corpo è la busta `{type, timestamp, data}`
+  con `type` `initiative.created | initiative.updated | initiative.expired` e `data` l'iniziativa più `user` (l'id
+  proprio del client per la persona della memoria) e `memoryId`. La libreria verifica con
+  `verifyWebhook(body, headers, secret)`.
+- **Il feed** `GET api/v1/initiatives?since&limit&status` (scope `read`, l'intestazione dell'utente): `{items, next,
+  more}` in ordine di `seq` — per un client dietro NAT, o per recuperare dopo consegne perse.
+
+L'iniziativa: `{id, seq, kind: say | ask | lookup | do, for: {personId, name} | null, text (nella lingua della memoria,
+pronto da dire), reason, worth (null in economy), episodeIds, dueAt, expiresAt, status, outcomeAt, reply, createdAt}`. Il client riporta che fine
+ha fatto — `POST api/v1/initiatives/{id}/outcome {status: said | asked | ignored | declined | done | failed | expired,
+at?, reply?}` (scope `write`) — e l'intento dell'agente ne segue l'esito: said / asked / done lo chiudono; declined lo
+annulla; ignored lo ripropone una volta a una settimana di distanza, poi basta (niente insistenza); failed riprova il
+giorno dopo. L'esito viene rimandato come `initiative.updated`; una ricerca riportata `done` ritira la domanda da cui veniva.
+Telemetria: `initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Misurato su `dataset_dev_initiatives`
+(RESULTS.md): 19–20 su 22 in tre run, circa 95 % di precisione, ognuna nel suo giorno e per la sua persona.
 
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
 

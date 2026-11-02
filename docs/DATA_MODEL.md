@@ -115,6 +115,7 @@ writer's episode-subject rule reads them. Episodes still keep people as "Name (r
 | `facts_reviewed_upto` | timestamptz null | Watermark of the nightly facts review (WORK_PLAN 5.6, on the recording clock) |
 | `patterns_upto` | timestamptz null | Watermark of the nightly pattern pass (WORK_PLAN 5.4, on the recording clock) |
 | `thoughts_upto` | timestamptz null | Watermark of the thought pass (D53, WORK_PLAN 8.12a, on the recording clock): the importance of the episodes recorded after it decides whether the agent thinks again |
+| `quiet_from`, `quiet_to` | smallint (0–23), default 22 / 8 | The memory's quiet hours, local: no initiative is due inside them (D53, 8.12c; admin `quietFrom` / `quietTo`) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = installation default (`QUALITY_PROFILE`) |
 | `mode` | enum `personal \| entity`, default `personal` | D50: `personal` — undeclared input is the memory's self (the account holder is "I"); `entity` (D48) — a shared device, robot or place: undeclared input is "someone"'s. Changed by the client only while the memory is empty (`PATCH api/v1/me`), by the admin any time |
 | `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | The first person in gendered languages (D50; used from WORK_PLAN 8.4) |
@@ -630,6 +631,34 @@ conversation_id null, item_key text null, subject_person_id uuid null → person
 note category (`item_key`), its subject (null = the memory itself) and its evidence messages (also those behind evidence
 episodes); the extraction does not write a fact of that slot / a note of that category for that subject again from any
 of those messages, while a new message telling it is news. Ids only; these messages stay in the chat search.
+
+### intents, initiatives, client_webhooks, webhook_deliveries (D53, WORK_PLAN 8.12c) — first cut built 2026-11-01 (migration `Initiatives1791220000000`)
+`intents(id, memory_id, kind enum (open_plan|upcoming_plan|lookup|promise|request|own), content, for_person_id null →
+persons, episode_id null → episodes (CASCADE), note_id null → notes (CASCADE), due_at, expires_at, status enum
+(pending|armed|fired|done|cancelled|expired), attempts, reconsider_at, created_at, updated_at)` — the agent's own things
+to do, one per source (unique on `(episode_id, kind)` and `(note_id, kind)`): an open plan past its date (`open_plan`,
+due the day after, kept a week), a plan coming up (`upcoming_plan`, due the day before, until the plan's time), a
+question the agent holds (`lookup`, two weeks), a promise of mine or a request made to me with a date (`promise`,
+`request`: written by the extraction, `message_id` → messages (CASCADE) the message, unique per message and kind, due at
+the local midnight of its day, a day to live; migration `IntentMessages1791230000000`); `own` is reserved. A source that
+moved on (the plan confirmed or cancelled, the question retired) closes its intent (`done`); the extraction closes a
+request withdrawn (`cancelled`) or a promise kept in the conversation (`done`), found by the words it shares
+(`lang/overlap.ts`). A plan past its date is asked about two days after its end, unless a confirmation told at or after
+its start says how it went; a plan with a request or promise about the same thing (same person, within three days, the
+same words) arms nothing. Private plans are not armed (D52: an initiative addresses a person).
+`initiatives(id, seq bigserial, memory_id, intent_id null → intents, kind enum (say|ask|lookup|do), for_person_id null,
+text, reason, worth real null (the model's, balanced and full; migration `InitiativeWorth1791240000000`), episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
+expired), outcome_at, reply, created_at, updated_at)` — what the agent decided to say or do: written when an armed intent
+is due (after the quiet hours, within `INITIATIVE_DAILY_LIMIT` per person on the due day), `text` in the memory's
+language (`lang/initiative.ts`), read as a feed by `seq` and pushed to the webhooks; the client's outcome report sets
+`status` and steers the intent (said / asked / done → done; declined → cancelled; ignored → armed again a week later,
+cancelled after the second; failed → next day); `pending` past `expires_at` → `expired`, its intent too.
+`client_webhooks(id, client_id → clients (CASCADE), url, secret (whsec_, kept to sign), token null, authentication jsonb
+null ({scheme, credentials}), description, created_at, disabled_at, disabled_reason)` — a client's endpoints (Standard
+Webhooks; `410 Gone` disables one); `webhook_deliveries(id, webhook_id, initiative_id null, event_type, payload jsonb,
+attempts, last_status, last_error, delivered_at, gave_up_at, created_at)` — every delivery, retried by the webhook queue
+with a growing delay (1 min … 12 h, seven times) then given up. A memory's events go to the webhooks of the clients that
+hold an account identity for it, each payload with that client's `user`.
 
 ### clarifications (D50, vision L1; behaviour WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null

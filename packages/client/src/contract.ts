@@ -293,6 +293,39 @@ export interface NoteChange {
   note: (Note & { status: string }) | null;
 }
 
+/** An initiative (D53, 8.12c): what the agent decided to say or do on its own, delivered by webhook and read as a feed. */
+export interface Initiative {
+  id: string;
+  /** The feed position: pass the last one back as `since`. */
+  seq: number;
+  /** say: tell it; ask: ask it; lookup: find it out with the host agent's own tools (the web, the room); do: an action. */
+  kind: 'say' | 'ask' | 'lookup' | 'do';
+  /** Whom it is for: a contact, or null for the holder (anyone, in an entity memory). Deliver it when they are there. */
+  for: { personId: string; name: string } | null;
+  /** In the memory's language, ready to be said. */
+  text: string;
+  reason: string;
+  /** How much the model found it worth saying, 0–1 (balanced and full); null when the sentence is the service's own. */
+  worth: number | null;
+  episodeIds: string[];
+  /** From when it may be delivered (after the memory's quiet hours). */
+  dueAt: string;
+  /** Until when; then it lapses, quietly. */
+  expiresAt: string;
+  status: 'pending' | 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
+  outcomeAt: string | null;
+  reply: string | null;
+  createdAt: string;
+}
+export type InitiativeOutcome = 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
+
+/** A webhook event (Standard Webhooks envelope): `data` is the initiative with the client's own `user` id for the memory. */
+export interface WebhookEvent {
+  type: 'initiative.created' | 'initiative.updated' | 'initiative.expired';
+  timestamp: string;
+  data: Initiative & { user: string; memoryId: string };
+}
+
 export interface MemorySettings {
   locale: string;
   timezone: string;

@@ -50,6 +50,8 @@ export class AdminService {
     if (input.locale) memory.locale = input.locale;
     if (input.timezone) memory.timezone = input.timezone;
     if (input.qualityProfile !== undefined) memory.qualityProfile = input.qualityProfile;
+    if (input.quietFrom !== undefined) memory.quietFrom = input.quietFrom;
+    if (input.quietTo !== undefined) memory.quietTo = input.quietTo;
     return repo.save(memory);
   }
 

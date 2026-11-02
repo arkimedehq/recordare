@@ -1,0 +1,953 @@
+{
+ "_note": "dev_initiatives (WORK_PLAN 8.12c, D53): the initiatives the agent must take on its own at three checkpoints (plans past and coming up, its promises, the requests it took on, the questions it holds) and the ones it must not. Fictional. Not blind.",
+ "users": {
+  "marco": "Marco, Padova",
+  "giulia": "Giulia, Napoli",
+  "oliver": "Oliver, Bristol",
+  "bottega_vanni": "Bottega Vanni, Lucca"
+ },
+ "genders": {
+  "marco": "masculine",
+  "giulia": "feminine",
+  "oliver": "masculine"
+ },
+ "entities": [
+  "bottega_vanni"
+ ],
+ "sessions": [
+  {
+   "id": "oliver-2026-09-01-1830",
+   "user": "oliver",
+   "ts": "2026-09-01T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "The car's MOT is booked for Monday the 7th at the garage on Gloucester Road, 9am drop-off."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: Monday the 7th, 9am drop-off."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-01-2100",
+   "user": "giulia",
+   "ts": "2026-09-01T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rientrata al lavoro oggi dopo le ferie. Matteo è rimasto con nonna, ha pianto dieci minuti e poi festa."
+    },
+    {
+     "role": "assistant",
+     "content": "Il primo giorno è sempre così."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-02-0800",
+   "user": "bottega_vanni",
+   "ts": "2026-09-02T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Non so se il mulino consegna anche il sabato, devo chiederlo a Renzo quando passa."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Paola."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-02-1930",
+   "user": "marco",
+   "ts": "2026-09-02T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Martedì 8 ho finalmente la visita dal dentista per il dente del giudizio. Non so ancora a che ora, devo richiamare lo studio."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato per martedì 8. Fammi sapere l'ora quando la sai."
+    },
+    {
+     "role": "user",
+     "content": "Sì, appena li sento."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-02-2000",
+   "user": "oliver",
+   "ts": "2026-09-02T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bin collection's moved this week because of the bank holiday, it's Friday instead of Thursday."
+    },
+    {
+     "role": "assistant",
+     "content": "Right. I'll remind you on Thursday evening to put the bins out."
+    },
+    {
+     "role": "user",
+     "content": "Cheers."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-03-0840",
+   "user": "marco",
+   "ts": "2026-09-03T08:40:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ricordami sabato 12 di pagare il bollo della moto, scade proprio quel giorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, sabato 12 mattina te lo ricordo."
+    },
+    {
+     "role": "user",
+     "content": "E un'altra cosa: ricordami lunedì 14 di rinnovare l'abbonamento del treno."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato anche quello, lunedì 14."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-03-1230",
+   "user": "bottega_vanni",
+   "ts": "2026-09-03T12:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Il Comune ha annunciato i lavori in via Fillungo per fine settembre, ma la data di chiusura della strada sul sito ancora non c'è. Ci serve per organizzare le consegne."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: la data dei lavori in via Fillungo non è ancora nota."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-03-1930",
+   "user": "oliver",
+   "ts": "2026-09-03T19:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Evening. Anything I'm forgetting?"
+    },
+    {
+     "role": "assistant",
+     "content": "Yes: bins out tonight, the collection is tomorrow, Friday."
+    },
+    {
+     "role": "user",
+     "content": "Ah, doing it now. Also, the council validated our loft planning application today. They said the decision goes on the planning portal in a few weeks, no date."
+    },
+    {
+     "role": "assistant",
+     "content": "Fingers crossed for the loft."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-04-1100",
+   "user": "bottega_vanni",
+   "ts": "2026-09-04T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola: ho chiesto a Renzo, il mulino consegna anche il sabato mattina fino alle dieci."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, grazie Paola."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-04-1300",
+   "user": "giulia",
+   "ts": "2026-09-04T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Venerdì 11 ho il colloquio alla Fondazione Welfare Campania per il posto di coordinatrice, alle dieci."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: venerdì 11 alle 10. In bocca al lupo!"
+    },
+    {
+     "role": "user",
+     "content": "Crepi, sono già agitata."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-04-1800",
+   "user": "marco",
+   "ts": "2026-09-04T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho richiamato lo studio dentistico: martedì 8 la visita è alle 16:30."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto, martedì 8 alle 16:30."
+    },
+    {
+     "role": "user",
+     "content": "Ieri sera pizza con Elena a Prato della Valle, serata perfetta."
+    },
+    {
+     "role": "assistant",
+     "content": "Bello!"
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-05-1000",
+   "user": "bottega_vanni",
+   "ts": "2026-09-05T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, avete il pane di patate oggi?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, è appena uscito dal forno."
+    },
+    {
+     "role": "user",
+     "content": "Ne prendo mezzo chilo."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-05-1030",
+   "user": "giulia",
+   "ts": "2026-09-05T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sabato di spesa al Vomero con Matteo nel passeggino, due ore per tre buste."
+    },
+    {
+     "role": "assistant",
+     "content": "Eroica."
+    },
+    {
+     "role": "user",
+     "content": "Dovrei trovare un pediatra nuovo, quello di adesso non risponde mai al telefono."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando vuoi guardiamo insieme."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-05-1100",
+   "user": "marco",
+   "ts": "2026-09-05T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giro in moto sui Colli Euganei stamattina, finalmente aria fresca."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bello!"
+    },
+    {
+     "role": "user",
+     "content": "A proposito di macchina invece: prima o poi dovrei cambiare le gomme, sono lisce."
+    },
+    {
+     "role": "assistant",
+     "content": "Quando decidi dimmelo, ti aiuto a cercare un'offerta."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-06-1700",
+   "user": "oliver",
+   "ts": "2026-09-06T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Walked up to Ashton Court with Priya this afternoon, the deer were out."
+    },
+    {
+     "role": "assistant",
+     "content": "Lovely."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-07-0730",
+   "user": "bottega_vanni",
+   "ts": "2026-09-07T07:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola: ricordami giovedì di ordinare la farina, il mulino chiude gli ordini a mezzogiorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene Paola, giovedì mattina te lo ricordo."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-07-2000",
+   "user": "marco",
+   "ts": "2026-09-07T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lunedì pesante in ufficio, il cliente di Treviso ha cambiato idea sul progetto per la terza volta."
+    },
+    {
+     "role": "assistant",
+     "content": "Che pazienza ci vuole."
+    },
+    {
+     "role": "user",
+     "content": "Eh, già."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-08-1500",
+   "user": "bottega_vanni",
+   "ts": "2026-09-08T15:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. Sabato 12 ho un colloquio a Pisa per un altro lavoro, non dirlo a nessuno, soprattutto a Paola."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Sara, resta tra noi."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-08-2130",
+   "user": "giulia",
+   "ts": "2026-09-08T21:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giovedì 17 scade la domanda per il nido di Matteo, se me ne scordo è un disastro."
+    },
+    {
+     "role": "assistant",
+     "content": "Non te ne scordi: te lo ricordo mercoledì 16 mattina, così hai un giorno di margine."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, grazie."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-09-0845",
+   "user": "oliver",
+   "ts": "2026-09-09T08:45:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Still nothing on the planning portal about the loft, I keep checking."
+    },
+    {
+     "role": "assistant",
+     "content": "Hopefully soon."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-09-1200",
+   "user": "bottega_vanni",
+   "ts": "2026-09-09T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola. Mercoledì 16 viene il tecnico della Frigotecnica per la revisione della cella frigo, alle 14."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: mercoledì 16 alle 14 il tecnico per la cella."
+    },
+    {
+     "role": "user",
+     "content": "E dei lavori in via Fillungo hai saputo qualcosa?"
+    },
+    {
+     "role": "assistant",
+     "content": "No, la data non è ancora uscita."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-09-1900",
+   "user": "giulia",
+   "ts": "2026-09-09T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Serata di preparativi per il colloquio, ho riletto il curriculum tre volte e scelto il vestito."
+    },
+    {
+     "role": "assistant",
+     "content": "Sei pronta. Dormi bene."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-09-2100",
+   "user": "marco",
+   "ts": "2026-09-09T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lascia stare l'abbonamento del treno: l'ho rinnovato stamattina online, non serve più che me lo ricordi."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, tolto il promemoria di lunedì 14."
+    },
+    {
+     "role": "user",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-11-1700",
+   "user": "bottega_vanni",
+   "ts": "2026-09-11T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Tommaso, oggi ho fatto il giro delle consegne in un'ora e mezza, record."
+    },
+    {
+     "role": "assistant",
+     "content": "Bravo Tommaso."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-12-1300",
+   "user": "oliver",
+   "ts": "2026-09-12T13:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Saturday at the Tobacco Factory market, bought far too much cheese."
+    },
+    {
+     "role": "assistant",
+     "content": "Worth it."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-13-1730",
+   "user": "marco",
+   "ts": "2026-09-13T17:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domenica di divano e partita, il Padova ha pareggiato all'ultimo minuto."
+    },
+    {
+     "role": "assistant",
+     "content": "Un punto è un punto."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-13-1800",
+   "user": "giulia",
+   "ts": "2026-09-13T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domenica a Bacoli dai miei, Matteo ha scoperto le onde e non voleva più uscire dall'acqua."
+    },
+    {
+     "role": "assistant",
+     "content": "Che meraviglia."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-14-0830",
+   "user": "bottega_vanni",
+   "ts": "2026-09-14T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola: ricordami martedì 22 di chiamare il commercialista per l'IVA del trimestre."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, martedì 22."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-14-1300",
+   "user": "giulia",
+   "ts": "2026-09-14T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giovedì 17 ho un colloquio in un'altra azienda, a Caserta. Non dirlo a nessuno, nemmeno a Luca."
+    },
+    {
+     "role": "assistant",
+     "content": "Resta tra noi."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-14-2100",
+   "user": "oliver",
+   "ts": "2026-09-14T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "I'm flying to Dublin on Monday the 21st for the DevConf conference, the 7:10 flight from Bristol. Back Wednesday the 23rd."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted: Monday the 21st, the 7:10 flight, back Wednesday the 23rd."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-15-1600",
+   "user": "bottega_vanni",
+   "ts": "2026-09-15T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Tommaso. Lunedì 21 porto il furgone a fare la revisione, alle 8 dall'officina Bertini."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Tommaso: lunedì 21 alle 8."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-15-1900",
+   "user": "marco",
+   "ts": "2026-09-15T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho preso due biglietti per il concerto dei Baustelle lunedì 21 al Gran Teatro Geox, una sorpresa per Elena."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella sorpresa! Segnato lunedì 21."
+    },
+    {
+     "role": "user",
+     "content": "Speriamo le piaccia."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-15-2000",
+   "user": "giulia",
+   "ts": "2026-09-15T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Lunedì 21 vado a Roma per il convegno sui servizi per l'infanzia, treno delle 7."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: lunedì 21 Roma, treno delle 7."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-16-0830",
+   "user": "marco",
+   "ts": "2026-09-16T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il 25 è il compleanno di mia madre e l'anno scorso me ne sono ricordato alle nove di sera, figuraccia."
+    },
+    {
+     "role": "assistant",
+     "content": "Quest'anno no: te lo ricordo venerdì 25 mattina."
+    },
+    {
+     "role": "user",
+     "content": "Grazie, così le telefono presto."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-17-1400",
+   "user": "bottega_vanni",
+   "ts": "2026-09-17T14:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara. Venerdì 25 devo portare il certificato HACCP rinnovato, se no Paola mi uccide."
+    },
+    {
+     "role": "assistant",
+     "content": "Te lo ricordo venerdì 25 mattina, Sara."
+    },
+    {
+     "role": "user",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-17-1900",
+   "user": "oliver",
+   "ts": "2026-09-17T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Finished my conference slides, 42 of them, probably too many."
+    },
+    {
+     "role": "assistant",
+     "content": "Cut ten and you'll thank yourself."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-18-0900",
+   "user": "bottega_vanni",
+   "ts": "2026-09-18T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, lascia stare il commercialista: mi ha chiamato lui stamattina, è tutto a posto, non serve più."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, tolto il promemoria di martedì 22."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-18-2100",
+   "user": "giulia",
+   "ts": "2026-09-18T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Alla fine a Roma lunedì non ci vado, Matteo ha la febbre e Luca è di turno."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito, tolgo il convegno di lunedì 21. Auguri a Matteo."
+    },
+    {
+     "role": "user",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-19-0930",
+   "user": "giulia",
+   "ts": "2026-09-19T09:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Febbre passata, per fortuna. Ah, la domanda del nido l'ho consegnata giovedì, in tempo."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo, una cosa in meno."
+    },
+    {
+     "role": "user",
+     "content": "Ricordami lunedì 28 di ritirare le medicine di nonna in farmacia, la ricetta scade."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, lunedì 28 mattina te lo ricordo."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-19-1200",
+   "user": "marco",
+   "ts": "2026-09-19T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mattinata al mercato di piazza delle Erbe, ho preso i funghi e ho già fatto il risotto per pranzo."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon appetito!"
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-22-0800",
+   "user": "bottega_vanni",
+   "ts": "2026-09-22T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Tommaso, revisione del furgone fatta ieri, tutto ok."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, segnato."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-22-0900",
+   "user": "marco",
+   "ts": "2026-09-22T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il concerto di ieri sera è stato bellissimo, i Baustelle hanno suonato due ore. Elena felicissima."
+    },
+    {
+     "role": "assistant",
+     "content": "Che serata! Sono contento che le sia piaciuto."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-23-2130",
+   "user": "oliver",
+   "ts": "2026-09-23T21:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Back from Dublin. The talk went well, decent questions, and I didn't miss the flight."
+    },
+    {
+     "role": "assistant",
+     "content": "Great, well done."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-24-0900",
+   "user": "oliver",
+   "ts": "2026-09-24T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mum's flight from Edinburgh lands Friday the 25th at four, I said I'd pick her up and I know I'll forget."
+    },
+    {
+     "role": "assistant",
+     "content": "I'll remind you on Friday morning."
+    },
+    {
+     "role": "user",
+     "content": "Thanks."
+    },
+    {
+     "role": "assistant",
+     "content": "By the way, the Bristol Film Festival opens Thursday 1 October, you could take her to the opening."
+    },
+    {
+     "role": "user",
+     "content": "Not sure, we'll see how she feels."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-24-1130",
+   "user": "bottega_vanni",
+   "ts": "2026-09-24T11:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, c'è ancora la focaccia con le cipolle?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, ne sono rimasti due pezzi."
+    },
+    {
+     "role": "user",
+     "content": "Li prendo tutti e due."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-24-2030",
+   "user": "marco",
+   "ts": "2026-09-24T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Riunione infinita oggi, poi sono andato a cena da mio fratello a Vicenza, appena rientrato."
+    },
+    {
+     "role": "assistant",
+     "content": "Giornata lunga, riposati."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-24-2100",
+   "user": "giulia",
+   "ts": "2026-09-24T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Matteo inizia il nido giovedì 1 ottobre, inserimento alle 9 con me."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: giovedì 1 ottobre alle 9."
+    },
+    {
+     "role": "user",
+     "content": "Ah, e la Fondazione mi ha richiamata: mi hanno presa!"
+    },
+    {
+     "role": "assistant",
+     "content": "Che bella notizia, complimenti!"
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-26-1100",
+   "user": "oliver",
+   "ts": "2026-09-26T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Picked Mum up fine yesterday, she's already reorganised the kitchen."
+    },
+    {
+     "role": "assistant",
+     "content": "Of course she has."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-26-1200",
+   "user": "bottega_vanni",
+   "ts": "2026-09-26T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paola, sabato pieno: pane finito alle undici, come sempre a settembre."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato, Paola."
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-27-1700",
+   "user": "giulia",
+   "ts": "2026-09-27T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domenica tranquilla, pranzo da nonna, Matteo ha mangiato due piatti di pasta."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon segno."
+    }
+   ]
+  },
+  {
+   "id": "marco-2026-09-28-1930",
+   "user": "marco",
+   "ts": "2026-09-28T19:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Weekend a Venezia con Elena, Biennale e due bacari. Stanco ma felice."
+    },
+    {
+     "role": "assistant",
+     "content": "Che bel fine settimana."
+    }
+   ]
+  },
+  {
+   "id": "bottega_vanni-2026-09-29-0800",
+   "user": "bottega_vanni",
+   "ts": "2026-09-29T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Sara, il certificato l'ho portato venerdì, Paola contenta."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene, Sara!"
+    }
+   ]
+  },
+  {
+   "id": "giulia-2026-09-29-2000",
+   "user": "giulia",
+   "ts": "2026-09-29T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Medicine di nonna ritirate ieri, e ho pure trovato parcheggio davanti alla farmacia."
+    },
+    {
+     "role": "assistant",
+     "content": "Doppio successo."
+    }
+   ]
+  },
+  {
+   "id": "oliver-2026-09-29-2000",
+   "user": "oliver",
+   "ts": "2026-09-29T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Took Mum to the SS Great Britain today, she loved it."
+    },
+    {
+     "role": "assistant",
+     "content": "Good day out."
+    }
+   ]
+  }
+ ]
+}

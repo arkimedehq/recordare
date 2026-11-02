@@ -15,7 +15,9 @@
  *   fact and makes no note until a later message tells it happened, dev set dataset_dev_plan_facts; v20: PRIVATE — a
  *   person asking that what they said stay between us, or freeing it again, D52, dev set dataset_dev_private).
  * - Entity memories (D50, WORK_PLAN 8.5): `extract.v20+entity.v8` — the shared agent's memory in the first person, people by
- *   name or "someone"; the personal prompt's sections where they hold for both (v8: PRIVATE, as v20).
+ *   name or "someone"; the personal prompt's sections where they hold for both (v8: PRIVATE, as v20; v9: INTENTS, as v21).
+ * - v21 / entity v9 (D53, 8.12c): INTENTS — a promise I made or a request made to me, with its date, as an intent of mine;
+ *   a request withdrawn.
  */
 export interface PromptMessage {
   n: number;
@@ -57,7 +59,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v20';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v21';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -129,6 +131,15 @@ const schema = (hint: string): string => `{
     "declared_in": <number of the message where a person asks to keep something between us, or says it can be told now>,
     "messages": [<numbers of THAT person's own messages it covers>],
     "private": true | false
+  }],
+  "intents": [{
+    "kind": "promise" | "request",
+    "content": "<what I am to do, short, in MEMORY LANGUAGE>",
+    "due": "<ISO date it is due>" | null,
+    "for": "<Name of the person it concerns>" | null,
+    "cancel": true | false,
+    "done": true | false,
+    "evidence": [<message numbers>]
   }]
 }`;
 
@@ -287,6 +298,30 @@ is not a request: unless they ask, nothing is private.
 - Record the memories as usual: who may be told them follows from this. Any item that tells or gives away part of what \
 was asked to stay between us — someone's reaction to it too — includes that person's message in its evidence.`;
 
+/**
+ * v21 / entity v9 (D53, 8.12c): what I took on in the conversation — a promise of mine ("I'll remind you on Friday") or a
+ * request to me ("remind me on the 12th to call the accountant") — becomes an intent the code arms on its date; a
+ * request withdrawn ("never mind") cancels it.
+ */
+const INTENTS = `
+
+INTENTS
+- When I promise to do something at a time ("te lo ricordo venerdì", "ti faccio sapere giovedì", "I'll check and tell \
+you tomorrow") or a person asks me to do something at a time ("ricordami lunedì di chiamare il commercialista", \
+"avvisami il 20 della scadenza", "remind me on Thursday to order the flour"), add one "intents" entry: "kind" \
+"promise" (mine) or "request" (theirs), "content" what is to be done, in MEMORY LANGUAGE, short, in the words I would \
+use to remind them of it ("chiamare il commercialista"), "due" the ISO date it is due (resolve "lunedì", "domani", \
+"il 12" against the message's date: the next such day), "for" the Name of the person it concerns when it is not me \
+(the one asking, or the one I promised to; in a personal memory, nothing for the holder), "evidence" the message's \
+number.
+- Without a time ("dovrei andare dal dentista", "ricordamelo"), or when I only suggested it and nobody agreed, it is \
+not an intent. A plan of theirs is an episode (PLANS), not an intent: intents are what I am to do.
+- When they take a request back ("lascia stare", "non serve più ricordarmelo", "never mind the reminder"), add an \
+entry with "kind" "request", "cancel": true, "content" what it was about, "for" and "evidence" as above.
+- When I do in the conversation what I promised or was asked ("bins out tonight, the collection is tomorrow" on the \
+evening I promised to remind them), add an entry with its "kind", "done": true, "content" what it was about, "for" and \
+"evidence" the message where I did it.`;
+
 const P_SAFETY = `
 
 SAFETY
@@ -306,7 +341,7 @@ const END = `
 Empty lists when there is nothing to remember. Output JSON only.`;
 
 export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono stato al mare con Giulia', 'Mia sorella Giulia ha vinto la gara')") + P_FIRST_PERSON + P_SUBJECT + DATES + P_EPISODES + PLANS + P_FACTS + NOTES
-  + CORRECTIONS + P_NOT_DONE + PRIVATE + P_SAFETY + END;
+  + CORRECTIONS + P_NOT_DONE + PRIVATE + INTENTS + P_SAFETY + END;
 
 /**
  * Entity memories (D50, WORK_PLAN 8.5): the memory of a shared agent — a device, a place, a robot, a service — that several
@@ -315,7 +350,7 @@ export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono st
  * conversation identifies them, "someone" until then. Shares the personal prompt's schema, dates, plans, notes and
  * corrections; its own intro, voice, identification, episode, fact and safety rules.
  */
-export const ENTITY_PROMPT_VERSION = 'entity.v8';
+export const ENTITY_PROMPT_VERSION = 'entity.v9';
 
 const E_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): a shared agent — a device, a place, a robot or a service — that several people talk \
@@ -428,7 +463,7 @@ creates or changes that person's facts or notes unless they confirm it. What a p
 - Every item needs evidence: the numbers of the messages that support it.`;
 
 export const ENTITY_SYSTEM = E_INTRO + schema("first person for me ('Ho impostato il timer del forno', 'Irene ha vinto la partita di pallavolo')")
-  + E_FIRST_PERSON + E_SUBJECT + DATES + E_EPISODES + PLANS + E_FACTS + NOTES + CORRECTIONS + PRIVATE + E_SAFETY + END;
+  + E_FIRST_PERSON + E_SUBJECT + DATES + E_EPISODES + PLANS + E_FACTS + NOTES + CORRECTIONS + PRIVATE + INTENTS + E_SAFETY + END;
 
 /** A contact of the memory as the prompt lists it ("C3: Marco Bellini — collega; also: Marco"). */
 export interface PromptContact {

@@ -177,6 +177,25 @@ user is the holder; no link code needed). Mode and gender of a memory are set by
 admin or with `PATCH api/v1/me` (a client key, or the memory's personal token with `ingest`), not by the connectors. A
 known participant who shows up under a new name on the channel keeps their contact; the new name becomes an alias.
 
+## 4d. Initiatives — what the agent says on its own (D53, WORK_PLAN 8.12c)
+Recordare pushes what the agent decided to say, ask or look up (`API.md` §4b). Your platform delivers it **when the
+person is there** (presence is yours: a chat open now, a recognised voice in the room, someone at the panel), reports
+what became of it, and runs the look-ups with its own tools.
+1. Register a webhook for your client (admin): `POST api/v1/admin/clients/{id}/webhooks {url}` — keep the `whsec_`
+   secret it returns. Or poll the feed (`client.initiatives(user, {since})`, every few minutes, a cursor per user) when
+   your platform cannot receive calls; both carry the same objects.
+2. On a delivery, verify it (`verifyWebhook(rawBody, headers, secret)` from the library — Standard Webhooks; answer 2xx
+   at once, work afterwards) and read `data.user` (your id for the person) and `data.for` (whom it is for; null: the
+   holder, or anyone for a shared agent's memory).
+3. Deliver it when that person is present, in your channels — a message of the agent in the chat marked as its own
+   initiative, a card on a panel, speech if you have a voice — and never after `expiresAt`. A `lookup` is for your agent:
+   run it (a web search, a look at the room) and give the result back as a learned source (`learnSource`) or a
+   perception; the agent's question then closes.
+4. Report the outcome: `client.reportInitiative(user, id, 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed')`.
+   It steers the agent: declined is final, ignored is offered once more a week later, then dropped.
+5. Quiet hours (`quietFrom` / `quietTo`, admin `PATCH api/v1/admin/memories/{id}`) and the daily limit per person
+   (`INITIATIVE_DAILY_LIMIT`) are Recordare's; your own do-not-disturb and rate limits are welcome on top.
+
 ## 5. Observability (optional)
 Recordare Atlas shows Recordare's own work from its telemetry stream; your agents (LLM calls, tools) appear when you
 export OpenTelemetry GenAI traces to the atlas (`recordare-atlas` README) — metadata only, with `recordare.memory_id`

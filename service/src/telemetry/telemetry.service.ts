@@ -25,6 +25,9 @@ export type TelemetryEvent =
   | { type: 'digest.written'; memoryId: string; level: 'day' | 'month'; period: string; sources: number }
   | { type: 'consolidation.finished'; memoryId: string; days: number; months: number; llmCalls: number; failed: number }
   | { type: 'episode.forgotten'; memoryId: string; ids: string[] }
+  /** The agent's own initiative (D53, 8.12c): created, and what the client reported of it. */
+  | { type: 'initiative.created'; memoryId: string; id: string; kind: string }
+  | { type: 'initiative.outcome'; memoryId: string; id: string; status: string }
   | { type: 'work.started'; memoryId: string | null; op: WorkOp; id: number }
   | { type: 'work.finished'; memoryId: string | null; op: WorkOp; id: number; ms: number };
 

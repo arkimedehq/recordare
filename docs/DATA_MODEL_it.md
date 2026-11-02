@@ -118,6 +118,7 @@ come stringhe "Nome (relazione)" (`episode_people.alias`), che il recall consape
 | `facts_reviewed_upto` | timestamptz null | Watermark della revisione notturna dei fatti (WORK_PLAN 5.6, sull'orologio di registrazione) |
 | `patterns_upto` | timestamptz null | Watermark del passaggio notturno dei pattern (WORK_PLAN 5.4, sull'orologio di registrazione) |
 | `thoughts_upto` | timestamptz null | Watermark della passata dei pensieri (D53, WORK_PLAN 8.12a, sull'orologio di registrazione): l'importanza degli episodi registrati dopo di esso decide se l'agente pensa di nuovo |
+| `quiet_from`, `quiet_to` | smallint (0–23), default 22 / 8 | Le ore di quiete della memoria, locali: nessuna iniziativa scatta al loro interno (D53, 8.12c; admin `quietFrom` / `quietTo`) |
 | `quality_profile` | text null (`economy` / `balanced` / `full`) | D35; null = default dell'installazione (`QUALITY_PROFILE`) |
 | `mode` | enum `personal \| entity`, default `personal` | D50: `personal` — ciò che arriva senza identità dichiarata è del sé della memoria (il titolare dell'account è l'"io"); `entity` (D48) — un dispositivo condiviso, un robot o un luogo: ciò che arriva non dichiarato è di "qualcuno". Il client lo cambia solo finché la memoria è vuota (`PATCH api/v1/me`), l'admin in qualsiasi momento |
 | `gender` | enum `masculine \| feminine \| neutral`, default `masculine` | La prima persona nelle lingue con genere (D50; usato dall'8.4 del WORK_PLAN) |
@@ -655,6 +656,37 @@ cancellati — la chiave dello slot o la categoria della nota (`item_key`), il s
 messaggi di evidenza (anche quelli dietro gli episodi di evidenza); l'estrazione non riscrive un fatto di quello slot /
 una nota di quella categoria per quel soggetto da nessuno di quei messaggi, mentre un messaggio nuovo che lo racconta è
 una novità. Solo id; questi messaggi restano nella ricerca nelle chat.
+
+### intents, initiatives, client_webhooks, webhook_deliveries (D53, WORK_PLAN 8.12c) — prima versione costruita il 2026-11-01 (migrazione `Initiatives1791220000000`)
+`intents(id, memory_id, kind enum (open_plan|upcoming_plan|lookup|promise|request|own), content, for_person_id null →
+persons, episode_id null → episodes (CASCADE), note_id null → notes (CASCADE), due_at, expires_at, status enum
+(pending|armed|fired|done|cancelled|expired), attempts, reconsider_at, created_at, updated_at)` — le cose che l'agente
+deve fare, una per fonte (unique su `(episode_id, kind)` e `(note_id, kind)`): un piano aperto oltre la sua data
+(`open_plan`, dovuto il giorno dopo, tenuto una settimana), un piano in arrivo (`upcoming_plan`, dovuto il giorno prima,
+fino all'ora del piano), una domanda che l'agente tiene (`lookup`, due settimane), una promessa mia o una richiesta
+fattami con una data (`promise`, `request`: scritte dall'estrazione, `message_id` → messages (CASCADE) il messaggio,
+unique per messaggio e tipo, dovute alla mezzanotte locale del loro giorno, un giorno di vita; migrazione
+`IntentMessages1791230000000`); `own` è riservato. Una fonte che è andata avanti (il piano confermato o annullato, la
+domanda ritirata) chiude il suo intento (`done`); l'estrazione chiude una richiesta ritirata (`cancelled`) o una promessa
+mantenuta in conversazione (`done`), trovate dalle parole che condividono (`lang/overlap.ts`). Di un piano oltre la sua
+data si chiede due giorni dopo la sua fine, a meno che una conferma raccontata all'inizio del piano o dopo dica com'è
+andata; un piano con una richiesta o una promessa sulla stessa cosa (stessa persona, entro tre giorni, le stesse parole)
+non arma nulla. I piani privati non vengono armati (D52: un'iniziativa si rivolge a una persona).
+`initiatives(id, seq bigserial, memory_id, intent_id null → intents, kind enum (say|ask|lookup|do), for_person_id null,
+text, reason, worth real null (del modello, balanced e full; migrazione `InitiativeWorth1791240000000`), episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
+expired), outcome_at, reply, created_at, updated_at)` — ciò che l'agente ha deciso di dire o fare: scritta quando un
+intento armato è dovuto (dopo le ore di quiete, entro `INITIATIVE_DAILY_LIMIT` per persona nel giorno dovuto), `text`
+nella lingua della memoria (`lang/initiative.ts`), letta come feed per `seq` e spinta ai webhook; il rapporto d'esito del
+client imposta `status` e guida l'intento (said / asked / done → done; declined → cancelled; ignored → armato di nuovo
+una settimana dopo, cancelled alla seconda volta; failed → il giorno dopo); `pending` oltre `expires_at` → `expired`,
+e così il suo intento.
+`client_webhooks(id, client_id → clients (CASCADE), url, secret (whsec_, conservato per firmare), token null,
+authentication jsonb null ({scheme, credentials}), description, created_at, disabled_at, disabled_reason)` — gli
+endpoint di un client (Standard Webhooks; `410 Gone` ne disabilita uno); `webhook_deliveries(id, webhook_id,
+initiative_id null, event_type, payload jsonb, attempts, last_status, last_error, delivered_at, gave_up_at,
+created_at)` — ogni consegna, ritentata dalla coda dei webhook con un ritardo crescente (da 1 min a 12 h, sette volte)
+poi abbandonata. Gli eventi di una memoria vanno ai webhook dei client che hanno per essa un'identità di account, ogni
+payload con l'`user` di quel client.
 
 ### clarifications (D50, visione L1; comportamento WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contatti), episode_id / fact_id / note_id null

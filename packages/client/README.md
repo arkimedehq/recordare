@@ -89,6 +89,14 @@ it; `updateSettings` and the export (`startExport` → `exportJob` → `exportAr
 public ones and `privateItems(user)` lists the private ones without their content (forget one with `forgetEpisode` /
 `delete`).
 
+## Initiatives — what the agent says on its own (D53)
+`initiatives(user, {since})` is the feed of what the agent decided to say, ask or look up (pass `next` back as `since`);
+the same objects reach your webhook (admin `POST api/v1/admin/clients/{id}/webhooks`) as Standard Webhooks — verify a
+delivery with `verifyWebhook(rawBody, headers, secret)` (the raw body, the `whsec_` secret the registration returned;
+throws `WebhookVerificationError`). Deliver an initiative when the person it is for (`for`, or the holder) is present
+and before `expiresAt`; a `lookup` is for your agent's own tools; then `reportInitiative(user, id, outcome)` with
+`said` / `asked` / `ignored` / `declined` / `done` / `failed` (API.md §4b, INTEGRATION.md §4d).
+
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,
 expiresAt}` (`RCD-XXXX-XXXX`, ten minutes, one use) — the holder sends the code alone to the agent from that channel, in

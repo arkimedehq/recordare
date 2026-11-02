@@ -748,6 +748,37 @@ ingested memory (`extract.v19` only, 5 calls); ≈ 0.04 USD in all (agent, judge
 - Stays **off by default** (`card` per request): to be measured with a less tool-eager model or a voice agent, where
   saving a tool round matters.
 
+### Initiatives — what the agent says on its own (D53, WORK_PLAN 8.12c, 2026-11-02, DeepSeek direct off-peak)
+
+New dev set `dataset_dev_initiatives` (4 memories — it / it / en and one entity, a bakery —, 54 sessions in September,
+three checkpoints): 22 expected initiatives (15 reminders `say`, 5 asks "did it happen?", 2 look-ups), each with the day
+it is due and whom it is for, and 13 traps (a plan whose outcome was told, a request withdrawn, a plan cancelled, a
+private plan, a promise already kept in the conversation, a wish with no date, a question already answered, something
+only the assistant suggested). `initiative_eval.py` ingests up to each checkpoint, runs patterns and thoughts, then the
+initiative sweep once a day at 09:00 local (the hourly sweep of a real night, compressed), and a judge matches every
+initiative to the gold — kind, matter and person; the due day and `for` are checked by the code. Engine: `extract.v21` /
+`entity.v9` (INTENTS: a promise I made or a request made to me, with its date; withdrawn; done), `initiative.v2` (the
+wording and the worth, balanced), `thoughts.v6`.
+
+| run | initiatives | found | traps | false | wrong day / person |
+|---|---|---|---|---|---|
+| i1 (sweep at the checkpoints only, first cut) | 15 | 5/18 | 3 | 7 | 3 / 0 |
+| i2 (daily sweeps; reminders hold to the end of the plan's day) | 28 | 20/24 | 3 | 4 | 2 / 0 |
+| i4 (INTENTS listed in the extraction's output schema) | 36 | 23/24 | 7 | 6 | 0 / 0 |
+| i5 (the ask two days after the plan; request over plan; no look-up on my own doings) | 29 | 20/24 | 4 | 5 | 0 / 0 |
+| **final, 3 runs** (no ask once the outcome was told; a kept promise closes; one initiative per thing) | 21–22 | **19/22, 19/22, 20/22** | 1, 1, 1 | **1, 1, 1** | **0 / 0** |
+
+- Precision ≈ 95 % (one false initiative a run: a small "ask Renzo" reminder of the shop; a look-up about a client in
+  one run); every initiative due on the right day and for the right person (Paola, Tommaso, Sara in the bakery).
+- The trap left: a promise kept or a request withdrawn in conversation is closed only when the extraction says so — the
+  bins reminder (kept in the evening chat) in one run, the train pass (withdrawn) in another.
+- Missed: the two look-ups depend on the thought pass writing a question (variance), the shop's HACCP ask in two runs.
+- What moved the numbers: the extraction ignored the `intents` key until the output schema listed it (i2 → i4: requests
+  and promises 3 → 10); asking the morning after a plan was a nag the gold also called a trap once the outcome came the
+  same day — two days and "no ask once told" removed four traps; a request and the plan it also is spoke twice.
+- Regression: blind12 **97.2 %** with `extract.v21` final (v21 first cut 94.4 %, v20 with thoughts 97.2 %) — within noise.
+- Cost: ≈ 0.15 USD a full run (extraction 54 sessions, the passes, about 15 wording calls), the judges included.
+
 ### The agent's self-model — `thoughts.v6` (D53, WORK_PLAN 8.12b, 2026-11-01, DeepSeek direct off-peak)
 
 The thought pass learns about the agent itself (kind `self`, 8.12b) from MY REPLIES — its own messages with what the

@@ -25,10 +25,11 @@ provider (§3).
 | `recallDigests` | off | off | off | Il diario notturno dato ai riepiloghi di periodo · blind5 3+3 run: −1,9 pt, nel rumore; diario v2 (8.6, prima persona) set di sviluppo 1 run: nessun guadagno |
 | `factsReview` | off | off | off | Revisione notturna dei fatti sui nuovi episodi · nessun guadagno misurato (5.6; v2 con soggetti, 8.6: nessun cambio proposto sui set di sviluppo) |
 | `patterns` | off | on | on | Passaggio notturno dei pattern: i pattern ricorrenti (≥ 3 episodi in giorni diversi) diventano note inferite della memoria stessa, che li conferma / aggiorna / ritira · una chiamata per memoria per notte con episodi nuovi · dev_patterns, `patterns.v2`, 3 run: 20 / 21 abitudini, nessun pattern falso (5.4) |
+| `initiativeWording` | off | on | on | Iniziative formulate e pesate dal modello (D53, 8.12c, `initiative.v2`): una chiamata quando ci sono intenti dovuti; sotto worth 0,3 il promemoria o la domanda di un piano viene scartato (mai una richiesta o una promessa); off: la frase del servizio · dev_initiatives 19–20 / 22, ≈ 95 % di precisione (RESULTS.md) |
 | `thoughts` | off | on | on | Passata dei pensieri (D53, 8.12a): le intuizioni, domande e opinioni proprie dell'agente, ognuna poggiata sugli episodi che cita, sostenuta / indebolita / ritirata da quelli successivi · una chiamata per memoria quando gli episodi nuovi hanno raccolto un'importanza ≥ 20, nessuna altrimenti · dev_thoughts, `thoughts.v6`, 3 run: 14 / 14, 14 / 14, 13 / 14 pensieri attesi, nessun pensiero falso; il modello di sé (8.12b, tipo `self`, dalle risposte dell'agente e dalle reazioni a esse) dev_self 11–12 / 15 note di sé, nessuna falsa (RESULTS.md) |
 
 Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
-`RECALL_DIGESTS`, `FACTS_REVIEW`, `PATTERNS`, `THOUGHTS`.
+`RECALL_DIGESTS`, `FACTS_REVIEW`, `PATTERNS`, `THOUGHTS`, `INITIATIVE_WORDING`.
 
 ## 2. Servizio (`service/.env`, oppure `deploy/.env` per il servizio installato)
 
@@ -46,6 +47,8 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Contesto di memoria: similarità minima per l'unico passaggio di una fonte appresa che può contenere (tagliato a 300 caratteri, `- learned (from «titolo»): …`; WORK_PLAN 8.9). Primo valore, da misurare |
 | `CONSOLIDATION_SCHEDULE` | on | Consolidamento notturno automatico, preceduto dall'estrazione dei messaggi rimasti in attesa (4.1); off = solo su richiesta (valutazioni) |
 | `CONSOLIDATION_HOUR` | 3 | Ora locale (fuso della persona) dopo la quale gira la notte |
+| `INITIATIVE_DAILY_LIMIT` | 3 | Iniziative che una persona riceve al giorno al massimo (D53, 8.12c); le altre aspettano domani |
+| `WEBHOOK_ALLOW_PRIVATE` | false | I webhook possono puntare a indirizzi privati e a http semplice (un client ospitato insieme a Recordare); spento: solo https pubblico |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
 | `LOG_LLM_CALLS` | on | Una riga `llm_calls` per chiamata (token, latenza; mai il contenuto) |
 | `ALLOW_CLOCK_OVERRIDE` | off | Solo valutazioni / test: rispetta `X-Recordare-Now` |
@@ -58,7 +61,7 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `LLM_PROVIDER` | `openai-compatible` (predefinito), `anthropic`, `claude-cli` (solo valutazioni locali) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Endpoint e modello predefiniti di ogni task |
 | `LLM_PROFILE` / `LLM_PROFILE_JSON` | Profilo del provider — come spegnere il ragionamento, output strutturato: `generic`, `deepseek`, `openrouter`, `ollama`, `vllm`, `anthropic`, `openai`, o una definizione JSON |
-| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Override per task; task: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS` |
+| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Override per task; task: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS`, `INITIATIVE` |
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Endpoint di embedding (misurato con `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fisso per installazione (1024 per bge-m3); cambiare modello richiede un re-embed |
 
@@ -75,6 +78,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `displayName` | segue il profilo sulla piattaforma (sincronizzato) | l'id utente del client | Il nome della persona |
 | `qualityProfile` | admin | predefinito dell'installazione | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |
+| `quietFrom`, `quietTo` | admin | 22, 8 | Le ore di quiete della memoria (locali): nessuna iniziativa scatta al loro interno (D53, 8.12c) |
 
 ## 5. Per client (API admin o console)
 
@@ -85,6 +89,8 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `rawLogScope` | `own` | Estratti del registro grezzo solo dalle conversazioni di questo client, o da tutte |
 | `disabled` | off | Tutte le chiavi e i token del client smettono subito di funzionare |
 | Permessi delle chiavi | — | `ingest`, `mcp`, `read`, `write` (mai admin, impostazioni della memoria o export) |
+
+Webhook (D53, 8.12c): `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?, description?}` registra dove un client riceve le iniziative dell'agente (Standard Webhooks, il segreto `whsec_` mostrato una sola volta); `GET …/webhooks`, `DELETE api/v1/admin/webhooks/{id}`. `API.md` §4b.
 
 ## 6. Script di installazione (`deploy/`)
 

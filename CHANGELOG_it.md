@@ -24,6 +24,21 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   e che fine ha fatto, la fiducia dimostrata — mai dall'introspezione: note di categoria `self` (`thought: true`),
   sostenute da quei messaggi, lo stesso esito in due giorni; raccontate nel recall e nel contesto di memoria come ciò che
   ha imparato di sé, e nella scheda di sé come "su di me come agente" (`GET api/v1/cards`). Migrazione `SelfNotes`.
+- **Iniziative — la memoria spinge** (D53, WORK_PLAN 8.12c, prima versione): ciò che l'agente decide di dire, chiedere o
+  cercare da sé, da ciò che tiene — un piano aperto oltre la sua data (un `ask` il giorno dopo), un piano in arrivo (un
+  promemoria il giorno prima), una domanda che tiene (un `lookup` per gli strumenti propri dell'agente ospite) — scattano
+  quando sono dovute, dopo le ore di quiete della memoria (`quietFrom` / `quietTo`) ed entro un limite giornaliero per
+  persona (`INITIATIVE_DAILY_LIMIT`), proposte una volta e al massimo un'altra una settimana dopo, decadendo in silenzio
+  quando nessuno c'è in tempo. Consegnate con **Standard Webhooks** (admin `POST api/v1/admin/clients/{id}/webhooks`, un
+  segreto `whsec_` mostrato una sola volta, intestazioni firmate, nuovi tentativi, `410` disabilita, https pubblico a
+  meno di `WEBHOOK_ALLOW_PRIVATE`) e leggibili come feed (`GET api/v1/initiatives`); il client riporta che fine ha fatto
+  ciascuna (`POST api/v1/initiatives/{id}/outcome`) e l'intento dell'agente ne segue l'esito. Libreria `initiatives`,
+  `reportInitiative`, `verifyWebhook`. L'ospite consegna quando la persona è presente e svolge le ricerche. Migrazioni
+  `Initiatives`, `IntentMessages`, `InitiativeWorth`. L'estrazione (`extract.v21` / `entity.v9`, INTENTS) trasforma una
+  promessa dell'agente o una richiesta fattagli con una data in un intento (ritirata o fatta in conversazione, si chiude);
+  in balanced e full il modello formula ogni iniziativa e le dà un `worth` (`initiative.v2`, knob `initiativeWording`).
+  Una domanda attende due giorni dopo il piano e non si fa se hanno raccontato com'è andata. Misurato: 19–20 su 22, ≈ 95 %
+  di precisione.
 - L'admin legge gli elementi di una memoria (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`),
   `…/facts`, `…/notes` — le liste del diario lette come l'intera memoria, gli elementi privati segnati con di chi sono — e
   ne dimentica uno (`DELETE …/episodes|facts|notes/{id}`). Solo chiave admin; Recordare Atlas li elenca e li dimentica con

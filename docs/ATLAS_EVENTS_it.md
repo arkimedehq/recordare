@@ -45,6 +45,8 @@ la `DELETE` di un episodio, fatto o nota. Tutto il resto sopra resta solo metada
 | `digest.written` | `level` (`day`, `month`), `period`, `sources` | un diario notturno scritto |
 | `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | il consolidamento di una memoria termina |
 | `episode.forgotten` | `ids` | episodi dimenticati |
+| `initiative.created` | `id`, `kind` (`say` / `ask` / `lookup` / `do`) | l'agente ha deciso di dire o fare qualcosa da sé (D53, 8.12c) |
+| `initiative.outcome` | `id`, `status` (`said` / `asked` / `ignored` / `declined` / `done` / `failed` / `expired`) | cosa il client ha riportato di un'iniziativa |
 
 Le piattaforme client (agenti, le loro chiamate LLM, strumenti) raggiungono l'atlas sul proprio canale — tracce
 OpenTelemetry GenAI — non tramite questo flusso (WORK_PLAN 5b.8).

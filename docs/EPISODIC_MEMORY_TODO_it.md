@@ -859,6 +859,18 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   "su di me come agente", raccontato a tutti come gli altri pensieri. Dev set `dataset_dev_self`: 11–12 / 15 in tre run,
   nessuna falsa nota di sé; limiti noti: le lezioni vengono dall'attrito, non da ciò che è andato bene (fiducia,
   affidamento), e due errori singoli diversi possono essere raggruppati in un'unica lezione (RESULTS.md).
+- **Costruito finora** (2026-11-01, passo c, prima versione senza modello): `intents` e `initiatives` (DATA_MODEL), il
+  giro orario (arma da piani aperti, piani in arrivo e domande che l'agente tiene; scatta quando è dovuto dopo le ore di
+  quiete ed entro il limite giornaliero; scade in silenzio), Standard Webhooks per client con la protezione SSRF e il
+  calendario dei tentativi, il feed `GET api/v1/initiatives`, il rapporto d'esito e il ciclo di vita dell'intento
+  (declined → cancelled, ignored → una volta ancora dopo una settimana, failed → il giorno dopo), libreria
+  `initiatives` / `reportInitiative` / `verifyWebhook`, le frasi nella lingua della memoria (`lang/initiative.ts`, ogni
+  locale). Poi (2026-11-02) la parte del modello: INTENTS nell'estrazione (`extract.v21` / `entity.v9`: una promessa mia o
+  una richiesta a me con una data; ritirata; fatta), la formulazione e il worth a cura del modello in balanced e full
+  (`initiative.v2`), una ricerca fatta che ritira la sua domanda. Deciso misurando (`dataset_dev_initiatives`, 19–20 / 22,
+  ≈ 95 % di precisione, RESULTS.md): la domanda attende due giorni dopo un piano (le persone raccontano da sé il giorno
+  dopo) e non si fa se hanno raccontato com'è andata; una richiesta e il piano che è anche essa lo dicono una volta (la
+  richiesta); nessuna ricerca per una domanda sull'esito di un piano o sulle mie azioni.
 
 ## Questioni aperte (da discutere)
 

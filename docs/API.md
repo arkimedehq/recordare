@@ -179,7 +179,7 @@ channel (exactly one), externalId, verified?}`, `DELETE identities/:id`,
 `POST memories/:id/tokens` (→ `{id, token, prefix}`), `DELETE tokens/:id`, `POST memories/:id/link-codes` (D51 → `{code,
 expiresAt}`; 409 `memory_not_personal`), `POST memories/:id/link-claims/:claim/confirm` / `DELETE
 memories/:id/link-claims/:claim` (→ 204), `POST memories/:id/consolidate`,
-`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `POST memories/:id/thoughts` (the thought pass alone, D53), `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
+`POST memories/:id/review-facts`, `POST memories/:id/patterns`, `POST memories/:id/thoughts` (the thought pass alone, D53), `POST memories/:id/initiatives` (the initiative sweep alone, 8.12c), `POST / GET clients/:id/webhooks`, `DELETE webhooks/:id` (§4b), `GET memories` (memories with their size, for the atlas), `GET memories/:id/atlas`,
 `GET telemetry/stream` (§6; the console routes are described there). Revocations take effect at once (the credential
 cache is cleared). `DELETE memories/:id?confirm=<the same id>` erases the whole memory (WORK_PLAN 8.13) → `200 {erased:
 {conversations, messages, episodes, facts, notes, digests, sources, contacts}}`; 400 `confirm_mismatch` without the
@@ -616,6 +616,50 @@ private or public again (§2) has its days written again.
 | `GET api/v1/me/identities` | read | D51: `{linked: [{id, channel, client, externalId, linkedAt}], pending: [{id, channel, client, externalId, displayName, claimedAt}]}` — the identities that speak as "I" and the claims (7 days) waiting for confirmation |
 | `POST api/v1/me/identities/pending/{id}/confirm`, `DELETE api/v1/me/identities/pending/{id}` | ingest | Confirm (that identity is bound to the memory's self, verified — a binding to a contact is moved; earlier messages keep their attribution) or reject a claim → 204 (404 unknown / expired) |
 | `DELETE api/v1/me/identities/{id}` | ingest | Unlink a linked identity → 204: that sender is a participant like any other again (a new contact) |
+
+## 4b. Initiatives — what the agent says or does on its own (D53, WORK_PLAN 8.12c) — first cut built 2026-11-01
+
+The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,
+for a person, from when and until when. Its sources: a plan past its date with no outcome told becomes an `ask` two days
+after its end ("did it happen?", kept a week; none once they told how it went); a plan coming up a `say` the day before
+(a reminder, until the end of the plan's day); a **promise I made or a request made to me** with a date ("ricordami
+giovedì di ordinare la farina", "te lo ricordo venerdì" — the extraction's INTENTS, `extract.v21`) a `say` that day, for
+the person it concerns — withdrawn ("lascia stare") or done in the conversation, it closes; when a request and a plan are
+the same thing, the request speaks; a question the agent holds (a thought of kind `question`, 8.12a, not about a plan's
+outcome nor my own doings) a `lookup` for the host agent, which finds it out with its own tools — the web, the room — and brings the answer back as a learned source
+or a perception (D53: external sources always through the agent). Each source arms one intent, once; it fires when
+due, after the memory's **quiet hours** (`quietFrom` / `quietTo`, local, default 22–8) and within the **daily limit** per
+person (`INITIATIVE_DAILY_LIMIT`, 3). **When to deliver is the host's call**: the best moment is when someone who can
+answer is there — the person it is for (`for`), or anyone when it is for the holder of an entity memory; the host knows
+presence (a chat open now, a voice in the room, someone at the panel). Nobody comes before `expiresAt`: it lapses,
+quietly.
+
+Two legs carry the same object:
+- **Webhooks** (admin, per client: `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?: {scheme,
+  credentials?}, description?}` → the endpoint with its `whsec_` **secret, shown once**; `GET …/webhooks`, `DELETE
+  api/v1/admin/webhooks/{id}`), delivered as **Standard Webhooks** (https://www.standardwebhooks.com/): headers
+  `webhook-id`, `webhook-timestamp` (Unix seconds), `webhook-signature` (`v1,` + base64 HMAC-SHA256 of
+  `id.timestamp.body` with the secret's bytes), a 5-minute tolerance, retries with a growing delay for a day and a half,
+  `410 Gone` disables the endpoint; `token` is sent back as `X-Recordare-Token`, `authentication` as the
+  `Authorization` header (A2A's names). Only `https` to a public address, unless the deployer sets
+  `WEBHOOK_ALLOW_PRIVATE` (a client co-hosted with Recordare). The body is the envelope `{type, timestamp, data}` with
+  `type` `initiative.created | initiative.updated | initiative.expired` and `data` the initiative plus `user` (the
+  client's own id for the memory's person) and `memoryId`. The library verifies with `verifyWebhook(body, headers, secret)`.
+- **The feed** `GET api/v1/initiatives?since&limit&status` (scope `read`, the user header): `{items, next, more}` in
+  `seq` order — for a client behind NAT, or to catch up after lost deliveries.
+
+In balanced and full the model words each due initiative as the agent would say it and gives it a `worth` (0–1;
+`initiative.v2`, LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's reminder or
+ask is dropped, never a request or a promise (owed); in economy the text is the service's own sentence.
+
+The initiative: `{id, seq, kind: say | ask | lookup | do, for: {personId, name} | null, text (in the memory's language,
+ready to be said), reason, worth (null in economy), episodeIds, dueAt, expiresAt, status, outcomeAt, reply, createdAt}`. The client reports what
+became of it — `POST api/v1/initiatives/{id}/outcome {status: said | asked | ignored | declined | done | failed |
+expired, at?, reply?}` (scope `write`) — and the agent's intent follows: said / asked / done close it; declined cancels it;
+ignored offers it once more a week later, then no more (no nagging); failed tries again the next day. The outcome is
+pushed back as `initiative.updated`; a look-up reported `done` retires the question it came from. Telemetry:
+`initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Measured on `dataset_dev_initiatives` (RESULTS.md): 19–20
+of 22 in three runs, about 95 % precision, every one on its day and for its person.
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 
