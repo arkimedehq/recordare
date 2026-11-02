@@ -18,20 +18,16 @@
  * - support rises with the episodes that back it and falls with those against it; at zero the thought is retired
  *   (superseded, never deleted); one whose note was deleted is `forgotten`.
  * Thoughts are never drawn from thoughts (the depth stays one).
- * The self-model (8.12b) and the procedures (8.12d): a second call, the lessons about myself — `self` (what the agent
- * learned about itself) and `procedure` (how it does a recurring task) — resting on MY REPLIES (its own messages with the
- * person's next message), public ones only, as message evidence; it runs when a new reply got a reaction, with its own
- * watermark (`memories.self_upto`). One call for both cost the world thoughts two points (RESULTS.md, 8.12d).
+ * The self-model (8.12b): a thought of kind `self` — what the agent learned about itself as an agent — rests on MY REPLIES
+ * (its own messages with the person's next message), public ones only, as message evidence; the same rules.
  */
-type Focus = 'world' | 'me';
-const KINDS: Record<Focus, readonly string[]> = { world: ['insight', 'question', 'opinion'], me: ['self', 'procedure'] };
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource, type EntityManager } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { type SubjectKind } from '../identity/identity.entities';
-import { ENTITY_SELF_SYSTEM, ENTITY_THOUGHTS_SUFFIX, ENTITY_THOUGHTS_SYSTEM, SELF_SYSTEM, SELF_VERSION, THOUGHTS_SYSTEM, THOUGHTS_VERSION, type ThoughtsOutput, thoughtsSchema } from './thoughts.prompt';
+import { ENTITY_THOUGHTS_SUFFIX, ENTITY_THOUGHTS_SYSTEM, THOUGHTS_SYSTEM, THOUGHTS_VERSION, type ThoughtsOutput, thoughtsSchema } from './thoughts.prompt';
 import { localDate } from './time';
 import { subjectLabel } from './subjects';
 import { vectorParam } from '../db/pgvector';
@@ -84,17 +80,8 @@ export class ThoughtsService {
     private readonly telemetry: TelemetryService,
   ) {}
 
-  /** Both calls: thoughts about the world, then lessons about myself; each runs only when it has something new. */
   async think(memoryId: string, now: Date, runId: string): Promise<ThoughtsReport> {
-    await this.sync(memoryId);
-    const a = await this.pass(memoryId, now, runId, 'world');
-    const b = await this.pass(memoryId, now, runId, 'me');
-    return { calls: a.calls + b.calls, written: a.written + b.written, retired: a.retired + b.retired, failed: a.failed + b.failed };
-  }
-
-  private async pass(memoryId: string, now: Date, runId: string, focus: Focus): Promise<ThoughtsReport> {
     const report: ThoughtsReport = { calls: 0, written: 0, retired: 0, failed: 0 };
-    const mark = focus === 'world' ? 'thoughts_upto' : 'self_upto';
     const [memory]: Array<{ timezone: string; locale: string; mode: string; gender: string | null; display_name: string; aliases: string[] }> = await this.db.query(
       `SELECT o.timezone, o.locale, o.mode, o.gender, p.display_name,
          ARRAY(SELECT alias FROM person_aliases a WHERE a.person_id = o.person_id ORDER BY created_at) AS aliases
@@ -102,6 +89,7 @@ export class ThoughtsService {
     if (!memory) return report;
     const tz = memory.timezone;
     const entity = memory.mode === 'entity';
+    await this.sync(memoryId);
 
     // Dated or not (a told opinion has no date): the lived and told episodes of the last weeks, public only (D52); an open
     // plan still ahead comes along once its telling was said (what is awaited or prepared is food for thought).
@@ -109,7 +97,7 @@ export class ThoughtsService {
       `SELECT e.id, e.content, e.occurred_at, e.recorded_at, e.subject_kind, e.subject_person_id, e.importance,
          (SELECT display_name FROM persons WHERE id = e.subject_person_id) AS subject,
          (SELECT array_agg(COALESCE(full_name, display_name) ORDER BY created_at) FROM persons WHERE id = ANY(e.subject_candidates)) AS candidates,
-         e.recorded_at > COALESCE((SELECT ${mark} FROM memories WHERE person_id = $1), '-infinity'::timestamptz) AS fresh
+         e.recorded_at > COALESCE((SELECT thoughts_upto FROM memories WHERE person_id = $1), '-infinity'::timestamptz) AS fresh
        FROM episodes e
        WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
          AND (COALESCE(e.occurred_at, e.recorded_at) <= $2 OR (e.kind = 'plan' AND e.plan_status = 'open'
@@ -119,11 +107,11 @@ export class ThoughtsService {
          AND ${episodeVisible('e', PUBLIC_ONLY)}
        ORDER BY COALESCE(e.occurred_at, e.recorded_at) DESC, e.id DESC LIMIT $4`, [memoryId, now, LOOKBACK_DAYS, MAX_EPISODES]) as EpisodeRow[]).reverse();
     // Not enough new since the last pass: no call (the watermark stays, so the importance keeps adding up).
-    if (focus === 'world' && episodes.filter((e) => e.fresh).reduce((a, e) => a + e.importance, 0) < THOUGHT_IMPORTANCE) return report;
+    if (episodes.filter((e) => e.fresh).reduce((a, e) => a + e.importance, 0) < THOUGHT_IMPORTANCE) return report;
 
     // My replies and what came next, public only (D52): what I learned about myself rests on them (8.12b).
     const replies: ReplyRow[] = (await this.db.query(
-      `SELECT a.id, a.content, a.sent_at, a.received_at > COALESCE((SELECT ${mark} FROM memories WHERE person_id = $1), '-infinity'::timestamptz) AS fresh,
+      `SELECT a.id, a.content, a.sent_at, a.received_at > COALESCE((SELECT thoughts_upto FROM memories WHERE person_id = $1), '-infinity'::timestamptz) AS fresh,
          r.id AS reaction_id, r.content AS reaction, (SELECT display_name FROM persons WHERE id = r.author_person_id) AS who
        FROM messages a LEFT JOIN LATERAL (
          SELECT m.id, m.content, m.author_person_id FROM messages m
@@ -132,16 +120,13 @@ export class ThoughtsService {
        WHERE a.memory_id = $1 AND a.role = 'assistant' AND a.sent_at <= $2 AND a.sent_at > $2::timestamptz - make_interval(days => $3)
          AND ${messageVisible('a', PUBLIC_ONLY)}
        ORDER BY a.sent_at DESC LIMIT $4`, [memoryId, now, LOOKBACK_DAYS, MAX_REPLIES]) as ReplyRow[]).reverse();
-    // Lessons about myself need a new reply of mine that got a reaction; the world thoughts do not look at my replies.
-    if (focus === 'me' && !replies.some((r) => r.fresh && r.reaction)) return report;
-    if (focus === 'world') replies.length = 0;
 
     const active: ActiveRow[] = await this.db.query(
       `SELECT p.id, p.note_id, n.category::text, n.content, p.subject_person_id, n.support_count AS support,
          ARRAY(SELECT x.episode_id FROM note_evidence x WHERE x.note_id = p.note_id AND x.episode_id IS NOT NULL AND NOT x.against) AS episode_ids,
          ARRAY(SELECT x.message_id FROM note_evidence x WHERE x.note_id = p.note_id AND x.message_id IS NOT NULL AND NOT x.against) AS message_ids
        FROM episode_promotions p JOIN notes n ON n.id = p.note_id
-       WHERE p.memory_id = $1 AND p.kind = 'thought' AND p.status = 'active' AND n.category::text = ANY($2) ORDER BY p.created_at`, [memoryId, KINDS[focus]]);
+       WHERE p.memory_id = $1 AND p.kind = 'thought' AND p.status = 'active' ORDER BY p.created_at`, [memoryId]);
     const known: Array<{ content: string; about: string | null }> = await this.db.query(
       `SELECT n.content, (SELECT display_name FROM persons WHERE id = n.subject_person_id) AS about FROM notes n
        WHERE n.memory_id = $1 AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
@@ -162,7 +147,7 @@ export class ThoughtsService {
       `MEMORY LANGUAGE: ${memory.locale}`,
       `TODAY: ${localDate(now, tz)}`,
       `EPISODES:\n${episodes.map((e, i) => `E${i + 1}${e.fresh ? '*' : ''}. [${localDate(e.occurred_at ?? e.recorded_at, tz)}] ${subjectLabel(e.subject_kind, e.subject, e.candidates)}${e.content}`).join('\n')}`,
-      ...(focus === 'me' ? [`MY REPLIES:\n${replies.map((r, i) => `R${i + 1}${r.fresh ? '*' : ''}. [${localDate(r.sent_at, tz)}] ME: ${cut(r.content)}${r.reaction ? ` → ${r.who ?? 'they'}: ${cut(r.reaction)}` : ''}`).join('\n') || '(none)'}`] : []),
+      `MY REPLIES:\n${replies.map((r, i) => `R${i + 1}${r.fresh ? '*' : ''}. [${localDate(r.sent_at, tz)}] ME: ${cut(r.content)}${r.reaction ? ` → ${r.who ?? 'they'}: ${cut(r.reaction)}` : ''}`).join('\n') || '(none)'}`,
       `THOUGHTS:\n${active.map((a, i) => {
         const cited = [...a.episode_ids, ...a.message_ids].map((id) => number.get(id)).filter(Boolean);
         const who = a.subject_person_id ? `[${nameOf.get(a.subject_person_id) ?? '?'}] ` : '';
@@ -176,11 +161,8 @@ export class ThoughtsService {
     let out: ThoughtsOutput;
     try {
       report.calls++;
-      const version = focus === 'world' ? THOUGHTS_VERSION : SELF_VERSION;
-      const system = focus === 'world' ? (entity ? ENTITY_THOUGHTS_SYSTEM : THOUGHTS_SYSTEM) : (entity ? ENTITY_SELF_SYSTEM : SELF_SYSTEM);
-      out = await this.llm.completeJson({ promptId: entity ? `${version}${ENTITY_THOUGHTS_SUFFIX}` : version,
-        system, user, schema: thoughtsSchema, maxTokens: 2000, task: 'thoughts' }, { memoryId, runId });
-      out.thoughts = out.thoughts.filter((t) => KINDS[focus].includes(t.kind)); // a kind of the other call is not this one's
+      out = await this.llm.completeJson({ promptId: entity ? `${THOUGHTS_VERSION}${ENTITY_THOUGHTS_SUFFIX}` : THOUGHTS_VERSION,
+        system: entity ? ENTITY_THOUGHTS_SYSTEM : THOUGHTS_SYSTEM, user, schema: thoughtsSchema, maxTokens: 2000, task: 'thoughts' }, { memoryId, runId });
     } catch (err) {
       // A failed pass changes nothing and is retried next night (the watermark does not move).
       report.failed++;
@@ -260,13 +242,8 @@ export class ThoughtsService {
         if (t.verdict === 'new') added[group] = (added[group] ?? 0) + 1;
         report.written++;
       }
-      if (focus === 'world') {
-        await tx.query(`UPDATE memories SET thoughts_upto = (SELECT max(recorded_at) FROM episodes WHERE id = ANY($2)) WHERE person_id = $1`,
-          [memoryId, episodes.map((e) => e.id)]);
-      } else {
-        await tx.query(`UPDATE memories SET self_upto = (SELECT max(received_at) FROM messages WHERE id = ANY($2)) WHERE person_id = $1`,
-          [memoryId, replies.map((r) => r.id)]);
-      }
+      await tx.query(`UPDATE memories SET thoughts_upto = (SELECT max(recorded_at) FROM episodes WHERE id = ANY($2)) WHERE person_id = $1`,
+        [memoryId, episodes.map((e) => e.id)]);
     });
     return report;
   }

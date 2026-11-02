@@ -112,13 +112,12 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     await say('u2', 'user', 'Basta l\'orario, grazie.', '2026-10-03T09:01:00Z');
     await episode('Dal dentista', '2026-10-03', { importance: 10 });
     await episode('Spesa al mercato', '2026-10-04', { importance: 10 });
-    llm.queue.push({ thoughts: [] }); // the call about the world first: nothing
     llm.queue.push({ thoughts: [
       { verdict: 'new', kind: 'self', subject: 'me', content: 'Con Marco funzionano le risposte brevi: due volte mi ha chiesto solo l\'orario', evidence: ['R1', 'R2'], confidence: 'medium' },
       { verdict: 'new', kind: 'self', subject: 'me', content: 'Sono bravo a ricordare gli appuntamenti', evidence: [9] }, // no reply behind it
     ] });
-    expect(await pass()).toMatchObject({ calls: 2, written: 1 }); // the world call, then the lessons about myself
-    expect(asked()).toContain('R1*. [2026-10-01] ME: Ecco un lungo riepilogo'); // the last call: the lessons
+    expect(await pass()).toMatchObject({ calls: 1, written: 1 });
+    expect(asked()).toContain('R1*. [2026-10-01] ME: Ecco un lungo riepilogo');
     expect(asked()).toContain('→ Marco: Troppo lungo, dimmi solo l\'orario.');
     const [self] = await db.query(`SELECT n.id, n.category::text, n.subject_kind::text, n.support_count, n.confidence,
         (SELECT count(*)::int FROM note_evidence x WHERE x.note_id = n.id AND x.message_id IS NOT NULL) AS messages
@@ -138,13 +137,12 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     await say('p2', 'user', 'No, al mulino si ordina per telefono entro mezzogiorno, col codice 4471.', '2026-10-06T09:01:00Z');
     await episode('Ordine della farina rifatto per telefono', '2026-10-06', { importance: 10 });
     await episode('Consegna in negozio', '2026-10-07', { importance: 10 });
-    llm.queue.push({ thoughts: [] }); // the call about the world first: nothing
     llm.queue.push({ thoughts: [
       { verdict: 'new', kind: 'procedure', subject: 'me', content: 'Quando ordino la farina al mulino, telefono entro mezzogiorno e do il codice 4471', evidence: ['R3'], confidence: 'high' },
       { verdict: 'new', kind: 'procedure', subject: 'me', content: 'Quando consegno, uso il furgone', evidence: [11] }, // no reply behind it
     ] });
     const r = await pass();
-    expect(r).toMatchObject({ calls: 2, written: 1 }); // the world call, then the lessons about myself
+    expect(r).toMatchObject({ calls: 1, written: 1 });
     const [p] = await db.query(`SELECT n.category::text, n.subject_kind::text,
         (SELECT count(*)::int FROM note_evidence x WHERE x.note_id = n.id AND x.message_id IS NOT NULL) AS messages
       FROM notes n WHERE n.memory_id = $1 AND n.category = 'procedure'`, [memoryId]);

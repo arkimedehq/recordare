@@ -4,20 +4,20 @@
     "extractionInputPerMessage": 280,
     "nightlyCalls": 4,
     "nightlyInput": 11529,
-    "monthlyInput": 1184400
+    "monthlyInput": 1184432
   },
   "balanced": {
     "extractionCalls": 6,
     "extractionInputPerMessage": 284,
-    "nightlyCalls": 7,
-    "nightlyInput": 33332,
-    "monthlyInput": 1849239
+    "nightlyCalls": 6,
+    "nightlyInput": 27577,
+    "monthlyInput": 1676714
   },
   "full": {
     "extractionCalls": 8,
     "extractionInputPerMessage": 360,
-    "nightlyCalls": 7,
-    "nightlyInput": 32170,
-    "monthlyInput": 2043689
+    "nightlyCalls": 6,
+    "nightlyInput": 26346,
+    "monthlyInput": 1869021
   }
 }
