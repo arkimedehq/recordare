@@ -158,6 +158,9 @@ function speaker(m: WindowMessage, contactRef: Map<string, string>): string {
   if (m.authorKind === 'self') return 'me';
   const ref = m.authorPersonId ? contactRef.get(m.authorPersonId) : undefined;
   if (m.authorKind === 'contact' && m.authorName) return `${m.authorName}${ref ? ` [${ref}]` : ''}`;
+  // Whoever talks through a shared agent's account is nobody yet: the account's own name (the platform sends it as the
+  // holder participant's) is the agent's, not the speaker's — "Arkim3de mi ha detto" was the agent quoting itself.
+  if (m.accountSpeaker && m.authorKind === 'someone') return 'someone';
   return m.authorName ? `other:${m.authorName}` : 'someone';
 }
 

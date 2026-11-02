@@ -89,7 +89,7 @@ export class InitiativeService {
   /** Every memory with something that could be due: arm, fire, expire. Hourly (the initiative processor) and on demand. */
   async sweepAll(now: Date): Promise<void> {
     const memories: Array<{ person_id: string }> = await this.db.query(
-      `SELECT o.person_id FROM memories o WHERE EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = o.person_id AND e.kind = 'plan')
+      `SELECT o.person_id FROM memories o WHERE EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = o.person_id AND e.kind IN ('plan', 'event'))
          OR EXISTS (SELECT 1 FROM notes n WHERE n.memory_id = o.person_id AND n.category = 'question')
          OR EXISTS (SELECT 1 FROM intents t WHERE t.memory_id = o.person_id AND t.status IN ('armed', 'fired'))`);
     for (const { person_id } of memories) {
@@ -109,15 +109,18 @@ export class InitiativeService {
     let armed = 0;
     const [m]: Array<{ timezone: string }> = await this.db.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
     const memoryTz = m?.timezone ?? 'UTC';
-    const plans: Array<{ id: string; content: string; occurred_at: Date; ends_at: Date; date_precision: Precision; subject_person_id: string | null; past: boolean }> = await this.db.query(
-      `SELECT e.id, e.content, e.occurred_at, COALESCE(e.occurred_until, e.occurred_at) AS ends_at, e.date_precision::text,
+    // Plans, and events told ahead of their day ("tomorrow Chloé has her geometry test": an appointment, recorded as an event).
+    const plans: Array<{ id: string; kind: string; content: string; occurred_at: Date; ends_at: Date; date_precision: Precision; subject_person_id: string | null; past: boolean }> = await this.db.query(
+      `SELECT e.id, e.kind::text, e.content, e.occurred_at, COALESCE(e.occurred_until, e.occurred_at) AS ends_at, e.date_precision::text,
          CASE WHEN e.subject_kind = 'contact' THEN e.subject_person_id END AS subject_person_id,
          e.occurred_at < $2 AS past
        FROM episodes e
-       WHERE e.memory_id = $1 AND e.kind = 'plan' AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
+       WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
+         AND (e.kind = 'plan' OR (e.kind = 'event' AND EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id
+           WHERE pv.episode_id = e.id AND pm.sent_at < e.occurred_at)))
          AND e.occurred_at IS NOT NULL AND e.author_role <> 'tool' AND e.origin <> 'assistant_stated'
-         AND ((e.plan_status IN ('open', 'confirmed') AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $5) AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
-           OR (e.plan_status IN ('open', 'confirmed') AND e.occurred_at > $2 AND e.occurred_at < $2::timestamptz + make_interval(hours => $4)))
+         AND (((e.kind = 'event' OR e.plan_status IN ('open', 'confirmed')) AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $5) AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
+           OR ((e.kind = 'event' OR e.plan_status IN ('open', 'confirmed')) AND e.occurred_at > $2 AND e.occurred_at < $2::timestamptz + make_interval(hours => $4)))
          AND ${episodeVisible('e', PUBLIC_ONLY)}
          -- a plan nobody told ahead of its day is a decision, not an appointment: nothing to ask "how did it go" about
          AND NOT (e.occurred_at < $2 AND EXISTS (SELECT 1 FROM episode_evidence pv WHERE pv.episode_id = e.id)
@@ -128,7 +131,14 @@ export class InitiativeService {
     // A request or a promise about the same thing, for the same person, around the same days: that one speaks, not the plan.
     const owed: Array<{ content: string; for_person_id: string | null; due_at: Date }> = plans.length ? await this.db.query(
       `SELECT content, for_person_id, due_at FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request')`, [memoryId]) : []; // any state: said, lapsed or withdrawn, it was the one
+    // An appointment told as an event has no outcome patch: a later episode of the same person on the same thing is its outcome.
+    const after: Array<{ id: string; subject_person_id: string | null; content: string; occurred_at: Date }> = plans.some((p) => p.kind === 'event' && p.past)
+      ? await this.db.query(`SELECT id, CASE WHEN subject_kind = 'contact' THEN subject_person_id END AS subject_person_id, content, occurred_at
+          FROM episodes WHERE memory_id = $1 AND kind = 'event' AND deleted_at IS NULL AND occurred_at > $2::timestamptz - make_interval(days => $3)
+            AND occurred_at <= $2`, [memoryId, now, ASK_BACK_DAYS]) : [];
     for (const p of plans) {
+      if (p.kind === 'event' && p.past && after.some((a) => a.id !== p.id && a.subject_person_id === p.subject_person_id
+        && a.occurred_at >= p.occurred_at && overlap(a.content, p.content))) continue;
       if (owed.some((o) => o.for_person_id === p.subject_person_id && Math.abs(o.due_at.getTime() - p.occurred_at.getTime()) < 3 * DAY_MS && overlap(o.content, p.content))) continue;
       const kind = p.past ? 'open_plan' : 'upcoming_plan';
       const due = p.past ? new Date(p.ends_at.getTime() + ASK_AFTER_DAYS * DAY_MS) : new Date(Math.max(now.getTime(), p.occurred_at.getTime() - DAY_MS));
