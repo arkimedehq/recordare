@@ -663,11 +663,17 @@ persons, episode_id null → episodes (CASCADE), note_id null → notes (CASCADE
 (pending|armed|fired|done|cancelled|expired), attempts, reconsider_at, created_at, updated_at)` — le cose che l'agente
 deve fare, una per fonte (unique su `(episode_id, kind)` e `(note_id, kind)`): un piano aperto oltre la sua data
 (`open_plan`, dovuto il giorno dopo, tenuto una settimana), un piano in arrivo (`upcoming_plan`, dovuto il giorno prima,
-fino all'ora del piano), una domanda che l'agente tiene (`lookup`, due settimane); `promise`, `request` e `own` sono
-riservati alla parte del modello. Una fonte che è andata avanti (il piano confermato o annullato, la domanda ritirata)
-chiude il suo intento (`done`). I piani privati non vengono armati (D52: un'iniziativa si rivolge a una persona).
+fino all'ora del piano), una domanda che l'agente tiene (`lookup`, due settimane), una promessa mia o una richiesta
+fattami con una data (`promise`, `request`: scritte dall'estrazione, `message_id` → messages (CASCADE) il messaggio,
+unique per messaggio e tipo, dovute alla mezzanotte locale del loro giorno, un giorno di vita; migrazione
+`IntentMessages1791230000000`); `own` è riservato. Una fonte che è andata avanti (il piano confermato o annullato, la
+domanda ritirata) chiude il suo intento (`done`); l'estrazione chiude una richiesta ritirata (`cancelled`) o una promessa
+mantenuta in conversazione (`done`), trovate dalle parole che condividono (`lang/overlap.ts`). Di un piano oltre la sua
+data si chiede due giorni dopo la sua fine, a meno che una conferma raccontata all'inizio del piano o dopo dica com'è
+andata; un piano con una richiesta o una promessa sulla stessa cosa (stessa persona, entro tre giorni, le stesse parole)
+non arma nulla. I piani privati non vengono armati (D52: un'iniziativa si rivolge a una persona).
 `initiatives(id, seq bigserial, memory_id, intent_id null → intents, kind enum (say|ask|lookup|do), for_person_id null,
-text, reason, episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
+text, reason, worth real null (del modello, balanced e full; migrazione `InitiativeWorth1791240000000`), episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
 expired), outcome_at, reply, created_at, updated_at)` — ciò che l'agente ha deciso di dire o fare: scritta quando un
 intento armato è dovuto (dopo le ore di quiete, entro `INITIATIVE_DAILY_LIMIT` per persona nel giorno dovuto), `text`
 nella lingua della memoria (`lang/initiative.ts`), letta come feed per `seq` e spinta ai webhook; il rapporto d'esito del

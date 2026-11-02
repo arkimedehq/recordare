@@ -33,8 +33,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   segreto `whsec_` mostrato una sola volta, intestazioni firmate, nuovi tentativi, `410` disabilita, https pubblico a
   meno di `WEBHOOK_ALLOW_PRIVATE`) e leggibili come feed (`GET api/v1/initiatives`); il client riporta che fine ha fatto
   ciascuna (`POST api/v1/initiatives/{id}/outcome`) e l'intento dell'agente ne segue l'esito. Libreria `initiatives`,
-  `reportInitiative`, `verifyWebhook`. L'ospite consegna quando la persona è presente e svolge le ricerche. Migrazione
-  `Initiatives`. Ancora nessun modello: la formulazione è del servizio, nella lingua della memoria.
+  `reportInitiative`, `verifyWebhook`. L'ospite consegna quando la persona è presente e svolge le ricerche. Migrazioni
+  `Initiatives`, `IntentMessages`, `InitiativeWorth`. L'estrazione (`extract.v21` / `entity.v9`, INTENTS) trasforma una
+  promessa dell'agente o una richiesta fattagli con una data in un intento (ritirata o fatta in conversazione, si chiude);
+  in balanced e full il modello formula ogni iniziativa e le dà un `worth` (`initiative.v2`, knob `initiativeWording`).
+  Una domanda attende due giorni dopo il piano e non si fa se hanno raccontato com'è andata. Misurato: 19–20 su 22, ≈ 95 %
+  di precisione.
 - L'admin legge gli elementi di una memoria (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`),
   `…/facts`, `…/notes` — le liste del diario lette come l'intera memoria, gli elementi privati segnati con di chi sono — e
   ne dimentica uno (`DELETE …/episodes|facts|notes/{id}`). Solo chiave admin; Recordare Atlas li elenca e li dimentica con

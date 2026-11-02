@@ -620,10 +620,13 @@ private or public again (§2) has its days written again.
 ## 4b. Initiatives — what the agent says or does on its own (D53, WORK_PLAN 8.12c) — first cut built 2026-11-01
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,
-for a person, from when and until when. Built so far without a model (the economy level, every profile): an open plan
-past its date becomes an `ask` the day after ("did it happen?", kept a week); a plan coming up a `say` the day before
-(a reminder, until the plan's time); a question the agent holds (a thought of kind `question`, 8.12a) a `lookup` for the
-host agent, which finds it out with its own tools — the web, the room — and brings the answer back as a learned source
+for a person, from when and until when. Its sources: a plan past its date with no outcome told becomes an `ask` two days
+after its end ("did it happen?", kept a week; none once they told how it went); a plan coming up a `say` the day before
+(a reminder, until the end of the plan's day); a **promise I made or a request made to me** with a date ("ricordami
+giovedì di ordinare la farina", "te lo ricordo venerdì" — the extraction's INTENTS, `extract.v21`) a `say` that day, for
+the person it concerns — withdrawn ("lascia stare") or done in the conversation, it closes; when a request and a plan are
+the same thing, the request speaks; a question the agent holds (a thought of kind `question`, 8.12a, not about a plan's
+outcome nor my own doings) a `lookup` for the host agent, which finds it out with its own tools — the web, the room — and brings the answer back as a learned source
 or a perception (D53: external sources always through the agent). Each source arms one intent, once; it fires when
 due, after the memory's **quiet hours** (`quietFrom` / `quietTo`, local, default 22–8) and within the **daily limit** per
 person (`INITIATIVE_DAILY_LIMIT`, 3). **When to deliver is the host's call**: the best moment is when someone who can
@@ -645,14 +648,18 @@ Two legs carry the same object:
 - **The feed** `GET api/v1/initiatives?since&limit&status` (scope `read`, the user header): `{items, next, more}` in
   `seq` order — for a client behind NAT, or to catch up after lost deliveries.
 
+In balanced and full the model words each due initiative as the agent would say it and gives it a `worth` (0–1;
+`initiative.v2`, LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's reminder or
+ask is dropped, never a request or a promise (owed); in economy the text is the service's own sentence.
+
 The initiative: `{id, seq, kind: say | ask | lookup | do, for: {personId, name} | null, text (in the memory's language,
-ready to be said), reason, episodeIds, dueAt, expiresAt, status, outcomeAt, reply, createdAt}`. The client reports what
+ready to be said), reason, worth (null in economy), episodeIds, dueAt, expiresAt, status, outcomeAt, reply, createdAt}`. The client reports what
 became of it — `POST api/v1/initiatives/{id}/outcome {status: said | asked | ignored | declined | done | failed |
 expired, at?, reply?}` (scope `write`) — and the agent's intent follows: said / asked / done close it; declined cancels it;
 ignored offers it once more a week later, then no more (no nagging); failed tries again the next day. The outcome is
-pushed back as `initiative.updated`. Telemetry: `initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). To
-come (8.12c, with a model and a dev set): promises and requests taken on in conversation as intents, the wording and
-the value × confidence of an initiative by the model in balanced and full, look-up answers closing the question.
+pushed back as `initiative.updated`; a look-up reported `done` retires the question it came from. Telemetry:
+`initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Measured on `dataset_dev_initiatives` (RESULTS.md): 19–20
+of 22 in three runs, about 95 % precision, every one on its day and for its person.
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 

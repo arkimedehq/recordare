@@ -31,8 +31,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `POST api/v1/admin/clients/{id}/webhooks`, a `whsec_` secret shown once, signed headers, retries, `410` disables,
   public https unless `WEBHOOK_ALLOW_PRIVATE`) and readable as a feed (`GET api/v1/initiatives`); the client reports what
   became of each (`POST api/v1/initiatives/{id}/outcome`) and the agent's intent follows. Library `initiatives`,
-  `reportInitiative`, `verifyWebhook`. The host delivers when the person is present and runs the look-ups. Migration
-  `Initiatives`. No model yet: the wording is the service's own, in the memory's language.
+  `reportInitiative`, `verifyWebhook`. The host delivers when the person is present and runs the look-ups. Migrations
+  `Initiatives`, `IntentMessages`, `InitiativeWorth`. The extraction (`extract.v21` / `entity.v9`, INTENTS) turns a promise
+  of the agent or a request made to it with a date into an intent (withdrawn or done in the conversation, it closes); in
+  balanced and full the model words each initiative and gives it a `worth` (`initiative.v2`, knob `initiativeWording`). An
+  ask waits two days after the plan and is not made once they told how it went. Measured: 19–20 of 22, ≈ 95 % precision.
 - The admin reads a memory's items (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`), `…/facts`,
   `…/notes` — the diary's lists read as the whole memory, private items marked whose they are — and forgets one
   (`DELETE …/episodes|facts|notes/{id}`). Admin key only; Recordare Atlas lists and forgets with them.

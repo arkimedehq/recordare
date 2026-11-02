@@ -638,11 +638,16 @@ persons, episode_id null → episodes (CASCADE), note_id null → notes (CASCADE
 (pending|armed|fired|done|cancelled|expired), attempts, reconsider_at, created_at, updated_at)` — the agent's own things
 to do, one per source (unique on `(episode_id, kind)` and `(note_id, kind)`): an open plan past its date (`open_plan`,
 due the day after, kept a week), a plan coming up (`upcoming_plan`, due the day before, until the plan's time), a
-question the agent holds (`lookup`, two weeks); `promise`, `request` and `own` are reserved for the model's part. A
-source that moved on (the plan confirmed or cancelled, the question retired) closes its intent (`done`). Private plans
-are not armed (D52: an initiative addresses a person).
+question the agent holds (`lookup`, two weeks), a promise of mine or a request made to me with a date (`promise`,
+`request`: written by the extraction, `message_id` → messages (CASCADE) the message, unique per message and kind, due at
+the local midnight of its day, a day to live; migration `IntentMessages1791230000000`); `own` is reserved. A source that
+moved on (the plan confirmed or cancelled, the question retired) closes its intent (`done`); the extraction closes a
+request withdrawn (`cancelled`) or a promise kept in the conversation (`done`), found by the words it shares
+(`lang/overlap.ts`). A plan past its date is asked about two days after its end, unless a confirmation told at or after
+its start says how it went; a plan with a request or promise about the same thing (same person, within three days, the
+same words) arms nothing. Private plans are not armed (D52: an initiative addresses a person).
 `initiatives(id, seq bigserial, memory_id, intent_id null → intents, kind enum (say|ask|lookup|do), for_person_id null,
-text, reason, episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
+text, reason, worth real null (the model's, balanced and full; migration `InitiativeWorth1791240000000`), episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
 expired), outcome_at, reply, created_at, updated_at)` — what the agent decided to say or do: written when an armed intent
 is due (after the quiet hours, within `INITIATIVE_DAILY_LIMIT` per person on the due day), `text` in the memory's
 language (`lang/initiative.ts`), read as a feed by `seq` and pushed to the webhooks; the client's outcome report sets

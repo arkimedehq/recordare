@@ -23,10 +23,11 @@ API or console). A profile only groups knobs; models stay provider configuration
 | `recallDigests` | off | off | off | Nightly diary given to period overviews · blind5 3+3 runs: −1.9 pt, within noise; diary v2 (8.6, first person) dev sets 1 run: no gain |
 | `factsReview` | off | off | off | Nightly facts review against new episodes · no gain measured (5.6; v2 with subjects, 8.6: proposed no change on the dev sets) |
 | `patterns` | off | on | on | Nightly pattern pass: recurring patterns (≥ 3 episodes on different days) become the memory's own inferred notes, kept / updated / retired by it · one call per memory per night with new episodes · dev_patterns, `patterns.v2`, 3 runs: 20 / 21 habits, no false pattern (5.4) |
+| `initiativeWording` | off | on | on | Initiatives worded and weighed by the model (D53, 8.12c, `initiative.v2`): one call when intents are due; below worth 0.3 a plan's reminder or ask is dropped (never a request or a promise); off: the service's own sentence · dev_initiatives 19–20 / 22, ≈ 95 % precision (RESULTS.md) |
 | `thoughts` | off | on | on | Thought pass (D53, 8.12a): the agent's own insights, questions and opinions, each resting on the episodes it cites, supported / weakened / retired by later ones · one call per memory when the new episodes gathered an importance ≥ 20, none otherwise · dev_thoughts, `thoughts.v6`, 3 runs: 14 / 14, 14 / 14, 13 / 14 expected thoughts, no false thought; the self-model (8.12b, kind `self`, from the agent's own replies and the reactions to them) dev_self 11–12 / 15 self notes, no false one (RESULTS.md) |
 
 Installation overrides of single knobs (they win over every profile): `EXTRACTION_WINDOW_CHARS`, `FACTS_PASS`,
-`RECALL_DIGESTS`, `FACTS_REVIEW`, `PATTERNS`, `THOUGHTS`.
+`RECALL_DIGESTS`, `FACTS_REVIEW`, `PATTERNS`, `THOUGHTS`, `INITIATIVE_WORDING`.
 
 ## 2. Service (`service/.env`, or `deploy/.env` for the installed service)
 
@@ -58,7 +59,7 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `LLM_PROVIDER` | `openai-compatible` (default), `anthropic`, `claude-cli` (local evaluations only) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Default endpoint and model of every task |
 | `LLM_PROFILE` / `LLM_PROFILE_JSON` | Provider profile — how to switch reasoning off, structured output: `generic`, `deepseek`, `openrouter`, `ollama`, `vllm`, `anthropic`, `openai`, or a JSON definition |
-| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Per-task override; tasks: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS` |
+| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Per-task override; tasks: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS`, `INITIATIVE` |
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Embedding endpoint (measured with `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fixed per installation (1024 for bge-m3); changing the model needs a re-embed |
 

@@ -865,9 +865,12 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   calendario dei tentativi, il feed `GET api/v1/initiatives`, il rapporto d'esito e il ciclo di vita dell'intento
   (declined → cancelled, ignored → una volta ancora dopo una settimana, failed → il giorno dopo), libreria
   `initiatives` / `reportInitiative` / `verifyWebhook`, le frasi nella lingua della memoria (`lang/initiative.ts`, ogni
-  locale). Prossimo, con un modello e un dev set (budget): promesse e richieste prese in carico in conversazione come
-  intenti (estrazione), formulazione e valore × confidenza di un'iniziativa in balanced e full, la risposta alla ricerca
-  che chiude la domanda.
+  locale). Poi (2026-11-02) la parte del modello: INTENTS nell'estrazione (`extract.v21` / `entity.v9`: una promessa mia o
+  una richiesta a me con una data; ritirata; fatta), la formulazione e il worth a cura del modello in balanced e full
+  (`initiative.v2`), una ricerca fatta che ritira la sua domanda. Deciso misurando (`dataset_dev_initiatives`, 19–20 / 22,
+  ≈ 95 % di precisione, RESULTS.md): la domanda attende due giorni dopo un piano (le persone raccontano da sé il giorno
+  dopo) e non si fa se hanno raccontato com'è andata; una richiesta e il piano che è anche essa lo dicono una volta (la
+  richiesta); nessuna ricerca per una domanda sull'esito di un piano o sulle mie azioni.
 
 ## Questioni aperte (da discutere)
 
