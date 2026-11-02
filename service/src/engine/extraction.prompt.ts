@@ -311,7 +311,7 @@ you tomorrow") or a person asks me to do something at a time ("ricordami lunedì
 "avvisami il 20 della scadenza", "remind me on Thursday to order the flour"), add one "intents" entry: "kind" \
 "promise" (mine) or "request" (theirs), "content" what is to be done, in MEMORY LANGUAGE, short, in the words I would \
 use to remind them of it ("chiamare il commercialista"), "due" the ISO date it is due (resolve "lunedì", "domani", \
-"il 12" against the message's date: the next such day), "for" the Name of the person it concerns when it is not me \
+"il 12" against the message's date: the next such day), with the time when one is said ("2026-11-03T09:00"), "for" the Name of the person it concerns when it is not me \
 (the one asking, or the one I promised to; in a personal memory, nothing for the holder), "evidence" the message's \
 number.
 - Without a time ("dovrei andare dal dentista", "ricordamelo"), or when I only suggested it and nobody agreed, it is \

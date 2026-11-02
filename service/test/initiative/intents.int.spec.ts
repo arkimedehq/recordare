@@ -67,6 +67,14 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     const [summary] = await db.query(`SELECT summary FROM extraction_runs ORDER BY started_at DESC LIMIT 1`);
     expect(summary.summary.returned.intents).toBe(3);
     expect(summary.summary.dropped).toEqual({ intent: { no_date: 1 } });
+    // Recordare does its own work whatever the host's tools did (the host deduplicates, D53): a request with a time keeps it.
+    await window([say('h1', 'marta', 'Domani alle 9 ricordami di innaffiare le piante.', '2026-10-05T11:00:00+02:00'),
+      say('h2', null, 'Fatto: promemoria impostato per domani alle 9.', '2026-10-05T11:00:30+02:00')],
+    { intents: [{ kind: 'request', content: 'innaffiare le piante', due: '2026-10-06T09:00', for: 'Marta', evidence: [1] }] });
+    const [handled] = await db.query(`SELECT status::text, due_at FROM intents WHERE content = 'innaffiare le piante'`);
+    expect(handled.status).toBe('armed');
+    expect(new Date(handled.due_at).toISOString()).toBe('2026-10-06T07:00:00.000Z'); // 09:00 in Rome: the time kept
+    await db.query(`DELETE FROM intents WHERE content = 'innaffiare le piante'`);
 
     await window([say('m4', 'marta', 'Lascia stare il commercialista, l\'ho già chiamato.', '2026-10-06T09:00:00+02:00')],
       { intents: [{ kind: 'request', cancel: true, content: 'chiamare il commercialista', for: 'Marta', evidence: [1] }] });
