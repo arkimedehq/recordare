@@ -12,11 +12,12 @@
  * thoughts; a thought may build on a habit the memory holds. v4: a question may rest on older episodes when what was
  * awaited is still unanswered; a thought that no longer holds is retired or revised, never contradicted by a new one.
  * v5 (8.12b): MY REPLIES and the kind "self" — what I learned about myself as an agent, from outcomes. v6: a measure the
- * person already took is theirs; trust shown counts as much as a mistake.
+ * person already took is theirs; trust shown counts as much as a mistake. v7 (8.12d): the kind "procedure" — how I do a
+ * recurring task, learned from an outcome.
  */
 import { z } from 'zod';
 
-export const THOUGHTS_VERSION = 'thoughts.v6';
+export const THOUGHTS_VERSION = 'thoughts.v7';
 /** Entity memories: the same version with the entity voice. */
 export const ENTITY_THOUGHTS_SUFFIX = '+entity';
 
@@ -43,6 +44,13 @@ they reacted), a promise I made and what became of it, how a person deals with m
 what I say — trust shown counts as much as a mistake). evidence: the R-numbers (and E-numbers) that show it, on at \
 least two different days — the same outcome twice; one correction alone is not a lesson. Not a self thought: a trait of the person, a judgement of myself nothing \
 shows, what someone said of me that my replies do not bear out, their habits, a thought about the world.
+- "procedure": HOW I DO a recurring task for this person or place, learned from an outcome — they taught or corrected \
+the way ("no, the order to the mill goes by phone before noon, with code 4471"), they explicitly approved the way I did \
+it ("perfect, always like this"), or a way failed and another then worked. Write it as "When <situation>, <how I do \
+it>", with the steps or details the episodes give. One clear teaching or correction is enough; an approval must be \
+explicit. evidence: the R-numbers (and E-numbers) of the outcome. Not a procedure: a taste or preference (that is a \
+self thought), my suggestion nobody confirmed, an instruction for one occasion only, their own habit, a bare fact (a \
+number, a price), a way that failed and was never fixed. When the way changes, revise the procedure I hold.
 
 Not a thought: a habit or routine (another pass finds those — but what a habit in KNOW implies for what to do next is an \
 insight); a fact or a plan; something one episode alone shows (an \
@@ -66,7 +74,7 @@ solved), or a question they answered (target; evidence: those episodes).
 language), concrete, with no more certainty than the episodes give. Every date, number or detail in it comes from an \
 episode it cites; no general rule from one case.
 - subject: "me" when it is about me or my place (always for "self"), else the Name the episodes carry in brackets for \
-the person it is about.
+the person it is about (for a "procedure", the person it is done for, or "me" for my place).
 - confidence: "low", "medium" or "high", from how clearly the episodes show it.
 - Think only about what is new: with no NEW episode that changes something, the answer is an empty list — the usual \
 answer.
@@ -86,7 +94,7 @@ export const thoughtsSchema = z.object({
   thoughts: z.array(z.object({
     verdict: z.enum(['new', 'support', 'revise', 'weaken', 'retire']),
     target: z.string().nullable().optional(),
-    kind: z.enum(['insight', 'question', 'opinion', 'self']).catch('insight'),
+    kind: z.enum(['insight', 'question', 'opinion', 'self', 'procedure']).catch('insight'),
     subject: z.string().max(200).nullable().optional(),
     content: z.string().nullable().optional(),
     evidence: z.array(z.union([z.number().int(), z.string()])).default([]),

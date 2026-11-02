@@ -33,6 +33,7 @@ import { SelfNotes1791210000000 } from './migrations/1791210000000-SelfNotes';
 import { Initiatives1791220000000 } from './migrations/1791220000000-Initiatives';
 import { IntentMessages1791230000000 } from './migrations/1791230000000-IntentMessages';
 import { InitiativeWorth1791240000000 } from './migrations/1791240000000-InitiativeWorth';
+import { Procedures1791250000000 } from './migrations/1791250000000-Procedures';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -46,7 +47,7 @@ export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, Messa
   MemoryIdentity1791070000000, ContactClarification1791080000000, Sources1791090000000, Memories1791100000000,
   FactNoteTombstones1791110000000, EpisodeResolvedAt1791120000000, Patterns1791130000000, Exports1791140000000,
   HolderLinks1791150000000, PendingProposals1791160000000, UnknownFactHistory1791170000000, UnembeddedMessages1791180000000, PrivateMessages1791190000000,
-  Thoughts1791200000000, SelfNotes1791210000000, Initiatives1791220000000, IntentMessages1791230000000, InitiativeWorth1791240000000];
+  Thoughts1791200000000, SelfNotes1791210000000, Initiatives1791220000000, IntentMessages1791230000000, InitiativeWorth1791240000000, Procedures1791250000000];
 
 /**
  * Every session scans HNSW indexes iteratively (pgvector ≥ 0.8, WORK_PLAN 4.14): a vector search filtered by memory

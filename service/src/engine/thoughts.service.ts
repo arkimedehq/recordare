@@ -220,8 +220,10 @@ export class ThoughtsService {
         if (!content) { this.drop('no_content'); continue; }
         if (t.verdict === 'new' && added >= MAX_NEW) { this.drop('too_many', t); continue; }
         if (!c.fresh && t.kind !== 'question') { this.drop('nothing_new', t); continue; }
-        if (t.kind !== 'question' && c.days < 2) { this.drop('one_day', t); continue; }
-        if (t.kind === 'self' && !c.rv.length) { this.drop('no_reply', t); continue; } // what I learned of myself rests on my replies
+        // A procedure may rest on one outcome (a clear correction teaches at once); insights, opinions, self notes need two days.
+        if (t.kind !== 'question' && t.kind !== 'procedure' && c.days < 2) { this.drop('one_day', t); continue; }
+        // What I learned of myself, and how I do a task, rest on my replies and how they went.
+        if ((t.kind === 'self' || t.kind === 'procedure') && !c.rv.length) { this.drop('no_reply', t); continue; }
         const subjectId = t.kind === 'self' ? null : await this.subject(tx, t, c.ev);
         const vector = vectorOf.get(content)!;
         if (t.verdict === 'revise' && !old) { this.drop('no_target', t); continue; }
