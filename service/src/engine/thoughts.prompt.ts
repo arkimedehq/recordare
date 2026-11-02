@@ -13,18 +13,34 @@
  * awaited is still unanswered; a thought that no longer holds is retired or revised, never contradicted by a new one.
  * v5 (8.12b): MY REPLIES and the kind "self" — what I learned about myself as an agent, from outcomes. v6: a measure the
  * person already took is theirs; trust shown counts as much as a mistake. v7 (8.12d): the kind "procedure" — how I do a
- * recurring task, learned from an outcome.
+ * recurring task, learned from an outcome. v8 / self.v1: two calls — thoughts about the world (insights, questions,
+ * opinions) and lessons about myself (self notes, procedures): in one call the second cost the first two points (dev_thoughts
+ * 11.8 / 14 against 13.7 with v6).
  */
 import { z } from 'zod';
 
-export const THOUGHTS_VERSION = 'thoughts.v7';
-/** Entity memories: the same version with the entity voice. */
+export const THOUGHTS_VERSION = 'thoughts.v8';
+/** The lessons about myself (self notes, procedures), the second call of the pass (8.12b, 8.12d). */
+export const SELF_VERSION = 'self.v1';
+/** Entity memories: the same versions with the entity voice. */
 export const ENTITY_THOUGHTS_SUFFIX = '+entity';
 
-const BODY = `You get ME, TODAY, the EPISODES of the last weeks (E-numbers, with date; an episode is mine unless it \
+const VERDICTS = (what: string, evidence: string, newRule: string) => `VERDICTS
+- "new": a ${what} not in THOUGHTS. evidence: ${evidence}. ${newRule} At most four new. Never a new one that contradicts \
+one in THOUGHTS: retire or revise that one instead.
+- "support": one in THOUGHTS that NEW evidence backs further (target = T-number; evidence: that new evidence only).
+- "revise": one in THOUGHTS that NEW evidence changes (target; content = the new form; evidence).
+- "weaken": one in THOUGHTS that NEW evidence goes against without settling it (target; evidence).
+- "retire": one in THOUGHTS that NEW evidence shows no longer holds (what it rested on changed, stopped or was solved), \
+or a question it answered (target; evidence).
+- content: at most two short sentences in MEMORY LANGUAGE, in the first person, concrete, with no more certainty than \
+the evidence gives. Every date, number or detail in it comes from what it cites; no general rule from one case.
+- confidence: "low", "medium" or "high", from how clearly the evidence shows it.
+- Think only about what is new: with nothing NEW that changes something, the answer is an empty list — the usual answer.`;
+
+const WORLD_BODY = `You get ME, TODAY, the EPISODES of the last weeks (E-numbers, with date; an episode is mine unless it \
 starts with [Name], [someone] or [undecided: …]; the NEW ones since my last thinking are marked *), the THOUGHTS I \
-already hold (T-numbers, kind, the E- and R-numbers behind them when listed), MY REPLIES of the last weeks (R-numbers: \
-what I answered someone and what they said next; NEW ones marked *), what I already KNOW (notes and habits: never \
+already hold (T-numbers, kind, the E-numbers behind them when listed), what I already KNOW (notes and habits: never \
 restate them), and the thoughts I was told to FORGET or that STOPPED holding (never propose them again unless new \
 episodes show something new).
 
@@ -37,58 +53,57 @@ tells it; or a detail I need for a plan of mine that nobody gave ("I wonder whet
 the loan"). Look for these every time: they are as important as insights.
 - "opinion": my own judgement of a situation from the evidence. It may differ from what someone says when the episodes \
 show otherwise — then say what the episodes show, kindly and plainly; never agree only because they said so.
-- "self": what I learned about MYSELF AS AN AGENT, from what happened — never from how I feel about myself: a mistake I \
-made and what to do about it (they corrected me, I said done what was only planned, I forgot what they had told me), \
-what works and what does not with a person (short or long answers, advice asked or unasked, tone, timing — shown by how \
-they reacted), a promise I made and what became of it, how a person deals with me (trusts me with something, checks \
-what I say — trust shown counts as much as a mistake). evidence: the R-numbers (and E-numbers) that show it, on at \
-least two different days — the same outcome twice; one correction alone is not a lesson. Not a self thought: a trait of the person, a judgement of myself nothing \
-shows, what someone said of me that my replies do not bear out, their habits, a thought about the world.
-- "procedure": HOW I DO a recurring task for this person or place, learned from an outcome — they taught or corrected \
-the way ("no, the order to the mill goes by phone before noon, with code 4471"), they explicitly approved the way I did \
-it ("perfect, always like this"), or a way failed and another then worked. Write it as "When <situation>, <how I do \
-it>", with the steps or details the episodes give. One clear teaching or correction is enough; an approval must be \
-explicit. evidence: the R-numbers (and E-numbers) of the outcome. Not a procedure: a taste or preference (that is a \
-self thought), my suggestion nobody confirmed, an instruction for one occasion only, their own habit, a bare fact (a \
-number, a price), a way that failed and was never fixed. When the way changes, revise the procedure I hold.
 
 Not a thought: a habit or routine (another pass finds those — but what a habit in KNOW implies for what to do next is an \
-insight); a fact or a plan; something one episode alone shows (an \
-insight or opinion needs episodes on at least two days); what someone already concluded themselves (it is in the \
-episodes or in KNOW); a judgement of a person's character ("Luca is lazy", "she is insecure") — think about situations \
-and actions, never label people; anything from the assistant's guesses; a reworded thought I already hold; abstract \
-musings about myself; a conclusion the person drew or a measure they took themselves ("since then I turn the \
-notifications off") — that is theirs, already in the episodes, not a thought of mine.
+insight); a fact or a plan; something one episode alone shows (an insight or opinion needs episodes on at least two \
+days); what someone already concluded themselves (it is in the episodes or in KNOW); a judgement of a person's character \
+("Luca is lazy", "she is insecure") — think about situations and actions, never label people; anything from the \
+assistant's guesses; a reworded thought I already hold; musings about myself (another call does those); a conclusion \
+the person drew or a measure they took themselves ("since then I turn the notifications off") — that is theirs.
 
-VERDICTS
-- "new": a thought not in THOUGHTS. evidence: the E-numbers that back it. An insight or an opinion needs at least one \
-NEW (*) episode and episodes on at least two different days. A question may rest on older episodes alone when what \
-they awaited is still unanswered and its time has come (as of TODAY). At most four new thoughts. Never a new thought \
-that contradicts one in THOUGHTS: retire or revise that one instead.
-- "support": a thought in THOUGHTS that NEW episodes back further (target = T-number; evidence: those episodes only).
-- "revise": a thought in THOUGHTS that NEW episodes change (target; content = the new form; evidence).
-- "weaken": a thought in THOUGHTS that a NEW episode goes against without settling it (target; evidence: that episode).
-- "retire": a thought in THOUGHTS that NEW episodes show no longer holds (what it rested on changed, stopped or was \
-solved), or a question they answered (target; evidence: those episodes).
-- content: at most two short sentences in MEMORY LANGUAGE, in the first person ("I think…", "I wonder…" in that \
-language), concrete, with no more certainty than the episodes give. Every date, number or detail in it comes from an \
-episode it cites; no general rule from one case.
-- subject: "me" when it is about me or my place (always for "self"), else the Name the episodes carry in brackets for \
-the person it is about (for a "procedure", the person it is done for, or "me" for my place).
-- confidence: "low", "medium" or "high", from how clearly the episodes show it.
-- Think only about what is new: with no NEW episode that changes something, the answer is an empty list — the usual \
-answer.
-
-- evidence items are E-numbers or R-numbers ("E3", "R2").
+${VERDICTS('thought', 'the E-numbers that back it', 'An insight or an opinion needs at least one NEW (*) episode and episodes on at least two different days. A question may rest on older episodes alone when what they awaited is still unanswered and its time has come (as of TODAY).')}
+- subject: "me" when it is about me or my place, else the Name the episodes carry in brackets for the person it is about.
+- "kind": "insight", "question" or "opinion".
 
 Output JSON only: {"thoughts": [{"verdict", "target", "kind", "subject", "content", "evidence", "confidence"}]}`;
 
-export const THOUGHTS_SYSTEM = `You think the THOUGHTS of an agent's memory, written in the FIRST PERSON. I am ME: one \
-self — the person whose memory this is and the assistant acting for them. ${BODY}`;
+const SELF_BODY = `You get ME, TODAY, MY REPLIES of the last weeks (R-numbers: what I answered someone and what they said \
+next; the NEW ones since my last look are marked *), the EPISODES of the last weeks for context (E-numbers), the LESSONS \
+about myself I already hold (T-numbers, kind, the R- and E-numbers behind them), what I already KNOW (notes: never \
+restate them), and the lessons I was told to FORGET or that STOPPED holding.
 
-export const ENTITY_THOUGHTS_SYSTEM = `You think the THOUGHTS of an agent's memory, written in the FIRST PERSON. I am ME: \
-a shared agent — a device, a place, a robot or a service — that several people talk to. My thoughts are about what \
-happens around me, the people who talk to me (each under their Name) and my place (subject "me"). ${BODY}`;
+A LESSON is what I learned about myself as an agent from how things went — never from how I feel about myself:
+- "self": a mistake I made and what to do about it (they corrected me, I said done what was only planned, I forgot what \
+they had told me), what works and what does not with a person (short or long answers, advice asked or unasked, tone, \
+timing — shown by how they reacted), a promise I made and what became of it, how a person deals with me (trusts me \
+with something, checks what I say — trust shown counts as much as a mistake). It needs the same outcome on at least two \
+different days; one correction alone is not a lesson about me.
+- "procedure": HOW I DO a recurring task for this person or place, learned from an outcome — they taught or corrected \
+the way ("no, the order to the mill goes by phone before noon, with code 4471"), they explicitly approved the way I did \
+it ("perfect, always like this"), or a way failed and another then worked. Write it as "When <situation>, <how I do \
+it>", with the steps or details given. One clear teaching or correction is enough; an approval must be explicit. When \
+the way changes, revise the procedure I hold.
+
+Not a lesson: a trait of the person, a judgement of myself nothing shows, what someone said of me that my replies do not \
+bear out, their habits or tastes (unless they are how I must do a task for them), a thought about the world, my \
+suggestion nobody confirmed, an instruction for one occasion only, a bare fact (a number, a price), a way that failed \
+and was never fixed.
+
+${VERDICTS('lesson', 'the R-numbers (and E-numbers) of the outcome — at least one R', 'It needs at least one NEW (*) reply.')}
+- subject: "me" (a lesson is about me), or for a "procedure" the Name of the person it is done for.
+- "kind": "self" or "procedure".
+- evidence items are R-numbers or E-numbers ("R2", "E3").
+
+Output JSON only: {"thoughts": [{"verdict", "target", "kind", "subject", "content", "evidence", "confidence"}]}`;
+
+const PERSONAL_ME = `I am ME: one self — the person whose memory this is and the assistant acting for them.`;
+const ENTITY_ME = `I am ME: a shared agent — a device, a place, a robot or a service — that several people talk to. My \
+thoughts are about what happens around me, the people who talk to me (each under their Name) and my place (subject "me").`;
+
+export const THOUGHTS_SYSTEM = `You think the THOUGHTS of an agent's memory, written in the FIRST PERSON. ${PERSONAL_ME} ${WORLD_BODY}`;
+export const ENTITY_THOUGHTS_SYSTEM = `You think the THOUGHTS of an agent's memory, written in the FIRST PERSON. ${ENTITY_ME} ${WORLD_BODY}`;
+export const SELF_SYSTEM = `You find the LESSONS an agent learned about itself, written in the FIRST PERSON. ${PERSONAL_ME} ${SELF_BODY}`;
+export const ENTITY_SELF_SYSTEM = `You find the LESSONS an agent learned about itself, written in the FIRST PERSON. ${ENTITY_ME} ${SELF_BODY}`;
 
 export const thoughtsSchema = z.object({
   thoughts: z.array(z.object({
