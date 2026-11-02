@@ -876,6 +876,13 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   strumenti dell'ospite** (maintainer, 2026-11-02): non conosce le automazioni dell'ospite (una persona può usare
   qualsiasi client), quindi un promemoria che anche l'ospite ha programmato tocca all'ospite deduplicarlo — spegnendo
   il proprio, o scartando il doppione che vede.
+- **Costruito finora** (2026-11-02, passo d): le procedure come tipo `procedure` della passata dei pensieri
+  (`thoughts.v7`): come l'agente svolge un compito ricorrente, da un esito sulle sue risposte (insegnato, corretto,
+  approvato esplicitamente), una correzione basta, riviste quando il modo cambia; "come lo faccio (imparato)" nel
+  contesto di memoria. Dev set `dataset_dev_procedures`: 11, 10, 11 su 14, quelle riviste ritirate, al massimo una falsa
+  a run (RESULTS.md). Deciso misurando: una sola chiamata per tutti i tipi — una seconda chiamata per le lezioni su di me
+  ha dato ai pensieri sul mondo mezzo punto (nel rumore) e alle procedure è costata due punti e più trappole nelle note
+  di sé; limiti separati (quattro sul mondo, quattro su di me).
 
 ## Questioni aperte (da discutere)
 

@@ -845,6 +845,12 @@ works on its own and pushes, not a memory that only answers.
   initiative); a request with a time keeps it. **Recordare does its own work, whatever the host's tools did**
   (maintainer, 2026-11-02): it does not know the host's automations (a person may use any client), so a reminder the
   host also scheduled is the host's to deduplicate — switch its own off, or drop the duplicate it sees.
+- **Built so far** (2026-11-02, step d): procedures as the kind `procedure` of the thought pass (`thoughts.v7`): how the
+  agent does a recurring task, from an outcome on its replies (taught, corrected, explicitly approved), one correction
+  enough, revised when the way changes; "how I do it (learned)" in the memory context. Dev set `dataset_dev_procedures`:
+  11, 10, 11 of 14, the revised ones retired, at most one false a run (RESULTS.md). Decided while measuring: one call
+  for all the kinds — a second call for the lessons about myself gave the world thoughts half a point (within noise) and
+  cost the procedures two and more traps in the self notes; separate caps (four about the world, four about myself).
 
 ## Open questions (to discuss)
 

@@ -507,7 +507,10 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   come un pensiero proprio, mai come qualcosa che è stato detto; un'opinione può differire da ciò che dice il titolare
   quando gli episodi mostrano altro; oppure `self`, 8.12b — ciò che ha imparato di sé come agente dalle proprie risposte
   e da come sono andate: un errore da evitare, ciò che funziona con una persona, una promessa, la fiducia dimostrata;
-  solo questi entrano anche nella scheda di sé e nel blocco di sé del contesto di memoria come "su di me come agente").
+  solo questi entrano anche nella scheda di sé e nel blocco di sé del contesto di memoria come "su di me come agente";
+  oppure `procedure`, 8.12d — come svolge un compito ricorrente per una persona o un luogo, imparato da un esito
+  (insegnato, corretto, approvato esplicitamente): "quando <situazione>, <come lo faccio>"; il contesto di memoria lo
+  riferisce come "come lo faccio (imparato)" quando il turno riguarda quel compito).
 
 ### `search_knowledge` e `learn_source` (D49, WORK_PLAN 8.9 — fonti apprese)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passaggi delle fonti che l'agente ha imparato, ordinati
@@ -593,7 +596,7 @@ JSON `format: "recordare-export/1"`, inviato compresso gzip, `404` finché non �
 `export`). Le modifiche rispondono `204` (`404` per un id che non è di questa memoria); pagina solo
 `GET episodes` (`{items, nextCursor}`, default 50), le altre liste sono array. Elementi di `GET notes`: `{id, category,
 content, pinned, pending, inferred, pattern, thought, authorRole, supportCount, recordedAt}` (`pattern`: un pattern
-ricorrente, WORK_PLAN 5.4; `thought`: un pensiero proprio dell'agente, categorie `insight` / `question` / `opinion` / `self`, D53). Come costruito, cancellare un fatto o una
+ricorrente, WORK_PLAN 5.4; `thought`: un pensiero proprio dell'agente, categorie `insight` / `question` / `opinion` / `self` / `procedure`, D53). Come costruito, cancellare un fatto o una
 nota (e rifiutarne uno in sospeso) rimuove la riga con le sue evidenze e lascia un tombstone `fact` / `note` (4.13) —
 una nota anche una voce `forgotten` in `note_changes`; confermare la rende dichiarata (`pending` false). Libreria client:
 `packages/client` (`episodes`, `episode`, `digests`, `facts`, `fact`, `notes`, `note`, `plans`, `addEpisode`, `addNote`,
@@ -617,7 +620,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `POST api/v1/facts/{id}/corrections`, `DELETE api/v1/facts/{id}` | write | Correggere o dimenticare un fatto |
 | `POST api/v1/facts/{id}/confirm` / `…/reject` | write | Fatti in sospeso (D20) |
 | `GET api/v1/plans?status` | read | Piani aperti / irrisolti |
-| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true`, i pensieri propri dell'agente note con `thought: true` (categorie `insight` / `question` / `opinion` / `self`; D26, D53: della memoria stessa, nulla da confermare — si dimentica uno con `DELETE`) |
+| `GET api/v1/notes?category&pinned&includePending` / `GET …/{id}` | read | Note semantiche (D34); i pattern ricorrenti sono note con `pattern: true`, i pensieri propri dell'agente note con `thought: true` (categorie `insight` / `question` / `opinion` / `self` / `procedure`; D26, D53: della memoria stessa, nulla da confermare — si dimentica uno con `DELETE`) |
 | `GET api/v1/cards` | read | Chi sono e chi sono i miei contatti (WORK_PLAN 8.13), senza LLM: `{self, contacts}`, ognuno `{personId, name, aliases, facts: [{id, key, value, validFrom}], notes: [{id, category, content, pinned, pattern}], lastMentioned}` — i fatti e le note attuali e confermati su quella persona (prima le note fissate, poi per supporto), i contatti nominati più di recente per primi; ogni id apre il suo dettaglio (`GET api/v1/facts/{id}`, `notes/{id}`) con le evidenze |
 | `GET api/v1/private` | read | I ricordi privati (D52): `[{kind: episode \| fact \| note, id, by: [nomi], recordedAt}]`, mai il loro contenuto; il Diario di una memoria entity li mostra così (se ne dimentica uno con il suo `DELETE`) |
 | `POST api/v1/notes`, `POST …/{id}/corrections`, `POST …/{id}/confirm\|reject`, `PATCH …/{id} {pinned}`, `DELETE …/{id}` | write | Gestire le note |
@@ -640,7 +643,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o
 fare, per una persona, da quando e fino a quando. Le sue fonti: un piano oltre la sua data senza esito raccontato diventa un `ask` due giorni
-dopo la sua fine ("è successo?", tenuto una settimana; nessuno se hanno raccontato com'è andata); un piano in arrivo un
+dopo la sua fine ("è successo?", tenuto una settimana; nessuno se hanno raccontato com'è andata, nessuno per un piano che nessuno ha detto prima del suo giorno — una decisione non è un appuntamento); un piano in arrivo un
 `say` il giorno prima (un promemoria, fino alla fine del giorno del piano); una **promessa che ho fatto o una richiesta
 fattami** con una data ("ricordami giovedì di ordinare la farina", "te lo ricordo venerdì" — gli INTENTS dell'estrazione,
 `extract.v21`) un `say` quel giorno, per la persona a cui si riferisce — ritirata ("lascia stare") o fatta in

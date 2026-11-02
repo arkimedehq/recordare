@@ -442,6 +442,13 @@ people deal with it — drawn from MY REPLIES, its own messages of the last 60 d
 (public only), never from introspection; their evidence is those messages (`note_evidence.message_id`, the reply and
 the reaction), the same outcome on two different days; subject always the self. They are the only thoughts in the self
 card (`GET api/v1/cards`: "about me as an agent").
+**Procedures** (8.12d, category `procedure`, migration `Procedures1791250000000`): how the agent does a recurring task for
+a person or place — "when <situation>, <how I do it>" — learned from an outcome on MY REPLIES (taught, corrected,
+explicitly approved, or a way that failed and another that worked); one clear correction is enough (no two-day rule),
+a reply with its reaction is required; checked for restatement against the agent's thoughts only (a note of what
+someone wants is not how the agent does it); revised when the way changes. Written by the same call as the other
+thoughts — a second call for the lessons about myself was measured and dropped (RESULTS.md). The new ones a pass are
+capped at four about the world (insights, questions, opinions) and four about myself (self notes, procedures).
 
 ## Layer 2 — digests
 
