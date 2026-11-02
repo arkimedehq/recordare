@@ -137,6 +137,23 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     expect(received.slice(before).some((d) => JSON.parse(d.body).type === 'initiative.expired')).toBe(true);
   });
 
+  it('asks about a plan told ahead of its day, not about a decision dated the day it was taken', async () => {
+    const [conv] = await db.query(`INSERT INTO conversations (memory_id, client_id, external_id, started_at, last_message_at)
+      VALUES ($1, $2, 'c-live', now(), now()) RETURNING id`, [memoryId, clientId]);
+    const told = async (id: string, content: string, at: Date) => (await db.query(
+      `INSERT INTO messages (conversation_id, memory_id, external_id, role, content, content_hash, sent_at, author_kind, attribution_method, attribution_confidence)
+       VALUES ($1, $2, $3, 'user', $4::text, sha256(convert_to($4::text, 'UTF8')), $5, 'self', 'account', 1) RETURNING id`, [conv.id, memoryId, id, content, at]))[0].id as string;
+    const T = new Date(NOW.getTime() + 20 * DAY);
+    const appointment = await plan('Visita dall\'oculista', new Date(T.getTime() - 3 * DAY));
+    const decision = await plan('Ho deciso di procedere con il nuovo indice delle foto', new Date(T.getTime() - 3 * DAY));
+    const before = await told('a1', 'Venerdì ho l\'oculista', new Date(T.getTime() - 6 * DAY));
+    const same = await told('a2', 'Ho deciso: procediamo con l\'indice delle foto', new Date(T.getTime() - 3 * DAY + 10 * 3_600_000));
+    await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2), ($3, $4)`, [appointment, before, decision, same]);
+    await sweep(T);
+    const asks = (await db.query(`SELECT episode_id FROM intents WHERE kind = 'open_plan' AND episode_id = ANY($1)`, [[appointment, decision]])).map((r: { episode_id: string }) => r.episode_id);
+    expect(asks).toEqual([appointment]);
+  });
+
   it('quiet hours: a due initiative waits for the morning; the admin sets them', async () => {
     const r = await call(url, 'PATCH', `/api/v1/admin/memories/${memoryId}`, { token: ADMIN_KEY, body: { quietFrom: 21, quietTo: 7 } });
     expect(r.status).toBe(200);

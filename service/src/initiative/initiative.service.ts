@@ -119,6 +119,9 @@ export class InitiativeService {
          AND ((e.plan_status IN ('open', 'confirmed') AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $5) AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
            OR (e.plan_status IN ('open', 'confirmed') AND e.occurred_at > $2 AND e.occurred_at < $2::timestamptz + make_interval(hours => $4)))
          AND ${episodeVisible('e', PUBLIC_ONLY)}
+         -- a plan nobody told ahead of its day is a decision, not an appointment: nothing to ask "how did it go" about
+         AND NOT (e.occurred_at < $2 AND EXISTS (SELECT 1 FROM episode_evidence pv WHERE pv.episode_id = e.id)
+           AND NOT EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id WHERE pv.episode_id = e.id AND pm.sent_at < e.occurred_at))
          -- a plan confirmed by a telling at or after its start: they said how it went, nothing to ask
          AND NOT (e.occurred_at < $2 AND EXISTS (SELECT 1 FROM plan_events pe JOIN messages pm ON pm.id = pe.evidence_message_id
            WHERE pe.plan_id = e.id AND pe.patch = 'confirm' AND pm.sent_at >= e.occurred_at))`, [memoryId, now, ASK_BACK_DAYS, REMIND_AHEAD_HOURS, ASK_AFTER_DAYS]);
