@@ -72,10 +72,19 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
       { intents: [{ kind: 'request', cancel: true, content: 'chiamare il commercialista', for: 'Marta', evidence: [1] }] });
     expect((await intents()).map((i: { content: string; status: string }) => [i.content, i.status])).toEqual([
       ['chiamare il commercialista', 'cancelled'], ['far sapere a Marta del preventivo', 'armed']]);
+    // A promise kept in conversation closes; nothing kept that matches: dropped, counted.
+    await window([say('m5', 'marta', 'Novità sul preventivo?', '2026-10-07T09:00:00+02:00'),
+      say('m6', null, 'Sì, è arrivato: 900 euro.', '2026-10-07T09:01:00+02:00')],
+    { intents: [{ kind: 'promise', done: true, content: 'far sapere del preventivo', for: 'Marta', evidence: [2] },
+      { kind: 'promise', done: true, content: 'portare il cane dal veterinario', for: 'Marta', evidence: [2] }] });
+    expect((await intents()).map((i: { status: string }) => i.status)).toEqual(['cancelled', 'done']);
+    const [last] = await db.query(`SELECT summary FROM extraction_runs ORDER BY started_at DESC LIMIT 1`);
+    expect(last.summary.dropped).toEqual({ intent: { nothing_done: 1 } });
   });
 
   it('when due, the promise becomes a reminder worded by the model (balanced), for the person it concerns', async () => {
     const [{ person_id }] = await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'u1'`);
+    await db.query(`UPDATE intents SET status = 'armed' WHERE kind = 'promise'`); // undo the kept promise: the wording is what this test checks
     const r = await app.get(InitiativeService).sweep(person_id, new Date('2026-10-09T08:30:00+02:00'));
     expect(r).toMatchObject({ fired: 1 });
     const feed = await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: { 'x-recordare-user': 'u1' } });

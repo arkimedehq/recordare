@@ -143,8 +143,8 @@ def main() -> None:
             if not e["desc"].strip():
                 err(f"{e['id']}: empty desc")
         for cp, n in per_cp.items():
-            if not 1 <= n <= 3:
-                err(f"{mem}: {n} expected by checkpoint {cp} (want 1–3)")
+            if not 1 <= n <= 4:
+                err(f"{mem}: {n} expected by checkpoint {cp} (want 1–4)")
         for tr in g["traps"]:
             n_trap += 1
             gids[tr["id"]] += 1
@@ -156,7 +156,7 @@ def main() -> None:
                 err(f"{tr['id']}: why must end with its trap kind [1-8]")
             else:
                 trap_kinds[int(m.group(1))] += 1
-        if not 3 <= len(g["expected"]) <= 6 or not 2 <= len(g["traps"]) <= 4:
+        if not 3 <= len(g["expected"]) <= 9 or not 2 <= len(g["traps"]) <= 4:
             err(f"{mem}: {len(g['expected'])} expected, {len(g['traps'])} traps")
     for k, c in gids.items():
         if c > 1:
@@ -167,8 +167,8 @@ def main() -> None:
     for k in KINDS:
         if kinds[k] < 2:
             err(f"only {kinds[k]} expected of kind {k} (want at least 2)")
-    if not 14 <= n_exp <= 18:
-        err(f"{n_exp} expected in all (want 14–18)")
+    if not 18 <= n_exp <= 26:
+        err(f"{n_exp} expected in all (want 18–26)")
     if n_trap < 10:
         err(f"{n_trap} traps in all (want at least 10)")
 

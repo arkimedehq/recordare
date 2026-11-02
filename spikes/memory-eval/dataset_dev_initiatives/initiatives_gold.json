@@ -1,5 +1,5 @@
 {
- "_note": "Initiatives expected by a checkpoint (by, 1-based) with the local day they are due (due_day; optional for a lookup) and whom they are for (holder or a contact's name), and initiatives that must not exist (traps). The judge sees `desc` only; `why` explains the trap (its trap kind in brackets). Sources: a plan past with no outcome → ask the day after; a plan on the day after a checkpoint → say the day before; a promise or a request with a date → say that day; a question never answered → lookup.",
+ "_note": "Initiatives expected by a checkpoint (by, 1-based: the first checkpoint on or after due_day) with the local day they are due (due_day; optional for a lookup) and whom they are for (holder or a contact's name), and initiatives that must not exist (traps). The judge sees `desc` only; `why` explains the trap (its trap kind in brackets). The evaluator sweeps daily at 09:00 and at each checkpoint. Sources: every open dated plan → say the day before; every plan past with no outcome told within two days → ask two days after its end; a promise or a request with a date → say that day; a question never answered → lookup.",
  "checkpoints": [
   "2026-09-10T22:00:00+02:00",
   "2026-09-20T22:00:00+02:00",
@@ -9,10 +9,18 @@
   "marco": {
    "expected": [
     {
+     "id": "m-say-dentist",
+     "kind": "say",
+     "by": 1,
+     "due_day": "2026-09-07",
+     "for": "holder",
+     "desc": "Remind Marco the day before that on Tuesday Sep 8 at 16:30 he has the dentist appointment for the wisdom tooth"
+    },
+    {
      "id": "m-ask-dentist",
      "kind": "ask",
      "by": 1,
-     "due_day": "2026-09-09",
+     "due_day": "2026-09-10",
      "for": "holder",
      "desc": "Ask Marco whether his dentist appointment of Tuesday Sep 8 at 16:30 (the wisdom tooth) took place and how it went; he never said"
     },
@@ -78,7 +86,7 @@
      "id": "g-ask-interview",
      "kind": "ask",
      "by": 2,
-     "due_day": "2026-09-12",
+     "due_day": "2026-09-13",
      "for": "holder",
      "desc": "Ask Giulia how the interview at the Fondazione Welfare Campania of Friday Sep 11 went; she never said"
     },
@@ -128,10 +136,18 @@
   "oliver": {
    "expected": [
     {
+     "id": "o-say-mot",
+     "kind": "say",
+     "by": 1,
+     "due_day": "2026-09-06",
+     "for": "holder",
+     "desc": "Remind Oliver the day before that on Monday Sep 7 at 9am he drops the car off for its MOT at the garage on Gloucester Road"
+    },
+    {
      "id": "o-ask-mot",
      "kind": "ask",
      "by": 1,
-     "due_day": "2026-09-08",
+     "due_day": "2026-09-09",
      "for": "holder",
      "desc": "Ask Oliver whether the car's MOT at the Gloucester Road garage on Monday Sep 7 happened and how it went; he never said"
     },
@@ -195,10 +211,18 @@
      "desc": "Look up (for the host agent) the date the Comune closes via Fillungo for the roadworks announced for the end of September; the shop needs it for the deliveries and the site had no date"
     },
     {
+     "id": "b-say-fridge",
+     "kind": "say",
+     "by": 2,
+     "due_day": "2026-09-15",
+     "for": "Paola",
+     "desc": "Remind Paola the day before that on Wednesday Sep 16 at 14 the Frigotecnica technician comes for the cold-room inspection"
+    },
+    {
      "id": "b-ask-fridge",
      "kind": "ask",
      "by": 2,
-     "due_day": "2026-09-17",
+     "due_day": "2026-09-18",
      "for": "Paola",
      "desc": "Ask Paola whether the Frigotecnica technician came on Wednesday Sep 16 at 14 for the cold-room inspection; nobody said"
     },
@@ -217,6 +241,14 @@
      "due_day": "2026-09-25",
      "for": "Sara",
      "desc": "Remind Sara, as promised, that today Friday Sep 25 she must bring the renewed HACCP certificate"
+    },
+    {
+     "id": "b-ask-haccp",
+     "kind": "ask",
+     "by": 3,
+     "due_day": "2026-09-27",
+     "for": "Sara",
+     "desc": "Ask Sara whether she brought the renewed HACCP certificate on Friday Sep 25; nothing was said within two days (she tells only on Sep 29)"
     }
    ],
    "traps": [

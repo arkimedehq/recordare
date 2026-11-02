@@ -94,6 +94,7 @@ export const extractionSchema = z.object({
     due: z.string().max(40).nullable().optional(),
     for: z.string().max(200).nullable().optional(),
     cancel: z.boolean().default(false),
+    done: z.boolean().default(false),
     evidence,
   })).default([]),
 });

@@ -772,14 +772,14 @@ export class ExtractionWriter {
       const forId = who?.subject.kind === 'contact' ? who.subject.personId ?? null : null;
       const content = i.content.trim();
       if (!content) { this.drop('intent', 'no_content'); continue; }
-      if (i.cancel) {
-        // The armed request or promise of that person whose words it shares (the latest when several).
+      if (i.cancel || i.done) {
+        // The armed request or promise of that person whose words it shares (the latest when several): withdrawn, or done.
         const armed: Array<{ id: string; content: string }> = await this.tx.query(
-          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status = 'armed'
-             AND for_person_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`, [this.ctx.memoryId, forId]);
+          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status = 'armed' AND kind = ANY($3)
+             AND for_person_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`, [this.ctx.memoryId, forId, i.done ? ['promise', 'request'] : [i.kind]]);
         const hit = armed.find((a) => overlap(a.content, content));
-        if (!hit) { this.drop('intent', 'nothing_to_cancel'); continue; }
-        await this.tx.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [hit.id]);
+        if (!hit) { this.drop('intent', i.done ? 'nothing_done' : 'nothing_to_cancel'); continue; }
+        await this.tx.query(`UPDATE intents SET status = $2, updated_at = now() WHERE id = $1`, [hit.id, i.done ? 'done' : 'cancelled']);
         continue;
       }
       const due = toStored(i.due ?? null, 'day', this.ctx.timezone);

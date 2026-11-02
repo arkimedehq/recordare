@@ -118,10 +118,13 @@ export class InitiativeService {
          AND e.occurred_at IS NOT NULL AND e.author_role <> 'tool' AND e.origin <> 'assistant_stated'
          AND ((e.plan_status IN ('open', 'confirmed') AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $5) AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
            OR (e.plan_status IN ('open', 'confirmed') AND e.occurred_at > $2 AND e.occurred_at < $2::timestamptz + make_interval(hours => $4)))
-         AND ${episodeVisible('e', PUBLIC_ONLY)}`, [memoryId, now, ASK_BACK_DAYS, REMIND_AHEAD_HOURS, ASK_AFTER_DAYS]);
+         AND ${episodeVisible('e', PUBLIC_ONLY)}
+         -- a plan confirmed by a telling at or after its start: they said how it went, nothing to ask
+         AND NOT (e.occurred_at < $2 AND EXISTS (SELECT 1 FROM plan_events pe JOIN messages pm ON pm.id = pe.evidence_message_id
+           WHERE pe.plan_id = e.id AND pe.patch = 'confirm' AND pm.sent_at >= e.occurred_at))`, [memoryId, now, ASK_BACK_DAYS, REMIND_AHEAD_HOURS, ASK_AFTER_DAYS]);
     // A request or a promise about the same thing, for the same person, around the same days: that one speaks, not the plan.
     const owed: Array<{ content: string; for_person_id: string | null; due_at: Date }> = plans.length ? await this.db.query(
-      `SELECT content, for_person_id, due_at FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status IN ('armed', 'fired', 'done')`, [memoryId]) : [];
+      `SELECT content, for_person_id, due_at FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request')`, [memoryId]) : []; // any state: said, lapsed or withdrawn, it was the one
     for (const p of plans) {
       if (owed.some((o) => o.for_person_id === p.subject_person_id && Math.abs(o.due_at.getTime() - p.occurred_at.getTime()) < 3 * DAY_MS && overlap(o.content, p.content))) continue;
       const kind = p.past ? 'open_plan' : 'upcoming_plan';

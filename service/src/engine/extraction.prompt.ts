@@ -138,6 +138,7 @@ const schema = (hint: string): string => `{
     "due": "<ISO date it is due>" | null,
     "for": "<Name of the person it concerns>" | null,
     "cancel": true | false,
+    "done": true | false,
     "evidence": [<message numbers>]
   }]
 }`;
@@ -316,7 +317,10 @@ number.
 - Without a time ("dovrei andare dal dentista", "ricordamelo"), or when I only suggested it and nobody agreed, it is \
 not an intent. A plan of theirs is an episode (PLANS), not an intent: intents are what I am to do.
 - When they take a request back ("lascia stare", "non serve più ricordarmelo", "never mind the reminder"), add an \
-entry with "kind" "request", "cancel": true, "content" what it was about, "for" and "evidence" as above.`;
+entry with "kind" "request", "cancel": true, "content" what it was about, "for" and "evidence" as above.
+- When I do in the conversation what I promised or was asked ("bins out tonight, the collection is tomorrow" on the \
+evening I promised to remind them), add an entry with its "kind", "done": true, "content" what it was about, "for" and \
+"evidence" the message where I did it.`;
 
 const P_SAFETY = `
 
