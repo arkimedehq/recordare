@@ -201,7 +201,7 @@ export class ThoughtsService {
         days: new Set(when.map((d) => localDate(d, tz))).size };
     };
     const target = (raw: string | null | undefined): ActiveRow | undefined => active[Number((raw ?? '').match(/^\s*T?(\d+)\s*$/i)?.[1]) - 1];
-    let added = 0;
+    const added: Record<string, number> = {};
     await this.db.transaction(async (tx) => {
       for (const t of out.thoughts) {
         const c = cited(t);
@@ -218,7 +218,9 @@ export class ThoughtsService {
         }
         const content = t.content?.trim();
         if (!content) { this.drop('no_content'); continue; }
-        if (t.verdict === 'new' && added >= MAX_NEW) { this.drop('too_many', t); continue; }
+        // Four new a pass about the world (insights, questions, opinions), four about myself (self notes, procedures).
+        const group = t.kind === 'self' || t.kind === 'procedure' ? 'me' : 'world';
+        if (t.verdict === 'new' && (added[group] ?? 0) >= MAX_NEW) { this.drop('too_many', t); continue; }
         if (!c.fresh && t.kind !== 'question') { this.drop('nothing_new', t); continue; }
         // A procedure may rest on one outcome (a clear correction teaches at once); insights, opinions, self notes need two days.
         if (t.kind !== 'question' && t.kind !== 'procedure' && c.days < 2) { this.drop('one_day', t); continue; }
@@ -231,13 +233,13 @@ export class ThoughtsService {
         const alike = t.verdict === 'new'
           ? active.find((a) => a.subject_person_id === subjectId && cosine(activeVector.get(a.id)!, vector) >= REVISE_SIMILARITY) : undefined;
         const replaced = t.verdict === 'revise' ? old : alike;
-        if (await this.restates(tx, memoryId, vector, replaced?.note_id)) { this.drop('known', t); continue; }
+        if (await this.restates(tx, memoryId, vector, replaced?.note_id, t.kind === 'procedure')) { this.drop('known', t); continue; }
         if (await this.restatesEpisode(tx, c.ev, vector)) { this.drop('restates_episode', t); continue; }
         const like = pastVectors.find((f) => cosine(f.vector, vector) >= SAME_SIMILARITY);
         if (like && !c.ids.some((id) => !like.episode_ids.includes(id))) { this.drop('past', t); continue; }
         if (replaced) await this.retire(tx, memoryId, replaced, true);
         await this.write(tx, memoryId, runId, t, content, c, subjectId, vector, replaced?.note_id ?? null);
-        if (t.verdict === 'new') added++;
+        if (t.verdict === 'new') added[group] = (added[group] ?? 0) + 1;
         report.written++;
       }
       await tx.query(`UPDATE memories SET thoughts_upto = (SELECT max(recorded_at) FROM episodes WHERE id = ANY($2)) WHERE person_id = $1`,
@@ -263,11 +265,16 @@ export class ThoughtsService {
   }
 
   /** Restates a note the memory holds — a habit apart: a thought may build on a pattern ("the flour is late on Thursdays: order on Wednesday"). */
-  private async restates(tx: EntityManager, memoryId: string, vector: number[], except?: string): Promise<boolean> {
+  /**
+   * Restates a note the memory holds. A procedure is checked against my thoughts only: a note of what someone wants ("the
+   * shifts per day") is not how I do it, and the procedure is what the memory context tells when the task comes back.
+   */
+  private async restates(tx: EntityManager, memoryId: string, vector: number[], except?: string, thoughtsOnly = false): Promise<boolean> {
     const rows: unknown[] = await tx.query(
       `SELECT 1 FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND embedding IS NOT NULL
-         AND NOT 'pattern' = ANY(tags) AND id IS DISTINCT FROM $3 AND 1 - (embedding <=> $2::vector) >= $4 LIMIT 1`,
-      [memoryId, vectorParam(vector), except ?? null, SAME_SIMILARITY]);
+         AND NOT 'pattern' = ANY(tags) AND ($5::boolean IS FALSE OR 'thought' = ANY(tags))
+         AND id IS DISTINCT FROM $3 AND 1 - (embedding <=> $2::vector) >= $4 LIMIT 1`,
+      [memoryId, vectorParam(vector), except ?? null, SAME_SIMILARITY, thoughtsOnly]);
     return rows.length > 0;
   }
 

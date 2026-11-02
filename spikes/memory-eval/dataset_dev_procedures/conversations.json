@@ -1,0 +1,1275 @@
+{
+ "_note": "dev_procedures (WORK_PLAN 8.12d, D53): procedures ('when <situation>, I do it this way') drawn from outcomes — a teaching or correction, an explicit approval, a way that failed and one that worked — revised when the way changes, and the procedures that must not be drawn. Fictional. Not blind.",
+ "users": {
+  "chiara": "Chiara, Bologna",
+  "davide": "Davide, Torino",
+  "owen": "Owen, Leeds",
+  "falegnameria_ricci": "Falegnameria Ricci, Lucca"
+ },
+ "genders": {
+  "chiara": "feminine",
+  "davide": "masculine",
+  "owen": "masculine"
+ },
+ "entities": [
+  "falegnameria_ricci"
+ ],
+ "sessions": [
+  {
+   "id": "falegnameria_ricci-2026-09-01-0830",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-01T08:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni. Da oggi gli ordini dei pannelli a Legnami Bertoni li prepari tu. Si fa così: email all'indirizzo ordini di Bertoni, nell'oggetto il nostro codice cliente 2208, una riga per pannello con tipo, spessore e misure, e deve partire entro giovedì a mezzogiorno se vogliamo la consegna il lunedì."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito, Gianni: email agli ordini di Bertoni, codice 2208 nell'oggetto, una riga per pannello, entro giovedì a mezzogiorno per la consegna del lunedì."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-01-0900",
+   "user": "chiara",
+   "ts": "2026-09-01T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi prepari la fattura per Lexis per la traduzione del manuale? 1.200 euro più IVA."
+    },
+    {
+     "role": "assistant",
+     "content": "Ecco la bozza: fattura 14/2026, traduzione manuale tecnico, 1.200 euro + IVA 22 %. La mando al project manager di Lexis con l'importo nel corpo della mail?"
+    },
+    {
+     "role": "user",
+     "content": "No, per Lexis si fa così: il loro numero d'ordine nell'oggetto della mail, la fattura solo come PDF allegato, e va all'amministrazione, non al project manager. Senza numero d'ordine non la pagano."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito: oggetto con il loro numero d'ordine, PDF allegato, indirizzata all'amministrazione. Il numero d'ordine è il 5531?"
+    },
+    {
+     "role": "user",
+     "content": "Sì, 5531. Mandala."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviata all'amministrazione di Lexis, oggetto 'Fattura 14/2026 – PO 5531', PDF allegato."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-01-1900",
+   "user": "owen",
+   "ts": "2026-09-01T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Repotted forty succulents tonight, my back is killing me."
+    },
+    {
+     "role": "assistant",
+     "content": "Forty! Rest it tonight."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-01-2330",
+   "user": "davide",
+   "ts": "2026-09-01T23:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Serata pienissima, 80 coperti, sono distrutto."
+    },
+    {
+     "role": "assistant",
+     "content": "Riposati, domani è martedì e si respira."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-02-1000",
+   "user": "owen",
+   "ts": "2026-09-02T10:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Can you book our usual pitch at the Saturday market for this week?"
+    },
+    {
+     "role": "assistant",
+     "content": "I've emailed the market office asking for pitch 14 for Saturday."
+    },
+    {
+     "role": "user",
+     "content": "Cheers."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-02-1100",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-02T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta. Prepara il preventivo per la signora Galli: armadio a muro in rovere, 2.800 euro."
+    },
+    {
+     "role": "assistant",
+     "content": "Preventivo per la sig.ra Galli: armadio a muro in rovere, 2.800 euro IVA inclusa. Consegna entro fine ottobre. Marta"
+    },
+    {
+     "role": "user",
+     "content": "No. I preventivi si fanno così: prezzo più IVA scritta a parte, validità 30 giorni, tempi di consegna in settimane dall'acconto, e firma 'Falegnameria Ricci', mai il mio nome."
+    },
+    {
+     "role": "assistant",
+     "content": "Preventivo per la sig.ra Galli: armadio a muro in rovere, 2.800 euro + IVA 22 % (616 euro), totale 3.416 euro. Validità 30 giorni. Consegna in 6 settimane dall'acconto. Falegnameria Ricci"
+    },
+    {
+     "role": "user",
+     "content": "Così. Mandalo."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-02-1830",
+   "user": "chiara",
+   "ts": "2026-09-02T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sei ore sul manuale tedesco oggi, ho gli occhi a pezzi."
+    },
+    {
+     "role": "assistant",
+     "content": "Stasera niente schermi, allora."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-03-1000",
+   "user": "chiara",
+   "ts": "2026-09-03T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Una cosa: a me i messaggi lunghi non piacciono, preferisco sempre due righe."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-03-1000",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-03T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni, fai l'ordine a Bertoni: 6 pannelli multistrato betulla 18 mm 250x122 e 4 MDF 10 mm 280x207."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato agli ordini di Bertoni alle 10:02, oggetto 'Ordine cliente 2208':\n- Multistrato betulla 18 mm 250x122 × 6\n- MDF 10 mm 280x207 × 4\nConsegna lunedì 7."
+    },
+    {
+     "role": "user",
+     "content": "Bene."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-03-1800",
+   "user": "davide",
+   "ts": "2026-09-03T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Scrivimi il messaggio dei turni per il gruppo dello staff, settimana dal 7: Luca lunedì, martedì e mercoledì, Sofia mercoledì, giovedì e venerdì, Ahmed venerdì, sabato e domenica, io sabato e domenica."
+    },
+    {
+     "role": "assistant",
+     "content": "Turni settimana 7–13 settembre:\nLuca: lun, mar, mer\nSofia: mer, gio, ven\nAhmed: ven, sab, dom\nDavide: sab, dom"
+    },
+    {
+     "role": "user",
+     "content": "No, così non lo legge nessuno. I turni si scrivono per giorno: una riga per ogni giorno, da lunedì a domenica, con chi lavora quel giorno."
+    },
+    {
+     "role": "assistant",
+     "content": "Turni settimana 7–13 settembre:\nLun: Luca\nMar: Luca\nMer: Luca, Sofia\nGio: Sofia\nVen: Sofia, Ahmed\nSab: Ahmed, Davide\nDom: Ahmed, Davide"
+    },
+    {
+     "role": "user",
+     "content": "Così sì. Mandalo nel gruppo."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato nel gruppo dello staff."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-04-0900",
+   "user": "owen",
+   "ts": "2026-09-04T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Did the market office reply?"
+    },
+    {
+     "role": "assistant",
+     "content": "No reply yet to Wednesday's email."
+    },
+    {
+     "role": "user",
+     "content": "Ugh. Turns out they don't read that inbox any more. Pitches go through the council's online booking form, and it has to be in by Wednesday noon for the Saturday or you lose it."
+    },
+    {
+     "role": "assistant",
+     "content": "Understood: the council booking form, by Wednesday noon. This week's deadline has passed, though."
+    },
+    {
+     "role": "user",
+     "content": "Yeah, we've lost Saturday. We'll do the Sunday car-boot instead."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-04-1100",
+   "user": "davide",
+   "ts": "2026-09-04T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fai l'ordine dei vini all'Enoteca Gallo: 12 Barbera, 6 Dolcetto, 6 Arneis."
+    },
+    {
+     "role": "assistant",
+     "content": "Ecco: 'Buongiorno, ordine Trattoria del Borgo (cliente 318):\n- BAR-21 Barbera d'Asti 2023 × 12\n- DOL-08 Dolcetto d'Alba 2024 × 6\n- ARN-03 Roero Arneis 2024 × 6\nConsegna martedì mattina entro le 11. Grazie.' Lo invio?"
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, è proprio come lo vuole Gallo: codici, quantità e consegna il martedì entro le 11. D'ora in poi fallo sempre così."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-04-1700",
+   "user": "chiara",
+   "ts": "2026-09-04T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fammi il riepilogo ore della settimana per Lexis: manuale 14 ore, glossario 3, revisione 5."
+    },
+    {
+     "role": "assistant",
+     "content": "| Progetto | Ore |\n|---|---|\n| Manuale | 14 |\n| Glossario | 3 |\n| Revisione | 5 |\n| **Totale** | **22** |\n\nSettimana 31 agosto – 4 settembre."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, fallo sempre così: tabella, totale in fondo e la settimana sotto."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, d'ora in poi così."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-05-0815",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-05T08:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni. Il sabato mattina io affilo le lame della pialla e della sega, fino alle 10 sono di là."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene, Gianni."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-05-1700",
+   "user": "owen",
+   "ts": "2026-09-05T17:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Packing the van for the car-boot tomorrow, give me a loading list."
+    },
+    {
+     "role": "assistant",
+     "content": "1. Folding tables, flat against the side\n2. Gazebo and weights\n3. Plant trays, tall ones at the cab end\n4. Empty crates on top of the trays' rack\n5. Cash tin and card reader last, on the passenger seat"
+    },
+    {
+     "role": "user",
+     "content": "Spot on, that's exactly the order. Do it like that every week."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-06-1000",
+   "user": "davide",
+   "ts": "2026-09-06T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Domani come ogni lunedì alle 10 faccio l'inventario della cantina, poi pomeriggio libero."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon inventario!"
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-06-2000",
+   "user": "owen",
+   "ts": "2026-09-06T20:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Write the weekly summary for Nadia."
+    },
+    {
+     "role": "assistant",
+     "content": "Hi Nadia! Good weekend at the car-boot, we sold quite a lot, about £640 in total, the ferns went really well and the herbs too…"
+    },
+    {
+     "role": "user",
+     "content": "No, she wants it like this: totals per plant type, cash and card on separate lines, and sent tonight, Sunday, as a text."
+    },
+    {
+     "role": "assistant",
+     "content": "Hi Nadia — week to 6 Sep:\nSucculents £210\nHerbs £150\nFerns £280\nCash £260 / Card £380\nTotal £640"
+    },
+    {
+     "role": "user",
+     "content": "That's it. Send it."
+    },
+    {
+     "role": "assistant",
+     "content": "Sent."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-07-0830",
+   "user": "owen",
+   "ts": "2026-09-07T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Nadia's new number is 07700 900461 by the way, her old phone died."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-07-1200",
+   "user": "chiara",
+   "ts": "2026-09-07T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho di nuovo male alla spalla. Mi prenoti da Fisiomed per questa settimana?"
+    },
+    {
+     "role": "assistant",
+     "content": "Ho scritto alla mail di Fisiomed chiedendo una seduta per giovedì o venerdì pomeriggio."
+    },
+    {
+     "role": "user",
+     "content": "Ok, grazie."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-07-1600",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-07T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Buongiorno, fate anche cornici su misura?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, lavoriamo su misura: passi in laboratorio con le misure e le facciamo un preventivo."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-08-2300",
+   "user": "davide",
+   "ts": "2026-09-08T23:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "La lavastoviglie di casa dà errore E24, che faccio?"
+    },
+    {
+     "role": "assistant",
+     "content": "E24 di solito è lo scarico: pulisci il filtro sul fondo e controlla che il tubo di scarico non sia piegato."
+    },
+    {
+     "role": "user",
+     "content": "Provo domani."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-09-1030",
+   "user": "owen",
+   "ts": "2026-09-09T10:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Book the pitch for Saturday."
+    },
+    {
+     "role": "assistant",
+     "content": "Done through the council booking form at 10:25 — confirmation came back: pitch 14, Saturday 12 September."
+    },
+    {
+     "role": "user",
+     "content": "Brilliant. That's the way then: the form, by Wednesday noon."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-09-1200",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-09T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni. Il trasporto di Bertoni ora costa 40 euro a consegna."
+    },
+    {
+     "role": "assistant",
+     "content": "Potremmo fare l'ordine a Bertoni ogni due settimane invece che ogni settimana, così si paga un trasporto solo."
+    },
+    {
+     "role": "user",
+     "content": "Vediamo, ci penso."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-09-1900",
+   "user": "chiara",
+   "ts": "2026-09-09T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fisiomed ti ha risposto?"
+    },
+    {
+     "role": "assistant",
+     "content": "No, nessuna risposta alla mail di lunedì."
+    },
+    {
+     "role": "user",
+     "content": "Lo immaginavo. Scrivigli su WhatsApp alla reception: nome, cognome e due orari che mi vanno bene."
+    },
+    {
+     "role": "assistant",
+     "content": "Scritto su WhatsApp alla reception: 'Buongiorno, sono Chiara Fabbri, vorrei una seduta per la spalla: giovedì 10 dopo le 17 o venerdì 11 mattina.'"
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-09-2010",
+   "user": "chiara",
+   "ts": "2026-09-09T20:10:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Hanno risposto subito: venerdì 11 alle 9. Visto? Per Fisiomed d'ora in poi WhatsApp, la mail non la legge nessuno."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: per prenotare da Fisiomed scrivo su WhatsApp alla reception, con nome, cognome e due orari."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-10-0930",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-10T09:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Ilario. Gianni dice di ordinare a Bertoni 10 pannelli di abete lamellare 27 mm 300x60, e questa volta falli consegnare direttamente al cantiere della villa a Capannori, non qui."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato agli ordini di Bertoni alle 9:33, oggetto 'Ordine cliente 2208':\n- Abete lamellare 27 mm 300x60 × 10\nConsegna lunedì 14 al cantiere della villa a Capannori."
+    },
+    {
+     "role": "user",
+     "content": "Ok."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-10-1800",
+   "user": "davide",
+   "ts": "2026-09-10T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Turni della settimana dal 14: Luca lunedì e martedì, Sofia da mercoledì a venerdì, Ahmed e io il weekend."
+    },
+    {
+     "role": "assistant",
+     "content": "Turni settimana 14–20 settembre:\nLun: Luca\nMar: Luca\nMer: Sofia\nGio: Sofia\nVen: Sofia\nSab: Ahmed, Davide\nDom: Ahmed, Davide\n\nVuoi che lo mandi anche per email a tutti, così resta traccia?"
+    },
+    {
+     "role": "user",
+     "content": "Mah, vediamo. Intanto mandalo nel gruppo."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato nel gruppo."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-11-0930",
+   "user": "davide",
+   "ts": "2026-09-11T09:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pulito il filtro e controllato il tubo: ancora E24."
+    },
+    {
+     "role": "assistant",
+     "content": "Allora potrebbe essere la pompa di scarico: meglio chiamare un tecnico."
+    },
+    {
+     "role": "user",
+     "content": "Uffa."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-11-1100",
+   "user": "chiara",
+   "ts": "2026-09-11T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fatta la seduta, 45 euro. Mi hanno detto di farne altre due."
+    },
+    {
+     "role": "assistant",
+     "content": "Bene. Quando vuoi le prenoto."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-11-1730",
+   "user": "chiara",
+   "ts": "2026-09-11T17:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Riepilogo ore Lexis: manuale 12, revisione 6."
+    },
+    {
+     "role": "assistant",
+     "content": "| Progetto | Ore |\n|---|---|\n| Manuale | 12 |\n| Revisione | 6 |\n| **Totale** | **18** |\n\nSettimana 7 – 11 settembre."
+    },
+    {
+     "role": "user",
+     "content": "Grazie."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-11-1800",
+   "user": "owen",
+   "ts": "2026-09-11T18:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Loading list for tomorrow — and this week add an extra crate of herbs for the school fair stall Nadia's doing."
+    },
+    {
+     "role": "assistant",
+     "content": "1. Folding tables\n2. Gazebo and weights\n3. Plant trays, tall ones at the cab end, plus the extra herb crate for the school fair\n4. Empty crates on top\n5. Cash tin and card reader last, on the passenger seat"
+    },
+    {
+     "role": "user",
+     "content": "Good."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-12-2030",
+   "user": "davide",
+   "ts": "2026-09-12T20:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "La stampante della cucina non riceve più le comande dal palmare! In pieno servizio!"
+    },
+    {
+     "role": "assistant",
+     "content": "Prova a reinstallare il driver della stampante dal computer della cassa."
+    },
+    {
+     "role": "user",
+     "content": "Fatto, niente, non stampa ancora."
+    },
+    {
+     "role": "assistant",
+     "content": "Allora spegnila, aspetta 30 secondi e riaccendila tenendo premuto il tasto FEED finché non stampa la pagina di rete; poi sul palmare riseleziona la stampante."
+    },
+    {
+     "role": "user",
+     "content": "Funziona! Ok, se ricapita si fa così, il driver lasciamolo stare."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-13-1600",
+   "user": "chiara",
+   "ts": "2026-09-13T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Giro sui colli con Paolo, siamo arrivati a San Luca a piedi."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella domenica!"
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-13-2030",
+   "user": "owen",
+   "ts": "2026-09-13T20:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Summary for Nadia please."
+    },
+    {
+     "role": "assistant",
+     "content": "Hi Nadia — week to 13 Sep:\nSucculents £180\nHerbs £230\nFerns £240\nCash £300 / Card £350\nTotal £650"
+    },
+    {
+     "role": "user",
+     "content": "Lovely, send."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-14-1500",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-14T15:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta, preventivo per il signor Bini: libreria in noce 1.500 euro, consegna 4 settimane."
+    },
+    {
+     "role": "assistant",
+     "content": "Preventivo per il sig. Bini: libreria in noce, 1.500 euro + IVA 22 % (330 euro), totale 1.830 euro. Validità 30 giorni. Consegna in 4 settimane dall'acconto. Falegnameria Ricci"
+    },
+    {
+     "role": "user",
+     "content": "Perfetto, mandalo."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-14-1700",
+   "user": "davide",
+   "ts": "2026-09-14T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Il tecnico della lavastoviglie viene il 2 ottobre, fino ad allora piatti a mano."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato: tecnico della lavastoviglie il 2 ottobre."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-16-1000",
+   "user": "chiara",
+   "ts": "2026-09-16T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fattura Lexis per il glossario, 300 euro più IVA, numero d'ordine 5590. Questa volta mettici in copia anche Marco, il loro project manager, che deve approvarla lui."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviata all'amministrazione di Lexis, oggetto 'Fattura 15/2026 – PO 5590', PDF allegato, Marco in copia."
+    },
+    {
+     "role": "user",
+     "content": "Perfetto."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-16-0930",
+   "user": "owen",
+   "ts": "2026-09-16T09:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pitch for Saturday?"
+    },
+    {
+     "role": "assistant",
+     "content": "Booked on the council form at 9:28: pitch 14, Saturday 19 September."
+    },
+    {
+     "role": "user",
+     "content": "Ta."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-16-1830",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-16T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni, fammi il riepilogo della giornata, oggi ero fuori dai clienti."
+    },
+    {
+     "role": "assistant",
+     "content": "Lavori finiti: armadio Galli montato; due cornici consegnate.\nIn corso: libreria Bini (taglio fatto), scala della villa di Capannori.\nDa ordinare: colla vinilica, 2 pannelli MDF 10 mm."
+    },
+    {
+     "role": "user",
+     "content": "Bravo, così va benissimo: finiti, in corso, da ordinare. Fallo sempre così la sera."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-17-1015",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-17T10:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni, ordine a Bertoni: 2 MDF 10 mm 280x207 e 3 multistrato betulla 18 mm."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato agli ordini di Bertoni alle 10:17, oggetto 'Ordine cliente 2208':\n- MDF 10 mm 280x207 × 2\n- Multistrato betulla 18 mm 250x122 × 3\nConsegna lunedì 21 qui in laboratorio."
+    },
+    {
+     "role": "user",
+     "content": "Bene."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-17-1800",
+   "user": "davide",
+   "ts": "2026-09-17T18:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Turni dal 21: Luca lunedì, martedì e mercoledì, Sofia giovedì e venerdì, Ahmed e io il weekend."
+    },
+    {
+     "role": "assistant",
+     "content": "Turni settimana 21–27 settembre:\nLun: Luca\nMar: Luca\nMer: Luca\nGio: Sofia\nVen: Sofia\nSab: Ahmed, Davide\nDom: Ahmed, Davide"
+    },
+    {
+     "role": "user",
+     "content": "Ok, mandalo."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato nel gruppo."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-18-1100",
+   "user": "davide",
+   "ts": "2026-09-18T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ordine Gallo: 12 Barbera e 12 Arneis."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviato: 'Buongiorno, ordine Trattoria del Borgo (cliente 318):\n- BAR-21 Barbera d'Asti 2023 × 12\n- ARN-03 Roero Arneis 2024 × 12\nConsegna martedì mattina entro le 11. Grazie.'"
+    },
+    {
+     "role": "user",
+     "content": "Bene."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-18-1715",
+   "user": "chiara",
+   "ts": "2026-09-18T17:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Riepilogo ore Lexis: manuale 10, glossario 4, revisione 4."
+    },
+    {
+     "role": "assistant",
+     "content": "| Progetto | Ore |\n|---|---|\n| Manuale | 10 |\n| Glossario | 4 |\n| Revisione | 4 |\n| **Totale** | **18** |\n\nSettimana 14 – 18 settembre."
+    },
+    {
+     "role": "user",
+     "content": "Ok."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-18-1830",
+   "user": "owen",
+   "ts": "2026-09-18T18:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Loading list for tomorrow."
+    },
+    {
+     "role": "assistant",
+     "content": "1. Folding tables\n2. Gazebo and weights\n3. Plant trays, tall ones at the cab end\n4. Empty crates on top\n5. Cash tin and card reader last, on the passenger seat"
+    },
+    {
+     "role": "user",
+     "content": "No herb crate this time, right?"
+    },
+    {
+     "role": "assistant",
+     "content": "Right, that was only for the school fair."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-20-1900",
+   "user": "owen",
+   "ts": "2026-09-20T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Summary for Nadia."
+    },
+    {
+     "role": "assistant",
+     "content": "Hi Nadia — week to 20 Sep:\nSucculents £200\nHerbs £170\nFerns £250\nCash £240 / Card £380\nTotal £620\n\nShall I text it now?"
+    },
+    {
+     "role": "user",
+     "content": "Hold on, change of plan from now on: Nadia does the books on Monday mornings now. Send it Monday by 9 instead, as a spreadsheet attached to an email, not a text, and take the £35 pitch fee off the total."
+    },
+    {
+     "role": "assistant",
+     "content": "Got it: from now on, Monday by 9, an email to Nadia with a spreadsheet — one row per plant type, cash and card columns, the £35 pitch fee deducted, net total at the bottom. I'll send this week's tomorrow morning."
+    },
+    {
+     "role": "user",
+     "content": "Yes."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-21-0900",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-21T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni. Ha chiamato Bertoni: da questa settimana gli ordini non si mandano più per email, si fanno sul loro portale clienti col codice 2208, e la chiusura è il mercoledì a mezzogiorno, non più il giovedì. La consegna resta il lunedì."
+    },
+    {
+     "role": "assistant",
+     "content": "Capito: da questa settimana gli ordini Bertoni sul portale clienti con il codice 2208, entro mercoledì a mezzogiorno, consegna il lunedì."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-21-0850",
+   "user": "owen",
+   "ts": "2026-09-21T08:50:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Did the summary go to Nadia?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sent at 8:40: spreadsheet attached, net total £585 after the £35 pitch fee."
+    },
+    {
+     "role": "user",
+     "content": "Great, she says it's much easier for her like that."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-21-1300",
+   "user": "davide",
+   "ts": "2026-09-21T13:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Inventario fatto, manca una cassa di Arneis, la riordino venerdì."
+    },
+    {
+     "role": "assistant",
+     "content": "Segnato."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-22-0930",
+   "user": "chiara",
+   "ts": "2026-09-22T09:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Prenotami la seconda seduta da Fisiomed, va bene giovedì o venerdì mattina."
+    },
+    {
+     "role": "assistant",
+     "content": "Scritto su WhatsApp alla reception: 'Buongiorno, sono Chiara Fabbri, vorrei la seconda seduta per la spalla: giovedì 24 o venerdì 25 mattina.'"
+    },
+    {
+     "role": "user",
+     "content": "Già risposto: giovedì 24 alle 10. Grazie."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-23-1030",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-23T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Ilario, ordine per Bertoni: 4 pannelli di rovere 20 mm 250x60."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto sul portale clienti di Bertoni alle 10:35, codice 2208: rovere 20 mm 250x60 × 4, conferma n. 7781, consegna lunedì 28."
+    },
+    {
+     "role": "user",
+     "content": "Gianni dice ok."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-23-1100",
+   "user": "owen",
+   "ts": "2026-09-23T11:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Pitch for Saturday, same as usual."
+    },
+    {
+     "role": "assistant",
+     "content": "Booked on the council form at 10:58: pitch 14, Saturday 26 September."
+    },
+    {
+     "role": "user",
+     "content": "Cheers."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-23-1845",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-23T18:45:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Gianni, riepilogo di oggi."
+    },
+    {
+     "role": "assistant",
+     "content": "Lavori finiti: libreria Bini.\nIn corso: scala della villa di Capannori, tavolo Ferretti.\nDa ordinare: niente."
+    },
+    {
+     "role": "user",
+     "content": "Ok."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-24-2100",
+   "user": "davide",
+   "ts": "2026-09-24T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stampante della cucina di nuovo bloccata."
+    },
+    {
+     "role": "assistant",
+     "content": "Spegnila, aspetta 30 secondi, riaccendila tenendo premuto FEED fino alla pagina di rete, poi riseleziona la stampante dal palmare."
+    },
+    {
+     "role": "user",
+     "content": "Ripartita. Grande."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-25-1100",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-25T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Avete la cera d'api per mobili?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sì, barattolo da 500 ml a 14 euro, è sullo scaffale vicino al banco."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-25-1900",
+   "user": "owen",
+   "ts": "2026-09-25T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Rain forecast for tomorrow, I'm bringing the big tarp."
+    },
+    {
+     "role": "assistant",
+     "content": "Good call."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-25-2100",
+   "user": "chiara",
+   "ts": "2026-09-25T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Cena da mia sorella, mi ha costretta a provare il suo tiramisù al pistacchio."
+    },
+    {
+     "role": "assistant",
+     "content": "Com'era?"
+    },
+    {
+     "role": "user",
+     "content": "Buonissimo, purtroppo."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-26-1600",
+   "user": "davide",
+   "ts": "2026-09-26T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera matrimonio da 60 persone, tutta la sala riservata."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo!"
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-27-2100",
+   "user": "owen",
+   "ts": "2026-09-27T21:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Best day of the season, sold out of ferns by eleven."
+    },
+    {
+     "role": "assistant",
+     "content": "Brilliant! I'll send Nadia the spreadsheet tomorrow by 9."
+    },
+    {
+     "role": "user",
+     "content": "Ta."
+    }
+   ]
+  },
+  {
+   "id": "owen-2026-09-28-0855",
+   "user": "owen",
+   "ts": "2026-09-28T08:55:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Summary gone?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sent at 8:35: spreadsheet attached, net total £710 after the £35 pitch fee."
+    },
+    {
+     "role": "user",
+     "content": "Good."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-28-1100",
+   "user": "chiara",
+   "ts": "2026-09-28T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mi mandi al commercialista le fatture di settembre?"
+    },
+    {
+     "role": "assistant",
+     "content": "Inviate al dottor Lenzi le tre fatture di settembre, tre PDF allegati alla mail."
+    },
+    {
+     "role": "user",
+     "content": "Mi ha appena richiamata: le vuole in un unico file zip, ogni PDF chiamato numero_cliente, tipo '14_Lexis.pdf', ed entro il 5 del mese dopo. Rifalla così."
+    },
+    {
+     "role": "assistant",
+     "content": "Rifatta: un solo zip 'Fatture_settembre_2026.zip' con 14_Lexis.pdf, 15_Lexis.pdf e 16_Studio Ferri.pdf, inviato al dottor Lenzi."
+    },
+    {
+     "role": "user",
+     "content": "Ok, adesso va bene."
+    }
+   ]
+  },
+  {
+   "id": "davide-2026-09-29-1030",
+   "user": "davide",
+   "ts": "2026-09-29T10:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Scrivi la conferma per la prenotazione Marchetti, sabato 3 ottobre, 14 persone alle 20."
+    },
+    {
+     "role": "assistant",
+     "content": "'Gentile signor Marchetti, confermiamo la prenotazione per 14 persone sabato 3 ottobre alle 20. A presto, Trattoria del Borgo.'"
+    },
+    {
+     "role": "user",
+     "content": "Per i gruppi sopra le 10 persone la conferma si scrive così: ci metti il menu fisso da 35 euro a testa, chiedi la caparra di 100 euro con l'IBAN del locale e chiedi conferma del numero esatto entro due giorni prima. Rifalla."
+    },
+    {
+     "role": "assistant",
+     "content": "'Gentile signor Marchetti, confermiamo la prenotazione per 14 persone sabato 3 ottobre alle 20, con il nostro menu fisso da 35 euro a persona. Per bloccare il tavolo le chiediamo una caparra di 100 euro sull'IBAN del locale (IT00 X000 0000 0000 0000 0000 000) e la conferma del numero esatto entro giovedì 1 ottobre. A presto, Trattoria del Borgo.'"
+    },
+    {
+     "role": "user",
+     "content": "Così. Mandala."
+    }
+   ]
+  },
+  {
+   "id": "chiara-2026-09-29-1500",
+   "user": "chiara",
+   "ts": "2026-09-29T15:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Fattura Lexis per la revisione, 450 euro più IVA, numero d'ordine 5612."
+    },
+    {
+     "role": "assistant",
+     "content": "Pronta: oggetto 'Fattura 17/2026 – PO 5612', PDF allegato, all'amministrazione. Metto in copia Marco come l'altra volta?"
+    },
+    {
+     "role": "user",
+     "content": "No, quella era solo per il glossario. Mandala normale."
+    },
+    {
+     "role": "assistant",
+     "content": "Inviata all'amministrazione, senza copie."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-29-1600",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-29T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Marta, preventivo per i Ferretti: tavolo in castagno 2,20 metri, 1.900 euro, consegna 5 settimane."
+    },
+    {
+     "role": "assistant",
+     "content": "Preventivo per la famiglia Ferretti: tavolo in castagno 220 cm, 1.900 euro + IVA 22 % (418 euro), totale 2.318 euro. Validità 30 giorni. Consegna in 5 settimane dall'acconto. Falegnameria Ricci"
+    },
+    {
+     "role": "user",
+     "content": "Perfetto."
+    }
+   ]
+  },
+  {
+   "id": "falegnameria_ricci-2026-09-30-0915",
+   "user": "falegnameria_ricci",
+   "ts": "2026-09-30T09:15:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Ilario, Gianni dice di ordinare 2 pannelli MDF 10 mm."
+    },
+    {
+     "role": "assistant",
+     "content": "Fatto sul portale clienti di Bertoni alle 9:18, codice 2208: MDF 10 mm 280x207 × 2, conferma n. 7840, consegna lunedì 5 ottobre."
+    },
+    {
+     "role": "user",
+     "content": "Ok."
+    }
+   ]
+  }
+ ]
+}

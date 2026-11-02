@@ -41,7 +41,8 @@ Output JSON only: {"matches": [{"n": 1, "gold": "<gold id>" | "none"}]}"""
 SUPPORT_SYSTEM = """You check whether a thought an AI agent drew is backed by the episodes it cites.
 "yes": the episodes clearly show what the thought says (an insight or opinion may draw a reasonable conclusion or \
 suggestion from them; a question may ask about a gap they leave; a self thought — what the agent learned about itself — \
-may rest on its replies, "ME:", and what the person said next, "THEY:"). "partly": some of it goes beyond the episodes. "no": \
+may rest on its replies, "ME:", and what the person said next, "THEY:"; a procedure — how it does a task — on a \
+teaching, a correction or an explicit approval there). "partly": some of it goes beyond the episodes. "no": \
 the episodes do not show it, or it states more than they give (a judgement of someone's character, a cause or a habit \
 they do not show, a certainty they do not have).
 Output JSON only: {"verdicts": [{"n": 1, "support": "yes" | "partly" | "no", "why": "<short>"}]}"""
@@ -147,7 +148,7 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
 def rescore(path: str) -> None:
     """Judge a saved run again (RESCORE=<result.json>): the snapshots are kept, only the judges run (no ingest, no passes)."""
     r = json.loads(Path(path).read_text())
-    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json", "procedures_gold.json") if (DATASET / f).exists()).read_text())
     cps = list(r["checkpoints"])
     first_ids = {t["id"] for ts_ in r["checkpoints"][cps[0]]["thoughts"].values() for t in ts_}
     for i, cp in enumerate(cps):
@@ -167,7 +168,7 @@ def main() -> None:
     if os.getenv("RESCORE"):
         return rescore(os.environ["RESCORE"])
     conv = json.loads((DATASET / "conversations.json").read_text())
-    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json", "procedures_gold.json") if (DATASET / f).exists()).read_text())
     reuse = os.getenv("REUSE_RUN")  # an earlier run's memories, already extracted: only the nightly passes again
     system = ServiceSystem()
     if reuse:
