@@ -15,13 +15,14 @@
  * person already took is theirs; trust shown counts as much as a mistake. v7 (8.12d): the kind "procedure" — how I do a
  * recurring task, learned from an outcome. v8 / self.v1: two calls — thoughts about the world (insights, questions,
  * opinions) and lessons about myself (self notes, procedures): in one call the second cost the first two points (dev_thoughts
- * 11.8 / 14 against 13.7 with v6).
+ * 11.8 / 14 against 13.7 with v6). v9 / self.v2: how a task is done is a procedure (the lessons' call), not an insight; a
+ * correction of how I did a task is a procedure, not a lesson about me.
  */
 import { z } from 'zod';
 
-export const THOUGHTS_VERSION = 'thoughts.v8';
+export const THOUGHTS_VERSION = 'thoughts.v9';
 /** The lessons about myself (self notes, procedures), the second call of the pass (8.12b, 8.12d). */
-export const SELF_VERSION = 'self.v1';
+export const SELF_VERSION = 'self.v2';
 /** Entity memories: the same versions with the entity voice. */
 export const ENTITY_THOUGHTS_SUFFIX = '+entity';
 
@@ -58,7 +59,8 @@ Not a thought: a habit or routine (another pass finds those — but what a habit
 insight); a fact or a plan; something one episode alone shows (an insight or opinion needs episodes on at least two \
 days); what someone already concluded themselves (it is in the episodes or in KNOW); a judgement of a person's character \
 ("Luca is lazy", "she is insecure") — think about situations and actions, never label people; anything from the \
-assistant's guesses; a reworded thought I already hold; musings about myself (another call does those); a conclusion \
+assistant's guesses; a reworded thought I already hold; musings about myself or how a task is to be done (another call \
+does those); a conclusion \
 the person drew or a measure they took themselves ("since then I turn the notifications off") — that is theirs.
 
 ${VERDICTS('thought', 'the E-numbers that back it', 'An insight or an opinion needs at least one NEW (*) episode and episodes on at least two different days. A question may rest on older episodes alone when what they awaited is still unanswered and its time has come (as of TODAY).')}
@@ -73,6 +75,8 @@ about myself I already hold (T-numbers, kind, the R- and E-numbers behind them),
 restate them), and the lessons I was told to FORGET or that STOPPED holding.
 
 A LESSON is what I learned about myself as an agent from how things went — never from how I feel about myself:
+- First ask: is it about HOW a task is done (the way to order, write, book, prepare something)? Then it is a \
+"procedure", even when they corrected me — one correction is enough. Only what is about ME across tasks is "self".
 - "self": a mistake I made and what to do about it (they corrected me, I said done what was only planned, I forgot what \
 they had told me), what works and what does not with a person (short or long answers, advice asked or unasked, tone, \
 timing — shown by how they reacted), a promise I made and what became of it, how a person deals with me (trusts me \
