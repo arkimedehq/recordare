@@ -748,6 +748,35 @@ ingested memory (`extract.v19` only, 5 calls); ≈ 0.04 USD in all (agent, judge
 - Stays **off by default** (`card` per request): to be measured with a less tool-eager model or a voice agent, where
   saving a tool round matters.
 
+### Procedures — how the agent does a recurring task (D53, WORK_PLAN 8.12d, 2026-11-02, DeepSeek direct off-peak)
+
+New dev set `dataset_dev_procedures` (4 memories — it / it / en and one entity, a joinery —, 64 sessions in September,
+two checkpoints): 16 expected procedures (taught or corrected, explicitly approved, a way that failed and one that then
+worked; two revised in mid-month, their old forms expected at the first checkpoint and retired by the second) and 13 traps
+(a taste, the assistant's suggestion nobody confirmed, an instruction for one occasion, the person's habit, a bare fact, a
+way that failed and was never fixed, the superseded form still current). Harness `thought_eval.py` (gold
+`procedures_gold.json`), the extraction once, the nightly passes re-run from a clean slate.
+
+| version | procedures (of 14) | revised retired | traps | false |
+|---|---|---|---|---|
+| v7 first cut (a procedure restating any note dropped) | 10 | 2/2 | 0 | 0 |
+| **v7** (checked against my thoughts only; separate caps), 3 runs | **11, 10, 11** | 2/2, 1/2, 1/2 | 1, 1, 0 | 0, 0, 1 |
+| v8 + self.v1 (two calls: the world, the lessons about myself), 3 runs | 10, 8, 9 | 2/2 ×3 | 1, 0, 1 | 0 ×3 |
+| v9 + self.v2 (how a task is done is a procedure), 3 runs | 7, 10, 9 | 2/2 ×3 | 2, 0, 1 | 0 ×3 |
+
+- The two-call split was measured because adding procedures to the one call cost the world thoughts (dev_thoughts v7:
+  11, 10, 14, 12, 12 — mean 11.8 — against v6's 14, 14, 13). Split, the thoughts were 12, 13, 12 and 13, 12, 12 (12.3),
+  half a point within the noise, while the procedures lost two and the self notes gained traps (3 a run in four of five
+  runs, against 0–1): **v7, one call, kept** (cheaper by a call a night). Self notes with v7: 13, 13 of 15.
+- Missed most: the ones whose correction the extraction had already stored as a plain note of what the person wants —
+  fixed in the first cut by checking a procedure against the thoughts only —, and two of Davide's (the kitchen printer,
+  the group bookings).
+- Harness fixes on the way: in reuse mode the evaluator now resets every pass's watermark; the judge's empty completions
+  came from its own reasoning using up `max_tokens` on long lists — more room (8000, then 16000) and ten items a call.
+  Checked by rescoring 11 saved runs with the new judge: 9 identical, two differing by the judge's own run-to-run
+  variance (the same run rescored again gave its original numbers) — no regression.
+- Cost: ≈ 0.20 USD the full ingest, ≈ 0.03 a re-run of the passes, judges included.
+
 ### Initiatives — what the agent says on its own (D53, WORK_PLAN 8.12c, 2026-11-02, DeepSeek direct off-peak)
 
 New dev set `dataset_dev_initiatives` (4 memories — it / it / en and one entity, a bakery —, 54 sessions in September,

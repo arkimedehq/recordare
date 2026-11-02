@@ -41,7 +41,8 @@ Output JSON only: {"matches": [{"n": 1, "gold": "<gold id>" | "none"}]}"""
 SUPPORT_SYSTEM = """You check whether a thought an AI agent drew is backed by the episodes it cites.
 "yes": the episodes clearly show what the thought says (an insight or opinion may draw a reasonable conclusion or \
 suggestion from them; a question may ask about a gap they leave; a self thought — what the agent learned about itself — \
-may rest on its replies, "ME:", and what the person said next, "THEY:"). "partly": some of it goes beyond the episodes. "no": \
+may rest on its replies, "ME:", and what the person said next, "THEY:"; a procedure — how it does a task — on a \
+teaching, a correction or an explicit approval there). "partly": some of it goes beyond the episodes. "no": \
 the episodes do not show it, or it states more than they give (a judgement of someone's character, a cause or a habit \
 they do not show, a certainty they do not have).
 Output JSON only: {"verdicts": [{"n": 1, "support": "yes" | "partly" | "no", "why": "<short>"}]}"""
@@ -77,12 +78,17 @@ def label(t: dict) -> str:
 
 def ask(system: str, msg: str) -> dict:
     """A judge call; a truncated or malformed answer is tried once more with room to spare, then counts as no answer."""
-    for max_tokens in (4000, 8000):
+    # The judge model reasons before answering and its reasoning counts in max_tokens: on long lists 4000 left nothing for
+    # the answer (empty completions). More room, the same judge.
+    for max_tokens in (8000, 16000):
         try:
             return json.loads(chat([{"role": "system", "content": system}, {"role": "user", "content": msg}], "judge", json_mode=True, max_tokens=max_tokens))
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"  ! judge answer unusable ({e.__class__.__name__}), {'retrying' if max_tokens == 4000 else 'giving up'}", flush=True)
+            print(f"  ! judge answer unusable ({e.__class__.__name__}), {'retrying' if max_tokens == 8000 else 'giving up'}", flush=True)
     return {}
+
+
+CHUNK = 10
 
 
 def judged(system: str, head: str, items: list[str], key: str, numbered: str) -> dict[int, dict]:
@@ -95,7 +101,11 @@ def judged(system: str, head: str, items: list[str], key: str, numbered: str) ->
             return {v.get("n"): v for v in out.get(key, []) if isinstance(v, dict)}
         mid = (lo + hi) // 2
         return {**go(lo, mid), **go(mid, hi)}
-    return go(0, len(items))
+    # Ten at a time from the start: a long list is where the judge ran out of room.
+    out: dict[int, dict] = {}
+    for lo in range(0, len(items), CHUNK):
+        out.update(go(lo, min(lo + CHUNK, len(items))))
+    return out
 
 
 def match(user: str, gold: dict, thoughts: list[dict], held: set[str]) -> list[str]:
@@ -147,7 +157,7 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int, first_ids: set
 def rescore(path: str) -> None:
     """Judge a saved run again (RESCORE=<result.json>): the snapshots are kept, only the judges run (no ingest, no passes)."""
     r = json.loads(Path(path).read_text())
-    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json", "procedures_gold.json") if (DATASET / f).exists()).read_text())
     cps = list(r["checkpoints"])
     first_ids = {t["id"] for ts_ in r["checkpoints"][cps[0]]["thoughts"].values() for t in ts_}
     for i, cp in enumerate(cps):
@@ -167,7 +177,7 @@ def main() -> None:
     if os.getenv("RESCORE"):
         return rescore(os.environ["RESCORE"])
     conv = json.loads((DATASET / "conversations.json").read_text())
-    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json") if (DATASET / f).exists()).read_text())
+    gold = json.loads(next(DATASET / f for f in ("thoughts_gold.json", "self_gold.json", "procedures_gold.json") if (DATASET / f).exists()).read_text())
     reuse = os.getenv("REUSE_RUN")  # an earlier run's memories, already extracted: only the nightly passes again
     system = ServiceSystem()
     if reuse:

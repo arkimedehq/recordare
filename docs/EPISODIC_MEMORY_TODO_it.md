@@ -870,7 +870,19 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   (`initiative.v2`), una ricerca fatta che ritira la sua domanda. Deciso misurando (`dataset_dev_initiatives`, 19–20 / 22,
   ≈ 95 % di precisione, RESULTS.md): la domanda attende due giorni dopo un piano (le persone raccontano da sé il giorno
   dopo) e non si fa se hanno raccontato com'è andata; una richiesta e il piano che è anche essa lo dicono una volta (la
-  richiesta); nessuna ricerca per una domanda sull'esito di un piano o sulle mie azioni.
+  richiesta); nessuna ricerca per una domanda sull'esito di un piano o sulle mie azioni; si chiede solo di un piano detto
+  prima del suo giorno (una decisione datata il giorno in cui è presa non è un appuntamento — la prima iniziativa dal
+  vivo); una richiesta con un orario lo conserva. **Recordare fa il suo lavoro, qualunque cosa abbiano fatto gli
+  strumenti dell'ospite** (maintainer, 2026-11-02): non conosce le automazioni dell'ospite (una persona può usare
+  qualsiasi client), quindi un promemoria che anche l'ospite ha programmato tocca all'ospite deduplicarlo — spegnendo
+  il proprio, o scartando il doppione che vede.
+- **Costruito finora** (2026-11-02, passo d): le procedure come tipo `procedure` della passata dei pensieri
+  (`thoughts.v7`): come l'agente svolge un compito ricorrente, da un esito sulle sue risposte (insegnato, corretto,
+  approvato esplicitamente), una correzione basta, riviste quando il modo cambia; "come lo faccio (imparato)" nel
+  contesto di memoria. Dev set `dataset_dev_procedures`: 11, 10, 11 su 14, quelle riviste ritirate, al massimo una falsa
+  a run (RESULTS.md). Deciso misurando: una sola chiamata per tutti i tipi — una seconda chiamata per le lezioni su di me
+  ha dato ai pensieri sul mondo mezzo punto (nel rumore) e alle procedure è costata due punti e più trappole nelle note
+  di sé; limiti separati (quattro sul mondo, quattro su di me).
 
 ## Questioni aperte (da discutere)
 

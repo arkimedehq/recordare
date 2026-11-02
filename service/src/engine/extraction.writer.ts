@@ -782,9 +782,11 @@ export class ExtractionWriter {
         await this.tx.query(`UPDATE intents SET status = $2, updated_at = now() WHERE id = $1`, [hit.id, i.done ? 'done' : 'cancelled']);
         continue;
       }
-      const due = toStored(i.due ?? null, 'day', this.ctx.timezone);
-      if (!due.at || i.due === null || i.due === undefined) { this.drop('intent', 'no_date'); continue; }
-      // Due at the local midnight of its day: the sweep moves it past the quiet hours, to the morning.
+      // With a time it is due then; a day alone, at the local midnight (the sweep moves it past the quiet hours).
+      const day = toStored(i.due ?? null, 'day', this.ctx.timezone);
+      if (!day.at || i.due === null || i.due === undefined) { this.drop('intent', 'no_date'); continue; }
+      const time = (i.due ?? '').match(/T(\d{2}):(\d{2})/);
+      const due = { at: time ? new Date(day.at.getTime() + (Number(time[1]) * 60 + Number(time[2])) * 60_000) : day.at };
       await this.tx.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at)
          VALUES ($1, $2, $3, $4, $5, $6, $6::timestamptz + interval '1 day') ON CONFLICT (message_id, kind) WHERE message_id IS NOT NULL DO NOTHING`,

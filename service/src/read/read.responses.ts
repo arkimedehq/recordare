@@ -10,8 +10,9 @@ import { z } from 'zod';
 import { QUALITY_PROFILES } from '../engine/quality-profile';
 
 const PRECISIONS = ['minute', 'day', 'month', 'year', 'approximate', 'unknown'] as const;
-/** From `insight` on: the agent's own thoughts (D53); `self` = what it learned about itself as an agent (8.12b). */
-const NOTE_CATEGORIES = ['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint', 'insight', 'question', 'opinion', 'self'] as const;
+/** From `insight` on: the agent's own thoughts (D53); `self` = what it learned about itself as an agent (8.12b); `procedure` = how it does a
+ * recurring task (8.12d). */
+const NOTE_CATEGORIES = ['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint', 'insight', 'question', 'opinion', 'self', 'procedure'] as const;
 const NOTE_CHANGES = ['created', 'updated', 'corrected', 'confirmed', 'forgotten', 'retired'] as const;
 const NOTE_STATUSES = ['current', 'superseded', 'corrected'] as const;
 export type NoteCategory = (typeof NOTE_CATEGORIES)[number];

@@ -1,0 +1,196 @@
+{
+ "_note": "Procedures (kind `procedure`) expected by a checkpoint (by), the superseded form of a revised one that must be retired by checkpoint 2 (retired_at), and procedures that must not appear (traps). The judge sees `desc` only; `why` explains the trap (its trap kind in brackets).",
+ "checkpoints": [
+  "2026-09-15T22:00:00+02:00",
+  "2026-09-30T22:00:00+02:00"
+ ],
+ "memories": {
+  "chiara": {
+   "expected": [
+    {
+     "id": "c-lexis-invoice",
+     "kind": "procedure",
+     "desc": "When I send an invoice to Lexis: their purchase-order number in the e-mail subject, the invoice only as an attached PDF, addressed to Lexis's accounts department (not the project manager) — Chiara taught it on Sep 1 (without the PO number they do not pay)",
+     "by": 1
+    },
+    {
+     "id": "c-hours",
+     "kind": "procedure",
+     "desc": "When I prepare the weekly hours summary for Lexis: a table with one row per project, the total at the bottom and the week's dates underneath — Chiara approved it explicitly on Sep 4 ('fallo sempre così')",
+     "by": 1
+    },
+    {
+     "id": "c-physio",
+     "kind": "procedure",
+     "desc": "When I book a session at Fisiomed (the physio): write to the reception on WhatsApp with Chiara's name and surname and two slots that suit her — e-mail got no answer (Sep 7–9), WhatsApp was answered at once (Sep 9, again Sep 22)",
+     "by": 1
+    },
+    {
+     "id": "c-accountant",
+     "kind": "procedure",
+     "desc": "When I send the month's invoices to the accountant (dottor Lenzi): one single zip file, each PDF named number_client (e.g. '14_Lexis.pdf'), by the 5th of the following month — separate PDFs were refused (Sep 28)",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "c-short",
+     "desc": "Keep messages to Chiara to two lines (as a procedure)",
+     "why": "her taste about messages (Sep 3), a preference, not how to do a task [1]"
+    },
+    {
+     "id": "c-marco-cc",
+     "desc": "When I invoice Lexis, put Marco (their project manager) in copy",
+     "why": "a one-off instruction for the glossary invoice (Sep 16); on Sep 29 she said it was only for that one [3]"
+    },
+    {
+     "id": "c-price",
+     "desc": "When booking the physio: a session at Fisiomed costs 45 euros (as a procedure)",
+     "why": "a fact (Sep 11) written as a procedure [5]"
+    }
+   ]
+  },
+  "davide": {
+   "expected": [
+    {
+     "id": "d-shifts",
+     "kind": "procedure",
+     "desc": "When I write the weekly shift message for the staff group: one line per day, Monday to Sunday, with who works that day (not one line per person) — Davide corrected it on Sep 3",
+     "by": 1
+    },
+    {
+     "id": "d-wine",
+     "kind": "procedure",
+     "desc": "When I order wine from Enoteca Gallo: the customer number (318), one line per wine with its code and quantity, delivery on Tuesday morning by 11 — Davide approved it explicitly on Sep 4 ('d'ora in poi fallo sempre così')",
+     "by": 1
+    },
+    {
+     "id": "d-printer",
+     "kind": "procedure",
+     "desc": "When the kitchen printer stops receiving orders from the handhelds: switch it off, wait 30 seconds, switch it on holding FEED until the network page prints, then reselect the printer on the handheld — reinstalling the driver did not work (Sep 12); the reset worked on Sep 12 and Sep 24",
+     "by": 1
+    },
+    {
+     "id": "d-groups",
+     "kind": "procedure",
+     "desc": "When I write the confirmation for a booking of more than 10 people: include the fixed menu at 35 euros a head, ask for a 100-euro deposit to the restaurant's IBAN and for the exact number two days before — Davide taught it on Sep 29",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "d-email",
+     "desc": "When I send the shift message, also send it by e-mail to everyone",
+     "why": "my own suggestion (Sep 10), answered 'mah, vediamo' and never confirmed [2]"
+    },
+    {
+     "id": "d-inventory",
+     "desc": "On Mondays at 10 I do the cellar inventory (as a procedure of mine)",
+     "why": "Davide's own habit (Sep 6, Sep 21), not a way the agent does a task [4]"
+    },
+    {
+     "id": "d-e24",
+     "desc": "When the home dishwasher shows error E24, clean the filter and check the drain hose — that fixes it",
+     "why": "it did not work (Sep 11); a technician is due on Oct 2: a failure never fixed, written as if it worked [6]"
+    }
+   ]
+  },
+  "owen": {
+   "expected": [
+    {
+     "id": "o-pitch",
+     "kind": "procedure",
+     "desc": "When I book the Saturday market pitch: use the council's online booking form, by Wednesday noon for that Saturday — e-mailing the market office got no answer and the pitch was lost (Sep 2–4); the form worked (Sep 9, 16, 23)",
+     "by": 1
+    },
+    {
+     "id": "o-van",
+     "kind": "procedure",
+     "desc": "When I give Owen the van loading list for the market: folding tables first, then gazebo and weights, plant trays (tall ones at the cab end), empty crates on top, cash tin and card reader last on the passenger seat — approved explicitly on Sep 5 ('do it like that every week')",
+     "by": 1
+    },
+    {
+     "id": "o-summary-old",
+     "kind": "procedure",
+     "desc": "When I write the weekly summary for Nadia: totals per plant type, cash and card on separate lines, the total, sent as a text on Sunday evening — Owen taught it on Sep 6",
+     "by": 1,
+     "retired_at": 2
+    },
+    {
+     "id": "o-summary",
+     "kind": "procedure",
+     "desc": "When I send the weekly summary to Nadia: on Monday by 9, an e-mail with a spreadsheet attached (one row per plant type, cash and card columns, the £35 pitch fee deducted, net total) — changed on Sep 20, Nadia pleased on Sep 21",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "o-summary-text",
+     "desc": "The weekly summary for Nadia is sent as a text on Sunday evening, with the gross total (as still current)",
+     "why": "the superseded form of the summary procedure, revised on Sep 20 [7]"
+    },
+    {
+     "id": "o-herbs",
+     "desc": "When I give the van loading list, add an extra crate of herbs",
+     "why": "a one-off for the school fair (Sep 11); on Sep 18 'that was only for the school fair' [3]"
+    },
+    {
+     "id": "o-nadia-number",
+     "desc": "To send Nadia something, use 07700 900461 (as a procedure)",
+     "why": "a fact (her new number, Sep 7) written as a procedure [5]"
+    }
+   ]
+  },
+  "falegnameria_ricci": {
+   "expected": [
+    {
+     "id": "fr-bertoni-old",
+     "kind": "procedure",
+     "desc": "When I order panels from Legnami Bertoni: an e-mail to their orders address, customer code 2208 in the subject, one line per panel (type, thickness, size), sent by Thursday noon for Monday delivery — Gianni taught it on Sep 1",
+     "by": 1,
+     "retired_at": 2
+    },
+    {
+     "id": "fr-bertoni",
+     "kind": "procedure",
+     "desc": "When I order panels from Legnami Bertoni: on their customer portal with code 2208, by Wednesday noon, delivery on Monday (no longer by e-mail by Thursday) — changed by Gianni on Sep 21, done that way on Sep 23 and Sep 30",
+     "by": 2
+    },
+    {
+     "id": "fr-quotes",
+     "kind": "procedure",
+     "desc": "When I write a customer quote for the workshop: price plus VAT written separately (and the total), valid 30 days, delivery time in weeks from the deposit, signed 'Falegnameria Ricci', never with Marta's name — Marta corrected it on Sep 2",
+     "by": 1
+    },
+    {
+     "id": "fr-evening",
+     "kind": "procedure",
+     "desc": "When Gianni asks for the end-of-day summary: three sections — jobs finished, jobs in progress, materials to order — Gianni approved it explicitly on Sep 16 ('fallo sempre così la sera')",
+     "by": 2
+    }
+   ],
+   "traps": [
+    {
+     "id": "fr-bertoni-email",
+     "desc": "Orders to Bertoni go by e-mail by Thursday noon (as still current)",
+     "why": "the superseded form of the Bertoni procedure, revised on Sep 21 [7]"
+    },
+    {
+     "id": "fr-fortnight",
+     "desc": "Order from Bertoni every two weeks to pay one transport only",
+     "why": "my own suggestion (Sep 9), answered 'vediamo, ci penso' and never confirmed; weekly orders went on [2]"
+    },
+    {
+     "id": "fr-capannori",
+     "desc": "Bertoni deliveries go to the Capannori villa site",
+     "why": "a one-off instruction for one order (Sep 10); the next ones were delivered to the workshop [3]"
+    },
+    {
+     "id": "fr-blades",
+     "desc": "On Saturday mornings I sharpen the planer and saw blades (as a procedure of mine)",
+     "why": "Gianni's own habit (Sep 5), not a way the agent does a task [4]"
+    }
+   ]
+  }
+ }
+}

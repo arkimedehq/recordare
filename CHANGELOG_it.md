@@ -37,8 +37,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   `Initiatives`, `IntentMessages`, `InitiativeWorth`. L'estrazione (`extract.v21` / `entity.v9`, INTENTS) trasforma una
   promessa dell'agente o una richiesta fattagli con una data in un intento (ritirata o fatta in conversazione, si chiude);
   in balanced e full il modello formula ogni iniziativa e le dà un `worth` (`initiative.v2`, knob `initiativeWording`).
-  Una domanda attende due giorni dopo il piano e non si fa se hanno raccontato com'è andata. Misurato: 19–20 su 22, ≈ 95 %
-  di precisione.
+  Una domanda attende due giorni dopo il piano e non si fa se hanno raccontato com'è andata, né per un piano che nessuno
+  ha detto prima del suo giorno (una decisione non è un appuntamento — la prima iniziativa dal vivo); una richiesta con
+  un orario lo conserva. Recordare fa il suo lavoro qualunque cosa abbiano fatto gli strumenti dell'ospite: un promemoria
+  che anche l'ospite ha programmato tocca all'ospite deduplicarlo. Misurato: 19–20 su 22, ≈ 95 % di precisione.
+- **Le procedure dell'agente** (D53, WORK_PLAN 8.12d): come svolge un compito ricorrente per una persona o un luogo,
+  imparato da un esito sulle sue stesse risposte — insegnato, corretto, approvato esplicitamente — come "quando
+  <situazione>, <come lo faccio>" (note di categoria `procedure`, `thoughts.v7`); una correzione chiara basta; riviste
+  quando il modo cambia; riferite nel contesto di memoria come "come lo faccio (imparato)". Migrazione `Procedures`.
 - L'admin legge gli elementi di una memoria (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`),
   `…/facts`, `…/notes` — le liste del diario lette come l'intera memoria, gli elementi privati segnati con di chi sono — e
   ne dimentica uno (`DELETE …/episodes|facts|notes/{id}`). Solo chiave admin; Recordare Atlas li elenca e li dimentica con

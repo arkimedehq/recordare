@@ -127,6 +127,28 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
     expect(cards!.self.notes.map((n) => n.category)).toEqual(['self']); // the other thoughts stay out of the card
   });
 
+  it('learns a procedure from one correction (8.12d): one day is enough, a reply is needed', async () => {
+    const [conv] = await db.query(`SELECT id FROM conversations WHERE memory_id = $1 LIMIT 1`, [memoryId]);
+    const say = async (id: string, role: string, content: string, at: string) => db.query(
+      `INSERT INTO messages (conversation_id, memory_id, external_id, role, content, content_hash, sent_at, author_kind, attribution_method, attribution_confidence, author_person_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'account', 1, $9)`,
+      [conv.id, memoryId, id, role, content, createHash('sha256').update(content).digest(), at, role === 'user' ? 'self' : 'agent', role === 'user' ? memoryId : null]);
+    await say('p1', 'assistant', 'Ho mandato l\'ordine della farina al mulino per email.', '2026-10-06T09:00:00Z');
+    await say('p2', 'user', 'No, al mulino si ordina per telefono entro mezzogiorno, col codice 4471.', '2026-10-06T09:01:00Z');
+    await episode('Ordine della farina rifatto per telefono', '2026-10-06', { importance: 10 });
+    await episode('Consegna in negozio', '2026-10-07', { importance: 10 });
+    llm.queue.push({ thoughts: [
+      { verdict: 'new', kind: 'procedure', subject: 'me', content: 'Quando ordino la farina al mulino, telefono entro mezzogiorno e do il codice 4471', evidence: ['R3'], confidence: 'high' },
+      { verdict: 'new', kind: 'procedure', subject: 'me', content: 'Quando consegno, uso il furgone', evidence: [11] }, // no reply behind it
+    ] });
+    const r = await pass();
+    expect(r).toMatchObject({ calls: 1, written: 1 });
+    const [p] = await db.query(`SELECT n.category::text, n.subject_kind::text,
+        (SELECT count(*)::int FROM note_evidence x WHERE x.note_id = n.id AND x.message_id IS NOT NULL) AS messages
+      FROM notes n WHERE n.memory_id = $1 AND n.category = 'procedure'`, [memoryId]);
+    expect(p).toEqual({ category: 'procedure', subject_kind: 'self', messages: 2 });
+  });
+
   it('survives the pattern pass: a thought with fewer than three episodes is not a weak pattern', async () => {
     const before = (await db.query(`SELECT count(*)::int AS n FROM notes WHERE memory_id = $1 AND 'thought' = ANY(tags)`, [memoryId]))[0].n;
     expect(before).toBeGreaterThan(0);
@@ -138,6 +160,6 @@ describe('the agent\'s own thoughts: drawn from new episodes, backed, weakened a
   it('the Diary and the recall tell it as my own thought', async () => {
     await db.query(`UPDATE notes SET status = 'current' WHERE 'thought' = ANY(tags)`);
     const notes = await app.get(ReadService).notes(memoryId, {});
-    expect(notes.map((n) => [n.category, n.thought, n.pattern, n.inferred])).toEqual([['self', true, false, true], ['insight', true, false, true]]);
+    expect(notes.map((n) => [n.category, n.thought, n.pattern, n.inferred])).toEqual([['procedure', true, false, true], ['self', true, false, true], ['insight', true, false, true]]);
   });
 });

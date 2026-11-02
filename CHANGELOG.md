@@ -35,7 +35,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `Initiatives`, `IntentMessages`, `InitiativeWorth`. The extraction (`extract.v21` / `entity.v9`, INTENTS) turns a promise
   of the agent or a request made to it with a date into an intent (withdrawn or done in the conversation, it closes); in
   balanced and full the model words each initiative and gives it a `worth` (`initiative.v2`, knob `initiativeWording`). An
-  ask waits two days after the plan and is not made once they told how it went. Measured: 19–20 of 22, ≈ 95 % precision.
+  ask waits two days after the plan and is not made once they told how it went, nor for a plan nobody told ahead of its day
+  (a decision is no appointment — the first live initiative); a request with a time keeps it. Recordare does its own work
+  whatever the host's tools did: a reminder the host also scheduled is the host's to deduplicate. Measured: 19–20 of 22, ≈
+  95 % precision.
+- **The agent's procedures** (D53, WORK_PLAN 8.12d): how it does a recurring task for a person or place, learned from an
+  outcome on its own replies — taught, corrected, explicitly approved — as "when <situation>, <how I do it>" (notes of
+  category `procedure`, `thoughts.v7`); one clear correction is enough; revised when the way changes; told in the memory
+  context as "how I do it (learned)". Migration `Procedures`.
 - The admin reads a memory's items (D52): `GET api/v1/admin/memories/{id}/episodes` (`source=own|claims`), `…/facts`,
   `…/notes` — the diary's lists read as the whole memory, private items marked whose they are — and forgets one
   (`DELETE …/episodes|facts|notes/{id}`). Admin key only; Recordare Atlas lists and forgets with them.

@@ -156,7 +156,8 @@ export class ContextService {
     }
     // A recurring pattern (WORK_PLAN 5.4) and a thought (D53) are the memory's own conclusions, not something said: labelled so.
     const label = (n: { pattern: boolean; thought: boolean; category: string }) =>
-      (n.category === 'self' ? 'what I learned about myself as an agent' : n.thought ? `my own thought (${n.category})` : n.pattern ? 'pattern I noticed' : 'note');
+      (n.category === 'self' ? 'what I learned about myself as an agent' : n.category === 'procedure' ? 'how I do it (learned)'
+        : n.thought ? `my own thought (${n.category})` : n.pattern ? 'pattern I noticed' : 'note');
     for (const n of notes.filter((x) => !top.ids.has(x.id))) lines.push(`- ${label(n)}: ${whose(n.about)}${n.content}`);
     for (const p of plans) lines.push(`- plan: ${p.content} (${when(p.occurred_at, p.date_precision, tz, memory.locale)})`);
     // Overheard in the room (6.5): not said to me, its speaker possibly misrecognised.

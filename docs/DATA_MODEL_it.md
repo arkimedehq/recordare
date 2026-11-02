@@ -464,6 +464,14 @@ come le persone si rapportano a lui — tratto da MY REPLIES, i suoi stessi mess
 il messaggio successivo della persona (solo pubblici), mai dall'introspezione; la loro evidenza sono quei messaggi
 (`note_evidence.message_id`, la risposta e la reazione), lo stesso esito in due giorni diversi; soggetto sempre il sé.
 Sono i soli pensieri nella scheda di sé (`GET api/v1/cards`: "su di me come agente").
+**Procedure** (8.12d, categoria `procedure`, migrazione `Procedures1791250000000`): come l'agente svolge un compito
+ricorrente per una persona o un luogo — "quando <situazione>, <come lo faccio>" — imparato da un esito sulle MY REPLIES
+(insegnato, corretto, approvato esplicitamente, o un modo che ha fallito e un altro che ha funzionato); una correzione
+chiara basta (nessuna regola dei due giorni), serve una risposta con la sua reazione; la ripetizione si controlla solo
+rispetto ai pensieri dell'agente (una nota su ciò che qualcuno vuole non è come lo fa l'agente); riviste quando il modo
+cambia. Scritte dalla stessa chiamata degli altri pensieri — una seconda chiamata per le lezioni su di me è stata
+misurata e scartata (RESULTS.md). I nuovi di una passata sono limitati a quattro sul mondo (intuizioni, domande,
+opinioni) e quattro su di me (note di sé, procedure).
 
 ## Layer 2 — digest
 
