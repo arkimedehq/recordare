@@ -152,7 +152,7 @@ def main() -> None:
             conn.execute("UPDATE intents SET status = 'armed', attempts = 0, reconsider_at = NULL WHERE memory_id = ANY(%s::uuid[]) AND status IN ('fired', 'expired')", (list(ids.values()),))
             conn.execute("DELETE FROM notes WHERE memory_id = ANY(%s::uuid[]) AND origin = 'reflected'", (list(ids.values()),))
             conn.execute("DELETE FROM episode_promotions WHERE memory_id = ANY(%s::uuid[])", (list(ids.values()),))
-            conn.execute("UPDATE memories SET patterns_upto = NULL, thoughts_upto = NULL, self_upto = NULL WHERE person_id = ANY(%s::uuid[])", (list(ids.values()),))
+            conn.execute("UPDATE memories SET patterns_upto = NULL, thoughts_upto = NULL WHERE person_id = ANY(%s::uuid[])", (list(ids.values()),))
             conn.execute("DELETE FROM extraction_runs WHERE memory_id = ANY(%s::uuid[]) AND kind = 'consolidation'", (list(ids.values()),))
         system.memories = {u: {"id": i} for u, i in ids.items()}
     else:
