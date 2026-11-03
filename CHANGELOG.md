@@ -48,6 +48,19 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `…/notes` — the diary's lists read as the whole memory, private items marked whose they are — and forgets one
   (`DELETE …/episodes|facts|notes/{id}`). Admin key only; Recordare Atlas lists and forgets with them.
 
+### Changed
+- **The memory is the agent's mind — a memory-first contract for every client** (D54, WORK_PLAN 8.14): the memory
+  charter, how an agent uses its memory (its own mind, reasoned from before answering, searched before other tools and
+  before "I don't know"; "remember / memories" mean this memory, not files or photos), served by `GET api/v1/charter`
+  (`{charter, version}`, for the agent's system prompt), as the MCP server's `instructions`, and named by the
+  `<memory-context>` block; `?tools=false` gives the form for a host with only the context, no memory tools (never
+  "search", rather "I don't remember"; the proxy's default, `MEMORY_TOOLS=true` for the full one). The block is now worded as what came to the agent's mind from its own memory (no longer "use it only if
+  it helps"). The self card opens the block **by default** (`card: false` turns it off; ≈ 130–150 tokens). A short
+  follow-up ("e lui?", any language, `CONTEXT_SHORT_QUERY_WORDS`) is matched with the person's previous turn too. The
+  contract, required of every client (`INTEGRATION.md` §4): the charter in the system prompt, the context before every
+  turn of every agent, the memory tools available, a fallback, off only explicitly. Library `charter()`; every connector
+  follows it.
+
 ### Fixed
 - The nightly pattern pass deleted the agent's thoughts written the night before as "weak patterns" (fewer than three
   episodes): its sync now looks only at patterns.

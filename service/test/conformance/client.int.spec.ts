@@ -49,6 +49,7 @@ export type AnswersFitClient = Assert<Extends<[
   Answer<typeof read.usageResponse>, Answer<typeof read.exportResponse>, Answer<typeof api.contextResponse>, Answer<typeof api.meResponse>,
   Answer<typeof api.ingestResponse>, Answer<typeof api.roomResponse>, Answer<typeof api.learnSourceResponse>, Answer<typeof api.sourcesResponse>,
   Answer<typeof api.linkCodeResponse>, Answer<typeof api.holderIdentitiesResponse>, Answer<typeof api.erasedResponse>, Answer<typeof read.cardsResponse>,
+  Answer<typeof api.charterResponse>,
 ], [
   { items: client.Episode[]; nextCursor: string | null }, client.EpisodeDetail, client.Digest[],
   client.Fact[], client.FactDetail, client.Note[],
@@ -56,6 +57,7 @@ export type AnswersFitClient = Assert<Extends<[
   client.Usage, client.ExportJob, client.MemoryContext, client.Me,
   client.IngestResult, client.RoomResult, client.LearnSourceResult, client.Source[],
   client.LinkCode, client.HolderIdentities, client.Erased, client.Cards,
+  client.Charter,
 ]>>;
 
 describe('client conformance (packages/client against the service)', () => {
@@ -135,6 +137,12 @@ describe('client conformance (packages/client against the service)', () => {
     expect(await db().query(`SELECT count(*)::int AS n FROM messages WHERE external_id = 't1'`)).toEqual([{ n: 1 }]);
     await rc.endConversation('user-1', 'chat-2');
     await rc.endConversation('user-1', 'chat-never-seen'); // nothing to end: done
+  });
+
+  it('reads the memory charter the agent\'s system prompt carries (D54)', async () => {
+    const c = await rc.charter();
+    expect(c.version).toMatch(/^charter\.v\d+$/);
+    expect(c.charter).toContain('## Your memory');
   });
 
   it('keeps the name in sync with the platform and accepts the mode only while the memory is empty', async () => {

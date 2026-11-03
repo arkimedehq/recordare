@@ -13,6 +13,7 @@ export { selfLeak, type SelfLeak } from './self';
 export { isFullName, isProperName } from './names';
 export { MONTH_NAMES, periodPhrases, WEEKDAY_NAMES } from './periods';
 export { PERIOD_KEYS, type PeriodKey, type RelationKey } from './types';
+export { wordCount } from './words';
 import { RELATIONS } from './relations';
 import { normalize } from './locales';
 import { type RelationKey } from './types';

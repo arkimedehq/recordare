@@ -59,6 +59,11 @@ export const contextResponse = z.object({
   items: z.number().int(),
 });
 
+export const charterResponse = z.object({
+  charter: z.string().describe('The memory charter (D54): put it in the agent\'s system prompt.'),
+  version: z.string().describe('Changes when the text changes (e.g. charter.v1).'),
+});
+
 export const meResponse = z.object({
   memoryId: z.uuid(),
   displayName: z.string().nullable(),

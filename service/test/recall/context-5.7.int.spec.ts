@@ -19,7 +19,7 @@ describe('memory context, WORK_PLAN 5.7: sentences and named periods', () => {
   beforeAll(async () => { s = await setup({}); });
   afterAll(async () => { await s?.app.close(); s?.fake.server.close(); });
   const ask = (query: string) => call(s.url, 'POST', '/api/v1/context', {
-    token: s.key, headers: { 'x-recordare-user': 'u1', 'x-recordare-conversation': 'chat-1', 'x-recordare-now': '2026-10-07T10:00:00+02:00' }, body: { query } });
+    token: s.key, headers: { 'x-recordare-user': 'u1', 'x-recordare-conversation': 'chat-1', 'x-recordare-now': '2026-10-07T10:00:00+02:00' }, body: { query, card: false } });
 
   it('matches the question even with an instruction tacked on', async () => {
     expect((await ask(`${s.query} Rispondi in una sola riga, senza elenchi.`)).body.items).toBe(3);

@@ -33,6 +33,23 @@ Le altre chiamate `/v1/*` (`/v1/models`, embedding, …) passano invariate. `GET
 Il richiamo con **strumenti MCP** non fa parte del proxy: le piattaforme che supportano header MCP per utente
 (LibreChat, Open WebUI) possono registrare direttamente `/mcp` di Recordare (`docs/INTEGRATION_it.md`).
 
+## Contratto memory-first (D54)
+
+- **La carta nel prompt di sistema**: la carta della memoria (`GET api/v1/charter`: come l'agente usa la sua memoria —
+  la sua mente, da consultare prima degli altri strumenti e prima di dire che non sa) viene aggiunta in fondo al primo
+  messaggio di sistema di ogni turno ricordato (`RECALL` attivo), prima del blocco di contesto. Viene letta una volta e
+  tenuta in cache per versione per tutto il processo (ricontrollata ogni ora): il testo è identico a ogni turno e il
+  prompt resta adatto alla cache dei prefissi.
+- **Il contesto di memoria prima di ogni turno**, aperto dalla scheda di sé (chi sono; attiva per default in
+  Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
+- **La forma della carta**: il proxy non dà al modello strumenti di memoria (Limiti), quindi di default chiede la carta
+  per il solo contesto (`GET api/v1/charter?tools=false`): ciò che è venuto in mente è tutto ciò che il modello può
+  ricordare — quando non basta, dice che non se lo ricorda invece di tirare a indovinare, e non dice mai di stare
+  cercando. Dove la piattaforma collega anche il server MCP di Recordare (Open WebUI, LibreChat), impostare
+  `MEMORY_TOOLS=true` per la carta completa, che dice al modello di cercare prima con quegli strumenti.
+- **Ripiego**: se Recordare non risponde, niente carta (finché non risponde; un tentativo ogni 30 s) e niente blocco —
+  il turno prosegue senza memoria.
+
 ## Avvio
 
 Node ≥ 20 (locale) o Docker. Build da questa cartella: `npm ci && npm run build && node dist/main.js` (il bundle include
@@ -85,6 +102,7 @@ per la prima persona nelle lingue con il genere. Il proxy non ha impostazioni pe
 | `TZ` | di sistema | Fuso orario del giorno usato negli id di conversazione sintetizzati |
 | `SKIP_PATTERNS` | — | Regex aggiuntive (array JSON o separate da `\|\|`) sull'ultimo messaggio utente che marcano le chiamate di background |
 | `RECALL`, `CAPTURE` | `true` | Spegne l'iniezione / la cattura |
+| `MEMORY_TOOLS` | `false` | `true` quando la piattaforma dà al modello anche gli strumenti MCP di Recordare: la carta della memoria completa invece di quella per il solo contesto (D54) |
 | `LOG_UPSTREAM` | `false` | Debug: registra i messaggi inviati upstream (dati personali — mai in produzione) |
 | `PORT` | `8788` | Porta d'ascolto |
 | `MAX_BODY_BYTES` | 25 MB | Richiesta di chat più grande accettata |
@@ -214,10 +232,10 @@ Open WebUI usa la modalità JWT. La chiave Recordare è una chiave client: non c
 - Coda di ritentativi e cache dei turni in memoria (perse al riavvio).
 
 ## Test
-`npm test` (vitest: resolver, rimozione del marcatore, chiamate di background, iniezione, accumulo dello stream, turni
-ripetuti, Recordare giù, pass-through), `npm run typecheck`. `smoke.sh` esegue il test end-to-end con AnythingLLM
-contro un Recordare locale (`SMOKE_DIR=/una/cartella/temporanea connectors/openai-proxy/smoke.sh`; ~5 GB di disco
-Docker, 2 turni LLM; rimuove poi l'immagine di AnythingLLM).
+`npm test` (vitest: resolver, rimozione del marcatore, chiamate di background, iniezione, carta della memoria, accumulo
+dello stream, turni ripetuti, Recordare giù, pass-through), `npm run typecheck`. `smoke.sh` esegue il test end-to-end
+con AnythingLLM contro un Recordare locale (`SMOKE_DIR=/una/cartella/temporanea connectors/openai-proxy/smoke.sh`; ~5 GB
+di disco Docker, 2 turni LLM; rimuove poi l'immagine di AnythingLLM).
 
 Smoke test del 2026-10-08 con AnythingLLM 1.17.0 (modalità multi-utente, modalità chat predefinita `automatic` —
 percorso agent con strumenti nativi — in streaming e no) e DeepSeek come upstream. Open WebUI e LibreChat: solo test

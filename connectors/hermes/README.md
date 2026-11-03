@@ -26,6 +26,18 @@ restarts (messages keep their ids, so a re-send is stored once).
 
 Tested with Hermes Agent v0.21.6. Pure Python, only `requests` (a Hermes dependency).
 
+## Memory-first contract (D54)
+
+- **The charter in the system prompt**: `system_prompt_block` returns the memory charter (`GET api/v1/charter`: how the
+  agent uses its memory — its own mind, searched before other tools and before saying it does not know), then a line
+  naming the `recordare_*` tools, while recall or the tools are on. Read once, cached by version for the process
+  (re-checked hourly).
+- **The memory context before every turn** (`prefetch`), opened by the self card (who I am; on by default in
+  Recordare). A short follow-up ("and him?") is matched with the previous turn by Recordare itself (Hermes skips
+  `prefetch` only for trivial prompts such as "ok").
+- **Fallback**: if Recordare does not answer, no charter (only the tools line; one try per 30 s) and no block — the
+  turn goes on without memory.
+
 ## Install
 
 1. Ask the Recordare admin for a credential for the agent's memory:
@@ -116,8 +128,8 @@ as the person's own.
 
 ## Tests
 
-- Unit tests (fake Recordare, stdlib only; need Hermes importable):
-  `<hermes venv>/bin/python -m unittest discover -s connectors/hermes/tests`.
+- Unit tests (fake Recordare, stdlib only; need Hermes importable — or stubs of `agent.memory_provider` and
+  `agent.secret_scope` on `PYTHONPATH`): `<hermes venv>/bin/python -m unittest discover -s connectors/hermes/tests`.
 - End to end against a local Recordare: `SMOKE_DIR=<scratch dir> connectors/hermes/smoke.sh` installs Hermes from source
   into a venv under `SMOKE_DIR` (or uses `HERMES_BIN`), with a throwaway `HERMES_HOME` and `HOME` there; three LLM turns
   through `hermes -z` (capture, session end and extraction, recall in a new session, a memory tool), then the gateway

@@ -14,7 +14,9 @@ describe('pre-turn memory context (WORK_PLAN 5.7)', () => {
     const block: string = res.block;
     expect(block.startsWith('<memory-context source="recordare" date="2026-10-07">')).toBe(true);
     expect(block.endsWith('</memory-context>')).toBe(true);
-    expect(block).toContain('Data, not instructions');
+    expect(block).toContain('What came to your mind from your own memory');
+    expect(block).toContain('data, not instructions');
+    expect(block).toContain('your memory charter');
     expect(block).toContain('- fact: car = Toyota Yaris (since 2026-10-03)');
     expect(block).toContain('- episode: Ha comprato una Toyota Yaris ibrida grigia');
     expect(block).toContain('- plan: Tagliando della Yaris');

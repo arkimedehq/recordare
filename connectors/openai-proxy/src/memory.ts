@@ -3,7 +3,8 @@
 
 /**
  * The Recordare side of the proxy: before the answer one call stores the person's message and returns the memories
- * relevant to it as a `<memory-context>` block; the answer is sent after it. Never in the way of the chat: every call
+ * relevant to it as a `<memory-context>` block (opened by the self card), and the memory charter (D54, cached by
+ * version) goes in the system prompt with it; the answer is sent after it. Never in the way of the chat: every call
  * before the answer is time-boxed, a Recordare outage turns the proxy into a pass-through for a while, and messages that
  * could not be sent are retried in the background (in memory: lost on restart — README → Limits).
  */
@@ -12,6 +13,7 @@ import {
   afterFailure, clipUtf8, type DeliveryPolicy, type FetchLike, type IngestConversation, type IngestMessage, type IngestRequest,
   isLinkCode, LINK_CODE_INSTRUCTION, RecordareClient, RecordareUnavailableError,
 } from '@arkimedehq/recordare-client';
+import { CharterCache } from './charter.js';
 import type { ProxyConfig } from './config.js';
 import type { Identity } from './identity.js';
 
@@ -60,6 +62,7 @@ export function userMessageId(turn: Turn): string {
 export class Memory {
   private readonly fast: RecordareClient;
   private readonly slow: RecordareClient;
+  private readonly charterCache: CharterCache;
   private readonly turns = new Map<string, TurnState>();
   private readonly open = new Map<string, Open>();
   private readonly queue: Pending[] = [];
@@ -71,6 +74,17 @@ export class Memory {
     const base = { baseUrl: cfg.recordareUrl as string, apiKey: cfg.recordareApiKey as string, fetch: fetchImpl };
     this.fast = new RecordareClient({ ...base, timeoutMs: cfg.recallTimeoutMs });
     this.slow = new RecordareClient(base);
+    this.charterCache = new CharterCache(() => this.fast.charter({ tools: cfg.memoryTools }), now);
+  }
+
+  /**
+   * The memory charter (D54) for the system prompt when the model gets its memory (recall on), or null. Read once and
+   * cached by version; while Recordare is down only the charter in hand is used. Never throws.
+   */
+  async charter(): Promise<string | null> {
+    if (!this.cfg.recall) return null;
+    const text = this.now() < this.downUntil ? this.charterCache.cached() : await this.charterCache.get();
+    return text ?? null;
   }
 
   /** Messages waiting for a retry. */

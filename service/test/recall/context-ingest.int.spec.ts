@@ -16,7 +16,7 @@ describe('connector calls (WORK_PLAN 6.6b)', () => {
     ({ conversation: { externalId: conversation }, messages: [{ externalId: id, role: 'user', content, sentAt: '2026-10-07T09:59:00+02:00' }] });
 
   it('stores the turn and returns the memory context in one call (query defaults to the last user message)', async () => {
-    const res = await call(s.url, 'POST', '/api/v1/context', { ...as(), body: { ingest: turn('new-chat', 'n1', s.query) } });
+    const res = await call(s.url, 'POST', '/api/v1/context', { ...as(), body: { ingest: turn('new-chat', 'n1', s.query), card: false } });
     expect(res.status).toBe(200);
     expect(res.body.items).toBe(3);
     const [m] = await s.db.query(`SELECT c.external_id FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE m.external_id = 'n1'`);
@@ -49,7 +49,7 @@ describe('connector calls (WORK_PLAN 6.6b)', () => {
     const client = (await call(s.url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'T', kind: 'mcp_client' } })).body;
     const token = (await call(s.url, 'POST', `/api/v1/admin/memories/${s.memoryId}/tokens`, { token: ADMIN_KEY, body: { clientId: client.id, scopes: ['read'] } })).body.token;
     const ask = (t: string, user?: string) => call(s.url, 'POST', '/api/v1/context', {
-      token: t, headers: { 'x-recordare-conversation': 'not-stored-yet', 'x-recordare-now': '2026-10-07T10:00:00+02:00', ...(user ? { 'x-recordare-user': user } : {}) }, body: { query: s.query } });
+      token: t, headers: { 'x-recordare-conversation': 'not-stored-yet', 'x-recordare-now': '2026-10-07T10:00:00+02:00', ...(user ? { 'x-recordare-user': user } : {}) }, body: { query: s.query, card: false } });
     expect((await ask(token)).body.items).toBe(3);
     expect((await ask(s.key, 'u1')).body.items).toBe(3);
   });

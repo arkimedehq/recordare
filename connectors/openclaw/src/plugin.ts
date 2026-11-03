@@ -2,9 +2,11 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Recordare for OpenClaw — the full client level (docs/INTEGRATION.md):
+ * Recordare for OpenClaw — the full client level (docs/INTEGRATION.md), memory-first (D54):
  * - before_prompt_build: one call (`POST api/v1/context` with `ingest`) stores the person's message and returns the
- *   memories relevant to it, added before the message as a fenced `<memory-context>` block;
+ *   memories relevant to it, opened by the self card, added before the message as a fenced `<memory-context>` block;
+ *   the memory charter (`GET api/v1/charter`, cached by version) goes at the end of the system prompt
+ *   (`appendSystemContext`, the same text every turn);
  * - agent_end: sends the agent's answer (and the message again, same id: stored once);
  * - session_end: ends the conversation (`POST …/conversations/{id}/end`: extraction now instead of after the idle delay);
  * - message_received: senders' names (for their participants); in group chats, the other members' messages go with the
@@ -21,7 +23,10 @@ import {
   afterFailure, clipUtf8, type DeliveryPolicy, type IngestConversation, type IngestMessage, type IngestParticipant,
   type IngestRequest, isLinkCode, LINK_CODE_INSTRUCTION, RecordareClient,
 } from '@arkimedehq/recordare-client';
-import type { AgentContext, AgentTool, OpenClawPluginApi, ToolContext } from 'openclaw/plugin-sdk/plugin-entry';
+import type {
+  AgentContext, AgentTool, BeforePromptBuildEvent, BeforePromptBuildResult, OpenClawPluginApi, ToolContext,
+} from 'openclaw/plugin-sdk/plugin-entry';
+import { CharterCache } from './charter.js';
 import { type RecordareConfig } from './config.js';
 import {
   conversationId, isGroupSession, isSystemRun, resolveSpeaker, resolveUser, senderParticipant, senderRef, type Speaker,
@@ -88,6 +93,7 @@ export function registerRecordare(
   // Before the agent answers: short timeouts (the turn waits). Background sends and tools: Recordare's usual 15 s.
   const fast = new RecordareClient({ baseUrl: cfg.url, apiKey: cfg.apiKey, timeoutMs: cfg.timeoutMs, mcp: { clientInfo } });
   const slow = new RecordareClient({ baseUrl: cfg.url, apiKey: cfg.apiKey, mcp: { clientInfo, maxSessions: 50 } });
+  const charter = new CharterCache(() => fast.charter());
   /** Header user: none with a personal token (it is the memory). */
   const headerUser = (user: string): string => (cfg.personal ? '' : user);
 
@@ -192,6 +198,15 @@ export function registerRecordare(
 
   // ── Hooks ─────────────────────────────────────────────────────────────────────────────────────────────────────
   api.on('before_prompt_build', async (event, ctx) => {
+    // The charter, for any remembered turn the agent has its memory in (recall or tools), read alongside the context.
+    const charterText = (cfg.autoRecall || cfg.tools) && who(ctx) ? charter.get() : undefined;
+    const res = await turnContext(event, ctx);
+    const text = await charterText;
+    return text ? { ...res, appendSystemContext: text } : res;
+  });
+
+  /** The turn's message stored and its memory context (`prependContext`), or a link code's instruction. */
+  async function turnContext(event: BeforePromptBuildEvent, ctx: AgentContext): Promise<BeforePromptBuildResult | undefined> {
     try {
       if (!cfg.capture && !cfg.autoRecall) return;
       const w = who(ctx);
@@ -232,7 +247,7 @@ export function registerRecordare(
       log.warn(`recordare: memory context unavailable (${errName(err)})`);
       return undefined;
     }
-  });
+  }
 
   api.on('agent_end', async (event, ctx) => {
     try {

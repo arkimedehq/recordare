@@ -56,6 +56,11 @@ export interface ProxyConfig {
   skipPatterns: RegExp[];
   /** Add the memory context before each answer. */
   recall: boolean;
+  /**
+   * The model also has Recordare's memory tools (the platform's own MCP set-up): the full memory charter. Off by
+   * default: the proxy gives only the memory context, so the charter's context-only form (D54) — no tools to search with.
+   */
+  memoryTools: boolean;
   /** Send the turns to Recordare. */
   capture: boolean;
   /** Debug only: log the messages sent upstream (personal data). */
@@ -122,6 +127,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ProxyConfig {
     timeZone: str(env.TZ) ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
     skipPatterns: parsePatterns(env.SKIP_PATTERNS),
     recall: bool(env.RECALL, true),
+    memoryTools: bool(env.MEMORY_TOOLS, false),
     capture: bool(env.CAPTURE, true),
     logUpstream: bool(env.LOG_UPSTREAM, false),
     maxBodyBytes: num(env.MAX_BODY_BYTES, 25 * 1024 * 1024),

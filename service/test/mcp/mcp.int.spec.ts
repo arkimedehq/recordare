@@ -7,6 +7,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
 import { ADMIN_KEY, call, fakeVector, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
+import { CHARTER } from '../../src/recall/charter';
 
 async function connect(url: string, headers: Record<string, string>): Promise<{ client: Client; transport: StreamableHTTPClientTransport }> {
   const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), { requestInit: { headers } });
@@ -62,6 +63,13 @@ describe('MCP endpoint', () => {
     await ingest('elena', 'elena-chat', 'Backup del NAS di Elena');
   });
   afterAll(async () => { await app?.close(); emb?.close(); });
+
+  it('gives the memory charter as the server instructions (D54): the agent is told this is its own memory', async () => {
+    const { client } = await connect(url, { authorization: `Bearer ${token}` });
+    expect(client.getInstructions()).toBe(CHARTER);
+    expect(CHARTER).toContain('it is your own mind');
+    await client.close();
+  });
 
   it('lists the tools and searches the raw log for the token memory (memory-direct)', async () => {
     const { client } = await connect(url, { authorization: `Bearer ${token}` });

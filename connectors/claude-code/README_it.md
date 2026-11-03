@@ -21,6 +21,19 @@ li imposta l'amministratore (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`
 `feminine`, `neutral`) oppure lo stesso token personale, se ha lo scope `ingest` (`PATCH api/v1/me {mode?, gender?}`; la
 modalità solo finché la memoria è vuota); il plugin non ha impostazioni per questi valori.
 
+## Contratto memory-first (D54)
+
+- **La carta della memoria a inizio sessione**: un hook `SessionStart` legge la carta della memoria
+  (`GET api/v1/charter`: come l'agente usa la sua memoria — la sua mente, da consultare prima degli altri strumenti e
+  prima di dire che non sa) e la aggiunge come contesto per tutta la sessione, quanto di più vicino al prompt di sistema
+  permettono gli hook; viene ripetuto dopo `/clear` e dopo una compattazione. Il server MCP invia la stessa carta come
+  sue `instructions`, che Claude Code mette anch'esso nel prompt di sistema: l'hook la garantisce anche quando il server
+  MCP non è connesso.
+- **Il contesto di memoria prima di ogni richiesta**, aperto dalla scheda di sé (chi sono; attiva per default in
+  Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
+- **Ripiego**: se Recordare non risponde, niente carta e niente blocco — la sessione e il turno proseguono senza
+  memoria.
+
 ## Installazione
 
 1. Chiedi all'amministratore di Recordare un **token personale** con gli scope `mcp`, `ingest` e `read` (console admin →
@@ -44,12 +57,15 @@ richiedono le opzioni del plugin.
 |---|---|
 | sessione | conversazione `claude-code:<id sessione>` (canale `claude-code`, titolo = cartella del progetto) |
 | la tua richiesta / la risposta di Claude | messaggi `user` / `assistant` (chiamate a strumenti e sotto-agenti non vengono inviati) |
+| inizio sessione (anche dopo `/clear` o una compattazione) | `GET api/v1/charter` → la carta della memoria come contesto della sessione (D54) |
 | fine sessione | `POST …/conversations/{id}/end` → estrazione subito invece che dopo il ritardo di inattività |
 
 Lo script degli hook (`scripts/recordare-hook.mjs`) è condiviso con il [connettore Codex](../codex/README_it.md); le
 due copie devono restare identiche byte per byte (`connectors/check-shared.sh`, eseguito in CI): modificane una e
 copiala nell'altra.
 
+Test unitari dello script di hook: `node --test connectors/codex/test/hook.test.mjs` (la copia di Codex è lo stesso
+file).
 Prova senza installare: `RECORDARE_URL=… RECORDARE_TOKEN=rp_… claude -p --plugin-dir connectors/claude-code "…"`.
 
 Licenza: AGPL-3.0-or-later, come Recordare.

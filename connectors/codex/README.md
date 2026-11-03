@@ -22,6 +22,16 @@ token or client). Its mode and the gender of its first person are set by the adm
 personal token itself, if it has the `ingest` scope (`PATCH api/v1/me {mode?, gender?}`; the mode only while the memory
 is empty); the plugin has no setting for them.
 
+## Memory-first contract (D54)
+
+- **The charter at session start**: a `SessionStart` hook reads the memory charter (`GET api/v1/charter`: how the agent
+  uses its memory — its own mind, searched before other tools and before saying it does not know) and adds it as context
+  for the whole session, the closest the hooks get to the system prompt; it runs again after `/clear` and a compaction.
+  The hook is the path that does not depend on the MCP server: Codex records its output as a developer message.
+- **The memory context before every prompt**, opened by the self card (who I am; on by default in Recordare). A short
+  follow-up ("and him?") is matched with the previous turn by Recordare itself.
+- **Fallback**: if Recordare does not answer, no charter and no block — the session and the turn go on without memory.
+
 ## Install
 
 1. Ask the Recordare admin for a **personal token** with the scopes `mcp`, `ingest` and `read` (admin console → your
@@ -37,7 +47,7 @@ is empty); the plugin has no setting for them.
    It asks for the token (hidden input; or set `RECORDARE_TOKEN` in the environment — the token is never accepted as
    an argument, so it stays out of the shell history), checks it against `GET api/v1/me`, and is safe to run again.
 3. **Trust the hooks.** Codex runs a new user hook only after you trust it: open `codex`, type **`/hooks`** and trust
-   the three Recordare hooks. Until then nothing is captured or recalled (the MCP tools work regardless).
+   the four Recordare hooks. Until then nothing is captured or recalled (the MCP tools work regardless).
    `install.sh --trust` (or `RECORDARE_TRUST_HOOKS=1`) records the trust in `config.toml` instead; it uses Codex's
    internal hook-hash format (verified with Codex 0.161.0), so if a later Codex version shows them as untrusted again,
    trust them in `/hooks`.
@@ -53,7 +63,7 @@ Each file it edits is first backed up as `<file>.bak-<timestamp>`.
 |---|---|
 | `~/.config/recordare/codex.json` (mode 600) | `{"url", "token"}` — read by the hooks and by the MCP headers helper (`XDG_CONFIG_HOME` respected) |
 | `$CODEX_HOME/recordare/recordare-hook.mjs` | the hook script (`CODEX_HOME` defaults to `~/.codex`) |
-| `$CODEX_HOME/hooks.json` | three handlers `node "…/recordare-hook.mjs" codex`: `UserPromptSubmit` (10 s), `Stop` (15 s), `SessionEnd` (3 s, Codex's cap); your other hooks are kept |
+| `$CODEX_HOME/hooks.json` | four handlers `node "…/recordare-hook.mjs" codex`: `SessionStart` (5 s), `UserPromptSubmit` (10 s), `Stop` (15 s), `SessionEnd` (3 s, Codex's cap); your other hooks are kept |
 | `$CODEX_HOME/config.toml` | a marked block (`# >>> recordare` … `# <<< recordare`) with `[mcp_servers.recordare]`: `url = "<url>/mcp"` and `http_headers_helper`, which prints the `Authorization` header from `codex.json` — the token is not stored in `config.toml`; with `--trust`, the `[hooks.state."…"]` entries too |
 
 The installer writes the MCP block itself because `codex mcp add` cannot set a headers helper. An existing
@@ -71,6 +81,7 @@ including the IDE and the app).
 | session (thread; survives `codex resume`) | conversation `codex:<session id>` (channel `codex`, title = project folder) |
 | your prompt / Codex's answer | messages `user` / `assistant` (`last_assistant_message`; when empty, the last agent message of the rollout file). Tool calls are not sent |
 | sub-agent turns (payload with `agent_id`) | not sent |
+| start of session (`SessionStart`, also after a clear or a compaction) | `GET api/v1/charter` → the memory charter as session context (D54) |
 | end of session (`SessionEnd`) | `POST …/conversations/{id}/end` → extraction now instead of after the idle delay |
 
 The hook script is the same file as the Claude Code connector's (`node recordare-hook.mjs codex`); the two copies are
@@ -86,6 +97,12 @@ kept byte-identical by `connectors/check-shared.sh`, run in CI.
 - Codex has its own memory feature (`[features] memories`); it is independent of Recordare and both can run side by
   side. Recordare is the one shared across your platforms.
 - Verified with the Codex CLI 0.161.0; the IDE extension and the desktop app were not tested.
+
+## Tests
+
+`node --test connectors/codex/test/hook.test.mjs`: the shared hook script (both copies are identical) against a
+fake Recordare — the charter at `SessionStart`, the context on every prompt with the self card left on, and nothing
+printed (exit 0) when Recordare does not answer.
 
 ## Smoke test without a paid model
 

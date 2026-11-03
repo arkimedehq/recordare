@@ -126,19 +126,39 @@ che è successo e cercato con `search_knowledge` (`API_it.md` §2, §3).
   consultare) come fonti: Recordare è ciò che l'agente ha *imparato*. Al massimo esporre `learn_source` / chiamare
   `learnSource` per ciò che la persona chiede esplicitamente all'agente di imparare.
 
-## 4. Richiamo — MCP
+## 4. Il contratto memory-first (D54) e il richiamo — MCP
+**Richiesto a ogni client, per ogni agente che usa Recordare** (maintainer, 2026-11-03): la memoria è la mente stessa
+dell'agente, non uno strumento tra tanti — quando ragiona è sempre influenzato da ciò che ricorda, a meno che non gli si
+chieda di non farlo. Come usarla è scritto una volta in Recordare e ogni client lo segue:
+1. **La carta nel prompt di sistema**: `GET api/v1/charter` (libreria `charter()`) → `{charter, version}`; mettere il
+   testo nel prompt di sistema dell'agente, nella sua parte stabile (prefix caching), e rileggerlo solo quando cambia
+   `version`. Gli host MCP che passano al modello le `instructions` di un server ricevono lo stesso testo
+   all'`initialize`. Un ospite che non dà all'agente strumenti di memoria chiede `?tools=false` (libreria
+   `charter({ tools: false })`): la carta allora non gli dice mai di cercare con strumenti che non ha.
+2. **Il contesto di memoria prima di ogni turno** di ogni agente — sotto-agenti, delegati e membri dei team compresi:
+   `POST api/v1/context` (o `{ingest}`, una sola andata e ritorno con il turno), il blocco aggiunto in fondo al prompt di
+   sistema dopo la carta, mai salvato come messaggio. La scheda di sé è accesa di default: lasciarla accesa (un agente sa
+   sempre chi è).
+3. **Gli strumenti di memoria disponibili** all'agente (§4 qui sotto: `search_memory`, `search_episodes`,
+   `resolve_period`, `search_knowledge`, le scritture), qualunque altro strumento abbia — la carta gli dice di cercare
+   prima nella sua memoria.
+4. **Un ripiego quando Recordare non risponde**: il turno prosegue senza il blocco (o con la memoria propria del client,
+   se ne ha una); mai bloccare la chat.
+5. **Spenta solo esplicitamente**: l'interruttore della memoria della persona (o dell'amministratore) (D50: l'on/off del
+   client è l'unico); un agente senza memoria è una scelta voluta, non un default.
+
 - Registrare l'endpoint MCP di Recordare (`/mcp`) nel proprio client MCP con la chiave e `X-Recordare-User`.
 - **Inviare sempre `X-Recordare-Conversation: <externalConversationId>`**: non più per la visibilità — le risposte usano
   tutta la memoria in ogni conversazione, anche in quelle condivise (D50; la privacy verrà dopo) — ma le scritture MCP ne
   hanno bisogno come prova (con una chiave client una scrittura senza conversazione risolvibile riceve
   `"cannot write here"`; un token personale scrive come la persona), e il richiamo esclude il turno corrente dagli
   estratti di chat (`API.md` §1). `X-Recordare-Viewers` non esiste più: Recordare lo ignora.
-- Facoltativo, per agente: `POST api/v1/context {query}` prima di una risposta restituisce i ricordi pertinenti come
-  blocco recintato da mettere in fondo al prompt di sistema (`API_it.md` §3, WORK_PLAN 5.7) — l'agente può rispondere
+- Prima di ogni risposta (il contratto qui sopra): `POST api/v1/context {query}` restituisce ciò che è venuto in mente
+  come blocco recintato da mettere in fondo al prompt di sistema (`API_it.md` §3, WORK_PLAN 5.7) — l'agente può rispondere
   senza chiamare uno strumento. `POST api/v1/context {ingest}` (scope `read` + `ingest`; nella libreria client
   `contextWithTurn`) salva il turno dell'utente e ne restituisce il contesto in una sola chiamata — una sola andata e
-  ritorno prima di ogni turno invece di due. `card: true` (nella libreria `context(…, { card: true })`) apre il blocco con
-  la scheda di sé, spento di default. Per una pagina del Diario, `GET api/v1/cards` (nella libreria `cards`) dà chi sono e
+  ritorno prima di ogni turno invece di due. La scheda di sé apre il blocco di default (D54; `card: false`,
+  nella libreria `context(…, { card: false })`, la spegne). Per una pagina del Diario, `GET api/v1/cards` (nella libreria `cards`) dà chi sono e
   una scheda per ogni contatto, ogni riga collegata al suo dettaglio.
 - Strumenti: `search_episodes`, `search_memory` (fatti e note), `search_knowledge` (fonti apprese), `resolve_period`,
   `log_episode`, `correct_episode`, `forget_episode`, `remember`, `learn_source` (§3b). Una piattaforma che invia già ogni turno può lasciare fuori `log_episode` (i connettori

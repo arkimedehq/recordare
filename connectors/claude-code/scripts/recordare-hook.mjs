@@ -2,11 +2,13 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * Recordare hook for agent CLIs with Claude-Code-style lifecycle hooks (one script, three events; Node ≥ 18, no
+ * Recordare hook for agent CLIs with Claude-Code-style lifecycle hooks (one script, four events; Node ≥ 18, no
  * dependencies). Shared by the Claude Code and the Codex connectors: `node recordare-hook.mjs [client]`, where
- * `client` is `claude-code` (default) or `codex`.
- * - UserPromptSubmit: sends the prompt to Recordare's ingest, then returns the memories relevant to it
- *   (`POST api/v1/context`) as additional context for this turn;
+ * `client` is `claude-code` (default) or `codex`. It follows the memory-first contract (D54):
+ * - SessionStart: returns the memory charter (`GET api/v1/charter`: how the agent uses its memory) as context for
+ *   the whole session — the closest the hooks get to the system prompt; it runs again after a clear or a compaction;
+ * - UserPromptSubmit: sends the prompt to Recordare's ingest, then returns the memories relevant to it, opened by the
+ *   self card (`POST api/v1/context`, card on by default) as additional context for this turn;
  * - Stop: sends the agent's answer;
  * - SessionEnd: tells Recordare the conversation ended (extraction now instead of after the idle delay).
  * Never blocks the host: any failure is silent (exit 0, nothing printed) — memory is best effort here.
@@ -49,9 +51,9 @@ const clip = (s) => (Buffer.byteLength(s) > MAX ? Buffer.from(s).subarray(0, MAX
 
 async function post(path, body, conversation, ms) {
   const res = await fetch(`${URL_}${path}`, {
-    method: 'POST',
+    method: body === null ? 'GET' : 'POST',
     headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json', 'x-recordare-conversation': conversation },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    ...(body == null ? {} : { body: JSON.stringify(body) }), // null: a GET
     signal: AbortSignal.timeout(ms),
   });
   if (!res.ok) throw new Error(`${path} ${res.status}`);
@@ -116,7 +118,14 @@ async function main() {
   const meta = { externalId: conversation, channel: CLIENT, title: input.cwd ? basename(input.cwd) : undefined };
   const now = new Date().toISOString();
 
-  if (input.hook_event_name === 'UserPromptSubmit') {
+  if (input.hook_event_name === 'SessionStart') {
+    // The charter is the same for every memory and every session; a hook process is short-lived, so it is fetched
+    // once per session (no cache to keep in step with its version).
+    const charter = await post('/api/v1/charter', null, conversation, 3000);
+    if (typeof charter?.charter === 'string' && charter.charter) {
+      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: charter.charter } }));
+    }
+  } else if (input.hook_event_name === 'UserPromptSubmit') {
     const prompt = (input.prompt ?? '').trim();
     if (!prompt) return;
     // One round trip: Recordare stores the prompt, then answers with the memories relevant to it.

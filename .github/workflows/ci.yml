@@ -72,6 +72,8 @@ jobs:
       # The Claude Code and Codex connectors share one hook script (two byte-identical copies).
       - run: sh connectors/check-shared.sh
       - run: bash -n connectors/codex/install.sh
+      # The shared hook against a fake Recordare: charter at SessionStart, context every prompt, fallback (D54).
+      - run: node --test connectors/codex/test/hook.test.mjs
       # TypeScript connectors bundle packages/client from its sources.
       - run: npm ci
         working-directory: packages/client
