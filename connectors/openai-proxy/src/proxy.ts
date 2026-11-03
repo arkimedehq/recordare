@@ -17,6 +17,8 @@ import { type ChatRequest, injectBlock, isBackgroundCall, lastUserIndex, personT
 
 /** What the proxy needs from the Recordare side (Memory; a fake in tests). */
 export interface MemoryPort {
+  /** The memory charter (D54) for the system prompt, or null. */
+  charter(): Promise<string | null>;
   beforeTurn(turn: Turn): Promise<string | null>;
   afterTurn(turn: Turn, answer: string): void;
   queued(): number;
@@ -144,7 +146,9 @@ export function createProxy(cfg: ProxyConfig, deps: ProxyDeps): Server {
     }
     const { turn, chat } = turnOf(req, parsed);
     if (turn && memory) {
-      const block = await memory.beforeTurn(turn).catch(() => null);
+      // Memory-first (D54): the charter (stable: the prompt prefix stays cacheable), then this turn's memory context.
+      const [charter, block] = await Promise.all([memory.charter().catch(() => null), memory.beforeTurn(turn).catch(() => null)]);
+      if (charter) chat.messages = injectBlock(chat.messages ?? [], charter);
       if (block) chat.messages = injectBlock(chat.messages ?? [], block);
     }
     if (cfg.logUpstream) log.info(`upstream request (stream: ${chat.stream === true}, tools: ${Array.isArray(chat.tools) ? chat.tools.length : 0}): ${JSON.stringify(chat.messages)}`);

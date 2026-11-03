@@ -21,6 +21,17 @@ token or client). Its mode and the gender of its first person are set by the adm
 personal token itself, if it has the `ingest` scope (`PATCH api/v1/me {mode?, gender?}`; the mode only while the memory
 is empty); the plugin has no setting for them.
 
+## Memory-first contract (D54)
+
+- **The charter at session start**: a `SessionStart` hook reads the memory charter (`GET api/v1/charter`: how the agent
+  uses its memory — its own mind, searched before other tools and before saying it does not know) and adds it as context
+  for the whole session, the closest the hooks get to the system prompt; it runs again after `/clear` and a compaction.
+  The MCP server sends the same charter as its `instructions`, which Claude Code also puts in the system prompt: the
+  hook keeps it there when the MCP server is not connected.
+- **The memory context before every prompt**, opened by the self card (who I am; on by default in Recordare). A short
+  follow-up ("and him?") is matched with the previous turn by Recordare itself.
+- **Fallback**: if Recordare does not answer, no charter and no block — the session and the turn go on without memory.
+
 ## Install
 
 1. Ask the Recordare admin for a **personal token** with the scopes `mcp`, `ingest` and `read` (admin console →
@@ -44,11 +55,13 @@ need the plugin options.
 |---|---|
 | session | conversation `claude-code:<session id>` (channel `claude-code`, title = project folder) |
 | your prompt / Claude's answer | messages `user` / `assistant` (tool calls and sub-agents are not sent) |
+| start of session (also after `/clear`, a compaction) | `GET api/v1/charter` → the memory charter as session context (D54) |
 | end of session | `POST …/conversations/{id}/end` → extraction now instead of after the idle delay |
 
 The hook script (`scripts/recordare-hook.mjs`) is shared with the [Codex connector](../codex/README.md); the two copies
 must stay byte-identical (`connectors/check-shared.sh`, run in CI): edit one, copy it to the other.
 
+Unit tests of the hook script: `node --test connectors/codex/test/hook.test.mjs` (the Codex copy is the same file).
 Test without installing: `RECORDARE_URL=… RECORDARE_TOKEN=rp_… claude -p --plugin-dir connectors/claude-code "…"`.
 
 Licence: AGPL-3.0-or-later, like Recordare.

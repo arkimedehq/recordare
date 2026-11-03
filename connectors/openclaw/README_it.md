@@ -33,6 +33,18 @@ lo ha ricevuto).
 
 Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 
+## Contratto memory-first (D54)
+
+- **La carta nel prompt di sistema**: la carta della memoria (`GET api/v1/charter`: come l'agente usa la sua memoria —
+  la sua mente, da consultare prima degli altri strumenti e prima di dire che non sa) va in fondo al prompt di sistema
+  di ogni turno ricordato (`appendSystemContext`) finché il richiamo o gli strumenti sono attivi. Viene letta una volta
+  e tenuta in cache per versione per tutto il processo (ricontrollata ogni ora): il testo è identico a ogni turno e il
+  prompt resta adatto alla cache dei prefissi.
+- **Il contesto di memoria prima di ogni messaggio**, aperto dalla scheda di sé (chi sono; attiva per default in
+  Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
+- **Ripiego**: se Recordare non risponde, niente carta (finché non risponde; un tentativo ogni 30 s) e niente blocco —
+  il turno prosegue senza memoria.
+
 ## Installazione
 
 1. Installalo in OpenClaw (sulla macchina del Gateway) da npm:
@@ -134,6 +146,7 @@ emergere con un'altra; chi gestisce il Gateway lo dice alle persone che gli parl
 | messaggi degli altri membri di un gruppo (`message_received`) | messaggi `other`, autore `<canale>:<senderId>` (partecipante con identità di canale); quelli del titolare dell'account come `user` (`memoryPer: agent`) |
 | fine sessione (`session_end`: new, reset, idle, daily, deleted) | `POST api/v1/ingest/conversations/{id}/end` → estrazione subito invece che dopo il ritardo di inattività (non su compaction, shutdown o restart) |
 | blocco di memoria | `prependContext` di `before_prompt_build` (solo per il modello in OpenClaw; mai rimandato a Recordare — il plugin lo rimuove) |
+| carta della memoria (D54) | `appendSystemContext` di `before_prompt_build`: `GET api/v1/charter`, in cache per versione, lo stesso testo a ogni turno |
 | esecuzioni cron, heartbeat, sub-agente, tra agenti e incognito | non ricordate |
 
 ## Smoke test

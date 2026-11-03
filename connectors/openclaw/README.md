@@ -30,6 +30,17 @@ messages are written there, and each file is deleted once Recordare has it).
 
 Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 
+## Memory-first contract (D54)
+
+- **The charter in the system prompt**: the memory charter (`GET api/v1/charter`: how the agent uses its memory — its
+  own mind, searched before other tools and before saying it does not know) goes at the end of the system prompt of
+  every remembered turn (`appendSystemContext`) while recall or the tools are on. Read once, cached by version for the
+  process (re-checked hourly), so the text is the same every turn and the prompt stays cacheable.
+- **The memory context before every message**, opened by the self card (who I am; on by default in Recordare). A short
+  follow-up ("and him?") is matched with the previous turn by Recordare itself.
+- **Fallback**: if Recordare does not answer, no charter (until it answers; one try per 30 s) and no block — the turn
+  goes on without memory.
+
 ## Install
 
 1. Install it into OpenClaw (on the Gateway's machine) from npm:
@@ -129,6 +140,7 @@ the agent can come up with another; whoever runs the Gateway tells the people wh
 | other members' messages in a group (`message_received`) | messages `other`, author `<channel>:<senderId>` (participant with a channel identity); the account holder's own as `user` (`memoryPer: agent`) |
 | session end (`session_end`: new, reset, idle, daily, deleted) | `POST api/v1/ingest/conversations/{id}/end` → extraction now instead of after the idle delay (not on compaction, shutdown or restart) |
 | memory block | `prependContext` of `before_prompt_build` (model-only in OpenClaw; never sent back to Recordare — the plugin strips it) |
+| memory charter (D54) | `appendSystemContext` of `before_prompt_build`: `GET api/v1/charter`, cached by version, the same text every turn |
 | cron, heartbeat, sub-agent, agent-to-agent and incognito runs | not remembered |
 
 ## Smoke test

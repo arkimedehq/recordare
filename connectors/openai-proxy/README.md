@@ -32,6 +32,19 @@ Other `/v1/*` calls (`/v1/models`, embeddings, …) are passed through. `GET /he
 Recall over **MCP tools** is not part of the proxy: platforms that support per-user MCP headers (LibreChat, Open WebUI)
 can register Recordare's `/mcp` directly (`docs/INTEGRATION.md`).
 
+## Memory-first contract (D54)
+
+- **The charter in the system prompt**: the memory charter (`GET api/v1/charter`: how the agent uses its memory — its
+  own mind, searched before other tools and before saying it does not know) is appended to the first system message
+  of every remembered turn (`RECALL` on), before the memory context block. Read once, cached by version for the
+  process (re-checked hourly), so the text is the same every turn and the prompt stays cacheable.
+- **The memory context before every turn**, opened by the self card (who I am; on by default in Recordare). A short
+  follow-up ("and him?") is matched with the previous turn by Recordare itself.
+- The charter names Recordare's memory tools; the proxy offers none (Limits), so they count only where the platform
+  connects Recordare's MCP server.
+- **Fallback**: if Recordare does not answer, no charter (until it answers; one try per 30 s) and no block — the turn
+  goes on without memory.
+
 ## Run it
 
 Node ≥ 20 (local) or Docker. Build from this folder: `npm ci && npm run build && node dist/main.js` (the bundle includes
@@ -204,10 +217,10 @@ Recordare key is a client key: it never changes a person's settings (`memory_set
 - In-memory retry queue and turn cache (lost on restart).
 
 ## Tests
-`npm test` (vitest: resolvers, marker removal, background calls, injection, stream accumulation, repeated turns,
-Recordare down, pass-through), `npm run typecheck`. `smoke.sh` runs the AnythingLLM end-to-end test against a local
-Recordare (`SMOKE_DIR=/some/scratch/dir connectors/openai-proxy/smoke.sh`; ~5 GB of Docker disk, 2 LLM turns; removes
-the AnythingLLM image afterwards).
+`npm test` (vitest: resolvers, marker removal, background calls, injection, the memory charter, stream accumulation,
+repeated turns, Recordare down, pass-through), `npm run typecheck`. `smoke.sh` runs the AnythingLLM end-to-end test
+against a local Recordare (`SMOKE_DIR=/some/scratch/dir connectors/openai-proxy/smoke.sh`; ~5 GB of Docker disk, 2 LLM
+turns; removes the AnythingLLM image afterwards).
 
 Smoke-tested 2026-10-08 with AnythingLLM 1.17.0 (multi-user mode, the default `automatic` chat mode — agent path with
 native tools — streamed and not) and DeepSeek upstream. Open WebUI and LibreChat: unit tests only, from their source

@@ -15,7 +15,7 @@
 # What it touches (each edited file is backed up as <file>.bak-<timestamp> first; never uses sudo):
 #   ~/.config/recordare/codex.json   url + token, mode 600 (read by the hooks and by the MCP headers helper)
 #   $CODEX_HOME/recordare/           the hook script
-#   $CODEX_HOME/hooks.json           UserPromptSubmit, Stop and SessionEnd handlers (other hooks are kept)
+#   $CODEX_HOME/hooks.json           SessionStart, UserPromptSubmit, Stop and SessionEnd handlers (other hooks are kept)
 #   $CODEX_HOME/config.toml          a marked [mcp_servers.recordare] block (+ hook trust entries with --trust)
 set -euo pipefail
 
@@ -66,7 +66,7 @@ const trust = [];
 if (mode === 'add') {
   const command = `node ${JSON.stringify(script)} codex`;
   // SessionEnd: Codex caps it at 3 s; the script keeps its request under 2.5 s there.
-  for (const [ev, timeout] of [['UserPromptSubmit', 10], ['Stop', 15], ['SessionEnd', 3]]) {
+  for (const [ev, timeout] of [['SessionStart', 5], ['UserPromptSubmit', 10], ['Stop', 15], ['SessionEnd', 3]]) {
     const handler = { type: 'command', command, timeout };
     (doc.hooks[ev] ??= []).push({ hooks: [handler] });
     // Codex's hook trust: key <hooks.json path>:<event_snake>:<group>:<handler>, hash = sha256 of the canonical
@@ -150,7 +150,7 @@ install() {
   backup "$HOOKS"
   local trusts
   trusts="$(merge_hooks add)"
-  say "  hooks: $HOOKS (UserPromptSubmit, Stop, SessionEnd)"
+  say "  hooks: $HOOKS (SessionStart, UserPromptSubmit, Stop, SessionEnd)"
 
   # config.toml: our block replaces the previous one; a foreign [mcp_servers.recordare] table goes through Codex.
   backup "$TOML"
@@ -192,10 +192,10 @@ $END"
 
   say ""
   if [ "$trust" = 1 ]; then
-    say "Done. The three hooks are pre-trusted; check them any time with /hooks in codex."
+    say "Done. The four hooks are pre-trusted; check them any time with /hooks in codex."
   else
     say "Done. One step left: Codex runs new hooks only once you trust them."
-    say "Open codex, type /hooks and trust the three Recordare hooks (UserPromptSubmit, Stop, SessionEnd)."
+    say "Open codex, type /hooks and trust the four Recordare hooks (SessionStart, UserPromptSubmit, Stop, SessionEnd)."
   fi
   say "Then 'codex mcp list' shows the recordare server. Remove everything with: install.sh uninstall"
 }

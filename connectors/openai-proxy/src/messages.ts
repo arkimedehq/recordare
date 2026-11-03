@@ -62,7 +62,7 @@ export function isBackgroundCall(lastUserRaw: string, extra: RegExp[] = []): boo
 }
 
 /**
- * Appends the memory block at the end of the first system message (a new system message first when there is none).
+ * Appends a block (the memory charter, then the memory context) at the end of the first system message (a new system message first when there is none).
  * The stable part of the prompt stays first (prefix caching); the block is never stored as a chat message.
  */
 export function injectBlock(messages: ChatMessage[], block: string): ChatMessage[] {

@@ -10,9 +10,10 @@
   go through a durable SQLite outbox that retries. A session end (`/new`, `/reset`, exit) queues
   `POST …/conversations/{id}/end` after the conversation's pending messages: Recordare extracts now instead of after its
   idle delay.
-- Recall: `prefetch` returns Recordare's pre-turn memory context (no LLM call; Hermes wraps it in its own
-  `<memory-context>` fence), and the `recordare_*` tools call Recordare's MCP tools bound in code to the memory and the
-  conversation.
+- Recall, memory-first (D54): `system_prompt_block` puts the memory charter (`GET api/v1/charter`, cached per process by
+  version) in the system prompt; `prefetch` returns Recordare's pre-turn memory context, opened by the self card (no LLM
+  call; Hermes wraps it in its own `<memory-context>` fence), every turn; and the `recordare_*` tools call Recordare's
+  MCP tools bound in code to the memory and the conversation.
 - Which memory (D50): by default the agent's one memory (a personal token, or a client key with a fixed
   RECORDARE_USER); the gateway users who talk to it are participants recognised inside it (`<platform>:<user id>`
   channel identities, their names), the account holder (RECORDARE_SELF_IDS, the CLI) is its "I". Optionally one memory
@@ -27,6 +28,8 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,6 +45,9 @@ logger = logging.getLogger(__name__)
 MAX_CONTENT_BYTES = 60 * 1024  # Recordare accepts 64 KiB per message
 TURN_START_DEADLINE_S = 1.5    # the person's message must be stored before a read or a memory tool call
 DEFAULT_TIMEOUT_S = 3.0        # context request (Hermes bounds prefetch at 8 s)
+CHARTER_TIMEOUT_S = 2.0        # the charter request, while Hermes builds the system prompt
+CHARTER_REFRESH_S = 3600.0     # a charter in hand is checked for a new version this often
+CHARTER_RETRY_S = 30.0         # while no charter could be read, at most one try per this interval
 # D51: a message that is only a link code (the service's own pattern) — the holder linking this channel identity.
 LINK_CODE = re.compile(r"^\s*RCD-?[0-9A-Z]{4}-?[0-9A-Z]{4}\.?\s*$", re.IGNORECASE)
 LINK_CODE_INSTRUCTION = ("The user's last message is a one-time code that links their account on this channel to their "
@@ -186,6 +192,32 @@ def strip_fence(block: str) -> str:
     if lines and lines[-1].strip() == "</memory-context>":
         lines = lines[:-1]
     return "\n".join(lines).strip()
+
+_charter_lock = threading.Lock()
+_charters: Dict[str, Dict[str, Any]] = {}  # Recordare URL → {"text", "version", "checked"}
+
+
+def memory_charter(client: RecordareClient) -> Optional[str]:
+    """The memory charter (D54, `GET api/v1/charter`), cached for the process: read once, re-read hourly and replaced
+    only when its version changes (the system prompt stays byte-identical: prompt caching keeps working). Never raises:
+    when Recordare does not answer, the charter in hand is used, or none."""
+    now = time.monotonic()
+    with _charter_lock:
+        entry = _charters.setdefault(client.url, {"text": None, "version": None, "checked": None})
+        wait = CHARTER_REFRESH_S if entry["text"] else CHARTER_RETRY_S
+        if entry["checked"] is not None and now - entry["checked"] < wait:
+            return entry["text"]
+        entry["checked"] = now
+    try:
+        data = client.charter(timeout=CHARTER_TIMEOUT_S)
+        text, version = data.get("charter"), data.get("version")
+        if isinstance(text, str) and text.strip():
+            with _charter_lock:
+                if version != entry["version"] or not entry["text"]:
+                    entry["text"], entry["version"] = text, version
+    except Exception as exc:
+        logger.info("Recordare charter unavailable: %s", exc)
+    return entry["text"]
 
 
 class RecordareMemoryProvider(MemoryProvider):
@@ -372,12 +404,20 @@ class RecordareMemoryProvider(MemoryProvider):
         return {"externalId": ext_id, "role": "other", "authorRef": who["ref"], "content": _clip(text), "sentAt": sent_at}
 
     def system_prompt_block(self) -> str:
-        if not (self._active and self._tools):
+        """The memory charter (D54) when the agent has its memory this session (recall or tools), then a line naming the
+        memory tools. Static for the session; without Recordare, only the tools line (or nothing)."""
+        try:
+            if not (self._active and self._client and (self._recall or self._tools)):
+                return ""
+            parts = [memory_charter(self._client) or ""]
+            if self._tools:
+                parts.append("Your memory tools here: recordare_search_episodes for what happened or was planned (with "
+                             "dates), recordare_search_memory for who people are, recordare_resolve_period to turn a "
+                             "period into dates, recordare_remember when the user asks you to remember something.")
+            return "\n\n".join(p for p in parts if p)
+        except Exception as exc:
+            logger.warning("Recordare system prompt: %s", exc)
             return ""
-        return ("# Recordare memory\nYour long-term memory is active. Use recordare_search_episodes for "
-                "what happened or was planned (with dates), recordare_search_memory for who people are, "
-                "recordare_resolve_period to turn a period into dates, recordare_remember when the user asks you to "
-                "remember something.")
 
     # -- capture ----------------------------------------------------------------------------------------------------------
 

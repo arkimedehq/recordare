@@ -29,11 +29,18 @@ function upstream(seen: Seen[]): typeof fetch {
 
 interface RCall { path: string; headers: Headers; body: Record<string, unknown> }
 
-/** A fake Recordare; `down` = unreachable. */
-function recordare(calls: RCall[], opts: { down?: boolean; block?: string | null } = {}) {
+const CHARTER = '## Your memory\nYou have a long-term memory.';
+interface Opts { down?: boolean; block?: string | null; noCharter?: boolean; charterReads?: { n: number } }
+
+/** A fake Recordare; `down` = unreachable, `noCharter` = the charter endpoint fails. Charter reads are not in `calls`. */
+function recordare(calls: RCall[], opts: Opts = {}) {
   return async (input: string | URL, init?: RequestInit): Promise<Response> => {
     if (opts.down) throw new TypeError('fetch failed');
     const path = new URL(String(input)).pathname;
+    if (path === '/api/v1/charter') {
+      if (opts.charterReads) opts.charterReads.n++;
+      return opts.noCharter ? Response.json({ title: 'boom' }, { status: 500 }) : Response.json({ charter: CHARTER, version: 'charter.v1' });
+    }
     const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
     calls.push({ path, headers: new Headers(init?.headers), body });
     if (path.endsWith('/end')) return new Response(null, { status: 202 });
@@ -45,7 +52,7 @@ function recordare(calls: RCall[], opts: { down?: boolean; block?: string | null
 const servers: Server[] = [];
 afterEach(() => { for (const s of servers.splice(0)) s.close(); });
 
-async function start(env: Record<string, string>, seen: Seen[], calls: RCall[], opts: { down?: boolean; block?: string | null } = {}) {
+async function start(env: Record<string, string>, seen: Seen[], calls: RCall[], opts: Opts = {}) {
   const cfg = config({ RECORDARE_URL: 'http://recordare:8080', RECORDARE_API_KEY: 'rk_test', RECORDARE_USER: 'agent', UPSTREAM_API_KEY: 'sk-up', ...env });
   const memory = new Memory(cfg, silent, recordare(calls, opts));
   const server = createProxy(cfg, { log: silent, memory, fetch: upstream(seen) });
@@ -77,7 +84,8 @@ describe('proxy', () => {
     expect(sent.url).toBe('http://upstream/v1/chat/completions');
     expect(sent.headers.authorization).toBe('Bearer sk-up');
     const system = (sent.body.messages as Array<{ content: string }>)[0]!.content;
-    expect(system).toBe('You are kind.\n\n<memory-context>Il gatto si chiama Biscotto</memory-context>');
+    // D54: the charter after the platform's prompt (stable prefix), then this turn's memory context.
+    expect(system).toBe(`You are kind.\n\n${CHARTER}\n\n<memory-context>Il gatto si chiama Biscotto</memory-context>`);
     expect(JSON.stringify(sent.body)).not.toContain('[[recordare');
 
     await until(() => calls.length >= 2);
@@ -90,6 +98,7 @@ describe('proxy', () => {
     expect(ingest.conversation.participants).toContainEqual({ ref: 'anythingllm:7', role: 'other', identity: { externalUserId: 'anythingllm:7' } });
     expect(ingest.messages[0]).toMatchObject({ role: 'other', authorRef: 'anythingllm:7' });
     expect(calls[0]!.body.query).toBe('Come si chiama il mio gatto?');
+    expect(calls[0]!.body).not.toHaveProperty('card'); // the self card: on by default
     const answer = (calls[1]!.body.messages as Array<Record<string, unknown>>)[0]!;
     expect(answer).toMatchObject({ role: 'assistant', content: 'Hello', upsert: true });
     expect(answer.externalId).toBe(`${ingest.messages[0]!.externalId}:a`);
@@ -197,6 +206,23 @@ describe('proxy', () => {
       .toMatchObject({ content: 'RCD-7K4M-9Q2X', authorRef: 'anythingllm:7' });
   });
 
+  it('the charter is read once and sent with every turn; without it the turn still gets its memory context', async () => {
+    const seen: Seen[] = []; const calls: RCall[] = [];
+    const charterReads = { n: 0 };
+    const { base } = await start({}, seen, calls, { charterReads });
+    await (await chat(base, { ...anythingllm('ciao'), stream: false })).text();
+    await (await chat(base, { ...anythingllm('e lui?'), stream: false })).text();
+    expect(charterReads.n).toBe(1);
+    expect(calls.filter((c) => c.path.endsWith('/context'))).toHaveLength(2); // every turn asks for its context
+    for (const s of seen) expect((s.body.messages as Array<{ content: string }>)[0]!.content).toContain(CHARTER);
+
+    const seen2: Seen[] = []; const calls2: RCall[] = [];
+    const { base: base2 } = await start({}, seen2, calls2, { noCharter: true });
+    await (await chat(base2, { ...anythingllm('ciao'), stream: false })).text();
+    expect((seen2[0]!.body.messages as Array<{ content: string }>)[0]!.content)
+      .toBe('You are kind.\n\n<memory-context>Il gatto si chiama Biscotto</memory-context>');
+  });
+
   it('with recall off, stores the message with a plain ingest', async () => {
     const seen: Seen[] = []; const calls: RCall[] = [];
     const { base } = await start({ RECALL: 'false' }, seen, calls);
@@ -204,5 +230,6 @@ describe('proxy', () => {
     await until(() => calls.length >= 2);
     expect(calls.map((c) => c.path)).toEqual(['/api/v1/ingest/messages', '/api/v1/ingest/messages']);
     expect(JSON.stringify(seen[0]!.body)).not.toContain('memory-context');
+    expect(JSON.stringify(seen[0]!.body)).not.toContain(CHARTER.split('\n')[0]); // no memory for the model: no charter
   });
 });

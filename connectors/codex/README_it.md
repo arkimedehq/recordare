@@ -22,6 +22,18 @@ li imposta l'amministratore (`PATCH api/v1/admin/memories/{id}` `{mode, gender}`
 `feminine`, `neutral`) oppure lo stesso token personale, se ha lo scope `ingest` (`PATCH api/v1/me {mode?, gender?}`; la
 modalità solo finché la memoria è vuota); il plugin non ha impostazioni per questi valori.
 
+## Contratto memory-first (D54)
+
+- **La carta della memoria a inizio sessione**: un hook `SessionStart` legge la carta della memoria
+  (`GET api/v1/charter`: come l'agente usa la sua memoria — la sua mente, da consultare prima degli altri strumenti e
+  prima di dire che non sa) e la aggiunge come contesto per tutta la sessione, quanto di più vicino al prompt di sistema
+  permettono gli hook; viene ripetuto dopo `/clear` e dopo una compattazione. L'hook non dipende dal server MCP: Codex
+  registra il suo output come messaggio developer.
+- **Il contesto di memoria prima di ogni richiesta**, aperto dalla scheda di sé (chi sono; attiva per default in
+  Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
+- **Ripiego**: se Recordare non risponde, niente carta e niente blocco — la sessione e il turno proseguono senza
+  memoria.
+
 ## Installazione
 
 1. Chiedi all'amministratore di Recordare un **token personale** con gli scope `mcp`, `ingest` e `read` (console admin →
@@ -38,7 +50,7 @@ modalità solo finché la memoria è vuota); il plugin non ha impostazioni per q
    argomento, così resta fuori dalla cronologia della shell), lo verifica con `GET api/v1/me` e si può rilanciare senza
    problemi.
 3. **Dai fiducia agli hook.** Codex esegue un nuovo hook utente solo dopo che gli hai dato fiducia: apri `codex`, scrivi
-   **`/hooks`** e dai fiducia ai tre hook di Recordare. Fino ad allora nulla viene catturato né richiamato (gli
+   **`/hooks`** e dai fiducia ai quattro hook di Recordare. Fino ad allora nulla viene catturato né richiamato (gli
    strumenti MCP funzionano comunque). `install.sh --trust` (oppure `RECORDARE_TRUST_HOOKS=1`) registra invece la
    fiducia in `config.toml`; usa il formato interno di hash degli hook di Codex (verificato con Codex 0.161.0), quindi
    se una versione successiva di Codex li mostra di nuovo come non fidati, dagli fiducia in `/hooks`.
@@ -55,7 +67,7 @@ Ogni file che modifica viene prima copiato in `<file>.bak-<timestamp>`.
 |---|---|
 | `~/.config/recordare/codex.json` (modo 600) | `{"url", "token"}` — letto dagli hook e dall'helper delle intestazioni MCP (rispetta `XDG_CONFIG_HOME`) |
 | `$CODEX_HOME/recordare/recordare-hook.mjs` | lo script degli hook (`CODEX_HOME` vale `~/.codex` di default) |
-| `$CODEX_HOME/hooks.json` | tre handler `node "…/recordare-hook.mjs" codex`: `UserPromptSubmit` (10 s), `Stop` (15 s), `SessionEnd` (3 s, il limite di Codex); gli altri tuoi hook restano |
+| `$CODEX_HOME/hooks.json` | quattro handler `node "…/recordare-hook.mjs" codex`: `SessionStart` (5 s), `UserPromptSubmit` (10 s), `Stop` (15 s), `SessionEnd` (3 s, il limite di Codex); gli altri tuoi hook restano |
 | `$CODEX_HOME/config.toml` | un blocco marcato (`# >>> recordare` … `# <<< recordare`) con `[mcp_servers.recordare]`: `url = "<url>/mcp"` e `http_headers_helper`, che stampa l'intestazione `Authorization` da `codex.json` — il token non viene salvato in `config.toml`; con `--trust`, anche le voci `[hooks.state."…"]` |
 
 L'installer scrive da sé il blocco MCP perché `codex mcp add` non sa impostare un helper per le intestazioni. Una
@@ -73,6 +85,7 @@ Codex, IDE e app compresi).
 | sessione (thread; sopravvive a `codex resume`) | conversazione `codex:<id sessione>` (canale `codex`, titolo = cartella del progetto) |
 | la tua richiesta / la risposta di Codex | messaggi `user` / `assistant` (`last_assistant_message`; se vuoto, l'ultimo messaggio dell'agente nel file rollout). Le chiamate a strumenti non vengono inviate |
 | turni dei sotto-agenti (payload con `agent_id`) | non inviati |
+| inizio sessione (`SessionStart`, anche dopo un clear o una compattazione) | `GET api/v1/charter` → la carta della memoria come contesto della sessione (D54) |
 | fine sessione (`SessionEnd`) | `POST …/conversations/{id}/end` → estrazione subito invece che dopo il ritardo di inattività |
 
 Lo script degli hook è lo stesso file del connettore Claude Code (`node recordare-hook.mjs codex`); le due copie sono
@@ -89,6 +102,12 @@ mantenute identiche byte per byte da `connectors/check-shared.sh`, eseguito in C
 - Codex ha una sua funzione di memoria (`[features] memories`); è indipendente da Recordare e possono convivere.
   Recordare è quella condivisa fra le tue piattaforme.
 - Verificato con la CLI di Codex 0.161.0; l'estensione per IDE e l'app desktop non sono state provate.
+
+## Test
+
+`node --test connectors/codex/test/hook.test.mjs`: lo script di hook condiviso (le due copie sono identiche) contro un
+Recordare finto — la carta a `SessionStart`, il contesto a ogni richiesta con la scheda di sé lasciata attiva, e nulla
+stampato (uscita 0) quando Recordare non risponde.
 
 ## Prova senza un modello a pagamento
 

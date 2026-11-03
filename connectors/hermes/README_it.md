@@ -28,6 +28,18 @@ una volta sola).
 
 Provato con Hermes Agent v0.21.6. Python puro, solo `requests` (una dipendenza di Hermes).
 
+## Contratto memory-first (D54)
+
+- **La carta nel prompt di sistema**: `system_prompt_block` restituisce la carta della memoria (`GET api/v1/charter`:
+  come l'agente usa la sua memoria — la sua mente, da consultare prima degli altri strumenti e prima di dire che non
+  sa), seguita da una riga che nomina gli strumenti `recordare_*`, finché il richiamo o gli strumenti sono attivi. Viene
+  letta una volta e tenuta in cache per versione per tutto il processo (ricontrollata ogni ora).
+- **Il contesto di memoria prima di ogni turno** (`prefetch`), aperto dalla scheda di sé (chi sono; attiva per default
+  in Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso
+  (Hermes salta `prefetch` solo per i messaggi banali come "ok").
+- **Ripiego**: se Recordare non risponde, niente carta (solo la riga degli strumenti; un tentativo ogni 30 s) e niente
+  blocco — il turno prosegue senza memoria.
+
 ## Installazione
 
 1. Chiedi all'admin di Recordare una credenziale per la memoria dell'agente:
@@ -120,7 +132,8 @@ conservato conta come della persona stessa.
 
 ## Test
 
-- Test unitari (Recordare finto, solo libreria standard; serve Hermes importabile):
+- Test unitari (Recordare finto, solo libreria standard; serve Hermes importabile — oppure stub di
+  `agent.memory_provider` e `agent.secret_scope` nel `PYTHONPATH`):
   `<venv di hermes>/bin/python -m unittest discover -s connectors/hermes/tests`.
 - End to end contro un Recordare locale: `SMOKE_DIR=<cartella temporanea> connectors/hermes/smoke.sh` installa Hermes
   dai sorgenti in un venv sotto `SMOKE_DIR` (oppure usa `HERMES_BIN`), con `HERMES_HOME` e `HOME` usa e getta lì; tre

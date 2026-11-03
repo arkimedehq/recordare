@@ -6,12 +6,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentTool, HookMap, OpenClawPluginApi, ToolContext } from 'openclaw/plugin-sdk/plugin-entry';
+import { CharterCache } from '../src/charter.js';
 import { parseConfig } from '../src/config.js';
 import { conversationId, resolveSpeaker, resolveUser } from '../src/identity.js';
 import { registerRecordare } from '../src/plugin.js';
 import { TOOLS, toolName } from '../src/tools.js';
 import { cleanUserText, lastTurn } from '../src/transcript.js';
 
+const CHARTER = { charter: '## Your memory\nYou have a long-term memory.', version: 'charter.v1' };
 const kinds = { isIncognito: () => false, isCron: () => false, isSubagent: () => false };
 
 function fakeApi(config: Record<string, unknown>) {
@@ -79,9 +81,15 @@ describe('transcript', () => {
 
 describe('hooks and tools', () => {
   let calls: Call[];
+  let charterReads: number;
   beforeEach(() => {
     calls = [];
+    charterReads = 0;
     vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      if (String(url).endsWith('/api/v1/charter')) {
+        charterReads++;
+        return new Response(JSON.stringify(CHARTER), { status: 200 });
+      }
       calls.push({ url: String(url), headers: new Headers(init.headers), body: JSON.parse(String(init.body ?? '{}')) });
       if (String(url).endsWith('/end')) return new Response(null, { status: 202 });
       const body = String(url).endsWith('/context') ? { block: '<memory-context>x</memory-context>', items: 1 }
@@ -97,14 +105,22 @@ describe('hooks and tools', () => {
     const ctx = { runId: 'r1', sessionKey: 'agent:main:telegram:42', sessionId: 's1', channel: 'telegram', senderId: '42', agentId: 'main' };
 
     const res = await hooks.before_prompt_build({ prompt: 'p', currentUserMessage: 'my sister is Giulia', currentUserMessageId: 'm1', messages: [] }, ctx);
-    expect(res).toEqual({ prependContext: '<memory-context>x</memory-context>' });
+    // D54: the context before the message (self card on: no `card` sent), the charter at the end of the system prompt.
+    expect(res).toEqual({ prependContext: '<memory-context>x</memory-context>', appendSystemContext: CHARTER.charter });
     expect(calls.map((c) => c.url)).toEqual(['http://r/api/v1/context']);
+    expect(calls[0]!.body).not.toHaveProperty('card');
     expect(calls[0]!.headers.get('x-recordare-user')).toBe('alice');
     const ingest = calls[0]!.body.ingest as { conversation: { externalId: string }; messages: Array<{ externalId: string; authorRef: string }> };
     expect(ingest.conversation.externalId).toBe('openclaw:agent:main:telegram:42/s1');
     expect(ingest.messages[0]!.externalId).toBe('m1:u');
     expect(ingest.messages[0]!.authorRef).toBe('holder');
     expect(calls[0]!.body.query).toBe('my sister is Giulia');
+
+    // Every turn asks for its context; the charter is read once (cached by version) and sent again unchanged.
+    const next = await hooks.before_prompt_build({ prompt: 'p', currentUserMessage: 'and her husband?', currentUserMessageId: 'm0', messages: [] }, { ...ctx, runId: 'r0' });
+    expect(next).toEqual({ prependContext: '<memory-context>x</memory-context>', appendSystemContext: CHARTER.charter });
+    expect(charterReads).toBe(1);
+    calls.splice(1);
 
     await hooks.agent_end({ success: true, messages: [{ role: 'user', content: 'x' }, { role: 'assistant', content: 'Nice!' }] }, ctx);
     expect(calls[1]!.url).toBe('http://r/api/v1/ingest/messages');
@@ -124,7 +140,7 @@ describe('hooks and tools', () => {
     const { api, hooks } = fakeApi({ url: 'http://r', apiKey: 'rp_x', autoRecall: false });
     const plugin = registerRecordare(api, parseConfig(api.pluginConfig, {})!, kinds);
     const res = await hooks.before_prompt_build({ prompt: 'p', currentUserMessage: 'hello', currentUserMessageId: 'm2', messages: [] }, { runId: 'r2', sessionKey: 'k', sessionId: 's' });
-    expect(res).toBeUndefined();
+    expect(res).toEqual({ appendSystemContext: CHARTER.charter }); // the tools are still there: the charter stays
     expect(calls.map((c) => c.url)).toEqual(['http://r/api/v1/ingest/messages']);
     expect(calls[0]!.headers.get('x-recordare-user')).toBeNull();
     await plugin.stop();
@@ -135,7 +151,7 @@ describe('hooks and tools', () => {
     const plugin = registerRecordare(api, parseConfig(api.pluginConfig, {})!, kinds);
     const ctx = { runId: 'r5', sessionKey: 'agent:main:telegram:direct:42', sessionId: 's5', channel: 'telegram', senderId: '42' };
     const res = await hooks.before_prompt_build({ prompt: 'p', currentUserMessage: 'RCD-7K4M-9Q2X', currentUserMessageId: 'm5', messages: [] }, ctx);
-    expect(res).toEqual({ prependSystemContext: expect.stringContaining('one-time code') });
+    expect(res).toEqual({ prependSystemContext: expect.stringContaining('one-time code'), appendSystemContext: CHARTER.charter });
     await vi.waitFor(() => expect(calls).toHaveLength(1));
     expect(calls[0]!.url).toBe('http://r/api/v1/ingest/messages'); // no memory context for a code
     const req = calls[0]!.body as { conversation: { direct: boolean }; messages: Array<{ content: string; authorRef: string }> };
@@ -210,6 +226,30 @@ describe('hooks and tools', () => {
     expect(tool).toBeDefined();
     expect((await tool.execute('t', { query: 'x' })).content[0]!.text).toMatch(/unavailable/);
     await plugin.stop();
+  });
+});
+
+describe('memory charter cache', () => {
+  it('reads once, keeps the text until the version changes, and never fails when Recordare is down', async () => {
+    let t = 0;
+    let answer: (() => Promise<typeof CHARTER>) = async () => { throw new Error('ECONNREFUSED'); };
+    const read = vi.fn(() => answer());
+    const cache = new CharterCache(read, () => t);
+    expect(await cache.get()).toBeUndefined();        // down: no charter, no error
+    expect(await cache.get()).toBeUndefined();        // and no new try before the retry interval
+    expect(read).toHaveBeenCalledTimes(1);
+    answer = async () => CHARTER;
+    t += 30_000;
+    expect(await cache.get()).toBe(CHARTER.charter);
+    expect(await cache.get()).toBe(CHARTER.charter);
+    expect(read).toHaveBeenCalledTimes(2);
+    answer = async () => { throw new Error('ECONNREFUSED'); };
+    t += 60 * 60_000;
+    expect(await cache.get()).toBe(CHARTER.charter);  // a failed refresh keeps the charter in hand
+    answer = async () => ({ charter: 'v2 text', version: 'charter.v2' });
+    t += 60 * 60_000;
+    await cache.get();                                // refreshes in the background
+    await vi.waitFor(async () => expect(await cache.get()).toBe('v2 text'));
   });
 });
 

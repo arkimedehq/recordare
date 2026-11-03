@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright © 2026 Andrea Genovese
 
-"""HTTP access to Recordare: REST (ingest, end of a conversation, pre-turn context) and a minimal MCP client (Streamable HTTP, JSON-RPC).
+"""HTTP access to Recordare: REST (ingest, end of a conversation, pre-turn context, memory charter) and a minimal MCP client (Streamable HTTP, JSON-RPC).
 
 Every request carries the credential (`Authorization: Bearer rp_…|rk_…`), the Recordare user with a client key
 (`X-Recordare-User`) and the conversation (`X-Recordare-Conversation`) — the headers Recordare resolves the memory and
@@ -89,6 +89,15 @@ class RecordareClient:
         if not resp.ok:
             raise _problem(resp)
         return None if resp.status_code in (202, 204) or not resp.content else resp.json()
+
+    def charter(self, *, timeout: float) -> Dict[str, Any]:
+        """The memory charter (D54, `GET api/v1/charter`): `{charter, version}`, the same for every memory."""
+        resp = self._http.get(f"{self.url}/api/v1/charter", headers=self.headers(None, None),
+                              timeout=(min(1.5, timeout), timeout))
+        if not resp.ok:
+            raise _problem(resp)
+        data = resp.json()
+        return data if isinstance(data, dict) else {}
 
     def ingest(self, body: Dict[str, Any], *, user: Optional[str], conversation: str, timeout: Tuple[float, float]) -> Any:
         return self.post("/api/v1/ingest/messages", body, user=user, conversation=conversation, timeout=timeout)
