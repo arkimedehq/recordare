@@ -49,6 +49,8 @@ describe('RecordareClient', () => {
     expect(await client().charter()).toEqual({ charter: '## Your memory', version: 'charter.v1' });
     expect(seen[0]).toMatchObject({ method: 'GET', path: '/api/v1/charter' });
     expect(seen[0]?.headers).not.toHaveProperty('x-recordare-user');
+    await client().charter({ tools: false });
+    expect(seen[1]).toMatchObject({ method: 'GET', path: '/api/v1/charter?tools=false' });
   });
 
   it('asks for the self card in the memory context and reads the cards', async () => {

@@ -39,10 +39,11 @@ export class RecordareClient {
   /**
    * The memory charter (D54, the memory-first contract): how the agent uses its memory — put it in the system prompt of
    * every agent that uses Recordare, before the `<memory-context>` block. The same for every memory; stable until
-   * `version` changes, so cache it (it keeps the prompt prefix cacheable).
+   * `version` changes, so cache it (it keeps the prompt prefix cacheable). `{ tools: false }`: the form for a host that
+   * gives the agent only the memory context, no memory tools (it never tells the agent to search with them).
    */
-  charter(): Promise<Charter> {
-    return this.http.request<Charter>('GET', 'api/v1/charter', {});
+  charter(opts: { tools?: boolean } = {}): Promise<Charter> {
+    return this.http.request<Charter>('GET', opts.tools === false ? 'api/v1/charter?tools=false' : 'api/v1/charter', {});
   }
 
   /** The memory behind `user` (auto-provisioned when the client allows it), its mode and gender. */

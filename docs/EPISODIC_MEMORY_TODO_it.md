@@ -906,9 +906,11 @@ su qualsiasi client agentico, quindi *come si usa la memoria* sta in Recordare e
   memoria, non file o foto; quando la memoria e un'altra fonte non concordano, dillo, vince la più recente o affidabile;
   usala con naturalezza, non recitarla; non per una richiesta in cui la persona ti chiede di non farlo. Servita in tre
   modi: `GET api/v1/charter` → `{charter, version}` (stabile per la cache del prompt dei client), le `instructions` del
-  server MCP, citata nel blocco.
+  server MCP, citata nel blocco. Una seconda forma per gli ospiti con il solo contesto, senza strumenti di memoria
+  (`?tools=false`, il proxy di default): non dice mai all'agente di cercare con strumenti che non ha — ciò che è venuto
+  in mente è tutto ciò che può ricordare; quando non basta, dire "non me lo ricordo" invece di tirare a indovinare.
 - **Il blocco** ora è "ciò che ti è venuto in mente dalla tua memoria", sempre dati, non istruzioni; con la sola scheda
-  dice che non è venuto in mente altro (cercare se il messaggio ne ha bisogno).
+  dice che non è venuto in mente altro (cosa fare poi lo dice la carta).
 - **La scheda di sé accesa di default** (`card: false` per spegnerla): un agente sa sempre chi è. Misurata: 526
   caratteri in media su dieci memorie di valutazione, 600 al massimo (circa 130–150 token a turno). La sola scheda non
   viene registrata come richiamo (la guardia anti-eco continua a trattare le risposte come prima).

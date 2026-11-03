@@ -42,8 +42,11 @@ Il richiamo con **strumenti MCP** non fa parte del proxy: le piattaforme che sup
   prompt resta adatto alla cache dei prefissi.
 - **Il contesto di memoria prima di ogni turno**, aperto dalla scheda di sé (chi sono; attiva per default in
   Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
-- La carta nomina gli strumenti di memoria di Recordare; il proxy non ne offre (Limiti), quindi valgono solo dove la
-  piattaforma collega il server MCP di Recordare.
+- **La forma della carta**: il proxy non dà al modello strumenti di memoria (Limiti), quindi di default chiede la carta
+  per il solo contesto (`GET api/v1/charter?tools=false`): ciò che è venuto in mente è tutto ciò che il modello può
+  ricordare — quando non basta, dice che non se lo ricorda invece di tirare a indovinare, e non dice mai di stare
+  cercando. Dove la piattaforma collega anche il server MCP di Recordare (Open WebUI, LibreChat), impostare
+  `MEMORY_TOOLS=true` per la carta completa, che dice al modello di cercare prima con quegli strumenti.
 - **Ripiego**: se Recordare non risponde, niente carta (finché non risponde; un tentativo ogni 30 s) e niente blocco —
   il turno prosegue senza memoria.
 
@@ -99,6 +102,7 @@ per la prima persona nelle lingue con il genere. Il proxy non ha impostazioni pe
 | `TZ` | di sistema | Fuso orario del giorno usato negli id di conversazione sintetizzati |
 | `SKIP_PATTERNS` | — | Regex aggiuntive (array JSON o separate da `\|\|`) sull'ultimo messaggio utente che marcano le chiamate di background |
 | `RECALL`, `CAPTURE` | `true` | Spegne l'iniezione / la cattura |
+| `MEMORY_TOOLS` | `false` | `true` quando la piattaforma dà al modello anche gli strumenti MCP di Recordare: la carta della memoria completa invece di quella per il solo contesto (D54) |
 | `LOG_UPSTREAM` | `false` | Debug: registra i messaggi inviati upstream (dati personali — mai in produzione) |
 | `PORT` | `8788` | Porta d'ascolto |
 | `MAX_BODY_BYTES` | 25 MB | Richiesta di chat più grande accettata |

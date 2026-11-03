@@ -74,7 +74,7 @@ export class Memory {
     const base = { baseUrl: cfg.recordareUrl as string, apiKey: cfg.recordareApiKey as string, fetch: fetchImpl };
     this.fast = new RecordareClient({ ...base, timeoutMs: cfg.recallTimeoutMs });
     this.slow = new RecordareClient(base);
-    this.charterCache = new CharterCache(() => this.fast.charter(), now);
+    this.charterCache = new CharterCache(() => this.fast.charter({ tools: cfg.memoryTools }), now);
   }
 
   /**

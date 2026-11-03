@@ -873,9 +873,12 @@ memory is a vital part of the agent, not a tool among others. Recordare was born
   saying you don't know; "remember / memories / what do you know about…" in any language mean this memory, not files or
   photos; when memory and another source disagree, say so, the newer or more reliable wins; use it naturally, don't
   recite it; not for a request where the person asks you not to. Served three ways: `GET api/v1/charter` →
-  `{charter, version}` (stable for the clients' prompt cache), the MCP server's `instructions`, named in the block.
+  `{charter, version}` (stable for the clients' prompt cache), the MCP server's `instructions`, named in the block. A
+  second form for hosts with only the context, no memory tools (`?tools=false`, the proxy by default): it never tells the
+  agent to search with tools it does not have — what came to mind is all it can recall; when not enough, say "I don't
+  remember" rather than guess.
 - **The block** is now "what came to your mind from your own memory", still data, not instructions; with only the card
-  it says nothing else came to mind (search if the message needs more).
+  it says nothing else came to mind (what to do then is the charter's).
 - **The self card on by default** (`card: false` opts out): an agent always knows who it is. Measured: 526 characters on
   average over ten evaluation memories, 600 at most (≈ 130–150 tokens a turn). The card alone is not logged as a recall
   (the recall-echo guard keeps treating replies as before).

@@ -57,7 +57,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   della memoria, come un agente usa la sua memoria (la sua mente, da cui ragiona prima di rispondere, in cui cerca prima
   degli altri strumenti e prima di "non lo so"; "ricordi / ricordare" vogliono dire questa memoria, non file o foto),
   servita da `GET api/v1/charter` (`{charter, version}`, per il prompt di sistema dell'agente), come `instructions` del
-  server MCP, e citata dal blocco `<memory-context>` — ora formulato come ciò che è venuto in mente all'agente dalla sua
+  server MCP, e citata dal blocco `<memory-context>`; `?tools=false` dà la forma per un ospite con il solo contesto, senza strumenti
+  di memoria (mai "cerca", piuttosto "non me lo ricordo"; il default del proxy, `MEMORY_TOOLS=true` per quella completa).
+  Il blocco è ora formulato come ciò che è venuto in mente all'agente dalla sua
   memoria (non più "usalo solo se aiuta"). La scheda di sé apre il blocco **di default** (`card: false` la spegne; circa
   130–150 token). Un seguito breve ("e lui?", ogni lingua, `CONTEXT_SHORT_QUERY_WORDS`) viene confrontato anche con il
   turno precedente della persona. Il contratto, richiesto a ogni client (`INTEGRATION.md` §4): la carta nel prompt di

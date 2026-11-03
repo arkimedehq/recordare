@@ -133,7 +133,8 @@ chieda di non farlo. Come usarla è scritto una volta in Recordare e ogni client
 1. **La carta nel prompt di sistema**: `GET api/v1/charter` (libreria `charter()`) → `{charter, version}`; mettere il
    testo nel prompt di sistema dell'agente, nella sua parte stabile (prefix caching), e rileggerlo solo quando cambia
    `version`. Gli host MCP che passano al modello le `instructions` di un server ricevono lo stesso testo
-   all'`initialize`.
+   all'`initialize`. Un ospite che non dà all'agente strumenti di memoria chiede `?tools=false` (libreria
+   `charter({ tools: false })`): la carta allora non gli dice mai di cercare con strumenti che non ha.
 2. **Il contesto di memoria prima di ogni turno** di ogni agente — sotto-agenti, delegati e membri dei team compresi:
    `POST api/v1/context` (o `{ingest}`, una sola andata e ritorno con il turno), il blocco aggiunto in fondo al prompt di
    sistema dopo la carta, mai salvato come messaggio. La scheda di sé è accesa di default: lasciarla accesa (un agente sa

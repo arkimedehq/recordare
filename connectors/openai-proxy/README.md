@@ -40,8 +40,11 @@ can register Recordare's `/mcp` directly (`docs/INTEGRATION.md`).
   process (re-checked hourly), so the text is the same every turn and the prompt stays cacheable.
 - **The memory context before every turn**, opened by the self card (who I am; on by default in Recordare). A short
   follow-up ("and him?") is matched with the previous turn by Recordare itself.
-- The charter names Recordare's memory tools; the proxy offers none (Limits), so they count only where the platform
-  connects Recordare's MCP server.
+- **The charter's form**: the proxy gives the model no memory tools (Limits), so by default it asks for the
+  context-only charter (`GET api/v1/charter?tools=false`): what came to mind is all the model can recall — when it is not
+  enough, it says it does not remember rather than guessing, and never claims to search. Where the platform also
+  connects Recordare's MCP server (Open WebUI, LibreChat), set `MEMORY_TOOLS=true` for the full charter, which tells the
+  model to search with those tools first.
 - **Fallback**: if Recordare does not answer, no charter (until it answers; one try per 30 s) and no block — the turn
   goes on without memory.
 
@@ -96,6 +99,7 @@ proxy has no setting for them.
 | `TZ` | system | Time zone of the day used in synthesised conversation ids |
 | `SKIP_PATTERNS` | — | Extra regexes (JSON array or `\|\|`-separated) on the last user message marking background calls |
 | `RECALL`, `CAPTURE` | `true` | Turn injection / capture off |
+| `MEMORY_TOOLS` | `false` | `true` when the platform also gives the model Recordare's MCP tools: the full memory charter instead of the context-only one (D54) |
 | `LOG_UPSTREAM` | `false` | Debug: log the messages sent upstream (personal data — never in production) |
 | `PORT` | `8788` | Listening port |
 | `MAX_BODY_BYTES` | 25 MB | Largest chat request |

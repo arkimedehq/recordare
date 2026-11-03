@@ -115,7 +115,9 @@ own mind, not a tool among others — when it reasons it is always shaped by wha
 How to use it is written once in Recordare and every client follows it:
 1. **The charter in the system prompt**: `GET api/v1/charter` (library `charter()`) → `{charter, version}`; put the text
    in the agent's system prompt, in its stable part (prefix caching), and re-read it only when `version` changes. MCP
-   hosts that pass a server's `instructions` to the model get the same text at `initialize`.
+   hosts that pass a server's `instructions` to the model get the same text at `initialize`. A host that gives the
+   agent no memory tools asks for `?tools=false` (library `charter({ tools: false })`): the charter then never tells it
+   to search with tools it does not have.
 2. **The memory context before every turn** of every agent — sub-agents, delegates and team members included:
    `POST api/v1/context` (or `{ingest}`, one round trip with the turn), the block appended at the end of the system
    prompt after the charter, never stored as a message. The self card is on by default: leave it on (an agent always

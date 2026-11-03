@@ -30,7 +30,7 @@ function upstream(seen: Seen[]): typeof fetch {
 interface RCall { path: string; headers: Headers; body: Record<string, unknown> }
 
 const CHARTER = '## Your memory\nYou have a long-term memory.';
-interface Opts { down?: boolean; block?: string | null; noCharter?: boolean; charterReads?: { n: number } }
+interface Opts { down?: boolean; block?: string | null; noCharter?: boolean; charterReads?: { n: number }; charterQueries?: string[] }
 
 /** A fake Recordare; `down` = unreachable, `noCharter` = the charter endpoint fails. Charter reads are not in `calls`. */
 function recordare(calls: RCall[], opts: Opts = {}) {
@@ -39,6 +39,7 @@ function recordare(calls: RCall[], opts: Opts = {}) {
     const path = new URL(String(input)).pathname;
     if (path === '/api/v1/charter') {
       if (opts.charterReads) opts.charterReads.n++;
+      opts.charterQueries?.push(new URL(String(input)).search);
       return opts.noCharter ? Response.json({ title: 'boom' }, { status: 500 }) : Response.json({ charter: CHARTER, version: 'charter.v1' });
     }
     const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : {};
@@ -208,11 +209,12 @@ describe('proxy', () => {
 
   it('the charter is read once and sent with every turn; without it the turn still gets its memory context', async () => {
     const seen: Seen[] = []; const calls: RCall[] = [];
-    const charterReads = { n: 0 };
-    const { base } = await start({}, seen, calls, { charterReads });
+    const charterReads = { n: 0 }; const charterQueries: string[] = [];
+    const { base } = await start({}, seen, calls, { charterReads, charterQueries });
     await (await chat(base, { ...anythingllm('ciao'), stream: false })).text();
     await (await chat(base, { ...anythingllm('e lui?'), stream: false })).text();
     expect(charterReads.n).toBe(1);
+    expect(charterQueries).toEqual(['?tools=false']); // the proxy gives no memory tools: the context-only charter
     expect(calls.filter((c) => c.path.endsWith('/context'))).toHaveLength(2); // every turn asks for its context
     for (const s of seen) expect((s.body.messages as Array<{ content: string }>)[0]!.content).toContain(CHARTER);
 
@@ -221,6 +223,13 @@ describe('proxy', () => {
     await (await chat(base2, { ...anythingllm('ciao'), stream: false })).text();
     expect((seen2[0]!.body.messages as Array<{ content: string }>)[0]!.content)
       .toBe('You are kind.\n\n<memory-context>Il gatto si chiama Biscotto</memory-context>');
+  });
+
+  it('asks for the full charter when the platform also gives the model the memory tools (MEMORY_TOOLS)', async () => {
+    const seen: Seen[] = []; const calls: RCall[] = []; const charterQueries: string[] = [];
+    const { base } = await start({ MEMORY_TOOLS: 'true' }, seen, calls, { charterQueries });
+    await (await chat(base, { ...anythingllm('ciao'), stream: false })).text();
+    expect(charterQueries).toEqual(['']);
   });
 
   it('with recall off, stores the message with a plain ingest', async () => {

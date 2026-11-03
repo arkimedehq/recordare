@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 
-import { BadRequestException, Body, Controller, ForbiddenException, Get, Headers, HttpCode, Inject, Module, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, ForbiddenException, Get, Headers, HttpCode, Inject, Module, Post, Query } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
 import { CurrentPrincipal, RequireScopes } from '../auth/decorators';
@@ -12,7 +12,7 @@ import { CLOCK_PORT, type ClockPort } from '../clock/clock.port';
 import { Returns } from '../common/returns';
 import { ZodBody } from '../common/zod-body.pipe';
 import { charterResponse, contextResponse } from '../openapi/responses';
-import { CHARTER, CHARTER_VERSION } from './charter';
+import { CHARTER, CHARTER_CONTEXT_ONLY, CHARTER_VERSION } from './charter';
 import { type Env } from '../config/env';
 import { NOW_HEADER } from '../mcp/mcp-tools';
 import { ingestSchema } from '../rawlog/ingest.schemas';
@@ -30,6 +30,11 @@ const contextSchema = z.object({
   ingest: ingestSchema.optional(),
   /** Open the block with the self card — who I am: current facts and notes about me (WORK_PLAN 8.13). On by default (D54). */
   card: z.boolean().optional(),
+});
+
+const charterQuery = z.object({
+  /** `false`: the agent has no memory tools, only the memory context. */
+  tools: z.enum(['true', 'false']).optional(),
 });
 
 /** `POST api/v1/context` — the pre-turn memory context for the message a host is about to answer (WORK_PLAN 5.7). */
@@ -74,15 +79,16 @@ export class ContextController {
 
 /**
  * `GET api/v1/charter` — the memory charter (D54): how the agent uses its memory, for the host to put in the agent's
- * system prompt. The same for every memory; stable until `version` changes (clients may cache it).
+ * system prompt. The same for every memory; stable until `version` changes (clients may cache it). `tools=false`: the
+ * form for a host that gives the agent only the memory context, no memory tools.
  */
 @Controller('api/v1/charter')
 export class CharterController {
   @Get()
   @RequireScopes('read')
   @Returns(charterResponse)
-  get(): { charter: string; version: string } {
-    return { charter: CHARTER, version: CHARTER_VERSION };
+  get(@Query(new ZodBody(charterQuery)) q: z.infer<typeof charterQuery>): { charter: string; version: string } {
+    return { charter: q.tools === 'false' ? CHARTER_CONTEXT_ONLY : CHARTER, version: CHARTER_VERSION };
   }
 }
 

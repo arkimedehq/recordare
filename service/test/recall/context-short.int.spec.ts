@@ -3,7 +3,7 @@
 
 /** D54: the memory charter, and a short follow-up matched with the person's previous turn. */
 import { call, fakeVector } from '../helpers/app';
-import { CHARTER, CHARTER_VERSION } from '../../src/recall/charter';
+import { CHARTER, CHARTER_CONTEXT_ONLY, CHARTER_VERSION } from '../../src/recall/charter';
 import { setup } from './context.setup';
 
 const PREVIOUS = 'Ti ricordi Paolo, il fratello di Giulia?';
@@ -22,6 +22,13 @@ describe('memory-first contract (D54)', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ charter: CHARTER, version: CHARTER_VERSION });
     expect((await call(s.url, 'GET', '/api/v1/charter', {})).status).toBe(401);
+    // A host with only the memory context: the same charter, but no tools to search with — never claim to search.
+    const ctxOnly = await call(s.url, 'GET', '/api/v1/charter?tools=false', { token: s.key });
+    expect(ctxOnly.body).toEqual({ charter: CHARTER_CONTEXT_ONLY, version: CHARTER_VERSION });
+    expect(CHARTER_CONTEXT_ONLY).not.toContain('search_memory');
+    expect(CHARTER_CONTEXT_ONLY).toContain("say you don't\n  remember rather than guessing");
+    expect(CHARTER).toContain('search_memory');
+    expect((await call(s.url, 'GET', '/api/v1/charter?tools=maybe', { token: s.key })).status).toBe(400);
   });
 
   it('matches a short follow-up with the turn before it in the same conversation, not elsewhere', async () => {
