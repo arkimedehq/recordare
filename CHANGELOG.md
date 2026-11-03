@@ -6,6 +6,21 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-11-03
+
+**The agent's own mind** (D53, D54): the memory now thinks on its own — insights, questions and opinions drawn from what
+the agent lived, what it learned about itself from its own replies, and how it does recurring tasks — and **pushes**:
+initiatives (a request or promise with a date, the "how did it go?" after an appointment, a look-up for the host's own
+tools) delivered by Standard Webhooks or read as a feed; a reminder only when asked. And the memory is the agent's mind,
+not a tool among others: a memory charter for the system prompt (full, or context-only for hosts without memory tools),
+the memory context worded as what came to mind and opened by the self card by default, every connector following the
+memory-first contract (`INTEGRATION.md` §4). No breaking change in the API; behaviour changes: the self card is on by
+default (`card: false` turns it off). Upgrade the service first (migrations `Thoughts`, `SelfNotes`, `Initiatives`,
+`IntentMessages`, `InitiativeWorth`, `Procedures` run at start-up), then the client library (`charter()`,
+`initiatives()`, `reportInitiative()`, `verifyWebhook()`) and the connectors. Quality (DeepSeek `deepseek-flash`,
+`spikes/memory-eval/RESULTS.md`): blind12 97.2 % with `extract.v21`; dev sets — thoughts 11.8 / 14, self-model 13 / 15,
+procedures 10–11 / 14, initiatives 11 / 14 with no false initiative.
+
 ### Added
 - **The agent's own thoughts** (D53, WORK_PLAN 8.12a — the first step of the agent's own mind): a nightly thought pass
   draws insights, questions and opinions from what the agent lived (public episodes only), each resting on the episodes
