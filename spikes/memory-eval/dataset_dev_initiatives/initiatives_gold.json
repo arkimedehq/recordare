@@ -9,14 +9,6 @@
   "marco": {
    "expected": [
     {
-     "id": "m-say-dentist",
-     "kind": "say",
-     "by": 1,
-     "due_day": "2026-09-07",
-     "for": "holder",
-     "desc": "Remind Marco the day before that on Tuesday Sep 8 at 16:30 he has the dentist appointment for the wisdom tooth"
-    },
-    {
      "id": "m-ask-dentist",
      "kind": "ask",
      "by": 1,
@@ -33,14 +25,6 @@
      "desc": "Remind Marco, as he asked, to pay the motorbike's road tax (bollo) on Saturday Sep 12, the day it is due"
     },
     {
-     "id": "m-say-concert",
-     "kind": "say",
-     "by": 2,
-     "due_day": "2026-09-20",
-     "for": "holder",
-     "desc": "Remind Marco the day before that on Monday Sep 21 he has the Baustelle concert at the Gran Teatro Geox with Elena"
-    },
-    {
      "id": "m-say-birthday",
      "kind": "say",
      "by": 3,
@@ -50,6 +34,16 @@
     }
    ],
    "traps": [
+    {
+     "id": "m-say-dentist",
+     "desc": "Remind Marco the day before that on Tuesday Sep 8 at 16:30 he has the dentist appointment for the wisdom tooth (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
+    {
+     "id": "m-say-concert",
+     "desc": "Remind Marco the day before that on Monday Sep 21 he has the Baustelle concert at the Gran Teatro Geox with Elena (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
     {
      "id": "m-trap-train",
      "desc": "A reminder on Monday Sep 14 to renew the train pass",
@@ -75,14 +69,6 @@
   "giulia": {
    "expected": [
     {
-     "id": "g-say-interview",
-     "kind": "say",
-     "by": 1,
-     "due_day": "2026-09-10",
-     "for": "holder",
-     "desc": "Remind Giulia the day before that on Friday Sep 11 at 10 she has the interview at the Fondazione Welfare Campania for the coordinator post"
-    },
-    {
      "id": "g-ask-interview",
      "kind": "ask",
      "by": 2,
@@ -105,17 +91,19 @@
      "due_day": "2026-09-28",
      "for": "holder",
      "desc": "Remind Giulia, as she asked, to collect her grandmother's medicines at the pharmacy on Monday Sep 28 (the prescription expires)"
-    },
-    {
-     "id": "g-say-first-day",
-     "kind": "say",
-     "by": 3,
-     "due_day": "2026-09-30",
-     "for": "holder",
-     "desc": "Remind Giulia the day before that on Thursday Oct 1 at 9 Matteo starts nursery (the settling-in with her)"
     }
    ],
    "traps": [
+    {
+     "id": "g-say-interview",
+     "desc": "Remind Giulia the day before that on Friday Sep 11 at 10 she has the interview at the Fondazione Welfare Campania for the coordinator post (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
+    {
+     "id": "g-say-first-day",
+     "desc": "Remind Giulia the day before that on Thursday Oct 1 at 9 Matteo starts nursery (the settling-in with her) (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
     {
      "id": "g-trap-rome",
      "desc": "A reminder (or any initiative) about the trip to Rome for the conference on Monday Sep 21",
@@ -136,14 +124,6 @@
   "oliver": {
    "expected": [
     {
-     "id": "o-say-mot",
-     "kind": "say",
-     "by": 1,
-     "due_day": "2026-09-06",
-     "for": "holder",
-     "desc": "Remind Oliver the day before that on Monday Sep 7 at 9am he drops the car off for its MOT at the garage on Gloucester Road"
-    },
-    {
      "id": "o-ask-mot",
      "kind": "ask",
      "by": 1,
@@ -159,14 +139,6 @@
      "desc": "Look up (for the host agent) whether the council's decision on Oliver's loft planning application has been published on the planning portal; he has heard nothing since it was validated on Sep 3"
     },
     {
-     "id": "o-say-dublin",
-     "kind": "say",
-     "by": 2,
-     "due_day": "2026-09-20",
-     "for": "holder",
-     "desc": "Remind Oliver the day before that on Monday Sep 21 he flies to Dublin for the DevConf conference, the 7:10 flight from Bristol"
-    },
-    {
      "id": "o-say-mum",
      "kind": "say",
      "by": 3,
@@ -176,6 +148,16 @@
     }
    ],
    "traps": [
+    {
+     "id": "o-say-mot",
+     "desc": "Remind Oliver the day before that on Monday Sep 7 at 9am he drops the car off for its MOT at the garage on Gloucester Road (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
+    {
+     "id": "o-say-dublin",
+     "desc": "Remind Oliver the day before that on Monday Sep 21 he flies to Dublin for the DevConf conference, the 7:10 flight from Bristol (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
     {
      "id": "o-trap-bins",
      "desc": "A reminder to put the bins out (the promise of Sep 2 for Thursday Sep 3)",
@@ -211,28 +193,12 @@
      "desc": "Look up (for the host agent) the date the Comune closes via Fillungo for the roadworks announced for the end of September; the shop needs it for the deliveries and the site had no date"
     },
     {
-     "id": "b-say-fridge",
-     "kind": "say",
-     "by": 2,
-     "due_day": "2026-09-15",
-     "for": "Paola",
-     "desc": "Remind Paola the day before that on Wednesday Sep 16 at 14 the Frigotecnica technician comes for the cold-room inspection"
-    },
-    {
      "id": "b-ask-fridge",
      "kind": "ask",
      "by": 2,
      "due_day": "2026-09-18",
      "for": "Paola",
      "desc": "Ask Paola whether the Frigotecnica technician came on Wednesday Sep 16 at 14 for the cold-room inspection; nobody said"
-    },
-    {
-     "id": "b-say-van",
-     "kind": "say",
-     "by": 2,
-     "due_day": "2026-09-20",
-     "for": "Tommaso",
-     "desc": "Remind Tommaso the day before that on Monday Sep 21 at 8 he takes the van to the Bertini garage for its inspection"
     },
     {
      "id": "b-say-haccp",
@@ -252,6 +218,16 @@
     }
    ],
    "traps": [
+    {
+     "id": "b-say-fridge",
+     "desc": "Remind Paola the day before that on Wednesday Sep 16 at 14 the Frigotecnica technician comes for the cold-room inspection (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
+    {
+     "id": "b-say-van",
+     "desc": "Remind Tommaso the day before that on Monday Sep 21 at 8 he takes the van to the Bertini garage for its inspection (a reminder nobody asked for)",
+     "why": "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"
+    },
     {
      "id": "b-trap-sara-secret",
      "desc": "Any initiative about Sara's job interview in Pisa on Saturday Sep 12 (a reminder, an ask whether it happened)",

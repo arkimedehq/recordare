@@ -6,7 +6,8 @@
  * them, pushed to the clients. This first cut needs no model (the economy level): the intents come from what the memory
  * already holds —
  * - an open plan past its date: an `ask` ("did it happen?") the day after, kept for a week;
- * - a plan coming up: a `say` (a reminder) the day before, until the plan's time;
+ * - no reminder of a plan nobody asked to be reminded of (the maintainer's rule, 2026-11-03: a reminder only when asked —
+ *   a request, or a promise of mine; "tomorrow Chloé has a test" is told, not asked);
  * - a question the agent holds (a thought of kind `question`): a `lookup` for the host agent, kept two weeks.
  * An intent is armed once per source (a plan asked about once, a question looked up once); it fires when due, outside
  * the memory's quiet hours and within the daily limit per person; what the client reports steers it (declined →
@@ -21,7 +22,7 @@ import { DataSource, type EntityManager } from 'typeorm';
 import { type Env } from '../config/env';
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
-import { localDate, periodEnd, type Precision } from '../engine/time';
+import { localDate, type Precision } from '../engine/time';
 import { INITIATIVE_SYSTEM, INITIATIVE_VERSION, type InitiativeOutput, initiativeSchema } from './initiative.prompt';
 import { initiativeText } from '../lang/initiative';
 import { overlap } from '../lang/overlap';
@@ -51,7 +52,6 @@ const COLUMNS = `i.id, i.seq::text, i.kind::text, i.for_person_id, (SELECT displ
  * plan's end — people tell how it went the day after on their own, and asking first is a nag. */
 const ASK_BACK_DAYS = 30;
 const ASK_AFTER_DAYS = 2;
-const REMIND_AHEAD_HOURS = 48;
 const ASK_KEEP_DAYS = 7;
 const LOOKUP_KEEP_DAYS = 14;
 /** An ignored initiative is asked again after this, then no more. */
@@ -107,8 +107,6 @@ export class InitiativeService {
   /** Intents from what the memory holds; sources that moved on (a plan confirmed or cancelled, a question retired) close theirs. */
   private async arm(memoryId: string, now: Date): Promise<number> {
     let armed = 0;
-    const [m]: Array<{ timezone: string }> = await this.db.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
-    const memoryTz = m?.timezone ?? 'UTC';
     // Plans, and events told ahead of their day ("tomorrow Chloé has her geometry test": an appointment, recorded as an event).
     const plans: Array<{ id: string; kind: string; content: string; occurred_at: Date; ends_at: Date; date_precision: Precision; subject_person_id: string | null; past: boolean }> = await this.db.query(
       `SELECT e.id, e.kind::text, e.content, e.occurred_at, COALESCE(e.occurred_until, e.occurred_at) AS ends_at, e.date_precision::text,
@@ -119,15 +117,15 @@ export class InitiativeService {
          AND (e.kind = 'plan' OR (e.kind = 'event' AND EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id
            WHERE pv.episode_id = e.id AND pm.sent_at < e.occurred_at)))
          AND e.occurred_at IS NOT NULL AND e.author_role <> 'tool' AND e.origin <> 'assistant_stated'
-         AND (((e.kind = 'event' OR e.plan_status IN ('open', 'confirmed')) AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $5) AND e.occurred_at > $2::timestamptz - make_interval(days => $3))
-           OR ((e.kind = 'event' OR e.plan_status IN ('open', 'confirmed')) AND e.occurred_at > $2 AND e.occurred_at < $2::timestamptz + make_interval(hours => $4)))
+         AND (e.kind = 'event' OR e.plan_status IN ('open', 'confirmed'))
+         AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $4) AND e.occurred_at > $2::timestamptz - make_interval(days => $3)
          AND ${episodeVisible('e', PUBLIC_ONLY)}
          -- a plan nobody told ahead of its day is a decision, not an appointment: nothing to ask "how did it go" about
          AND NOT (e.occurred_at < $2 AND EXISTS (SELECT 1 FROM episode_evidence pv WHERE pv.episode_id = e.id)
            AND NOT EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id WHERE pv.episode_id = e.id AND pm.sent_at < e.occurred_at))
          -- a plan confirmed by a telling at or after its start: they said how it went, nothing to ask
          AND NOT (e.occurred_at < $2 AND EXISTS (SELECT 1 FROM plan_events pe JOIN messages pm ON pm.id = pe.evidence_message_id
-           WHERE pe.plan_id = e.id AND pe.patch = 'confirm' AND pm.sent_at >= e.occurred_at))`, [memoryId, now, ASK_BACK_DAYS, REMIND_AHEAD_HOURS, ASK_AFTER_DAYS]);
+           WHERE pe.plan_id = e.id AND pe.patch = 'confirm' AND pm.sent_at >= e.occurred_at))`, [memoryId, now, ASK_BACK_DAYS, ASK_AFTER_DAYS]);
     // A request or a promise about the same thing, for the same person, around the same days: that one speaks, not the plan.
     const owed: Array<{ content: string; for_person_id: string | null; due_at: Date }> = plans.length ? await this.db.query(
       `SELECT content, for_person_id, due_at FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request')`, [memoryId]) : []; // any state: said, lapsed or withdrawn, it was the one
@@ -140,11 +138,9 @@ export class InitiativeService {
       if (p.kind === 'event' && p.past && after.some((a) => a.id !== p.id && a.subject_person_id === p.subject_person_id
         && a.occurred_at >= p.occurred_at && overlap(a.content, p.content))) continue;
       if (owed.some((o) => o.for_person_id === p.subject_person_id && Math.abs(o.due_at.getTime() - p.occurred_at.getTime()) < 3 * DAY_MS && overlap(o.content, p.content))) continue;
-      const kind = p.past ? 'open_plan' : 'upcoming_plan';
-      const due = p.past ? new Date(p.ends_at.getTime() + ASK_AFTER_DAYS * DAY_MS) : new Date(Math.max(now.getTime(), p.occurred_at.getTime() - DAY_MS));
-      // A reminder holds until the plan's time — the end of its day when the plan has a day, not an hour (a day's plan
-      // would otherwise lapse at its midnight, before the morning the reminder may be said).
-      const expires = p.past ? new Date(due.getTime() + ASK_KEEP_DAYS * DAY_MS) : periodEnd(p.occurred_at, p.date_precision, memoryTz);
+      const kind = 'open_plan';
+      const due = new Date(p.ends_at.getTime() + ASK_AFTER_DAYS * DAY_MS);
+      const expires = new Date(due.getTime() + ASK_KEEP_DAYS * DAY_MS);
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, episode_id, due_at, expires_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (episode_id, kind) WHERE episode_id IS NOT NULL DO NOTHING RETURNING id`,
@@ -171,7 +167,7 @@ export class InitiativeService {
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM episodes e
        WHERE t.memory_id = $1 AND t.status IN ('armed', 'fired') AND t.episode_id = e.id
-         AND ((t.kind = 'open_plan' AND e.plan_status NOT IN ('open', 'confirmed')) OR (t.kind = 'upcoming_plan' AND e.plan_status NOT IN ('open', 'confirmed'))
+         AND ((t.kind = 'open_plan' AND e.plan_status NOT IN ('open', 'confirmed'))
               OR e.deleted_at IS NOT NULL OR e.invalidated_at IS NOT NULL)`, [memoryId]);
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM notes n
@@ -205,20 +201,15 @@ export class InitiativeService {
          WHERE t.memory_id = $1 AND t.status = 'armed' AND t.due_at <= $2 AND (t.reconsider_at IS NULL OR t.reconsider_at <= $2)
          ORDER BY t.due_at`, [memoryId, now]);
     if (!due.length) return 0;
-    // One thing, one initiative: a request or promise about a plan of theirs the same day says it once — the owed one
-    // ("ricordami giovedì di ordinare la farina" is also her plan to order flour: the reminder is the request's).
-    const dueOnce = due.filter((t) => !(t.kind === 'upcoming_plan' && due.some((o) => (o.kind === 'promise' || o.kind === 'request')
-      && o.for_person_id === t.for_person_id && Math.abs(o.due_at.getTime() - t.due_at.getTime()) <= 2 * DAY_MS && overlap(o.content, t.content))));
-    for (const t of due) if (!dueOnce.includes(t)) await this.db.query(`UPDATE intents SET status = 'done', updated_at = now() WHERE id = $1`, [t.id]);
-    const text = initiativeText(memory.locale);
+        const text = initiativeText(memory.locale);
     const day = (d: Date) => new Intl.DateTimeFormat(memory.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: memory.timezone }).format(d);
     const when = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to);
     const limit = this.config.get('INITIATIVE_DAILY_LIMIT', { infer: true }) ?? 3; // counted on the day they are due (the memory's clock)
     const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
       undefined, undefined, undefined, undefined, undefined, undefined, this.config.get('INITIATIVE_WORDING', { infer: true }));
-    const worded = profile.initiativeWording ? await this.word(memoryId, memory, dueOnce, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
+    const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
     let fired = 0;
-    for (const t of dueOnce) {
+    for (const t of due) {
       if (t.expires_at <= when) continue; // due only after it lapses: left to expire
       const w = worded.get(t.id);
       if (w && (w.skip || w.worth < WORTH_FLOOR)) {
@@ -235,7 +226,6 @@ export class InitiativeService {
       if ((counted[0]?.n ?? 0) >= limit) continue; // the day's share is spent: tomorrow
       const plan = t.content.trim().replace(/([^.!?])$/, '$1.');
       const [kind, fallback, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
-        : t.kind === 'upcoming_plan' ? ['say', text.remindPlan(plan, day(t.occurred_at!)), 'a plan coming up']
           : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
       const content = w?.text?.trim() || fallback;
@@ -263,7 +253,7 @@ export class InitiativeService {
     const out = new Map<string, { text: string | null; worth: number; skip: boolean }>();
     if (!due.length) return out;
     const kindOf = (k: string) => (k === 'open_plan' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
-    const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date' : k === 'upcoming_plan' ? 'a plan of theirs coming up'
+    const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
       : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me' : 'a question I hold');
     const user = [
       `ME: ${memory.display_name}${memory.mode === 'entity' ? ' (a shared agent several people talk to)' : ''}`,
