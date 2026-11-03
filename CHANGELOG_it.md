@@ -25,8 +25,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   sostenute da quei messaggi, lo stesso esito in due giorni; raccontate nel recall e nel contesto di memoria come ciò che
   ha imparato di sé, e nella scheda di sé come "su di me come agente" (`GET api/v1/cards`). Migrazione `SelfNotes`.
 - **Iniziative — la memoria spinge** (D53, WORK_PLAN 8.12c, prima versione): ciò che l'agente decide di dire, chiedere o
-  cercare da sé, da ciò che tiene — un piano aperto oltre la sua data (un `ask` il giorno dopo), un piano in arrivo (un
-  promemoria il giorno prima), una domanda che tiene (un `lookup` per gli strumenti propri dell'agente ospite) — scattano
+  cercare da sé, da ciò che tiene — un piano aperto oltre la sua data (un `ask` due giorni dopo), una promessa o una
+  richiesta con una data (un `say` quel giorno), una domanda che tiene (un `lookup` per gli strumenti propri dell'agente ospite) — scattano
   quando sono dovute, dopo le ore di quiete della memoria (`quietFrom` / `quietTo`) ed entro un limite giornaliero per
   persona (`INITIATIVE_DAILY_LIMIT`), proposte una volta e al massimo un'altra una settimana dopo, decadendo in silenzio
   quando nessuno c'è in tempo. Consegnate con **Standard Webhooks** (admin `POST api/v1/admin/clients/{id}/webhooks`, un
@@ -40,7 +40,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   Una domanda attende due giorni dopo il piano e non si fa se hanno raccontato com'è andata, né per un piano che nessuno
   ha detto prima del suo giorno (una decisione non è un appuntamento — la prima iniziativa dal vivo); una richiesta con
   un orario lo conserva. Recordare fa il suo lavoro qualunque cosa abbiano fatto gli strumenti dell'ospite: un promemoria
-  che anche l'ospite ha programmato tocca all'ospite deduplicarlo. Misurato: 19–20 su 22, ≈ 95 % di precisione.
+  che anche l'ospite ha programmato tocca all'ospite deduplicarlo. **Un promemoria solo se chiesto**: un piano o un
+  evento solo raccontato viene ricordato, non promemorato (nessun promemoria il giorno prima); un evento detto prima del
+  suo giorno è un appuntamento, chiesto dopo se non se ne è raccontato l'esito. Misurato: dev_initiatives 11/14 in 3 run, 0 false, nessun promemoria non richiesto.
 - **Le procedure dell'agente** (D53, WORK_PLAN 8.12d): come svolge un compito ricorrente per una persona o un luogo,
   imparato da un esito sulle sue stesse risposte — insegnato, corretto, approvato esplicitamente — come "quando
   <situazione>, <come lo faccio>" (note di categoria `procedure`, `thoughts.v7`); una correzione chiara basta; riviste
@@ -53,6 +55,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ### Corretto
 - La passata notturna dei pattern cancellava i pensieri dell'agente scritti la notte prima come "pattern deboli" (meno
   di tre episodi): la sua sincronizzazione ora guarda solo i pattern.
+- In una memoria entity, chi parlava attraverso un account condiviso dell'agente (la piattaforma manda il nome
+  dell'account come quello del partecipante titolare) veniva preso per l'agente, che poi citava sé stesso; ora chi parla
+  così è qualcuno.
+- Un esito raccontato dopo l'ora del giro non nasconde più una domanda (rieseguire una valutazione su una memoria che
+  contiene già messaggi successivi la nascondeva).
 
 ## [0.5.0] — 2026-10-27
 

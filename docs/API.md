@@ -625,8 +625,9 @@ private or public again (§2) has its days written again.
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,
 for a person, from when and until when. Its sources: a plan past its date with no outcome told becomes an `ask` two days
 after its end ("did it happen?", kept a week; none once they told how it went, none for a plan nobody told ahead of its
-day — a decision is no appointment); a plan coming up a `say` the day before
-(a reminder, until the end of the plan's day); a **promise I made or a request made to me** with a date ("ricordami
+day — a decision is no appointment; an event told ahead of its day is an appointment too); **no reminder nobody asked
+for** (maintainer, 2026-11-03): a plan or an event only told ("domani Chloé ha la verifica") is remembered, not
+reminded; a **promise I made or a request made to me** with a date ("ricordami
 giovedì di ordinare la farina", "te lo ricordo venerdì" — the extraction's INTENTS, `extract.v21`) a `say` that day, for
 the person it concerns — withdrawn ("lascia stare") or done in the conversation, it closes; when a request and a plan are
 the same thing, the request speaks; a question the agent holds (a thought of kind `question`, 8.12a, not about a plan's

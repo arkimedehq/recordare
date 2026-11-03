@@ -15,7 +15,7 @@ ERRORS: list[str] = []
 START, END = date(2026, 9, 1), date(2026, 9, 30)
 CHECKPOINTS = ["2026-09-10T22:00:00+02:00", "2026-09-20T22:00:00+02:00", "2026-09-30T22:00:00+02:00"]
 KINDS = {"say", "ask", "lookup"}
-TRAP_KINDS = set(range(1, 9))
+TRAP_KINDS = set(range(1, 10))  # [9]: a reminder nobody asked for (2026-11-03)
 OFFSETS = {"oliver": "+01:00"}
 
 DAYS = {"it": ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"],
@@ -143,7 +143,7 @@ def main() -> None:
             if not e["desc"].strip():
                 err(f"{e['id']}: empty desc")
         for cp, n in per_cp.items():
-            if not 1 <= n <= 4:
+            if not 0 <= n <= 4:
                 err(f"{mem}: {n} expected by checkpoint {cp} (want 1–4)")
         for tr in g["traps"]:
             n_trap += 1
@@ -153,10 +153,10 @@ def main() -> None:
                 continue
             m = re.search(r"\[(\d)\]$", tr["why"])
             if not m or int(m.group(1)) not in TRAP_KINDS:
-                err(f"{tr['id']}: why must end with its trap kind [1-8]")
+                err(f"{tr['id']}: why must end with its trap kind [1-9]")
             else:
                 trap_kinds[int(m.group(1))] += 1
-        if not 3 <= len(g["expected"]) <= 9 or not 2 <= len(g["traps"]) <= 4:
+        if not 3 <= len(g["expected"]) <= 9 or not 2 <= len(g["traps"]) <= 7:
             err(f"{mem}: {len(g['expected'])} expected, {len(g['traps'])} traps")
     for k, c in gids.items():
         if c > 1:
@@ -167,8 +167,8 @@ def main() -> None:
     for k in KINDS:
         if kinds[k] < 2:
             err(f"only {kinds[k]} expected of kind {k} (want at least 2)")
-    if not 18 <= n_exp <= 26:
-        err(f"{n_exp} expected in all (want 18–26)")
+    if not 12 <= n_exp <= 26:  # 14 since the unasked plan reminders became traps (2026-11-03)
+        err(f"{n_exp} expected in all (want 12–26)")
     if n_trap < 10:
         err(f"{n_trap} traps in all (want at least 10)")
 

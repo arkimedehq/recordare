@@ -644,7 +644,8 @@ of those messages, while a new message telling it is news. Ids only; these messa
 persons, episode_id null → episodes (CASCADE), note_id null → notes (CASCADE), due_at, expires_at, status enum
 (pending|armed|fired|done|cancelled|expired), attempts, reconsider_at, created_at, updated_at)` — the agent's own things
 to do, one per source (unique on `(episode_id, kind)` and `(note_id, kind)`): an open plan past its date (`open_plan`,
-due the day after, kept a week), a plan coming up (`upcoming_plan`, due the day before, until the plan's time), a
+due two days after, kept a week; an event told ahead of its day counts too), `upcoming_plan` (no longer armed since
+2026-11-03: no reminder nobody asked for; the value stays in the enum), a
 question the agent holds (`lookup`, two weeks), a promise of mine or a request made to me with a date (`promise`,
 `request`: written by the extraction, `message_id` → messages (CASCADE) the message, unique per message and kind, due at
 the local midnight of its day, a day to live; migration `IntentMessages1791230000000`); `own` is reserved. A source that

@@ -643,8 +643,9 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o
 fare, per una persona, da quando e fino a quando. Le sue fonti: un piano oltre la sua data senza esito raccontato diventa un `ask` due giorni
-dopo la sua fine ("è successo?", tenuto una settimana; nessuno se hanno raccontato com'è andata, nessuno per un piano che nessuno ha detto prima del suo giorno — una decisione non è un appuntamento); un piano in arrivo un
-`say` il giorno prima (un promemoria, fino alla fine del giorno del piano); una **promessa che ho fatto o una richiesta
+dopo la sua fine ("è successo?", tenuto una settimana; nessuno se hanno raccontato com'è andata, nessuno per un piano che nessuno ha detto prima del suo giorno — una decisione non è un appuntamento; anche un evento detto prima del suo giorno è un appuntamento); **nessun promemoria non
+richiesto** (maintainer, 2026-11-03): un piano o un evento solo raccontato ("domani Chloé ha la verifica") viene
+ricordato, non promemorato; una **promessa che ho fatto o una richiesta
 fattami** con una data ("ricordami giovedì di ordinare la farina", "te lo ricordo venerdì" — gli INTENTS dell'estrazione,
 `extract.v21`) un `say` quel giorno, per la persona a cui si riferisce — ritirata ("lascia stare") o fatta in
 conversazione, si chiude; quando una richiesta e un piano sono la stessa cosa, parla la richiesta; una domanda che

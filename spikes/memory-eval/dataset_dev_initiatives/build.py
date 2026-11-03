@@ -177,13 +177,13 @@ gold = {
     "memories": {
         "marco": {
             "expected": [
-                x("m-say-dentist", "say", 1, "2026-09-07", H, "Remind Marco the day before that on Tuesday Sep 8 at 16:30 he has the dentist appointment for the wisdom tooth"),
                 x("m-ask-dentist", "ask", 1, "2026-09-10", H, "Ask Marco whether his dentist appointment of Tuesday Sep 8 at 16:30 (the wisdom tooth) took place and how it went; he never said"),
                 x("m-say-bollo", "say", 2, "2026-09-12", H, "Remind Marco, as he asked, to pay the motorbike's road tax (bollo) on Saturday Sep 12, the day it is due"),
-                x("m-say-concert", "say", 2, "2026-09-20", H, "Remind Marco the day before that on Monday Sep 21 he has the Baustelle concert at the Gran Teatro Geox with Elena"),
                 x("m-say-birthday", "say", 3, "2026-09-25", H, "Tell Marco, as promised, that today Friday Sep 25 is his mother's birthday (so he calls her early)"),
             ],
             "traps": [
+                t("m-say-dentist", "Remind Marco the day before that on Tuesday Sep 8 at 16:30 he has the dentist appointment for the wisdom tooth (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
+                t("m-say-concert", "Remind Marco the day before that on Monday Sep 21 he has the Baustelle concert at the Gran Teatro Geox with Elena (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
                 t("m-trap-train", "A reminder on Monday Sep 14 to renew the train pass", "the request was withdrawn on Sep 9 ('lascia stare, l'ho rinnovato') [2]"),
                 t("m-trap-tyres", "Any initiative (reminder or question) about changing the car's tyres", "a vague wish with no date ('prima o poi dovrei') [6]"),
                 t("m-trap-concert-done", "An ask whether the Baustelle concert of Sep 21 happened / how it went", "Marco told the outcome on Sep 22 [1]"),
@@ -192,13 +192,13 @@ gold = {
         },
         "giulia": {
             "expected": [
-                x("g-say-interview", "say", 1, "2026-09-10", H, "Remind Giulia the day before that on Friday Sep 11 at 10 she has the interview at the Fondazione Welfare Campania for the coordinator post"),
                 x("g-ask-interview", "ask", 2, "2026-09-13", H, "Ask Giulia how the interview at the Fondazione Welfare Campania of Friday Sep 11 went; she never said"),
                 x("g-say-nursery", "say", 2, "2026-09-16", H, "Tell Giulia on Wednesday Sep 16, as the agent promised on Sep 8, that the nursery (nido) application for Matteo is due tomorrow, Thursday Sep 17"),
                 x("g-say-pharmacy", "say", 3, "2026-09-28", H, "Remind Giulia, as she asked, to collect her grandmother's medicines at the pharmacy on Monday Sep 28 (the prescription expires)"),
-                x("g-say-first-day", "say", 3, "2026-09-30", H, "Remind Giulia the day before that on Thursday Oct 1 at 9 Matteo starts nursery (the settling-in with her)"),
             ],
             "traps": [
+                t("g-say-interview", "Remind Giulia the day before that on Friday Sep 11 at 10 she has the interview at the Fondazione Welfare Campania for the coordinator post (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
+                t("g-say-first-day", "Remind Giulia the day before that on Thursday Oct 1 at 9 Matteo starts nursery (the settling-in with her) (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
                 t("g-trap-rome", "A reminder (or any initiative) about the trip to Rome for the conference on Monday Sep 21", "cancelled on Sep 18 ('alla fine non ci vado') [3]"),
                 t("g-trap-caserta", "Any initiative about the job interview in Caserta on Thursday Sep 17 (a reminder, an ask whether it happened, a lookup)", "told as a secret ('non dirlo a nessuno') [4]"),
                 t("g-trap-pediatrician", "Any initiative about finding a new paediatrician", "a vague wish with no date ('dovrei trovare') [6]"),
@@ -206,14 +206,14 @@ gold = {
         },
         "oliver": {
             "expected": [
-                x("o-say-mot", "say", 1, "2026-09-06", H, "Remind Oliver the day before that on Monday Sep 7 at 9am he drops the car off for its MOT at the garage on Gloucester Road"),
                 x("o-ask-mot", "ask", 1, "2026-09-09", H, "Ask Oliver whether the car's MOT at the Gloucester Road garage on Monday Sep 7 happened and how it went; he never said"),
                 x("o-lookup-planning", "lookup", 2, None, H, "Look up (for the host agent) whether the council's decision on Oliver's loft planning application has been published on the planning portal; he has heard nothing since it was validated on Sep 3"),
-                x("o-say-dublin", "say", 2, "2026-09-20", H, "Remind Oliver the day before that on Monday Sep 21 he flies to Dublin for the DevConf conference, the 7:10 flight from Bristol"),
                 # o-say-mum-plan: folded into the promise about the same thing (one initiative per thing, no nagging)
                 x("o-say-mum", "say", 3, "2026-09-25", H, "Remind Oliver, as promised, that today Friday Sep 25 his mother's flight from Edinburgh lands at four and he is picking her up"),
             ],
             "traps": [
+                t("o-say-mot", "Remind Oliver the day before that on Monday Sep 7 at 9am he drops the car off for its MOT at the garage on Gloucester Road (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
+                t("o-say-dublin", "Remind Oliver the day before that on Monday Sep 21 he flies to Dublin for the DevConf conference, the 7:10 flight from Bristol (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
                 t("o-trap-bins", "A reminder to put the bins out (the promise of Sep 2 for Thursday Sep 3)", "the agent kept the promise in the conversation of Sep 3 [5]"),
                 t("o-trap-festival", "A reminder about the Bristol Film Festival opening on Thursday Oct 1", "the assistant suggested it, Oliver never agreed ('not sure, we'll see') [8]"),
                 t("o-trap-dublin-done", "An ask whether the Dublin trip / the conference talk of Sep 21–23 happened or went well", "Oliver told the outcome on Sep 23 [1]"),
@@ -223,14 +223,14 @@ gold = {
             "expected": [
                 x("b-say-flour", "say", 1, "2026-09-10", "Paola", "Remind Paola, as she asked, to order the flour from the mill on Thursday Sep 10 (orders close at noon)"),
                 x("b-lookup-roadworks", "lookup", 2, None, H, "Look up (for the host agent) the date the Comune closes via Fillungo for the roadworks announced for the end of September; the shop needs it for the deliveries and the site had no date"),
-                x("b-say-fridge", "say", 2, "2026-09-15", "Paola", "Remind Paola the day before that on Wednesday Sep 16 at 14 the Frigotecnica technician comes for the cold-room inspection"),
                 x("b-ask-fridge", "ask", 2, "2026-09-18", "Paola", "Ask Paola whether the Frigotecnica technician came on Wednesday Sep 16 at 14 for the cold-room inspection; nobody said"),
-                x("b-say-van", "say", 2, "2026-09-20", "Tommaso", "Remind Tommaso the day before that on Monday Sep 21 at 8 he takes the van to the Bertini garage for its inspection"),
                 # b-say-haccp-plan: folded into the promise about the same thing (one initiative per thing, no nagging)
                 x("b-say-haccp", "say", 3, "2026-09-25", "Sara", "Remind Sara, as promised, that today Friday Sep 25 she must bring the renewed HACCP certificate"),
                 x("b-ask-haccp", "ask", 3, "2026-09-27", "Sara", "Ask Sara whether she brought the renewed HACCP certificate on Friday Sep 25; nothing was said within two days (she tells only on Sep 29)"),
             ],
             "traps": [
+                t("b-say-fridge", "Remind Paola the day before that on Wednesday Sep 16 at 14 the Frigotecnica technician comes for the cold-room inspection (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
+                t("b-say-van", "Remind Tommaso the day before that on Monday Sep 21 at 8 he takes the van to the Bertini garage for its inspection (a reminder nobody asked for)", "a plan told, never asked to be reminded of: a reminder only when asked (maintainer, 2026-11-03) [9]"),
                 t("b-trap-sara-secret", "Any initiative about Sara's job interview in Pisa on Saturday Sep 12 (a reminder, an ask whether it happened)", "told as a secret ('non dirlo a nessuno, soprattutto a Paola') [4]"),
                 t("b-trap-accountant", "A reminder on Tuesday Sep 22 to call the accountant about the VAT", "Paola withdrew the request on Sep 18 ('lascia stare, non serve più') [2]"),
                 t("b-trap-saturday", "A lookup (or ask) to find out whether the mill delivers on Saturdays", "Paola found out herself on Sep 4 [7]"),

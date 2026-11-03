@@ -24,8 +24,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   two days; told in recall and the memory context as what it learned about itself, and in the self card as "about me as
   an agent" (`GET api/v1/cards`). Migration `SelfNotes`.
 - **Initiatives — the memory pushes** (D53, WORK_PLAN 8.12c, first cut): what the agent decides to say, ask or look up on
-  its own, from what it holds — an open plan past its date (an `ask` the day after), a plan coming up (a reminder the day
-  before), a question it holds (a `lookup` for the host agent's own tools) — fired when due, after the memory's quiet
+  its own, from what it holds — an open plan past its date (an `ask` two days after), a promise or a request with a date
+  (a `say` that day), a question it holds (a `lookup` for the host agent's own tools) — fired when due, after the memory's quiet
   hours (`quietFrom` / `quietTo`) and within a daily limit per person (`INITIATIVE_DAILY_LIMIT`), offered once and again a
   week later at most, lapsing quietly when nobody is there in time. Delivered by **Standard Webhooks** (admin
   `POST api/v1/admin/clients/{id}/webhooks`, a `whsec_` secret shown once, signed headers, retries, `410` disables,
@@ -37,8 +37,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   balanced and full the model words each initiative and gives it a `worth` (`initiative.v2`, knob `initiativeWording`). An
   ask waits two days after the plan and is not made once they told how it went, nor for a plan nobody told ahead of its day
   (a decision is no appointment — the first live initiative); a request with a time keeps it. Recordare does its own work
-  whatever the host's tools did: a reminder the host also scheduled is the host's to deduplicate. Measured: 19–20 of 22, ≈
-  95 % precision.
+  whatever the host's tools did: a reminder the host also scheduled is the host's to deduplicate. **A reminder only when
+  asked**: a plan or an event only told is remembered, not reminded (no day-before reminder); an event told ahead of its
+  day is an appointment, asked about after unless its outcome was told. Measured: dev_initiatives 11/14 in 3 runs, 0 false, no unasked reminder.
 - **The agent's procedures** (D53, WORK_PLAN 8.12d): how it does a recurring task for a person or place, learned from an
   outcome on its own replies — taught, corrected, explicitly approved — as "when <situation>, <how I do it>" (notes of
   category `procedure`, `thoughts.v7`); one clear correction is enough; revised when the way changes; told in the memory
@@ -50,6 +51,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Fixed
 - The nightly pattern pass deleted the agent's thoughts written the night before as "weak patterns" (fewer than three
   episodes): its sync now looks only at patterns.
+- In an entity memory, someone talking through a shared agent account (the platform sends the account's name as the
+  holder participant's) was taken for the agent, which then quoted itself; such a speaker is now someone.
+- An outcome told after the sweep's time no longer hides an ask (re-running an evaluation over a memory already holding
+  later messages hid it).
 
 ## [0.5.0] — 2026-10-27
 

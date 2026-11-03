@@ -94,21 +94,21 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     expect(await sweep()).toEqual({ armed: 0, fired: 0, expired: 0 });
   });
 
-  it('reminds of a plan coming up and asks the host to look up a question it holds; the daily limit holds the rest', async () => {
-    await plan('Dentista alle 15', new Date(NOW.getTime() + DAY), 'confirmed');
+  it('reminds of nothing nobody asked; asks the host to look up a question it holds; the daily limit holds the rest', async () => {
+    await plan('Dentista alle 15', new Date(NOW.getTime() + DAY), 'confirmed'); // told, not asked to be reminded of: no reminder
     await db.query(`INSERT INTO notes (memory_id, category, content, origin, author_role, stance, audience, tags)
       VALUES ($1, 'question', 'Mi chiedo se Marta abbia prenotato il volo', 'reflected', 'holder', 'inferred', ARRAY[$1::uuid], '{thought}')`, [memoryId]);
-    await plan('Chiamare il commercialista', new Date(NOW.getTime() - 4 * DAY)); // past two days: asked about; a third for today, over the limit of 3 with the first test's
+    await plan('Chiamare il commercialista', new Date(NOW.getTime() - 4 * DAY));
+    await plan('Ritirare il pacco in posta', new Date(NOW.getTime() - 5 * DAY)); // a third for today: over the limit of 3 with the first test's
     const r = await sweep();
     expect(r.armed).toBe(3);
     expect(r.fired).toBe(2);
-    // The earliest due first: the past plan, then the reminder; the lookup (due now too, armed last) waits for tomorrow.
     const feed = await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: { ...user } });
-    expect(feed.body.items.map((i: { kind: string }) => i.kind).sort()).toEqual(['ask', 'ask', 'say']);
-    expect(feed.body.items.find((i: { kind: string }) => i.kind === 'say').text).toContain('promemoria');
+    expect(feed.body.items.map((i: { kind: string }) => i.kind)).not.toContain('say');
     expect((await sweep(new Date(NOW.getTime() + 4 * 3_600_000))).fired).toBe(0); // 16:00, the same day
     expect((await sweep(new Date(NOW.getTime() + DAY))).fired).toBe(1);
     const later = await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: user });
+    expect(later.body.items.map((i: { kind: string }) => i.kind).sort()).toEqual(['ask', 'ask', 'ask', 'lookup']);
     expect(later.body.items.find((i: { kind: string }) => i.kind === 'lookup').text).toContain('Vorrei scoprire');
   });
 
@@ -119,21 +119,19 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     const [t] = await db.query(`SELECT status::text, attempts, reconsider_at FROM intents WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [ask.id]);
     expect(t).toMatchObject({ status: 'armed', attempts: 1 });
     expect(new Date(t.reconsider_at).getTime()).toBe(NOW.getTime() + 8 * DAY);
-    // A week later it is asked again (its intent is kept alive past the plan's week); ignored again → cancelled. The
-    // pending reminder, whose plan's time has passed, lapses in the same sweep — and that confirmed plan, past its date
-    // with no outcome, is asked about.
+    // A week later it is asked again (its intent is kept alive past the plan's week); ignored again → cancelled.
     await db.query(`UPDATE intents SET expires_at = $2 WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [ask.id, new Date(NOW.getTime() + 30 * DAY)]);
-    const before = received.length;
-    const again = await sweep(new Date(NOW.getTime() + 8 * DAY));
-    expect(again).toMatchObject({ armed: 1, fired: 2, expired: 1 });
-    const second = (await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: user, body: undefined })).body.items.filter((i: { text: string; status: string }) => i.text.includes('commercialista') && i.status === 'pending');
+    await sweep(new Date(NOW.getTime() + 8 * DAY));
+    const second = (await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: user })).body.items.filter((i: { text: string; status: string }) => i.text.includes('commercialista') && i.status === 'pending');
     expect(second).toHaveLength(1);
     await call(url, 'POST', `/api/v1/initiatives/${second[0].id}/outcome`, { token: key, headers: user, body: { status: 'ignored', at: new Date(NOW.getTime() + 8 * DAY).toISOString() } });
     expect((await db.query(`SELECT status::text FROM intents WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [ask.id]))[0].status).toBe('cancelled');
 
-    const expired = (await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: user, })).body.items.filter((i: { status: string }) => i.status === 'expired');
-    expect(expired.map((i: { kind: string }) => i.kind)).toEqual(['say']);
-    await delivered(before + 2);
+    // Nobody answered the others in time: they lapse, quietly, and the client hears of it.
+    const before = received.length;
+    const late = await sweep(new Date(NOW.getTime() + 40 * DAY));
+    expect(late.expired).toBeGreaterThanOrEqual(1);
+    await delivered(before + 1);
     expect(received.slice(before).some((d) => JSON.parse(d.body).type === 'initiative.expired')).toBe(true);
   });
 
@@ -152,6 +150,32 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     await sweep(T);
     const asks = (await db.query(`SELECT episode_id FROM intents WHERE kind = 'open_plan' AND episode_id = ANY($1)`, [[appointment, decision]])).map((r: { episode_id: string }) => r.episode_id);
     expect(asks).toEqual([appointment]);
+  });
+
+  it('an event told ahead of its day is an appointment: asked about after unless its outcome was told, never reminded unasked', async () => {
+    const [conv] = await db.query(`INSERT INTO conversations (memory_id, client_id, external_id, started_at, last_message_at)
+      VALUES ($1, $2, 'c-events', now(), now()) RETURNING id`, [memoryId, clientId]);
+    const told = async (id: string, content: string, at: Date) => (await db.query(
+      `INSERT INTO messages (conversation_id, memory_id, external_id, role, content, content_hash, sent_at, author_kind, attribution_method, attribution_confidence)
+       VALUES ($1, $2, $3, 'user', $4::text, sha256(convert_to($4::text, 'UTF8')), $5, 'self', 'account', 1) RETURNING id`, [conv.id, memoryId, id, content, at]))[0].id as string;
+    const event = async (content: string, at: Date, msg: string) => {
+      const [r] = await db.query(
+        `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, recorded_at)
+         VALUES ($1, 'event', $2, 'holder_told', 'holder', 'stated', ARRAY[$1::uuid], $3, 'day', $4) RETURNING id`, [memoryId, content, at, new Date(at.getTime() - 20 * DAY)]);
+      await db.query(`INSERT INTO episode_evidence (episode_id, message_id) VALUES ($1, $2)`, [r.id, msg]);
+      return r.id as string;
+    };
+    const T = new Date(NOW.getTime() + 40 * DAY);
+    const test = await event('Chloé ha la verifica di geometria', new Date(T.getTime() + 12 * 3_600_000), await told('e1', 'Domani Chloé ha la verifica di geometria', T));
+    const visit = await event('Visita dal dentista per Chloé', new Date(T.getTime() - 4 * DAY), await told('e2', 'Lunedì Chloé va dal dentista', new Date(T.getTime() - 6 * DAY)));
+    const exam = await event('Esame di guida di Chloé', new Date(T.getTime() - 4 * DAY), await told('e3', 'Lunedì Chloé ha l\'esame di guida', new Date(T.getTime() - 6 * DAY)));
+    // The outcome of the driving exam was told afterwards: a later episode on the same thing.
+    await db.query(`INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision)
+      VALUES ($1, 'event', 'Chloé ha passato l''esame di guida', 'holder_told', 'holder', 'stated', ARRAY[$1::uuid], $2, 'day')`, [memoryId, new Date(T.getTime() - 4 * DAY)]);
+    await sweep(new Date(T.getTime() + 3_600_000));
+    const armed = await db.query(`SELECT episode_id, kind::text FROM intents WHERE episode_id = ANY($1)`, [[test, visit, exam]]);
+    expect(armed.map((r: { episode_id: string; kind: string }) => [r.episode_id === test ? 'test' : r.episode_id === visit ? 'visit' : 'exam', r.kind]).sort())
+      .toEqual([['visit', 'open_plan']]); // the test tomorrow: told, not asked to be reminded of
   });
 
   it('quiet hours: a due initiative waits for the morning; the admin sets them', async () => {

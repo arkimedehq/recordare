@@ -58,6 +58,19 @@ describe('entity memory (D48, D50 8.5)', () => {
     expect(req?.messages[0]?.content).toContain('a shared agent — a device, a place, a robot or a service');
     expect(req?.messages[1]?.content).toContain(' someone: Sono Andrea');
 
+    // A platform that names its account as the holder participant (Arkimede's voice account): the name is the agent's,
+    // the speaker is still someone — never "other:Casa", or the agent quotes itself ("Casa mi ha detto…").
+    const named = await call(url, 'POST', '/api/v1/ingest/messages', {
+      token: key, headers: { 'x-recordare-user': 'Casa' },
+      body: { conversation: { externalId: 'e1h', participants: [{ ref: 'holder', role: 'holder', displayName: 'Casa' }] },
+        messages: [{ externalId: 'e1h-1', role: 'user', authorRef: 'holder', content: 'Domani Chloé ha la verifica di geometria.', sentAt: '2026-06-07T11:00:00+02:00' }] },
+    });
+    llm.queue.push({});
+    await app.get<ExtractionRunner>(EXTRACTION_RUNNER).runForConversation(named.body.conversationId as string);
+    const asked = (llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1)!.messages[1]!.content;
+    expect(asked).toContain(' someone: Domani Chloé');
+    expect(asked).not.toContain('other:Casa');
+
     await extract('Casa', 'e2', 'Sono Marta, anche io ho una macchina nuova: una Clio.', {
       facts: [{ key: 'car', value: 'Renault Clio', verdict: 'new', subject: 'Marta (figlia)', evidence: [1] }],
     });

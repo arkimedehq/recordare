@@ -860,7 +860,7 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   nessuna falsa nota di sé; limiti noti: le lezioni vengono dall'attrito, non da ciò che è andato bene (fiducia,
   affidamento), e due errori singoli diversi possono essere raggruppati in un'unica lezione (RESULTS.md).
 - **Costruito finora** (2026-11-01, passo c, prima versione senza modello): `intents` e `initiatives` (DATA_MODEL), il
-  giro orario (arma da piani aperti, piani in arrivo e domande che l'agente tiene; scatta quando è dovuto dopo le ore di
+  giro orario (arma da piani aperti, piani in arrivo — tolti il 2026-11-03 — e domande che l'agente tiene; scatta quando è dovuto dopo le ore di
   quiete ed entro il limite giornaliero; scade in silenzio), Standard Webhooks per client con la protezione SSRF e il
   calendario dei tentativi, il feed `GET api/v1/initiatives`, il rapporto d'esito e il ciclo di vita dell'intento
   (declined → cancelled, ignored → una volta ancora dopo una settimana, failed → il giorno dopo), libreria
@@ -875,7 +875,11 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   vivo); una richiesta con un orario lo conserva. **Recordare fa il suo lavoro, qualunque cosa abbiano fatto gli
   strumenti dell'ospite** (maintainer, 2026-11-02): non conosce le automazioni dell'ospite (una persona può usare
   qualsiasi client), quindi un promemoria che anche l'ospite ha programmato tocca all'ospite deduplicarlo — spegnendo
-  il proprio, o scartando il doppione che vede.
+  il proprio, o scartando il doppione che vede. **Un promemoria solo se chiesto** (maintainer, 2026-11-03, da
+  un'affermazione dal vivo "Chloé domani ha la verifica di geometria"): un piano o un evento solo raccontato viene
+  ricordato, mai promemorato — il promemoria del giorno prima per i piani in arrivo non c'è più; restano richieste e
+  promesse, e la domanda dopo un appuntamento (lo è anche un evento detto prima del suo giorno); un esito raccontato
+  conta solo una volta detto (all'ora del giro). Rimisurato: dev_initiatives 11/14 in 3 run, 0 false, nessun promemoria non richiesto.
 - **Costruito finora** (2026-11-02, passo d): le procedure come tipo `procedure` della passata dei pensieri
   (`thoughts.v7`): come l'agente svolge un compito ricorrente, da un esito sulle sue risposte (insegnato, corretto,
   approvato esplicitamente), una correzione basta, riviste quando il modo cambia; "come lo faccio (imparato)" nel
