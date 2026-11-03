@@ -44,6 +44,13 @@ describe('RecordareClient', () => {
     expect(seen[0]?.headers).toMatchObject({ authorization: 'Bearer rk_test', 'x-recordare-user': 'u1', traceparent: '00-abc-def-01' });
   });
 
+  it('reads the memory charter (D54)', async () => {
+    reply = () => ({ status: 200, body: { charter: '## Your memory', version: 'charter.v1' } });
+    expect(await client().charter()).toEqual({ charter: '## Your memory', version: 'charter.v1' });
+    expect(seen[0]).toMatchObject({ method: 'GET', path: '/api/v1/charter' });
+    expect(seen[0]?.headers).not.toHaveProperty('x-recordare-user');
+  });
+
   it('asks for the self card in the memory context and reads the cards', async () => {
     reply = () => ({ status: 200, body: { block: null, items: 0 } });
     await client().context('u1', 'chat-1', 'Che macchina ho?', { card: true });

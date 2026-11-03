@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import {
-  type Cards, type ContextOptions, type PrivateItem, CONVERSATION_HEADER, type Digest, type Episode, type Erased, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
+  type Cards, type Charter, type ContextOptions, type PrivateItem, CONVERSATION_HEADER, type Digest, type Episode, type Erased, type EpisodeDetail, type EpisodeQuery, type ExportJob, type Fact, type FactDetail,
   type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
@@ -34,6 +34,15 @@ export class RecordareClient {
   constructor(options: ClientOptions & { mcp?: McpOptions }) {
     this.http = new Http(options);
     this.mcp = new RecordareMcp(this.http, options.mcp);
+  }
+
+  /**
+   * The memory charter (D54, the memory-first contract): how the agent uses its memory — put it in the system prompt of
+   * every agent that uses Recordare, before the `<memory-context>` block. The same for every memory; stable until
+   * `version` changes, so cache it (it keeps the prompt prefix cacheable).
+   */
+  charter(): Promise<Charter> {
+    return this.http.request<Charter>('GET', 'api/v1/charter', {});
   }
 
   /** The memory behind `user` (auto-provisioned when the client allows it), its mode and gender. */
@@ -137,7 +146,7 @@ export class RecordareClient {
   /**
    * The memories relevant to `query` (the message about to be answered) as a fenced block to append to the prompt — or
    * null. Append it at the end of the system prompt (it changes every turn: keep the stable part first for prompt
-   * caching); never store it as a chat message. `card`: open it with the self card (who I am), off by default.
+   * caching); never store it as a chat message. `card`: the block opens with the self card (who I am) unless `false`.
    */
   context(user: string, conversation: string, query: string, opts: ContextOptions = {}): Promise<MemoryContext> {
     return this.http.request<MemoryContext>('POST', 'api/v1/context', { user, body: { query, ...opts }, headers: { [CONVERSATION_HEADER]: conversation } });

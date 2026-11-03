@@ -394,8 +394,15 @@ export interface Source {
 /** `POST api/v1/context`: the memories relevant to the message a host is about to answer (WORK_PLAN 5.7). */
 /** `POST api/v1/context` options. */
 export interface ContextOptions {
-  /** Open the block with the self card — who I am: current facts and notes about me. Off by default. */
+  /** Open the block with the self card — who I am: current facts and notes about me. On by default (D54); false turns it off. */
   card?: boolean;
+}
+
+/** `GET api/v1/charter`: the memory charter (D54) — how the agent uses its memory, for its system prompt. */
+export interface Charter {
+  charter: string;
+  /** Changes when the text changes: cache the charter until then. */
+  version: string;
 }
 
 /** `GET api/v1/cards`: a person as the memory knows them now (WORK_PLAN 8.13). */

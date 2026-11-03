@@ -12,7 +12,8 @@ const far = vec(fakeVector(QUERY).map((x) => -x));
 
 export async function setup(env: Record<string, string>) {
   const fake = await startFakeEmbeddings();
-  testEnv({ EMBEDDING_BASE_URL: fake.url, IDLE_DELAY_SECONDS: '3600', ALLOW_CLOCK_OVERRIDE: 'true', ...env });
+  // The fake vectors are random for any new text: the short-query vector (D54) is tested on its own (context-short.int.spec.ts).
+  testEnv({ EMBEDDING_BASE_URL: fake.url, IDLE_DELAY_SECONDS: '3600', ALLOW_CLOCK_OVERRIDE: 'true', CONTEXT_SHORT_QUERY_WORDS: '0', ...env });
   await resetSchema();
   const { app, url } = await startApp();
   const client = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'P', kind: 'platform', autoProvision: true } })).body;
@@ -40,7 +41,7 @@ export async function setup(env: Record<string, string>) {
   await episode('Revisione della Yaris', 'plan', '2026-12-01', near); // beyond the plan horizon
   const context = (conversation: string, query = QUERY) => call(url, 'POST', '/api/v1/context', {
     token: key, headers: { 'x-recordare-user': 'u1', 'x-recordare-conversation': conversation, 'x-recordare-now': '2026-10-07T10:00:00+02:00' },
-    body: { query },
+    body: { query, card: false }, // relevance alone; the self card (on by default, D54) is tested in cards.int.spec.ts
   });
   return { app, fake, db, memoryId, context, url, key, query: QUERY };
 }

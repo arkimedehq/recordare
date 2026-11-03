@@ -11,14 +11,14 @@ describe('cards: who I am and who my contacts are (WORK_PLAN 8.13)', () => {
   afterAll(async () => { await s?.app.close(); s?.fake.server.close(); });
   const as = () => ({ token: s.key, headers: { 'x-recordare-user': 'u1', 'x-recordare-conversation': 'chat-1', 'x-recordare-now': '2026-10-07T10:00:00+02:00' } });
 
-  it('the memory context opens with the self card only when asked, without repeating what it shows', async () => {
+  it('the memory context opens with the self card unless turned off (D54), without repeating what it shows', async () => {
     const ctx = (body: object) => call(s.url, 'POST', '/api/v1/context', { ...as(), body });
 
-    const plain: string = (await ctx({ query: s.query })).body.block;
+    const plain: string = (await ctx({ query: s.query, card: false })).body.block;
     expect(plain).not.toContain('about me');
     expect(plain).toContain('- fact: car = Toyota Yaris');
 
-    const res = (await ctx({ query: s.query, card: true })).body;
+    const res = (await ctx({ query: s.query })).body; // on by default
     expect(res.block).toContain('- about me: car = Toyota Yaris (since 2026-10-03)\n- about me: Prende il caffè amaro');
     expect(res.block).not.toContain('- fact: car'); // already in the card
     expect(res.block).toContain('- episode: Ha comprato una Toyota Yaris ibrida grigia');

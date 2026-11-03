@@ -60,6 +60,8 @@ const baseSchema = z.object({
   CONTEXT_MIN_PERIOD_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** Memory context: minimum similarity for one passage of a learned source (WORK_PLAN 8.9). */
   CONTEXT_MIN_PASSAGE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
+  /** D54: a message of at most this many words is matched with the person's previous turn too (0: never). */
+  CONTEXT_SHORT_QUERY_WORDS: z.coerce.number().int().min(0).max(50).optional(),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
   /** Installation override of the quality profile's nightly pattern pass (WORK_PLAN 5.4). */

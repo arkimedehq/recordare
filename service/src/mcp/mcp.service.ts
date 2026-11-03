@@ -24,6 +24,7 @@ import { EpisodeSearchService } from '../recall/episode-search.service';
 import { MemorySearchService } from '../recall/memory-search.service';
 import { MemoryWriteService } from '../recall/memory-write.service';
 import { registerTools } from './mcp-tools';
+import { CHARTER } from '../recall/charter';
 import { KnowledgeSearchService } from '../knowledge/knowledge-search.service';
 import { SourcesService } from '../knowledge/sources.service';
 
@@ -75,7 +76,8 @@ export class McpService implements OnModuleDestroy {
     }
     if (req.method !== 'POST' || !isInitializeRequest(body)) throw new NotFoundException();
 
-    const server = new McpServer({ name: 'recordare', version: VERSION });
+    // The charter (D54) as the server's instructions: hosts that pass them to the model tell it this is its own memory.
+    const server = new McpServer({ name: 'recordare', version: VERSION }, { instructions: CHARTER });
     const [settings] = await this.db.query(`SELECT timezone, locale FROM memories WHERE person_id = $1`, [memoryId]);
     registerTools(server, {
       principal, memoryId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,

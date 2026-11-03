@@ -138,7 +138,7 @@ describe('personal first person (WORK_PLAN 8.4)', () => {
     // The memory context suggests the question when the message names one of the candidates.
     const ctx = await context('Devo chiamare Marco stasera', '2026-09-19T10:00:00+02:00');
     expect(ctx.body.block).toContain('- if natural, ask: Marco? Marco (cugino) / Marco Bellini (collega)');
-    expect(ctx.body.block).toContain('Background from your memory (you are Andrea: first-person items are yours)');
+    expect(ctx.body.block).toContain('from your own memory for this message (you are Andrea: first-person items are yours)');
 
     // A later window lists it under OPEN QUESTIONS; an unknown contact or the assistant's turn is no answer.
     const cousin = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Marco'`, [me]))[0].id as string;
