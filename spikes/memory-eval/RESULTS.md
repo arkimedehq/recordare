@@ -808,6 +808,20 @@ wording and the worth, balanced), `thoughts.v6`.
 - Regression: blind12 **97.2 %** with `extract.v21` final (v21 first cut 94.4 %, v20 with thoughts 97.2 %) — within noise.
 - Cost: ≈ 0.15 USD a full run (extraction 54 sessions, the passes, about 15 wording calls), the judges included.
 
+**A reminder only when asked** (maintainer, 2026-11-03; `live-fixes`): the day-before reminder of a plan only told is
+gone, an event told ahead of its day is an appointment, an outcome counts only once said (as of the sweep's time). The
+gold changed with it: the 8 "remind … the day before" items became traps of kind [9] (14 expected, 21 traps). Runs on
+the memories of `eval1793606335` (`REUSE_RUN`, same extraction and thoughts):
+
+| run | found | traps | false | note |
+|---|---|---|---|---|
+| i9–i11 (rule, before the outcome-time fix) | 10/14 ×3 | 1, 1, 1 | 0, 0, 0 | Giulia's interview ask hidden by a later message |
+| **i12–i14** (with the fix) | **11/14 ×3** | 1, 1, 1 | **0, 0, 0** | no trap [9] |
+
+- Missed, the same in every run: the two look-ups (no question written by the reused thought pass) and the shop's HACCP
+  ask; the trap left is the bins reminder (kept in the evening chat, the extraction did not close it).
+- Cost: the passes and wording only, ≈ 0.03 USD a run.
+
 ### The agent's self-model — `thoughts.v6` (D53, WORK_PLAN 8.12b, 2026-11-01, DeepSeek direct off-peak)
 
 The thought pass learns about the agent itself (kind `self`, 8.12b) from MY REPLIES — its own messages with what the

@@ -831,7 +831,7 @@ works on its own and pushes, not a memory that only answers.
   note; known limits: lessons come from friction, not from what went well (trust, reliance), and two different single
   mistakes may be bundled into one lesson (RESULTS.md).
 - **Built so far** (2026-11-01, step c, first cut without a model): `intents` and `initiatives` (DATA_MODEL), the hourly
-  sweep (arm from open plans, upcoming plans and the questions the agent holds; fire when due after the quiet hours and
+  sweep (arm from open plans, upcoming plans — dropped 2026-11-03 — and the questions the agent holds; fire when due after the quiet hours and
   within the daily limit; expire quietly), Standard Webhooks per client with the SSRF guard and the retry schedule, the
   feed `GET api/v1/initiatives`, the outcome report and the intent's lifecycle (declined → cancelled, ignored → once
   more a week later, failed → next day), library `initiatives` / `reportInitiative` / `verifyWebhook`, the sentences in
@@ -844,7 +844,11 @@ works on its own and pushes, not a memory that only answers.
   about a plan told ahead of its day (a decision dated the day it was taken is no appointment — the first live
   initiative); a request with a time keeps it. **Recordare does its own work, whatever the host's tools did**
   (maintainer, 2026-11-02): it does not know the host's automations (a person may use any client), so a reminder the
-  host also scheduled is the host's to deduplicate — switch its own off, or drop the duplicate it sees.
+  host also scheduled is the host's to deduplicate — switch its own off, or drop the duplicate it sees. **A reminder only
+  when asked** (maintainer, 2026-11-03, from a live statement "Chloé domani ha la verifica di geometria"): a plan or an
+  event only told is remembered, never reminded — the day-before reminder of upcoming plans is gone; requests and
+  promises stay, and so does the ask after an appointment (an event told ahead of its day is one too); an outcome told
+  counts only once said (as of the sweep's time). Re-measured: dev_initiatives 11/14 in 3 runs, 0 false, no unasked reminder.
 - **Built so far** (2026-11-02, step d): procedures as the kind `procedure` of the thought pass (`thoughts.v7`): how the
   agent does a recurring task, from an outcome on its replies (taught, corrected, explicitly approved), one correction
   enough, revised when the way changes; "how I do it (learned)" in the memory context. Dev set `dataset_dev_procedures`:
