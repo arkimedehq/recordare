@@ -654,8 +654,8 @@ Two legs carry the same object:
   `seq` order — for a client behind NAT, or to catch up after lost deliveries.
 
 In balanced and full the model words each due initiative as the agent would say it and gives it a `worth` (0–1;
-`initiative.v2`, LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's reminder or
-ask is dropped, never a request or a promise (owed); in economy the text is the service's own sentence.
+`initiative.v2`, LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's ask is
+dropped, never a request or a promise (owed); in economy the text is the service's own sentence.
 
 The initiative: `{id, seq, kind: say | ask | lookup | do, for: {personId, name} | null, text (in the memory's language,
 ready to be said), reason, worth (null in economy), episodeIds, dueAt, expiresAt, status, outcomeAt, reply, createdAt}`. The client reports what
@@ -663,8 +663,8 @@ became of it — `POST api/v1/initiatives/{id}/outcome {status: said | asked | i
 expired, at?, reply?}` (scope `write`) — and the agent's intent follows: said / asked / done close it; declined cancels it;
 ignored offers it once more a week later, then no more (no nagging); failed tries again the next day. The outcome is
 pushed back as `initiative.updated`; a look-up reported `done` retires the question it came from. Telemetry:
-`initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Measured on `dataset_dev_initiatives` (RESULTS.md): 19–20
-of 22 in three runs, about 95 % precision, every one on its day and for its person.
+`initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Measured on `dataset_dev_initiatives` (RESULTS.md): 11 of
+14 in three runs, no false initiative, no unasked reminder, every one on its day and for its person.
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 

@@ -659,8 +659,8 @@ oppure chiunque quando è destinata al titolare di una memoria di entità; l'osp
 ora, una voce nella stanza, qualcuno al pannello). Se nessuno arriva prima di `expiresAt`, decade in silenzio.
 
 In balanced e full il modello formula ogni iniziativa dovuta come la direbbe l'agente e le dà un `worth` (0–1;
-`initiative.v2`, task LLM `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): sotto 0,3 il promemoria o la
-domanda di un piano viene scartato, mai una richiesta o una promessa (dovute); in economy il testo è la frase del
+`initiative.v2`, task LLM `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): sotto 0,3 la domanda di un
+piano viene scartata, mai una richiesta o una promessa (dovute); in economy il testo è la frase del
 servizio.
 
 Due vie portano lo stesso oggetto:
@@ -685,7 +685,7 @@ at?, reply?}` (scope `write`) — e l'intento dell'agente ne segue l'esito: said
 annulla; ignored lo ripropone una volta a una settimana di distanza, poi basta (niente insistenza); failed riprova il
 giorno dopo. L'esito viene rimandato come `initiative.updated`; una ricerca riportata `done` ritira la domanda da cui veniva.
 Telemetria: `initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Misurato su `dataset_dev_initiatives`
-(RESULTS.md): 19–20 su 22 in tre run, circa 95 % di precisione, ognuna nel suo giorno e per la sua persona.
+(RESULTS.md): 11 su 14 in tre run, nessuna iniziativa falsa, nessun promemoria non richiesto, ognuna nel suo giorno e per la sua persona.
 
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
 
