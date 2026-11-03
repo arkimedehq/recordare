@@ -6,6 +6,22 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.6.0] — 2026-11-03
+
+**La mente dell'agente** (D53, D54): la memoria ora pensa da sé — intuizioni, domande e opinioni tratte da ciò che
+l'agente ha vissuto, ciò che ha imparato di sé dalle sue risposte, e come svolge i compiti ricorrenti — e **spinge**:
+iniziative (una richiesta o una promessa con una data, il "com'è andata?" dopo un appuntamento, una ricerca per gli
+strumenti propri dell'ospite) consegnate con Standard Webhooks o lette come feed; un promemoria solo se chiesto. E la
+memoria è la mente dell'agente, non uno strumento tra tanti: una carta della memoria per il prompt di sistema (completa,
+o per il solo contesto per gli ospiti senza strumenti di memoria), il contesto di memoria formulato come ciò che è venuto
+in mente e aperto di default dalla scheda di sé, ogni connettore che segue il contratto memory-first (`INTEGRATION.md`
+§4). Nessuna modifica incompatibile nell'API; cambia un comportamento: la scheda di sé è accesa di default (`card: false`
+la spegne). Aggiornare prima il servizio (le migrazioni `Thoughts`, `SelfNotes`, `Initiatives`, `IntentMessages`,
+`InitiativeWorth`, `Procedures` girano all'avvio), poi la libreria client (`charter()`, `initiatives()`,
+`reportInitiative()`, `verifyWebhook()`) e i connettori. Qualità (DeepSeek `deepseek-flash`,
+`spikes/memory-eval/RESULTS.md`): blind12 97,2 % con `extract.v21`; dev set — pensieri 11,8 / 14, modello di sé 13 / 15,
+procedure 10–11 / 14, iniziative 11 / 14 senza iniziative false.
+
 ### Aggiunto
 - **I pensieri dell'agente** (D53, WORK_PLAN 8.12a — il primo passo della mente dell'agente): una passata notturna di
   pensiero trae intuizioni, domande e opinioni da ciò che l'agente ha vissuto (solo episodi pubblici), ognuna poggiata
