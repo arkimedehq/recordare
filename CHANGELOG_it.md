@@ -52,6 +52,18 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   ne dimentica uno (`DELETE …/episodes|facts|notes/{id}`). Solo chiave admin; Recordare Atlas li elenca e li dimentica con
   queste rotte.
 
+### Modificato
+- **La memoria è la mente dell'agente — un contratto memory-first per ogni client** (D54, WORK_PLAN 8.14): la carta
+  della memoria, come un agente usa la sua memoria (la sua mente, da cui ragiona prima di rispondere, in cui cerca prima
+  degli altri strumenti e prima di "non lo so"; "ricordi / ricordare" vogliono dire questa memoria, non file o foto),
+  servita da `GET api/v1/charter` (`{charter, version}`, per il prompt di sistema dell'agente), come `instructions` del
+  server MCP, e citata dal blocco `<memory-context>` — ora formulato come ciò che è venuto in mente all'agente dalla sua
+  memoria (non più "usalo solo se aiuta"). La scheda di sé apre il blocco **di default** (`card: false` la spegne; circa
+  130–150 token). Un seguito breve ("e lui?", ogni lingua, `CONTEXT_SHORT_QUERY_WORDS`) viene confrontato anche con il
+  turno precedente della persona. Il contratto, richiesto a ogni client (`INTEGRATION.md` §4): la carta nel prompt di
+  sistema, il contesto prima di ogni turno di ogni agente, gli strumenti di memoria disponibili, un ripiego, spenta solo
+  esplicitamente. Libreria `charter()`; ogni connettore lo segue.
+
 ### Corretto
 - La passata notturna dei pattern cancellava i pensieri dell'agente scritti la notte prima come "pattern deboli" (meno
   di tre episodi): la sua sincronizzazione ora guarda solo i pattern.

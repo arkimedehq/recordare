@@ -109,18 +109,35 @@ searched with `search_knowledge` (`API.md` §2, §3).
   what the agent *learned*. At most expose `learn_source` / call `learnSource` for what the person explicitly asks the
   agent to learn.
 
-## 4. Recall — MCP
+## 4. The memory-first contract (D54) and recall — MCP
+**Required of every client, for every agent that uses Recordare** (maintainer, 2026-11-03): the memory is the agent's
+own mind, not a tool among others — when it reasons it is always shaped by what it remembers, unless asked not to be.
+How to use it is written once in Recordare and every client follows it:
+1. **The charter in the system prompt**: `GET api/v1/charter` (library `charter()`) → `{charter, version}`; put the text
+   in the agent's system prompt, in its stable part (prefix caching), and re-read it only when `version` changes. MCP
+   hosts that pass a server's `instructions` to the model get the same text at `initialize`.
+2. **The memory context before every turn** of every agent — sub-agents, delegates and team members included:
+   `POST api/v1/context` (or `{ingest}`, one round trip with the turn), the block appended at the end of the system
+   prompt after the charter, never stored as a message. The self card is on by default: leave it on (an agent always
+   knows who it is).
+3. **The memory tools available** to the agent (§4 below: `search_memory`, `search_episodes`, `resolve_period`,
+   `search_knowledge`, the writes), whatever other tools it has — the charter tells it to search its memory first.
+4. **A fallback when Recordare does not answer**: the turn goes on without the block (or with the client's own memory,
+   if it has one); never block the chat.
+5. **Off only explicitly**: the person's (or the admin's) switch for the memory (D50: the client's on/off is the only
+   one); an agent with no memory is a deliberate choice, not a default.
+
 - Register Recordare's MCP endpoint (`/mcp`) in your MCP client with the key and `X-Recordare-User`.
 - **Always send `X-Recordare-Conversation: <externalConversationId>`**: no longer for visibility — answers use the
   whole memory in every conversation, shared ones included (D50; privacy comes later) — but MCP writes need it as their
   evidence (with a client key a write without a resolvable conversation gets `"cannot write here"`; a personal token
   writes as the person), and recall leaves the current turn out of the chat excerpts (`API.md` §1).
   `X-Recordare-Viewers` is gone: Recordare ignores it.
-- Optional, per agent: `POST api/v1/context {query}` before an answer returns the relevant memories as a fenced
+- Before every answer (the contract above): `POST api/v1/context {query}` returns what came to mind as a fenced
   block for the end of the system prompt (`API.md` §3, WORK_PLAN 5.7) — the agent may answer without a tool call.
   `POST api/v1/context {ingest}` (scopes `read` + `ingest`; client library `contextWithTurn`) stores the user's turn
-  and returns its context in one call — one round trip before each turn instead of two. `card: true` (library
-  `context(…, { card: true })`) opens the block with the self card, off by default. For a Diary page, `GET api/v1/cards`
+  and returns its context in one call — one round trip before each turn instead of two. The self card opens the
+  block by default (D54; `card: false`, library `context(…, { card: false })`, turns it off). For a Diary page, `GET api/v1/cards`
   (library `cards`) gives who I am and a card per contact, each line linked to its detail.
 - Tools: `search_episodes`, `search_memory` (facts and notes), `search_knowledge` (learned sources), `resolve_period`,
   `log_episode`, `correct_episode`, `forget_episode`, `remember`, `learn_source` (§3b). A platform that already ingests every turn may leave `log_episode` out (the

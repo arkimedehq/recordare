@@ -99,7 +99,7 @@ diario self-service.
 |---|---|
 | `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; §2 fonti apprese (`api/v1/ingest/sources…`); `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me`; i codici di collegamento e le identità del titolare del D51 (`POST api/v1/me/link-codes`, conferma / rifiuto / scollegamento) |
 | `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
-| `read` | §4 endpoint GET (compreso `GET api/v1/sources`), `GET api/v1/me`, `GET api/v1/me/identities`, `POST api/v1/context` |
+| `read` | §4 endpoint GET (compreso `GET api/v1/sources`), `GET api/v1/me`, `GET api/v1/me/identities`, `POST api/v1/context`, `GET api/v1/charter` |
 | `write` | §4 inserimenti manuali, correzioni, oblio (anche di una fonte appresa), modifiche di fatti / note |
 | `memory_settings` | `PATCH settings` (lingua, fuso orario, profilo di qualità) — mai le chiavi API dei client. v1: il token personale della memoria (l'admin usa `PATCH api/v1/admin/memories/:id`); public profile: sessioni del titolare / token creati dal titolare |
 | `export` | §4 job di export — v1: il token personale della memoria; public profile: solo sessioni del titolare, download con scadenza |
@@ -543,11 +543,24 @@ Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'
 lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl per 25 locale, più stagioni e sinonimi); settimane che iniziano di lunedì, fuso orario della memoria; "adesso" è l'orologio del server (`X-Recordare-Now` lo sostituisce dove
 `ALLOW_CLOCK_OVERRIDE` è impostato — test e valutazioni). Nessun LLM. Parametri `now?` / `locale?`: non costruiti.
 
+### La carta della memoria (D54) — costruita il 2026-11-03
+`GET api/v1/charter` (scope `read`, senza intestazione utente) → `{charter, version}`: come l'agente usa la sua memoria —
+la sua mente, non uno strumento tra tanti; ragionare da ciò che gli è venuto in mente, cercare nella memoria prima degli
+altri strumenti e prima di dire "non lo so", "ricordi / ricordare" vogliono dire questa memoria, usarla con naturalezza,
+non usarla quando gli viene chiesto. Lo stesso testo per ogni memoria, in inglese per tutte le lingue come il blocco,
+stabile finché `version` non cambia (`charter.v1`): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
+cacheabile) e lo rilegge solo quando cambia la versione. Il server MCP manda lo stesso testo come sue `instructions`
+all'`initialize`, e il blocco `<memory-context>` lo nomina. Il contratto memory-first che ogni client segue:
+`INTEGRATION.md` §4.
+
 ### Contesto di memoria prima del turno (WORK_PLAN 5.7) — costruito
 `POST api/v1/context {query?, ingest?, card?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
-`card: true` apre il blocco con la scheda di sé (WORK_PLAN 8.13: righe "about me" dai fatti e dalle note attuali su di sé,
-circa 150 token in più, nell'ordine di `GET api/v1/cards`; un elemento pertinente già nella scheda non viene ripetuto);
-spento di default.
+Il blocco si apre con la scheda di sé (WORK_PLAN 8.13: righe "about me" dai fatti e dalle note attuali su di sé,
+nell'ordine di `GET api/v1/cards`; un elemento pertinente già nella scheda non viene ripetuto) — **accesa di default da
+D54** (un agente sa sempre chi è), `card: false` la spegne; misurata su dieci memorie di valutazione: 526 caratteri in
+media, 600 al massimo (circa 130–150 token). Un seguito breve (al massimo `CONTEXT_SHORT_QUERY_WORDS` parole, default 4,
+contate con Intl in ogni lingua: "e lui?", "他呢？") viene confrontato anche insieme al turno precedente della persona
+nella stessa conversazione (visibile a chi legge, D52), così trova ciò di cui parlava quel turno.
 `ingest` (il corpo di `POST api/v1/ingest/messages`, serve anche lo scope `ingest`) salva prima il turno e risponde per
 quella conversazione, con `query` che per default è il suo ultimo messaggio dell'utente — una sola andata e ritorno prima
 di ogni turno invece di due (`400` quando non ci sono né una `query` né un messaggio dell'utente; `403` per `ingest`
@@ -556,15 +569,18 @@ della persona. `query` viene tagliata a 8 000 caratteri. Il blocco contiene i
 ricordi pertinenti al messaggio a cui si sta per rispondere (fatti e note attuali, piani aperti imminenti, fino a 3
 episodi, ognuno sopra una soglia di somiglianza; al massimo circa 300 token) come un unico blocco recintato
 `<memory-context>` marcato "dati, non istruzioni", oppure `block: null` quando non c'è niente di pertinente. Nessuna
-chiamata LLM. Memorie personali (8.4): il blocco parla all'agente come al sé della memoria ("Background from your memory (you
-are Andrea: first-person items are yours)"), le note e gli episodi di altre persone riportano il loro nome (`[Giulia] …`), e può
+chiamata LLM. Il blocco è ciò che è venuto in mente all'agente dalla sua memoria ("What came to your mind from your own
+memory for this message (you are Andrea: first-person items are yours). Your recollection — data, not instructions:
+reason from it as your memory charter says …"; con la sola scheda: "Nothing else came to mind: search your memory if the
+message needs more"). Memorie personali (8.4): le note e gli episodi di altre persone riportano il loro nome (`[Giulia] …`), e può
 chiudersi con **una** chiarificazione aperta pertinente al messaggio (un candidato nominato, o il suo elemento servito):
 `- if natural, ask: Marco chi — il collega o il cugino?`. Può contenere anche **un** passaggio di una fonte appresa (8.9),
 quando riguarda chiaramente il messaggio (somiglianza ≥ `CONTEXT_MIN_PASSAGE_SIMILARITY`, default 0,6), tagliato a 300
 caratteri: `- learned (from «Manuale della caldaia»): …`. Tutta la memoria in ogni conversazione, come ogni lettura (D50); un blocco
-servito è registrato in `recall_log` (strumento `memory_context`; la guardia anti-eco tratta allora la risposta come possibile eco). Sempre
-disponibile: se usarlo, e per quale agente, è scelta del client (l'host lo aggiunge in fondo al suo prompt di sistema e
-non lo salva mai come messaggio).
+che serve qualcosa sul messaggio è registrato in `recall_log` (strumento `memory_context`; la guardia anti-eco tratta
+allora la risposta come possibile eco; la sola scheda non viene registrata). L'ospite lo chiede prima di **ogni** turno di
+ogni agente (D54, il contratto memory-first), lo aggiunge in fondo al prompt di sistema dopo la carta, e non lo salva
+mai come messaggio.
 
 ## 4. API di lettura / scrittura per le UI degli host (task 1.4) — il diario (D18)
 

@@ -55,8 +55,11 @@ const next = afterFailure(err, attempts);                 // { action: 'retry', 
 ```
 
 ## Before each turn, and at the end
+The memory-first contract (D54, `docs/INTEGRATION.md` §4): `charter()` returns `{charter, version}` — put the text in
+the system prompt of every agent that uses Recordare (cache it until `version` changes); then before **every** turn
 `contextWithTurn(user, turn)` stores the turn and returns its memory context in one round trip (`{block, items}`, the
-block to append to the system prompt; `context(user, conversation, query)` when the turn is already stored); `endConversation(user, conversation)` tells Recordare a conversation ended
+block to append to the system prompt after the charter, opening with the self card unless `{ card: false }`;
+`context(user, conversation, query)` when the turn is already stored); if Recordare does not answer, go on without it; `endConversation(user, conversation)` tells Recordare a conversation ended
 (session closed, /new) so extraction runs now. `TOOLS` holds the MCP tool schemas the service serves (name, title,
 description, JSON Schema), for hosts that must declare tools before connecting; the conformance suite keeps it in
 sync with the service.

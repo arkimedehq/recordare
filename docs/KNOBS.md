@@ -41,8 +41,9 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `MAX_REQUEST_BYTES` | 16 MB (16 777 216) | Largest JSON request body (≥ 100 000); bigger → `413` `payload_too_large`. A learned source bigger than this arrives in parts (`learnSource` sends 4 MB parts, `SOURCE_PART_BYTES`); no limit per source or per memory (WORK_PLAN 8.9) |
 | `IDLE_DELAY_SECONDS` | 900 | Quiet time before a conversation is extracted (a new message restarts it) |
 | `CONTEXT_MIN_FACT_SIMILARITY`, `…_EPISODE_…`, `…_PLAN_…`, `…_PERIOD_…` | 0.50, 0.55, 0.45, 0.35 | Memory context (`POST api/v1/context`): minimum similarity for facts and notes, episodes, upcoming plans, episodes of a named period. Lower floors (0.45 / 0.48 / 0.42) measured: no gain (RESULTS 5.7) |
-| `card` (body of `POST api/v1/context`) | false | The self card at the top of the memory context (WORK_PLAN 8.13; ≈ 150 tokens more). Not measured yet |
+| `card` (body of `POST api/v1/context`) | true (D54) | The self card at the top of the memory context (WORK_PLAN 8.13): an agent always knows who it is; `false` turns it off · measured on ten evaluation memories: 526 characters on average, 600 at most (≈ 130–150 tokens) |
 | `CONTEXT_MIN_PASSAGE_SIMILARITY` | 0.6 | Memory context: minimum similarity for the one passage of a learned source it may hold (cut at 300 characters, `- learned (from «title»): …`; WORK_PLAN 8.9). First value, to measure |
+| `CONTEXT_SHORT_QUERY_WORDS` | 4 | Memory context (D54): a message of at most this many words (Intl word segmentation, any language: "e lui?", "他呢？") is matched together with the person's previous turn in the same conversation too; 0 never · unit and integration tests, not measured on a dev set |
 | `CONSOLIDATION_SCHEDULE` | on | Nightly consolidation on its own, preceded by the extraction of messages left pending (4.1); off = only on demand (evaluations) |
 | `CONSOLIDATION_HOUR` | 3 | Local hour (person's timezone) after which the night runs |
 | `INITIATIVE_DAILY_LIMIT` | 3 | Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow |
