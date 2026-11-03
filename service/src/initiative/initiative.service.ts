@@ -125,7 +125,7 @@ export class InitiativeService {
            AND NOT EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id WHERE pv.episode_id = e.id AND pm.sent_at < e.occurred_at))
          -- a plan confirmed by a telling at or after its start: they said how it went, nothing to ask
          AND NOT (e.occurred_at < $2 AND EXISTS (SELECT 1 FROM plan_events pe JOIN messages pm ON pm.id = pe.evidence_message_id
-           WHERE pe.plan_id = e.id AND pe.patch = 'confirm' AND pm.sent_at >= e.occurred_at))`, [memoryId, now, ASK_BACK_DAYS, ASK_AFTER_DAYS]);
+           WHERE pe.plan_id = e.id AND pe.patch = 'confirm' AND pm.sent_at >= e.occurred_at AND pm.sent_at <= $2))`, [memoryId, now, ASK_BACK_DAYS, ASK_AFTER_DAYS]);
     // A request or a promise about the same thing, for the same person, around the same days: that one speaks, not the plan.
     const owed: Array<{ content: string; for_person_id: string | null; due_at: Date }> = plans.length ? await this.db.query(
       `SELECT content, for_person_id, due_at FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request')`, [memoryId]) : []; // any state: said, lapsed or withdrawn, it was the one
