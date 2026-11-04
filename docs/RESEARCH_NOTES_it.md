@@ -29,6 +29,7 @@ provenienza titolare vs twin e piani utente irrisolti.
 | H6 | Metodo di valutazione: set held-out cieco scritto da un agente separato; artefatti di giudice troppo severo | Parzialmente nuova, modesta (appendice metodi) | 1 |
 | H7 | Distillare il motore di estrazione in un piccolo modello locale chiude gran parte del divario dei modelli locali | Da testare (ipotesi di ingegneria); il divario ora è misurato (sotto) | dopo M4 |
 | H8 | Stile del twin: fine-tuning per persona vs recupero few-shot dei messaggi del titolare | Da testare | 2 |
+| H14 | Una memoria proattiva che impara **quando** parlare (una finestra per iniziativa, il momento scelto da impulsi di presenza, turni, abitudini ed esiti; un bandit sulle fasce orarie con la finestra del modello come prior) e **cosa chiedere** per conoscere le sue persone e il suo mondo (domande indirizzate a una persona che potrebbe sapere o agli strumenti dell'agente; meno domande man mano che sa di più) batte le regole fisse su interruzioni inutili, tempestività e conoscenza acquisita | Da rivedere (letteratura non ancora cercata, F0) | R / D55 |
 | H13 | Estrazione "classifica e componi" (un instradatore per tipo di messaggio sceglie i moduli di regole per un'unica chiamata di estrazione) e crescita dei moduli guidata dagli errori ("imparare dalla sorpresa"), confrontate con il prompt unico sui set ciechi, con i costi | Nota, parzialmente nuova (ristretta): il confronto controllato prompt unico vs composto | 1 / R |
 | H12 | Pensiero a riposo ("default mode"): un processo in background con budget che rivede gli episodi recenti, li collega, mantiene i cicli aperti (piani irrisolti, promesse), prepara domande / proposte e aggiorna il self-model migliora recall e iniziativa senza confabulazione | Da progettare con M5 / traccia R | 5 / R |
 | H11 | Retrieval oltre il singolo embedding: reranking con cross-encoder, vettori sparsi bge-m3, un indice persone / entità migliorano il recall su negazioni, dettagli esatti e "tutto su X" | Da testare (ingegneria); misurate correzioni del recall e un ramo per le persone, reranker / vettori sparsi non ancora | 1 / 3 |
@@ -365,3 +366,36 @@ previsione): 1 run esplorativo ciascuno, blind9 95,2 % e blind10 95,7 % contro 9
 +45–49 % di token in ingresso all'estrazione — **C non vince**, rimosso. La nostra estrazione vede già gli elementi noti
 (piani, fatti, note, episodi collegati), che la base di confronto di Nemori non vedeva, quindi la previsione aggiunge poco.
 
+## H14 — Imparare quando parlare e cosa chiedere
+
+**Ispirazione (maintainer, 2026-11-04, D55).** Un cervello suo per un robot: prende iniziativa in entrambe le modalità,
+e in una memoria di entità impara le persone e il mondo intorno a sé chiedendo, come fa un bambino, per diventare
+autonomo. L'esempio: "Eriona ha messo i panni a lavare, deve stenderli" — qualche ora dopo, chiederle se li ha stesi non
+ha un momento esatto; la memoria deve imparare quando, e deve sapere che qualcuno la ascolta (chat e messaggistica
+raggiungono sempre; la voce solo quando l'agente vede o sente la persona).
+
+**Ipotesi.** (a) Tempo: una finestra per iniziativa e un momento scelto al suo interno da impulsi di presenza, turni,
+abitudini (la passata dei pattern) ed esiti precedenti — v0 la finestra del modello, v1 un bandit sulle fasce orarie per
+persona × canale con v0 come prior, v2 il contesto del momento — dà meno interruzioni inutili e più iniziative con
+risposta delle regole fisse (ora dovuta, ore di quiete, limite giornaliero). (b) Chiedere: indirizzare le domande che la
+memoria ha in sospeso a una persona che potrebbe sapere (soglie di identità, una alla volta, mai assillare) o agli
+strumenti dell'agente fa conoscere più in fretta la casa a una memoria di entità, con il numero di domande che cala man
+mano che cresce la conoscenza.
+
+**A che punto è Recordare.** D53 ha costruito intenti, iniziative, ore di quiete, un limite giornaliero, esiti che
+orientano le iniziative successive, e domande trasformate in ricerche per gli strumenti dell'agente; niente sceglie un
+momento, niente chiede a una persona per imparare, e sul Kinox nessuna iniziativa è ancora stata consegnata (D55).
+Specifica: `INITIATIVES_DELIVERY_it.md`.
+
+**Letteratura: da cercare in F0 (niente ancora verificato; nessuna pretesa di novità).** Aree candidate: interrompibilità
+e avvisi attenti all'attenzione (notifiche decise con la teoria delle decisioni, modelli di quando una persona può essere
+interrotta); tempismo delle notifiche sui telefoni (ricettività, rinvio ai momenti di pausa); assistenti LLM proattivi e
+i loro benchmark; bandit contestuali per il tempismo degli interventi (interventi adattivi just-in-time nella salute
+mobile); curiosità, apprendimento attivo e domande negli agenti e nei robot; le domande dei bambini come strategia di
+apprendimento (ispirazione).
+
+**Piano di valutazione.** Tempo: un dev set di linee temporali (eventi, impulsi di presenza, turni) con un gold di
+finestre accettabili, valutato su consegne nella finestra, interruzioni inutili e iniziative scadute, contro le regole
+fisse; osservazione sul Kinox. Chiedere: un set "una casa che cresce" (una memoria di entità che conosce una famiglia
+nell'arco di settimane) valutato su fatti appresi, domande fatte / con risposta / ritirate, consegne alla persona
+sbagliata (devono essere zero) e assillo.

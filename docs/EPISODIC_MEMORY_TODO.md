@@ -786,7 +786,7 @@ works on its own and pushes, not a memory that only answers.
   confidence against the cost of interrupting, at a fitting moment, with the reason — and **pushes** them to the client
   (the mechanism is part of the design; the client delivers them to the person, in any channel). What happened to each
   (said, ignored, declined) is recorded and steers the next ones; an open loop is offered once, then left until
-  something changes; rate limits and the memory's quiet hours. **When to speak** (maintainer, 2026-11-01): the best
+  something changes; rate limits and the memory's quiet hours. **When to speak** (maintainer, 2026-11-01; who chooses the moment: superseded by D55): the best
   moment is when someone is there who can answer — the person it concerns, or anyone when it concerns everyone. Presence
   is the body's knowledge (a chat open now, a voice recognised in the room, someone at the panel), so an initiative is
   pushed with whom it is for and until when, and the agent delivers it when that person is present; Recordare adds what
@@ -891,6 +891,40 @@ memory is a vital part of the agent, not a tool among others. Recordare was born
   OpenAI-compatible proxy); library `charter()`.
 - Not measured on a dev set yet: the change is in the host's prompt (whether the agent calls the memory first); the
   memory's own answers are unchanged (blind12 not affected: the block's items are the same, only its wording).
+
+### D55 — Initiatives: Recordare decides who, when and where; the agent gives it senses (maintainer's decision, 2026-11-04)
+**Principle** (maintainer): in both modes Recordare takes initiative; the aim is to give a robot a brain of its own. A
+brain chooses when to speak, and an entity memory learns the people and the world around it by asking, as a child
+does, to become autonomous. Refines D53, whose "when to deliver is the host's call" it supersedes. Spec:
+`docs/INITIATIVES_DELIVERY.md`; research: `RESEARCH_NOTES.md` H14.
+- **Why** (Kinox, 2026-11-02 → 04): two initiatives created, none delivered — no webhook registered, no feed reader, no
+  connector delivering — both expired; in the same conversation the host had scheduled its own reminder, so a delivery
+  would have reminded twice. Choosing the moment left to each host would be solved differently or not at all.
+- **Roles**: Recordare (the mind) decides who may receive an initiative, when and on which channel, and learns from
+  outcomes; the agent (the body) declares its channels, sends **presence impulses** (who it sees or hears now, by what,
+  how sure, for how long), delivers, and reports the outcome with its context. Biometrics (voiceprint, face) stay with
+  the agent; Recordare receives only "it is Eriona, 0.9" and never reads a sensor (D53).
+- **Who**: a personal memory delivers to its holder; an entity memory only to an identified person, with a confidence
+  threshold by sensitivity (harmless: medium; from a private memory D52 or personal matters: high); an unidentified
+  person never learns the content; an unknown speaker may be asked "are you …?" (the clarification mechanism).
+- **When**: two classes — **timed** (a request or promise with a time: due then, on a channel that reaches the person
+  now, else at their first presence or turn before expiry) and **flexible** (a follow-up of something left unfinished,
+  a plan's outcome, a question: a window, and Recordare chooses the moment inside it from presence, turns, routines
+  and earlier outcomes). Learned in steps: v0 the model's window (rules in economy), v1 learning from outcomes, v2 the
+  moment's context.
+- **Where**: channels declared by the client — in the turn (the memory context, always when the person talks), chat
+  (always, waits), messaging (always, interrupts: quiet hours, daily limit), voice / room (only after a presence
+  impulse). The two paths of the first draft (in the turn, push) coexist: both are ways to reach the person, and
+  Recordare picks one; an initiative is delivered once.
+- **Learning by asking**: a question the agent holds gets an answerer — the world through the agent's tools (`lookup`)
+  or a person who could know (`ask`, under the rules above); answers become memories with their source and retire the
+  question; one question at a time per person, no nagging, fewer questions as it knows more (measured as a curve).
+- **Contract** (additive): presence impulse `POST api/v1/presence` answering with the initiative to deliver now;
+  channels per client; initiative fields `timing`, `window`, `channel`, `identity`, `source`; status `offered`;
+  webhook `events`; outcomes with context; `charter.v2`.
+- **Phases**: F0 literature and spec; F1 contract and the in-turn channel; F2 timing v0, the "left unfinished" source,
+  questions to people, dev sets (timelines, a growing household); F3 clients (Arkimede first); F4 learning from
+  outcomes; F5 voiceprint / face and voice announce in Arkimede.
 
 ## Open questions (to discuss)
 

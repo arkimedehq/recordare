@@ -27,6 +27,7 @@ twin, holder vs twin provenance, and unresolved user plans.
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis); the gap is now measured (below) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the holder's own messages | To test | 2 |
+| H14 | A proactive memory that learns **when** to speak (a window per initiative, the moment chosen from presence impulses, turns, routines and outcomes; a bandit over time slots with the model's window as prior) and **what to ask** to know its people and world (questions routed to a person who could know or to the agent's tools; fewer questions as it knows more) beats fixed rules on needless interruptions, timeliness and knowledge gained | To review (literature not yet searched, F0) | R / D55 |
 | H13 | Classify-and-compose extraction (a message-type router picks rule modules for one extraction call) and failure-driven module growth ("learning from surprise"), compared with the monolithic prompt on blind sets, with cost | Known, partially novel (narrow): the controlled monolithic-vs-composed comparison | 1 / R |
 | H12 | Resting-state thinking ("default mode"): a budgeted background process that replays recent episodes, links them, keeps open loops (unresolved plans, promises), prepares questions / proposals and updates the self-model improves recall and initiative without confabulation | To design with M5 / track R | 5 / R |
 | H11 | Retrieval beyond a single embedding: cross-encoder reranking, bge-m3 sparse vectors, a people / entity index improve recall on negations, exact details and "everything about X" | To test (engineering); recall fixes and a people-aware leg measured, reranker / sparse vectors not yet | 1 / 3 |
@@ -351,3 +352,32 @@ prediction): 1 exploratory run each, blind9 95.2 % and blind10 95.7 % against R'
 +45–49 % extraction input — **C does not win**, removed. Our extraction already sees the known items (plans, facts,
 notes, related episodes), which Nemori's baseline did not, so the prediction adds little.
 
+## H14 — Learning when to speak and what to ask
+
+**Inspiration (maintainer, 2026-11-04, D55).** A brain of its own for a robot: it takes initiative in both modes, and
+in an entity memory it learns the people and the world around it by asking, as a child does, to become autonomous. The
+example: "Eriona put the laundry in, she has to hang it" — a few hours later, asking whether she did has no exact
+moment; the memory must learn when, and must know someone is listening (chat and messaging always reach; voice only
+when the agent sees or hears the person).
+
+**Hypothesis.** (a) Timing: a window per initiative and a moment chosen inside it from presence impulses, turns,
+routines (the pattern pass) and earlier outcomes — v0 the model's window, v1 a bandit over time slots per person ×
+channel with v0 as prior, v2 the moment's context — gives fewer needless interruptions and more answered initiatives
+than fixed rules (due time, quiet hours, daily limit). (b) Asking: routing the questions the memory holds to a person
+who could know (identity thresholds, one at a time, no nagging) or to the agent's tools makes an entity memory know its
+household faster, with the number of questions falling as knowledge grows.
+
+**Where it stands in Recordare.** D53 built intents, initiatives, quiet hours, a daily limit, outcomes that steer the
+next ones, and questions turned into look-ups for the agent's tools; nothing chooses a moment, nothing asks a person to
+learn, and no initiative has been delivered on Kinox yet (D55). Spec: `INITIATIVES_DELIVERY.md`.
+
+**Literature: to search in F0 (nothing verified yet; no claim of novelty).** Candidate areas: interruptibility and
+attention-sensitive alerting (decision-theoretic notification, models of when a person can be interrupted);
+notification timing on phones (receptivity, deferring to breakpoints); proactive LLM assistants and their benchmarks;
+contextual bandits for intervention timing (just-in-time adaptive interventions in mobile health); curiosity, active
+learning and question asking in agents and robots; children's question asking as a learning strategy (inspiration).
+
+**Evaluation plan.** Timing: a dev set of timelines (events, presence impulses, turns) with gold acceptable windows,
+scored on delivered-in-window, needless interruptions and lapsed initiatives, against fixed rules; observation on
+Kinox. Asking: a "growing household" set (an entity memory meeting a family over weeks) scored on facts learned,
+questions asked / answered / retired, wrong-person deliveries (must be zero) and nagging.

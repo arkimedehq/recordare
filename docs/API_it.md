@@ -658,6 +658,8 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `DELETE api/v1/me/identities/{id}` | ingest | Scollega un'identità collegata → 204: quel mittente torna un partecipante come gli altri (un nuovo contatto) |
 
 ## 4b. Iniziative — ciò che l'agente dice o fa da sé (D53, WORK_PLAN 8.12c) — prima versione costruita il 2026-11-01
+> **D55** (2026-11-04): a chi, quando e dove diventano decisione di Recordare — impulsi di presenza, canali per client, finestre di tempo, `offered`, `events` dei webhook; cambi additivi specificati in `INITIATIVES_DELIVERY_it.md`, non ancora costruiti.
+
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o
 fare, per una persona, da quando e fino a quando. Le sue fonti: un piano oltre la sua data senza esito raccontato diventa un `ask` due giorni
