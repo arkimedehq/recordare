@@ -42,6 +42,9 @@ Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
   prompt resta adatto alla cache dei prefissi.
 - **Il contesto di memoria prima di ogni messaggio**, aperto dalla scheda di sé (chi sono; attiva per default in
   Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
+- **Le iniziative nel turno** (Recordare 0.7.0, D55): il contesto di memoria porta anche ciò che l'agente voleva dire
+  o chiedere a chi sta parlando — un promemoria richiesto, "com'è andata?", "hai steso i panni?" — offerto una volta,
+  senza configurazione; la carta della memoria (`charter.v2`) dice come usarlo.
 - **Ripiego**: se Recordare non risponde, niente carta (finché non risponde; un tentativo ogni 30 s) e niente blocco —
   il turno prosegue senza memoria.
 

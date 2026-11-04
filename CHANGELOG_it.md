@@ -6,6 +6,23 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.7.0] — 2026-11-04
+
+**Iniziative decise dalla memoria** (D55): Recordare decide chi riceve un'iniziativa, quando e su quale canale; l'agente
+le dà i sensi — impulsi di presenza (chi vede o sente, con che sicurezza) — e dichiara i suoi canali. Ogni client di
+livello completo consegna le iniziative nel turno senza codice (il contesto di memoria porta quella dovuta per chi sta
+parlando); a un impulso di presenza risponde con ciò che va detto adesso; l'orologio spinge i promemoria a orario al loro
+minuto e quelli flessibili a un'ora adatta (`initiative.deliver`), ogni decisione registrata; una memoria di entità dà
+l'iniziativa di una persona solo a quella persona, riconosciuta con sufficiente sicurezza. Fonti nuove: le cose lasciate
+a metà ("hai steso i panni?") e le domande indirizzate a chi potrebbe sapere. E gli embedding interattivi non aspettano mai
+quelli in background (il contesto di memoria entro un budget). Nessuna modifica incompatibile nell'API (campi additivi,
+un nuovo stato `offered`, un nuovo evento `initiative.deliver`); cambi di comportamento: le iniziative arrivano all'agente
+nel turno, le richieste a orario valgono anche nelle ore di quiete. Aggiornare prima il servizio (le migrazioni
+`InitiativeDelivery`, `InitiativeTiming`, `IntentFollowup` girano all'avvio), poi la libreria client (`presence()`, i
+nuovi tipi) e i connettori. Qualità (DeepSeek `deepseek-flash`, `spikes/memory-eval/RESULTS.md`): blind12 95,7 % di media
+con `extract.v23`; dev set — cose lasciate a metà 7–8 / 8, iniziative 11 / 14 con `initiative.v3`, tempo 9 / 9 (messo a
+punto su di esso), domande indirizzate senza nessuna falsa.
+
 ### Aggiunto
 - **Iniziative decise da Recordare: a chi, quando, dove** (D55, `docs/INITIATIVES_DELIVERY_it.md` F1). A un impulso di
   presenza (`POST api/v1/presence`, libreria `presence()`) — l'agente dice chi vede o sente, con cosa, con che sicurezza —

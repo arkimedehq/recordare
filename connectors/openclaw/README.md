@@ -38,6 +38,9 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
   process (re-checked hourly), so the text is the same every turn and the prompt stays cacheable.
 - **The memory context before every message**, opened by the self card (who I am; on by default in Recordare). A short
   follow-up ("and him?") is matched with the previous turn by Recordare itself.
+- **Initiatives in the turn** (Recordare 0.7.0, D55): the memory context also carries what the agent meant to tell or
+  ask whoever is talking — a reminder they asked for, "how did it go?", "did you hang the laundry?" — offered once,
+  with no setup; the memory charter (`charter.v2`) says how to use it.
 - **Fallback**: if Recordare does not answer, no charter (until it answers; one try per 30 s) and no block — the turn
   goes on without memory.
 

@@ -527,7 +527,7 @@ synonyms); Monday-based weeks, the memory's timezone; "now" is the server clock 
 `GET api/v1/charter` (scope `read`, no user header) → `{charter, version}`: how the agent uses its memory — its own
 mind, not a tool among others; reason from what came to mind, search the memory before other tools and before saying
 "I don't know", "remember / memories" mean this memory, use it naturally, not when asked not to. The same text for every
-memory, in English for every language like the block, stable until `version` changes (`charter.v1`): the host puts it in
+memory, in English for every language like the block, stable until `version` changes (`charter.v2` since 0.7.0: how to use an initiative line): the host puts it in
 the agent's system prompt (stable part, cacheable) and re-reads it only when the version changes. The MCP server sends
 the same text as its `instructions` at `initialize`, and the `<memory-context>` block names it. The memory-first
 contract every client follows: `INTEGRATION.md` §4. `?tools=false` gives the form for a host that offers the agent

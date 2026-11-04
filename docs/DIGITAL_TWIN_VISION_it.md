@@ -118,6 +118,9 @@ Sconosciuto = `public`.
 
 ## Livelli di iniziativa
 
+> L1 è costruito come **iniziative decise dalla memoria** (D53, D55, v0.7.0): Recordare decide a chi, quando e dove,
+> l'agente gli dà i sensi e consegna; le memorie di entità chiedono per imparare — `docs/INITIATIVES_DELIVERY_it.md`.
+
 | Livello | Esempio | Protezioni |
 |---|---|---|
 | **L1 informare e proporre** | "Domani è il compleanno di Marco — mando gli auguri?" (al titolare) | Solo verso il titolare; porta heartbeat (nessuna chiamata LLM se non c'è nulla da dire) |
