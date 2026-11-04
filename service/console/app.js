@@ -112,7 +112,12 @@ const HELP = {
     keys: 'Le chiavi con cui il client usa Recordare. Si mostrano una sola volta alla creazione. Dai solo i permessi che servono.',
     newClientKind: 'Platform: un\'applicazione con i suoi utenti (es. Arkimede). MCP client: un agente che usa gli strumenti di memoria (es. Claude Code). Import: solo per importare storici.',
     scopesLegend: 'ingest: invia conversazioni · mcp: strumenti di memoria per l\'agente · read: legge memoria e contesto · write: corregge e scrive ricordi · erase: cancella memorie intere · memory_settings: cambia le impostazioni della memoria · export: esporta la memoria',
-    eventsLegend: 'deliver: "dillo adesso" (quello che serve per consegnare) · created: nuova iniziativa decisa · updated: cambiata (offerta, detta, rifiutata…) · expired: scaduta senza essere detta',
+    eventsLegend: 'deliver: "dillo adesso" — l\'unico che serve per consegnare; per un client che deve solo parlare (come Arkimede) basta questo. '
+      + 'Gli altri sono solo informativi, per un client che vuole seguire la vita delle iniziative: '
+      + 'created: decisa ma non ancora da dire (mostrare cosa arriva, prepararsi) · '
+      + 'updated: cambiata di stato — offerta, detta, chiesta, rifiutata, fatta (una copia locale, una dashboard, sapere che un altro client l\'ha già detta) · '
+      + 'expired: scaduta senza essere detta (togliere un promemoria locale, statistiche). '
+      + 'Un client che non li usa li riceve inutilmente. Nessun evento spuntato = tutti e quattro.',
   },
   en: {
     introPersons: 'Each card is a memory: a person\'s own (personal) or that of an agent several people talk to, like the home assistant (shared). Here you choose how it remembers, how it is linked to the programs that use it, and when it may take initiative.',
@@ -140,7 +145,12 @@ const HELP = {
     keys: 'The keys the client uses Recordare with. Shown once, when created. Give only the scopes it needs.',
     newClientKind: 'Platform: an application with its users (e.g. Arkimede). MCP client: an agent using the memory tools (e.g. Claude Code). Import: only to import history.',
     scopesLegend: 'ingest: sends conversations · mcp: memory tools for the agent · read: reads the memory and its context · write: corrects and writes memories · erase: erases whole memories · memory_settings: changes the memory\'s settings · export: exports the memory',
-    eventsLegend: 'deliver: "say it now" (what delivering needs) · created: a new initiative decided · updated: changed (offered, said, declined…) · expired: lapsed unsaid',
+    eventsLegend: 'deliver: "say it now" — the only one delivering needs; a client that only speaks (like Arkimede) needs just this. '
+      + 'The others are information only, for a client that follows the initiatives\' life: '
+      + 'created: decided but not due yet (show what is coming, get ready) · '
+      + 'updated: its status changed — offered, said, asked, declined, done (a local copy, a dashboard, knowing another client already said it) · '
+      + 'expired: lapsed unsaid (drop a local reminder, statistics). '
+      + 'A client that does not use them receives them for nothing. No event ticked = all four.',
   },
 };
 /** A field's explanation, folded away behind a small "?" (all opened at once with the header's switch). */
