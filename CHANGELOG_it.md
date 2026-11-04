@@ -33,6 +33,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   canale condiviso; il contesto di memoria mantiene la scheda di sé e un'iniziativa quando il server di embedding è giù.
   `INITIATIVE_TIMING=due` è il confronto di base delle valutazioni. v0 9 / 9, due 8 / 9 sul set su cui è stato messo a
   punto (RESULTS.md).
+- **Le ore del modello** (`initiative.v3`, balanced e full): ogni iniziativa formulata porta le ore locali in cui dirla
+  sarebbe naturale (l'ordine della farina prima che il mulino chiuda a mezzogiorno, i bidoni la sera); l'orologio le usa al
+  posto delle ore predefinite del tipo. `dataset_dev_initiatives`: 11 / 14 come v2 sulla stessa estrazione (RESULTS.md).
 
 ### Corretto
 - **Il contesto di memoria non aspetta più gli embedding in background.** Su un ospite che condivide un server di

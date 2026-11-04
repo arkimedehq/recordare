@@ -31,6 +31,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   presence; an entity memory never pushes a person's initiative on a shared channel; the memory context keeps the self
   card and an initiative when the embedding server is down. `INITIATIVE_TIMING=due` is the evaluation baseline. v0 9 / 9,
   due 8 / 9 on the set it was tuned on (RESULTS.md).
+- **The model's hours** (`initiative.v3`, balanced and full): each worded initiative carries the local hours when saying
+  it would be natural (the flour order before the mill's noon deadline, the bins in the evening); the clock uses them in
+  place of the kind's default. `dataset_dev_initiatives`: 11 / 14 like v2 on the same extraction (RESULTS.md).
 
 ### Fixed
 - **The memory context no longer waits for background embeddings.** On a host sharing a CPU embedding server (one

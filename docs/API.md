@@ -718,8 +718,9 @@ Two legs carry the same object:
 - **The feed** `GET api/v1/initiatives?since&limit&status` (scope `read`, the user header): `{items, next, more}` in
   `seq` order — for a client behind NAT, or to catch up after lost deliveries.
 
-In balanced and full the model words each due initiative as the agent would say it and gives it a `worth` (0–1;
-`initiative.v2`, LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's ask is
+In balanced and full the model words each due initiative as the agent would say it and gives it a `worth` (0–1) and the
+local hours when saying it would be natural (`initiative.v3`, D55 F2b: at least three hours, else none — the clock's
+timing uses them in place of the kind's default hours; LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's ask is
 dropped, never a request or a promise (owed); in economy the text is the service's own sentence.
 
 The initiative: `{id, seq, kind: say | ask | lookup | do, for: {personId, name} | null, text (in the memory's language,

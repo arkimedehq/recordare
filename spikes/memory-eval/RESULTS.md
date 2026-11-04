@@ -1993,3 +1993,15 @@ any run: a reminder asked for 23:00 was held until the morning (a time the perso
 and an entity memory would push an initiative for Eriona on the shared panel (person-specific ones now wait for their
 presence or turn). **Caveat**: tuned on this set, by its writer — 9 / 9 is not a measurement; a held-out set is owed.
 
+### The model's hours — `initiative.v3` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
+
+`initiative.v3` adds to each worded initiative the local hours when saying it would be natural (`hours: [from, to]`, at
+least three hours, else none); the clock's timing v0 uses them in place of the kind's default. On `dataset_dev_initiatives`
+(three fresh runs, each with its own extraction): found **11, 10, 11 / 14**, traps 2, 1, 1, false 0, 0, 1 — against
+v2's 11 / 14 ×3, traps 1, false 0 (i12–i14, one shared extraction). The differences come from the extraction (a
+reminder nobody asked for, the bins), which the wording call cannot create; on one shared extraction (i17's, passes
+re-run): **v2 11 / 14, v3 11 / 14**, the same initiatives (the van reminder judged "none" in one, a trap in the other).
+The hours given are sensible: the flour order before noon (8–12; the mill closes orders at midday — the default 9–21
+could miss it), the bins in the evening (18–22), picking mother up before her 16:00 landing (9–15), asks in the day.
+Adopted. Cost ≈ 0.25 USD a fresh run, ≈ 0.03 a re-run of the passes.
+

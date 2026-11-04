@@ -297,7 +297,8 @@ export class InitiativeService {
     const limit = this.config.get('INITIATIVE_DAILY_LIMIT', { infer: true }) ?? 3; // counted on the day they are due (the memory's clock)
     const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
       undefined, undefined, undefined, undefined, undefined, undefined, this.config.get('INITIATIVE_WORDING', { infer: true }));
-    const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
+    const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now)
+      : new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     let fired = 0;
     for (const t of due) {
       // A time the person chose (a timed request or promise) is kept, quiet hours or not: they asked for that moment.
@@ -324,12 +325,12 @@ export class InitiativeService {
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
           `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at, worth,
-               timing, identity_required, channel, source_message_ids)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *)
+               timing, identity_required, channel, source_message_ids, preferred_from, preferred_to)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
           [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > at ? t.due_at : at, t.expires_at, w?.worth ?? null,
             t.timed ? 'timed' : 'flexible', t.private ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
-            t.message_id ? [t.message_id] : []]);
+            t.message_id ? [t.message_id] : [], w?.hours?.[0] ?? null, w?.hours?.[1] ?? null]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
       });
@@ -344,8 +345,8 @@ export class InitiativeService {
   /** The model words each due intent as the agent would say it and weighs it (balanced, full); on a failure, the templates. */
   private async word(memoryId: string, memory: { locale: string; timezone: string; display_name: string; mode: string },
     due: Array<{ id: string; kind: string; content: string; for_name: string | null; due_at: Date; occurred_at: Date | null }>, now: Date,
-  ): Promise<Map<string, { text: string | null; worth: number; skip: boolean }>> {
-    const out = new Map<string, { text: string | null; worth: number; skip: boolean }>();
+  ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
+    const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
     const kindOf = (k: string) => (k === 'open_plan' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
     const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
@@ -361,7 +362,7 @@ export class InitiativeService {
       for (const r of res.initiatives) {
         const n = Number(String(r.candidate).replace(/^\s*C/i, ''));
         const t = due[n - 1];
-        if (t) out.set(t.id, { text: r.text ?? null, worth: r.worth, skip: r.skip });
+        if (t) out.set(t.id, { text: r.text ?? null, worth: r.worth, skip: r.skip, hours: r.hours ?? null });
       }
     } catch (err) {
       this.log.warn(`initiative wording skipped: ${(err as Error).name}`);

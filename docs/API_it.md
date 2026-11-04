@@ -723,8 +723,10 @@ decide l'ospite**: il momento migliore è quando c'è qualcuno che può risponde
 oppure chiunque quando è destinata al titolare di una memoria di entità; l'ospite conosce la presenza (una chat aperta
 ora, una voce nella stanza, qualcuno al pannello). Se nessuno arriva prima di `expiresAt`, decade in silenzio.
 
-In balanced e full il modello formula ogni iniziativa dovuta come la direbbe l'agente e le dà un `worth` (0–1;
-`initiative.v2`, task LLM `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): sotto 0,3 la domanda di un
+In balanced e full il modello formula ogni iniziativa dovuta come la direbbe l'agente e le dà un `worth` (0–1) e le ore
+locali in cui dirla sarebbe naturale (`initiative.v3`, D55 F2b: almeno tre ore, altrimenti nessuna — il tempo
+dell'orologio le usa al posto delle ore predefinite del tipo; task LLM `initiative`, knob `initiativeWording` /
+`INITIATIVE_WORDING`): sotto 0,3 la domanda di un
 piano viene scartata, mai una richiesta o una promessa (dovute); in economy il testo è la frase del
 servizio.
 

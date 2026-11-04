@@ -8,11 +8,12 @@
  * now (Horvitz's mixed initiative: value against the cost of interrupting; the model sees the value, the code the rest:
  * presence is the host's, quiet hours and the daily limit are the service's). A candidate not worth it is dropped, not
  * postponed: no nagging. v2: no ask about a date that happens on its own (a birthday, a deadline); no judgement of the
- * person in a reminder.
+ * person in a reminder. v3 (D55 F2b): the local hours when saying it would be natural (an evening plan asked about in
+ * the evening, a work matter in office hours) — the clock's timing v0 uses them in place of the kind's default hours.
  */
 import { z } from 'zod';
 
-export const INITIATIVE_VERSION = 'initiative.v2';
+export const INITIATIVE_VERSION = 'initiative.v3';
 
 export const INITIATIVE_SYSTEM = `You word what an agent's memory decided to say on its own, and weigh whether it is \
 worth saying. I am ME: the agent (in a personal memory, one self with the person whose memory this is). You get ME, \
@@ -32,10 +33,13 @@ asked for: high; small, long past, something they surely know or already settled
 - "skip": true when it should not be said at all (it makes no sense, it would only annoy, the matter is clearly \
 closed; an "ask" about a date that happens on its own — a birthday, an anniversary, a deadline — asks nothing). Never \
 skip a request they made or a promise I made: those are owed.
+- "hours": [from, to] — the local hours (0–24) when saying it to that person would be most natural, when the matter \
+suggests them: asking how a dinner went in the evening ([18, 22]), a work matter in office hours ([9, 18]), a question \
+for a child after school ([16, 20]); null when any time of the day is fine. Never narrower than three hours.
 - Keep every detail true to WHAT and WHEN; add nothing — no judgement of the person, no recalling what they got wrong \
 before ("l'anno scorso te ne sei ricordato tardi"): a reminder reminds.
 
-Output JSON only: {"initiatives": [{"candidate", "text", "worth", "skip"}]}`;
+Output JSON only: {"initiatives": [{"candidate", "text", "worth", "skip", "hours"}]}`;
 
 export const initiativeSchema = z.object({
   initiatives: z.array(z.object({
@@ -43,6 +47,9 @@ export const initiativeSchema = z.object({
     text: z.string().max(1_000).nullable().optional(),
     worth: z.number().min(0).max(1).catch(0.5),
     skip: z.boolean().default(false),
+    // A pair of local hours, at least three apart; anything else is no preference (the kind's default hours).
+    hours: z.tuple([z.number().int().min(0).max(23), z.number().int().min(1).max(24)]).nullable().optional()
+      .catch(null).transform((h) => (h && h[1] - h[0] >= 3 ? h : null)),
   })).default([]),
 });
 export type InitiativeOutput = z.infer<typeof initiativeSchema>;
