@@ -197,6 +197,8 @@ admin or with `PATCH api/v1/me` (a client key, or the memory's personal token wi
 known participant who shows up under a new name on the channel keeps their contact; the new name becomes an alias.
 
 ## 4d. Initiatives — what the agent says on its own (D53, WORK_PLAN 8.12c)
+> **Redesigned by D55** (2026-11-04): Recordare will decide who, when and on which channel; your platform declares its channels, sends presence impulses and delivers — `INITIATIVES_DELIVERY.md` (phases F0–F5). What follows is the contract built so far.
+
 Recordare pushes what the agent decided to say, ask or look up (`API.md` §4b). Your platform delivers it **when the
 person is there** (presence is yours: a chat open now, a recognised voice in the room, someone at the panel), reports
 what became of it, and runs the look-ups with its own tools.

@@ -218,6 +218,8 @@ client, oppure il token personale della memoria con `ingest`), non i connettori.
 nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 
 ## 4d. Iniziative — ciò che l'agente dice da sé (D53, WORK_PLAN 8.12c)
+> **Riprogettata da D55** (2026-11-04): Recordare deciderà a chi, quando e su quale canale; la tua piattaforma dichiara i suoi canali, manda impulsi di presenza e consegna — `INITIATIVES_DELIVERY_it.md` (fasi F0–F5). Ciò che segue è il contratto costruito finora.
+
 Recordare spinge ciò che l'agente ha deciso di dire, chiedere o cercare (`API.md` §4b). La tua piattaforma lo consegna
 **quando la persona c'è** (la presenza è tua: una chat aperta ora, una voce riconosciuta nella stanza, qualcuno al
 pannello), riporta che fine ha fatto e svolge le ricerche con i propri strumenti.

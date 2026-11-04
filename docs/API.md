@@ -642,6 +642,8 @@ private or public again (§2) has its days written again.
 | `DELETE api/v1/me/identities/{id}` | ingest | Unlink a linked identity → 204: that sender is a participant like any other again (a new contact) |
 
 ## 4b. Initiatives — what the agent says or does on its own (D53, WORK_PLAN 8.12c) — first cut built 2026-11-01
+> **D55** (2026-11-04): who, when and where become Recordare's decision — presence impulses, channels per client, timing windows, `offered`, webhook `events`; additive changes specified in `INITIATIVES_DELIVERY.md`, not built yet.
+
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,
 for a person, from when and until when. Its sources: a plan past its date with no outcome told becomes an `ask` two days

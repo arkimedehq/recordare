@@ -812,7 +812,7 @@ in chat — che lavora da sola e spinge, non una memoria che si limita a rispond
   momento adatto, con il motivo — e li **spinge** al client (il meccanismo fa parte del progetto; il client li consegna
   alla persona, su qualsiasi canale). Cosa ne è stato (detto, ignorato, rifiutato) è registrato e orienta i successivi;
   una cosa lasciata a metà è offerta una volta, poi lasciata finché qualcosa cambia; limiti di frequenza e le ore di
-  quiete della memoria. **Quando parlare** (maintainer, 2026-11-01): il momento migliore è quando c'è qualcuno che può
+  quiete della memoria. **Quando parlare** (maintainer, 2026-11-01; chi sceglie il momento: sostituito da D55): il momento migliore è quando c'è qualcuno che può
   rispondere — la persona a cui la cosa riguarda, o chiunque quando riguarda tutti. La presenza la conosce il corpo (una
   chat aperta adesso, una voce riconosciuta nella stanza, qualcuno davanti al pannello): un'iniziativa è spinta con il
   destinatario e la scadenza, e l'agente la consegna quando quella persona è presente; Recordare aggiunge ciò che sente
@@ -924,6 +924,43 @@ su qualsiasi client agentico, quindi *come si usa la memoria* sta in Recordare e
 - Non ancora misurato su un dev set: il cambiamento è nel prompt dell'ospite (se l'agente chiama prima la memoria); le
   risposte della memoria non cambiano (blind12 non toccato: gli elementi del blocco sono gli stessi, cambia solo la
   formulazione).
+
+### D55 — Iniziative: Recordare decide a chi, quando e dove; l'agente gli dà i sensi (decisione del maintainer, 2026-11-04)
+**Principio** (maintainer): in entrambe le modalità Recordare prende iniziativa; lo scopo è dare a un robot un cervello
+suo. Un cervello sceglie quando parlare, e una memoria di entità impara le persone e il mondo intorno a sé chiedendo,
+come fa un bambino, per diventare autonoma. Affina D53, di cui sostituisce "quando consegnare lo decide l'ospite".
+Specifica: `docs/INITIATIVES_DELIVERY_it.md`; ricerca: `RESEARCH_NOTES_it.md` H14.
+- **Perché** (Kinox, 2026-11-02 → 04): due iniziative create, nessuna consegnata — nessun webhook registrato, nessun
+  lettore del feed, nessun connettore che consegna — entrambe scadute; nella stessa conversazione l'ospite aveva
+  programmato un suo promemoria, quindi una consegna avrebbe ricordato due volte. La scelta del momento lasciata a ogni
+  ospite verrebbe risolta in modo diverso o per niente.
+- **Ruoli**: Recordare (la mente) decide chi può ricevere un'iniziativa, quando e su quale canale, e impara dagli esiti;
+  l'agente (il corpo) dichiara i suoi canali, manda **impulsi di presenza** (chi vede o sente adesso, con cosa, con che
+  sicurezza, per quanto), consegna e riporta l'esito con il suo contesto. La biometria (impronta vocale, volto) resta
+  all'agente; Recordare riceve solo "è Eriona, 0,9" e non legge mai un sensore (D53).
+- **A chi**: una memoria personale consegna al titolare; una memoria di entità solo a una persona identificata, con una
+  soglia di sicurezza per delicatezza (innocua: media; da un ricordo privato D52 o su cose personali: alta); una persona
+  non identificata non viene mai a sapere il contenuto; a chi parla ed è sconosciuto si può chiedere "sei …?" (il
+  meccanismo delle chiarificazioni).
+- **Quando**: due classi — **a orario** (una richiesta o una promessa con un'ora: dovuta allora, su un canale che
+  raggiunge la persona adesso, altrimenti alla sua prima presenza o al primo turno prima della scadenza) e
+  **flessibile** (la ripresa di qualcosa lasciato a metà, l'esito di un piano, una domanda: una finestra, e dentro la
+  finestra Recordare sceglie il momento da presenze, turni, abitudini ed esiti precedenti). Imparato per gradi: v0 la
+  finestra del modello (regole in economy), v1 apprendimento dagli esiti, v2 il contesto del momento.
+- **Dove**: canali dichiarati dal client — nel turno (il contesto di memoria, sempre quando la persona parla), chat
+  (sempre, aspetta), messaggistica (sempre, interrompe: ore di quiete, limite giornaliero), voce / stanza (solo dopo un
+  impulso di presenza). Le due strade della prima bozza (nel turno, push) convivono: sono entrambe modi di raggiungere
+  la persona, e Recordare ne sceglie una; un'iniziativa viene consegnata una volta.
+- **Imparare chiedendo**: una domanda che l'agente ha in sospeso riceve un destinatario — il mondo tramite gli strumenti
+  dell'agente (`lookup`) o una persona che potrebbe sapere (`ask`, con le regole sopra); le risposte diventano ricordi
+  con la loro fonte e ritirano la domanda; una domanda alla volta per persona, mai assillare, meno domande man mano che
+  sa di più (misurato come una curva).
+- **Contratto** (additivo): impulso di presenza `POST api/v1/presence` che risponde con l'iniziativa da consegnare
+  adesso; canali per client; campi dell'iniziativa `timing`, `window`, `channel`, `identity`, `source`; stato
+  `offered`; `events` dei webhook; esiti con contesto; `charter.v2`.
+- **Fasi**: F0 letteratura e specifica; F1 contratto e canale nel turno; F2 tempo v0, la fonte "lasciato a metà",
+  domande alle persone, dev set (linee temporali, una casa che cresce); F3 client (prima Arkimede); F4 apprendimento
+  dagli esiti; F5 impronta vocale / volto e annuncio a voce in Arkimede.
 
 ## Questioni aperte (da discutere)
 
