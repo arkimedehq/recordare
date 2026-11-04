@@ -65,3 +65,7 @@ select { height: 32px; }
 dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--text); max-width: 560px; width: calc(100% - 32px); }
 dialog code { display: block; word-break: break-all; background: var(--chip); padding: 10px; border-radius: 6px; margin: 8px 0; }
 @media (max-width: 600px) { header { padding: 10px 16px; } }
+
+/* Field help (maintainer, 2026-11-04: every field explained for a non-developer). */
+.help { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.intro { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
