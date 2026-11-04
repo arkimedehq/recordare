@@ -82,7 +82,7 @@ export class MemorySearchService {
     const reader = await readerOf(this.db, memoryId, args.conversationId, now);
     let vec: number[] | undefined;
     try {
-      [vec] = await this.embeddings.embed([args.query], 'query');
+      [vec] = await this.embeddings.embed([args.query], 'query', { priority: 'interactive' });
     } catch (err) {
       this.log.warn(`memory vector leg skipped: ${(err as Error).message}`);
     }

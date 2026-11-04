@@ -13,6 +13,7 @@ import { AnthropicAdapter } from './anthropic.adapter';
 import { ClaudeCliAdapter } from './claude-cli.adapter';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { OpenAiCompatibleEmbeddingAdapter } from '../embedding/openai-compatible-embedding.adapter';
+import { PrioritizedEmbeddings } from '../embedding/prioritized-embeddings';
 import { CLOCK_PORT, systemClock } from '../clock/clock.port';
 
 /** Model access for the whole service, chosen by configuration only (D27): one model (and provider) per task. */
@@ -53,11 +54,15 @@ import { CLOCK_PORT, systemClock } from '../clock/clock.port';
     {
       provide: EMBEDDING_PORT,
       inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>): EmbeddingPort => new OpenAiCompatibleEmbeddingAdapter({
+      // Interactive embeddings (the memory context, recall tools) never queue behind background ones.
+      useFactory: (config: ConfigService<Env, true>): EmbeddingPort => new PrioritizedEmbeddings(new OpenAiCompatibleEmbeddingAdapter({
         baseURL: config.get('EMBEDDING_BASE_URL', { infer: true }),
         apiKey: config.get('EMBEDDING_API_KEY', { infer: true }),
         model: config.get('EMBEDDING_MODEL', { infer: true }),
         dim: config.get('EMBEDDING_DIM', { infer: true }),
+      }), {
+        quietMs: config.get('EMBEDDING_QUIET_MS', { infer: true }),
+        batchChars: config.get('EMBEDDING_BACKGROUND_BATCH_CHARS', { infer: true }),
       }),
     },
     { provide: CLOCK_PORT, useValue: systemClock },

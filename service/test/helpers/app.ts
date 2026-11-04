@@ -25,22 +25,27 @@ export function fakeVector(text: string): number[] {
   return v.map((x) => x / norm);
 }
 
-/** OpenAI-compatible /v1/embeddings stub on a random port. */
-export async function startFakeEmbeddings(): Promise<{ url: string; server: Server; requests: string[][] }> {
-  const requests: string[][] = [];
+/** OpenAI-compatible /v1/embeddings stub on a random port; `delay` (settable) makes a request wait before its answer. */
+export async function startFakeEmbeddings(): Promise<{ url: string; server: Server; requests: string[][]; delay: (input: string[]) => number }> {
+  const fake = { requests: [] as string[][], delay: (_input: string[]): number => 0 };
   const server = createServer((req, res) => {
     let body = '';
     req.on('data', (c) => { body += c; });
     req.on('end', () => {
       const input = JSON.parse(body).input as string[];
-      requests.push(input);
-      res.setHeader('content-type', 'application/json');
-      res.end(JSON.stringify({ object: 'list', model: 'fake', data: input.map((t, i) => ({ object: 'embedding', index: i, embedding: fakeVector(t) })), usage: { prompt_tokens: 0, total_tokens: 0 } }));
+      fake.requests.push(input);
+      const answer = () => {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ object: 'list', model: 'fake', data: input.map((t, i) => ({ object: 'embedding', index: i, embedding: fakeVector(t) })), usage: { prompt_tokens: 0, total_tokens: 0 } }));
+      };
+      const ms = fake.delay(input);
+      if (ms > 0) setTimeout(answer, ms);
+      else answer();
     });
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
   const { port } = server.address() as { port: number };
-  return { url: `http://127.0.0.1:${port}/v1`, server, requests };
+  return Object.assign(fake, { url: `http://127.0.0.1:${port}/v1`, server });
 }
 
 type FakeLlmRequest = { messages: Array<{ role: string; content: string }> };
@@ -82,6 +87,9 @@ export function testEnv(overrides: Record<string, string> = {}): void {
     EMBEDDING_BASE_URL: 'http://127.0.0.1:9/v1',
     EMBEDDING_MODEL: 'test-embedding',
     EMBEDDING_DIM: '8',
+    // tests ingest and search back to back: background embeddings must not wait for a pause in the conversation
+    // (the pause itself is covered by test/embedding/prioritized-embeddings.spec.ts)
+    EMBEDDING_QUIET_MS: '0',
     // own queue namespace: a running dev service on the same Redis never takes test jobs
     QUEUE_PREFIX: `test-${process.pid}`,
     ...overrides,

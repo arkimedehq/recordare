@@ -62,7 +62,9 @@ services by name; nothing is published on the host.
 
 **What sharing costs** — say it to the operator: one Postgres or Redis down stops both products; the embedder serves
 two loads (Recordare's extraction comes in bursts, after idle periods and at night), so give it the CPU / memory both
-need; backups stay separate (`pg_dump` per database). Changing the embedding model of the shared embedder changes it
+need (an embedding server like Arkimede's computes one request at a time: Recordare sends its own queries first and its
+background work in short requests during conversation pauses, `EMBEDDING_QUIET_MS`, but Arkimede's own batches can still
+delay a query — the memory context then serves the self card within `CONTEXT_EMBEDDING_BUDGET_MS`); backups stay separate (`pg_dump` per database). Changing the embedding model of the shared embedder changes it
 for both: Arkimede re-embeds with its admin job, Recordare re-embeds its episodes, facts, notes and digests — never
 change it for one side only.
 

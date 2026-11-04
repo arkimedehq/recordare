@@ -62,6 +62,8 @@ const baseSchema = z.object({
   CONTEXT_MIN_PASSAGE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** D54: a message of at most this many words is matched with the person's previous turn too (0: never). */
   CONTEXT_SHORT_QUERY_WORDS: z.coerce.number().int().min(0).max(50).optional(),
+  /** Memory context: the longest wait for its query vectors (ms); later, the block holds the self card only (0: no limit). */
+  CONTEXT_EMBEDDING_BUDGET_MS: z.coerce.number().int().min(0).default(1_500),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
   /** Installation override of the quality profile's nightly pattern pass (WORK_PLAN 5.4). */
@@ -95,6 +97,10 @@ const baseSchema = z.object({
   EMBEDDING_MODEL: z.string(),
   /** Fixed per installation; changing it requires a re-embed job (D27). */
   EMBEDDING_DIM: z.coerce.number().int().positive(),
+  /** Background embeddings start only after this long without an interactive one (ms; 0: as soon as none is in flight). */
+  EMBEDDING_QUIET_MS: z.coerce.number().int().min(0).default(10_000),
+  /** Characters per background embedding request (a longer text goes alone). */
+  EMBEDDING_BACKGROUND_BATCH_CHARS: z.coerce.number().int().positive().default(2_000),
 
   LOG_LLM_CALLS: bool.default(true),
   /** Evaluation / tests only: honour `X-Recordare-Now` to ask questions "as of" a past instant. */

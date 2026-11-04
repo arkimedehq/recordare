@@ -6,6 +6,22 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Corretto
+- **Il contesto di memoria non aspetta più gli embedding in background.** Su un ospite che condivide un server di
+  embedding su CPU (una richiesta alla volta, come quello di Arkimede), il turno appena salvato — output di strumenti di
+  4–8 000 caratteri — veniva embeddato in un unico lotto proprio quando arrivava la domanda successiva, e la query del
+  contesto aspettava dietro: misurato sul Kinox (i3-1215U, bge-m3 su CPU), 4 970 ms invece di 110–150 ms, oltre il
+  timeout di 2,5 s dell'ospite. Gli embedding ora hanno una priorità: quelli interattivi (contesto di memoria, strumenti
+  di richiamo, `remember`) partono subito; quelli in background vanno una richiesta alla volta, in richieste di al
+  massimo `EMBEDDING_BACKGROUND_BATCH_CHARS` caratteri (default 2000), e partono dopo una pausa della conversazione
+  (`EMBEDDING_QUIET_MS`, default 10 s; al massimo 60 s di attesa). Stesso caso dopo: 137 ms. Le query ripetute vengono da
+  una piccola cache, e gli strumenti di richiamo di un turno condividono una sola richiesta per la stessa query. Il
+  contesto di memoria aspetta i suoi vettori al massimo `CONTEXT_EMBEDDING_BUDGET_MS` (default 1,5 s), poi serve la sola
+  scheda di sé invece di far aspettare l'ospite. `recall.served` (Atlas) riporta `embedMs`, e `late` quando il budget è
+  stato mancato. Nessun cambio all'API. Cambia un comportamento: durante una conversazione un messaggio nuovo diventa
+  cercabile per vettore fino a un minuto dopo (il full-text lo trova nel frattempo); con una GPU o un provider di
+  embedding ospitato, alzare `EMBEDDING_BACKGROUND_BATCH_CHARS` e impostare `EMBEDDING_QUIET_MS=0` (`docs/KNOBS.md`).
+
 ## [0.6.0] — 2026-11-03
 
 **La mente dell'agente** (D53, D54): la memoria ora pensa da sé — intuizioni, domande e opinioni tratte da ciò che

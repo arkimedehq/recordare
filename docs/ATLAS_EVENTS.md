@@ -38,7 +38,7 @@ fact or note. Everything above stays metadata only.
 | `work.started` / `work.finished` | `op` (`embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`), `id` (pairs them) / `ms` | work without an LLM call starts / ends |
 | `memory.written` | `runId`, `table` (`episodes`, `facts`, `notes`), `id`, `kind`, `authorRole`, `importance`, `corrects` | a memory row written |
 | `episode.linked` | `relation` (`duplicate`, `corrects`), `from`, `to` | the resolver linked two episodes |
-| `recall.served` | `tool` (an MCP tool, or `memory_context` for the pre-turn block, only when it is not empty), `mode`, `episodeIds`, `claimIds`, `chats`, `digests`, `facts`, `notes` | a recall answered |
+| `recall.served` | `tool` (an MCP tool, or `memory_context` for the pre-turn block, only when it is not empty), `mode`, `episodeIds`, `claimIds`, `chats`, `digests`, `facts`, `notes`; for `memory_context` also `embedMs` (how long its query vectors took) and `late: true` when they missed `CONTEXT_EMBEDDING_BUDGET_MS` (self card only) | a recall answered |
 | `digest.written` | `level` (`day`, `month`), `period`, `sources` | a nightly diary written |
 | `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | a memory's consolidation ends |
 | `episode.forgotten` | `ids` | episodes forgotten |
