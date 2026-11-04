@@ -648,7 +648,7 @@ due two days after, kept a week; an event told ahead of its day counts too), `up
 2026-11-03: no reminder nobody asked for; the value stays in the enum), a
 question the agent holds (`lookup`, two weeks), a promise of mine or a request made to me with a date (`promise`,
 `request`: written by the extraction, `message_id` → messages (CASCADE) the message, unique per message and kind, due at
-the local midnight of its day, a day to live; migration `IntentMessages1791230000000`); `own` is reserved. A source that
+the local midnight of its day, a day to live; migration `IntentMessages1791230000000`); `followup` (D55 F2b, `extract.v23`, migration `IntentFollowup1791280000000`): something a person left to finish — `content` the question to ask, due when it makes sense, half a day to live when it has a time, closed by the extraction when they say it is done; `own` is reserved. A source that
 moved on (the plan confirmed or cancelled, the question retired) closes its intent (`done`); the extraction closes a
 request withdrawn (`cancelled`) or a promise kept in the conversation (`done`), found by the words it shares
 (`lang/overlap.ts`). A plan past its date is asked about two days after its end, unless a confirmation told at or after

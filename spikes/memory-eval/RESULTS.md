@@ -1974,3 +1974,79 @@ Options now on the table:
 
 Before deciding: re-run B/C (and a D prototype) with `bge-m3` embeddings and with a local model
 (Ollama, e.g. qwen3 with thinking off) to check the sovereign/local deployment story.
+
+### Timing v0 — `dataset_dev_timing` (D55 F2b, H14, 2026-11-04; no LLM)
+
+Nine items over three days in two memories, replayed with a 15-minute clock (`timing_eval.py`; the service with
+`INITIATIVE_TIMING` = `v0` or `due`, everything else equal — identity thresholds, quiet hours, the entity rule).
+
+| policy | right | in window | outside | lapsed | rightly silent |
+|---|---|---|---|---|---|
+| v0, first run | 7 / 9 | 6 | 1 (g3: an ask at 08:30) | 1 (g5) | 1 |
+| v0, after the two fixes | **9 / 9** | 8 | 0 | 0 | 1 |
+| due (push as soon as due) | 8 / 9 | 7 | 1 (g2: a day's reminder at 08:00) | 0 | 1 |
+
+The first run found two faults, both fixed: in a turn the older ask (the dentist) won over the day's owed reminder (the
+gift), which then lapsed — the owed one now comes first (then timed ones, then the worth); and the owed one's last
+chance fell at 22:00, in the quiet hours — it now comes before they begin. Designing the set found two more, fixed before
+any run: a reminder asked for 23:00 was held until the morning (a time the person chose now overrides the quiet hours),
+and an entity memory would push an initiative for Eriona on the shared panel (person-specific ones now wait for their
+presence or turn). **Caveat**: tuned on this set, by its writer — 9 / 9 is not a measurement; a held-out set is owed.
+
+### The model's hours — `initiative.v3` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
+
+`initiative.v3` adds to each worded initiative the local hours when saying it would be natural (`hours: [from, to]`, at
+least three hours, else none); the clock's timing v0 uses them in place of the kind's default. On `dataset_dev_initiatives`
+(three fresh runs, each with its own extraction): found **11, 10, 11 / 14**, traps 2, 1, 1, false 0, 0, 1 — against
+v2's 11 / 14 ×3, traps 1, false 0 (i12–i14, one shared extraction). The differences come from the extraction (a
+reminder nobody asked for, the bins), which the wording call cannot create; on one shared extraction (i17's, passes
+re-run): **v2 11 / 14, v3 11 / 14**, the same initiatives (the van reminder judged "none" in one, a trap in the other).
+The hours given are sensible: the flour order before noon (8–12; the mill closes orders at midday — the default 9–21
+could miss it), the bins in the evening (18–22), picking mother up before her 16:00 landing (9–15), asks in the day.
+Adopted. Cost ≈ 0.25 USD a fresh run, ≈ 0.03 a re-run of the passes.
+
+### Things left to finish — `extract.v22` / `entity.v10` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
+
+INTENTS gains a follow-up: something a person started that must be finished later and is easy to forget — the
+question I would ask, when it makes sense, for whom; closed when they say it is done. New dev set
+`dataset_dev_followups` (3 memories, 14 sessions; 8 expected, 6 traps), `initiative_eval.py` with
+`SWEEP_HOURS=9,12,15,18,21`:
+
+| run | found | traps | false |
+|---|---|---|---|
+| f1, f2, f3 | **8/8 ×3** | 1, 1, 1 | 1, 1, 1 |
+
+The trap hit every time is no follow-up: "did the plumber come?" is D53's ask after an appointment told ahead (by design —
+the trap was ill-posed, kept as written). The false one every time: "did you bring the sheets in from the terrace?"
+after "sheets already hung on the terrace" — plausible, not asked for; counted. Cost ≈ 0.02 USD a run.
+
+Regression, blind12 (3 runs): **92.6, 95.4, 94.4 %** (mean 94.1) — v21 94.4 / 97.2 %, v17 93.5 % (3 runs): within the
+band. Wrong: h14 ×2 and h26 ×1 (wrong in v21's first run too), h37 (partial in v21 too), h35, h39 once each, and **h11
+twice** (the railing painted "as said" on April 1: an event told as done, not corrected when a later window moves the
+job to April 15 — NOT DONE AFTER ALL, v17), right in both v21 runs. No follow-up intent touches the railing (the only
+one created on that memory: a passport photo to bring to the registry office), so the rule did not write it; a longer
+prompt diluting NOT DONE AFTER ALL cannot be excluded. **Watch h11.**
+
+**`extract.v23` / `entity.v11` — the follow-up rule in half the words** (to see whether h11 comes back). dev_followups
+(3 runs): found **7, 8, 8 / 8**, real false follow-ups 1, 1, 2 (the dishwasher twice — its example was cut —, the sheets)
+against v22's 8 / 8 ×3 and 1, 1, 1; the plumber ask (D53) judged "none" instead of a trap in two runs. blind12 (3 runs):
+**95.4, 94.4, 97.2 %** (mean 95.7; v22 94.1), **h11 right ×3**; wrong h09, h03, h41 once, h12, h35 partial, h37 partial
+×3 (as in v21). The blind set improves and h11 is back, the dev set loses a little (one miss, one more false in three
+runs): **v23 adopted** (maintainer, 2026-11-04: "if it improves, keep it, else v22").
+
+### Questions to who could know (D55 F2b step 4, 2026-11-04)
+
+A question the memory holds (the thought pass, `thoughts.v7`) about a person is routed — deterministically, no prompt
+change — to that person when they talk to the agent, else to whoever told it most about them (the holder; in an entity
+memory an identified contact; nobody identified: not asked), one at a time each, `identity: high` when about someone
+else; world questions stay look-ups. Integration test for every rule (`asking.int.spec.ts`). New dev set
+`dataset_dev_asking` (2 memories, 11 sessions; 4 expected, 3 traps), four runs (a1 with Paolo and Marta saying who they
+are in the text; a2–a4 with their voice as a platform identity — text-declared speakers are not recorded as authors, so
+nobody could be found as "who told me"): found 2, 2, 2, 1 / 4, **false 0 ×4, traps 0 ×4**. Luca's interview went to
+Sara every time the thought pass wrote it (3 of 4); Marta's diet came as D53's ask after a plan; the questions about
+Giada were written only in a1 (none in a2–a4) and the bike-shop look-up never — the thought pass's recall on this set,
+not the routing. The first run also found the plan rule too broad (a question resting on a confirmed plan was dropped):
+now only an open plan's outcome is left to the ask after its day. Still owed: the growing-household curve (questions
+falling as knowledge grows) with simulated answers, and recording a text-declared speaker as a message's author (D50).
+Cost ≈ 0.03 USD a run.
+

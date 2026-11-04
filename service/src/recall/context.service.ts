@@ -136,24 +136,26 @@ export class ContextService {
     if (before) texts.push(`${before}\n${query}`);
     const started = Date.now();
     let vecs: number[][] | null;
+    let failed = false;
     try {
       vecs = await withinBudget(this.embeddings.embed([...new Set(texts)], 'query', { priority: 'interactive' }), this.embeddingBudgetMs);
     } catch (err) {
-      this.log.warn(`memory context skipped: ${(err as Error).message}`);
-      return EMPTY;
+      this.log.warn(`memory context without recall: ${(err as Error).message}`);
+      vecs = null;
+      failed = true;
     }
     const embedMs = Date.now() - started;
     if (!vecs) {
-      // The embedding server is busy (a long text computed before the query): the host must not wait — the self card,
-      // which needs no vector, and nothing else; the agent searches if the message needs it (the charter).
-      this.log.warn(`memory context without recall: query vectors not back within ${this.embeddingBudgetMs} ms`);
+      // The embedding server is busy (a long text computed before the query) or down: the host must not wait — the self
+      // card and an initiative, which need no vector, and nothing else; the agent searches if the message needs it.
+      if (!failed) this.log.warn(`memory context without recall: query vectors not back within ${this.embeddingBudgetMs} ms`);
       const card = withCard ? await buildCards(this.db, memoryId, reader) : null;
       const top = card ? selfCardLines(card.self, CARD_CHARS) : null;
       // An initiative needs no vector either: still given now that its person is talking.
       const own = await this.initiativeLines(memoryId, memory.mode, conversationId, now, lookups);
       if (!top?.lines.length && !own.length) return EMPTY;
       this.telemetry.emit({ type: 'recall.served', memoryId, tool: 'memory_context', episodeIds: [], claimIds: [], chats: 0, digests: 0,
-        facts: 0, notes: 0, embedMs, late: true });
+        facts: 0, notes: 0, embedMs, ...(failed ? {} : { late: true as const }) });
       return { block: contextBlock(memory, now, top?.lines ?? [], own), items: (top?.lines.length ?? 0) + own.length };
     }
     this.log.debug(`memory context: query vectors in ${embedMs} ms`);

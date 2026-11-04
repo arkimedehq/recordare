@@ -680,7 +680,11 @@ private or public again (§2) has its days written again.
 >   promise) at its last chance two hours before its end; never in the quiet hours; look-ups stay with the turn. A pushed
 >   initiative becomes `offered` (`pushedAt` set) and goes out as the event **`initiative.deliver`**: deliver it now on
 >   `data.channel`. Every decision — clock, presence, turn — is logged with its probability and threshold
->   (`initiative_decisions`), for offline replay and the learner (F4).
+>   (`initiative_decisions`), for offline replay and the learner (F4). Rules found by `dataset_dev_timing` (F2b): a
+>   time the person chose (a timed request or promise) is kept in the quiet hours; the last chance comes before the quiet
+>   hours begin; in a turn or a presence, what is owed comes first, then what has a time, then the worth; an entity
+>   memory never pushes what is for one person on its (shared) channels; the memory context still carries the self card
+>   and an initiative when the embedding server is down. `INITIATIVE_TIMING=due` (baseline): push as soon as due.
 
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,
@@ -691,7 +695,14 @@ for** (maintainer, 2026-11-03): a plan or an event only told ("domani Chloé ha 
 reminded; a **promise I made or a request made to me** with a date ("ricordami
 giovedì di ordinare la farina", "te lo ricordo venerdì" — the extraction's INTENTS, `extract.v21`) a `say` that day, for
 the person it concerns — withdrawn ("lascia stare") or done in the conversation, it closes; when a request and a plan are
-the same thing, the request speaks; a question the agent holds (a thought of kind `question`, 8.12a, not about a plan's
+the same thing, the request speaks; **something a person started and left to finish** (D55 F2b, `extract.v23`: the
+laundry to hang, a roast in the oven, a half-filled form before its deadline — not what ends on its own, is finished in
+the conversation, is trivial, a routine or someone else's job) an `ask` a few hours later — the question the extraction
+wrote, in the memory's language, for the person who has to finish it, flexible, for half a day — closed when they say it
+is done; a question the agent holds **about a person** (D55 F2b step 4) an `ask` to someone who could know — that person
+when they talk to the agent, else whoever told it most about them (the holder of a personal memory, an identified
+contact in an entity memory; nobody identified: not asked), one question at a time for each person, `identity: high`
+when it is about someone else; a question the agent holds about the world (a thought of kind `question`, 8.12a, not about a plan's
 outcome nor my own doings) a `lookup` for the host agent, which finds it out with its own tools — the web, the room — and brings the answer back as a learned source
 or a perception (D53: external sources always through the agent). Each source arms one intent, once; it fires when
 due, after the memory's **quiet hours** (`quietFrom` / `quietTo`, local, default 22–8) and within the **daily limit** per
@@ -714,8 +725,9 @@ Two legs carry the same object:
 - **The feed** `GET api/v1/initiatives?since&limit&status` (scope `read`, the user header): `{items, next, more}` in
   `seq` order — for a client behind NAT, or to catch up after lost deliveries.
 
-In balanced and full the model words each due initiative as the agent would say it and gives it a `worth` (0–1;
-`initiative.v2`, LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's ask is
+In balanced and full the model words each due initiative as the agent would say it and gives it a `worth` (0–1) and the
+local hours when saying it would be natural (`initiative.v3`, D55 F2b: at least three hours, else none — the clock's
+timing uses them in place of the kind's default hours; LLM task `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): below 0.3 a plan's ask is
 dropped, never a request or a promise (owed); in economy the text is the service's own sentence.
 
 The initiative: `{id, seq, kind: say | ask | lookup | do, for: {personId, name} | null, text (in the memory's language,

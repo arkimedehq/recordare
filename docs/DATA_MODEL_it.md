@@ -674,7 +674,7 @@ deve fare, una per fonte (unique su `(episode_id, kind)` e `(note_id, kind)`): u
 `upcoming_plan` (non più armato dal 2026-11-03: nessun promemoria non richiesto; il valore resta nell'enum), una domanda che l'agente tiene (`lookup`, due settimane), una promessa mia o una richiesta
 fattami con una data (`promise`, `request`: scritte dall'estrazione, `message_id` → messages (CASCADE) il messaggio,
 unique per messaggio e tipo, dovute alla mezzanotte locale del loro giorno, un giorno di vita; migrazione
-`IntentMessages1791230000000`); `own` è riservato. Una fonte che è andata avanti (il piano confermato o annullato, la
+`IntentMessages1791230000000`); `followup` (D55 F2b, `extract.v23`, migrazione `IntentFollowup1791280000000`): qualcosa che una persona ha lasciato da finire — `content` la domanda da fare, dovuta quando ha senso, mezza giornata di vita quando ha un orario, chiusa dall'estrazione quando dice che è fatto; `own` è riservato. Una fonte che è andata avanti (il piano confermato o annullato, la
 domanda ritirata) chiude il suo intento (`done`); l'estrazione chiude una richiesta ritirata (`cancelled`) o una promessa
 mantenuta in conversazione (`done`), trovate dalle parole che condividono (`lang/overlap.ts`). Di un piano oltre la sua
 data si chiede due giorni dopo la sua fine, a meno che una conferma raccontata all'inizio del piano o dopo dica com'è

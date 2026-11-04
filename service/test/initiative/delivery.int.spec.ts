@@ -153,6 +153,18 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     expect(await row(id)).toMatchObject({ status: 'offered', channel: 'turn' });
   });
 
+  it('in the turn, what is owed comes before an older ask (dev_timing g5)', async () => {
+    await db.query(
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, plan_status)
+       VALUES ($1, 'plan', 'Cena da Paola', 'holder_lived', 'holder', 'stated', ARRAY[$1::uuid], $2, 'day', 'open')`, [marco, new Date(NOW.getTime() - 4 * 24 * HOUR)]);
+    await app.get(InitiativeService).sweep(marco, NOW); // the ask about the dinner, due earlier
+    await request(marco, 'comprare il regalo per Anna');
+    const block = (await context('marco', 'm-chat')).body.block as string;
+    expect(block).toContain('comprare il regalo per Anna');
+    expect(block).not.toContain('Cena da Paola');
+    await db.query(`UPDATE initiatives SET status = 'expired' WHERE memory_id = $1 AND status IN ('pending', 'offered')`, [marco]); // leave the next tests alone
+  });
+
   it('a look-up goes to the agent in the turn only when the host says it has tools', async () => {
     await db.query(`INSERT INTO intents (memory_id, kind, content, due_at, expires_at) VALUES ($1, 'lookup', 'Leo ha scuola il sabato?', $2, $3)`,
       [marco, new Date(NOW.getTime() - HOUR), new Date(NOW.getTime() + 20 * HOUR)]);

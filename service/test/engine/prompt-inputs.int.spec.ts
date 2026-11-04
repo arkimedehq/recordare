@@ -47,8 +47,8 @@ describe('prompt inputs of the measured versions', () => {
     return { system: req?.messages[0]?.content ?? '', user: req?.messages[1]?.content ?? '' };
   }
 
-  it('personal prompts are the measured extract.v21 and facts.v2', () => {
-    expect(sha(EXTRACTION_SYSTEM)).toBe('d5e7ceba518578525ae7f6ae649b2176987fc240d48205a238eb46fde5480372');
+  it('personal prompts are the measured extract.v23 and facts.v2', () => {
+    expect(sha(EXTRACTION_SYSTEM)).toBe('7bbba23493592dc7e1e52fe3007c5128487fd4de1578cbeff948124ae6bd8fb4');
     expect(sha(FACTS_SYSTEM)).toBe('309707b0c33d7fb2b05cce9fe88d434185180cf5c195135070e6f37509924d7c');
   });
 
@@ -77,7 +77,7 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-5', role: 'tool', toolName: 'web_search', content: 'Meteo: sole.', sentAt: '2026-06-08T09:04:00+02:00' },
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
-    expect(sha(second.system)).toBe('904fead7ea13089700d927b140d457930ac9babb6f81856e6cd0138d7fb2830e');
+    expect(sha(second.system)).toBe('5070669ed39c46f18cfa97c704fb41ed14af50934bc6efae14e9901cb149aefb');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

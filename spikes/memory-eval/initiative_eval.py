@@ -174,14 +174,16 @@ def main() -> None:
         if not reuse:
             system.ingest(batch)
         done += len(batch)
-        # One sweep a day at 09:00 local between the checkpoints, as the hourly sweep of a real night would (the gold's
+        # Sweeps at SWEEP_HOURS local (default one a day at 09:00) between the checkpoints, as the hourly sweep of a real night would (the gold's
         # due days follow), then the checkpoint itself; SWEEP_DAILY=0 keeps the checkpoints only.
         moments = []
         if os.getenv("SWEEP_DAILY", "1") != "0":
             start = ts(previous) if previous else ts(cp) - timedelta(days=10)
-            day = start.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            # SWEEP_HOURS: the local hours of the day's sweeps (default 9); same-day follow-ups need several ("9,12,15,18,21").
+            hours = [int(h) for h in os.getenv("SWEEP_HOURS", "9").split(",")]
+            day = start.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
             while day < ts(cp):
-                moments.append(day.isoformat())
+                moments.extend((day + timedelta(hours=h)).isoformat() for h in hours if day + timedelta(hours=h) < ts(cp))
                 day += timedelta(days=1)
         moments.append(cp)
         reports = {u: {"patterns": None, "thoughts": None, "sweeps": []} for u in ids}

@@ -101,11 +101,41 @@ describe('timing v0 (D55 F2a): the clock chooses the moment, every decision logg
     expect((await state('chiamare la banca')).status).toBe('offered');
     expect((await decisions(s.id)).map((x: { reason: string }) => x.reason)).toEqual(['low', 'last_chance']);
 
+    // A time the person chose is kept even in the quiet hours (they asked for 23:00)…
     await intent('spegnere la caldaia', rome('23:00'), { timed: true });
     await sweep(rome('23:00'));
     const night = await state('spegnere la caldaia');
-    // In the quiet hours the intent becomes an initiative due in the morning (after the quiet hours): nothing pushed now.
-    expect(night).toMatchObject({ status: 'pending' });
-    expect(night.pushed_at).toBeNull();
+    expect(night).toMatchObject({ status: 'offered', channel: 'messaging' });
+    // …anything else waits for the morning.
+    await intent('ordinare il pane', rome('23:00', '2026-10-15'), { until: rome('21:00', '2026-10-16') });
+    await sweep(rome('23:30', '2026-10-15'));
+    const bread = await state('ordinare il pane');
+    expect(bread).toMatchObject({ status: 'pending' });
+    expect(bread.pushed_at).toBeNull();
+  });
+
+  it('the last chance comes before the quiet hours begin, not inside them (dev_timing g5)', async () => {
+    await intent('rispondere a Sara', rome('08:30', '2026-10-17'), { timed: true }); // something given that morning
+    await sweep(rome('08:30', '2026-10-17'));
+    await intent('ritirare il pacco', rome('09:00', '2026-10-17'), { until: rome('23:59', '2026-10-17') });
+    await sweep(rome('09:00', '2026-10-17'));
+    await sweep(rome('19:45', '2026-10-17')); // 2 h 15 before the quiet hours (22:00): not yet
+    expect((await state('ritirare il pacco')).status).toBe('pending');
+    await sweep(rome('20:00', '2026-10-17')); // 2 h before them: the last chance
+    expect((await state('ritirare il pacco')).status).toBe('offered');
+  });
+
+  it('an entity memory never pushes what is for one person on its shared channels: that waits for their presence or turn', async () => {
+    const [{ id: home }] = await db.query(`SELECT person_id AS id FROM memories m JOIN persons p ON p.id = m.person_id WHERE p.display_name = 'Marco'`);
+    expect(home).toBe(marco);
+    await db.query(`UPDATE memories SET mode = 'entity' WHERE person_id = $1`, [marco]);
+    const [eri] = await db.query(`INSERT INTO persons (memory_id, display_name) VALUES ($1, 'Eriona') RETURNING id`, [marco]);
+    await db.query(`INSERT INTO intents (memory_id, kind, content, for_person_id, due_at, expires_at) VALUES ($1, 'request', 'stendere i panni', $2, $3, $4)`,
+      [marco, eri.id, rome('11:00', '2026-10-16'), rome('21:00', '2026-10-16')]);
+    await sweep(rome('12:00', '2026-10-16'));
+    const s = await state('stendere i panni');
+    expect(s).toMatchObject({ status: 'pending', channel: 'chat' });
+    expect(await decisions(s.id)).toEqual([]); // not even considered by the clock
+    await db.query(`UPDATE memories SET mode = 'personal' WHERE person_id = $1`, [marco]);
   });
 });

@@ -176,7 +176,9 @@ export class InitiativeService {
     const memories: Array<{ person_id: string }> = await this.db.query(
       `SELECT o.person_id FROM memories o WHERE EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = o.person_id AND e.kind IN ('plan', 'event'))
          OR EXISTS (SELECT 1 FROM notes n WHERE n.memory_id = o.person_id AND n.category = 'question')
-         OR EXISTS (SELECT 1 FROM intents t WHERE t.memory_id = o.person_id AND t.status IN ('armed', 'fired'))`);
+         OR EXISTS (SELECT 1 FROM intents t WHERE t.memory_id = o.person_id AND t.status IN ('armed', 'fired'))
+         -- what was given or waits to be (D55): settled, pushed or lapsed even when no intent is open any more
+         OR EXISTS (SELECT 1 FROM initiatives i WHERE i.memory_id = o.person_id AND i.status IN ('pending', 'offered'))`);
     for (const { person_id } of memories) {
       try { await this.sweep(person_id, now); } catch (err) { this.log.warn(`initiative sweep failed for ${person_id}: ${(err as Error).name}`); }
     }
@@ -236,18 +238,33 @@ export class InitiativeService {
     }
     // A question the agent holds becomes a look-up — unless it asks about the outcome of a plan (the ask the day after
     // covers it), or the question it supersedes (the thought pass revised it) was already looked up.
-    const questions: Array<{ id: string; content: string }> = await this.db.query(
-      `SELECT n.id, n.content FROM notes n
+    const questions: Array<{ id: string; content: string; subject: string | null }> = await this.db.query(
+      `SELECT n.id, n.content, CASE WHEN n.subject_kind = 'contact' THEN n.subject_person_id END AS subject FROM notes n
        WHERE n.memory_id = $1 AND n.category = 'question' AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
-         AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND e.kind = 'plan')
+         -- a question about an open plan's outcome is the ask after its day; once the plan is confirmed, asking more is fine
+         AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND e.kind = 'plan' AND e.plan_status = 'open')
          -- a question about my own doings (it rests on my replies: did I keep my promise?) is no look-up for the host
          AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN messages m ON m.id = x.message_id WHERE x.note_id = n.id AND m.role = 'assistant')
-         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'lookup' AND t.note_id = n.supersedes)`, [memoryId]);
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.supersedes)
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.id)`, [memoryId]);
+    const [mem]: Array<{ mode: string }> = questions.length ? await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]) : [];
     for (const q of questions) {
+      // D55 F2b: whom to ask. A question about the world goes to the agent's tools (a look-up); one about a person to
+      // someone who could know — that person when they talk to me, else whoever told me most about them (the holder of a
+      // personal memory, an identified contact in an entity memory); nobody to ask: not asked. One question at a time
+      // for each person.
+      const to = q.subject ? await this.answerer(memoryId, q.subject, mem?.mode === 'entity') : null;
+      if (q.subject && to === undefined) continue;
+      if (to !== null && to !== undefined) {
+        const [busy] = await this.db.query(
+          `SELECT 1 FROM intents WHERE memory_id = $1 AND kind = 'own' AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
+          [memoryId, to === 'holder' ? null : to]);
+        if (busy) continue;
+      }
       const r = await this.db.query(
-        `INSERT INTO intents (memory_id, kind, content, note_id, due_at, expires_at) VALUES ($1, 'lookup', $2, $3, $4, $5)
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (note_id, kind) WHERE note_id IS NOT NULL DO NOTHING RETURNING id`,
-        [memoryId, q.content, q.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
+        [memoryId, q.subject ? 'own' : 'lookup', q.content, to && to !== 'holder' ? to : null, q.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
       armed += r.length;
     }
     // A source that moved on closes its intent: the plan confirmed, cancelled or rescheduled; the question answered or forgotten.
@@ -260,6 +277,24 @@ export class InitiativeService {
       `UPDATE intents t SET status = 'done', updated_at = now() FROM notes n
        WHERE t.memory_id = $1 AND t.status IN ('armed', 'fired') AND t.note_id = n.id AND (n.status <> 'current' OR n.deleted_at IS NOT NULL)`, [memoryId]);
     return armed;
+  }
+
+  /**
+   * Who could answer a question about `subject` (D55 F2b): the subject when they talk to me (a message of theirs in this
+   * memory); else whoever told me most about them — 'holder' (a personal memory's own turns) or an identified contact; in
+   * an entity memory only an identified contact. undefined: nobody to ask.
+   */
+  private async answerer(memoryId: string, subject: string, entity: boolean): Promise<string | 'holder' | undefined> {
+    const [talks] = await this.db.query(
+      `SELECT 1 FROM messages WHERE memory_id = $1 AND author_kind = 'contact' AND author_person_id = $2 LIMIT 1`, [memoryId, subject]);
+    if (talks) return subject;
+    const [teller]: Array<{ who: string }> = await this.db.query(
+      `SELECT CASE WHEN m.author_kind = 'self' THEN 'holder' ELSE m.author_person_id::text END AS who
+       FROM episodes e JOIN episode_evidence v ON v.episode_id = e.id JOIN messages m ON m.id = v.message_id
+       WHERE e.memory_id = $1 AND e.subject_person_id = $2 AND e.deleted_at IS NULL
+         AND ((m.author_kind = 'self' AND NOT $3) OR (m.author_kind = 'contact' AND m.author_person_id IS NOT NULL AND m.author_person_id <> $2))
+       GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1`, [memoryId, subject, entity]);
+    return teller?.who;
   }
 
   /** Pending initiatives nobody answered in time lapse, quietly; their intents lapse with them. */
@@ -281,11 +316,12 @@ export class InitiativeService {
       `SELECT o.timezone, o.locale, o.quiet_from, o.quiet_to, o.quality_profile, o.mode, p.display_name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory) return 0;
     const due: Array<{ id: string; kind: string; content: string; for_person_id: string | null; for_name: string | null; episode_id: string | null; note_id: string | null; expires_at: Date; due_at: Date; occurred_at: Date | null;
-      timed: boolean; message_id: string | null; private: boolean }> =
+      timed: boolean; message_id: string | null; private: boolean; note_subject: string | null }> =
       await this.db.query(
         `SELECT t.id, t.kind::text, t.content, t.for_person_id, (SELECT display_name FROM persons WHERE id = t.for_person_id) AS for_name,
            t.episode_id, t.note_id, t.expires_at, t.due_at, e.occurred_at, t.timed, t.message_id,
-           COALESCE((SELECT m.private FROM messages m WHERE m.id = t.message_id), false) AS private
+           COALESCE((SELECT m.private FROM messages m WHERE m.id = t.message_id), false) AS private,
+           (SELECT CASE WHEN n.subject_kind = 'contact' THEN n.subject_person_id END FROM notes n WHERE n.id = t.note_id) AS note_subject
          FROM intents t LEFT JOIN episodes e ON e.id = t.episode_id
          WHERE t.memory_id = $1 AND t.status = 'armed' AND t.due_at <= $2 AND (t.reconsider_at IS NULL OR t.reconsider_at <= $2)
          ORDER BY t.due_at`, [memoryId, now]);
@@ -297,10 +333,13 @@ export class InitiativeService {
     const limit = this.config.get('INITIATIVE_DAILY_LIMIT', { infer: true }) ?? 3; // counted on the day they are due (the memory's clock)
     const profile = qualityProfile(memory.quality_profile, this.config.get('QUALITY_PROFILE', { infer: true }) as QualityProfileName,
       undefined, undefined, undefined, undefined, undefined, undefined, this.config.get('INITIATIVE_WORDING', { infer: true }));
-    const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
+    const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now)
+      : new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     let fired = 0;
     for (const t of due) {
-      if (t.expires_at <= when) continue; // due only after it lapses: left to expire
+      // A time the person chose (a timed request or promise) is kept, quiet hours or not: they asked for that moment.
+      const at = t.timed && (t.kind === 'request' || t.kind === 'promise') ? now : when;
+      if (t.expires_at <= at) continue; // due only after it lapses: left to expire
       const w = worded.get(t.id);
       if (w && (w.skip || w.worth < WORTH_FLOOR)) {
         // Not worth saying: dropped, not postponed (a request or a promise is never skipped: the prompt says so, the code too).
@@ -317,17 +356,22 @@ export class InitiativeService {
       const plan = t.content.trim().replace(/([^.!?])$/, '$1.');
       const [kind, fallback, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
           : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']
+            // A follow-up's content is already the question, in the memory's language (the extraction wrote it so).
+            : t.kind === 'followup' ? ['ask', t.content.trim(), 'something they left unfinished']
+              // A question of mine for someone who could know (D55 F2b): the question as the thought pass wrote it.
+              : t.kind === 'own' ? ['ask', t.content.trim(), 'a question I hold, for someone who could know']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
       const content = w?.text?.trim() || fallback;
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
           `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at, worth,
-               timing, identity_required, channel, source_message_ids)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *)
+               timing, identity_required, channel, source_message_ids, preferred_from, preferred_to)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
-          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > when ? t.due_at : when, t.expires_at, w?.worth ?? null,
-            t.timed ? 'timed' : 'flexible', t.private ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
-            t.message_id ? [t.message_id] : []]);
+          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > at ? t.due_at : at, t.expires_at, w?.worth ?? null,
+            // High: from a private message, or a question about someone asked to another person (it tells what I know of them).
+            t.timed ? 'timed' : 'flexible', t.private || (t.kind === 'own' && t.for_person_id && t.note_subject !== t.for_person_id) ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
+            t.message_id ? [t.message_id] : [], w?.hours?.[0] ?? null, w?.hours?.[1] ?? null]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
       });
@@ -342,12 +386,14 @@ export class InitiativeService {
   /** The model words each due intent as the agent would say it and weighs it (balanced, full); on a failure, the templates. */
   private async word(memoryId: string, memory: { locale: string; timezone: string; display_name: string; mode: string },
     due: Array<{ id: string; kind: string; content: string; for_name: string | null; due_at: Date; occurred_at: Date | null }>, now: Date,
-  ): Promise<Map<string, { text: string | null; worth: number; skip: boolean }>> {
-    const out = new Map<string, { text: string | null; worth: number; skip: boolean }>();
+  ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
+    const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
-    const kindOf = (k: string) => (k === 'open_plan' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' || k === 'own' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
     const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
-      : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me' : 'a question I hold');
+      : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me'
+        : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)'
+          : k === 'own' ? 'a question I hold, to ask the person FOR, who could know (WHAT is the question)' : 'a question I hold');
     const user = [
       `ME: ${memory.display_name}${memory.mode === 'entity' ? ' (a shared agent several people talk to)' : ''}`,
       `MEMORY LANGUAGE: ${memory.locale}`,
@@ -359,7 +405,7 @@ export class InitiativeService {
       for (const r of res.initiatives) {
         const n = Number(String(r.candidate).replace(/^\s*C/i, ''));
         const t = due[n - 1];
-        if (t) out.set(t.id, { text: r.text ?? null, worth: r.worth, skip: r.skip });
+        if (t) out.set(t.id, { text: r.text ?? null, worth: r.worth, skip: r.skip, hours: r.hours ?? null });
       }
     } catch (err) {
       this.log.warn(`initiative wording skipped: ${(err as Error).name}`);
@@ -395,7 +441,8 @@ export class InitiativeService {
            OR (i.for_person_id IS NULL AND $6 AND $10::uuid IS NOT NULL
                AND EXISTS (SELECT 1 FROM messages m WHERE m.id = ANY(i.source_message_ids) AND m.conversation_id = $10))
          )
-       ORDER BY i.worth DESC NULLS LAST, i.due_at LIMIT 1`,
+       -- what is owed first (a request, a promise), then what has a time, then the worth (dev_timing g5, 2026-11-04)
+       ORDER BY (t.kind IN ('request', 'promise')) DESC NULLS LAST, (i.timing = 'timed') DESC, i.worth DESC NULLS LAST, i.due_at LIMIT 1`,
       [memoryId, now, !!opts.lookups, contact, who.confidence, entity, IDENTITY_THRESHOLD.medium, IDENTITY_THRESHOLD.high, self, who.conversationId ?? null]);
     if (hit) {
       const rows = updated<Row>(await this.db.query(
@@ -458,18 +505,24 @@ export class InitiativeService {
    * memory's quiet hours; look-ups stay with the turn (they are for the agent's tools).
    */
   private async push(memoryId: string, now: Date): Promise<void> {
-    const [memory]: Array<{ timezone: string; quiet_from: number; quiet_to: number }> = await this.db.query(
-      `SELECT timezone, quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]);
+    const [memory]: Array<{ timezone: string; quiet_from: number; quiet_to: number; mode: string }> = await this.db.query(
+      `SELECT timezone, quiet_from, quiet_to, mode FROM memories WHERE person_id = $1`, [memoryId]);
     if (!memory) return;
+    const policy = this.config.get('INITIATIVE_TIMING', { infer: true }) ?? 'v0';
     const candidates: Array<{ id: string; kind: InitiativeKind; timing: 'timed' | 'flexible'; worth: number | null; due_at: Date; expires_at: Date;
       for_person_id: string | null; channel: string; preferred_from: number | null; preferred_to: number | null; intent_kind: string | null }> = await this.db.query(
       `SELECT i.id, i.kind::text, i.timing, i.worth, i.due_at, i.expires_at, i.for_person_id, i.channel, i.preferred_from, i.preferred_to, t.kind::text AS intent_kind
        FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
        WHERE i.memory_id = $1 AND i.status = 'pending' AND i.pushed_at IS NULL AND i.channel IS NOT NULL AND i.kind <> 'lookup'
          AND i.due_at <= $2 AND i.expires_at > $2 AND (t.id IS NULL OR t.status = 'fired')
-       ORDER BY i.due_at`, [memoryId, now]);
+         -- an entity memory's channels are shared (a panel, the agent's own chat): what is for one person waits for their
+         -- presence or their turn, where who it is gets checked (D55)
+         AND NOT ($3 AND i.for_person_id IS NOT NULL)
+       ORDER BY i.due_at`, [memoryId, now, memory.mode === 'entity']);
     if (!candidates.length) return;
     const quiet = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to).getTime() !== now.getTime();
+    // The window ends for the clock where the quiet hours begin: a last chance at 22:30 would be no chance (dev_timing g5).
+    const quietStart = quiet ? now : nextLocalHour(now, memory.timezone, memory.quiet_from);
     const localHour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: memory.timezone }).format(now)) % 24;
     for (const c of candidates) {
       const counted: Array<{ n: number }> = await this.db.query(
@@ -478,11 +531,14 @@ export class InitiativeService {
       const n = counted[0]?.n ?? 0;
       const preferred: [number, number] = c.preferred_from !== null && c.preferred_to !== null ? [c.preferred_from, c.preferred_to] : TIMING.preferred[c.kind];
       const input: MomentInput = { kind: c.kind, timing: c.timing, worth: c.worth, owed: c.intent_kind === 'request' || c.intent_kind === 'promise',
-        localHour, preferred, deliveredToday: n, sinceDueMs: now.getTime() - c.due_at.getTime(), untilEndMs: c.expires_at.getTime() - now.getTime() };
-      const d = decideMoment(input);
-      const deliver = d.deliver && !quiet;
+        localHour, preferred, deliveredToday: n, sinceDueMs: now.getTime() - c.due_at.getTime(),
+        untilEndMs: Math.min(c.expires_at.getTime(), memory.quiet_from === memory.quiet_to ? Infinity : quietStart.getTime()) - now.getTime() };
+      const d = policy === 'due' ? { p: 1, threshold: 0, deliver: true, reason: 'due' } : decideMoment(input);
+      // Quiet hours hold everything but a time the person chose themselves (a timed request or promise).
+      const held = quiet && !(c.timing === 'timed' && input.owed);
+      const deliver = d.deliver && !held;
       await this.logDecision(memoryId, c.id, 'clock', now, d.p, d.threshold, deliver,
-        { reason: quiet ? 'quiet_hours' : d.reason, channel: c.channel, localHour, deliveredToday: n, timing: c.timing, kind: c.kind });
+        { reason: held && d.deliver ? 'quiet_hours' : d.reason, channel: c.channel, localHour, deliveredToday: n, timing: c.timing, kind: c.kind, policy });
       if (!deliver) continue;
       const rows = updated<Row>(await this.db.query(
         `UPDATE initiatives i SET status = 'offered', offered_at = $3, pushed_at = $3, updated_at = now()
@@ -579,16 +635,22 @@ export function afterQuiet(now: Date, tz: string, from: number, to: number): Dat
   const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: tz }).format(now)) % 24;
   const quiet = from === to ? false : from < to ? hour >= from && hour < to : hour >= from || hour < to;
   if (!quiet) return now;
-  // The local hour `to`, today or tomorrow: found by stepping from the local midnight.
+  return nextLocalHour(now, tz, to);
+}
+
+/** The local hour `hour` (the memory's timezone) at `isoDay`. */
+function localHourAt(isoDay: string, hour: number, tz: string): Date {
+  const utcMidnight = new Date(`${isoDay}T00:00:00Z`);
+  const offset = utcMidnight.getTime() - new Date(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    .format(utcMidnight).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6Z')).getTime();
+  return new Date(utcMidnight.getTime() + offset + hour * 3_600_000);
+}
+
+/** The next time it is the local hour `hour` after `now`: today, or tomorrow. */
+export function nextLocalHour(now: Date, tz: string, hour: number): Date {
   const today = localDate(now, tz);
-  const candidate = (isoDay: string) => {
-    const utcMidnight = new Date(`${isoDay}T00:00:00Z`);
-    const offset = utcMidnight.getTime() - new Date(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      .format(utcMidnight).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6Z')).getTime();
-    return new Date(utcMidnight.getTime() + offset + to * 3_600_000);
-  };
-  const end = candidate(today);
-  return end > now ? end : candidate(new Date(new Date(`${today}T12:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10));
+  const end = localHourAt(today, hour, tz);
+  return end > now ? end : localHourAt(new Date(new Date(`${today}T12:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10), hour, tz);
 }
 
 /**

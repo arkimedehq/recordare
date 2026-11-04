@@ -27,6 +27,27 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   già ricevuto oggi, contro la soglia del tipo), una dovuta alla sua ultima occasione; mai nelle ore di quiete. Quelle
   spinte escono come nuovo evento webhook `initiative.deliver` (`pushedAt`); ogni decisione — orologio, presenza, turno —
   è registrata con la sua probabilità (`initiative_decisions`, migrazione `InitiativeTiming`).
+- **Regole di tempo da `dataset_dev_timing`** (D55 F2b, un set deterministico di linee temporali, `timing_eval.py`):
+  un'ora scelta dalla persona vale anche nelle ore di quiete; l'ultima occasione viene prima di esse; le iniziative dovute
+  vengono prima in un turno o in una presenza; una memoria di entità non spinge mai l'iniziativa di una persona su un
+  canale condiviso; il contesto di memoria mantiene la scheda di sé e un'iniziativa quando il server di embedding è giù.
+  `INITIATIVE_TIMING=due` è il confronto di base delle valutazioni. v0 9 / 9, due 8 / 9 sul set su cui è stato messo a
+  punto (RESULTS.md).
+- **Le ore del modello** (`initiative.v3`, balanced e full): ogni iniziativa formulata porta le ore locali in cui dirla
+  sarebbe naturale (l'ordine della farina prima che il mulino chiuda a mezzogiorno, i bidoni la sera); l'orologio le usa al
+  posto delle ore predefinite del tipo. `dataset_dev_initiatives`: 11 / 14 come v2 sulla stessa estrazione (RESULTS.md).
+- **Cose lasciate a metà** (`extract.v23` / `entity.v11`, migrazione `IntentFollowup`): qualcosa che una persona ha
+  iniziato e deve finire più tardi (i panni da stendere, un arrosto in forno, un modulo prima della scadenza) diventa,
+  quando ha senso, la domanda dell'agente per quella persona — chiusa quando dice che è fatto; non ciò che finisce da sé,
+  che è finito nella conversazione, banale, un'abitudine o compito d'altri. `dataset_dev_followups` 7–8 / 8; blind12
+  95,4 / 94,4 / 97,2 % (la v23 più breve sopra la media 94,1 % della v22, h11 di nuovo giusta; RESULTS.md). La passata delle iniziative ora visita anche le
+  memorie che hanno solo iniziative in attesa, così si chiudono.
+- **Domande a chi potrebbe sapere** (D55 F2b passo 4, `docs/INITIATIVES_DELIVERY_it.md` §6): una domanda che la memoria
+  tiene su una persona viene fatta a quella persona quando parla con l'agente, altrimenti a chi gliene ha parlato di più
+  (il titolare, o un contatto identificato in una memoria di entità; nessuno identificato: non si chiede), una alla volta
+  per persona, con un riconoscimento sicuro quando riguarda qualcun altro; le domande sul mondo restano ricerche per gli
+  strumenti dell'agente. Una domanda su un piano è lasciata alla domanda del giorno dopo solo finché il piano è aperto.
+  `dataset_dev_asking`: 0 false, 0 trappole in quattro corse (RESULTS.md).
 
 ### Corretto
 - **Il contesto di memoria non aspetta più gli embedding in background.** Su un ospite che condivide un server di

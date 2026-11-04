@@ -699,6 +699,11 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 >   restano al turno. Un'iniziativa spinta diventa `offered` (`pushedAt` impostato) ed esce come evento
 >   **`initiative.deliver`**: consegnala adesso su `data.channel`. Ogni decisione — orologio, presenza, turno — è
 >   registrata con la sua probabilità e la soglia (`initiative_decisions`), per il rigioco offline e l'apprendimento (F4).
+>   Regole trovate da `dataset_dev_timing` (F2b): un'ora scelta dalla persona (una richiesta o promessa a orario) vale anche
+>   nelle ore di quiete; l'ultima occasione viene prima che inizino le ore di quiete; in un turno o in una presenza viene
+>   prima ciò che è dovuto, poi ciò che ha un orario, poi il valore; una memoria di entità non spinge mai sui suoi canali
+>   (condivisi) ciò che è per una persona; il contesto di memoria porta comunque la scheda di sé e un'iniziativa quando il
+>   server di embedding è giù. `INITIATIVE_TIMING=due` (confronto di base): spinge appena dovuta.
 
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o
@@ -708,7 +713,14 @@ richiesto** (maintainer, 2026-11-03): un piano o un evento solo raccontato ("dom
 ricordato, non promemorato; una **promessa che ho fatto o una richiesta
 fattami** con una data ("ricordami giovedì di ordinare la farina", "te lo ricordo venerdì" — gli INTENTS dell'estrazione,
 `extract.v21`) un `say` quel giorno, per la persona a cui si riferisce — ritirata ("lascia stare") o fatta in
-conversazione, si chiude; quando una richiesta e un piano sono la stessa cosa, parla la richiesta; una domanda che
+conversazione, si chiude; quando una richiesta e un piano sono la stessa cosa, parla la richiesta; **qualcosa che una
+persona ha iniziato e lasciato da finire** (D55 F2b, `extract.v23`: i panni da stendere, un arrosto in forno, un modulo a
+metà prima della scadenza — non ciò che finisce da sé, che è finito nella conversazione, banale, un'abitudine o compito
+d'altri) un `ask` qualche ora dopo — la domanda scritta dall'estrazione, nella lingua della memoria, per chi deve finirlo,
+flessibile, per mezza giornata — chiuso quando dice che è fatto; una domanda che l'agente tiene **su una persona** (D55 F2b passo 4) un `ask` a qualcuno che
+potrebbe sapere — quella persona quando parla con l'agente, altrimenti chi gliene ha parlato di più (il titolare di una
+memoria personale, un contatto identificato in una memoria di entità; nessuno identificato: non si chiede), una domanda
+alla volta per persona, `identity: high` quando riguarda qualcun altro; una domanda sul mondo che
 l'agente tiene (un pensiero di tipo `question`, 8.12a, non sull'esito di un piano né sulle mie azioni) un `lookup` per
 l'agente ospite, che lo scopre con i propri strumenti — il web, la stanza — e porta la
 risposta come fonte appresa o come percezione (D53: le fonti esterne passano sempre dall'agente). Ogni fonte arma un
@@ -718,8 +730,10 @@ decide l'ospite**: il momento migliore è quando c'è qualcuno che può risponde
 oppure chiunque quando è destinata al titolare di una memoria di entità; l'ospite conosce la presenza (una chat aperta
 ora, una voce nella stanza, qualcuno al pannello). Se nessuno arriva prima di `expiresAt`, decade in silenzio.
 
-In balanced e full il modello formula ogni iniziativa dovuta come la direbbe l'agente e le dà un `worth` (0–1;
-`initiative.v2`, task LLM `initiative`, knob `initiativeWording` / `INITIATIVE_WORDING`): sotto 0,3 la domanda di un
+In balanced e full il modello formula ogni iniziativa dovuta come la direbbe l'agente e le dà un `worth` (0–1) e le ore
+locali in cui dirla sarebbe naturale (`initiative.v3`, D55 F2b: almeno tre ore, altrimenti nessuna — il tempo
+dell'orologio le usa al posto delle ore predefinite del tipo; task LLM `initiative`, knob `initiativeWording` /
+`INITIATIVE_WORDING`): sotto 0,3 la domanda di un
 piano viene scartata, mai una richiesta o una promessa (dovute); in economy il testo è la frase del
 servizio.
 

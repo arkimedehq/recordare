@@ -18,6 +18,9 @@
  *   name or "someone"; the personal prompt's sections where they hold for both (v8: PRIVATE, as v20; v9: INTENTS, as v21).
  * - v21 / entity v9 (D53, 8.12c): INTENTS — a promise I made or a request made to me, with its date, as an intent of mine;
  *   a request withdrawn.
+ * - v22 / entity v10 (D55 F2b): INTENTS also a follow-up — something a person started that must be finished later and is
+ *   easy to forget (the laundry to hang, the oven on): the question I would ask, and when; closed when they say it is done.
+ *   v23 / entity v11: the same, said in half the words (blind12 h11, 2026-11-04).
  */
 export interface PromptMessage {
   n: number;
@@ -59,7 +62,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v21';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v23';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -133,9 +136,9 @@ const schema = (hint: string): string => `{
     "private": true | false
   }],
   "intents": [{
-    "kind": "promise" | "request",
-    "content": "<what I am to do, short, in MEMORY LANGUAGE>",
-    "due": "<ISO date it is due>" | null,
+    "kind": "promise" | "request" | "followup",
+    "content": "<what I am to do, short, in MEMORY LANGUAGE; for a followup the question I would ask>",
+    "due": "<ISO date it is due, with the time when known>" | null,
     "for": "<Name of the person it concerns>" | null,
     "cancel": true | false,
     "done": true | false,
@@ -320,7 +323,12 @@ not an intent. A plan of theirs is an episode (PLANS), not an intent: intents ar
 entry with "kind" "request", "cancel": true, "content" what it was about, "for" and "evidence" as above.
 - When I do in the conversation what I promised or was asked ("bins out tonight, the collection is tomorrow" on the \
 evening I promised to remind them), add an entry with its "kind", "done": true, "content" what it was about, "for" and \
-"evidence" the message where I did it.`;
+"evidence" the message where I did it.
+- When a person starts something easy to forget that they must finish later (the laundry to hang, a roast in the oven, \
+a form due Friday), add "kind" "followup": "content" the question I would ask, in MEMORY LANGUAGE ("Hai steso i \
+panni?"), "due" when to ask (ISO date and time), "for" the person (nothing for the holder), "evidence". Not for what ends \
+on its own, is already finished, or is a plan or a routine. When they say it is finished, add "kind" "followup", \
+"done": true, "content", "for", "evidence".`;
 
 const P_SAFETY = `
 
@@ -350,7 +358,7 @@ export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono st
  * conversation identifies them, "someone" until then. Shares the personal prompt's schema, dates, plans, notes and
  * corrections; its own intro, voice, identification, episode, fact and safety rules.
  */
-export const ENTITY_PROMPT_VERSION = 'entity.v9';
+export const ENTITY_PROMPT_VERSION = 'entity.v11';
 
 const E_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): a shared agent — a device, a place, a robot or a service — that several people talk \

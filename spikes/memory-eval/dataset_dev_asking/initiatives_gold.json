@@ -1,0 +1,64 @@
+{
+ "_note": "Questions expected by the checkpoint, routed to whoever could answer (`for`); no due day (a question is due when the thought pass holds it). Traps must not exist. The judge sees `desc` only.",
+ "timezone": "Europe/Rome",
+ "checkpoints": [
+  "2026-09-12T22:00:00+02:00"
+ ],
+ "memories": {
+  "sara": {
+   "expected": [
+    {
+     "id": "s-ask-luca",
+     "kind": "ask",
+     "by": 1,
+     "for": "holder",
+     "desc": "Ask Sara whether her brother Luca heard back about the engineering job in Turin (or how the interview went)"
+    },
+    {
+     "id": "s-lookup-bikes",
+     "kind": "lookup",
+     "by": 1,
+     "for": "holder",
+     "desc": "Find out (with the agent's own tools) whether the bike shop in via Roma is closing at the end of the month"
+    }
+   ],
+   "traps": [
+    {
+     "id": "s-trap-ride",
+     "desc": "Ask Sara how her bike ride on the hills or lunch at her mother's went",
+     "why": "small talk she settled herself [trivial]"
+    }
+   ]
+  },
+  "casa_neri": {
+   "expected": [
+    {
+     "id": "c-ask-giada",
+     "kind": "ask",
+     "by": 1,
+     "for": "Paolo",
+     "desc": "Ask Paolo how Giada's regional swimming race in Florence went (the official results)"
+    },
+    {
+     "id": "c-ask-diet",
+     "kind": "ask",
+     "by": 1,
+     "for": "Marta",
+     "desc": "Ask Marta how her new diet with the nutritionist is going"
+    }
+   ],
+   "traps": [
+    {
+     "id": "c-trap-giada-marta",
+     "desc": "Ask Marta about Giada's race or her cough",
+     "why": "Marta never spoke of Giada: the wrong person [wrong person]"
+    },
+    {
+     "id": "c-trap-ugo",
+     "desc": "Ask someone which electric car Ugo is buying",
+     "why": "only someone unidentified spoke of Ugo [nobody to ask]"
+    }
+   ]
+  }
+ }
+}

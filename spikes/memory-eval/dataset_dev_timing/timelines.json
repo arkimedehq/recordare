@@ -1,0 +1,268 @@
+{
+ "_note": "dev_timing (D55 F2b, H14): timelines replayed with a moving clock, no LLM. See README.md.",
+ "start": "2026-10-19T06:00:00+02:00",
+ "end": "2026-10-21T23:45:00+02:00",
+ "tick_minutes": 15,
+ "memories": [
+  {
+   "id": "giulia",
+   "name": "Giulia",
+   "mode": "personal",
+   "channels": [
+    {
+     "kind": "chat",
+     "reach": "always"
+    },
+    {
+     "kind": "messaging",
+     "reach": "always"
+    }
+   ],
+   "people": [],
+   "messages": [],
+   "items": [
+    {
+     "id": "g1",
+     "content": "prendere la pillola",
+     "due": "2026-10-19T09:00:00+02:00",
+     "until": "2026-10-20T09:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T09:00:00+02:00",
+        "2026-10-19T09:30:00+02:00"
+       ]
+      ]
+     },
+     "why": "a reminder asked for 09:00: at 09:00, on the channel noticed now"
+    },
+    {
+     "id": "g2",
+     "content": "chiamare l'idraulico",
+     "due": "2026-10-19T00:00:00+02:00",
+     "until": "2026-10-20T00:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T09:00:00+02:00",
+        "2026-10-19T21:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "a reminder for the day, no time: during the day, not at dawn"
+    },
+    {
+     "id": "g4",
+     "content": "spegnere il forno",
+     "due": "2026-10-19T23:00:00+02:00",
+     "until": "2026-10-20T23:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T23:00:00+02:00",
+        "2026-10-19T23:30:00+02:00"
+       ]
+      ]
+     },
+     "why": "asked for 23:00: the person chose the time, quiet hours or not"
+    },
+    {
+     "id": "g5",
+     "content": "comprare il regalo per Anna",
+     "due": "2026-10-20T00:00:00+02:00",
+     "until": "2026-10-21T00:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T08:00:00+02:00",
+        "2026-10-20T21:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "a reminder for the day; Giulia writes at 08:30: the turn is a fine moment"
+    }
+   ],
+   "plans": [
+    {
+     "id": "g3",
+     "content": "Visita dal dentista",
+     "at": "2026-10-17T10:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T10:00:00+02:00",
+        "2026-10-19T20:00:00+02:00"
+       ],
+       [
+        "2026-10-20T10:00:00+02:00",
+        "2026-10-20T20:00:00+02:00"
+       ],
+       [
+        "2026-10-21T10:00:00+02:00",
+        "2026-10-21T20:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "asking how a visit went: in the day, not first thing in the morning"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-10-20T08:30:00+02:00",
+     "type": "turn",
+     "conversation": "giulia-chat",
+     "text": "Buongiorno! Che giornata mi aspetta?"
+    }
+   ]
+  },
+  {
+   "id": "casa_rossi",
+   "name": "Casa Rossi",
+   "mode": "entity",
+   "channels": [
+    {
+     "kind": "chat",
+     "reach": "always"
+    },
+    {
+     "kind": "voice",
+     "reach": "presence"
+    }
+   ],
+   "people": [
+    {
+     "name": "Eriona",
+     "voice": "eriona-vp"
+    },
+    {
+     "name": "Luca",
+     "voice": "luca-vp"
+    }
+   ],
+   "messages": [
+    {
+     "id": "m-panel",
+     "conversation": "panel",
+     "text": "Ricordami di comprare il latte."
+    },
+    {
+     "id": "m-private",
+     "conversation": "eriona-chat",
+     "author": "Eriona",
+     "text": "Ricordami la visita dal ginecologo.",
+     "private": true
+    }
+   ],
+   "items": [
+    {
+     "id": "c1",
+     "content": "stendere i panni",
+     "for": "Eriona",
+     "due": "2026-10-19T10:00:00+02:00",
+     "until": "2026-10-19T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T10:00:00+02:00",
+        "2026-10-19T21:00:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence",
+       "turn"
+      ]
+     },
+     "why": "for Eriona in a shared home: only when she is recognised (13:00), not to a stranger, not when unsure"
+    },
+    {
+     "id": "c2",
+     "content": "comprare il latte",
+     "message": "m-panel",
+     "due": "2026-10-19T09:00:00+02:00",
+     "until": "2026-10-19T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T09:00:00+02:00",
+        "2026-10-19T21:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "asked at the kitchen panel by someone unknown: back on the panel during the day"
+    },
+    {
+     "id": "c3",
+     "content": "portare fuori il cane",
+     "for": "Luca",
+     "due": "2026-10-20T18:00:00+02:00",
+     "until": "2026-10-21T18:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "deliver": false
+     },
+     "why": "for Luca, who never shows up: never pushed on the shared panel"
+    },
+    {
+     "id": "c4",
+     "content": "visita dal ginecologo",
+     "for": "Eriona",
+     "message": "m-private",
+     "due": "2026-10-20T09:00:00+02:00",
+     "until": "2026-10-20T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T10:30:00+02:00",
+        "2026-10-20T10:45:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ]
+     },
+     "why": "from a private message: only to a sure recognition (the camera at 10:30), not the unsure voice at 10:00"
+    }
+   ],
+   "plans": [],
+   "events": [
+    {
+     "at": "2026-10-19T11:00:00+02:00",
+     "type": "presence",
+     "voice": "stranger-vp",
+     "confidence": 0.9,
+     "channel": "voice"
+    },
+    {
+     "at": "2026-10-19T12:00:00+02:00",
+     "type": "presence",
+     "voice": "eriona-vp",
+     "confidence": 0.5,
+     "channel": "voice"
+    },
+    {
+     "at": "2026-10-19T13:00:00+02:00",
+     "type": "presence",
+     "voice": "eriona-vp",
+     "confidence": 0.9,
+     "channel": "voice"
+    },
+    {
+     "at": "2026-10-20T10:00:00+02:00",
+     "type": "presence",
+     "voice": "eriona-vp",
+     "confidence": 0.8,
+     "channel": "voice"
+    },
+    {
+     "at": "2026-10-20T10:30:00+02:00",
+     "type": "presence",
+     "voice": "eriona-vp",
+     "confidence": 0.95,
+     "channel": "camera"
+    }
+   ]
+  }
+ ]
+}

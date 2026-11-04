@@ -91,6 +91,27 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     expect(last.summary.dropped).toEqual({ intent: { nothing_done: 1 } });
   });
 
+  it('a follow-up (extract.v23): something Marta left to finish becomes, a few hours later, the question the extraction wrote; done closes it', async () => {
+    await window([say('f1', 'marta', 'Ho messo la lavatrice, poi stendo.', '2026-10-09T10:00:00+02:00')],
+      { intents: [{ kind: 'followup', content: 'Hai steso i panni?', due: '2026-10-09T12:00', for: 'Marta', evidence: [1] }] });
+    const [f] = await db.query(`SELECT kind::text, status::text, due_at, expires_at, timed FROM intents WHERE content = 'Hai steso i panni?'`);
+    expect(f).toMatchObject({ kind: 'followup', status: 'armed', timed: false });
+    expect(new Date(f.due_at).toISOString()).toBe('2026-10-09T10:00:00.000Z'); // 12:00 in Rome
+    expect(new Date(f.expires_at).getTime() - new Date(f.due_at).getTime()).toBe(12 * 3_600_000); // half a day
+    await db.query(`UPDATE memories SET quality_profile = 'economy'`); // the extraction's own question, no wording call
+    await app.get(InitiativeService).sweepAll(new Date('2026-10-09T10:30:00Z'));
+    const [i] = await db.query(`SELECT kind::text, text, reason, status::text FROM initiatives WHERE intent_id = (SELECT id FROM intents WHERE content = 'Hai steso i panni?')`);
+    expect(i).toMatchObject({ kind: 'ask', text: 'Hai steso i panni?', reason: 'something they left unfinished', status: 'pending' });
+    await window([say('f2', 'marta', 'Panni stesi!', '2026-10-09T12:40:00+02:00')],
+      { intents: [{ kind: 'followup', done: true, content: 'stendere i panni', for: 'Marta', evidence: [1] }] });
+    expect((await db.query(`SELECT status::text FROM intents WHERE content = 'Hai steso i panni?'`))[0].status).toBe('done');
+    await app.get(InitiativeService).sweepAll(new Date('2026-10-09T10:45:00Z'));
+    expect((await db.query(`SELECT status::text FROM initiatives WHERE text = 'Hai steso i panni?'`))[0].status).toBe('done'); // not needed any more
+    await db.query(`UPDATE memories SET quality_profile = NULL`);
+    await db.query(`DELETE FROM initiatives WHERE text = 'Hai steso i panni?'`); // the next test reads the feed
+    await db.query(`DELETE FROM intents WHERE kind = 'followup'`);
+  });
+
   it('when due, the promise becomes a reminder worded by the model (balanced), for the person it concerns', async () => {
     const [{ person_id }] = await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'u1'`);
     await db.query(`UPDATE intents SET status = 'armed' WHERE kind = 'promise'`); // undo the kept promise: the wording is what this test checks
