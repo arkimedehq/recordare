@@ -7,6 +7,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **`InitiativeInbox`** nella libreria client: ciò che ogni ospite fa per consegnare le iniziative, una volta sola —
+  webhook verificati (un `webhook-id` ripetuto ignorato), impulsi di presenza, il feed recuperato da un cursore, ogni
+  iniziativa passata una volta al `deliver` dell'ospite, l'esito che restituisce riportato; archivi durevoli `seen` /
+  `cursors` facoltativi.
 - **Ogni impostazione dalla console di amministrazione** (`/admin`): per memoria anche lingua, fuso orario e ore di
   quiete, le passate notturne su richiesta (revisione dei fatti, abitudini, pensieri, iniziative), i permessi di un token
   personale e la cancellazione dell'intera memoria (scrivendone il nome); per client l'ambito del registro grezzo, i canali

@@ -7,6 +7,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ## [Unreleased]
 
 ### Added
+- **`InitiativeInbox`** in the client library: what every host does to deliver initiatives, once — webhooks verified (a
+  repeated `webhook-id` ignored), presence impulses, the feed caught up from a cursor, each initiative handed to the
+  host's `deliver` once, the outcome it returns reported; durable `seen` / `cursors` stores optional.
 - **Every setting from the admin console** (`/admin`): per memory also the language, time zone and quiet hours, the
   nightly passes on demand (facts review, habits, thoughts, initiatives), a personal token's scopes, and erasing the whole
   memory (typing its name); per client the raw-log scope, the channels (D55: chat / messaging / voice, always or on

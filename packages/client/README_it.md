@@ -107,6 +107,18 @@ che ricevi (già `offered`), o chiedi "sei tu?" per `askWho`; passa `channel` e 
 `context(…, {initiatives: {lookups: true}})` quando il tuo agente ha strumenti; `source` in un'iniziativa indica i tuoi
 messaggi da cui è nata (un promemoria programmato da te). Consegna sull'evento webhook `initiative.deliver` (Recordare
 ha scelto il momento): `data.channel` dice dove.
+`InitiativeInbox` fa tutto una volta sola — gli dai come pronunci un'iniziativa, e lui verifica i webhook (un
+`webhook-id` ripetuto ignorato), chiede alla presenza, recupera dal feed con un cursore, ti passa ogni iniziativa una volta
+e riporta l'esito che restituisci:
+```ts
+const inbox = new InitiativeInbox({ client, secret: process.env.RECORDARE_WEBHOOK_SECRET, channels: ['chat'],
+  users: () => enabledUserIds(),
+  deliver: async (user, i) => (await alreadyScheduled(user, i)) ? 'done' : (await postToChat(user, i.text), i.kind === 'ask' ? 'asked' : 'said') });
+app.post('/recordare/webhook', (req, res) => { try { inbox.handleWebhook(req.rawBody, req.headers); res.sendStatus(204); } catch { res.sendStatus(401); } });
+inbox.start();                                 // il feed ogni 15 min
+await inbox.presence(userId, { channel: 'chat' }); // quando l'utente si presenta
+```
+Passa `seen` / `cursors` per tenerli nel tuo archivio tra un riavvio e l'altro.
 
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:

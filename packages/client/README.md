@@ -105,6 +105,18 @@ recognises someone (your voiceprint or face model's score; an account is 1) and 
 `context(…, {initiatives: {lookups: true}})` when your agent has tools; `source` on an initiative names your own messages
 it came from (a reminder you scheduled yourself). Deliver on the webhook event `initiative.deliver` (Recordare chose
 the moment): `data.channel` says where.
+`InitiativeInbox` does all of it once — give it how you speak one initiative, and it verifies webhooks (a repeated
+`webhook-id` ignored), asks on presence, catches up from the feed with a cursor, hands each initiative to you once and
+reports the outcome you return:
+```ts
+const inbox = new InitiativeInbox({ client, secret: process.env.RECORDARE_WEBHOOK_SECRET, channels: ['chat'],
+  users: () => enabledUserIds(),
+  deliver: async (user, i) => (await alreadyScheduled(user, i)) ? 'done' : (await postToChat(user, i.text), i.kind === 'ask' ? 'asked' : 'said') });
+app.post('/recordare/webhook', (req, res) => { try { inbox.handleWebhook(req.rawBody, req.headers); res.sendStatus(204); } catch { res.sendStatus(401); } });
+inbox.start();                                 // the feed every 15 min
+await inbox.presence(userId, { channel: 'chat' }); // when the user shows up
+```
+Pass `seen` / `cursors` to keep them in your own store across restarts.
 
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,
