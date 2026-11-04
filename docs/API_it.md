@@ -717,7 +717,10 @@ conversazione, si chiude; quando una richiesta e un piano sono la stessa cosa, p
 persona ha iniziato e lasciato da finire** (D55 F2b, `extract.v23`: i panni da stendere, un arrosto in forno, un modulo a
 metà prima della scadenza — non ciò che finisce da sé, che è finito nella conversazione, banale, un'abitudine o compito
 d'altri) un `ask` qualche ora dopo — la domanda scritta dall'estrazione, nella lingua della memoria, per chi deve finirlo,
-flessibile, per mezza giornata — chiuso quando dice che è fatto; una domanda che
+flessibile, per mezza giornata — chiuso quando dice che è fatto; una domanda che l'agente tiene **su una persona** (D55 F2b passo 4) un `ask` a qualcuno che
+potrebbe sapere — quella persona quando parla con l'agente, altrimenti chi gliene ha parlato di più (il titolare di una
+memoria personale, un contatto identificato in una memoria di entità; nessuno identificato: non si chiede), una domanda
+alla volta per persona, `identity: high` quando riguarda qualcun altro; una domanda sul mondo che
 l'agente tiene (un pensiero di tipo `question`, 8.12a, non sull'esito di un piano né sulle mie azioni) un `lookup` per
 l'agente ospite, che lo scopre con i propri strumenti — il web, la stanza — e porta la
 risposta come fonte appresa o come percezione (D53: le fonti esterne passano sempre dall'agente). Ogni fonte arma un

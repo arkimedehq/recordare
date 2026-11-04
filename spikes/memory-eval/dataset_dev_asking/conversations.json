@@ -1,0 +1,216 @@
+{
+ "_note": "dev_asking (D55 F2b step 4): whom the memory's questions go to; see build.py.",
+ "users": {
+  "sara": "Sara, Bologna",
+  "casa_neri": "Casa Neri, Prato"
+ },
+ "genders": {
+  "sara": "feminine",
+  "casa_neri": "feminine"
+ },
+ "entities": [
+  "casa_neri"
+ ],
+ "sessions": [
+  {
+   "id": "s1",
+   "user": "sara",
+   "ts": "2026-09-01T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Mio fratello Luca domani ha il colloquio a Torino per il posto da ingegnere, è agitatissimo."
+    },
+    {
+     "role": "assistant",
+     "content": "In bocca al lupo a Luca!"
+    }
+   ]
+  },
+  {
+   "id": "s2",
+   "user": "sara",
+   "ts": "2026-09-02T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Luca oggi ha fatto il colloquio a Torino, tre ore tra test e domande. Gli diranno qualcosa entro due settimane."
+    },
+    {
+     "role": "assistant",
+     "content": "Speriamo bene."
+    }
+   ]
+  },
+  {
+   "id": "s3",
+   "user": "sara",
+   "ts": "2026-09-04T12:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho sentito che il negozio di bici di via Roma forse chiude a fine mese, peccato."
+    },
+    {
+     "role": "assistant",
+     "content": "Sarebbe un peccato davvero."
+    }
+   ]
+  },
+  {
+   "id": "s4",
+   "user": "sara",
+   "ts": "2026-09-06T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Oggi giro in bici sui colli, poi pranzo da mamma."
+    },
+    {
+     "role": "assistant",
+     "content": "Bella giornata!"
+    }
+   ]
+  },
+  {
+   "id": "s5",
+   "user": "sara",
+   "ts": "2026-09-08T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Luca è ancora in attesa per Torino, non si sa niente."
+    },
+    {
+     "role": "assistant",
+     "content": "L'attesa è la parte più dura."
+    }
+   ]
+  },
+  {
+   "id": "c1",
+   "user": "casa_neri",
+   "ts": "2026-09-01T18:00:00+02:00",
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Sabato Giada ha la gara di nuoto regionale a Firenze, i 100 stile."
+    },
+    {
+     "role": "assistant",
+     "content": "Forza Giada!"
+    }
+   ]
+  },
+  {
+   "id": "c2",
+   "user": "casa_neri",
+   "ts": "2026-09-02T20:00:00+02:00",
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Da lunedì comincio una dieta nuova col nutrizionista, vediamo se tengo duro."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona fortuna, Marta."
+    }
+   ]
+  },
+  {
+   "id": "c3",
+   "user": "casa_neri",
+   "ts": "2026-09-06T21:00:00+02:00",
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Giada oggi ha gareggiato a Firenze, aspettiamo le classifiche ufficiali."
+    },
+    {
+     "role": "assistant",
+     "content": "Che emozione!"
+    }
+   ]
+  },
+  {
+   "id": "c4",
+   "user": "casa_neri",
+   "ts": "2026-09-07T19:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ugo ha venduto la macchina vecchia, dice che ne prende una elettrica."
+    },
+    {
+     "role": "assistant",
+     "content": "Interessante."
+    }
+   ]
+  },
+  {
+   "id": "c5",
+   "user": "casa_neri",
+   "ts": "2026-09-09T20:00:00+02:00",
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Prima settimana di dieta fatta, ma che fatica la sera."
+    },
+    {
+     "role": "assistant",
+     "content": "Brava Marta, tieni duro."
+    }
+   ]
+  },
+  {
+   "id": "c6",
+   "user": "casa_neri",
+   "ts": "2026-09-10T08:00:00+02:00",
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Giada ha ancora la tosse da sabato, oggi resta a casa da scuola."
+    },
+    {
+     "role": "assistant",
+     "content": "Guarisca presto."
+    }
+   ]
+  }
+ ]
+}

@@ -2034,3 +2034,19 @@ against v22's 8 / 8 ×3 and 1, 1, 1; the plumber ask (D53) judged "none" instead
 ×3 (as in v21). The blind set improves and h11 is back, the dev set loses a little (one miss, one more false in three
 runs): **v23 adopted** (maintainer, 2026-11-04: "if it improves, keep it, else v22").
 
+### Questions to who could know (D55 F2b step 4, 2026-11-04)
+
+A question the memory holds (the thought pass, `thoughts.v7`) about a person is routed — deterministically, no prompt
+change — to that person when they talk to the agent, else to whoever told it most about them (the holder; in an entity
+memory an identified contact; nobody identified: not asked), one at a time each, `identity: high` when about someone
+else; world questions stay look-ups. Integration test for every rule (`asking.int.spec.ts`). New dev set
+`dataset_dev_asking` (2 memories, 11 sessions; 4 expected, 3 traps), four runs (a1 with Paolo and Marta saying who they
+are in the text; a2–a4 with their voice as a platform identity — text-declared speakers are not recorded as authors, so
+nobody could be found as "who told me"): found 2, 2, 2, 1 / 4, **false 0 ×4, traps 0 ×4**. Luca's interview went to
+Sara every time the thought pass wrote it (3 of 4); Marta's diet came as D53's ask after a plan; the questions about
+Giada were written only in a1 (none in a2–a4) and the bike-shop look-up never — the thought pass's recall on this set,
+not the routing. The first run also found the plan rule too broad (a question resting on a confirmed plan was dropped):
+now only an open plan's outcome is left to the ask after its day. Still owed: the growing-household curve (questions
+falling as knowledge grows) with simulated answers, and recording a text-declared speaker as a message's author (D50).
+Cost ≈ 0.03 USD a run.
+

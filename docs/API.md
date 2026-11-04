@@ -699,7 +699,10 @@ the same thing, the request speaks; **something a person started and left to fin
 laundry to hang, a roast in the oven, a half-filled form before its deadline — not what ends on its own, is finished in
 the conversation, is trivial, a routine or someone else's job) an `ask` a few hours later — the question the extraction
 wrote, in the memory's language, for the person who has to finish it, flexible, for half a day — closed when they say it
-is done; a question the agent holds (a thought of kind `question`, 8.12a, not about a plan's
+is done; a question the agent holds **about a person** (D55 F2b step 4) an `ask` to someone who could know — that person
+when they talk to the agent, else whoever told it most about them (the holder of a personal memory, an identified
+contact in an entity memory; nobody identified: not asked), one question at a time for each person, `identity: high`
+when it is about someone else; a question the agent holds about the world (a thought of kind `question`, 8.12a, not about a plan's
 outcome nor my own doings) a `lookup` for the host agent, which finds it out with its own tools — the web, the room — and brings the answer back as a learned source
 or a perception (D53: external sources always through the agent). Each source arms one intent, once; it fires when
 due, after the memory's **quiet hours** (`quietFrom` / `quietTo`, local, default 22–8) and within the **daily limit** per

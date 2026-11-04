@@ -238,18 +238,33 @@ export class InitiativeService {
     }
     // A question the agent holds becomes a look-up — unless it asks about the outcome of a plan (the ask the day after
     // covers it), or the question it supersedes (the thought pass revised it) was already looked up.
-    const questions: Array<{ id: string; content: string }> = await this.db.query(
-      `SELECT n.id, n.content FROM notes n
+    const questions: Array<{ id: string; content: string; subject: string | null }> = await this.db.query(
+      `SELECT n.id, n.content, CASE WHEN n.subject_kind = 'contact' THEN n.subject_person_id END AS subject FROM notes n
        WHERE n.memory_id = $1 AND n.category = 'question' AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
-         AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND e.kind = 'plan')
+         -- a question about an open plan's outcome is the ask after its day; once the plan is confirmed, asking more is fine
+         AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN episodes e ON e.id = x.episode_id WHERE x.note_id = n.id AND e.kind = 'plan' AND e.plan_status = 'open')
          -- a question about my own doings (it rests on my replies: did I keep my promise?) is no look-up for the host
          AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN messages m ON m.id = x.message_id WHERE x.note_id = n.id AND m.role = 'assistant')
-         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'lookup' AND t.note_id = n.supersedes)`, [memoryId]);
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.supersedes)
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.id)`, [memoryId]);
+    const [mem]: Array<{ mode: string }> = questions.length ? await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]) : [];
     for (const q of questions) {
+      // D55 F2b: whom to ask. A question about the world goes to the agent's tools (a look-up); one about a person to
+      // someone who could know — that person when they talk to me, else whoever told me most about them (the holder of a
+      // personal memory, an identified contact in an entity memory); nobody to ask: not asked. One question at a time
+      // for each person.
+      const to = q.subject ? await this.answerer(memoryId, q.subject, mem?.mode === 'entity') : null;
+      if (q.subject && to === undefined) continue;
+      if (to !== null && to !== undefined) {
+        const [busy] = await this.db.query(
+          `SELECT 1 FROM intents WHERE memory_id = $1 AND kind = 'own' AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
+          [memoryId, to === 'holder' ? null : to]);
+        if (busy) continue;
+      }
       const r = await this.db.query(
-        `INSERT INTO intents (memory_id, kind, content, note_id, due_at, expires_at) VALUES ($1, 'lookup', $2, $3, $4, $5)
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (note_id, kind) WHERE note_id IS NOT NULL DO NOTHING RETURNING id`,
-        [memoryId, q.content, q.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
+        [memoryId, q.subject ? 'own' : 'lookup', q.content, to && to !== 'holder' ? to : null, q.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
       armed += r.length;
     }
     // A source that moved on closes its intent: the plan confirmed, cancelled or rescheduled; the question answered or forgotten.
@@ -262,6 +277,24 @@ export class InitiativeService {
       `UPDATE intents t SET status = 'done', updated_at = now() FROM notes n
        WHERE t.memory_id = $1 AND t.status IN ('armed', 'fired') AND t.note_id = n.id AND (n.status <> 'current' OR n.deleted_at IS NOT NULL)`, [memoryId]);
     return armed;
+  }
+
+  /**
+   * Who could answer a question about `subject` (D55 F2b): the subject when they talk to me (a message of theirs in this
+   * memory); else whoever told me most about them — 'holder' (a personal memory's own turns) or an identified contact; in
+   * an entity memory only an identified contact. undefined: nobody to ask.
+   */
+  private async answerer(memoryId: string, subject: string, entity: boolean): Promise<string | 'holder' | undefined> {
+    const [talks] = await this.db.query(
+      `SELECT 1 FROM messages WHERE memory_id = $1 AND author_kind = 'contact' AND author_person_id = $2 LIMIT 1`, [memoryId, subject]);
+    if (talks) return subject;
+    const [teller]: Array<{ who: string }> = await this.db.query(
+      `SELECT CASE WHEN m.author_kind = 'self' THEN 'holder' ELSE m.author_person_id::text END AS who
+       FROM episodes e JOIN episode_evidence v ON v.episode_id = e.id JOIN messages m ON m.id = v.message_id
+       WHERE e.memory_id = $1 AND e.subject_person_id = $2 AND e.deleted_at IS NULL
+         AND ((m.author_kind = 'self' AND NOT $3) OR (m.author_kind = 'contact' AND m.author_person_id IS NOT NULL AND m.author_person_id <> $2))
+       GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1`, [memoryId, subject, entity]);
+    return teller?.who;
   }
 
   /** Pending initiatives nobody answered in time lapse, quietly; their intents lapse with them. */
@@ -283,11 +316,12 @@ export class InitiativeService {
       `SELECT o.timezone, o.locale, o.quiet_from, o.quiet_to, o.quality_profile, o.mode, p.display_name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory) return 0;
     const due: Array<{ id: string; kind: string; content: string; for_person_id: string | null; for_name: string | null; episode_id: string | null; note_id: string | null; expires_at: Date; due_at: Date; occurred_at: Date | null;
-      timed: boolean; message_id: string | null; private: boolean }> =
+      timed: boolean; message_id: string | null; private: boolean; note_subject: string | null }> =
       await this.db.query(
         `SELECT t.id, t.kind::text, t.content, t.for_person_id, (SELECT display_name FROM persons WHERE id = t.for_person_id) AS for_name,
            t.episode_id, t.note_id, t.expires_at, t.due_at, e.occurred_at, t.timed, t.message_id,
-           COALESCE((SELECT m.private FROM messages m WHERE m.id = t.message_id), false) AS private
+           COALESCE((SELECT m.private FROM messages m WHERE m.id = t.message_id), false) AS private,
+           (SELECT CASE WHEN n.subject_kind = 'contact' THEN n.subject_person_id END FROM notes n WHERE n.id = t.note_id) AS note_subject
          FROM intents t LEFT JOIN episodes e ON e.id = t.episode_id
          WHERE t.memory_id = $1 AND t.status = 'armed' AND t.due_at <= $2 AND (t.reconsider_at IS NULL OR t.reconsider_at <= $2)
          ORDER BY t.due_at`, [memoryId, now]);
@@ -324,6 +358,8 @@ export class InitiativeService {
           : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']
             // A follow-up's content is already the question, in the memory's language (the extraction wrote it so).
             : t.kind === 'followup' ? ['ask', t.content.trim(), 'something they left unfinished']
+              // A question of mine for someone who could know (D55 F2b): the question as the thought pass wrote it.
+              : t.kind === 'own' ? ['ask', t.content.trim(), 'a question I hold, for someone who could know']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
       const content = w?.text?.trim() || fallback;
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
@@ -333,7 +369,8 @@ export class InitiativeService {
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
           [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > at ? t.due_at : at, t.expires_at, w?.worth ?? null,
-            t.timed ? 'timed' : 'flexible', t.private ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
+            // High: from a private message, or a question about someone asked to another person (it tells what I know of them).
+            t.timed ? 'timed' : 'flexible', t.private || (t.kind === 'own' && t.for_person_id && t.note_subject !== t.for_person_id) ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
             t.message_id ? [t.message_id] : [], w?.hours?.[0] ?? null, w?.hours?.[1] ?? null]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
@@ -352,10 +389,11 @@ export class InitiativeService {
   ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
     const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
-    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' || k === 'own' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
     const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
       : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me'
-        : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)' : 'a question I hold');
+        : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)'
+          : k === 'own' ? 'a question I hold, to ask the person FOR, who could know (WHAT is the question)' : 'a question I hold');
     const user = [
       `ME: ${memory.display_name}${memory.mode === 'entity' ? ' (a shared agent several people talk to)' : ''}`,
       `MEMORY LANGUAGE: ${memory.locale}`,

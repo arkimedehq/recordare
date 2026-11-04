@@ -40,6 +40,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   the conversation, is trivial, a routine or someone else's job. `dataset_dev_followups` 7–8 / 8; blind12 95.4 / 94.4 /
   97.2 % (the shorter v23 over v22's 94.1 % mean, h11 right again; RESULTS.md). The initiative sweep now also visits memories that only have
   initiatives waiting, so they close.
+- **Questions to who could know** (D55 F2b step 4, `docs/INITIATIVES_DELIVERY.md` §6): a question the memory holds about a
+  person is asked to that person when they talk to the agent, else to whoever told it most about them (the holder, or an
+  identified contact in an entity memory; nobody identified: not asked), one at a time for each person, with a sure
+  recognition when it is about someone else; questions about the world stay look-ups for the agent's tools. A question
+  about a plan is left to the ask after its day only while the plan is open. `dataset_dev_asking`: 0 false, 0 traps in
+  four runs (RESULTS.md).
 
 ### Fixed
 - **The memory context no longer waits for background embeddings.** On a host sharing a CPU embedding server (one
