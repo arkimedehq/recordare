@@ -3,7 +3,8 @@
 #
 # Recordare memory proxy. Build from the repository root (the proxy bundles packages/client):
 #   docker build -f connectors/openai-proxy/Dockerfile -t recordare-openai-proxy .
-FROM node:22-alpine AS build
+# The bundle is plain JavaScript: build it once on the runner's own platform (no emulation), copy it into each target.
+FROM --platform=$BUILDPLATFORM node:22-alpine AS build
 WORKDIR /src
 COPY packages/client/package.json packages/client/package-lock.json packages/client/
 RUN cd packages/client && npm ci --no-audit --no-fund
