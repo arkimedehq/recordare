@@ -226,7 +226,8 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > modello di impronta vocale o di volto; un account vale 1) e dice l'`initiative` che riceve, o chiede "sei tu?" per
 > `askWho`; (d) riporta gli esiti con `channel` e `reaction`; (e) consegna sull'evento webhook `initiative.deliver` (Recordare ha
 > scelto il momento; consegna su `data.channel`), prende gli altri eventi come informazione, e riconosce da `source` un
-> promemoria programmato da sé. I passi qui sotto valgono ancora per la consegna push.
+> promemoria programmato da sé. L'`InitiativeInbox` della libreria fa (c)–(e) in un pezzo solo: scrivi solo come ne consegni
+> una. I passi qui sotto valgono ancora per la consegna push.
 
 Recordare spinge ciò che l'agente ha deciso di dire, chiedere o cercare (`API.md` §4b). La tua piattaforma lo consegna
 **quando la persona c'è** (la presenza è tua: una chat aperta ora, una voce riconosciuta nella stanza, qualcuno al
