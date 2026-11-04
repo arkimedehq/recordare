@@ -7,6 +7,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ## [Unreleased]
 
 ### Added
+- **The admin console explains every field** (Italian and English): what it does and when to change it, under each
+  setting; a legend of key and token scopes and of webhook events; a short introduction to people and clients.
 - **`InitiativeInbox`** in the client library: what every host does to deliver initiatives, once — webhooks verified (a
   repeated `webhook-id` ignored), presence impulses, the feed caught up from a cursor, each initiative handed to the
   host's `deliver` once, the outcome it returns reported; durable `seen` / `cursors` stores optional.

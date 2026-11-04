@@ -79,6 +79,67 @@ const T = {
     remove: 'Remove', webhookSecret: 'The webhook\'s secret (whsec_): give it to the client, it will not be shown again.',
   },
 };
+
+/** What every field means, for someone who is not a developer (shown under each field; maintainer, 2026-11-04). */
+const HELP = {
+  it: {
+    introPersons: 'Ogni scheda è una memoria: quella di una persona (personale) o di un agente condiviso da più persone, come l\'assistente di casa (condivisa). Qui si sceglie come ricorda, come si collega ai programmi che la usano e quando può prendere iniziativa.',
+    introClients: 'Un client è un programma che usa Recordare (Arkimede, Claude Code, un plugin…). Ognuno ha le sue chiavi, i canali con cui raggiunge le persone e gli indirizzi (webhook) dove riceve ciò che la memoria vuole dire di sua iniziativa.',
+    mode: 'Personale: la memoria è di una persona e scrive "io" per lei. Condivisa: è di un agente che parla con più persone; chi non si identifica è "qualcuno". Si cambia di solito solo finché la memoria è vuota.',
+    gender: 'Il genere grammaticale con cui la memoria parla di sé in prima persona (es. "sono andato" / "sono andata"). Conta solo nelle lingue che lo distinguono.',
+    profile: 'Quanto lavoro fa il modello per capire e ricordare. Economy: costa meno. Balanced: equilibrio (consigliato). Full: massima qualità, costa di più. "Predefinito" usa l\'impostazione dell\'installazione.',
+    name: 'Il nome della memoria (della persona o dell\'agente). Se un client la collega a un profilo, il nome segue quello del client.',
+    locale: 'La lingua in cui la memoria scrive i suoi ricordi e le sue iniziative, come codice BCP 47: it, en, es, pt-BR…',
+    timezone: 'Il fuso orario della persona: serve per capire "domani", "stasera", le ore di quiete e l\'ora dei promemoria.',
+    quiet: 'Le ore in cui la memoria non disturba: nessun messaggio spontaneo, salvo un promemoria chiesto proprio per quell\'ora.',
+    identities: 'Chi può aprire questa memoria: un "account" è un utente di un client (es. l\'utente di Arkimede) che arriva qui. Scollegare non cancella i ricordi.',
+    link: 'Collega un utente di un client a questa memoria: scegli il client e scrivi l\'id che quel client usa per l\'utente.',
+    linkCode: 'Un codice monouso per riconoscere il titolare quando scrive da un altro canale (es. Telegram): lo invia all\'agente in chat diretta, poi confermi qui.',
+    claims: 'Richieste arrivate con un codice di collegamento: conferma solo se quel mittente è davvero il titolare.',
+    tokens: 'Chiavi personali di questa memoria, per un programma che la usa direttamente (es. Claude Code). Si mostrano una sola volta alla creazione: copiale subito.',
+    actions: 'Di notte la memoria riordina da sola. Questi pulsanti la fanno lavorare subito: Consolida (diario del giorno e del mese), Revisione fatti, Abitudini, Pensieri, Iniziative (cosa dire di sua iniziativa).',
+    erase: 'Cancella per sempre tutta la memoria: ricordi, conversazioni, identità. Non si può annullare.',
+    autoProvision: 'Se attivo, quando il client presenta un utente nuovo Recordare gli crea subito una memoria. Se spento, va collegato a mano qui.',
+    disabled: 'Ferma subito tutte le chiavi e i token di questo client, senza cancellare nulla. Si può riattivare.',
+    rawLog: 'Quando l\'agente cerca nelle vecchie conversazioni: solo in quelle avvenute in questo client, o in tutte quelle della memoria.',
+    channels: 'Come il client raggiunge una persona quando la memoria vuole dirle qualcosa di sua iniziativa. Sempre: il messaggio arriva comunque (chat, messaggistica). Con presenza: solo quando l\'agente vede o sente la persona (voce). No: canale assente.',
+    webhooks: 'L\'indirizzo del client dove Recordare invia ciò che la memoria vuole dire. Alla registrazione ricevi un segreto (whsec_…) da dare al client: si mostra una sola volta.',
+    webhookUrl: 'https e un indirizzo pubblico; un indirizzo interno (es. http://backend:3000/…) solo se il server ha WEBHOOK_ALLOW_PRIVATE=true.',
+    keys: 'Le chiavi con cui il client usa Recordare. Si mostrano una sola volta alla creazione. Dai solo i permessi che servono.',
+    newClientKind: 'Platform: un\'applicazione con i suoi utenti (es. Arkimede). MCP client: un agente che usa gli strumenti di memoria (es. Claude Code). Import: solo per importare storici.',
+    scopesLegend: 'ingest: invia conversazioni · mcp: strumenti di memoria per l\'agente · read: legge memoria e contesto · write: corregge e scrive ricordi · erase: cancella memorie intere · memory_settings: cambia le impostazioni della memoria · export: esporta la memoria',
+    eventsLegend: 'deliver: "dillo adesso" (quello che serve per consegnare) · created: nuova iniziativa decisa · updated: cambiata (offerta, detta, rifiutata…) · expired: scaduta senza essere detta',
+  },
+  en: {
+    introPersons: 'Each card is a memory: a person\'s own (personal) or that of an agent several people talk to, like the home assistant (shared). Here you choose how it remembers, how it is linked to the programs that use it, and when it may take initiative.',
+    introClients: 'A client is a program that uses Recordare (Arkimede, Claude Code, a plugin…). Each has its keys, the channels it reaches people on, and the addresses (webhooks) where it receives what the memory wants to say on its own.',
+    mode: 'Personal: the memory belongs to one person and writes "I" for them. Shared: it belongs to an agent that talks with several people; whoever is not identified is "someone". Usually changed only while the memory is empty.',
+    gender: 'The grammatical gender the memory uses for itself in the first person. Matters only in languages that mark it.',
+    profile: 'How much work the model does to understand and remember. Economy: cheapest. Balanced: the balance (recommended). Full: best quality, costs more. "Default" uses the installation\'s setting.',
+    name: 'The memory\'s name (the person\'s or the agent\'s). When a client links it to a profile, the name follows the client\'s.',
+    locale: 'The language the memory writes its memories and initiatives in, as a BCP 47 code: it, en, es, pt-BR…',
+    timezone: 'The person\'s time zone: it resolves "tomorrow", "tonight", the quiet hours and when reminders are due.',
+    quiet: 'Hours when the memory does not disturb: no message of its own, except a reminder asked for that very hour.',
+    identities: 'Who can open this memory: an "account" is a client\'s user (e.g. Arkimede\'s user) arriving here. Unlinking deletes no memory.',
+    link: 'Link a client\'s user to this memory: pick the client and type the id that client uses for the user.',
+    linkCode: 'A one-time code to recognise the holder writing from another channel (e.g. Telegram): they send it to the agent in a direct chat, then you confirm here.',
+    claims: 'Claims made with a link code: confirm only if that sender really is the holder.',
+    tokens: 'Personal keys of this memory, for a program that uses it directly (e.g. Claude Code). Shown once, when created: copy them at once.',
+    actions: 'At night the memory tidies up on its own. These buttons make it work now: Consolidate (the day\'s and month\'s diary), Facts review, Habits, Thoughts, Initiatives (what to say on its own).',
+    erase: 'Erases the whole memory for good: memories, conversations, identities. Cannot be undone.',
+    autoProvision: 'When on, a new user presented by the client gets a memory at once. When off, link them here by hand.',
+    disabled: 'Stops every key and token of this client at once, deleting nothing. Can be switched back on.',
+    rawLog: 'Where the agent searches old conversations: only those held in this client, or all of the memory\'s.',
+    channels: 'How the client reaches a person when the memory wants to tell them something on its own. Always: the message arrives anyway (chat, messaging). On presence: only when the agent sees or hears the person (voice). No: not available.',
+    webhooks: 'The client\'s address where Recordare sends what the memory wants to say. Registering gives a secret (whsec_…) for the client: shown only once.',
+    webhookUrl: 'https and a public address; an internal one (e.g. http://backend:3000/…) only when the server has WEBHOOK_ALLOW_PRIVATE=true.',
+    keys: 'The keys the client uses Recordare with. Shown once, when created. Give only the scopes it needs.',
+    newClientKind: 'Platform: an application with its users (e.g. Arkimede). MCP client: an agent using the memory tools (e.g. Claude Code). Import: only to import history.',
+    scopesLegend: 'ingest: sends conversations · mcp: memory tools for the agent · read: reads the memory and its context · write: corrects and writes memories · erase: erases whole memories · memory_settings: changes the memory\'s settings · export: exports the memory',
+    eventsLegend: 'deliver: "say it now" (what delivering needs) · created: a new initiative decided · updated: changed (offered, said, declined…) · expired: lapsed unsaid',
+  },
+};
+const help = (key) => h('small', { class: 'help' }, HELP[lang][key] ?? '');
 const PROFILES = ['economy', 'balanced', 'full'];
 const KEY_SCOPES = ['ingest', 'mcp', 'read', 'write', 'erase'];
 /** A personal token's scopes (never admin). */
@@ -201,23 +262,23 @@ function personCard(p) {
       h('span', {}, `${t('last')}: ${when(p.lastMessage)}`),
     ),
     h('div', { class: 'grid' },
-      h('label', { class: 'field' }, h('span', {}, t('mode')), mode),
-      h('label', { class: 'field' }, h('span', {}, t('gender')), gender),
-      h('label', { class: 'field' }, h('span', {}, t('profile')), profile),
+      h('label', { class: 'field' }, h('span', {}, t('mode')), mode, help('mode')),
+      h('label', { class: 'field' }, h('span', {}, t('gender')), gender, help('gender')),
+      h('label', { class: 'field' }, h('span', {}, t('profile')), profile, help('profile')),
       h('div', { class: 'field' }, h('span', { title: t('renameHint') }, `${t('name')} ⓘ`),
         h('div', { class: 'row' }, nameInput, h('button', {
           class: 'ghost small', onclick: () => nameInput.value.trim() && act(() => api('PATCH', `memories/${p.id}`, { displayName: nameInput.value.trim() })),
-        }, t('rename')))),
+        }, t('rename'))), help('name')),
       h('div', { class: 'field' }, h('span', {}, t('locale')),
-        h('div', { class: 'row' }, localeInput, h('button', { class: 'ghost small', onclick: () => localeInput.value.trim() && patch({ locale: localeInput.value.trim() }) }, t('save')))),
+        h('div', { class: 'row' }, localeInput, h('button', { class: 'ghost small', onclick: () => localeInput.value.trim() && patch({ locale: localeInput.value.trim() }) }, t('save'))), help('locale')),
       h('div', { class: 'field' }, h('span', {}, t('timezone')),
         h('div', { class: 'row' }, tzInput, h('datalist', { id: tzList }, TIMEZONES.map((z) => h('option', { value: z }))),
-          h('button', { class: 'ghost small', onclick: () => tzInput.value.trim() && patch({ timezone: tzInput.value.trim() }) }, t('save')))),
+          h('button', { class: 'ghost small', onclick: () => tzInput.value.trim() && patch({ timezone: tzInput.value.trim() }) }, t('save'))), help('timezone')),
       h('div', { class: 'field' }, h('span', {}, t('quiet')),
-        h('div', { class: 'row' }, t('from'), hourSelect(p.quietFrom, 'quietFrom'), t('to'), hourSelect(p.quietTo, 'quietTo'))),
+        h('div', { class: 'row' }, t('from'), hourSelect(p.quietFrom, 'quietFrom'), t('to'), hourSelect(p.quietTo, 'quietTo')), help('quiet')),
     ),
     h('div', { class: 'sub' },
-      h('h4', {}, t('identities')),
+      h('h4', {}, t('identities')), help('identities'),
       p.identities.length ? p.identities.map((i) => h('div', { class: 'item' },
         h('span', { class: 'chip' }, t(i.kind)), h('span', { class: 'chip' }, i.client ?? i.channel), h('code', {}, i.externalId),
         i.kind === 'participant' ? h('span', { class: 'muted' }, i.person) : null,
@@ -228,8 +289,10 @@ function personCard(p) {
         onclick: () => linkId.value.trim() && act(() => api('POST', 'identities',
           { kind: 'account', personId: p.id, clientId: linkClient.value, externalId: linkId.value.trim() })),
       }, t('link'))) : null,
+      clientsCache.length ? help('link') : null,
       // D51: the holder's channel identities — a one-time code, then the claim it made is confirmed here.
       p.linkClaims.length ? h('h4', {}, t('claims')) : null,
+      p.linkClaims.length ? help('claims') : null,
       ...p.linkClaims.map((c) => h('div', { class: 'item' },
         h('span', { class: 'chip' }, c.client ?? c.channel), h('code', {}, c.externalId),
         c.displayName ? h('span', { class: 'muted' }, c.displayName) : null, h('span', { class: 'muted' }, when(c.claimedAt)),
@@ -240,9 +303,10 @@ function personCard(p) {
         class: 'ghost small', title: t('linkCodeHint'),
         onclick: () => act(async () => showSecret((await api('POST', `memories/${p.id}/link-codes`)).code), null),
       }, `${t('linkCode')} ⓘ`)) : null,
+      p.mode === 'personal' ? help('linkCode') : null,
     ),
     h('div', { class: 'sub' },
-      h('h4', {}, t('tokens')),
+      h('h4', {}, t('tokens')), help('tokens'),
       p.tokens.length ? p.tokens.map((k) => h('div', { class: 'item' },
         h('code', {}, `${k.prefix}…`), h('span', { class: 'chip' }, k.client), h('span', { class: 'muted' }, k.scopes.join(', ')),
         h('span', { class: 'muted' }, `${t('used')}: ${when(k.lastUsedAt)}`),
@@ -255,6 +319,7 @@ function personCard(p) {
           if (scopes.length) act(async () => showSecret((await api('POST', `memories/${p.id}/tokens`, { clientId: tokenClient.value, scopes })).token), null);
         },
       }, t('newToken'))) : null,
+      clientsCache.length ? help('scopesLegend') : null,
     ),
     h('div', { class: 'row' },
       h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `memories/${p.id}/consolidate`), t('consolidated')) }, t('consolidate')),
@@ -268,6 +333,7 @@ function personCard(p) {
         },
       }, t('erase')),
     ),
+    help('actions'), help('erase'),
   );
 }
 
@@ -278,7 +344,7 @@ function newPersonForm() {
     class: 'card',
     onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'memories', { displayName: name.value.trim(), mode: mode.value })); },
   }, h('div', { class: 'row' }, name, mode, h('button', { type: 'submit' }, t('create')),
-    h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))));
+    h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))), help('mode'));
   return form;
 }
 
@@ -307,6 +373,7 @@ function clientCard(c) {
       h('label', { class: 'switch' }, h('input', {
         type: 'checkbox', checked: c.autoProvision, onchange: (e) => act(() => api('PATCH', `clients/${c.id}`, { autoProvision: e.target.checked })),
       }), t('autoProvision')),
+      help('autoProvision'),
       h('label', { class: 'switch' }, h('input', {
         type: 'checkbox', checked: !!c.disabledAt,
         onchange: (e) => {
@@ -314,13 +381,14 @@ function clientCard(c) {
           act(() => api('PATCH', `clients/${c.id}`, { disabled: e.target.checked }));
         },
       }), t('disabled')),
+      help('disabled'),
       h('label', { class: 'field' }, h('span', {}, t('rawLog')), h('select', { onchange: (e) => patch({ rawLogScope: e.target.value }) },
         h('option', { value: 'own', selected: c.rawLogScope === 'own' }, t('rawOwn')),
-        h('option', { value: 'all', selected: c.rawLogScope === 'all' }, t('rawAll')))),
+        h('option', { value: 'all', selected: c.rawLogScope === 'all' }, t('rawAll'))), help('rawLog')),
     ),
-    h('div', { class: 'sub' }, h('h4', {}, t('channels')), h('div', { class: 'grid' }, channelSelects)),
+    h('div', { class: 'sub' }, h('h4', {}, t('channels')), help('channels'), h('div', { class: 'grid' }, channelSelects)),
     h('div', { class: 'sub' },
-      h('h4', {}, t('webhooks')),
+      h('h4', {}, t('webhooks')), help('webhooks'),
       (c.webhooks ?? []).length ? c.webhooks.map((w) => h('div', { class: 'item' },
         h('code', {}, w.url), h('span', { class: 'muted' }, `${t('events')}: ${(w.events ?? [t('allEvents')]).join(', ')}`),
         w.description ? h('span', { class: 'muted' }, w.description) : null,
@@ -341,9 +409,10 @@ function clientCard(c) {
           }, null);
         },
       }, t('register'))),
+      help('webhookUrl'), help('eventsLegend'),
     ),
     h('div', { class: 'sub' },
-      h('h4', {}, t('keys')),
+      h('h4', {}, t('keys')), help('keys'),
       c.keys.length ? c.keys.map((k) => h('div', { class: 'item' },
         h('code', {}, `${k.prefix}…`), h('span', { class: 'muted' }, `${t('scopes')}: ${k.scopes.join(', ')}`),
         h('span', { class: 'muted' }, `${t('used')}: ${when(k.lastUsedAt)}`),
@@ -356,6 +425,7 @@ function clientCard(c) {
           if (scopes.length) act(async () => showSecret((await api('POST', `clients/${c.id}/keys`, { scopes })).key), null);
         },
       }, t('newKey'))),
+      help('scopesLegend'),
     ),
   );
 }
@@ -367,7 +437,7 @@ function newClientForm() {
     class: 'card',
     onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'clients', { name: name.value.trim(), kind: kind.value })); },
   }, h('div', { class: 'row' }, name, kind, h('button', { type: 'submit' }, t('create')),
-    h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))));
+    h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))), help('newClientKind'));
   return form;
 }
 
@@ -405,7 +475,8 @@ function draw() {
   const match = (input) => (x) => x.name.toLowerCase().includes($(input).value.trim().toLowerCase());
   const list = (items, input, card, target) => {
     const shown = items.filter(match(input));
-    $(target).replaceChildren(...(shown.length < items.length ? [h('p', { class: 'muted' }, t('shown', { n: shown.length, total: items.length }))] : []),
+    $(target).replaceChildren(h('p', { class: 'intro' }, HELP[lang][tab === 'persons' ? 'introPersons' : 'introClients']),
+      ...(shown.length < items.length ? [h('p', { class: 'muted' }, t('shown', { n: shown.length, total: items.length }))] : []),
       ...shown.map(card));
   };
   if (tab === 'persons') list(personsCache, 'person-search', personCard, 'person-list');

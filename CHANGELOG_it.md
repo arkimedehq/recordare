@@ -7,6 +7,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ## [Non rilasciato]
 
 ### Aggiunto
+- **La console di amministrazione spiega ogni campo** (italiano e inglese): cosa fa e quando cambiarlo, sotto ogni
+  impostazione; una legenda dei permessi di chiavi e token e degli eventi dei webhook; una breve introduzione a persone e
+  client.
 - **`InitiativeInbox`** nella libreria client: ciò che ogni ospite fa per consegnare le iniziative, una volta sola —
   webhook verificati (un `webhook-id` ripetuto ignorato), impulsi di presenza, il feed recuperato da un cursore, ogni
   iniziativa passata una volta al `deliver` dell'ospite, l'esito che restituisce riportato; archivi durevoli `seen` /
