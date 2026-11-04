@@ -16,7 +16,7 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   massimo `EMBEDDING_BACKGROUND_BATCH_CHARS` caratteri (default 2000), e partono dopo una pausa della conversazione
   (`EMBEDDING_QUIET_MS`, default 10 s; al massimo 60 s di attesa). Stesso caso dopo: 137 ms. Le query ripetute vengono da
   una piccola cache, e gli strumenti di richiamo di un turno condividono una sola richiesta per la stessa query. Il
-  contesto di memoria aspetta i suoi vettori al massimo `CONTEXT_EMBEDDING_BUDGET_MS` (default 1 s), poi serve la sola
+  contesto di memoria aspetta i suoi vettori al massimo `CONTEXT_EMBEDDING_BUDGET_MS` (default 1,5 s), poi serve la sola
   scheda di sé invece di far aspettare l'ospite. `recall.served` (Atlas) riporta `embedMs`, e `late` quando il budget è
   stato mancato. Nessun cambio all'API. Cambia un comportamento: durante una conversazione un messaggio nuovo diventa
   cercabile per vettore fino a un minuto dopo (il full-text lo trova nel frattempo); con una GPU o un provider di

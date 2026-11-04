@@ -63,7 +63,7 @@ const baseSchema = z.object({
   /** D54: a message of at most this many words is matched with the person's previous turn too (0: never). */
   CONTEXT_SHORT_QUERY_WORDS: z.coerce.number().int().min(0).max(50).optional(),
   /** Memory context: the longest wait for its query vectors (ms); later, the block holds the self card only (0: no limit). */
-  CONTEXT_EMBEDDING_BUDGET_MS: z.coerce.number().int().min(0).default(1_000),
+  CONTEXT_EMBEDDING_BUDGET_MS: z.coerce.number().int().min(0).default(1_500),
   /** Installation override of the quality profile's nightly facts review (M5). */
   FACTS_REVIEW: bool.optional(),
   /** Installation override of the quality profile's nightly pattern pass (WORK_PLAN 5.4). */

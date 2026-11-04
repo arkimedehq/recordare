@@ -15,7 +15,7 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   request at a time, in requests of at most `EMBEDDING_BACKGROUND_BATCH_CHARS` characters (default 2000), and start
   after a pause in the conversation (`EMBEDDING_QUIET_MS`, default 10 s; 60 s of waiting at most). Same case after:
   137 ms. Repeated queries come from a small cache, and the recall tools of one turn share one request for the same
-  query. The memory context waits at most `CONTEXT_EMBEDDING_BUDGET_MS` (default 1 s) for its vectors, then serves the
+  query. The memory context waits at most `CONTEXT_EMBEDDING_BUDGET_MS` (default 1.5 s) for its vectors, then serves the
   self card alone instead of making the host wait. `recall.served` (Atlas) carries `embedMs`, and `late` when the
   budget was missed. No API change. Behaviour change: during a conversation, a new message is vector-searchable up to a
   minute later (full-text finds it meanwhile); on a GPU or hosted embedding provider, raise
