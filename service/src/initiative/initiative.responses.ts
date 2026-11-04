@@ -29,6 +29,7 @@ export const initiative = z.object({
   source: z.object({ conversation: z.string(), messageIds: z.array(z.string()) }).nullable()
     .describe('The client\'s own ids of the messages its intent came from: a host recognises a reminder it scheduled itself.'),
   offeredAt: z.string().nullable(),
+  pushedAt: z.string().nullable().describe('When Recordare pushed it to its channel (event `initiative.deliver`).'),
 });
 
 export const initiativesResponse = z.object({ items: z.array(initiative), next: z.number().int(), more: z.boolean() });

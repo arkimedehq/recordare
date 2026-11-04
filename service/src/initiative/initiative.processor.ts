@@ -37,9 +37,19 @@ export class InitiativeProcessor extends WorkerHost implements OnModuleInit {
     }
   }
 
-  async process(_job: Job): Promise<void> {
+  async process(job: Job<{ memoryId?: string }>): Promise<void> {
     if (!this.config.get('CONSOLIDATION_SCHEDULE', { infer: true })) return;
-    await this.initiatives.sweepAll(this.clock.now());
+    // A timed initiative's own minute (D55 F2a): its memory alone.
+    if (job.name === 'memory' && job.data.memoryId) {
+      await this.initiatives.sweep(job.data.memoryId, this.clock.now());
+      return;
+    }
+    const now = this.clock.now();
+    await this.initiatives.sweepAll(now);
+    for (const t of await this.initiatives.timedSoon(now)) {
+      await this.queue.add('memory', { memoryId: t.memoryId }, { delay: Math.max(0, t.at.getTime() - now.getTime()), jobId: `timed-${t.key}`,
+        removeOnComplete: true, removeOnFail: true });
+    }
     this.log.debug('initiative sweep done');
   }
 }

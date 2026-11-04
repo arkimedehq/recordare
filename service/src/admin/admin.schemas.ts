@@ -40,8 +40,8 @@ export const registerWebhookSchema = z.object({
   token: z.string().min(8).max(200).optional(),
   authentication: z.object({ scheme: z.string().min(1).max(40), credentials: z.string().max(2_000).optional() }).optional(),
   description: z.string().trim().max(200).optional(),
-  /** The event types this endpoint takes (default: all) — an endpoint that delivers straight to a chat takes `initiative.created` only. */
-  events: z.array(z.enum(['initiative.created', 'initiative.updated', 'initiative.expired'])).min(1).optional(),
+  /** The event types this endpoint takes (default: all) — an endpoint that delivers straight to a chat takes `initiative.deliver` only. */
+  events: z.array(z.enum(['initiative.created', 'initiative.deliver', 'initiative.updated', 'initiative.expired'])).min(1).optional(),
 });
 export type RegisterWebhook = z.infer<typeof registerWebhookSchema>;
 

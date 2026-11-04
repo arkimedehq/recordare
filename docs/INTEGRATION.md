@@ -203,8 +203,8 @@ known participant who shows up under a new name on the channel keeps their conta
 > is talking (send `initiatives: {lookups: true}` when your agent has tools); (c) sends a **presence impulse** when it
 > recognises someone (`client.presence(user, {channel, person?, confidence})` — your voiceprint or face model's score; an
 > account is 1) and speaks the `initiative` it gets back, or asks "is it you?" for `askWho`; (d) reports outcomes with
-> `channel` and `reaction`; (e) on a webhook, skips an initiative already `offered` and recognises a reminder it
-> scheduled itself by `source`. The steps below still hold for push delivery.
+> `channel` and `reaction`; (e) delivers on the webhook event `initiative.deliver` (Recordare chose the moment; deliver
+> on `data.channel`), takes the other events as information, and recognises a reminder it scheduled itself by `source`. The steps below still hold for push delivery.
 
 Recordare pushes what the agent decided to say, ask or look up (`API.md` §4b). Your platform delivers it **when the
 person is there** (presence is yours: a chat open now, a recognised voice in the room, someone at the panel), reports

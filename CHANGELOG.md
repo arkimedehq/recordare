@@ -20,6 +20,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   `reaction` and keep the delay; clients declare their `channels`; webhooks take `events`. Memory charter `charter.v2`
   (how to use an initiative line). Migration `InitiativeDelivery`. Additive, no breaking change; a client library
   release is needed for `presence()` and the new types.
+- **Timing v0: the clock chooses the moment** (D55 F2a). Pending initiatives with a channel that always reaches the person
+  are pushed when it is time: a timed one at its minute (the memory is swept at that minute), a flexible one when a
+  cost-sensitive gate passes (the worth × the hour's fit ÷ what the person already got today, against the kind's
+  threshold), an owed one at its last chance; never in the quiet hours. Pushed ones go out as the new webhook event
+  `initiative.deliver` (`pushedAt`); every decision — clock, presence, turn — is logged with its probability
+  (`initiative_decisions`, migration `InitiativeTiming`).
 
 ### Fixed
 - **The memory context no longer waits for background embeddings.** On a host sharing a CPU embedding server (one
