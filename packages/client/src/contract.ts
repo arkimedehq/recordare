@@ -312,12 +312,47 @@ export interface Initiative {
   dueAt: string;
   /** Until when; then it lapses, quietly. */
   expiresAt: string;
-  status: 'pending' | 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
+  /** offered: given to the agent in a turn or after a presence impulse (D55), waiting for what happens next. */
+  status: 'pending' | 'offered' | 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
   outcomeAt: string | null;
   reply: string | null;
   createdAt: string;
+  /** D55: timed (a time was asked for) or flexible (a window, the moment chosen by Recordare). */
+  timing: 'timed' | 'flexible';
+  window: { notBefore: string; notAfter: string };
+  /** Where it was offered, or will be delivered (a declared channel); null: at the person's next presence or turn. */
+  channel: string | null;
+  /** How surely the person must be recognised before hearing it. */
+  identity: { required: 'medium' | 'high' };
+  /** Your own ids of the messages its intent came from: recognise a reminder you scheduled yourself (and report it done). */
+  source: { conversation: string; messageIds: string[] } | null;
+  offeredAt: string | null;
 }
 export type InitiativeOutcome = 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
+/** Where an initiative reached the person (D55). */
+export type DeliveryChannel = 'turn' | 'chat' | 'messaging' | 'voice' | 'panel';
+
+/** A presence impulse (D55): who the agent sees or hears now. The agent recognises; Recordare never reads a sensor. */
+export interface PresenceImpulse {
+  /** An identity as in ingest (a voice profile, a face: `{channel, externalId}`; or `{externalUserId}`); none: the holder of a personal memory. */
+  person?: { identity: { channel: string; externalId: string } | { externalUserId: string } };
+  channel: 'voice' | 'camera' | 'panel' | 'chat';
+  /** How sure the agent is of who it is (its model's score; 1 for an account). Default 1. */
+  confidence?: number;
+  /** How long the presence holds (default 120 s). */
+  ttlSeconds?: number;
+  place?: string;
+  /** The person left. */
+  left?: boolean;
+}
+
+/** What Recordare answers to a presence impulse: who it is, what to tell or ask them now (offered), or whom to ask about. */
+export interface PresenceResult {
+  person: { personId: string; name: string } | null;
+  initiative: Initiative | null;
+  /** Nobody identified and something waits for this person: ask whether it is them, revealing nothing of it. */
+  askWho: { personId: string; name: string } | null;
+}
 
 /** A webhook event (Standard Webhooks envelope): `data` is the initiative with the client's own `user` id for the memory. */
 export interface WebhookEvent {
@@ -396,6 +431,8 @@ export interface Source {
 export interface ContextOptions {
   /** Open the block with the self card — who I am: current facts and notes about me. On by default (D54); false turns it off. */
   card?: boolean;
+  /** D55: what your agent can do with the memory's initiatives — `lookups`: it has tools to find things out with. */
+  initiatives?: { lookups?: boolean };
 }
 
 /** `GET api/v1/charter`: the memory charter (D54) — how the agent uses its memory, for its system prompt. */

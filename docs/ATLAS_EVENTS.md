@@ -43,7 +43,7 @@ fact or note. Everything above stays metadata only.
 | `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | a memory's consolidation ends |
 | `episode.forgotten` | `ids` | episodes forgotten |
 | `initiative.created` | `id`, `kind` (`say` / `ask` / `lookup` / `do`) | the agent decided to say or do something on its own (D53, 8.12c) |
-| `initiative.outcome` | `id`, `status` (`said` / `asked` / `ignored` / `declined` / `done` / `failed` / `expired`) | what the client reported of an initiative |
+| `initiative.outcome` | `id`, `status` (`offered` — given in a turn or after a presence impulse, D55 — / `said` / `asked` / `ignored` / `declined` / `done` / `failed` / `expired`) | what became of an initiative (the client's report, or what Recordare saw) |
 
 Client platforms (agents, their LLM calls, tools) reach the atlas on their own channel — OpenTelemetry GenAI traces —
 not through this stream (WORK_PLAN 5b.8).

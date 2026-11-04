@@ -27,6 +27,8 @@ import { type HolderIdentities, type LinkCode } from '../../src/identity/holder-
 import type * as client from '../../../packages/client/src/index.js';
 import type * as read from '../../src/read/read.responses';
 import type * as api from '../../src/openapi/responses';
+import type * as ini from '../../src/initiative/initiative.responses';
+import { InitiativeService } from '../../src/initiative/initiative.service';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
 // ── Contract drift (compile time) ──────────────────────────────────────────────
@@ -49,7 +51,8 @@ export type AnswersFitClient = Assert<Extends<[
   Answer<typeof read.usageResponse>, Answer<typeof read.exportResponse>, Answer<typeof api.contextResponse>, Answer<typeof api.meResponse>,
   Answer<typeof api.ingestResponse>, Answer<typeof api.roomResponse>, Answer<typeof api.learnSourceResponse>, Answer<typeof api.sourcesResponse>,
   Answer<typeof api.linkCodeResponse>, Answer<typeof api.holderIdentitiesResponse>, Answer<typeof api.erasedResponse>, Answer<typeof read.cardsResponse>,
-  Answer<typeof api.charterResponse>,
+  Answer<typeof api.charterResponse>, Answer<typeof ini.initiativesResponse>['items'], Answer<typeof ini.initiativeResponse>,
+  Answer<typeof ini.presenceResponse>,
 ], [
   { items: client.Episode[]; nextCursor: string | null }, client.EpisodeDetail, client.Digest[],
   client.Fact[], client.FactDetail, client.Note[],
@@ -57,7 +60,8 @@ export type AnswersFitClient = Assert<Extends<[
   client.Usage, client.ExportJob, client.MemoryContext, client.Me,
   client.IngestResult, client.RoomResult, client.LearnSourceResult, client.Source[],
   client.LinkCode, client.HolderIdentities, client.Erased, client.Cards,
-  client.Charter,
+  client.Charter, client.Initiative[], client.Initiative,
+  client.PresenceResult,
 ]>>;
 
 describe('client conformance (packages/client against the service)', () => {
@@ -137,6 +141,21 @@ describe('client conformance (packages/client against the service)', () => {
     expect(await db().query(`SELECT count(*)::int AS n FROM messages WHERE external_id = 't1'`)).toEqual([{ n: 1 }]);
     await rc.endConversation('user-1', 'chat-2');
     await rc.endConversation('user-1', 'chat-never-seen'); // nothing to end: done
+  });
+
+  it('gives an initiative to the person present, reads it in the feed, reports it with its context (D55)', async () => {
+    const { memoryId } = await rc.me('user-1');
+    const now = new Date();
+    await db().query(`INSERT INTO intents (memory_id, kind, content, due_at, expires_at) VALUES ($1, 'request', 'stendere i panni', $2, $3)`,
+      [memoryId, new Date(now.getTime() - 60_000), new Date(now.getTime() + 86_400_000)]);
+    await app.get(InitiativeService).sweep(memoryId, now);
+    const [created] = (await rc.initiatives('user-1')).items;
+    expect(created).toMatchObject({ status: 'pending', timing: 'flexible', identity: { required: 'medium' } });
+    const seen = await rc.presence('user-1', { channel: 'panel' }); // a personal memory: no person is its holder
+    expect(seen.person?.personId).toBe(memoryId);
+    expect(seen.initiative).toMatchObject({ id: created!.id, status: 'offered', channel: 'panel' });
+    const done = await rc.reportInitiative('user-1', created!.id, 'said', { channel: 'panel', reaction: 'positive' });
+    expect(done.status).toBe('said');
   });
 
   it('reads the memory charter the agent\'s system prompt carries (D54)', async () => {

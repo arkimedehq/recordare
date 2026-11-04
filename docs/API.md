@@ -642,7 +642,36 @@ private or public again (§2) has its days written again.
 | `DELETE api/v1/me/identities/{id}` | ingest | Unlink a linked identity → 204: that sender is a participant like any other again (a new contact) |
 
 ## 4b. Initiatives — what the agent says or does on its own (D53, WORK_PLAN 8.12c) — first cut built 2026-11-01
-> **D55** (2026-11-04): who, when and where become Recordare's decision — presence impulses, channels per client, timing windows, `offered`, webhook `events`; additive changes specified in `INITIATIVES_DELIVERY.md`, not built yet.
+> **D55 — delivery decided by Recordare** (F1 built 2026-11-04; `INITIATIVES_DELIVERY.md`). Additive:
+> - **Presence impulse** `POST api/v1/presence {person?: {identity}, channel: voice | camera | panel | chat, confidence?
+>   (0–1, default 1), ttlSeconds? (default 120), place?, left?}` (scope `ingest`, the user header; `X-Recordare-Now` with
+>   `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: the person resolved in this memory (an identity as in ingest;
+>   none: the holder of a personal memory; an unknown identity creates nobody), the one initiative to deliver now (marked
+>   `offered`, `channel` voice / panel / chat — report its outcome afterwards), or, in an entity memory with nobody
+>   identified, whom the agent may ask "is it you?" (nothing of it revealed).
+> - **In the turn**: `POST api/v1/context` adds at most one initiative due for whoever is talking, as a block line
+>   (`- something I meant to tell you (my own initiative; say it if natural, once): …`, `ask`, and `lookup` only with
+>   `initiatives: {lookups: true}` in the body — the host's agent has tools), or `- if natural, ask whether you are talking
+>   with <name> …`; marked `offered` (`channel: turn`, the conversation kept), never twice. No new response field.
+> - **Who**: an initiative for a person reaches only that person, recognised with confidence ≥ 0.6 (`identity.required:
+>   medium`) or ≥ 0.85 (`high`: it came from a private message); one for nobody in particular reaches the holder of a
+>   personal memory and, in an entity memory, anyone identified — or whoever talks in the conversation it came from. A
+>   platform account or a verified participant identity counts 1.
+> - **The initiative** gains `timing` (`timed`: a time was asked for; `flexible`), `window {notBefore, notAfter}` (today
+>   `dueAt` / `expiresAt`), `channel` (offered on, or where it will be delivered: a client's declared channel that
+>   reaches at any time — messaging first when timed, chat first when flexible; null: next presence or turn), `identity
+>   {required}`, `source {conversation, messageIds}` (your ids of the messages its intent came from — recognise a reminder
+>   you scheduled yourself), `offeredAt`, and the status `offered`.
+> - **Closing what was offered**, no LLM call: the conversation's extraction sees the reminder given or the request
+>   withdrawn (INTENTS), the plan's outcome told, the question answered → `said` / `asked` / `done`, or `declined` for a
+>   withdrawal (a pending one whose intent is done becomes `done`); offered and not followed up by `expiresAt` →
+>   `expired` (a `say`) or `ignored` (an ask: offered once more a week later).
+> - **Outcome with context**: `POST api/v1/initiatives/{id}/outcome` accepts `channel` (`turn | chat | messaging | voice |
+>   panel`) and `reaction` (`positive | neutral | negative`); the delay since `dueAt` is computed — the data timing will
+>   learn from (F4).
+> - **Channels per client** (admin): `channels: [{kind: chat | messaging | voice, reach: always | presence}]` on `POST` /
+>   `PATCH api/v1/admin/clients` (each kind once). **Webhook events**: `events` on registration (default all three; an
+>   endpoint that delivers straight to a chat takes `initiative.created` only).
 
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,

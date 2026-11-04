@@ -51,6 +51,9 @@ export class Memory {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
 }
 
+export const CHANNEL_KINDS = ['chat', 'messaging', 'voice'] as const;
+export interface ClientChannel { kind: (typeof CHANNEL_KINDS)[number]; reach: 'always' | 'presence' }
+
 @Entity('clients')
 export class Client {
   @PrimaryGeneratedColumn('uuid') id!: string;
@@ -58,6 +61,8 @@ export class Client {
   @Column({ type: 'enum', enumName: 'client_kind', enum: ['platform', 'mcp_client', 'import'] }) kind!: 'platform' | 'mcp_client' | 'import';
   @Column({ name: 'auto_provision', type: 'boolean', default: false }) autoProvision!: boolean;
   @Column({ name: 'raw_log_scope', type: 'enum', enumName: 'raw_log_scope', enum: ['own', 'all'], default: 'own' }) rawLogScope!: 'own' | 'all';
+  /** The channels the client declares (D55) and how each reaches a person: `always` (chat, messaging) or `presence` (voice). */
+  @Column({ type: 'jsonb', default: () => "'[]'" }) channels!: ClientChannel[];
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
   @Column({ name: 'disabled_at', type: 'timestamptz', nullable: true }) disabledAt!: Date | null;
 }

@@ -2,7 +2,7 @@
 // Copyright © 2026 Andrea Genovese
 
 import { z } from 'zod';
-import { MEMORY_GENDERS, MEMORY_MODES, SCOPES } from '../identity/identity.entities';
+import { CHANNEL_KINDS, MEMORY_GENDERS, MEMORY_MODES, SCOPES } from '../identity/identity.entities';
 import { QUALITY_PROFILES } from '../engine/quality-profile';
 import { canonicalLocale } from '../lang';
 
@@ -10,17 +10,24 @@ const scopes = z.array(z.enum(SCOPES)).min(1);
 /** The memory's language: any BCP 47 locale, stored canonical ("it-it" → "it-IT"). */
 const locale = z.string().refine((l) => !!canonicalLocale(l), 'invalid locale').transform((l) => canonicalLocale(l)!);
 
+/** The channels a client declares (D55): each kind once, with how it reaches a person. */
+const channels = z.array(z.object({ kind: z.enum(CHANNEL_KINDS), reach: z.enum(['always', 'presence']) })).max(CHANNEL_KINDS.length)
+  .refine((l) => new Set(l.map((c) => c.kind)).size === l.length, 'each channel kind once');
+
 export const createClientSchema = z.object({
   name: z.string().min(1).max(200),
   kind: z.enum(['platform', 'mcp_client', 'import']),
   autoProvision: z.boolean().default(false),
   rawLogScope: z.enum(['own', 'all']).default('own'),
+  channels: channels.default([]),
 });
 
 export const updateClientSchema = z.object({
   autoProvision: z.boolean().optional(),
   /** true = every key and token of the client stops working at once; false = back on. */
   disabled: z.boolean().optional(),
+  /** The channels the client can reach a person on (D55): chat and messaging `always`, voice on `presence`. */
+  channels: channels.optional(),
 });
 
 /**
@@ -33,6 +40,8 @@ export const registerWebhookSchema = z.object({
   token: z.string().min(8).max(200).optional(),
   authentication: z.object({ scheme: z.string().min(1).max(40), credentials: z.string().max(2_000).optional() }).optional(),
   description: z.string().trim().max(200).optional(),
+  /** The event types this endpoint takes (default: all) — an endpoint that delivers straight to a chat takes `initiative.created` only. */
+  events: z.array(z.enum(['initiative.created', 'initiative.updated', 'initiative.expired'])).min(1).optional(),
 });
 export type RegisterWebhook = z.infer<typeof registerWebhookSchema>;
 

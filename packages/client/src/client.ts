@@ -6,7 +6,7 @@ import {
   type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
-  type Initiative, type InitiativeOutcome,
+  type DeliveryChannel, type Initiative, type InitiativeOutcome, type PresenceImpulse, type PresenceResult,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
@@ -325,9 +325,22 @@ export class RecordareClient {
     return this.http.request('GET', `api/v1/initiatives${qs(query)}`, { user });
   }
 
-  /** What became of an initiative: said / asked (delivered), ignored, declined, done (a lookup or an action), failed. */
-  reportInitiative(user: string, id: string, status: InitiativeOutcome, extra: { at?: string; reply?: string } = {}): Promise<Initiative> {
+  /**
+   * What became of an initiative: said / asked (delivered), ignored, declined, done (a lookup or an action), failed — with
+   * where it reached the person and how it was taken (D55: what Recordare learns the right moment from).
+   */
+  reportInitiative(user: string, id: string, status: InitiativeOutcome,
+    extra: { at?: string; reply?: string; channel?: DeliveryChannel; reaction?: 'positive' | 'neutral' | 'negative' } = {}): Promise<Initiative> {
     return this.http.request('POST', `api/v1/initiatives/${enc(id)}/outcome`, { user, body: { status, ...extra } });
+  }
+
+  /**
+   * A presence impulse (D55, needs `ingest`): the agent saw or heard someone. Recordare answers at once with what to tell
+   * or ask them now, if this is the moment (`initiative`, already offered: report its outcome afterwards), or whom to ask
+   * "is it you?" when nobody was identified.
+   */
+  presence(user: string, impulse: PresenceImpulse): Promise<PresenceResult> {
+    return this.http.request('POST', 'api/v1/presence', { user, body: impulse });
   }
 
   settings(user: string): Promise<MemorySettings> {

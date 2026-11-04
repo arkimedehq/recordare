@@ -18,6 +18,7 @@ import { NOW_HEADER } from '../mcp/mcp-tools';
 import { ingestSchema } from '../rawlog/ingest.schemas';
 import { IngestService } from '../rawlog/ingest.service';
 import { RawLogModule } from '../rawlog/rawlog.module';
+import { InitiativeModule } from '../initiative/initiative.module';
 import { ContextService, type MemoryContext } from './context.service';
 
 const contextSchema = z.object({
@@ -30,6 +31,8 @@ const contextSchema = z.object({
   ingest: ingestSchema.optional(),
   /** Open the block with the self card — who I am: current facts and notes about me (WORK_PLAN 8.13). On by default (D54). */
   card: z.boolean().optional(),
+  /** D55: what the host's agent can do with the memory's initiatives — `lookups`: it has tools to find things out with. */
+  initiatives: z.object({ lookups: z.boolean().optional() }).optional(),
 });
 
 const charterQuery = z.object({
@@ -73,7 +76,7 @@ export class ContextController {
     const ctx = await this.conversations.resolve(principal, memoryId, conversation);
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
     const now = override && !Number.isNaN(override.getTime()) ? override : this.clock.now();
-    return this.context.build(memoryId, query.trim().slice(0, 8_000), ctx.conversationId, now, { card: body.card });
+    return this.context.build(memoryId, query.trim().slice(0, 8_000), ctx.conversationId, now, { card: body.card, lookups: body.initiatives?.lookups });
   }
 }
 
@@ -92,5 +95,5 @@ export class CharterController {
   }
 }
 
-@Module({ imports: [RawLogModule], controllers: [ContextController, CharterController], providers: [ContextService, ConversationResolver] })
+@Module({ imports: [RawLogModule, InitiativeModule], controllers: [ContextController, CharterController], providers: [ContextService, ConversationResolver] })
 export class ContextModule {}

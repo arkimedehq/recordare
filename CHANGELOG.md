@@ -6,6 +6,21 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Initiatives decided by Recordare: who, when, where** (D55, `docs/INITIATIVES_DELIVERY.md` F1). A presence impulse
+  (`POST api/v1/presence`, library `presence()`) — the agent says whom it sees or hears, by what, how sure — is answered
+  at once with the one initiative to deliver now, or, in an entity memory with nobody identified, whom to ask "is it
+  you?" (nothing revealed). The memory context carries the initiative due for whoever is talking (the in-turn channel:
+  every full-level client delivers initiatives with no code; look-ups only with `initiatives: {lookups: true}`). An
+  initiative for a person reaches only that person, recognised with confidence ≥ 0.6, or ≥ 0.85 when it came from a
+  private message; in an entity memory one for nobody in particular reaches anyone identified, or whoever talks in the
+  conversation it came from. New status `offered`, closed by what the conversation's extraction sees (said, asked, done,
+  declined) or lapsing as expired / ignored. Initiatives gain `timing` (timed / flexible), `window`, `channel`,
+  `identity`, `source` (the client's ids of the messages they came from), `offeredAt`; outcomes take `channel` and
+  `reaction` and keep the delay; clients declare their `channels`; webhooks take `events`. Memory charter `charter.v2`
+  (how to use an initiative line). Migration `InitiativeDelivery`. Additive, no breaking change; a client library
+  release is needed for `presence()` and the new types.
+
 ### Fixed
 - **The memory context no longer waits for background embeddings.** On a host sharing a CPU embedding server (one
   request at a time, e.g. Arkimede's), the turn just ingested — tool outputs of 4–8 000 characters — was embedded in

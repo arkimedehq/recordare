@@ -92,9 +92,10 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `autoProvision` | off | Crea una persona al primo contatto di un nuovo utente |
 | `rawLogScope` | `own` | Estratti del registro grezzo solo dalle conversazioni di questo client, o da tutte |
 | `disabled` | off | Tutte le chiavi e i token del client smettono subito di funzionare |
+| `channels` | `[]` | D55: i canali su cui il client raggiunge una persona, ognuno con il modo — `chat` / `messaging` `always`, `voice` su `presence`; il `channel` di una nuova iniziativa viene scelto tra questi (prima la messaggistica se a orario, prima la chat se flessibile). Le soglie di identità 0,6 (medium) / 0,85 (high) sono costanti (`IDENTITY_THRESHOLD`), non ancora misurate |
 | Permessi delle chiavi | — | `ingest`, `mcp`, `read`, `write` (mai admin, impostazioni della memoria o export) |
 
-Webhook (D53, 8.12c): `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?, description?}` registra dove un client riceve le iniziative dell'agente (Standard Webhooks, il segreto `whsec_` mostrato una sola volta); `GET …/webhooks`, `DELETE api/v1/admin/webhooks/{id}`. `API.md` §4b.
+Webhook (D53, 8.12c): `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?, description?, events?}` registra dove un client riceve le iniziative dell'agente (Standard Webhooks, il segreto `whsec_` mostrato una sola volta); `GET …/webhooks`, `DELETE api/v1/admin/webhooks/{id}`. `API.md` §4b.
 
 ## 6. Script di installazione (`deploy/`)
 

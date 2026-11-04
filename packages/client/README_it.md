@@ -101,6 +101,11 @@ restituito dalla registrazione; lancia `WebhookVerificationError`). Consegna un'
 destinata (`for`, o il titolare) è presente e prima di `expiresAt`; un `lookup` è per gli strumenti propri del tuo
 agente; poi `reportInitiative(user, id, outcome)` con `said` / `asked` / `ignored` / `declined` / `done` / `failed`
 (API.md §4b, INTEGRATION.md §4d).
+D55 — Recordare decide a chi, quando e dove: manda `presence(user, {channel, person?, confidence?})` quando il tuo agente
+riconosce qualcuno (il punteggio del tuo modello di impronta vocale o di volto; un account vale 1) e di' l'`initiative`
+che ricevi (già `offered`), o chiedi "sei tu?" per `askWho`; passa `channel` e `reaction` a `reportInitiative`; usa
+`context(…, {initiatives: {lookups: true}})` quando il tuo agente ha strumenti; `source` in un'iniziativa indica i tuoi
+messaggi da cui è nata (un promemoria programmato da te).
 
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:

@@ -71,8 +71,9 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     await window([say('h1', 'marta', 'Domani alle 9 ricordami di innaffiare le piante.', '2026-10-05T11:00:00+02:00'),
       say('h2', null, 'Fatto: promemoria impostato per domani alle 9.', '2026-10-05T11:00:30+02:00')],
     { intents: [{ kind: 'request', content: 'innaffiare le piante', due: '2026-10-06T09:00', for: 'Marta', evidence: [1] }] });
-    const [handled] = await db.query(`SELECT status::text, due_at FROM intents WHERE content = 'innaffiare le piante'`);
+    const [handled] = await db.query(`SELECT status::text, due_at, timed FROM intents WHERE content = 'innaffiare le piante'`);
     expect(handled.status).toBe('armed');
+    expect(handled.timed).toBe(true); // D55: a time was asked for — a timed initiative
     expect(new Date(handled.due_at).toISOString()).toBe('2026-10-06T07:00:00.000Z'); // 09:00 in Rome: the time kept
     await db.query(`DELETE FROM intents WHERE content = 'innaffiare le piante'`);
 

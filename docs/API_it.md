@@ -658,7 +658,38 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 | `DELETE api/v1/me/identities/{id}` | ingest | Scollega un'identità collegata → 204: quel mittente torna un partecipante come gli altri (un nuovo contatto) |
 
 ## 4b. Iniziative — ciò che l'agente dice o fa da sé (D53, WORK_PLAN 8.12c) — prima versione costruita il 2026-11-01
-> **D55** (2026-11-04): a chi, quando e dove diventano decisione di Recordare — impulsi di presenza, canali per client, finestre di tempo, `offered`, `events` dei webhook; cambi additivi specificati in `INITIATIVES_DELIVERY_it.md`, non ancora costruiti.
+> **D55 — la consegna la decide Recordare** (F1 costruita il 2026-11-04; `INITIATIVES_DELIVERY_it.md`). Additivo:
+> - **Impulso di presenza** `POST api/v1/presence {person?: {identity}, channel: voice | camera | panel | chat,
+>   confidence? (0–1, default 1), ttlSeconds? (default 120), place?, left?}` (scope `ingest`, l'header dell'utente;
+>   `X-Recordare-Now` con `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: la persona risolta in questa memoria
+>   (un'identità come nell'ingest; nessuna: il titolare di una memoria personale; un'identità sconosciuta non crea nessuno),
+>   l'unica iniziativa da consegnare adesso (segnata `offered`, `channel` voice / panel / chat — riportarne poi l'esito),
+>   oppure, in una memoria di entità senza nessuno identificato, a chi l'agente può chiedere "sei tu?" (senza rivelare
+>   nulla).
+> - **Nel turno**: `POST api/v1/context` aggiunge al massimo un'iniziativa dovuta per chi sta parlando, come riga del
+>   blocco (`- something I meant to tell you (my own initiative; say it if natural, once): …`, `ask`, e `lookup` solo con
+>   `initiatives: {lookups: true}` nel corpo — l'agente dell'ospite ha strumenti), oppure `- if natural, ask whether you
+>   are talking with <nome> …`; segnata `offered` (`channel: turn`, la conversazione registrata), mai due volte. Nessun
+>   campo nuovo nella risposta.
+> - **A chi**: un'iniziativa per una persona raggiunge solo quella persona, riconosciuta con sicurezza ≥ 0,6
+>   (`identity.required: medium`) o ≥ 0,85 (`high`: nasce da un messaggio privato); una per nessuno in particolare
+>   raggiunge il titolare di una memoria personale e, in una memoria di entità, chiunque sia identificato — o chi parla
+>   nella conversazione da cui è nata. Un account della piattaforma o un'identità di partecipante verificata vale 1.
+> - **L'iniziativa** riceve `timing` (`timed`: è stata chiesta un'ora; `flexible`), `window {notBefore, notAfter}` (oggi
+>   `dueAt` / `expiresAt`), `channel` (dove è stata offerta, o dove verrà consegnata: un canale dichiarato da un client che
+>   raggiunge sempre — prima la messaggistica se a orario, prima la chat se flessibile; null: alla prossima presenza o
+>   turno), `identity {required}`, `source {conversation, messageIds}` (i tuoi id dei messaggi da cui è nato il suo
+>   intento — riconosci un promemoria programmato da te), `offeredAt`, e lo stato `offered`.
+> - **Chiusura di ciò che è stato offerto**, senza chiamate LLM: l'estrazione della conversazione vede il promemoria dato o
+>   la richiesta ritirata (INTENTS), l'esito del piano raccontato, la domanda con risposta → `said` / `asked` / `done`, o
+>   `declined` per un ritiro (una in attesa il cui intento è fatto diventa `done`); offerta e senza seguito entro
+>   `expiresAt` → `expired` (un `say`) o `ignored` (una domanda: offerta ancora una volta una settimana dopo).
+> - **Esito con contesto**: `POST api/v1/initiatives/{id}/outcome` accetta `channel` (`turn | chat | messaging | voice |
+>   panel`) e `reaction` (`positive | neutral | negative`); il ritardo rispetto a `dueAt` è calcolato — i dati da cui il
+>   tempo imparerà (F4).
+> - **Canali per client** (admin): `channels: [{kind: chat | messaging | voice, reach: always | presence}]` su `POST` /
+>   `PATCH api/v1/admin/clients` (ogni tipo una volta). **Eventi dei webhook**: `events` alla registrazione (default tutti
+>   e tre; un endpoint che consegna direttamente in una chat prende solo `initiative.created`).
 
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o

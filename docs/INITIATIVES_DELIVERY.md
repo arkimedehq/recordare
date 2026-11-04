@@ -159,7 +159,7 @@ Path facts verified 2026-11-04 (connector code, OpenClaw 2026.10.10, hermes-agen
 | Phase | What | Where |
 |---|---|---|
 | **F0** | literature (H14: interruptibility, notification timing, proactive LLM agents, curiosity / active learning); D55; this spec — **done 2026-11-04** (sources, verdict and design consequences in H14) | docs |
-| **F1** | contract: channels, presence impulse, timing / window / channel / identity / `source`, `offered`, `events`; the in-turn channel with identity thresholds; "are you …?" for an unknown speaker | Recordare |
+| **F1** | contract: channels, presence impulse, timing / window / channel / identity / `source`, `offered`, `events`; the in-turn channel with identity thresholds; "are you …?" for an unknown speaker — **built 2026-11-04** (the window is `dueAt` / `expiresAt` until F2; the shared Claude Code / Codex hook's `lookups` line comes with F3) | Recordare |
 | **F2** | timing v0 (classes, windows by rules and by the model, a decision on three triggers: the clock, an impulse, a turn); the new source "something left unfinished"; questions to people (§6); dev sets with timelines (timing) and a growing household (learning by asking) | Recordare + evaluation |
 | **F3** | clients: Arkimede first (receiver, chat + notification, Telegram opt-in, impulses from Voce), then OpenClaw and Hermes | clients |
 | **F4** | timing v1: learning from outcomes; measured on the dev set and on Kinox | Recordare |
