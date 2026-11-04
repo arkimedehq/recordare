@@ -21,7 +21,9 @@ export type TelemetryEvent =
       kind?: string; authorRole?: string; importance?: number; corrects?: string | null }
   | { type: 'episode.linked'; memoryId: string; relation: 'duplicate' | 'corrects'; from: string; to: string }
   | { type: 'recall.served'; memoryId: string; tool: string; mode?: string; episodeIds: string[]; claimIds: string[];
-      chats: number; digests: number; facts?: number; notes?: number }
+      chats: number; digests: number; facts?: number; notes?: number;
+      /** Memory context only: how long its query vectors took (ms), and `late` when they missed its budget (self card only). */
+      embedMs?: number; late?: true }
   | { type: 'digest.written'; memoryId: string; level: 'day' | 'month'; period: string; sources: number }
   | { type: 'consolidation.finished'; memoryId: string; days: number; months: number; llmCalls: number; failed: number }
   | { type: 'episode.forgotten'; memoryId: string; ids: string[] }

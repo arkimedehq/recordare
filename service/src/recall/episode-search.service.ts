@@ -317,7 +317,7 @@ export class EpisodeSearchService {
       text.forEach((r, i) => scores.set(r.id, (scores.get(r.id) ?? 0) + 0.5 / (RRF_K + i + 1)));
     }
     try {
-      const [q] = await this.embeddings.embed([query], 'query');
+      const [q] = await this.embeddings.embed([query], 'query', { priority: 'interactive' });
       if (q) {
         const vec: Array<{ id: string; sim: number }> = await this.db.query(
           `SELECT id, 1 - (embedding <=> $2::vector) AS sim FROM episodes

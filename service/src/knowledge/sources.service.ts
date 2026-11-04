@@ -163,7 +163,7 @@ export class SourcesService {
 
   private async embed(episodeId: string, text: string): Promise<void> {
     try {
-      const [vector] = await this.embeddings.embed([text], 'document');
+      const [vector] = await this.embeddings.embed([text], 'document', { priority: 'interactive' });
       await storeEmbeddings(this.db, 'episodes', this.embeddings.model, [{ id: episodeId, vector, text }]);
     } catch (err) {
       this.log.warn(`learning episode embedding skipped: ${(err as Error).message}`); // full-text still finds it

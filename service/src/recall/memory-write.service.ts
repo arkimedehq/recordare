@@ -341,7 +341,7 @@ export class MemoryWriteService {
 
   private async embed(table: 'episodes' | 'notes' | 'facts', id: string, text: string): Promise<void> {
     try {
-      const [vector] = await this.embeddings.embed([text], 'document');
+      const [vector] = await this.embeddings.embed([text], 'document', { priority: 'interactive' });
       await storeEmbeddings(this.db, table, this.embeddings.model, [{ id, vector, text }]);
     } catch {
       // Embedding is best-effort; full-text still finds the row.

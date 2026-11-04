@@ -96,7 +96,7 @@ export class RawLogSearchService {
 
     let vector: { id: string }[] = [];
     try {
-      const [q] = await this.embeddings.embed([opts.query], 'query');
+      const [q] = await this.embeddings.embed([opts.query], 'query', { priority: 'interactive' });
       if (q) {
         vector = await this.db.query(
           `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id

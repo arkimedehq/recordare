@@ -41,7 +41,7 @@ la `DELETE` di un episodio, fatto o nota. Tutto il resto sopra resta solo metada
 | `work.started` / `work.finished` | `op` (`embed.messages`, `context`, `embed.memories`, `recall`, `consolidation`), `id` (le accoppia) / `ms` | un lavoro senza chiamata LLM inizia / finisce |
 | `memory.written` | `runId`, `table` (`episodes`, `facts`, `notes`), `id`, `kind`, `authorRole`, `importance`, `corrects` | una riga di memoria scritta |
 | `episode.linked` | `relation` (`duplicate`, `corrects`), `from`, `to` | il resolver ha collegato due episodi |
-| `recall.served` | `tool` (uno strumento MCP, oppure `memory_context` per il blocco prima del turno, solo quando non è vuoto), `mode`, `episodeIds`, `claimIds`, `chats`, `digests`, `facts`, `notes` | un richiamo ha risposto |
+| `recall.served` | `tool` (uno strumento MCP, oppure `memory_context` per il blocco prima del turno, solo quando non è vuoto), `mode`, `episodeIds`, `claimIds`, `chats`, `digests`, `facts`, `notes`; per `memory_context` anche `embedMs` (quanto hanno impiegato i suoi vettori di query) e `late: true` quando hanno mancato `CONTEXT_EMBEDDING_BUDGET_MS` (solo la scheda di sé) | un richiamo ha risposto |
 | `digest.written` | `level` (`day`, `month`), `period`, `sources` | un diario notturno scritto |
 | `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | il consolidamento di una memoria termina |
 | `episode.forgotten` | `ids` | episodi dimenticati |

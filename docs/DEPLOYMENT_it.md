@@ -66,7 +66,10 @@ compose) e raggiunge i servizi per nome; nulla viene pubblicato sull'host.
 
 **Che cosa costa la condivisione** — dirlo all'operatore: un Postgres o Redis fermo blocca entrambi i prodotti;
 l'embedder serve due carichi (l'estrazione di Recordare arriva a raffiche, dopo i periodi di inattività e di notte),
-quindi dargli la CPU / memoria che servono a entrambi; i backup restano separati (`pg_dump` per database). Cambiare il
+quindi dargli la CPU / memoria che servono a entrambi (un server di embedding come quello di Arkimede calcola una richiesta
+alla volta: Recordare manda prima le sue query e il suo lavoro in background in richieste brevi durante le pause della
+conversazione, `EMBEDDING_QUIET_MS`, ma i lotti di Arkimede possono ancora ritardare una query — il contesto di memoria
+serve allora la scheda di sé entro `CONTEXT_EMBEDDING_BUDGET_MS`); i backup restano separati (`pg_dump` per database). Cambiare il
 modello di embedding dell'embedder condiviso lo cambia per entrambi: Arkimede ri-calcola gli embedding con il suo job di
 amministrazione, Recordare ri-calcola quelli di episodi, fatti, note e digest — non cambiarlo mai per un solo lato.
 
