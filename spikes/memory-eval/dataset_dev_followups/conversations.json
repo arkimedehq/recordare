@@ -1,0 +1,236 @@
+{
+ "_note": "dev_followups (D55 F2b): things left to finish; see build.py.",
+ "users": {
+  "elena": "Elena, Bologna",
+  "tom": "Tom, London",
+  "casa_bellini": "Casa Bellini, Firenze"
+ },
+ "genders": {
+  "elena": "feminine",
+  "tom": "masculine",
+  "casa_bellini": "feminine"
+ },
+ "entities": [
+  "casa_bellini"
+ ],
+ "sessions": [
+  {
+   "id": "e1",
+   "user": "elena",
+   "ts": "2026-09-02T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho appena messo la lavatrice con i jeans, poi li stendo."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene!"
+    }
+   ]
+  },
+  {
+   "id": "e2",
+   "user": "elena",
+   "ts": "2026-09-04T18:30:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho messo l'arrosto in forno, un'ora e mezza a 180 gradi."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona cena!"
+    }
+   ]
+  },
+  {
+   "id": "e3",
+   "user": "elena",
+   "ts": "2026-09-07T09:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho compilato metà del modulo ISEE, va spedito entro venerdì 11."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok, ce la farai."
+    }
+   ]
+  },
+  {
+   "id": "e4",
+   "user": "elena",
+   "ts": "2026-09-08T11:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Messo la lavastoviglie."
+    },
+    {
+     "role": "assistant",
+     "content": "Perfetto."
+    }
+   ]
+  },
+  {
+   "id": "e5",
+   "user": "elena",
+   "ts": "2026-09-09T08:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho messo la lavatrice delle lenzuola."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok!"
+    },
+    {
+     "role": "user",
+     "content": "Fatto, lenzuola già stese sul terrazzo, c'è un bel sole."
+    },
+    {
+     "role": "assistant",
+     "content": "Ottimo."
+    }
+   ]
+  },
+  {
+   "id": "e6",
+   "user": "elena",
+   "ts": "2026-09-15T20:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Stasera guardo un film e poi a letto."
+    },
+    {
+     "role": "assistant",
+     "content": "Buona visione!"
+    }
+   ]
+  },
+  {
+   "id": "t1",
+   "user": "tom",
+   "ts": "2026-09-03T08:30:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Bread dough is proving, should be ready to bake in about two hours."
+    },
+    {
+     "role": "assistant",
+     "content": "Lovely."
+    }
+   ]
+  },
+  {
+   "id": "t2",
+   "user": "tom",
+   "ts": "2026-09-12T14:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Left the paint stripper on the old door, it needs scraping off in three hours."
+    },
+    {
+     "role": "assistant",
+     "content": "Got it."
+    }
+   ]
+  },
+  {
+   "id": "t3",
+   "user": "tom",
+   "ts": "2026-09-14T09:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "The kitchen tap is dripping, the plumber is coming tomorrow to fix it."
+    },
+    {
+     "role": "assistant",
+     "content": "Good that it's sorted."
+    }
+   ]
+  },
+  {
+   "id": "t4",
+   "user": "tom",
+   "ts": "2026-09-16T19:00:00+01:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "I always water the plants on Sunday evenings."
+    },
+    {
+     "role": "assistant",
+     "content": "Noted."
+    }
+   ]
+  },
+  {
+   "id": "c1",
+   "user": "casa_bellini",
+   "ts": "2026-09-05T16:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paolo. Ho messo i panni in lavatrice, poi li stendo io."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene Paolo."
+    }
+   ]
+  },
+  {
+   "id": "c2",
+   "user": "casa_bellini",
+   "ts": "2026-09-13T17:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Anna, ho messo la torta in forno, quaranta minuti."
+    },
+    {
+     "role": "assistant",
+     "content": "Che profumo, Anna!"
+    }
+   ]
+  },
+  {
+   "id": "c3",
+   "user": "casa_bellini",
+   "ts": "2026-09-14T21:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Ho acceso la lavastoviglie."
+    },
+    {
+     "role": "assistant",
+     "content": "Ok."
+    }
+   ]
+  },
+  {
+   "id": "c4",
+   "user": "casa_bellini",
+   "ts": "2026-09-18T10:00:00+02:00",
+   "messages": [
+    {
+     "role": "user",
+     "content": "Sono Paolo: ho iniziato a pitturare la ringhiera, la finisco domani."
+    },
+    {
+     "role": "assistant",
+     "content": "Buon lavoro."
+    }
+   ]
+  }
+ ]
+}

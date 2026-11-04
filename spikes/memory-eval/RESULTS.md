@@ -2005,3 +2005,25 @@ The hours given are sensible: the flour order before noon (8–12; the mill clos
 could miss it), the bins in the evening (18–22), picking mother up before her 16:00 landing (9–15), asks in the day.
 Adopted. Cost ≈ 0.25 USD a fresh run, ≈ 0.03 a re-run of the passes.
 
+### Things left to finish — `extract.v22` / `entity.v10` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
+
+INTENTS gains a follow-up: something a person started that must be finished later and is easy to forget — the
+question I would ask, when it makes sense, for whom; closed when they say it is done. New dev set
+`dataset_dev_followups` (3 memories, 14 sessions; 8 expected, 6 traps), `initiative_eval.py` with
+`SWEEP_HOURS=9,12,15,18,21`:
+
+| run | found | traps | false |
+|---|---|---|---|
+| f1, f2, f3 | **8/8 ×3** | 1, 1, 1 | 1, 1, 1 |
+
+The trap hit every time is no follow-up: "did the plumber come?" is D53's ask after an appointment told ahead (by design —
+the trap was ill-posed, kept as written). The false one every time: "did you bring the sheets in from the terrace?"
+after "sheets already hung on the terrace" — plausible, not asked for; counted. Cost ≈ 0.02 USD a run.
+
+Regression, blind12 (3 runs): **92.6, 95.4, 94.4 %** (mean 94.1) — v21 94.4 / 97.2 %, v17 93.5 % (3 runs): within the
+band. Wrong: h14 ×2 and h26 ×1 (wrong in v21's first run too), h37 (partial in v21 too), h35, h39 once each, and **h11
+twice** (the railing painted "as said" on April 1: an event told as done, not corrected when a later window moves the
+job to April 15 — NOT DONE AFTER ALL, v17), right in both v21 runs. No follow-up intent touches the railing (the only
+one created on that memory: a passport photo to bring to the registry office), so the rule did not write it; a longer
+prompt diluting NOT DONE AFTER ALL cannot be excluded. **Watch h11.**
+

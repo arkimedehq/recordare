@@ -176,7 +176,9 @@ export class InitiativeService {
     const memories: Array<{ person_id: string }> = await this.db.query(
       `SELECT o.person_id FROM memories o WHERE EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = o.person_id AND e.kind IN ('plan', 'event'))
          OR EXISTS (SELECT 1 FROM notes n WHERE n.memory_id = o.person_id AND n.category = 'question')
-         OR EXISTS (SELECT 1 FROM intents t WHERE t.memory_id = o.person_id AND t.status IN ('armed', 'fired'))`);
+         OR EXISTS (SELECT 1 FROM intents t WHERE t.memory_id = o.person_id AND t.status IN ('armed', 'fired'))
+         -- what was given or waits to be (D55): settled, pushed or lapsed even when no intent is open any more
+         OR EXISTS (SELECT 1 FROM initiatives i WHERE i.memory_id = o.person_id AND i.status IN ('pending', 'offered'))`);
     for (const { person_id } of memories) {
       try { await this.sweep(person_id, now); } catch (err) { this.log.warn(`initiative sweep failed for ${person_id}: ${(err as Error).name}`); }
     }
@@ -320,6 +322,8 @@ export class InitiativeService {
       const plan = t.content.trim().replace(/([^.!?])$/, '$1.');
       const [kind, fallback, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
           : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']
+            // A follow-up's content is already the question, in the memory's language (the extraction wrote it so).
+            : t.kind === 'followup' ? ['ask', t.content.trim(), 'something they left unfinished']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
       const content = w?.text?.trim() || fallback;
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
@@ -348,9 +352,10 @@ export class InitiativeService {
   ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
     const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
-    const kindOf = (k: string) => (k === 'open_plan' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
     const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
-      : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me' : 'a question I hold');
+      : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me'
+        : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)' : 'a question I hold');
     const user = [
       `ME: ${memory.display_name}${memory.mode === 'entity' ? ' (a shared agent several people talk to)' : ''}`,
       `MEMORY LANGUAGE: ${memory.locale}`,

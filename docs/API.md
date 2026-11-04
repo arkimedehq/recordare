@@ -695,7 +695,11 @@ for** (maintainer, 2026-11-03): a plan or an event only told ("domani Chloé ha 
 reminded; a **promise I made or a request made to me** with a date ("ricordami
 giovedì di ordinare la farina", "te lo ricordo venerdì" — the extraction's INTENTS, `extract.v21`) a `say` that day, for
 the person it concerns — withdrawn ("lascia stare") or done in the conversation, it closes; when a request and a plan are
-the same thing, the request speaks; a question the agent holds (a thought of kind `question`, 8.12a, not about a plan's
+the same thing, the request speaks; **something a person started and left to finish** (D55 F2b, `extract.v22`: the
+laundry to hang, a roast in the oven, a half-filled form before its deadline — not what ends on its own, is finished in
+the conversation, is trivial, a routine or someone else's job) an `ask` a few hours later — the question the extraction
+wrote, in the memory's language, for the person who has to finish it, flexible, for half a day — closed when they say it
+is done; a question the agent holds (a thought of kind `question`, 8.12a, not about a plan's
 outcome nor my own doings) a `lookup` for the host agent, which finds it out with its own tools — the web, the room — and brings the answer back as a learned source
 or a perception (D53: external sources always through the agent). Each source arms one intent, once; it fires when
 due, after the memory's **quiet hours** (`quietFrom` / `quietTo`, local, default 22–8) and within the **daily limit** per

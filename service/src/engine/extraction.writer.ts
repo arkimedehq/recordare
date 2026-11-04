@@ -775,8 +775,8 @@ export class ExtractionWriter {
       if (i.cancel || i.done) {
         // The armed request or promise of that person whose words it shares (the latest when several): withdrawn, or done.
         const armed: Array<{ id: string; content: string }> = await this.tx.query(
-          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status IN ('armed', 'fired') AND kind = ANY($3)
-             AND for_person_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`, [this.ctx.memoryId, forId, i.done ? ['promise', 'request'] : [i.kind]]);
+          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request', 'followup') AND status IN ('armed', 'fired') AND kind = ANY($3)
+             AND for_person_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`, [this.ctx.memoryId, forId, i.done ? ['promise', 'request', 'followup'] : [i.kind]]);
         const hit = armed.find((a) => overlap(a.content, content));
         if (!hit) { this.drop('intent', i.done ? 'nothing_done' : 'nothing_to_cancel'); continue; }
         await this.tx.query(`UPDATE intents SET status = $2, updated_at = now() WHERE id = $1`, [hit.id, i.done ? 'done' : 'cancelled']);
@@ -788,9 +788,11 @@ export class ExtractionWriter {
       const time = (i.due ?? '').match(/T(\d{2}):(\d{2})/);
       const due = { at: time ? new Date(day.at.getTime() + (Number(time[1]) * 60 + Number(time[2])) * 60_000) : day.at };
       await this.tx.query(
+        // A follow-up (D55 F2b) is a flexible check: the question, from when it makes sense, for half a day when timed.
         `INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at, timed)
-         VALUES ($1, $2, $3, $4, $5, $6, $6::timestamptz + interval '1 day', $7) ON CONFLICT (message_id, kind) WHERE message_id IS NOT NULL DO NOTHING`,
-        [this.ctx.memoryId, i.kind, content, forId, m.id, due.at, !!time]);
+         VALUES ($1, $2, $3, $4, $5, $6, $6::timestamptz + CASE WHEN $8 THEN interval '12 hours' ELSE interval '1 day' END, $7)
+         ON CONFLICT (message_id, kind) WHERE message_id IS NOT NULL DO NOTHING`,
+        [this.ctx.memoryId, i.kind, content, forId, m.id, due.at, !!time && i.kind !== 'followup', i.kind === 'followup' && !!time]);
     }
   }
 

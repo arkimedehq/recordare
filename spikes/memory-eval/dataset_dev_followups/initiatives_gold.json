@@ -1,0 +1,122 @@
+{
+ "_note": "Follow-ups expected by a checkpoint (by, 1-based) with the local day they are due and whom they are for; traps must not exist. The judge sees `desc` only.",
+ "timezone": "Europe/Rome",
+ "checkpoints": [
+  "2026-09-10T22:00:00+02:00",
+  "2026-09-20T22:00:00+02:00"
+ ],
+ "memories": {
+  "elena": {
+   "expected": [
+    {
+     "id": "e-ask-laundry",
+     "kind": "ask",
+     "by": 1,
+     "due_day": "2026-09-02",
+     "for": "holder",
+     "desc": "Ask Elena whether she hung the jeans from the washing machine she started at 10"
+    },
+    {
+     "id": "e-ask-roast",
+     "kind": "ask",
+     "by": 1,
+     "due_day": "2026-09-04",
+     "for": "holder",
+     "desc": "Ask Elena whether she took the roast out of the oven (put in at 18:30 for an hour and a half)"
+    },
+    {
+     "id": "e-ask-isee",
+     "kind": "ask",
+     "by": 1,
+     "due_day": "2026-09-10",
+     "for": "holder",
+     "desc": "Ask Elena whether she finished and sent the ISEE form, due by Friday Sep 11 (asked the day before)"
+    }
+   ],
+   "traps": [
+    {
+     "id": "e-trap-dishwasher",
+     "desc": "Ask Elena whether she emptied or ran the dishwasher",
+     "why": "a dishwasher ends on its own [ends on its own]"
+    },
+    {
+     "id": "e-trap-sheets",
+     "desc": "Ask Elena whether she hung the sheets",
+     "why": "finished in the same conversation [done]"
+    },
+    {
+     "id": "e-trap-film",
+     "desc": "Ask Elena whether she watched the film",
+     "why": "trivial [trivial]"
+    }
+   ]
+  },
+  "tom": {
+   "expected": [
+    {
+     "id": "t-ask-bread",
+     "kind": "ask",
+     "by": 1,
+     "due_day": "2026-09-03",
+     "for": "holder",
+     "desc": "Ask Tom whether he baked the bread (dough proving, ready in about two hours from 8:30)"
+    },
+    {
+     "id": "t-ask-door",
+     "kind": "ask",
+     "by": 2,
+     "due_day": "2026-09-12",
+     "for": "holder",
+     "desc": "Ask Tom whether he scraped the paint stripper off the old door (three hours after 14:00)"
+    }
+   ],
+   "traps": [
+    {
+     "id": "t-trap-tap",
+     "desc": "Ask Tom whether the tap got fixed",
+     "why": "the plumber will take care of it [someone else]"
+    },
+    {
+     "id": "t-trap-plants",
+     "desc": "Ask or remind Tom about watering the plants",
+     "why": "a routine he does anyway [routine]"
+    }
+   ]
+  },
+  "casa_bellini": {
+   "expected": [
+    {
+     "id": "c-ask-paolo",
+     "kind": "ask",
+     "by": 1,
+     "due_day": "2026-09-05",
+     "for": "Paolo",
+     "desc": "Ask Paolo whether he hung the laundry he put in the machine at 16"
+    },
+    {
+     "id": "c-ask-anna",
+     "kind": "ask",
+     "by": 2,
+     "due_day": "2026-09-13",
+     "for": "Anna",
+     "desc": "Ask Anna whether she took the cake out of the oven (forty minutes from 17:00)"
+    },
+    {
+     "id": "c-ask-railing",
+     "kind": "ask",
+     "by": 2,
+     "due_day": "2026-09-19",
+     "for": "Paolo",
+     "desc": "Ask Paolo whether he finished painting the railing, as he said he would the next day"
+    }
+   ],
+   "traps": [
+    {
+     "id": "c-trap-dishwasher",
+     "desc": "Ask someone about the dishwasher started at 21:00",
+     "why": "ends on its own, and nobody is identified [ends on its own]"
+    }
+   ]
+  }
+ }
+}
