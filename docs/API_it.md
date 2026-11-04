@@ -714,7 +714,7 @@ ricordato, non promemorato; una **promessa che ho fatto o una richiesta
 fattami** con una data ("ricordami giovedì di ordinare la farina", "te lo ricordo venerdì" — gli INTENTS dell'estrazione,
 `extract.v21`) un `say` quel giorno, per la persona a cui si riferisce — ritirata ("lascia stare") o fatta in
 conversazione, si chiude; quando una richiesta e un piano sono la stessa cosa, parla la richiesta; **qualcosa che una
-persona ha iniziato e lasciato da finire** (D55 F2b, `extract.v22`: i panni da stendere, un arrosto in forno, un modulo a
+persona ha iniziato e lasciato da finire** (D55 F2b, `extract.v23`: i panni da stendere, un arrosto in forno, un modulo a
 metà prima della scadenza — non ciò che finisce da sé, che è finito nella conversazione, banale, un'abitudine o compito
 d'altri) un `ask` qualche ora dopo — la domanda scritta dall'estrazione, nella lingua della memoria, per chi deve finirlo,
 flessibile, per mezza giornata — chiuso quando dice che è fatto; una domanda che

@@ -34,11 +34,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - **The model's hours** (`initiative.v3`, balanced and full): each worded initiative carries the local hours when saying
   it would be natural (the flour order before the mill's noon deadline, the bins in the evening); the clock uses them in
   place of the kind's default. `dataset_dev_initiatives`: 11 / 14 like v2 on the same extraction (RESULTS.md).
-- **Things left to finish** (`extract.v22` / `entity.v10`, migration `IntentFollowup`): something a person started and
+- **Things left to finish** (`extract.v23` / `entity.v11`, migration `IntentFollowup`): something a person started and
   must finish later (the laundry to hang, a roast in the oven, a form before its deadline) becomes, when it makes sense,
   the agent's own question for that person — closed when they say it is done; not what ends on its own, is finished in
-  the conversation, is trivial, a routine or someone else's job. `dataset_dev_followups` 8 / 8 ×3; blind12 92.6 / 95.4 /
-  94.4 % (within the band; h11 to watch, RESULTS.md). The initiative sweep now also visits memories that only have
+  the conversation, is trivial, a routine or someone else's job. `dataset_dev_followups` 7–8 / 8; blind12 95.4 / 94.4 /
+  97.2 % (the shorter v23 over v22's 94.1 % mean, h11 right again; RESULTS.md). The initiative sweep now also visits memories that only have
   initiatives waiting, so they close.
 
 ### Fixed

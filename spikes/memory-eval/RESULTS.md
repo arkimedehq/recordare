@@ -2027,3 +2027,10 @@ job to April 15 — NOT DONE AFTER ALL, v17), right in both v21 runs. No follow-
 one created on that memory: a passport photo to bring to the registry office), so the rule did not write it; a longer
 prompt diluting NOT DONE AFTER ALL cannot be excluded. **Watch h11.**
 
+**`extract.v23` / `entity.v11` — the follow-up rule in half the words** (to see whether h11 comes back). dev_followups
+(3 runs): found **7, 8, 8 / 8**, real false follow-ups 1, 1, 2 (the dishwasher twice — its example was cut —, the sheets)
+against v22's 8 / 8 ×3 and 1, 1, 1; the plumber ask (D53) judged "none" instead of a trap in two runs. blind12 (3 runs):
+**95.4, 94.4, 97.2 %** (mean 95.7; v22 94.1), **h11 right ×3**; wrong h09, h03, h41 once, h12, h35 partial, h37 partial
+×3 (as in v21). The blind set improves and h11 is back, the dev set loses a little (one miss, one more false in three
+runs): **v23 adopted** (maintainer, 2026-11-04: "if it improves, keep it, else v22").
+

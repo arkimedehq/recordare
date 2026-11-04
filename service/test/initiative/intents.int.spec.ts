@@ -91,7 +91,7 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     expect(last.summary.dropped).toEqual({ intent: { nothing_done: 1 } });
   });
 
-  it('a follow-up (extract.v22): something Marta left to finish becomes, a few hours later, the question the extraction wrote; done closes it', async () => {
+  it('a follow-up (extract.v23): something Marta left to finish becomes, a few hours later, the question the extraction wrote; done closes it', async () => {
     await window([say('f1', 'marta', 'Ho messo la lavatrice, poi stendo.', '2026-10-09T10:00:00+02:00')],
       { intents: [{ kind: 'followup', content: 'Hai steso i panni?', due: '2026-10-09T12:00', for: 'Marta', evidence: [1] }] });
     const [f] = await db.query(`SELECT kind::text, status::text, due_at, expires_at, timed FROM intents WHERE content = 'Hai steso i panni?'`);

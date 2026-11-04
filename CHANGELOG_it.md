@@ -36,11 +36,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - **Le ore del modello** (`initiative.v3`, balanced e full): ogni iniziativa formulata porta le ore locali in cui dirla
   sarebbe naturale (l'ordine della farina prima che il mulino chiuda a mezzogiorno, i bidoni la sera); l'orologio le usa al
   posto delle ore predefinite del tipo. `dataset_dev_initiatives`: 11 / 14 come v2 sulla stessa estrazione (RESULTS.md).
-- **Cose lasciate a metà** (`extract.v22` / `entity.v10`, migrazione `IntentFollowup`): qualcosa che una persona ha
+- **Cose lasciate a metà** (`extract.v23` / `entity.v11`, migrazione `IntentFollowup`): qualcosa che una persona ha
   iniziato e deve finire più tardi (i panni da stendere, un arrosto in forno, un modulo prima della scadenza) diventa,
   quando ha senso, la domanda dell'agente per quella persona — chiusa quando dice che è fatto; non ciò che finisce da sé,
-  che è finito nella conversazione, banale, un'abitudine o compito d'altri. `dataset_dev_followups` 8 / 8 ×3; blind12
-  92,6 / 95,4 / 94,4 % (nella fascia; h11 da sorvegliare, RESULTS.md). La passata delle iniziative ora visita anche le
+  che è finito nella conversazione, banale, un'abitudine o compito d'altri. `dataset_dev_followups` 7–8 / 8; blind12
+  95,4 / 94,4 / 97,2 % (la v23 più breve sopra la media 94,1 % della v22, h11 di nuovo giusta; RESULTS.md). La passata delle iniziative ora visita anche le
   memorie che hanno solo iniziative in attesa, così si chiudono.
 
 ### Corretto
