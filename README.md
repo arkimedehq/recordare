@@ -14,7 +14,7 @@ twin** of that person. Any agent platform can use it through **MCP** (any MCP cl
 (the platform pushes its conversations and Recordare extracts the memory in the background).
 [Arkimede](https://github.com/arkimedehq/arkimede) is the first client.
 
-> **Status (2026-11-03).** **v0.6.0 is public** (2026-11-03, the agent's own mind: thoughts, self-model, procedures, initiatives, the memory-first contract; v0.5.0 on 2026-10-27, private memories; v0.4.0 on 2026-10-26, plans apart from facts, my own replies, cards and erasure; v0.3.0 on 2026-10-17, memory quality and control; v0.2.0 on 2026-10-10, the agent memory; first public release v0.1.0 on 2026-10-08, the private profile; [CHANGELOG](CHANGELOG.md)). Phase 1
+> **Status (2026-11-04).** **v0.7.0 is public** (2026-11-04, initiatives decided by the memory — who, when, where —, presence impulses, things left to finish, questions to who could know, interactive embeddings first; v0.6.0 on 2026-11-03, the agent's own mind: thoughts, self-model, procedures, initiatives, the memory-first contract; v0.5.0 on 2026-10-27, private memories; v0.4.0 on 2026-10-26, plans apart from facts, my own replies, cards and erasure; v0.3.0 on 2026-10-17, memory quality and control; v0.2.0 on 2026-10-10, the agent memory; first public release v0.1.0 on 2026-10-08, the private profile; [CHANGELOG](CHANGELOG.md)). Phase 1
 > (episodic memory) is implemented in `service/` (NestJS, Postgres + pgvector, BullMQ). It covers the raw log,
 > episodes, plans, facts, notes, nightly digests, MCP recall and write tools, the pre-turn memory context, the read
 > API (the person's diary), the admin API and console, and live telemetry. Clients: Arkimede, and full-level
@@ -41,6 +41,13 @@ and what the assistant only guessed never becomes a fact. You can correct a memo
 not come back. Each person has their **own private memory**; a device the whole family uses (the home voice assistant)
 can have a **shared memory**, where whoever introduces themselves signs their own memories. The **on/off switch** is
 the assistant's: Recordare remembers what it is sent. Recordare works with any assistant and any AI model; Arkimede is the first to use it.
+
+It is also **the assistant's own mind**, not a tool it may or may not use: before every reply the assistant gets what
+came to mind from its memory, and the memory **thinks on its own** — it draws its own conclusions, learns how it does
+things, and **takes initiative**: it reminds you of what you asked to be reminded of, asks how an appointment went, asks
+"did you hang the laundry?" a couple of hours after you started the washing machine, and asks to learn what it does not
+know yet. **Recordare decides when and to whom**: in a turn of the right person, on a chat or a message at a fitting
+hour, by voice only when the assistant sees or hears that person — never to the wrong one.
 
 ## What kind of memory it is
 
@@ -87,6 +94,15 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
 - **Any LLM / embedding provider** (D27): any OpenAI-compatible server (DeepSeek, OpenAI, OpenRouter, Ollama, vLLM, …)
   or native Anthropic, with a model per task. DeepSeek and local Ollama are only our test setups.
 - **One memory per person, across platforms.** One person using Arkimede and Claude Code has a single memory.
+- **The agent's own mind** (D53, D54). A nightly thought pass draws insights, questions and opinions from what the agent
+  lived, learns about itself from its own replies, and keeps procedures ("when X, I do it this way"); a memory charter
+  for the system prompt and the memory context before every turn make the memory the agent's mind, not a tool among
+  others.
+- **Initiatives decided by the memory** (D55, [spec](docs/INITIATIVES_DELIVERY.md)). Requests and promises with a date,
+  the "how did it go?" after an appointment, things left to finish, questions to whoever could answer. Recordare decides
+  who may receive one (an entity memory only a person recognised surely enough), when (a timed one at its minute, a
+  flexible one at a fitting hour, every decision logged to learn from) and where (in the turn, chat, messaging, voice
+  only after a presence impulse); the agent gives it senses — who it sees or hears, how sure — and delivers.
 
 ### MCP tools (as built)
 
@@ -131,6 +147,11 @@ Answer and judge model: `deepseek-flash`. Embeddings: `bge-m3`. Bracketed ranges
 | `dataset_blind3`, quality profiles | Economy 93.5 %, balanced 94.9 %, full 92.1 %, all within noise. Measured after the set had been read, so not blind |
 | Recall-echo dev set (not blind) | 79 % without the guard → 100 % with guard v3 (3 runs each) |
 | Memory-context dev set (not blind, agent mode, 1 run) | Tools only 93.3 % → tools + memory context 100 %; with a real voice agent's prompt 90 → 93.3 %, tool calls 9 → 5 of 15 |
+| `dataset_blind12` (54 q, unresolved plans, harder; written by a separate agent), 3 runs | Released service **95.7 %** (95.4 / 94.4 / 97.2, `extract.v23`); full context 95.4 % but invents outcomes |
+| `dataset_blind11` (40 q, entity memory) | 95.0 % (`entity.v8`, 1 run; earlier prompts 97.5–100 %) |
+| LongMemEval-S (100 q sample, 1 run) | 83.5 %; full context (whole history in the prompt) 84.5 % |
+| Initiatives (dev sets, not blind) | 11 / 14 expected with no false one (`dataset_dev_initiatives`); things left to finish 7–8 / 8; timing 9 / 9 on the set it was tuned on; questions routed with no false one |
+| Memory context with a busy CPU embedder (Kinox, bge-m3) | 4 970 ms → 137 ms while a turn's ingest is embedded |
 
 What these numbers do **not** show: the blind sets are small (31–87 questions), so gaps under about 5 points are
 noise. Several blind sets were later read while fixing failures, and the docs mark which. Local 8–20B engines score
@@ -172,6 +193,10 @@ What is new is narrower:
     combination and its evaluation are open.
   - **H3 — source monitoring for twins.** The holder's lived memories, what the holder was told, and what the twin
     itself experienced never mix.
+  - **H14 — learning when to speak and what to ask.** Every part has precedents (decision-theoretic alerting,
+    per-person timing learned by bandits, proactive LLM agents, robots that ask); not found: a memory service that
+    decides who, when and where for any host from presence impulses and outcomes, identity-gated delivery from a shared
+    memory, questions routed to whoever could know. Safe framing: integration plus a home evaluation.
   - Smaller items: blind evaluation sets written by a separate agent, and over-strict judge artefacts (H6, a methods
     note). Resting-state thinking that keeps open loops alive (H12, to design). Legacy mode as enforceable mechanisms
     (H4, engineering only). Cost-aware memory (H5) is already a crowded topic: we report costs and claim nothing.
@@ -186,16 +211,21 @@ carried over from another chat and never guessed; a fact of an unidentified spea
 Identification never grants access: a person's *own* memory is reached only through a secure client identity bound by
 the admin. The person chooses the mode (`entity`) on their platform (Arkimede: memory settings) while the memory is
 empty. Measured: **91.4 %** on a fresh blind set (3 runs; 82.1 % before 8.5) and 100 % on its two dev sets
-([RESULTS.md](spikes/memory-eval/RESULTS.md)).
+([RESULTS.md](spikes/memory-eval/RESULTS.md)). An entity memory takes initiative too — the agent gets a person's
+initiative only when that person is recognised surely enough (an account, a voiceprint or a face from the agent, never
+a guess), may ask "is it you?" without revealing anything, and asks to learn its household: a question about someone
+goes to that person, or to whoever told it about them.
 
 ## Beyond phase 1
 
 The [vision](docs/DIGITAL_TWIN_VISION.md) adds the next phases:
 
-- a self-model (style, values, decision patterns);
+- a self-model (style, values, decision patterns) — its first part is built: what the agent learned about itself, its
+  procedures (D53);
 - contacts and disclosure tiers;
 - the twin interface: companion mode with the holder, declared proxy toward others (EU AI Act art. 50);
-- initiative: inform and propose (L1), then act within a permission matrix (L2);
+- initiative: inform and propose (L1) — built as initiatives decided by the memory (D55; the clients' delivery and
+  learning the moment from outcomes next) —, then act within a permission matrix (L2);
 - the holder's voice;
 - legacy mode;
 - a research mode on autonomous twins.
@@ -307,7 +337,7 @@ co-hosted with Arkimede on a small server).
 | `deploy/` | Installer, update and backup scripts, Compose files (standalone / co-hosted) |
 | `spikes/memory-eval/` | Evaluation harness and datasets: engine comparison, blind sets, results ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
 | `docs/` | Vision, design decisions D1–D48 ([episodic memory design](docs/EPISODIC_MEMORY_TODO.md)), [work plan](docs/WORK_PLAN.md), contracts, [every setting](docs/KNOBS.md), [supported models](docs/MODELS.md), research notes, literature cards, connector research notes (`docs/connectors/`) |
-| `CHANGELOG.md` | Release notes ([v0.6.0](CHANGELOG.md)) |
+| `CHANGELOG.md` | Release notes ([v0.7.0](CHANGELOG.md)) |
 | `docker-compose.yml` | Local development stack (Postgres + pgvector, Redis, service) |
 | `CLAUDE.md` | Context and conventions for development sessions |
 

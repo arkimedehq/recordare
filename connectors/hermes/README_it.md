@@ -37,6 +37,9 @@ Provato con Hermes Agent v0.21.6. Python puro, solo `requests` (una dipendenza d
 - **Il contesto di memoria prima di ogni turno** (`prefetch`), aperto dalla scheda di sé (chi sono; attiva per default
   in Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso
   (Hermes salta `prefetch` solo per i messaggi banali come "ok").
+- **Le iniziative nel turno** (Recordare 0.7.0, D55): il contesto di memoria porta anche ciò che l'agente voleva dire
+  o chiedere a chi sta parlando — un promemoria richiesto, "com'è andata?", "hai steso i panni?" — offerto una volta,
+  senza configurazione; la carta della memoria (`charter.v2`) dice come usarlo.
 - **Ripiego**: se Recordare non risponde, niente carta (solo la riga degli strumenti; un tentativo ogni 30 s) e niente
   blocco — il turno prosegue senza memoria.
 

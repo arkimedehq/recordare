@@ -114,6 +114,9 @@ Unknown = `public`.
 
 ## Initiative levels
 
+> L1 is built as **initiatives decided by the memory** (D53, D55, v0.7.0): Recordare decides who, when and where, the
+> agent gives it senses and delivers; entity memories ask to learn — `docs/INITIATIVES_DELIVERY.md`.
+
 | Level | Example | Guardrails |
 |---|---|---|
 | **L1 inform & propose** | "Tomorrow is Marco's birthday — shall I send wishes?" (to the holder) | Holder-facing only; heartbeat gate (no LLM call if nothing to say) |

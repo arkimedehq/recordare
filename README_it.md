@@ -14,7 +14,7 @@ di un **gemello digitale** dichiarato di quella persona. Qualsiasi piattaforma d
 (qualsiasi client MCP) oppure tramite **MCP + ingest REST** (la piattaforma invia le sue conversazioni e Recordare
 estrae la memoria in background). [Arkimede](https://github.com/arkimedehq/arkimede) è il primo client.
 
-> **Stato (2026-11-03).** **La v0.6.0 è pubblica** (2026-11-03, la mente dell'agente: pensieri, modello di sé, procedure, iniziative, il contratto memory-first; v0.5.0 il 2026-10-27, le memorie private; v0.4.0 il 2026-10-26, i piani separati dai fatti, le mie risposte, le schede e la cancellazione; v0.3.0 il 2026-10-17, qualità e controllo della memoria; v0.2.0 il 2026-10-10, la memoria dell'agente; prima versione pubblica v0.1.0 il 2026-10-08, il profilo privato; [CHANGELOG](CHANGELOG_it.md)). La
+> **Stato (2026-11-04).** **La v0.7.0 è pubblica** (2026-11-04, iniziative decise dalla memoria — a chi, quando, dove —, impulsi di presenza, cose lasciate a metà, domande a chi potrebbe sapere, embedding interattivi per primi; v0.6.0 il 2026-11-03, la mente dell'agente: pensieri, modello di sé, procedure, iniziative, il contratto memory-first; v0.5.0 il 2026-10-27, le memorie private; v0.4.0 il 2026-10-26, i piani separati dai fatti, le mie risposte, le schede e la cancellazione; v0.3.0 il 2026-10-17, qualità e controllo della memoria; v0.2.0 il 2026-10-10, la memoria dell'agente; prima versione pubblica v0.1.0 il 2026-10-08, il profilo privato; [CHANGELOG](CHANGELOG_it.md)). La
 > fase 1 (memoria episodica) è implementata in `service/` (NestJS, Postgres + pgvector, BullMQ). Comprende il log
 > grezzo, gli episodi, i piani, i fatti, le note, i digest notturni, gli strumenti MCP di lettura e scrittura, il
 > contesto di memoria prima di ogni turno, l'API di lettura (il diario della persona), l'API e la console di
@@ -41,6 +41,13 @@ e ciò che l'assistente ha solo ipotizzato non diventa mai un fatto. Puoi correg
 dimenticare non ritorna. Ogni persona ha la **propria memoria privata**; un dispositivo usato da tutta la famiglia (l'assistente
 vocale di casa) può avere una **memoria di entità**, condivisa, dove chi si presenta firma i propri ricordi. L'**interruttore acceso /
 spento** è dell'assistente: Recordare ricorda ciò che gli viene inviato. Recordare funziona con qualsiasi assistente e qualsiasi modello di IA; Arkimede è il primo a usarlo.
+
+È anche **la mente stessa dell'assistente**, non uno strumento che può usare o no: prima di ogni risposta l'assistente
+riceve ciò che gli è venuto in mente dalla sua memoria, e la memoria **pensa da sé** — trae le sue conclusioni, impara
+come fa le cose, e **prende iniziativa**: ti ricorda ciò che hai chiesto di ricordarti, ti chiede com'è andato un
+appuntamento, ti chiede "hai steso i panni?" un paio d'ore dopo che hai messo la lavatrice, e chiede per imparare ciò che
+non sa ancora. **Recordare decide quando e a chi**: in un turno della persona giusta, in una chat o con un messaggio a
+un'ora adatta, a voce solo quando l'assistente vede o sente quella persona — mai alla persona sbagliata.
 
 ## Che tipo di memoria è
 
@@ -91,6 +98,16 @@ Layer 3  facts       state slots with a value chain ("lives in" Turin → Bologn
   OpenRouter, Ollama, vLLM, …) oppure Anthropic nativo, con un modello per compito. DeepSeek e Ollama locale sono solo
   i nostri ambienti di test.
 - **Una memoria per persona, tra le piattaforme.** Una persona che usa Arkimede e Claude Code ha una sola memoria.
+- **La mente dell'agente** (D53, D54). Una passata notturna dei pensieri trae intuizioni, domande e opinioni da ciò che
+  l'agente ha vissuto, impara su di sé dalle proprie risposte e tiene le procedure ("quando X, faccio così"); una carta
+  della memoria per il prompt di sistema e il contesto di memoria prima di ogni turno fanno della memoria la mente
+  dell'agente, non uno strumento tra tanti.
+- **Iniziative decise dalla memoria** (D55, [specifica](docs/INITIATIVES_DELIVERY_it.md)). Richieste e promesse con una
+  data, il "com'è andata?" dopo un appuntamento, le cose lasciate a metà, le domande a chi potrebbe rispondere. Recordare
+  decide chi può riceverne una (in una memoria di entità solo una persona riconosciuta con sufficiente sicurezza),
+  quando (una a orario al suo minuto, una flessibile a un'ora adatta, ogni decisione registrata per imparare) e dove (nel
+  turno, chat, messaggistica, a voce solo dopo un impulso di presenza); l'agente le dà i sensi — chi vede o sente, con
+  che sicurezza — e consegna.
 
 ### Strumenti MCP (come realizzati)
 
@@ -139,6 +156,11 @@ intervalli al 95 %.
 | `dataset_blind3`, profili di qualità | Economy 93,5 %, balanced 94,9 %, full 92,1 %, tutti nel rumore. Misurato dopo che il set era stato letto, quindi non cieco |
 | Dev set dell'eco del richiamo (non cieco) | 79 % senza la protezione → 100 % con la protezione v3 (3 esecuzioni ciascuno) |
 | Dev set del contesto di memoria (non cieco, modalità agente, 1 esecuzione) | Solo strumenti 93,3 % → strumenti + contesto di memoria 100 %; con il prompt di un vero agente vocale 90 → 93,3 %, chiamate agli strumenti 9 → 5 su 15 |
+| `dataset_blind12` (54 d, piani irrisolti, più difficile; scritto da un agente separato), 3 esecuzioni | Servizio rilasciato **95,7 %** (95,4 / 94,4 / 97,2, `extract.v23`); contesto completo 95,4 % ma inventa gli esiti |
+| `dataset_blind11` (40 d, memoria di entità) | 95,0 % (`entity.v8`, 1 esecuzione; prompt precedenti 97,5–100 %) |
+| LongMemEval-S (campione di 100 d, 1 esecuzione) | 83,5 %; contesto completo (tutta la storia nel prompt) 84,5 % |
+| Iniziative (dev set, non ciechi) | 11 / 14 attese senza nessuna falsa (`dataset_dev_initiatives`); cose lasciate a metà 7–8 / 8; tempo 9 / 9 sul set su cui è stato messo a punto; domande indirizzate senza nessuna falsa |
+| Contesto di memoria con un embedder su CPU occupato (Kinox, bge-m3) | 4 970 ms → 137 ms mentre si calcola l'ingest di un turno |
 
 Ciò che questi numeri **non** mostrano: i set ciechi sono piccoli (31–87 domande), quindi divari sotto i 5 punti circa
 sono rumore. Diversi set ciechi sono stati letti in seguito per correggere errori, e i documenti indicano quali.
@@ -181,6 +203,11 @@ Ciò che è nuovo è più circoscritto:
     combinazione specifica per il gemello e la sua valutazione sono aperte.
   - **H3 — monitoraggio della fonte per i gemelli.** I ricordi vissuti dal titolare, ciò che al titolare è
     stato detto e ciò che il gemello stesso ha vissuto non si mescolano mai.
+  - **H14 — imparare quando parlare e cosa chiedere.** Ogni parte ha precedenti (avvisi decisi con la teoria delle
+    decisioni, tempi per persona imparati con i bandit, agenti LLM proattivi, robot che chiedono); non trovato: un
+    servizio di memoria che decide a chi, quando e dove per qualunque ospite da impulsi di presenza ed esiti, la
+    consegna filtrata dall'identità da una memoria condivisa, domande indirizzate a chi potrebbe sapere. Formulazione
+    sicura: integrazione più una valutazione in casa.
   - Voci minori: set di valutazione ciechi scritti da un agente separato, e artefatti di giudici troppo severi (H6, una
     nota di metodo). Pensiero a riposo che mantiene vivi i cicli aperti (H12, da progettare). Modalità legacy come
     meccanismi applicabili (H4, solo ingegneria). La memoria attenta ai costi (H5) è già un tema affollato: riportiamo
@@ -197,16 +224,21 @@ parlante non identificato non viene memorizzato come fatto di nessuno. L'identif
 memoria *propria* di una persona si raggiunge solo tramite un'identità client sicura vincolata dall'amministratore. La
 persona sceglie il modo (`entity`) sulla propria piattaforma (Arkimede: impostazioni della memoria) finché la memoria è
 vuota. Misurato: **91,4 %** su un nuovo set cieco (3 esecuzioni; 82,1 % prima dell'8.5) e 100 % sui suoi due set di
-sviluppo ([RESULTS.md](spikes/memory-eval/RESULTS.md)).
+sviluppo ([RESULTS.md](spikes/memory-eval/RESULTS.md)). Anche una memoria di entità prende iniziativa — l'agente riceve
+l'iniziativa di una persona solo quando quella persona è riconosciuta con sufficiente sicurezza (un account, un'impronta
+vocale o un volto dall'agente, mai un'ipotesi), può chiedere "sei tu?" senza rivelare nulla, e chiede per imparare la sua
+casa: una domanda su qualcuno va a quella persona, o a chi gliene ha parlato.
 
 ## Oltre la fase 1
 
 La [visione](docs/DIGITAL_TWIN_VISION_it.md) aggiunge le fasi successive:
 
-- un automodello (stile, valori, schemi decisionali);
+- un automodello (stile, valori, schemi decisionali) — la prima parte è costruita: ciò che l'agente ha imparato su di sé,
+  le sue procedure (D53);
 - contatti e livelli di divulgazione;
 - l'interfaccia del gemello: modalità compagno con il titolare, procuratore dichiarato verso gli altri (AI Act UE art. 50);
-- iniziativa: informare e proporre (L1), poi agire entro una matrice di permessi (L2);
+- iniziativa: informare e proporre (L1) — costruita come iniziative decise dalla memoria (D55; poi la consegna dei client
+  e l'apprendimento del momento dagli esiti) —, poi agire entro una matrice di permessi (L2);
 - la voce del titolare;
 - la modalità legacy;
 - una modalità di ricerca sui gemelli autonomi.
@@ -320,7 +352,7 @@ compito. Altre due guide: [integrare una piattaforma client](docs/INTEGRATION_it
 | `deploy/` | Script di installazione, aggiornamento e backup, file Compose (standalone / co-ospitato) |
 | `spikes/memory-eval/` | Harness di valutazione e dataset: confronto tra motori, set ciechi, risultati ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
 | `docs/` | Visione, decisioni di design D1–D48 ([design della memoria episodica](docs/EPISODIC_MEMORY_TODO_it.md)), [piano di lavoro](docs/WORK_PLAN_it.md), contratti, [tutte le impostazioni](docs/KNOBS_it.md), [modelli supportati](docs/MODELS_it.md), note di ricerca, schede di letteratura, note di ricerca sui connettori (`docs/connectors/`) |
-| `CHANGELOG.md` | Note di rilascio ([v0.6.0](CHANGELOG_it.md)) |
+| `CHANGELOG.md` | Note di rilascio ([v0.7.0](CHANGELOG_it.md)) |
 | `docker-compose.yml` | Stack di sviluppo locale (Postgres + pgvector, Redis, servizio) |
 | `CLAUDE.md` | Contesto e convenzioni per le sessioni di sviluppo |
 

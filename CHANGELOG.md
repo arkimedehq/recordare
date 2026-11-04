@@ -6,6 +6,22 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-11-04
+
+**Initiatives decided by the memory** (D55): Recordare decides who receives an initiative, when and on which channel;
+the agent gives it senses — presence impulses (who it sees or hears, how sure) — and declares its channels. Every
+full-level client delivers initiatives in the turn with no code (the memory context carries the one due for whoever is
+talking); a presence impulse is answered with what to say now; the clock pushes timed reminders at their minute and
+flexible ones at a fitting hour (`initiative.deliver`), every decision logged; an entity memory gives a person's
+initiative only to that person, recognised surely enough. New sources: things left to finish ("did you hang the
+laundry?") and questions routed to who could know. And interactive embeddings never wait for background ones (the
+memory context within a budget). No breaking change in the API (additive fields, a new status `offered`, a new event
+`initiative.deliver`); behaviour changes: initiatives reach the agent in the turn, timed requests are kept in the quiet
+hours. Upgrade the service first (migrations `InitiativeDelivery`, `InitiativeTiming`, `IntentFollowup` run at
+start-up), then the client library (`presence()`, the new types) and the connectors. Quality (DeepSeek `deepseek-flash`,
+`spikes/memory-eval/RESULTS.md`): blind12 95.7 % mean with `extract.v23`; dev sets — follow-ups 7–8 / 8, initiatives
+11 / 14 with `initiative.v3`, timing 9 / 9 (tuned on it), questions routed with no false one.
+
 ### Added
 - **Initiatives decided by Recordare: who, when, where** (D55, `docs/INITIATIVES_DELIVERY.md` F1). A presence impulse
   (`POST api/v1/presence`, library `presence()`) — the agent says whom it sees or hears, by what, how sure — is answered

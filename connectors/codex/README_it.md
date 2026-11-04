@@ -31,6 +31,9 @@ modalità solo finché la memoria è vuota); il plugin non ha impostazioni per q
   registra il suo output come messaggio developer.
 - **Il contesto di memoria prima di ogni richiesta**, aperto dalla scheda di sé (chi sono; attiva per default in
   Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
+- **Le iniziative nel turno** (Recordare 0.7.0, D55): il contesto di memoria porta anche ciò che l'agente voleva dire
+  o chiedere a chi sta parlando — un promemoria richiesto, "com'è andata?", "hai steso i panni?" — offerto una volta,
+  senza configurazione; la carta della memoria (`charter.v2`) dice come usarlo.
 - **Ripiego**: se Recordare non risponde, niente carta e niente blocco — la sessione e il turno proseguono senza
   memoria.
 

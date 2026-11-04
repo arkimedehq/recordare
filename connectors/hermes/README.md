@@ -35,6 +35,9 @@ Tested with Hermes Agent v0.21.6. Pure Python, only `requests` (a Hermes depende
 - **The memory context before every turn** (`prefetch`), opened by the self card (who I am; on by default in
   Recordare). A short follow-up ("and him?") is matched with the previous turn by Recordare itself (Hermes skips
   `prefetch` only for trivial prompts such as "ok").
+- **Initiatives in the turn** (Recordare 0.7.0, D55): the memory context also carries what the agent meant to tell or
+  ask whoever is talking — a reminder they asked for, "how did it go?", "did you hang the laundry?" — offered once,
+  with no setup; the memory charter (`charter.v2`) says how to use it.
 - **Fallback**: if Recordare does not answer, no charter (only the tools line; one try per 30 s) and no block — the
   turn goes on without memory.
 
