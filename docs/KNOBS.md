@@ -82,7 +82,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Language of the memories, local dates and the night |
 | `quietFrom`, `quietTo` | admin | 22, 8 | The memory's quiet hours (local): no initiative is due inside them (D53, 8.12c) |
 
-## 5. Per client (admin API or console)
+## 5. Per client (admin API or console — every setting below, webhooks and channels included)
 
 | Setting | Default | What it does |
 |---|---|---|

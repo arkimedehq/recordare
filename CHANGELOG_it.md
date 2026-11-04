@@ -6,6 +6,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Ogni impostazione dalla console di amministrazione** (`/admin`): per memoria anche lingua, fuso orario e ore di
+  quiete, le passate notturne su richiesta (revisione dei fatti, abitudini, pensieri, iniziative), i permessi di un token
+  personale e la cancellazione dell'intera memoria (scrivendone il nome); per client l'ambito del registro grezzo, i canali
+  (D55: chat / messaggistica / voce, sempre o con presenza), i webhook (registrazione con i loro eventi — il segreto
+  `whsec_` mostrato una volta —, elenco, rimozione) e il permesso `erase` per le chiavi. `PATCH
+  api/v1/admin/clients/{id}` accetta `rawLogScope`; `GET api/v1/admin/clients` elenca i webhook di ogni client (mai il
+  loro segreto).
+
 ## [0.7.0] — 2026-11-04
 
 **Iniziative decise dalla memoria** (D55): Recordare decide chi riceve un'iniziativa, quando e su quale canale; l'agente

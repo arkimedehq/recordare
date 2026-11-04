@@ -114,7 +114,8 @@ export class AdminService {
   async listPersons(): Promise<unknown[]> {
     const memories: Array<Record<string, unknown> & { id: string }> = await this.db.query(
       `SELECT p.id, p.display_name AS name, o.mode, o.gender,
-              o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.created_at AS "createdAt",
+              o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.quiet_from AS "quietFrom", o.quiet_to AS "quietTo",
+              o.created_at AS "createdAt",
               (SELECT count(*)::int FROM persons c WHERE c.memory_id = p.id) AS contacts,
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.memory_id = p.id) AS messages,
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id
@@ -166,7 +167,12 @@ export class AdminService {
     const keys: Array<{ clientId: string }> = await this.db.query(
       `SELECT id, client_id AS "clientId", prefix, scopes, created_at AS "createdAt", last_used_at AS "lastUsedAt"
        FROM api_keys WHERE revoked_at IS NULL AND client_id IS NOT NULL ORDER BY created_at`);
-    return clients.map((c) => ({ ...c, keys: keys.filter((k) => k.clientId === c.id) }));
+    // Its webhooks (D53, D55) — never the secret, shown once at registration.
+    const webhooks: Array<{ clientId: string }> = await this.db.query(
+      `SELECT id, client_id AS "clientId", url, events, description, created_at AS "createdAt", disabled_at AS "disabledAt",
+              disabled_reason AS "disabledReason"
+       FROM client_webhooks ORDER BY created_at`);
+    return clients.map((c) => ({ ...c, keys: keys.filter((k) => k.clientId === c.id), webhooks: webhooks.filter((w) => w.clientId === c.id) }));
   }
 
   async updateClient(id: string, input: UpdateClient): Promise<void> {
@@ -176,6 +182,7 @@ export class AdminService {
     if (input.autoProvision !== undefined) client.autoProvision = input.autoProvision;
     if (input.disabled !== undefined) client.disabledAt = input.disabled ? (client.disabledAt ?? new Date()) : null;
     if (input.channels !== undefined) client.channels = input.channels;
+    if (input.rawLogScope !== undefined) client.rawLogScope = input.rawLogScope;
     await repo.save(client);
     this.auth.forget();
   }

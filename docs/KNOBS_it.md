@@ -84,7 +84,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |
 | `quietFrom`, `quietTo` | admin | 22, 8 | Le ore di quiete della memoria (locali): nessuna iniziativa scatta al loro interno (D53, 8.12c) |
 
-## 5. Per client (API admin o console)
+## 5. Per client (API admin o console — ogni impostazione qui sotto, webhook e canali compresi)
 
 | Impostazione | Predefinito | Cosa fa |
 |---|---|---|

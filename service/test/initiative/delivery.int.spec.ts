@@ -209,8 +209,14 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     const flexible = await request(marco, 'sentire Luca');
     expect(await row(timed)).toMatchObject({ timing: 'timed', channel: 'messaging' });
     expect(await row(flexible)).toMatchObject({ timing: 'flexible', channel: 'chat' });
+    expect((await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY, body: { rawLogScope: 'all' } })).status).toBe(204);
     const listed = (await call(url, 'GET', '/api/v1/admin/clients', { token: ADMIN_KEY })).body.find((c: { id: string }) => c.id === clientId);
     expect(listed.channels).toHaveLength(3);
+    expect(listed.rawLogScope).toBe('all');
+    // The console shows each client's webhooks — never their secret.
+    expect(listed.webhooks.map((w: { url: string; events: string[] | null }) => [w.url.replace(/:\d+/, ':P'), w.events]))
+      .toEqual([['http://127.0.0.1:P/all', null], ['http://127.0.0.1:P/created', ['initiative.created']]]);
+    expect(JSON.stringify(listed.webhooks)).not.toContain('whsec_');
     expect(pickChannel([{ kind: 'voice', reach: 'presence' }], true)).toBeNull();
     expect((await feed('marco')).find((i) => i.id === timed)).toMatchObject({ timing: 'timed', channel: 'messaging' });
   });

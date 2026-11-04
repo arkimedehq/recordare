@@ -28,6 +28,8 @@ export const updateClientSchema = z.object({
   disabled: z.boolean().optional(),
   /** The channels the client can reach a person on (D55): chat and messaging `always`, voice on `presence`. */
   channels: channels.optional(),
+  /** Raw-log excerpts from this client's conversations only (`own`), or from all. */
+  rawLogScope: z.enum(['own', 'all']).optional(),
 });
 
 /**

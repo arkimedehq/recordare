@@ -31,6 +31,16 @@ const T = {
     linkCode: 'Codice di collegamento', linkCodeHint: 'Il titolare lo invia all\'agente dal canale, in chat diretta, entro 10 minuti; poi la richiesta si conferma qui.',
     claims: 'Da confermare', isHolder: 'È il titolare', notHolder: 'Non è il titolare',
     claimConfirm: 'Da ora i messaggi di questo mittente saranno del titolare ("io"); i messaggi passati restano come sono. Confermare?',
+    save: 'Salva', locale: 'Lingua (BCP 47)', timezone: 'Fuso orario', quiet: 'Ore di quiete (nessuna iniziativa)', from: 'dalle', to: 'alle',
+    run: 'Esegui ora', reviewFacts: 'Revisione fatti', patterns: 'Abitudini', thoughts: 'Pensieri', initiatives: 'Iniziative', done: 'Eseguito',
+    tokenScopes: 'Permessi del nuovo token:', erase: 'Cancella la memoria',
+    eraseConfirm: 'Cancellare per sempre TUTTA la memoria di «{name}»? Scrivi il nome per confermare.', erased: 'Memoria cancellata',
+    rawLog: 'Estratti del registro grezzo', rawOwn: 'solo conversazioni di questo client', rawAll: 'tutte le conversazioni',
+    channels: 'Canali (iniziative)', chNone: 'no', chAlways: 'sempre', chPresence: 'con presenza',
+    chat: 'chat', messaging: 'messaggistica', voice: 'voce',
+    webhooks: 'Webhook (iniziative)', webhookUrl: 'URL (https, o http interno se WEBHOOK_ALLOW_PRIVATE)', description: 'Descrizione',
+    events: 'eventi', allEvents: 'tutti', register: 'Registra', removeConfirm: 'Rimuovere il webhook? Il client non riceverà più le iniziative qui.',
+    remove: 'Rimuovi', webhookSecret: 'Segreto del webhook (whsec_): dallo al client, non verrà più mostrato.',
   },
   en: {
     persons: 'People', clients: 'Clients', logout: 'Sign out', signIn: 'Administrator sign-in',
@@ -57,10 +67,29 @@ const T = {
     linkCode: 'Link code', linkCodeHint: 'The holder sends it to the agent from the channel, in a direct chat, within 10 minutes; then the claim is confirmed here.',
     claims: 'To confirm', isHolder: 'It is the holder', notHolder: 'Not the holder',
     claimConfirm: 'From now on this sender\'s messages will be the holder\'s ("I"); past messages stay as they are. Confirm?',
+    save: 'Save', locale: 'Language (BCP 47)', timezone: 'Time zone', quiet: 'Quiet hours (no initiative)', from: 'from', to: 'to',
+    run: 'Run now', reviewFacts: 'Facts review', patterns: 'Habits', thoughts: 'Thoughts', initiatives: 'Initiatives', done: 'Done',
+    tokenScopes: 'Scopes for a new token:', erase: 'Erase the memory',
+    eraseConfirm: 'Erase ALL of «{name}»\'s memory for good? Type the name to confirm.', erased: 'Memory erased',
+    rawLog: 'Raw-log excerpts', rawOwn: 'this client\'s conversations only', rawAll: 'all conversations',
+    channels: 'Channels (initiatives)', chNone: 'no', chAlways: 'always', chPresence: 'on presence',
+    chat: 'chat', messaging: 'messaging', voice: 'voice',
+    webhooks: 'Webhooks (initiatives)', webhookUrl: 'URL (https, or internal http with WEBHOOK_ALLOW_PRIVATE)', description: 'Description',
+    events: 'events', allEvents: 'all', register: 'Register', removeConfirm: 'Remove the webhook? The client will no longer receive initiatives here.',
+    remove: 'Remove', webhookSecret: 'The webhook\'s secret (whsec_): give it to the client, it will not be shown again.',
   },
 };
 const PROFILES = ['economy', 'balanced', 'full'];
-const KEY_SCOPES = ['ingest', 'mcp', 'read', 'write'];
+const KEY_SCOPES = ['ingest', 'mcp', 'read', 'write', 'erase'];
+/** A personal token's scopes (never admin). */
+const TOKEN_SCOPES = ['mcp', 'ingest', 'read', 'write', 'memory_settings', 'export', 'erase'];
+const CHANNEL_KINDS = ['chat', 'messaging', 'voice'];
+const EVENTS = ['initiative.created', 'initiative.deliver', 'initiative.updated', 'initiative.expired'];
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const TIMEZONES = (() => { try { return Intl.supportedValuesOf('timeZone'); } catch { return []; } })();
+/** Checkboxes for a list of values; `on` says which start checked. */
+const boxes = (values, on) => values.map((v) => h('label', { class: 'switch' }, h('input', { type: 'checkbox', value: v, checked: on(v) }), v));
+const checked = (list) => list.map((l) => l.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
 
 const store = {
   get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
@@ -148,6 +177,14 @@ function personCard(p) {
   const linkClient = h('select', {}, clientOptions());
   const linkId = h('input', { placeholder: t('externalId') });
   const tokenClient = h('select', {}, clientOptions());
+  const tokenScopes = boxes(TOKEN_SCOPES, (v) => ['mcp', 'read', 'write'].includes(v));
+  const patch = (body) => act(() => api('PATCH', `memories/${p.id}`, body));
+  const localeInput = h('input', { value: p.locale ?? '', maxlength: 35, size: 8 });
+  const tzList = `tz-${p.id}`;
+  const tzInput = h('input', { value: p.timezone ?? '', list: tzList, size: 18 });
+  const hourSelect = (value, key) => h('select', { onchange: (e) => patch({ [key]: Number(e.target.value) }) },
+    HOURS.map((x) => h('option', { value: x, selected: Number(value) === x }, `${String(x).padStart(2, '0')}:00`)));
+  const runNow = (path, label) => h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `memories/${p.id}/${path}`), t('done')) }, label);
 
   return h('div', { class: 'card' },
     h('div', { class: 'head' },
@@ -171,6 +208,13 @@ function personCard(p) {
         h('div', { class: 'row' }, nameInput, h('button', {
           class: 'ghost small', onclick: () => nameInput.value.trim() && act(() => api('PATCH', `memories/${p.id}`, { displayName: nameInput.value.trim() })),
         }, t('rename')))),
+      h('div', { class: 'field' }, h('span', {}, t('locale')),
+        h('div', { class: 'row' }, localeInput, h('button', { class: 'ghost small', onclick: () => localeInput.value.trim() && patch({ locale: localeInput.value.trim() }) }, t('save')))),
+      h('div', { class: 'field' }, h('span', {}, t('timezone')),
+        h('div', { class: 'row' }, tzInput, h('datalist', { id: tzList }, TIMEZONES.map((z) => h('option', { value: z }))),
+          h('button', { class: 'ghost small', onclick: () => tzInput.value.trim() && patch({ timezone: tzInput.value.trim() }) }, t('save')))),
+      h('div', { class: 'field' }, h('span', {}, t('quiet')),
+        h('div', { class: 'row' }, t('from'), hourSelect(p.quietFrom, 'quietFrom'), t('to'), hourSelect(p.quietTo, 'quietTo'))),
     ),
     h('div', { class: 'sub' },
       h('h4', {}, t('identities')),
@@ -204,16 +248,25 @@ function personCard(p) {
         h('span', { class: 'muted' }, `${t('used')}: ${when(k.lastUsedAt)}`),
         h('button', { class: 'danger small', onclick: () => confirm(t('revokeConfirm')) && act(() => api('DELETE', `tokens/${k.id}`)) }, t('revoke')),
       )) : h('div', { class: 'muted' }, t('noneM')),
-      clientsCache.length ? h('div', { class: 'row' }, tokenClient, h('button', {
+      clientsCache.length ? h('div', { class: 'row' }, h('span', { class: 'muted' }, t('tokenScopes')), tokenScopes, tokenClient, h('button', {
         class: 'ghost small',
-        onclick: () => act(async () => {
-          const res = await api('POST', `memories/${p.id}/tokens`, { clientId: tokenClient.value, scopes: ['mcp', 'read', 'write'] });
-          showSecret(res.token);
-        }, null),
+        onclick: () => {
+          const scopes = checked(tokenScopes);
+          if (scopes.length) act(async () => showSecret((await api('POST', `memories/${p.id}/tokens`, { clientId: tokenClient.value, scopes })).token), null);
+        },
       }, t('newToken'))) : null,
     ),
     h('div', { class: 'row' },
       h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `memories/${p.id}/consolidate`), t('consolidated')) }, t('consolidate')),
+      h('span', { class: 'muted' }, `${t('run')}:`),
+      runNow('review-facts', t('reviewFacts')), runNow('patterns', t('patterns')), runNow('thoughts', t('thoughts')), runNow('initiatives', t('initiatives')),
+      h('button', {
+        class: 'danger small',
+        onclick: () => {
+          const typed = prompt(t('eraseConfirm', { name: p.name }));
+          if (typed !== null && typed.trim() === p.name) act(() => api('DELETE', `memories/${p.id}?confirm=${encodeURIComponent(p.id)}`), t('erased'));
+        },
+      }, t('erase')),
     ),
   );
 }
@@ -232,7 +285,19 @@ function newPersonForm() {
 // ── Clients ────────────────────────────────────────────────────────────────────
 
 function clientCard(c) {
-  const scopeBoxes = KEY_SCOPES.map((s) => h('label', { class: 'switch' }, h('input', { type: 'checkbox', value: s, checked: true }), s));
+  const scopeBoxes = boxes(KEY_SCOPES, (s) => s !== 'erase');
+  const patch = (body) => act(() => api('PATCH', `clients/${c.id}`, body));
+  const reachOf = (kind) => (c.channels ?? []).find((x) => x.kind === kind)?.reach ?? '';
+  // One select per channel kind: no / always / on presence; the whole list is saved (D55).
+  const channelSelects = CHANNEL_KINDS.map((kind) => h('label', { class: 'field' }, h('span', {}, t(kind)), h('select', {
+    'data-kind': kind,
+    onchange: () => patch({ channels: channelSelects.map((l) => l.querySelector('select')).filter((x) => x.value).map((x) => ({ kind: x.dataset.kind, reach: x.value })) }),
+  }, h('option', { value: '', selected: !reachOf(kind) }, t('chNone')),
+     h('option', { value: 'always', selected: reachOf(kind) === 'always' }, t('chAlways')),
+     h('option', { value: 'presence', selected: reachOf(kind) === 'presence' }, t('chPresence')))));
+  const hookUrl = h('input', { placeholder: t('webhookUrl'), size: 40 });
+  const hookDescription = h('input', { placeholder: t('description'), maxlength: 200 });
+  const hookEvents = boxes(EVENTS, (e) => e === 'initiative.deliver');
   return h('div', { class: 'card' },
     h('div', { class: 'head' },
       h('span', { class: 'name' }, c.name), h('span', { class: 'chip' }, c.kind),
@@ -249,6 +314,33 @@ function clientCard(c) {
           act(() => api('PATCH', `clients/${c.id}`, { disabled: e.target.checked }));
         },
       }), t('disabled')),
+      h('label', { class: 'field' }, h('span', {}, t('rawLog')), h('select', { onchange: (e) => patch({ rawLogScope: e.target.value }) },
+        h('option', { value: 'own', selected: c.rawLogScope === 'own' }, t('rawOwn')),
+        h('option', { value: 'all', selected: c.rawLogScope === 'all' }, t('rawAll')))),
+    ),
+    h('div', { class: 'sub' }, h('h4', {}, t('channels')), h('div', { class: 'grid' }, channelSelects)),
+    h('div', { class: 'sub' },
+      h('h4', {}, t('webhooks')),
+      (c.webhooks ?? []).length ? c.webhooks.map((w) => h('div', { class: 'item' },
+        h('code', {}, w.url), h('span', { class: 'muted' }, `${t('events')}: ${(w.events ?? [t('allEvents')]).join(', ')}`),
+        w.description ? h('span', { class: 'muted' }, w.description) : null,
+        w.disabledAt ? h('span', { class: 'chip danger' }, `${t('disabled')}: ${w.disabledReason ?? ''}`) : null,
+        h('button', { class: 'danger small', onclick: () => confirm(t('removeConfirm')) && act(() => api('DELETE', `webhooks/${w.id}`)) }, t('remove')),
+      )) : h('div', { class: 'muted' }, t('noneM')),
+      h('div', { class: 'row' }, hookUrl, hookDescription),
+      h('div', { class: 'row' }, h('span', { class: 'muted' }, `${t('events')}:`), hookEvents, h('button', {
+        class: 'ghost small',
+        onclick: () => {
+          const events = checked(hookEvents);
+          if (!hookUrl.value.trim()) return;
+          act(async () => {
+            const res = await api('POST', `clients/${c.id}/webhooks`, { url: hookUrl.value.trim(), ...(hookDescription.value.trim() ? { description: hookDescription.value.trim() } : {}),
+              ...(events.length && events.length < EVENTS.length ? { events } : {}) });
+            showSecret(res.secret);
+            toast(t('webhookSecret'));
+          }, null);
+        },
+      }, t('register'))),
     ),
     h('div', { class: 'sub' },
       h('h4', {}, t('keys')),
