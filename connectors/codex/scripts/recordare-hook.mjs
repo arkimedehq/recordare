@@ -132,6 +132,8 @@ async function main() {
     const ctx = await post('/api/v1/context', {
       ingest: { conversation: meta, messages: [{ externalId: `${session}:u:${hash(prompt + now)}`, role: 'user', content: clip(prompt), sentAt: now }] },
       query: prompt.slice(0, 4000),
+      // D55: the agent has tools (web, files) — a look-up the memory wants done may be given to it in the turn.
+      initiatives: { lookups: true },
     }, conversation, 4000);
     if (ctx?.block) {
       process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: ctx.block } }));

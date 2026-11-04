@@ -65,6 +65,7 @@ test('UserPromptSubmit asks for the context of every prompt, the self card left 
   assert.equal(ctx.body.query, 'and him?');
   assert.equal('card' in ctx.body, false); // the service's default: card on
   assert.equal(ctx.body.ingest.messages[0].role, 'user');
+  assert.deepEqual(ctx.body.initiatives, { lookups: true }); // D55: the agent has tools for a look-up
 });
 
 test('Recordare down: no charter, no context, the turn goes on (exit 0, nothing printed)', async () => {
