@@ -23,7 +23,7 @@ export default tseslint.config(
     files: ['console/**/*.js'],
     languageOptions: {
       sourceType: 'script',
-      globals: Object.fromEntries(['document', 'navigator', 'sessionStorage', 'fetch', 'confirm', 'setTimeout', 'clearTimeout', 'Node']
+      globals: Object.fromEntries(['document', 'navigator', 'sessionStorage', 'fetch', 'confirm', 'prompt', 'localStorage', 'setTimeout', 'clearTimeout', 'Node']
         .map((g) => [g, 'readonly'])),
     },
   },
