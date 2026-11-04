@@ -775,7 +775,7 @@ export class ExtractionWriter {
       if (i.cancel || i.done) {
         // The armed request or promise of that person whose words it shares (the latest when several): withdrawn, or done.
         const armed: Array<{ id: string; content: string }> = await this.tx.query(
-          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status = 'armed' AND kind = ANY($3)
+          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind IN ('promise', 'request') AND status IN ('armed', 'fired') AND kind = ANY($3)
              AND for_person_id IS NOT DISTINCT FROM $2 ORDER BY created_at DESC`, [this.ctx.memoryId, forId, i.done ? ['promise', 'request'] : [i.kind]]);
         const hit = armed.find((a) => overlap(a.content, content));
         if (!hit) { this.drop('intent', i.done ? 'nothing_done' : 'nothing_to_cancel'); continue; }
@@ -788,9 +788,9 @@ export class ExtractionWriter {
       const time = (i.due ?? '').match(/T(\d{2}):(\d{2})/);
       const due = { at: time ? new Date(day.at.getTime() + (Number(time[1]) * 60 + Number(time[2])) * 60_000) : day.at };
       await this.tx.query(
-        `INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $6::timestamptz + interval '1 day') ON CONFLICT (message_id, kind) WHERE message_id IS NOT NULL DO NOTHING`,
-        [this.ctx.memoryId, i.kind, content, forId, m.id, due.at]);
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at, timed)
+         VALUES ($1, $2, $3, $4, $5, $6, $6::timestamptz + interval '1 day', $7) ON CONFLICT (message_id, kind) WHERE message_id IS NOT NULL DO NOTHING`,
+        [this.ctx.memoryId, i.kind, content, forId, m.id, due.at, !!time]);
     }
   }
 

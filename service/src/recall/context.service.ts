@@ -28,6 +28,7 @@ import { speakerOf } from './subjects';
 import { vectorParam } from '../db/pgvector';
 import { buildCards, selfCardLines } from './cards';
 import { episodeVisible, factVisible, messageVisible, noteVisible, readerOf, type Reader } from './privacy';
+import { InitiativeService, type InitiativeView } from '../initiative/initiative.service';
 
 /**
  * Minimum query ↔ memory similarity (bge-m3) for an item to enter the block: above the recall tools' floors (0.35),
@@ -80,6 +81,7 @@ export class ContextService {
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     private readonly telemetry: TelemetryService,
     config: ConfigService<Env, true>,
+    private readonly initiatives: InitiativeService,
   ) {
     const knob = (k: 'CONTEXT_MIN_FACT_SIMILARITY' | 'CONTEXT_MIN_EPISODE_SIMILARITY' | 'CONTEXT_MIN_PLAN_SIMILARITY' | 'CONTEXT_MIN_PERIOD_SIMILARITY'
       | 'CONTEXT_MIN_PASSAGE_SIMILARITY', d: number) =>
@@ -97,16 +99,34 @@ export class ContextService {
 
   private readonly floors: { fact: number; episode: number; plan: number; period: number; passage: number };
 
-  /** `card`: open the block with the self card (who I am: current facts and notes about me), on by default (D54). */
-  async build(memoryId: string, query: string, conversationId: string | undefined, now: Date, opts: { card?: boolean } = {}): Promise<MemoryContext> {
+  /**
+   * `card`: open the block with the self card (who I am: current facts and notes about me), on by default (D54).
+   * `lookups`: the host's agent has tools, so a look-up the memory wants done may be given to it (D55).
+   */
+  async build(memoryId: string, query: string, conversationId: string | undefined, now: Date, opts: { card?: boolean; lookups?: boolean } = {}): Promise<MemoryContext> {
     const [memory] = await this.db.query(
       `SELECT o.timezone, o.locale, o.mode, p.display_name AS name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory || !query.trim()) return EMPTY;
-    return this.telemetry.track('recall', memoryId, () => this.collect(memoryId, memory, query, conversationId, now, opts.card ?? true));
+    return this.telemetry.track('recall', memoryId, () => this.collect(memoryId, memory, query, conversationId, now, opts.card ?? true, !!opts.lookups));
+  }
+
+  /**
+   * The in-turn channel (D55): the one initiative due now for whoever is talking — the self, an identified contact, or
+   * in an entity memory whoever talks in the conversation it came from — marked offered so it is given once; with nobody
+   * identified and something waiting for someone, whether the agent may ask who it is talking with.
+   */
+  private async initiativeLines(memoryId: string, mode: string, conversationId: string | undefined, now: Date, lookups: boolean): Promise<string[]> {
+    const speaker = await speakerOf(this.db, conversationId, now, mode === 'entity' ? 'entity' : 'personal');
+    const personId = speaker.kind === 'contact' ? speaker.id : speaker.kind === 'self' ? memoryId : null;
+    const { initiative, askWho } = await this.initiatives.offer(memoryId, { personId, confidence: personId ? 1 : 0, ...(conversationId ? { conversationId } : {}) },
+      'turn', now, { lookups });
+    if (initiative) return [initiativeLine(initiative)];
+    if (askWho) return [`- if natural, ask whether you are talking with ${askWho.name} (something waits for them; say nothing of it before they confirm)`];
+    return [];
   }
 
   private async collect(memoryId: string, memory: { timezone: string; locale: string; mode: string; name: string }, query: string,
-    conversationId: string | undefined, now: Date, withCard: boolean): Promise<MemoryContext> {
+    conversationId: string | undefined, now: Date, withCard: boolean, lookups: boolean): Promise<MemoryContext> {
     // The whole message and its sentences, each embedded: an item matches by its best one, so an instruction tacked on
     // a question ("…? Answer in one line.") does not dilute it.
     const reader = await readerOf(this.db, memoryId, conversationId, now);
@@ -129,10 +149,12 @@ export class ContextService {
       this.log.warn(`memory context without recall: query vectors not back within ${this.embeddingBudgetMs} ms`);
       const card = withCard ? await buildCards(this.db, memoryId, reader) : null;
       const top = card ? selfCardLines(card.self, CARD_CHARS) : null;
-      if (!top?.lines.length) return EMPTY;
+      // An initiative needs no vector either: still given now that its person is talking.
+      const own = await this.initiativeLines(memoryId, memory.mode, conversationId, now, lookups);
+      if (!top?.lines.length && !own.length) return EMPTY;
       this.telemetry.emit({ type: 'recall.served', memoryId, tool: 'memory_context', episodeIds: [], claimIds: [], chats: 0, digests: 0,
         facts: 0, notes: 0, embedMs, late: true });
-      return { block: contextBlock(memory, now, top.lines, []), items: top.lines.length };
+      return { block: contextBlock(memory, now, top?.lines ?? [], own), items: (top?.lines.length ?? 0) + own.length };
     }
     this.log.debug(`memory context: query vectors in ${embedMs} ms`);
     const vectors = vecs.map(vectorParam);
@@ -213,13 +235,15 @@ export class ContextService {
       kept.push(l);
       size += l.length;
     }
-    if (!kept.length && !top.lines.length) return EMPTY;
+    // What I meant to tell or ask, on its own budget after the lines (D55): said once, never cut.
+    const own = await this.initiativeLines(memoryId, memory.mode, conversationId, now, lookups);
+    if (!kept.length && !top.lines.length && !own.length) return EMPTY;
     // Logged only when something about this message is served (the self card alone is not a recall of it): the
     // recall-echo guard (D38) then treats the reply as possibly echoing it.
     if (kept.length) await logRecall(this.db, memoryId, 'memory_context', null, top.lines.length + kept.length, conversationId, now);
     this.telemetry.emit({ type: 'recall.served', memoryId, tool: 'memory_context', episodeIds: [], claimIds: [], chats: 0, digests: 0,
       facts: facts.length, notes: notes.length, embedMs });
-    return { block: contextBlock(memory, now, top.lines, kept), items: top.lines.length + kept.length };
+    return { block: contextBlock(memory, now, top.lines, [...kept, ...own]), items: top.lines.length + kept.length + own.length };
   }
 
   /**
@@ -236,6 +260,14 @@ export class ContextService {
     const prev = rows.find((r, i) => i > 0 || normalize(r.content) !== current);
     return prev ? prev.content.slice(0, 1_000) : null;
   }
+}
+
+/** An initiative as a line of the block: something I meant to tell, ask, or find out (D55; the charter says how to use it). */
+export function initiativeLine(i: InitiativeView): string {
+  const text = i.text.replace(/\s+/g, ' ').trim();
+  if (i.kind === 'ask') return `- something I meant to ask you (my own initiative; ask it if natural, once): ${text}`;
+  if (i.kind === 'lookup') return `- something I wanted to find out with my tools, if you can (my own initiative; then learn_source the answer): ${text}`;
+  return `- something I meant to tell you (my own initiative; say it if natural, once): ${text}`;
 }
 
 /** The fenced block: the self card's lines, then the lines about the message. */

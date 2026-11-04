@@ -53,6 +53,17 @@ describe('RecordareClient', () => {
     expect(seen[1]).toMatchObject({ method: 'GET', path: '/api/v1/charter?tools=false' });
   });
 
+  it('sends a presence impulse and reports an initiative with its context (D55)', async () => {
+    reply = () => ({ status: 200, body: { person: null, initiative: null, askWho: { personId: 'p1', name: 'Eriona' } } });
+    const res = await client().presence('u1', { channel: 'voice', confidence: 0.4, person: { identity: { channel: 'voice', externalId: 'v1' } } });
+    expect(res.askWho).toEqual({ personId: 'p1', name: 'Eriona' });
+    expect(seen[0]).toMatchObject({ method: 'POST', path: '/api/v1/presence', body: { channel: 'voice', confidence: 0.4 } });
+    expect(seen[0]?.headers).toMatchObject({ 'x-recordare-user': 'u1' });
+    reply = () => ({ status: 201, body: {} });
+    await client().reportInitiative('u1', 'i1', 'said', { channel: 'voice', reaction: 'positive' });
+    expect(seen[1]).toMatchObject({ method: 'POST', path: '/api/v1/initiatives/i1/outcome', body: { status: 'said', channel: 'voice', reaction: 'positive' } });
+  });
+
   it('asks for the self card in the memory context and reads the cards', async () => {
     reply = () => ({ status: 200, body: { block: null, items: 0 } });
     await client().context('u1', 'chat-1', 'Che macchina ho?', { card: true });

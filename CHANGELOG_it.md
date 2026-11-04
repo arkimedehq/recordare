@@ -6,6 +6,22 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Iniziative decise da Recordare: a chi, quando, dove** (D55, `docs/INITIATIVES_DELIVERY_it.md` F1). A un impulso di
+  presenza (`POST api/v1/presence`, libreria `presence()`) — l'agente dice chi vede o sente, con cosa, con che sicurezza —
+  Recordare risponde subito con l'unica iniziativa da consegnare adesso, oppure, in una memoria di entità senza nessuno
+  identificato, a chi chiedere "sei tu?" (senza rivelare nulla). Il contesto di memoria porta l'iniziativa dovuta per chi
+  sta parlando (il canale nel turno: ogni client di livello completo consegna le iniziative senza codice; le ricerche solo
+  con `initiatives: {lookups: true}`). Un'iniziativa per una persona raggiunge solo quella persona, riconosciuta con
+  sicurezza ≥ 0,6, o ≥ 0,85 quando nasce da un messaggio privato; in una memoria di entità una per nessuno in particolare
+  raggiunge chiunque sia identificato, o chi parla nella conversazione da cui è nata. Nuovo stato `offered`, chiuso da ciò
+  che vede l'estrazione della conversazione (said, asked, done, declined) o che decade come expired / ignored. Le
+  iniziative ricevono `timing` (timed / flexible), `window`, `channel`, `identity`, `source` (gli id del client dei
+  messaggi da cui sono nate), `offeredAt`; gli esiti accettano `channel` e `reaction` e conservano il ritardo; i client
+  dichiarano i loro `channels`; i webhook accettano `events`. Carta della memoria `charter.v2` (come usare una riga di
+  iniziativa). Migrazione `InitiativeDelivery`. Additivo, nessuna modifica incompatibile; serve una release della libreria
+  client per `presence()` e i nuovi tipi.
+
 ### Corretto
 - **Il contesto di memoria non aspetta più gli embedding in background.** Su un ospite che condivide un server di
   embedding su CPU (una richiesta alla volta, come quello di Arkimede), il turno appena salvato — output di strumenti di

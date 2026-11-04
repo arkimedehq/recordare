@@ -667,6 +667,14 @@ Webhooks; `410 Gone` disables one); `webhook_deliveries(id, webhook_id, initiati
 attempts, last_status, last_error, delivered_at, gave_up_at, created_at)` — every delivery, retried by the webhook queue
 with a growing delay (1 min … 12 h, seven times) then given up. A memory's events go to the webhooks of the clients that
 hold an account identity for it, each payload with that client's `user`.
+**D55 delivery** (F1, migration `InitiativeDelivery1791260000000`): `initiative_status` gains `offered` (given in a turn or
+after a presence impulse, closed by what happens next); `initiatives` gain `timing text (timed|flexible)`,
+`identity_required text (medium|high)`, `channel text null`, `offered_at`, `offered_conversation_id null → conversations`,
+`source_message_ids uuid[]` (the intent's messages), `outcome_channel text null`, `outcome_context jsonb null`
+(`{reaction, latencyMs}`); `intents.timed boolean` (a time was asked for); `clients.channels jsonb` (`[{kind: chat |
+messaging | voice, reach: always | presence}]`); `client_webhooks.events text[] null` (null: all);
+`presences(id, memory_id, person_id null (not identified), client_id null, channel (voice|camera|panel|chat), confidence
+real, place null, seen_at, expires_at)` — who the agent saw or heard, by what, how sure, until when; never a voice or a face.
 
 ### clarifications (D50, vision L1; behaviour WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null

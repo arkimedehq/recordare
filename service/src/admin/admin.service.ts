@@ -160,7 +160,7 @@ export class AdminService {
   /** Clients with their active keys (prefixes only). */
   async listClients(): Promise<unknown[]> {
     const clients: Array<Record<string, unknown> & { id: string }> = await this.db.query(
-      `SELECT id, name, kind, auto_provision AS "autoProvision", raw_log_scope AS "rawLogScope", created_at AS "createdAt",
+      `SELECT id, name, kind, auto_provision AS "autoProvision", raw_log_scope AS "rawLogScope", channels, created_at AS "createdAt",
               disabled_at AS "disabledAt"
        FROM clients ORDER BY created_at`);
     const keys: Array<{ clientId: string }> = await this.db.query(
@@ -175,6 +175,7 @@ export class AdminService {
     if (!client) throw new NotFoundException();
     if (input.autoProvision !== undefined) client.autoProvision = input.autoProvision;
     if (input.disabled !== undefined) client.disabledAt = input.disabled ? (client.disabledAt ?? new Date()) : null;
+    if (input.channels !== undefined) client.channels = input.channels;
     await repo.save(client);
     this.auth.forget();
   }

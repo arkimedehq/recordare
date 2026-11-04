@@ -197,7 +197,14 @@ admin or with `PATCH api/v1/me` (a client key, or the memory's personal token wi
 known participant who shows up under a new name on the channel keeps their contact; the new name becomes an alias.
 
 ## 4d. Initiatives — what the agent says on its own (D53, WORK_PLAN 8.12c)
-> **Redesigned by D55** (2026-11-04): Recordare will decide who, when and on which channel; your platform declares its channels, sends presence impulses and delivers — `INITIATIVES_DELIVERY.md` (phases F0–F5). What follows is the contract built so far.
+> **D55** (F1 built 2026-11-04; `INITIATIVES_DELIVERY.md`): Recordare decides who, when and on which channel. Your platform
+> (a) declares its channels once (admin `PATCH api/v1/admin/clients/{id} {channels}`); (b) does nothing more for the
+> in-turn channel — the memory context you already ask for before every turn (§4) carries the initiative due for whoever
+> is talking (send `initiatives: {lookups: true}` when your agent has tools); (c) sends a **presence impulse** when it
+> recognises someone (`client.presence(user, {channel, person?, confidence})` — your voiceprint or face model's score; an
+> account is 1) and speaks the `initiative` it gets back, or asks "is it you?" for `askWho`; (d) reports outcomes with
+> `channel` and `reaction`; (e) on a webhook, skips an initiative already `offered` and recognises a reminder it
+> scheduled itself by `source`. The steps below still hold for push delivery.
 
 Recordare pushes what the agent decided to say, ask or look up (`API.md` §4b). Your platform delivers it **when the
 person is there** (presence is yours: a chat open now, a recognised voice in the room, someone at the panel), reports

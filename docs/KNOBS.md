@@ -90,9 +90,10 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `autoProvision` | off | Create a person at the first contact of a new user |
 | `rawLogScope` | `own` | Raw-log excerpts from this client's conversations only, or all |
 | `disabled` | off | Every key and token of the client stops at once |
+| `channels` | `[]` | D55: the channels the client reaches a person on, each with how — `chat` / `messaging` `always`, `voice` on `presence`; a new initiative's `channel` is picked from them (messaging first when timed, chat first when flexible). Identity thresholds 0.6 (medium) / 0.85 (high) are constants (`IDENTITY_THRESHOLD`), not measured yet |
 | Key scopes | — | `ingest`, `mcp`, `read`, `write` (never admin, memory settings or export) |
 
-Webhooks (D53, 8.12c): `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?, description?}` registers where a client receives the agent's initiatives (Standard Webhooks, the `whsec_` secret shown once); `GET …/webhooks`, `DELETE api/v1/admin/webhooks/{id}`. `API.md` §4b.
+Webhooks (D53, 8.12c): `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?, description?, events?}` registers where a client receives the agent's initiatives (Standard Webhooks, the `whsec_` secret shown once); `GET …/webhooks`, `DELETE api/v1/admin/webhooks/{id}`. `API.md` §4b.
 
 ## 6. Installation scripts (`deploy/`)
 

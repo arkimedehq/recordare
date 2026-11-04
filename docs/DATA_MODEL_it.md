@@ -695,6 +695,15 @@ initiative_id null, event_type, payload jsonb, attempts, last_status, last_error
 created_at)` — ogni consegna, ritentata dalla coda dei webhook con un ritardo crescente (da 1 min a 12 h, sette volte)
 poi abbandonata. Gli eventi di una memoria vanno ai webhook dei client che hanno per essa un'identità di account, ogni
 payload con l'`user` di quel client.
+**Consegna D55** (F1, migrazione `InitiativeDelivery1791260000000`): `initiative_status` riceve `offered` (data in un turno
+o dopo un impulso di presenza, chiusa da ciò che succede dopo); `initiatives` ricevono `timing text (timed|flexible)`,
+`identity_required text (medium|high)`, `channel text null`, `offered_at`, `offered_conversation_id null → conversations`,
+`source_message_ids uuid[]` (i messaggi dell'intento), `outcome_channel text null`, `outcome_context jsonb null`
+(`{reaction, latencyMs}`); `intents.timed boolean` (è stata chiesta un'ora); `clients.channels jsonb` (`[{kind: chat |
+messaging | voice, reach: always | presence}]`); `client_webhooks.events text[] null` (null: tutti);
+`presences(id, memory_id, person_id null (non identificata), client_id null, channel (voice|camera|panel|chat), confidence
+real, place null, seen_at, expires_at)` — chi l'agente ha visto o sentito, con cosa, con che sicurezza, fino a quando; mai
+una voce o un volto.
 
 ### clarifications (D50, visione L1; comportamento WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contatti), episode_id / fact_id / note_id null

@@ -99,6 +99,11 @@ delivery with `verifyWebhook(rawBody, headers, secret)` (the raw body, the `whse
 throws `WebhookVerificationError`). Deliver an initiative when the person it is for (`for`, or the holder) is present
 and before `expiresAt`; a `lookup` is for your agent's own tools; then `reportInitiative(user, id, outcome)` with
 `said` / `asked` / `ignored` / `declined` / `done` / `failed` (API.md §4b, INTEGRATION.md §4d).
+D55 — Recordare decides who, when and where: send `presence(user, {channel, person?, confidence?})` when your agent
+recognises someone (your voiceprint or face model's score; an account is 1) and speak the `initiative` you get back
+(already `offered`), or ask "is it you?" for `askWho`; pass `channel` and `reaction` to `reportInitiative`; give
+`context(…, {initiatives: {lookups: true}})` when your agent has tools; `source` on an initiative names your own messages
+it came from (a reminder you scheduled yourself).
 
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,

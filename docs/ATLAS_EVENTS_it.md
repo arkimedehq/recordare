@@ -46,7 +46,7 @@ la `DELETE` di un episodio, fatto o nota. Tutto il resto sopra resta solo metada
 | `consolidation.finished` | `days`, `months`, `llmCalls`, `failed` | il consolidamento di una memoria termina |
 | `episode.forgotten` | `ids` | episodi dimenticati |
 | `initiative.created` | `id`, `kind` (`say` / `ask` / `lookup` / `do`) | l'agente ha deciso di dire o fare qualcosa da sé (D53, 8.12c) |
-| `initiative.outcome` | `id`, `status` (`said` / `asked` / `ignored` / `declined` / `done` / `failed` / `expired`) | cosa il client ha riportato di un'iniziativa |
+| `initiative.outcome` | `id`, `status` (`offered` — data in un turno o dopo un impulso di presenza, D55 — / `said` / `asked` / `ignored` / `declined` / `done` / `failed` / `expired`) | cosa è stato di un'iniziativa (il resoconto del client, o ciò che Recordare ha visto) |
 
 Le piattaforme client (agenti, le loro chiamate LLM, strumenti) raggiungono l'atlas sul proprio canale — tracce
 OpenTelemetry GenAI — non tramite questo flusso (WORK_PLAN 5b.8).

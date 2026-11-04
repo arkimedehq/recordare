@@ -31,22 +31,56 @@ import { TelemetryService } from '../telemetry/telemetry.service';
 import { WebhooksService } from './webhooks.service';
 
 export type InitiativeKind = 'say' | 'ask' | 'lookup' | 'do';
-export type InitiativeStatus = 'pending' | 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
+export type InitiativeStatus = 'pending' | 'offered' | 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
 export const OUTCOMES = ['said', 'asked', 'ignored', 'declined', 'done', 'failed', 'expired'] as const;
+/** Where an initiative reached the person (D55): in a turn (the memory context), a chat, messaging, by voice, on a panel. */
+export const DELIVERY_CHANNELS = ['turn', 'chat', 'messaging', 'voice', 'panel'] as const;
+export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
+export type Reaction = 'positive' | 'neutral' | 'negative';
 
 export interface InitiativeView {
   id: string; seq: number; kind: InitiativeKind; for: { personId: string; name: string } | null; text: string; reason: string; worth: number | null;
   episodeIds: string[]; dueAt: string; expiresAt: string; status: InitiativeStatus; outcomeAt: string | null; reply: string | null;
   createdAt: string;
+  /** D55: timed (a time was asked for) or flexible (a window, the moment chosen by Recordare). */
+  timing: 'timed' | 'flexible';
+  window: { notBefore: string; notAfter: string };
+  /** Where it was offered, or will be delivered (a client's declared channel); null: at the person's next presence or turn. */
+  channel: string | null;
+  /** How surely the person must be recognised before hearing it (D55: medium, or high for what came from a private message). */
+  identity: { required: 'medium' | 'high' };
+  /** The client's own ids of the messages its intent came from: a host recognises a reminder it scheduled itself. */
+  source: { conversation: string; messageIds: string[] } | null;
+  offeredAt: string | null;
 }
 
 interface Row {
   id: string; seq: string; kind: InitiativeKind; for_person_id: string | null; for_name: string | null; text: string; reason: string; worth: number | null;
   episode_ids: string[]; due_at: Date; expires_at: Date; status: InitiativeStatus; outcome_at: Date | null; reply: string | null; created_at: Date;
+  timing: 'timed' | 'flexible'; identity_required: 'medium' | 'high'; channel: string | null; offered_at: Date | null;
+  source_conversation: string | null; source_messages: string[];
 }
 
 const COLUMNS = `i.id, i.seq::text, i.kind::text, i.for_person_id, (SELECT display_name FROM persons WHERE id = i.for_person_id) AS for_name,
-  i.text, i.reason, i.worth, i.episode_ids, i.due_at, i.expires_at, i.status::text, i.outcome_at, i.reply, i.created_at`;
+  i.text, i.reason, i.worth, i.episode_ids, i.due_at, i.expires_at, i.status::text, i.outcome_at, i.reply, i.created_at,
+  i.timing, i.identity_required, i.channel, i.offered_at,
+  (SELECT c.external_id FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE m.id = i.source_message_ids[1]) AS source_conversation,
+  ARRAY(SELECT m.external_id FROM messages m WHERE m.id = ANY(i.source_message_ids) ORDER BY m.sent_at) AS source_messages`;
+
+/**
+ * The confidence a person must be recognised with (D55), by the initiative's sensitivity: a platform account or a link
+ * code is 1; a declared name, a voiceprint or a face comes with the agent's own number.
+ */
+export const IDENTITY_THRESHOLD: Record<'medium' | 'high', number> = { medium: 0.6, high: 0.85 };
+
+/** Who is there to receive an initiative: an identified person (or the memory's self), with how surely; or nobody known. */
+export interface Recipient {
+  /** The person recognised (the memory's own id for its self); null: someone not identified. */
+  personId: string | null;
+  confidence: number;
+  /** The conversation the person is talking in (a turn), when there is one. */
+  conversationId?: string;
+}
 
 /** How far back a past plan is still asked about, how far ahead a plan is reminded of; the ask waits two days after the
  * plan's end — people tell how it went the day after on their own, and asking first is a nag. */
@@ -71,6 +105,10 @@ export function view(r: Row): InitiativeView {
     id: r.id, seq: Number(r.seq), kind: r.kind, for: r.for_person_id ? { personId: r.for_person_id, name: r.for_name ?? '' } : null,
     text: r.text, reason: r.reason, worth: r.worth, episodeIds: r.episode_ids, dueAt: r.due_at.toISOString(), expiresAt: r.expires_at.toISOString(),
     status: r.status, outcomeAt: r.outcome_at?.toISOString() ?? null, reply: r.reply, createdAt: r.created_at.toISOString(),
+    timing: r.timing, window: { notBefore: r.due_at.toISOString(), notAfter: r.expires_at.toISOString() }, channel: r.channel,
+    identity: { required: r.identity_required },
+    source: r.source_conversation ? { conversation: r.source_conversation, messageIds: r.source_messages } : null,
+    offeredAt: r.offered_at?.toISOString() ?? null,
   };
 }
 
@@ -99,6 +137,7 @@ export class InitiativeService {
 
   async sweep(memoryId: string, now: Date): Promise<{ armed: number; fired: number; expired: number }> {
     const armed = await this.arm(memoryId, now);
+    await this.settle(memoryId, now);
     const expired = await this.expire(memoryId, now);
     const fired = await this.fire(memoryId, now);
     return { armed, fired, expired };
@@ -193,15 +232,18 @@ export class InitiativeService {
     const [memory]: Array<{ timezone: string; locale: string; quiet_from: number; quiet_to: number; quality_profile: string | null; display_name: string; mode: string }> = await this.db.query(
       `SELECT o.timezone, o.locale, o.quiet_from, o.quiet_to, o.quality_profile, o.mode, p.display_name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory) return 0;
-    const due: Array<{ id: string; kind: string; content: string; for_person_id: string | null; for_name: string | null; episode_id: string | null; note_id: string | null; expires_at: Date; due_at: Date; occurred_at: Date | null }> =
+    const due: Array<{ id: string; kind: string; content: string; for_person_id: string | null; for_name: string | null; episode_id: string | null; note_id: string | null; expires_at: Date; due_at: Date; occurred_at: Date | null;
+      timed: boolean; message_id: string | null; private: boolean }> =
       await this.db.query(
         `SELECT t.id, t.kind::text, t.content, t.for_person_id, (SELECT display_name FROM persons WHERE id = t.for_person_id) AS for_name,
-           t.episode_id, t.note_id, t.expires_at, t.due_at, e.occurred_at
+           t.episode_id, t.note_id, t.expires_at, t.due_at, e.occurred_at, t.timed, t.message_id,
+           COALESCE((SELECT m.private FROM messages m WHERE m.id = t.message_id), false) AS private
          FROM intents t LEFT JOIN episodes e ON e.id = t.episode_id
          WHERE t.memory_id = $1 AND t.status = 'armed' AND t.due_at <= $2 AND (t.reconsider_at IS NULL OR t.reconsider_at <= $2)
          ORDER BY t.due_at`, [memoryId, now]);
     if (!due.length) return 0;
-        const text = initiativeText(memory.locale);
+    const text = initiativeText(memory.locale);
+    const channels = await this.declaredChannels(memoryId);
     const day = (d: Date) => new Intl.DateTimeFormat(memory.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: memory.timezone }).format(d);
     const when = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to);
     const limit = this.config.get('INITIATIVE_DAILY_LIMIT', { infer: true }) ?? 3; // counted on the day they are due (the memory's clock)
@@ -231,10 +273,13 @@ export class InitiativeService {
       const content = w?.text?.trim() || fallback;
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
-          `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at, worth)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *)
+          `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at, worth,
+               timing, identity_required, channel, source_message_ids)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
-          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > when ? t.due_at : when, t.expires_at, w?.worth ?? null]);
+          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > when ? t.due_at : when, t.expires_at, w?.worth ?? null,
+            t.timed ? 'timed' : 'flexible', t.private ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
+            t.message_id ? [t.message_id] : []]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
       });
@@ -274,6 +319,96 @@ export class InitiativeService {
     return out;
   }
 
+  /**
+   * D55: the one initiative to give now to who is there — a turn of theirs (the memory context) or a presence impulse —
+   * marked `offered` so it is given once; or, in an entity memory with nobody identified, whom to ask "are you …?"
+   * (something waits for them; nothing of it is told). An initiative for a person reaches only that person, recognised
+   * at least as surely as it requires; one for nobody in particular reaches the holder of a personal memory, and in an
+   * entity memory anyone identified — or whoever talks in the conversation it came from (the one who asked is there).
+   * A look-up goes to the agent (its tools) only when the host says it has some.
+   */
+  async offer(memoryId: string, who: Recipient, channel: DeliveryChannel, now: Date, opts: { lookups?: boolean } = {}):
+    Promise<{ initiative: InitiativeView | null; askWho: { personId: string; name: string } | null }> {
+    const [memory]: Array<{ mode: string }> = await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
+    if (!memory) return { initiative: null, askWho: null };
+    const entity = memory.mode === 'entity';
+    const self = who.personId === memoryId;
+    const contact = who.personId && !self ? who.personId : null;
+    const [hit]: Array<{ id: string }> = await this.db.query(
+      `SELECT i.id FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
+       WHERE i.memory_id = $1 AND i.status = 'pending' AND i.due_at <= $2 AND i.expires_at > $2
+         AND (t.id IS NULL OR t.status = 'fired')
+         AND (i.kind <> 'lookup' OR $3)
+         AND (
+           (i.kind = 'lookup' AND i.for_person_id IS NULL)
+           OR (i.for_person_id IS NOT NULL AND i.for_person_id = $4 AND $5 >= CASE i.identity_required WHEN 'high' THEN $8 ELSE $7 END)
+           OR (i.for_person_id IS NULL AND NOT $6 AND $9 AND $5 >= CASE i.identity_required WHEN 'high' THEN $8 ELSE $7 END)
+           OR (i.for_person_id IS NULL AND $6 AND $4 IS NOT NULL AND $5 >= CASE i.identity_required WHEN 'high' THEN $8 ELSE $7 END)
+           OR (i.for_person_id IS NULL AND $6 AND $10::uuid IS NOT NULL
+               AND EXISTS (SELECT 1 FROM messages m WHERE m.id = ANY(i.source_message_ids) AND m.conversation_id = $10))
+         )
+       ORDER BY i.worth DESC NULLS LAST, i.due_at LIMIT 1`,
+      [memoryId, now, !!opts.lookups, contact, who.confidence, entity, IDENTITY_THRESHOLD.medium, IDENTITY_THRESHOLD.high, self, who.conversationId ?? null]);
+    if (hit) {
+      const rows = updated<Row>(await this.db.query(
+        `UPDATE initiatives i SET status = 'offered', offered_at = $3, channel = $4, offered_conversation_id = $5, updated_at = now()
+         WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`,
+        [memoryId, hit.id, now, channel, channel === 'turn' ? who.conversationId ?? null : null]));
+      const r = rows[0];
+      if (r) {
+        const v = view(r);
+        this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: v.id, status: 'offered' });
+        await this.webhooks.notify(memoryId, 'initiative.updated', v, v.id);
+        return { initiative: v, askWho: null };
+      }
+    }
+    if (!entity || who.personId) return { initiative: null, askWho: null };
+    const [waiting]: Array<{ person_id: string; name: string }> = await this.db.query(
+      `SELECT i.for_person_id AS person_id, p.display_name AS name FROM initiatives i JOIN persons p ON p.id = i.for_person_id
+       LEFT JOIN intents t ON t.id = i.intent_id
+       WHERE i.memory_id = $1 AND i.status = 'pending' AND i.due_at <= $2 AND i.expires_at > $2 AND (t.id IS NULL OR t.status = 'fired')
+       ORDER BY i.worth DESC NULLS LAST, i.due_at LIMIT 1`, [memoryId, now]);
+    return { initiative: null, askWho: waiting ? { personId: waiting.person_id, name: waiting.name } : null };
+  }
+
+  /**
+   * Offered or pending initiatives whose intent moved on (D55, no LLM call): done in a conversation (the extraction saw
+   * the reminder given, the plan's outcome told, the question answered) closes an offered one as said / asked / done and
+   * a pending one as done (no longer needed); withdrawn closes it as declined. An offered one nobody followed up by its
+   * end is ignored (an ask is offered once more a week later) — or expired, for a reminder (moot after its day).
+   */
+  private async settle(memoryId: string, now: Date): Promise<void> {
+    const moved: Array<{ id: string; status: InitiativeStatus }> = await this.db.query(
+      `SELECT i.id, CASE WHEN t.status = 'cancelled' THEN 'declined'
+                         WHEN i.status = 'pending' THEN 'done'
+                         WHEN i.kind = 'ask' THEN 'asked' WHEN i.kind = 'say' THEN 'said' ELSE 'done' END AS status
+       FROM initiatives i JOIN intents t ON t.id = i.intent_id
+       WHERE i.memory_id = $1 AND i.status IN ('pending', 'offered') AND t.status IN ('done', 'cancelled')`, [memoryId]);
+    for (const m of moved) await this.close(memoryId, m.id, m.status, now);
+    const lapsed: Array<{ id: string; kind: InitiativeKind }> = await this.db.query(
+      `SELECT id, kind::text FROM initiatives WHERE memory_id = $1 AND status = 'offered' AND expires_at < $2`, [memoryId, now]);
+    for (const l of lapsed) await this.outcome(memoryId, l.id, l.kind === 'say' ? 'expired' : 'ignored', now);
+  }
+
+  /** Closes an initiative whose intent is already settled (no intent bookkeeping), and tells the clients. */
+  private async close(memoryId: string, id: string, status: InitiativeStatus, now: Date): Promise<void> {
+    const rows = updated<Row>(await this.db.query(
+      `UPDATE initiatives i SET status = $3, outcome_at = $4, outcome_channel = COALESCE(i.outcome_channel, i.channel), updated_at = now()
+       WHERE i.memory_id = $1 AND i.id = $2 AND i.status IN ('pending', 'offered') RETURNING ${COLUMNS}`, [memoryId, id, status, now]));
+    const r = rows[0];
+    if (!r) return;
+    this.telemetry.emit({ type: 'initiative.outcome', memoryId, id, status });
+    await this.webhooks.notify(memoryId, 'initiative.updated', view(r), id);
+  }
+
+  /** The channels the memory's clients declared (D55), from the clients that open this memory. */
+  private async declaredChannels(memoryId: string): Promise<Array<{ kind: string; reach: string }>> {
+    const rows: Array<{ channels: Array<{ kind: string; reach: string }> }> = await this.db.query(
+      `SELECT c.channels FROM clients c JOIN external_identities x ON x.client_id = c.id AND x.person_id = $1 AND x.kind = 'account'
+       WHERE c.disabled_at IS NULL ORDER BY c.created_at`, [memoryId]);
+    return rows.flatMap((r) => r.channels ?? []);
+  }
+
   /** The feed: initiatives after `since` (seq), in order; `next` goes back as `since`, `more` when a page was full. */
   async list(memoryId: string, query: { since?: number; limit?: number; status?: InitiativeStatus }): Promise<{ items: InitiativeView[]; next: number; more: boolean }> {
     const limit = Math.min(Math.max(query.limit ?? 100, 1), 500);
@@ -285,10 +420,15 @@ export class InitiativeService {
   }
 
   /** What became of an initiative (the client's report); its intent follows. */
-  async outcome(memoryId: string, id: string, status: (typeof OUTCOMES)[number], at: Date, reply?: string): Promise<InitiativeView> {
+  async outcome(memoryId: string, id: string, status: (typeof OUTCOMES)[number], at: Date, reply?: string,
+    context: { channel?: DeliveryChannel; reaction?: Reaction } = {}): Promise<InitiativeView> {
+    // The outcome's context is what timing learns from (D55): where it reached the person, how late, how it was taken.
     const rows = updated<Row>(await this.db.query(
-      `UPDATE initiatives i SET status = $3, outcome_at = $4, reply = COALESCE($5, i.reply), updated_at = now()
-       WHERE i.memory_id = $1 AND i.id = $2 RETURNING ${COLUMNS}`, [memoryId, id, status, at, reply ?? null]));
+      `UPDATE initiatives i SET status = $3, outcome_at = $4, reply = COALESCE($5, i.reply), updated_at = now(),
+         outcome_channel = COALESCE($6, i.outcome_channel, i.channel),
+         outcome_context = jsonb_strip_nulls(jsonb_build_object('reaction', $7::text,
+           'latencyMs', (extract(epoch FROM ($4::timestamptz - i.due_at)) * 1000)::bigint))
+       WHERE i.memory_id = $1 AND i.id = $2 RETURNING ${COLUMNS}`, [memoryId, id, status, at, reply ?? null, context.channel ?? null, context.reaction ?? null]));
     if (!rows.length) throw new NotFoundException();
     const linked: Array<{ intent_id: string | null }> = await this.db.query(`SELECT intent_id FROM initiatives WHERE id = $1`, [id]);
     const intent_id = linked[0]?.intent_id;
@@ -335,4 +475,15 @@ export function afterQuiet(now: Date, tz: string, from: number, to: number): Dat
   };
   const end = candidate(today);
   return end > now ? end : candidate(new Date(new Date(`${today}T12:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10));
+}
+
+/**
+ * Where a new initiative will reach the person (D55), among the channels that reach them at any time: a timed one where
+ * it is noticed now (messaging before chat), a flexible one where it can wait (chat before messaging); none: at their
+ * next presence impulse or turn.
+ */
+export function pickChannel(channels: Array<{ kind: string; reach: string }>, timed: boolean): string | null {
+  const always = new Set(channels.filter((c) => c.reach === 'always').map((c) => c.kind));
+  for (const kind of timed ? ['messaging', 'chat'] : ['chat', 'messaging']) if (always.has(kind)) return kind;
+  return null;
 }

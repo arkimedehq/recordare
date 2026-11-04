@@ -1,0 +1,212 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright © 2026 Andrea Genovese
+
+/**
+ * D55 delivery (`docs/INITIATIVES_DELIVERY.md` F1): Recordare decides who, when and where. A presence impulse or a turn of
+ * the right person gets the one initiative due now (offered once); an entity memory gives one only to a person recognised
+ * surely enough — or to whoever talks in the conversation it came from — and with nobody identified asks who it is; an
+ * offered initiative closes by what happens next; clients declare their channels, webhooks take the events they want.
+ */
+import { type INestApplication } from '@nestjs/common';
+import { createServer, type Server } from 'node:http';
+import { DataSource } from 'typeorm';
+import { InitiativeService, pickChannel } from '../../src/initiative/initiative.service';
+import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
+
+const NOW = new Date('2026-10-12T10:00:00Z'); // 12:00 in Rome: outside the quiet hours
+const HOUR = 3_600_000;
+
+describe('initiative delivery (D55): presence impulses, the in-turn channel, identity thresholds, channels, events', () => {
+  let app: INestApplication;
+  let url: string;
+  let emb: Server;
+  let receiver: Server;
+  let db: DataSource;
+  let clientId: string;
+  let key: string;
+  let home: string; // entity memory (a shared agent)
+  let marco: string; // personal memory
+  let eriona: string;
+  const received: Array<{ hook: string; body: { type: string; data: { id: string; status: string } } }> = [];
+  const at = { 'x-recordare-now': NOW.toISOString() };
+  const as = (user: string, extra: Record<string, string> = {}) => ({ token: key, headers: { 'x-recordare-user': user, ...at, ...extra } });
+
+  async function ingest(user: string, conversation: string, messages: object[], participants: object[] = []): Promise<void> {
+    const res = await call(url, 'POST', '/api/v1/ingest/messages', { token: key, headers: { 'x-recordare-user': user },
+      body: { conversation: { externalId: conversation, participants }, messages } });
+    expect(res.status).toBeLessThan(300);
+  }
+  const messageId = async (externalId: string): Promise<string> => (await db.query(`SELECT id FROM messages WHERE external_id = $1`, [externalId]))[0].id;
+  /** A request intent due an hour ago (the extraction's INTENTS make these), fired by the sweep. */
+  async function request(memoryId: string, content: string, opts: { for?: string; message?: string; timed?: boolean; kind?: string } = {}): Promise<string> {
+    await db.query(
+      `INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at, timed) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [memoryId, opts.kind ?? 'request', content, opts.for ?? null, opts.message ? await messageId(opts.message) : null,
+        new Date(NOW.getTime() - HOUR), new Date(NOW.getTime() + 20 * HOUR), opts.timed ?? false]);
+    await app.get(InitiativeService).sweep(memoryId, NOW);
+    const [row] = await db.query(`SELECT id FROM initiatives WHERE text LIKE '%' || $1 || '%' ORDER BY created_at DESC LIMIT 1`, [content]);
+    return row.id as string;
+  }
+  const feed = async (user: string) => (await call(url, 'GET', '/api/v1/initiatives', as(user))).body.items as Array<{ id: string; timing: string; channel: string | null }>;
+  const row = async (id: string) => (await db.query(
+    `SELECT status::text, channel, offered_conversation_id, outcome_channel, outcome_context, timing, identity_required FROM initiatives WHERE id = $1`, [id]))[0];
+  const presence = (user: string, body: object) => call(url, 'POST', '/api/v1/presence', { ...as(user), body });
+  const context = (user: string, conversation: string, body: object = {}) =>
+    call(url, 'POST', '/api/v1/context', { ...as(user, { 'x-recordare-conversation': conversation }), body: { query: 'ciao, come va?', card: false, ...body } });
+
+  beforeAll(async () => {
+    const fake = await startFakeEmbeddings();
+    emb = fake.server;
+    receiver = createServer((req, res) => {
+      let body = '';
+      req.on('data', (c) => { body += c; });
+      req.on('end', () => { received.push({ hook: req.url ?? '', body: JSON.parse(body) }); res.statusCode = 204; res.end(); });
+    });
+    await new Promise<void>((r) => receiver.listen(0, '127.0.0.1', r));
+    const { port } = receiver.address() as { port: number };
+    testEnv({ EMBEDDING_BASE_URL: fake.url, WEBHOOK_ALLOW_PRIVATE: 'true', CONSOLIDATION_SCHEDULE: 'false', INITIATIVE_WORDING: 'false',
+      ALLOW_CLOCK_OVERRIDE: 'true', IDLE_DELAY_SECONDS: '3600', INITIATIVE_DAILY_LIMIT: '20' });
+    await resetSchema();
+    ({ app, url } = await startApp());
+    db = app.get(DataSource);
+    clientId = (await call(url, 'POST', '/api/v1/admin/clients', { token: ADMIN_KEY, body: { name: 'A', kind: 'platform' } })).body.id;
+    key = (await call(url, 'POST', `/api/v1/admin/clients/${clientId}/keys`, { token: ADMIN_KEY, body: { scopes: ['ingest', 'read', 'write'] } })).body.key;
+    home = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Casa', mode: 'entity' } })).body.personId;
+    marco = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Marco' } })).body.personId;
+    for (const [personId, externalId] of [[home, 'casa'], [marco, 'marco']]) {
+      await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId, clientId, externalId } });
+    }
+    // Eriona writes to the shared agent on a channel: a contact of the entity memory with a verified identity.
+    await ingest('casa', 'eriona-chat', [{ externalId: 'e1', role: 'other', authorRef: 'eriona', content: 'Ho messo i panni a lavare, ricordami di stenderli.', sentAt: '2026-10-12T08:00:00Z' }],
+      [{ ref: 'eriona', role: 'other', displayName: 'Eriona', identity: { channel: 'voice', externalId: 'eriona-voiceprint' } }]);
+    eriona = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Eriona'`, [home]))[0].id;
+    await call(url, 'POST', `/api/v1/admin/clients/${clientId}/webhooks`, { token: ADMIN_KEY, body: { url: `http://127.0.0.1:${port}/all` } });
+    const only = await call(url, 'POST', `/api/v1/admin/clients/${clientId}/webhooks`,
+      { token: ADMIN_KEY, body: { url: `http://127.0.0.1:${port}/created`, events: ['initiative.created'] } });
+    expect(only.body.events).toEqual(['initiative.created']);
+  });
+  afterAll(async () => { await app?.close(); emb?.close(); receiver?.close(); });
+
+  it('an impulse of the right person, recognised surely enough, gets the initiative now — once; nobody identified: whom to ask', async () => {
+    const id = await request(home, 'stendere i panni', { for: eriona, message: 'e1' });
+    expect(await row(id)).toMatchObject({ status: 'pending', timing: 'flexible', identity_required: 'medium', channel: null });
+
+    // Someone the agent cannot name: nothing is told, but it may ask whether this is Eriona.
+    const unknown = await presence('casa', { channel: 'voice', person: { identity: { channel: 'voice', externalId: 'stranger' } } });
+    expect(unknown.status).toBe(200);
+    expect(unknown.body).toEqual({ person: null, initiative: null, askWho: { personId: eriona, name: 'Eriona' } });
+    // Eriona, but the voiceprint is unsure: below the medium threshold, nothing yet.
+    const unsure = await presence('casa', { channel: 'voice', confidence: 0.5, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
+    expect(unsure.body).toMatchObject({ person: { personId: eriona, name: 'Eriona' }, initiative: null });
+    const sure = await presence('casa', { channel: 'voice', confidence: 0.9, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } }, place: 'kitchen' });
+    expect(sure.body.initiative).toMatchObject({ id, status: 'offered', channel: 'voice', for: { name: 'Eriona' }, timing: 'flexible', identity: { required: 'medium' } });
+    expect(sure.body.initiative.text).toContain('stendere i panni');
+    expect(sure.body.initiative.source).toEqual({ conversation: 'eriona-chat', messageIds: ['e1'] });
+    // Given once.
+    const again = await presence('casa', { channel: 'voice', confidence: 0.9, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
+    expect(again.body.initiative).toBeNull();
+    const [stored] = await db.query(`SELECT channel, confidence, person_id FROM presences WHERE memory_id = $1 AND place = 'kitchen'`, [home]);
+    expect(stored).toMatchObject({ channel: 'voice', person_id: eriona });
+    expect(stored.confidence).toBeCloseTo(0.9);
+    // The clients hear of it (initiative.updated, offered) — not the endpoint that takes created events only.
+    for (let i = 0; i < 50 && !received.some((r) => r.body.data.id === id && r.body.data.status === 'offered'); i++) await new Promise((r) => setTimeout(r, 100));
+    expect(received.filter((r) => r.body.data.id === id).map((r) => `${r.hook} ${r.body.type} ${r.body.data.status}`).sort())
+      .toEqual(['/all initiative.created pending', '/all initiative.updated offered', '/created initiative.created pending']);
+  });
+
+  it('what came from a private message needs a sure recognition (high)', async () => {
+    await ingest('casa', 'eriona-chat', [{ externalId: 'e2', role: 'other', authorRef: 'eriona', content: 'Ricordami la visita dal ginecologo.', sentAt: '2026-10-12T08:05:00Z', private: true }],
+      [{ ref: 'eriona', role: 'other', displayName: 'Eriona', identity: { channel: 'voice', externalId: 'eriona-voiceprint' } }]);
+    const id = await request(home, 'visita dal ginecologo', { for: eriona, message: 'e2' });
+    expect(await row(id)).toMatchObject({ identity_required: 'high' });
+    const medium = await presence('casa', { channel: 'voice', confidence: 0.7, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
+    expect(medium.body.initiative).toBeNull();
+    const high = await presence('casa', { channel: 'camera', confidence: 0.95, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
+    expect(high.body.initiative).toMatchObject({ id, status: 'offered', channel: 'voice', identity: { required: 'high' } });
+  });
+
+  it('in the turn: the holder\'s initiative enters the memory context once, then closes when the reminder was given', async () => {
+    await ingest('marco', 'm-chat', [{ externalId: 'm1', role: 'user', content: 'Ricordami di chiamare il commercialista.', sentAt: '2026-10-12T07:00:00Z' }]);
+    const id = await request(marco, 'chiamare il commercialista', { message: 'm1' });
+    const first = await context('marco', 'm-chat');
+    expect(first.body.block).toContain('- something I meant to tell you (my own initiative; say it if natural, once):');
+    expect(first.body.block).toContain('chiamare il commercialista');
+    expect(first.body.items).toBe(1);
+    const offered = await row(id);
+    expect(offered).toMatchObject({ status: 'offered', channel: 'turn' });
+    expect(offered.offered_conversation_id).toBe((await db.query(`SELECT id FROM conversations WHERE external_id = 'm-chat'`))[0].id);
+    expect((await context('marco', 'm-chat')).body.block).toBeNull(); // once
+    // The conversation's extraction saw the reminder given (INTENTS done): the next sweep closes it as said.
+    await db.query(`UPDATE intents SET status = 'done' WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [id]);
+    await app.get(InitiativeService).sweep(marco, NOW);
+    expect(await row(id)).toMatchObject({ status: 'said', outcome_channel: 'turn' });
+  });
+
+  it('an entity memory: whoever talks in the conversation it came from gets it; someone unknown elsewhere does not', async () => {
+    await ingest('casa', 'kitchen-panel', [{ externalId: 'k1', role: 'user', content: 'Ricordami di comprare il latte.', sentAt: '2026-10-12T07:30:00Z' }]);
+    await ingest('casa', 'other-chat', [{ externalId: 'o1', role: 'user', content: 'Che tempo fa?', sentAt: '2026-10-12T09:59:00Z' }]);
+    const id = await request(home, 'comprare il latte', { message: 'k1' });
+    expect((await context('casa', 'other-chat')).body.block ?? '').not.toContain('comprare il latte');
+    expect((await context('casa', 'kitchen-panel')).body.block).toContain('comprare il latte');
+    expect(await row(id)).toMatchObject({ status: 'offered', channel: 'turn' });
+  });
+
+  it('a look-up goes to the agent in the turn only when the host says it has tools', async () => {
+    await db.query(`INSERT INTO intents (memory_id, kind, content, due_at, expires_at) VALUES ($1, 'lookup', 'Leo ha scuola il sabato?', $2, $3)`,
+      [marco, new Date(NOW.getTime() - HOUR), new Date(NOW.getTime() + 20 * HOUR)]);
+    await app.get(InitiativeService).sweep(marco, NOW);
+    expect((await context('marco', 'm-chat')).body.block ?? '').not.toContain('Leo ha scuola');
+    const withTools = await context('marco', 'm-chat', { initiatives: { lookups: true } });
+    expect(withTools.body.block).toContain('- something I wanted to find out with my tools, if you can');
+    expect(withTools.body.block).toContain('Leo ha scuola il sabato?');
+  });
+
+  it('closes what moved on: withdrawn → declined, done before it was given → done; an offered reminder lapses as expired, an ask as ignored', async () => {
+    const withdrawn = await request(marco, 'portare la giacca in lavanderia');
+    const already = await request(marco, 'pagare la bolletta');
+    await db.query(`UPDATE intents SET status = 'cancelled' WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [withdrawn]);
+    await db.query(`UPDATE intents SET status = 'done' WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [already]);
+    await app.get(InitiativeService).sweep(marco, NOW);
+    expect((await row(withdrawn)).status).toBe('declined');
+    expect((await row(already)).status).toBe('done');
+
+    const lapsing = await request(marco, 'spegnere il forno');
+    expect((await context('marco', 'm-chat')).body.block).toContain('spegnere il forno');
+    await app.get(InitiativeService).sweep(marco, new Date(NOW.getTime() + 21 * HOUR));
+    expect((await row(lapsing)).status).toBe('expired');
+  });
+
+  it('the outcome carries its context: the channel and how it was taken, the delay since it was due', async () => {
+    const id = await request(home, 'innaffiare il basilico', { for: eriona });
+    const res = await call(url, 'POST', `/api/v1/initiatives/${id}/outcome`, { ...as('casa'), body: { status: 'said', at: new Date(NOW.getTime() + HOUR).toISOString(), channel: 'voice', reaction: 'positive' } });
+    expect(res.status).toBe(201);
+    const r = await row(id);
+    expect(r).toMatchObject({ status: 'said', outcome_channel: 'voice' });
+    expect(r.outcome_context).toEqual({ reaction: 'positive', latencyMs: HOUR }); // due from the sweep (NOW), said an hour later
+  });
+
+  it('declared channels: a timed initiative goes where it is noticed now, a flexible one where it can wait', async () => {
+    const patch = await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY,
+      body: { channels: [{ kind: 'chat', reach: 'always' }, { kind: 'messaging', reach: 'always' }, { kind: 'voice', reach: 'presence' }] } });
+    expect(patch.status).toBe(204);
+    const bad = await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY, body: { channels: [{ kind: 'chat', reach: 'always' }, { kind: 'chat', reach: 'presence' }] } });
+    expect(bad.status).toBe(400);
+    const timed = await request(marco, 'prendere la medicina', { timed: true });
+    const flexible = await request(marco, 'sentire Luca');
+    expect(await row(timed)).toMatchObject({ timing: 'timed', channel: 'messaging' });
+    expect(await row(flexible)).toMatchObject({ timing: 'flexible', channel: 'chat' });
+    const listed = (await call(url, 'GET', '/api/v1/admin/clients', { token: ADMIN_KEY })).body.find((c: { id: string }) => c.id === clientId);
+    expect(listed.channels).toHaveLength(3);
+    expect(pickChannel([{ kind: 'voice', reach: 'presence' }], true)).toBeNull();
+    expect((await feed('marco')).find((i) => i.id === timed)).toMatchObject({ timing: 'timed', channel: 'messaging' });
+  });
+
+  it('the presence of someone who left ends it; no person in a personal memory is its holder', async () => {
+    const left = await presence('casa', { channel: 'camera', left: true, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
+    expect(left.body).toEqual({ person: { personId: eriona, name: 'Eriona' }, initiative: null, askWho: null });
+    const [open] = await db.query(`SELECT count(*)::int AS n FROM presences WHERE person_id = $1 AND expires_at > $2`, [eriona, NOW]);
+    expect(open.n).toBe(0);
+    const holder = await presence('marco', { channel: 'panel' });
+    expect(holder.body.person).toEqual({ personId: marco, name: 'Marco' });
+  });
+});

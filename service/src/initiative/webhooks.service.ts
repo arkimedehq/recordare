@@ -21,17 +21,17 @@ import { DataSource } from 'typeorm';
 import { type Env } from '../config/env';
 import { WEBHOOK_QUEUE } from './initiative.queue';
 
-export interface WebhookView { id: string; clientId: string; url: string; token: string | null; authentication: { scheme: string; credentials?: string } | null; description: string | null; createdAt: string; disabledAt: string | null; disabledReason: string | null }
-export interface RegisterWebhook { url: string; token?: string; authentication?: { scheme: string; credentials?: string }; description?: string }
+export interface WebhookView { id: string; clientId: string; url: string; token: string | null; authentication: { scheme: string; credentials?: string } | null; description: string | null; events: string[] | null; createdAt: string; disabledAt: string | null; disabledReason: string | null }
+export interface RegisterWebhook { url: string; token?: string; authentication?: { scheme: string; credentials?: string }; description?: string; events?: string[] }
 
 /** Seconds before each retry (the Standard Webhooks' shape: growing, over a day and a half). */
 export const RETRY_DELAYS_S = [60, 300, 1800, 7200, 21600, 43200, 43200];
 const TIMEOUT_MS = 20_000;
 
-interface Row { id: string; client_id: string; url: string; secret: string; token: string | null; authentication: WebhookView['authentication']; description: string | null; created_at: Date; disabled_at: Date | null; disabled_reason: string | null }
+interface Row { id: string; client_id: string; url: string; secret: string; token: string | null; authentication: WebhookView['authentication']; description: string | null; events: string[] | null; created_at: Date; disabled_at: Date | null; disabled_reason: string | null }
 
 const viewOf = (r: Row): WebhookView => ({
-  id: r.id, clientId: r.client_id, url: r.url, token: r.token, authentication: r.authentication, description: r.description,
+  id: r.id, clientId: r.client_id, url: r.url, token: r.token, authentication: r.authentication, description: r.description, events: r.events,
   createdAt: r.created_at.toISOString(), disabledAt: r.disabled_at?.toISOString() ?? null, disabledReason: r.disabled_reason,
 });
 
@@ -59,8 +59,9 @@ export class WebhooksService {
     if (!client) throw new NotFoundException();
     const secret = `whsec_${randomBytes(24).toString('base64')}`;
     const [row]: Row[] = await this.db.query(
-      `INSERT INTO client_webhooks (client_id, url, secret, token, authentication, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [clientId, input.url, secret, input.token ?? null, input.authentication ? JSON.stringify(input.authentication) : null, input.description ?? null]);
+      `INSERT INTO client_webhooks (client_id, url, secret, token, authentication, description, events) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [clientId, input.url, secret, input.token ?? null, input.authentication ? JSON.stringify(input.authentication) : null, input.description ?? null,
+        input.events?.length ? [...new Set(input.events)] : null]);
     return { ...viewOf(row!), secret };
   }
 
@@ -83,7 +84,7 @@ export class WebhooksService {
     const targets: Array<Row & { external_id: string }> = await this.db.query(
       `SELECT w.*, i.external_id FROM client_webhooks w
        JOIN external_identities i ON i.client_id = w.client_id AND i.person_id = $1 AND i.kind = 'account'
-       WHERE w.disabled_at IS NULL`, [memoryId]);
+       WHERE w.disabled_at IS NULL AND (w.events IS NULL OR $2 = ANY(w.events))`, [memoryId, type]);
     const timestamp = new Date().toISOString();
     for (const w of targets) {
       const payload = { type, timestamp, data: { ...data, user: w.external_id, memoryId } };
