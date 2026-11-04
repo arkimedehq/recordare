@@ -300,7 +300,9 @@ export class InitiativeService {
     const worded = profile.initiativeWording ? await this.word(memoryId, memory, due, now) : new Map<string, { text: string | null; worth: number; skip: boolean }>();
     let fired = 0;
     for (const t of due) {
-      if (t.expires_at <= when) continue; // due only after it lapses: left to expire
+      // A time the person chose (a timed request or promise) is kept, quiet hours or not: they asked for that moment.
+      const at = t.timed && (t.kind === 'request' || t.kind === 'promise') ? now : when;
+      if (t.expires_at <= at) continue; // due only after it lapses: left to expire
       const w = worded.get(t.id);
       if (w && (w.skip || w.worth < WORTH_FLOOR)) {
         // Not worth saying: dropped, not postponed (a request or a promise is never skipped: the prompt says so, the code too).
@@ -325,7 +327,7 @@ export class InitiativeService {
                timing, identity_required, channel, source_message_ids)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
-          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > when ? t.due_at : when, t.expires_at, w?.worth ?? null,
+          [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > at ? t.due_at : at, t.expires_at, w?.worth ?? null,
             t.timed ? 'timed' : 'flexible', t.private ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
             t.message_id ? [t.message_id] : []]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
@@ -395,7 +397,8 @@ export class InitiativeService {
            OR (i.for_person_id IS NULL AND $6 AND $10::uuid IS NOT NULL
                AND EXISTS (SELECT 1 FROM messages m WHERE m.id = ANY(i.source_message_ids) AND m.conversation_id = $10))
          )
-       ORDER BY i.worth DESC NULLS LAST, i.due_at LIMIT 1`,
+       -- what is owed first (a request, a promise), then what has a time, then the worth (dev_timing g5, 2026-11-04)
+       ORDER BY (t.kind IN ('request', 'promise')) DESC NULLS LAST, (i.timing = 'timed') DESC, i.worth DESC NULLS LAST, i.due_at LIMIT 1`,
       [memoryId, now, !!opts.lookups, contact, who.confidence, entity, IDENTITY_THRESHOLD.medium, IDENTITY_THRESHOLD.high, self, who.conversationId ?? null]);
     if (hit) {
       const rows = updated<Row>(await this.db.query(
@@ -458,18 +461,24 @@ export class InitiativeService {
    * memory's quiet hours; look-ups stay with the turn (they are for the agent's tools).
    */
   private async push(memoryId: string, now: Date): Promise<void> {
-    const [memory]: Array<{ timezone: string; quiet_from: number; quiet_to: number }> = await this.db.query(
-      `SELECT timezone, quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]);
+    const [memory]: Array<{ timezone: string; quiet_from: number; quiet_to: number; mode: string }> = await this.db.query(
+      `SELECT timezone, quiet_from, quiet_to, mode FROM memories WHERE person_id = $1`, [memoryId]);
     if (!memory) return;
+    const policy = this.config.get('INITIATIVE_TIMING', { infer: true }) ?? 'v0';
     const candidates: Array<{ id: string; kind: InitiativeKind; timing: 'timed' | 'flexible'; worth: number | null; due_at: Date; expires_at: Date;
       for_person_id: string | null; channel: string; preferred_from: number | null; preferred_to: number | null; intent_kind: string | null }> = await this.db.query(
       `SELECT i.id, i.kind::text, i.timing, i.worth, i.due_at, i.expires_at, i.for_person_id, i.channel, i.preferred_from, i.preferred_to, t.kind::text AS intent_kind
        FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
        WHERE i.memory_id = $1 AND i.status = 'pending' AND i.pushed_at IS NULL AND i.channel IS NOT NULL AND i.kind <> 'lookup'
          AND i.due_at <= $2 AND i.expires_at > $2 AND (t.id IS NULL OR t.status = 'fired')
-       ORDER BY i.due_at`, [memoryId, now]);
+         -- an entity memory's channels are shared (a panel, the agent's own chat): what is for one person waits for their
+         -- presence or their turn, where who it is gets checked (D55)
+         AND NOT ($3 AND i.for_person_id IS NOT NULL)
+       ORDER BY i.due_at`, [memoryId, now, memory.mode === 'entity']);
     if (!candidates.length) return;
     const quiet = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to).getTime() !== now.getTime();
+    // The window ends for the clock where the quiet hours begin: a last chance at 22:30 would be no chance (dev_timing g5).
+    const quietStart = quiet ? now : nextLocalHour(now, memory.timezone, memory.quiet_from);
     const localHour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: memory.timezone }).format(now)) % 24;
     for (const c of candidates) {
       const counted: Array<{ n: number }> = await this.db.query(
@@ -478,11 +487,14 @@ export class InitiativeService {
       const n = counted[0]?.n ?? 0;
       const preferred: [number, number] = c.preferred_from !== null && c.preferred_to !== null ? [c.preferred_from, c.preferred_to] : TIMING.preferred[c.kind];
       const input: MomentInput = { kind: c.kind, timing: c.timing, worth: c.worth, owed: c.intent_kind === 'request' || c.intent_kind === 'promise',
-        localHour, preferred, deliveredToday: n, sinceDueMs: now.getTime() - c.due_at.getTime(), untilEndMs: c.expires_at.getTime() - now.getTime() };
-      const d = decideMoment(input);
-      const deliver = d.deliver && !quiet;
+        localHour, preferred, deliveredToday: n, sinceDueMs: now.getTime() - c.due_at.getTime(),
+        untilEndMs: Math.min(c.expires_at.getTime(), memory.quiet_from === memory.quiet_to ? Infinity : quietStart.getTime()) - now.getTime() };
+      const d = policy === 'due' ? { p: 1, threshold: 0, deliver: true, reason: 'due' } : decideMoment(input);
+      // Quiet hours hold everything but a time the person chose themselves (a timed request or promise).
+      const held = quiet && !(c.timing === 'timed' && input.owed);
+      const deliver = d.deliver && !held;
       await this.logDecision(memoryId, c.id, 'clock', now, d.p, d.threshold, deliver,
-        { reason: quiet ? 'quiet_hours' : d.reason, channel: c.channel, localHour, deliveredToday: n, timing: c.timing, kind: c.kind });
+        { reason: held && d.deliver ? 'quiet_hours' : d.reason, channel: c.channel, localHour, deliveredToday: n, timing: c.timing, kind: c.kind, policy });
       if (!deliver) continue;
       const rows = updated<Row>(await this.db.query(
         `UPDATE initiatives i SET status = 'offered', offered_at = $3, pushed_at = $3, updated_at = now()
@@ -579,16 +591,22 @@ export function afterQuiet(now: Date, tz: string, from: number, to: number): Dat
   const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: tz }).format(now)) % 24;
   const quiet = from === to ? false : from < to ? hour >= from && hour < to : hour >= from || hour < to;
   if (!quiet) return now;
-  // The local hour `to`, today or tomorrow: found by stepping from the local midnight.
+  return nextLocalHour(now, tz, to);
+}
+
+/** The local hour `hour` (the memory's timezone) at `isoDay`. */
+function localHourAt(isoDay: string, hour: number, tz: string): Date {
+  const utcMidnight = new Date(`${isoDay}T00:00:00Z`);
+  const offset = utcMidnight.getTime() - new Date(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    .format(utcMidnight).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6Z')).getTime();
+  return new Date(utcMidnight.getTime() + offset + hour * 3_600_000);
+}
+
+/** The next time it is the local hour `hour` after `now`: today, or tomorrow. */
+export function nextLocalHour(now: Date, tz: string, hour: number): Date {
   const today = localDate(now, tz);
-  const candidate = (isoDay: string) => {
-    const utcMidnight = new Date(`${isoDay}T00:00:00Z`);
-    const offset = utcMidnight.getTime() - new Date(new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      .format(utcMidnight).replace(/(\d+)\/(\d+)\/(\d+), (\d+):(\d+):(\d+)/, '$3-$1-$2T$4:$5:$6Z')).getTime();
-    return new Date(utcMidnight.getTime() + offset + to * 3_600_000);
-  };
-  const end = candidate(today);
-  return end > now ? end : candidate(new Date(new Date(`${today}T12:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10));
+  const end = localHourAt(today, hour, tz);
+  return end > now ? end : localHourAt(new Date(new Date(`${today}T12:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10), hour, tz);
 }
 
 /**

@@ -27,6 +27,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   già ricevuto oggi, contro la soglia del tipo), una dovuta alla sua ultima occasione; mai nelle ore di quiete. Quelle
   spinte escono come nuovo evento webhook `initiative.deliver` (`pushedAt`); ogni decisione — orologio, presenza, turno —
   è registrata con la sua probabilità (`initiative_decisions`, migrazione `InitiativeTiming`).
+- **Regole di tempo da `dataset_dev_timing`** (D55 F2b, un set deterministico di linee temporali, `timing_eval.py`):
+  un'ora scelta dalla persona vale anche nelle ore di quiete; l'ultima occasione viene prima di esse; le iniziative dovute
+  vengono prima in un turno o in una presenza; una memoria di entità non spinge mai l'iniziativa di una persona su un
+  canale condiviso; il contesto di memoria mantiene la scheda di sé e un'iniziativa quando il server di embedding è giù.
+  `INITIATIVE_TIMING=due` è il confronto di base delle valutazioni. v0 9 / 9, due 8 / 9 sul set su cui è stato messo a
+  punto (RESULTS.md).
 
 ### Corretto
 - **Il contesto di memoria non aspetta più gli embedding in background.** Su un ospite che condivide un server di

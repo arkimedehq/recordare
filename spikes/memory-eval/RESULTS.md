@@ -1974,3 +1974,22 @@ Options now on the table:
 
 Before deciding: re-run B/C (and a D prototype) with `bge-m3` embeddings and with a local model
 (Ollama, e.g. qwen3 with thinking off) to check the sovereign/local deployment story.
+
+### Timing v0 — `dataset_dev_timing` (D55 F2b, H14, 2026-11-04; no LLM)
+
+Nine items over three days in two memories, replayed with a 15-minute clock (`timing_eval.py`; the service with
+`INITIATIVE_TIMING` = `v0` or `due`, everything else equal — identity thresholds, quiet hours, the entity rule).
+
+| policy | right | in window | outside | lapsed | rightly silent |
+|---|---|---|---|---|---|
+| v0, first run | 7 / 9 | 6 | 1 (g3: an ask at 08:30) | 1 (g5) | 1 |
+| v0, after the two fixes | **9 / 9** | 8 | 0 | 0 | 1 |
+| due (push as soon as due) | 8 / 9 | 7 | 1 (g2: a day's reminder at 08:00) | 0 | 1 |
+
+The first run found two faults, both fixed: in a turn the older ask (the dentist) won over the day's owed reminder (the
+gift), which then lapsed — the owed one now comes first (then timed ones, then the worth); and the owed one's last
+chance fell at 22:00, in the quiet hours — it now comes before they begin. Designing the set found two more, fixed before
+any run: a reminder asked for 23:00 was held until the morning (a time the person chose now overrides the quiet hours),
+and an entity memory would push an initiative for Eriona on the shared panel (person-specific ones now wait for their
+presence or turn). **Caveat**: tuned on this set, by its writer — 9 / 9 is not a measurement; a held-out set is owed.
+

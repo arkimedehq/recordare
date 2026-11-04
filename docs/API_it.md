@@ -699,6 +699,11 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 >   restano al turno. Un'iniziativa spinta diventa `offered` (`pushedAt` impostato) ed esce come evento
 >   **`initiative.deliver`**: consegnala adesso su `data.channel`. Ogni decisione — orologio, presenza, turno — è
 >   registrata con la sua probabilità e la soglia (`initiative_decisions`), per il rigioco offline e l'apprendimento (F4).
+>   Regole trovate da `dataset_dev_timing` (F2b): un'ora scelta dalla persona (una richiesta o promessa a orario) vale anche
+>   nelle ore di quiete; l'ultima occasione viene prima che inizino le ore di quiete; in un turno o in una presenza viene
+>   prima ciò che è dovuto, poi ciò che ha un orario, poi il valore; una memoria di entità non spinge mai sui suoi canali
+>   (condivisi) ciò che è per una persona; il contesto di memoria porta comunque la scheda di sé e un'iniziativa quando il
+>   server di embedding è giù. `INITIATIVE_TIMING=due` (confronto di base): spinge appena dovuta.
 
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o

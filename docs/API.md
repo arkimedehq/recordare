@@ -680,7 +680,11 @@ private or public again (§2) has its days written again.
 >   promise) at its last chance two hours before its end; never in the quiet hours; look-ups stay with the turn. A pushed
 >   initiative becomes `offered` (`pushedAt` set) and goes out as the event **`initiative.deliver`**: deliver it now on
 >   `data.channel`. Every decision — clock, presence, turn — is logged with its probability and threshold
->   (`initiative_decisions`), for offline replay and the learner (F4).
+>   (`initiative_decisions`), for offline replay and the learner (F4). Rules found by `dataset_dev_timing` (F2b): a
+>   time the person chose (a timed request or promise) is kept in the quiet hours; the last chance comes before the quiet
+>   hours begin; in a turn or a presence, what is owed comes first, then what has a time, then the worth; an entity
+>   memory never pushes what is for one person on its (shared) channels; the memory context still carries the self card
+>   and an initiative when the embedding server is down. `INITIATIVE_TIMING=due` (baseline): push as soon as due.
 
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,

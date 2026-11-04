@@ -74,6 +74,8 @@ const baseSchema = z.object({
   INITIATIVE_WORDING: bool.optional(),
   /** Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow. */
   INITIATIVE_DAILY_LIMIT: z.coerce.number().int().min(0).max(50).default(3),
+  /** D55: how the clock chooses the moment to push — `v0` (the cost-sensitive gate) or `due` (as soon as due: the baseline). */
+  INITIATIVE_TIMING: z.enum(['v0', 'due']).default('v0'),
   /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */
   WEBHOOK_ALLOW_PRIVATE: bool.default(false),
   /** Local hour (memory's timezone) after which the nightly consolidation runs (M5). */

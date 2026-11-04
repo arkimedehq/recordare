@@ -26,6 +26,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   threshold), an owed one at its last chance; never in the quiet hours. Pushed ones go out as the new webhook event
   `initiative.deliver` (`pushedAt`); every decision — clock, presence, turn — is logged with its probability
   (`initiative_decisions`, migration `InitiativeTiming`).
+- **Timing rules from `dataset_dev_timing`** (D55 F2b, a deterministic timeline set, `timing_eval.py`): a time the person
+  chose is kept in the quiet hours; the last chance comes before them; owed initiatives come first in a turn or a
+  presence; an entity memory never pushes a person's initiative on a shared channel; the memory context keeps the self
+  card and an initiative when the embedding server is down. `INITIATIVE_TIMING=due` is the evaluation baseline. v0 9 / 9,
+  due 8 / 9 on the set it was tuned on (RESULTS.md).
 
 ### Fixed
 - **The memory context no longer waits for background embeddings.** On a host sharing a CPU embedding server (one
