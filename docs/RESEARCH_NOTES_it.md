@@ -29,7 +29,7 @@ provenienza titolare vs twin e piani utente irrisolti.
 | H6 | Metodo di valutazione: set held-out cieco scritto da un agente separato; artefatti di giudice troppo severo | Parzialmente nuova, modesta (appendice metodi) | 1 |
 | H7 | Distillare il motore di estrazione in un piccolo modello locale chiude gran parte del divario dei modelli locali | Da testare (ipotesi di ingegneria); il divario ora è misurato (sotto) | dopo M4 |
 | H8 | Stile del twin: fine-tuning per persona vs recupero few-shot dei messaggi del titolare | Da testare | 2 |
-| H14 | Una memoria proattiva che impara **quando** parlare (una finestra per iniziativa, il momento scelto da impulsi di presenza, turni, abitudini ed esiti; un bandit sulle fasce orarie con la finestra del modello come prior) e **cosa chiedere** per conoscere le sue persone e il suo mondo (domande indirizzate a una persona che potrebbe sapere o agli strumenti dell'agente; meno domande man mano che sa di più) batte le regole fisse su interruzioni inutili, tempestività e conoscenza acquisita | Da rivedere (letteratura non ancora cercata, F0) | R / D55 |
+| H14 | Una memoria proattiva che impara **quando** parlare (una finestra per iniziativa, il momento scelto da impulsi di presenza, turni, abitudini ed esiti; un bandit sulle fasce orarie con la finestra del modello come prior) e **cosa chiedere** per conoscere le sue persone e il suo mondo (domande indirizzate a una persona che potrebbe sapere o agli strumenti dell'agente; meno domande man mano che sa di più) batte le regole fisse su interruzioni inutili, tempestività e conoscenza acquisita | Parti note; la combinazione non trovata (ristretta): integrazione + valutazione in casa — ricontrollare per intero prima di qualsiasi affermazione | R / D55 |
 | H13 | Estrazione "classifica e componi" (un instradatore per tipo di messaggio sceglie i moduli di regole per un'unica chiamata di estrazione) e crescita dei moduli guidata dagli errori ("imparare dalla sorpresa"), confrontate con il prompt unico sui set ciechi, con i costi | Nota, parzialmente nuova (ristretta): il confronto controllato prompt unico vs composto | 1 / R |
 | H12 | Pensiero a riposo ("default mode"): un processo in background con budget che rivede gli episodi recenti, li collega, mantiene i cicli aperti (piani irrisolti, promesse), prepara domande / proposte e aggiorna il self-model migliora recall e iniziativa senza confabulazione | Da progettare con M5 / traccia R | 5 / R |
 | H11 | Retrieval oltre il singolo embedding: reranking con cross-encoder, vettori sparsi bge-m3, un indice persone / entità migliorano il recall su negazioni, dettagli esatti e "tutto su X" | Da testare (ingegneria); misurate correzioni del recall e un ramo per le persone, reranker / vettori sparsi non ancora | 1 / 3 |
@@ -387,15 +387,101 @@ orientano le iniziative successive, e domande trasformate in ricerche per gli st
 momento, niente chiede a una persona per imparare, e sul Kinox nessuna iniziativa è ancora stata consegnata (D55).
 Specifica: `INITIATIVES_DELIVERY_it.md`.
 
-**Letteratura: da cercare in F0 (niente ancora verificato; nessuna pretesa di novità).** Aree candidate: interrompibilità
-e avvisi attenti all'attenzione (notifiche decise con la teoria delle decisioni, modelli di quando una persona può essere
-interrotta); tempismo delle notifiche sui telefoni (ricettività, rinvio ai momenti di pausa); assistenti LLM proattivi e
-i loro benchmark; bandit contestuali per il tempismo degli interventi (interventi adattivi just-in-time nella salute
-mobile); curiosità, apprendimento attivo e domande negli agenti e nei robot; le domande dei bambini come strategia di
-apprendimento (ispirazione).
+**Letteratura (F0, 2026-11-04; tre ricerche, solo abstract ed estratti di ricerca — [A] abstract letto, [S]
+estratto; niente ancora letto per intero).**
+- *Quando interrompere.* Avvisi decisi con la teoria delle decisioni su più dispositivi e canali, che confrontano il
+  valore di un avviso con il costo dell'interruzione, inferendo attenzione e presenza (Horvitz, Kadie, Paek, Hovel, CACM
+  2003, doi:10.1145/636772.636798 [S]); modelli personali del costo dell'interruzione da autovalutazioni occasionali
+  (BusyBody, Horvitz, Koch, Apacible, CSCW 2004, doi:10.1145/1031607.1031690 [S]); i momenti di pausa costano meno di
+  quelli a metà compito (Adamczyk & Bailey, CHI 2004 [S]; Iqbal & Bailey, CHI 2008, doi:10.1145/1357054.1357070 [S]: il
+  contenuto decide quale pausa è adatta); la fine di un episodio d'uso del telefono è meglio di un momento a caso,
+  lasciar scegliere l'utente non è meglio (Fischer et al., MobileHCI 2011 [S]); il coinvolgimento non è
+  l'interrompibilità (Pielot et al., IMWUT 2017, doi:10.1145/3130956 [S]); ricettività appresa fino a +40 % rispetto a
+  tempi casuali sul campo (Mishra et al., IMWUT 2021, arXiv:2011.08302 [A]). Case: i momenti adatti per un altoparlante
+  proattivo dipendono da impegni, umore, abitudini e altre persone presenti (Cha et al., IMWUT 2020,
+  doi:10.1145/3411810 [S]); un altoparlante che parla per primo, 13 case × 3 settimane (Wei, Dingler, Kostakos, IMWUT
+  2021, doi:10.1145/3494965 [S]); i promemoria contestuali di un robot di famiglia erano graditi, tempi e autorità
+  creavano tensioni (Xu et al., HRI 2026, arXiv:2602.22628 [A]).
+- *Imparare il momento per persona.* Interventi adattivi just-in-time (Nahum-Shani et al., Ann Behav Med 2018 [S]); il
+  trial micro-randomizzato di HeartSteps — effetto di un suggerimento +66 % il primo giorno, circa −2 % al giorno, nullo
+  verso il giorno 28: assuefazione misurata (Klasnja et al., Ann Behav Med 2019, doi:10.1093/abm/kay067 [A]); RL online
+  per decidere quando sollecitare, costruito su un simulatore adattato ai dati precedenti (Liao et al., IMWUT 2020,
+  arXiv:1909.03539 [A]); Thompson sampling con dati messi in comune tra persone e personalizzazione empirical-Bayes,
+  −26 % di regret (IntelligentPooling, Tomkins et al., Machine Learning 2021, arXiv:2008.01571 [A]); un prior sui tempi
+  imparato da persone simulate, poi adattamento per utente (arXiv:2602.04000 [A]; ProPerSim, ICLR 2026,
+  arXiv:2509.21730 [A]). La ripetizione abbassa l'accettazione: ogni promemoria in più circa −30 % (Ancker et al., BMC
+  MIDM 2017, doi:10.1186/s12911-017-0430-8 [S]).
+- *Agenti LLM proattivi.* Proactive Agent / ProactiveBench (Lu et al., ICLR 2025, arXiv:2410.12361 [A]: i modelli non
+  addestrati intervengono troppo); un filtro sensibile ai costi — agire solo quando la P(accettazione) calibrata supera
+  una soglia fissata dai costi asimmetrici di un'occasione persa e di un falso allarme, −22,8 % di falsi allarmi (PRISM,
+  arXiv:2602.01532 [A]); tempi separati dal contenuto, la memoria migliora i tempi (ProAgentBench, arXiv:2602.04482
+  [A]); un agente di memoria separato accanto a un ospite non modificato che decide quando iniettare un promemoria (Wu et
+  al., Meta, arXiv:2607.08716 [A] — dentro un compito, non su più giorni né per persone); la memoria prospettica è
+  difficile per gli LLM, al massimo 65,1 F1 (PM-Bench, COLM 2026, arXiv:2607.12385 [A]), intenzioni tenute nel codice
+  con indizi d'orario controllati da regole arrivano a 82,9 (Typed Intention Stores, arXiv:2609.01272 [A]); intervento
+  multi-utente con attribuzione di chi parla (ProACT, arXiv:2607.03730 [A]); robot multi-utente con identificazione di
+  chi parla e profili per persona, privacy non trattata (HARMONI, arXiv:2601.19839 [A]); altoparlante in una casa di
+  cura con sicurezza dell'identità e domande di chiarimento (arXiv:2603.23625 [A]). Sistemi: heartbeat di OpenClaw (ore
+  attive, solo se inattivo, risultati silenziosi), cron di Hermes con destinazioni di consegna [A, documentazione];
+  ChatGPT Pulse [S, stampa].
+- *Imparare chiedendo.* Le domande dei bambini guidano l'apprendimento dei concetti (Chouinard, Monographs SRCD 2007
+  [S]); a 5 anni chiedono alla persona che sa (Mills et al., JECP 2011 [S]; Koenig & Harris, Child Dev 2005 [S]); il loro
+  punto debole è il criterio di arresto — chiedono anche dopo che la risposta è già chiara (Ruggeri et al., Dev Psych
+  2016, doi:10.1037/dev0000240 [S]). Curiosità come progresso nell'apprendimento (Oudeyer, Kaplan, Hafner, IEEE TEC 2007
+  [S]); il guadagno di informazione atteso come norma per le domande (Rothe, Lake, Gureckis, CBB 2018 [S]; EVPI, Rao &
+  Daumé III, ACL 2018 [S]; Uncertainty of Thoughts, NeurIPS 2024, arXiv:2402.03271 [S]); chiedere solo se incerti
+  (KnowNo, Ren et al., CoRL 2023, arXiv:2307.01928 [S]; CLAM, arXiv:2212.07769 [S]); robot che pianificano a chi
+  chiedere in base a presenza e disponibilità (Rosenthal, Veloso, Dey, JIRS 2012 [S]); un robot domestico con domande a
+  massimo guadagno di informazione e un criterio di arresto (APRICOT, CoRL 2024, arXiv:2410.19656 [S]); budget di
+  fastidio (Gucsi et al., IROS 2020 [S]); un robot che chiede viene giudicato meno utile (Mannem et al., Humanoids 2023,
+  arXiv:2311.00785 [A]). Il precedente più vicino: **Leolani** — un robot che salva ciò che percepisce e gli viene detto
+  con la sua fonte, spinto a conoscere le persone e a risolvere lacune e conflitti (Vossen et al., 2018,
+  arXiv:1806.01526 [A]); poi KNOWBOT (NAACL 2015 [S]) ed EgoAsk (robot domestico che chiede degli oggetti dell'utente,
+  arXiv:2609.16766 [A]).
+
+**Verdetto (prudente; le ricerche non sono esaustive).** Ogni parte ha precedenti: avvisi decisi dal valore contro il
+costo dell'interruzione, tempi per persona imparati con Thompson sampling con prior e dati in comune, filtri di
+intervento sensibili ai costi, archivi di intenzioni, domande a guadagno di informazione, budget di fastidio, una memoria
+robotica con le fonti che fa domande. Non trovato: (1) un servizio di memoria separato dall'agente che decide a chi,
+quando e su quale canale per qualunque ospite, da impulsi di presenza ed esiti; (2) la consegna da una memoria condivisa
+filtrata dall'identità con soglie per delicatezza — nessun lavoro misura il contenuto rivelato alla persona sbagliata, e
+nessuno tratta cosa rivela una *domanda*; (3) tempi di consegna imparati da esiti reali su più giorni, per persona ×
+canale; (4) domande indirizzate per valore atteso a una persona precisa (chi probabilmente sa) o agli strumenti
+dell'agente; (5) una curva di lungo periodo con domande che calano man mano che cresce la conoscenza. Formulazione
+sicura: integrazione più una valutazione in casa / incarnata, non un metodo nuovo. **Prima di qualsiasi affermazione
+pubblica** leggere per intero: PRISM, arXiv:2607.08716, arXiv:2602.04000, PM-Bench, Leolani, e il brevetto US10635707B2
+("Contextual memory bandit for proactive dialogs", 2020 [S]).
+
+**Cosa cambia nel progetto (F1–F2).**
+- Il ciclo di vita delle intenzioni resta nel codice, con indizi d'orario e di presenza controllati da regole; il modello
+  giudica solo il significato (PM-Bench, Typed Intention Stores).
+- v0 è un **filtro esplicito sensibile ai costi**: consegnare quando P(utile) supera una soglia fissata per tipo — un
+  promemoria a orario richiesto ha un alto costo se mancato, una ripresa flessibile un alto costo se interrompe (PRISM,
+  Horvitz).
+- Segnali per il momento: presenza e sua sicurezza, un momento di pausa (un turno appena finito), tempo dall'ultimo
+  turno, fascia oraria e abitudini, altre persone presenti, il contenuto dell'iniziativa, sollecitazioni già fatte oggi
+  ed esiti recenti.
+- v1: **Thompson sampling** (Beta-Bernoulli) per persona × canale × fascia, con prior da v0 con pochi pseudo-conteggi e
+  riportato verso un prior di popolazione (un IntelligentPooling leggero); un termine esplicito di carico
+  (sollecitazioni di oggi, tempo dall'ultima); una quota minima di esplorazione; **registrare la probabilità di ogni
+  decisione** così che le linee temporali si possano rigiocare con stimatori off-policy. Ore di quiete, limiti
+  giornalieri e "voce solo se presente" restano regole fisse fuori dall'apprendimento.
+- Ricompensa: coinvolto (detto e con risposta) 1, ignorato 0, rifiutato o infastidito negativo; inoltre latenza, "non
+  ora", iniziative scadute e il compimento del compito (i panni stesi); andamenti settimanali per vedere l'assuefazione.
+- Chiedere: valore di una domanda per una persona = guadagno di informazione × importanza (cambia una decisione futura:
+  EVPI) × P(la persona sa) × P(risposta vera) − costo dell'interruzione − rischio di rivelare; prima gli strumenti, una
+  persona solo per ciò che sa solo la casa; domande che restringono lo spazio piuttosto che indovinelli sì/no; ritirare
+  una domanda quando l'incertezza rimasta è bassa (l'errore dei bambini); un budget per persona che cresce con le
+  risposte e cala con le domande ignorate.
 
 **Piano di valutazione.** Tempo: un dev set di linee temporali (eventi, impulsi di presenza, turni) con un gold di
 finestre accettabili, valutato su consegne nella finestra, interruzioni inutili e iniziative scadute, contro le regole
 fisse; osservazione sul Kinox. Chiedere: un set "una casa che cresce" (una memoria di entità che conosce una famiglia
 nell'arco di settimane) valutato su fatti appresi, domande fatte / con risposta / ritirate, consegne alla persona
-sbagliata (devono essere zero) e assillo.
+sbagliata (devono essere zero) e assillo. Da F0: linee temporali rigiocate sotto politiche
+candidate con stimatori off-policy (le probabilità di decisione registrate), un simulatore adattato ai primi dati reali
+(il metodo di HeartSteps), regret rispetto alla fascia migliore a posteriori, persone tenute da parte; membri della casa
+simulati da un LLM, ognuno con una parte diversa di ciò che sa e con la sua pazienza (l'utente simulato di CLAM); metriche
+anche conoscenza contro domande cumulative (area sotto la curva), domande per fatto appreso, domande ridondanti o
+rivolte alla persona sbagliata, la pendenza settimanale delle domande; confronti: solo ascolto passivo, regole fisse,
+scelta casuale.

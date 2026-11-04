@@ -27,7 +27,7 @@ twin, holder vs twin provenance, and unresolved user plans.
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis); the gap is now measured (below) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the holder's own messages | To test | 2 |
-| H14 | A proactive memory that learns **when** to speak (a window per initiative, the moment chosen from presence impulses, turns, routines and outcomes; a bandit over time slots with the model's window as prior) and **what to ask** to know its people and world (questions routed to a person who could know or to the agent's tools; fewer questions as it knows more) beats fixed rules on needless interruptions, timeliness and knowledge gained | To review (literature not yet searched, F0) | R / D55 |
+| H14 | A proactive memory that learns **when** to speak (a window per initiative, the moment chosen from presence impulses, turns, routines and outcomes; a bandit over time slots with the model's window as prior) and **what to ask** to know its people and world (questions routed to a person who could know or to the agent's tools; fewer questions as it knows more) beats fixed rules on needless interruptions, timeliness and knowledge gained | Parts known; the combination not found (narrow): integration + home evaluation — re-check in full text before any claim | R / D55 |
 | H13 | Classify-and-compose extraction (a message-type router picks rule modules for one extraction call) and failure-driven module growth ("learning from surprise"), compared with the monolithic prompt on blind sets, with cost | Known, partially novel (narrow): the controlled monolithic-vs-composed comparison | 1 / R |
 | H12 | Resting-state thinking ("default mode"): a budgeted background process that replays recent episodes, links them, keeps open loops (unresolved plans, promises), prepares questions / proposals and updates the self-model improves recall and initiative without confabulation | To design with M5 / track R | 5 / R |
 | H11 | Retrieval beyond a single embedding: cross-encoder reranking, bge-m3 sparse vectors, a people / entity index improve recall on negations, exact details and "everything about X" | To test (engineering); recall fixes and a people-aware leg measured, reranker / sparse vectors not yet | 1 / 3 |
@@ -371,13 +371,89 @@ household faster, with the number of questions falling as knowledge grows.
 next ones, and questions turned into look-ups for the agent's tools; nothing chooses a moment, nothing asks a person to
 learn, and no initiative has been delivered on Kinox yet (D55). Spec: `INITIATIVES_DELIVERY.md`.
 
-**Literature: to search in F0 (nothing verified yet; no claim of novelty).** Candidate areas: interruptibility and
-attention-sensitive alerting (decision-theoretic notification, models of when a person can be interrupted);
-notification timing on phones (receptivity, deferring to breakpoints); proactive LLM assistants and their benchmarks;
-contextual bandits for intervention timing (just-in-time adaptive interventions in mobile health); curiosity, active
-learning and question asking in agents and robots; children's question asking as a learning strategy (inspiration).
+**Literature (F0, 2026-11-04; three searches, abstracts and search snippets only — [A] abstract read, [S] snippet;
+nothing read in full text yet).**
+- *When to interrupt.* Decision-theoretic alerting across devices and channels, weighing an alert's value against the
+  cost of interrupting, with attention and presence inferred (Horvitz, Kadie, Paek, Hovel, CACM 2003,
+  doi:10.1145/636772.636798 [S]); personal cost-of-interruption models from occasional self-reports (BusyBody, Horvitz,
+  Koch, Apacible, CSCW 2004, doi:10.1145/1031607.1031690 [S]); breakpoints cost less than mid-task moments (Adamczyk &
+  Bailey, CHI 2004 [S]; Iqbal & Bailey, CHI 2008, doi:10.1145/1357054.1357070 [S]: the content decides which breakpoint
+  suits); end of a phone-activity episode better than random, self-scheduling no better (Fischer et al., MobileHCI 2011
+  [S]); engagement is not interruptibility (Pielot et al., IMWUT 2017, doi:10.1145/3130956 [S]); learned receptivity up
+  to +40 % over random timing in the field (Mishra et al., IMWUT 2021, arXiv:2011.08302 [A]). Homes: opportune moments
+  for a proactive smart speaker depend on busyness, mood, routines and other people present (Cha et al., IMWUT 2020,
+  doi:10.1145/3411810 [S]); a speaker that speaks first, 13 homes × 3 weeks (Wei, Dingler, Kostakos, IMWUT 2021,
+  doi:10.1145/3494965 [S]); a family robot's contextual reminders were welcome, timing and authority caused tension
+  (Xu et al., HRI 2026, arXiv:2602.22628 [A]).
+- *Learning the moment per person.* Just-in-time adaptive interventions (Nahum-Shani et al., Ann Behav Med 2018 [S]);
+  HeartSteps' micro-randomised trial — a suggestion's effect +66 % on day 1, about −2 % a day, gone by day ~28:
+  measured habituation (Klasnja et al., Ann Behav Med 2019, doi:10.1093/abm/kay067 [A]); online RL for when to prompt,
+  built on a simulator fitted to earlier data (Liao et al., IMWUT 2020, arXiv:1909.03539 [A]); Thompson sampling with
+  pooling across people and empirical-Bayes personalisation, −26 % regret (IntelligentPooling, Tomkins et al., Machine
+  Learning 2021, arXiv:2008.01571 [A]); a timing prior learned from simulated personas, then per-user adaptation
+  (arXiv:2602.04000 [A]; ProPerSim, ICLR 2026, arXiv:2509.21730 [A]). Repetition lowers acceptance: each extra reminder
+  about −30 % (Ancker et al., BMC MIDM 2017, doi:10.1186/s12911-017-0430-8 [S]).
+- *Proactive LLM agents.* Proactive Agent / ProactiveBench (Lu et al., ICLR 2025, arXiv:2410.12361 [A]: untuned models
+  over-intervene); a cost-sensitive gate — act only when the calibrated P(accept) exceeds a threshold set by the
+  asymmetric costs of a miss and a false alarm, −22.8 % false alarms (PRISM, arXiv:2602.01532 [A]); timing separated
+  from content, memory improves timing (ProAgentBench, arXiv:2602.04482 [A]); a separate memory agent beside an
+  unmodified host deciding when to inject a reminder (Wu et al., Meta, arXiv:2607.08716 [A] — within one task, not across
+  days or people); prospective memory is hard for LLMs, best 65.1 F1 (PM-Bench, COLM 2026, arXiv:2607.12385 [A]),
+  intentions held in code with rule-checked clock cues reach 82.9 (Typed Intention Stores, arXiv:2609.01272 [A]);
+  multi-user speaker-attributed intervention (ProACT, arXiv:2607.03730 [A]); multi-user robot with speaker
+  identification and per-person profiles, privacy not addressed (HARMONI, arXiv:2601.19839 [A]); care-home speaker with
+  identity confidence and clarification prompts (arXiv:2603.23625 [A]). Systems: OpenClaw heartbeats (active hours,
+  idle only, silent results), Hermes cron with delivery targets [A, docs]; ChatGPT Pulse [S, press].
+- *Learning by asking.* Children's questions drive concept learning (Chouinard, Monographs SRCD 2007 [S]); they ask the
+  person who knows by age 5 (Mills et al., JECP 2011 [S]; Koenig & Harris, Child Dev 2005 [S]); their weakness is the
+  stopping rule — asking after the answer is settled (Ruggeri et al., Dev Psych 2016, doi:10.1037/dev0000240 [S]).
+  Learning-progress curiosity (Oudeyer, Kaplan, Hafner, IEEE TEC 2007 [S]); expected information gain as the norm for
+  questions (Rothe, Lake, Gureckis, CBB 2018 [S]; EVPI, Rao & Daumé III, ACL 2018 [S]; Uncertainty of Thoughts,
+  NeurIPS 2024, arXiv:2402.03271 [S]); ask only when uncertain (KnowNo, Ren et al., CoRL 2023, arXiv:2307.01928 [S];
+  CLAM, arXiv:2212.07769 [S]); robots planning whom to ask by presence and availability (Rosenthal, Veloso, Dey, JIRS
+  2012 [S]); a home robot with information-gain questions and a stop rule (APRICOT, CoRL 2024, arXiv:2410.19656 [S]);
+  annoyance budgets (Gucsi et al., IROS 2020 [S]); an asking robot rated less helpful (Mannem et al., Humanoids 2023,
+  arXiv:2311.00785 [A]). Closest precedent: **Leolani** — a robot storing what it perceives and is told with its source,
+  driven to learn about people and resolve gaps and conflicts (Vossen et al., 2018, arXiv:1806.01526 [A]); also
+  KNOWBOT (NAACL 2015 [S]) and EgoAsk (household robot asking about the user's objects, arXiv:2609.16766 [A]).
+
+**Verdict (conservative; the searches were not exhaustive).** Every part has precedents: alerting by value against
+interruption cost, per-person timing learned by Thompson sampling with priors and pooling, cost-sensitive intervention
+gates, intention stores, information-gain questions, annoyance budgets, a source-tagged robot memory that asks. Not
+found: (1) a memory service separate from the agent that decides who, when and on which channel for any host, from
+presence impulses and outcomes; (2) identity-gated delivery from a shared memory with thresholds by sensitivity — no
+work measures content revealed to the wrong person, and none treats what a *question* reveals; (3) delivery timing
+learned from real outcomes over days, per person × channel; (4) questions routed by expected value to a specific person
+(by who is likely to know) or to the agent's tools; (5) a long-run curve of questions falling as knowledge grows. Safe
+framing: integration plus a home / embodied evaluation, not a new method. **Before any public claim** read in full:
+PRISM, arXiv:2607.08716, arXiv:2602.04000, PM-Bench, Leolani, and the patent US10635707B2 ("Contextual memory bandit for
+proactive dialogs", 2020 [S]).
+
+**What it changes in the design (F1–F2).**
+- Keep the intention lifecycle in code, with clock and presence cues checked by rule; the model only judges meaning
+  (PM-Bench, Typed Intention Stores).
+- v0 is an explicit **cost-sensitive gate**: deliver when P(useful) exceeds a threshold set by kind — a timed reminder
+  that was asked for has a high cost of missing, a flexible follow-up a high cost of interrupting (PRISM, Horvitz).
+- Signals for the moment: presence and its confidence, a breakpoint (a turn just ended), time since the last turn, the
+  time slot and routine, other people present, the initiative's content, prompts already made today and recent outcomes.
+- v1: **Thompson sampling** (Beta-Bernoulli) per person × channel × slot, its prior from v0 with few pseudo-counts and
+  shrunk towards a population prior (a light IntelligentPooling); an explicit burden term (prompts today, time since the
+  last one); a floor of exploration; **log the probability of every decision** so that timelines can be replayed with
+  off-policy estimators. Quiet hours, daily caps and "voice only when present" stay hard rules outside the learner.
+- Reward: engaged (said and answered) 1, ignored 0, declined or annoyed negative; also latency, "not now", lapsed
+  initiatives and the task's completion (the laundry hung); weekly trends to see habituation.
+- Asking: value of a question for a person = information gain × importance (it changes a future decision: EVPI) ×
+  P(the person knows) × P(a true answer) − interruption cost − disclosure risk; tools first, a person only for what the
+  household alone knows; questions that narrow the space rather than yes/no guesses; retire a question when the
+  remaining uncertainty is low (the children's failure); a per-person budget that grows on answers and shrinks on
+  ignored questions.
 
 **Evaluation plan.** Timing: a dev set of timelines (events, presence impulses, turns) with gold acceptable windows,
 scored on delivered-in-window, needless interruptions and lapsed initiatives, against fixed rules; observation on
 Kinox. Asking: a "growing household" set (an entity memory meeting a family over weeks) scored on facts learned,
-questions asked / answered / retired, wrong-person deliveries (must be zero) and nagging.
+questions asked / answered / retired, wrong-person deliveries (must be zero) and nagging. From F0: timelines replayed
+under candidate policies with off-policy estimators (the logged decision probabilities), a simulator fitted to the
+first real data (HeartSteps' method), regret against the best slot in hindsight, people held out; household members
+simulated by an LLM, each knowing a different part and with its own patience (CLAM's simulated user); metrics also
+knowledge against cumulative questions (area under the curve), questions per fact learned, redundant and wrongly
+targeted questions, the weekly slope of questions; baselines: passive listening only, fixed rules, random choice.

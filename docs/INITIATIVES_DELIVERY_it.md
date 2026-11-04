@@ -166,7 +166,7 @@ Fatti verificati il 2026-11-04 (codice dei connettori, OpenClaw 2026.10.10, herm
 
 | Fase | Cosa | Dove |
 |---|---|---|
-| **F0** | letteratura (H14: interrompibilità, tempismo delle notifiche, agenti LLM proattivi, curiosità / apprendimento attivo); D55; questa specifica | docs |
+| **F0** | letteratura (H14: interrompibilità, tempismo delle notifiche, agenti LLM proattivi, curiosità / apprendimento attivo); D55; questa specifica — **fatta il 2026-11-04** (fonti, verdetto e conseguenze per il progetto in H14) | docs |
 | **F1** | contratto: canali, impulso di presenza, timing / finestra / canale / identità / `source`, `offered`, `events`; il canale nel turno con le soglie di identità; "sei …?" per chi parla ed è sconosciuto | Recordare |
 | **F2** | tempo v0 (classi, finestre da regole e dal modello, una decisione su tre eventi: l'orologio, un impulso, un turno); la fonte nuova "qualcosa lasciato a metà"; domande alle persone (§6); dev set con linee temporali (tempo) e una casa che cresce (imparare chiedendo) | Recordare + valutazione |
 | **F3** | client: prima Arkimede (ricevitore, chat + notifica, Telegram su scelta, impulsi da Voce), poi OpenClaw e Hermes | client |
