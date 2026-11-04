@@ -103,7 +103,8 @@ D55 — Recordare decides who, when and where: send `presence(user, {channel, pe
 recognises someone (your voiceprint or face model's score; an account is 1) and speak the `initiative` you get back
 (already `offered`), or ask "is it you?" for `askWho`; pass `channel` and `reaction` to `reportInitiative`; give
 `context(…, {initiatives: {lookups: true}})` when your agent has tools; `source` on an initiative names your own messages
-it came from (a reminder you scheduled yourself).
+it came from (a reminder you scheduled yourself). Deliver on the webhook event `initiative.deliver` (Recordare chose
+the moment): `data.channel` says where.
 
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,

@@ -21,6 +21,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   dichiarano i loro `channels`; i webhook accettano `events`. Carta della memoria `charter.v2` (come usare una riga di
   iniziativa). Migrazione `InitiativeDelivery`. Additivo, nessuna modifica incompatibile; serve una release della libreria
   client per `presence()` e i nuovi tipi.
+- **Tempo v0: l'orologio sceglie il momento** (D55 F2a). Le iniziative in attesa con un canale che raggiunge sempre la
+  persona vengono spinte quando è il momento: una a orario al suo minuto (la memoria viene passata a quel minuto), una
+  flessibile quando un filtro sensibile ai costi lo permette (il worth × l'adattamento dell'ora ÷ ciò che la persona ha
+  già ricevuto oggi, contro la soglia del tipo), una dovuta alla sua ultima occasione; mai nelle ore di quiete. Quelle
+  spinte escono come nuovo evento webhook `initiative.deliver` (`pushedAt`); ogni decisione — orologio, presenza, turno —
+  è registrata con la sua probabilità (`initiative_decisions`, migrazione `InitiativeTiming`).
 
 ### Corretto
 - **Il contesto di memoria non aspetta più gli embedding in background.** Su un ospite che condivide un server di

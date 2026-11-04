@@ -105,7 +105,8 @@ D55 — Recordare decide a chi, quando e dove: manda `presence(user, {channel, p
 riconosce qualcuno (il punteggio del tuo modello di impronta vocale o di volto; un account vale 1) e di' l'`initiative`
 che ricevi (già `offered`), o chiedi "sei tu?" per `askWho`; passa `channel` e `reaction` a `reportInitiative`; usa
 `context(…, {initiatives: {lookups: true}})` quando il tuo agente ha strumenti; `source` in un'iniziativa indica i tuoi
-messaggi da cui è nata (un promemoria programmato da te).
+messaggi da cui è nata (un promemoria programmato da te). Consegna sull'evento webhook `initiative.deliver` (Recordare
+ha scelto il momento): `data.channel` dice dove.
 
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:

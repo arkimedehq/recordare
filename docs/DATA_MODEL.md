@@ -675,6 +675,11 @@ after a presence impulse, closed by what happens next); `initiatives` gain `timi
 messaging | voice, reach: always | presence}]`); `client_webhooks.events text[] null` (null: all);
 `presences(id, memory_id, person_id null (not identified), client_id null, channel (voice|camera|panel|chat), confidence
 real, place null, seen_at, expires_at)` — who the agent saw or heard, by what, how sure, until when; never a voice or a face.
+**Timing v0** (F2a, migration `InitiativeTiming1791270000000`): `initiatives.pushed_at` (pushed as `initiative.deliver`),
+`preferred_from` / `preferred_to smallint null` (the local hours that suit it; null: the kind's default);
+`initiative_decisions(id bigserial, memory_id, initiative_id → initiatives (CASCADE), trigger (clock|presence|turn), at,
+p real, threshold real, delivered boolean, features jsonb)` — every decision with the probability it was taken with
+(features only: reason, channel, local hour, what the person got today, timing, kind; never text).
 
 ### clarifications (D50, vision L1; behaviour WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contacts), episode_id / fact_id / note_id null

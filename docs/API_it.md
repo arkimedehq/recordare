@@ -688,8 +688,17 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 >   panel`) e `reaction` (`positive | neutral | negative`); il ritardo rispetto a `dueAt` è calcolato — i dati da cui il
 >   tempo imparerà (F4).
 > - **Canali per client** (admin): `channels: [{kind: chat | messaging | voice, reach: always | presence}]` su `POST` /
->   `PATCH api/v1/admin/clients` (ogni tipo una volta). **Eventi dei webhook**: `events` alla registrazione (default tutti
->   e tre; un endpoint che consegna direttamente in una chat prende solo `initiative.created`).
+>   `PATCH api/v1/admin/clients` (ogni tipo una volta). **Eventi dei webhook**: `events` alla registrazione (default
+>   tutti; un endpoint che consegna direttamente in una chat prende solo `initiative.deliver`).
+> - **Tempo v0 — l'orologio sceglie il momento** (F2a, costruita il 2026-11-04): ogni passata decide, per ogni iniziativa in
+>   attesa con un canale che raggiunge sempre la persona, se adesso è il momento — una a orario alla sua ora (entro due
+>   ore; il processore passa quella memoria al minuto esatto quando è dovuta prima della passata oraria successiva), una
+>   flessibile quando p = prior (il `worth` del modello, o 0,7) × l'adattamento dell'ora (say 9–21, ask 10–20 locali; 0,3
+>   fuori) ÷ (1 + ciò che la persona ha già ricevuto oggi) raggiunge la soglia del tipo (say 0,5, ask 0,6), una dovuta (una
+>   richiesta, una promessa) alla sua ultima occasione due ore prima della fine; mai nelle ore di quiete; le ricerche
+>   restano al turno. Un'iniziativa spinta diventa `offered` (`pushedAt` impostato) ed esce come evento
+>   **`initiative.deliver`**: consegnala adesso su `data.channel`. Ogni decisione — orologio, presenza, turno — è
+>   registrata con la sua probabilità e la soglia (`initiative_decisions`), per il rigioco offline e l'apprendimento (F4).
 
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o

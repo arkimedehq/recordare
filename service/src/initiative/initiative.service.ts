@@ -52,18 +52,20 @@ export interface InitiativeView {
   /** The client's own ids of the messages its intent came from: a host recognises a reminder it scheduled itself. */
   source: { conversation: string; messageIds: string[] } | null;
   offeredAt: string | null;
+  /** When Recordare pushed it to its channel (event `initiative.deliver`: deliver it now there). */
+  pushedAt: string | null;
 }
 
 interface Row {
   id: string; seq: string; kind: InitiativeKind; for_person_id: string | null; for_name: string | null; text: string; reason: string; worth: number | null;
   episode_ids: string[]; due_at: Date; expires_at: Date; status: InitiativeStatus; outcome_at: Date | null; reply: string | null; created_at: Date;
   timing: 'timed' | 'flexible'; identity_required: 'medium' | 'high'; channel: string | null; offered_at: Date | null;
-  source_conversation: string | null; source_messages: string[];
+  source_conversation: string | null; source_messages: string[]; pushed_at: Date | null;
 }
 
 const COLUMNS = `i.id, i.seq::text, i.kind::text, i.for_person_id, (SELECT display_name FROM persons WHERE id = i.for_person_id) AS for_name,
   i.text, i.reason, i.worth, i.episode_ids, i.due_at, i.expires_at, i.status::text, i.outcome_at, i.reply, i.created_at,
-  i.timing, i.identity_required, i.channel, i.offered_at,
+  i.timing, i.identity_required, i.channel, i.offered_at, i.pushed_at,
   (SELECT c.external_id FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE m.id = i.source_message_ids[1]) AS source_conversation,
   ARRAY(SELECT m.external_id FROM messages m WHERE m.id = ANY(i.source_message_ids) ORDER BY m.sent_at) AS source_messages`;
 
@@ -109,7 +111,52 @@ export function view(r: Row): InitiativeView {
     identity: { required: r.identity_required },
     source: r.source_conversation ? { conversation: r.source_conversation, messageIds: r.source_messages } : null,
     offeredAt: r.offered_at?.toISOString() ?? null,
+    pushedAt: r.pushed_at?.toISOString() ?? null,
   };
+}
+
+/**
+ * Timing v0 (D55 F2a; RESEARCH_NOTES H14): the clock's decision to push an initiative now on a channel that always
+ * reaches the person — an explicit cost-sensitive gate (PRISM-like): deliver when p ≥ the kind's threshold. A timed one
+ * is pushed at its time (within a grace); a flexible one when p = prior (the model's worth, or a default) × the fit of the
+ * hour (the kind's preferred local hours) × fatigue (what this person already got today) passes the threshold; an owed
+ * one (a request, a promise) at the last chance before its window ends. Constants are a first guess, logged with every
+ * decision so the learner (F4) replaces them.
+ */
+export const TIMING = {
+  timedPushGraceMs: 2 * 3_600_000,
+  lastChanceMs: 2 * 3_600_000,
+  preferred: { say: [9, 21], ask: [10, 20], do: [9, 21], lookup: [0, 24] } as Record<InitiativeKind, [number, number]>,
+  threshold: { say: 0.5, ask: 0.6, do: 0.6, lookup: 0.5 } as Record<InitiativeKind, number>,
+  defaultPrior: 0.7,
+  offHoursFit: 0.3,
+};
+
+export interface MomentInput {
+  kind: InitiativeKind;
+  timing: 'timed' | 'flexible';
+  worth: number | null;
+  /** A request they made or a promise I made: owed, so not left to lapse. */
+  owed: boolean;
+  localHour: number;
+  preferred: [number, number];
+  deliveredToday: number;
+  sinceDueMs: number;
+  untilEndMs: number;
+}
+
+export function decideMoment(m: MomentInput): { p: number; threshold: number; deliver: boolean; reason: string } {
+  const threshold = TIMING.threshold[m.kind];
+  if (m.timing === 'timed') {
+    const p = m.sinceDueMs >= 0 && m.sinceDueMs < TIMING.timedPushGraceMs ? 1 : 0;
+    return { p, threshold, deliver: p >= threshold, reason: p ? 'timed' : 'timed_missed' };
+  }
+  const [from, to] = m.preferred;
+  const fits = from <= to ? m.localHour >= from && m.localHour < to : m.localHour >= from || m.localHour < to;
+  const p = Math.min(1, Math.max(0, (m.worth ?? TIMING.defaultPrior) * (fits ? 1 : TIMING.offHoursFit) / (1 + m.deliveredToday)));
+  if (p >= threshold) return { p, threshold, deliver: true, reason: 'moment' };
+  if (m.owed && m.untilEndMs <= TIMING.lastChanceMs) return { p, threshold, deliver: true, reason: 'last_chance' };
+  return { p, threshold, deliver: false, reason: fits ? 'low' : 'off_hours' };
 }
 
 @Injectable()
@@ -140,6 +187,7 @@ export class InitiativeService {
     await this.settle(memoryId, now);
     const expired = await this.expire(memoryId, now);
     const fired = await this.fire(memoryId, now);
+    await this.push(memoryId, now);
     return { armed, fired, expired };
   }
 
@@ -357,6 +405,9 @@ export class InitiativeService {
       const r = rows[0];
       if (r) {
         const v = view(r);
+        // The person is there (a turn, a presence): v0 takes the moment; logged like the clock's decisions (F4 learns from all).
+        await this.logDecision(memoryId, v.id, channel === 'turn' ? 'turn' : 'presence', now, 1, 0, true,
+          { channel, confidence: who.confidence, reason: 'present' });
         this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: v.id, status: 'offered' });
         await this.webhooks.notify(memoryId, 'initiative.updated', v, v.id);
         return { initiative: v, askWho: null };
@@ -399,6 +450,69 @@ export class InitiativeService {
     if (!r) return;
     this.telemetry.emit({ type: 'initiative.outcome', memoryId, id, status });
     await this.webhooks.notify(memoryId, 'initiative.updated', view(r), id);
+  }
+
+  /**
+   * The clock's trigger (D55 F2a): pending initiatives with a channel that always reaches the person, decided one by one
+   * (`decideMoment`), every decision logged; pushed ones become `offered` and go out as `initiative.deliver`. Never in the
+   * memory's quiet hours; look-ups stay with the turn (they are for the agent's tools).
+   */
+  private async push(memoryId: string, now: Date): Promise<void> {
+    const [memory]: Array<{ timezone: string; quiet_from: number; quiet_to: number }> = await this.db.query(
+      `SELECT timezone, quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]);
+    if (!memory) return;
+    const candidates: Array<{ id: string; kind: InitiativeKind; timing: 'timed' | 'flexible'; worth: number | null; due_at: Date; expires_at: Date;
+      for_person_id: string | null; channel: string; preferred_from: number | null; preferred_to: number | null; intent_kind: string | null }> = await this.db.query(
+      `SELECT i.id, i.kind::text, i.timing, i.worth, i.due_at, i.expires_at, i.for_person_id, i.channel, i.preferred_from, i.preferred_to, t.kind::text AS intent_kind
+       FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
+       WHERE i.memory_id = $1 AND i.status = 'pending' AND i.pushed_at IS NULL AND i.channel IS NOT NULL AND i.kind <> 'lookup'
+         AND i.due_at <= $2 AND i.expires_at > $2 AND (t.id IS NULL OR t.status = 'fired')
+       ORDER BY i.due_at`, [memoryId, now]);
+    if (!candidates.length) return;
+    const quiet = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to).getTime() !== now.getTime();
+    const localHour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: memory.timezone }).format(now)) % 24;
+    for (const c of candidates) {
+      const counted: Array<{ n: number }> = await this.db.query(
+        `SELECT count(*)::int AS n FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2 AND offered_at IS NOT NULL
+           AND (offered_at AT TIME ZONE $3)::date = ($4::timestamptz AT TIME ZONE $3)::date`, [memoryId, c.for_person_id, memory.timezone, now]);
+      const n = counted[0]?.n ?? 0;
+      const preferred: [number, number] = c.preferred_from !== null && c.preferred_to !== null ? [c.preferred_from, c.preferred_to] : TIMING.preferred[c.kind];
+      const input: MomentInput = { kind: c.kind, timing: c.timing, worth: c.worth, owed: c.intent_kind === 'request' || c.intent_kind === 'promise',
+        localHour, preferred, deliveredToday: n, sinceDueMs: now.getTime() - c.due_at.getTime(), untilEndMs: c.expires_at.getTime() - now.getTime() };
+      const d = decideMoment(input);
+      const deliver = d.deliver && !quiet;
+      await this.logDecision(memoryId, c.id, 'clock', now, d.p, d.threshold, deliver,
+        { reason: quiet ? 'quiet_hours' : d.reason, channel: c.channel, localHour, deliveredToday: n, timing: c.timing, kind: c.kind });
+      if (!deliver) continue;
+      const rows = updated<Row>(await this.db.query(
+        `UPDATE initiatives i SET status = 'offered', offered_at = $3, pushed_at = $3, updated_at = now()
+         WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`, [memoryId, c.id, now]));
+      const r = rows[0];
+      if (!r) continue;
+      const v = view(r);
+      this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: v.id, status: 'offered' });
+      await this.webhooks.notify(memoryId, 'initiative.deliver', v, v.id);
+    }
+  }
+
+  private async logDecision(memoryId: string, initiativeId: string, trigger: 'clock' | 'presence' | 'turn', at: Date, p: number, threshold: number,
+    delivered: boolean, features: Record<string, unknown>): Promise<void> {
+    await this.db.query(
+      `INSERT INTO initiative_decisions (memory_id, initiative_id, trigger, at, p, threshold, delivered, features) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [memoryId, initiativeId, trigger, at, p, threshold, delivered, JSON.stringify(features)]);
+  }
+
+  /**
+   * Timed intents and initiatives due before the next hourly sweep (D55 F2a): the processor sweeps their memory at that
+   * minute, so a reminder asked for 09:00 goes out at 09:00, not at the next hour.
+   */
+  async timedSoon(now: Date, horizonMs = 3_600_000): Promise<Array<{ key: string; memoryId: string; at: Date }>> {
+    const rows: Array<{ key: string; memory_id: string; at: Date }> = await this.db.query(
+      `SELECT 'intent-' || id AS key, memory_id, due_at AS at FROM intents WHERE status = 'armed' AND timed AND due_at > $1 AND due_at <= $2
+       UNION ALL
+       SELECT 'initiative-' || id, memory_id, due_at FROM initiatives WHERE status = 'pending' AND timing = 'timed' AND pushed_at IS NULL
+         AND channel IS NOT NULL AND due_at > $1 AND due_at <= $2`, [now, new Date(now.getTime() + horizonMs)]);
+    return rows.map((r) => ({ key: r.key, memoryId: r.memory_id, at: r.at }));
   }
 
   /** The channels the memory's clients declared (D55), from the clients that open this memory. */

@@ -670,8 +670,17 @@ private or public again (§2) has its days written again.
 >   panel`) and `reaction` (`positive | neutral | negative`); the delay since `dueAt` is computed — the data timing will
 >   learn from (F4).
 > - **Channels per client** (admin): `channels: [{kind: chat | messaging | voice, reach: always | presence}]` on `POST` /
->   `PATCH api/v1/admin/clients` (each kind once). **Webhook events**: `events` on registration (default all three; an
->   endpoint that delivers straight to a chat takes `initiative.created` only).
+>   `PATCH api/v1/admin/clients` (each kind once). **Webhook events**: `events` on registration (default all; an
+>   endpoint that delivers straight to a chat takes `initiative.deliver` only).
+> - **Timing v0 — the clock chooses the moment** (F2a, built 2026-11-04): each sweep decides, for every pending initiative
+>   with a channel that always reaches the person, whether now is the moment — a timed one at its time (within two
+>   hours; the processor sweeps that memory at the exact minute when it is due before the next hourly sweep), a flexible
+>   one when p = prior (the model's `worth`, or 0.7) × the hour's fit (say 9–21, ask 10–20 local; 0.3 outside) ÷ (1 +
+>   what the person already got today) reaches the kind's threshold (say 0.5, ask 0.6), an owed one (a request, a
+>   promise) at its last chance two hours before its end; never in the quiet hours; look-ups stay with the turn. A pushed
+>   initiative becomes `offered` (`pushedAt` set) and goes out as the event **`initiative.deliver`**: deliver it now on
+>   `data.channel`. Every decision — clock, presence, turn — is logged with its probability and threshold
+>   (`initiative_decisions`), for offline replay and the learner (F4).
 
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,

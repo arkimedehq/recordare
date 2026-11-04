@@ -704,6 +704,11 @@ messaging | voice, reach: always | presence}]`); `client_webhooks.events text[] 
 `presences(id, memory_id, person_id null (non identificata), client_id null, channel (voice|camera|panel|chat), confidence
 real, place null, seen_at, expires_at)` — chi l'agente ha visto o sentito, con cosa, con che sicurezza, fino a quando; mai
 una voce o un volto.
+**Tempo v0** (F2a, migrazione `InitiativeTiming1791270000000`): `initiatives.pushed_at` (spinta come `initiative.deliver`),
+`preferred_from` / `preferred_to smallint null` (le ore locali adatte; null: il default del tipo);
+`initiative_decisions(id bigserial, memory_id, initiative_id → initiatives (CASCADE), trigger (clock|presence|turn), at,
+p real, threshold real, delivered boolean, features jsonb)` — ogni decisione con la probabilità con cui è stata presa (solo
+caratteristiche: motivo, canale, ora locale, cosa la persona ha ricevuto oggi, timing, tipo; mai testo).
 
 ### clarifications (D50, visione L1; comportamento WORK_PLAN 8.4)
 `id, memory_id → memories (CASCADE), question text, candidates uuid[] (contatti), episode_id / fact_id / note_id null

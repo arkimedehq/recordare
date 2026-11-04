@@ -327,6 +327,8 @@ export interface Initiative {
   /** Your own ids of the messages its intent came from: recognise a reminder you scheduled yourself (and report it done). */
   source: { conversation: string; messageIds: string[] } | null;
   offeredAt: string | null;
+  /** When Recordare pushed it to its channel (event `initiative.deliver`): deliver it there now. */
+  pushedAt: string | null;
 }
 export type InitiativeOutcome = 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
 /** Where an initiative reached the person (D55). */
@@ -356,7 +358,8 @@ export interface PresenceResult {
 
 /** A webhook event (Standard Webhooks envelope): `data` is the initiative with the client's own `user` id for the memory. */
 export interface WebhookEvent {
-  type: 'initiative.created' | 'initiative.updated' | 'initiative.expired';
+  /** `initiative.deliver` (D55): Recordare chose this moment — deliver it now on `data.channel`. */
+  type: 'initiative.created' | 'initiative.deliver' | 'initiative.updated' | 'initiative.expired';
   timestamp: string;
   data: Initiative & { user: string; memoryId: string };
 }

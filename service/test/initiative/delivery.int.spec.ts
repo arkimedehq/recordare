@@ -136,6 +136,8 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     expect(offered).toMatchObject({ status: 'offered', channel: 'turn' });
     expect(offered.offered_conversation_id).toBe((await db.query(`SELECT id FROM conversations WHERE external_id = 'm-chat'`))[0].id);
     expect((await context('marco', 'm-chat')).body.block).toBeNull(); // once
+    // Logged like the clock's decisions (F2a): the person was there, the moment taken.
+    expect(await db.query(`SELECT trigger, p, delivered FROM initiative_decisions WHERE initiative_id = $1`, [id])).toEqual([{ trigger: 'turn', p: 1, delivered: true }]);
     // The conversation's extraction saw the reminder given (INTENTS done): the next sweep closes it as said.
     await db.query(`UPDATE intents SET status = 'done' WHERE id = (SELECT intent_id FROM initiatives WHERE id = $1)`, [id]);
     await app.get(InitiativeService).sweep(marco, NOW);
