@@ -11,19 +11,23 @@
 </head>
 <body>
   <header>
-    <h1>Recordare <span class="muted">admin</span></h1>
+    <div>
+      <h1>Recordare <span>Console</span></h1>
+      <p id="status" class="status"></p>
+    </div>
     <nav id="tabs" hidden>
       <button data-tab="persons" class="active" data-i18n="persons"></button>
       <button data-tab="clients" data-i18n="clients"></button>
     </nav>
     <div class="spacer"></div>
-    <button id="lang" class="ghost"></button>
-    <button id="logout" class="ghost" hidden data-i18n="logout"></button>
+    <button id="helps" class="ghost small" aria-pressed="false"></button>
+    <button id="lang" class="ghost small"></button>
+    <button id="logout" class="ghost small" hidden data-i18n="logout"></button>
   </header>
 
   <main>
     <section id="login" hidden>
-      <form id="login-form" class="card narrow">
+      <form id="login-form" class="card narrow panel corner">
         <h2 data-i18n="signIn"></h2>
         <p class="muted" data-i18n="signInHint"></p>
         <input id="key" type="password" autocomplete="current-password" required autofocus>
@@ -54,7 +58,7 @@
   </main>
 
   <div id="toast" hidden></div>
-  <dialog id="secret">
+  <dialog id="secret" class="corner">
     <h3 data-i18n="secretTitle"></h3>
     <p class="muted" data-i18n="secretHint"></p>
     <code id="secret-value"></code>

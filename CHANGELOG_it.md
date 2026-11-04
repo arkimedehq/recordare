@@ -10,6 +10,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - **La console di amministrazione spiega ogni campo** (italiano e inglese): cosa fa e quando cambiarlo, sotto ogni
   impostazione; una legenda dei permessi di chiavi e token e degli eventi dei webhook; una breve introduzione a persone e
   client.
+- **La console di amministrazione nello stile di Atlas**: pannelli scuri con angoli, titoli in maiuscoletto, dati in
+  monospazio; ogni scheda si chiude sul nome, le etichette e i contatori ("Apri tutte" / "Chiudi tutte"; una scheda
+  sola si apre da sé); ogni spiegazione si nasconde dietro un piccolo "?", tutte mostrate o nascoste insieme
+  dall'intestazione (ricordato nel browser). Nessun font esterno (la CSP della pagina resta sulla stessa origine).
 - **`InitiativeInbox`** nella libreria client: ciò che ogni ospite fa per consegnare le iniziative, una volta sola —
   webhook verificati (un `webhook-id` ripetuto ignorato), impulsi di presenza, il feed recuperato da un cursore, ogni
   iniziativa passata una volta al `deliver` dell'ospite, l'esito che restituisce riportato; archivi durevoli `seen` /

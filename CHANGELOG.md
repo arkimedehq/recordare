@@ -9,6 +9,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Added
 - **The admin console explains every field** (Italian and English): what it does and when to change it, under each
   setting; a legend of key and token scopes and of webhook events; a short introduction to people and clients.
+- **The admin console in the Atlas style**: dark panels with corner brackets, display caps, monospace data; each card
+  folds to its name, chips and counters ("Open all" / "Close all"; a single card opens by itself); every explanation
+  folds behind a small "?", all shown or hidden at once from the header (remembered in the browser). No external fonts
+  (the page's CSP stays same-origin).
 - **`InitiativeInbox`** in the client library: what every host does to deliver initiatives, once — webhooks verified (a
   repeated `webhook-id` ignored), presence impulses, the feed caught up from a cursor, each initiative handed to the
   host's `deliver` once, the outcome it returns reported; durable `seen` / `cursors` stores optional.

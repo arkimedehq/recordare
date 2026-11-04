@@ -40,6 +40,8 @@ const T = {
     chat: 'chat', messaging: 'messaggistica', voice: 'voce',
     webhooks: 'Webhook (iniziative)', webhookUrl: 'URL (https, o http interno se WEBHOOK_ALLOW_PRIVATE)', description: 'Descrizione',
     events: 'eventi', allEvents: 'tutti', register: 'Registra', removeConfirm: 'Rimuovere il webhook? Il client non riceverà più le iniziative qui.',
+    helpsShow: 'Mostra aiuti', helpsHide: 'Nascondi aiuti', helpLabel: 'cos\'è?', connected: 'collegato', signedOut: 'non collegato',
+    expandAll: 'Apri tutte', collapseAll: 'Chiudi tutte',
     remove: 'Rimuovi', webhookSecret: 'Segreto del webhook (whsec_): dallo al client, non verrà più mostrato.',
   },
   en: {
@@ -76,6 +78,8 @@ const T = {
     chat: 'chat', messaging: 'messaging', voice: 'voice',
     webhooks: 'Webhooks (initiatives)', webhookUrl: 'URL (https, or internal http with WEBHOOK_ALLOW_PRIVATE)', description: 'Description',
     events: 'events', allEvents: 'all', register: 'Register', removeConfirm: 'Remove the webhook? The client will no longer receive initiatives here.',
+    helpsShow: 'Show help', helpsHide: 'Hide help', helpLabel: 'what is it?', connected: 'connected', signedOut: 'not connected',
+    expandAll: 'Open all', collapseAll: 'Close all',
     remove: 'Remove', webhookSecret: 'The webhook\'s secret (whsec_): give it to the client, it will not be shown again.',
   },
 };
@@ -139,7 +143,9 @@ const HELP = {
     eventsLegend: 'deliver: "say it now" (what delivering needs) · created: a new initiative decided · updated: changed (offered, said, declined…) · expired: lapsed unsaid',
   },
 };
-const help = (key) => h('small', { class: 'help' }, HELP[lang][key] ?? '');
+/** A field's explanation, folded away behind a small "?" (all opened at once with the header's switch). */
+const help = (...keys) => h('details', { class: 'help', open: helpsOpen },
+  h('summary', {}, t('helpLabel')), keys.map((key) => h('p', {}, HELP[lang][key] ?? '')));
 const PROFILES = ['economy', 'balanced', 'full'];
 const KEY_SCOPES = ['ingest', 'mcp', 'read', 'write', 'erase'];
 /** A personal token's scopes (never admin). */
@@ -161,6 +167,14 @@ let adminKey = store.get('adminKey');
 let tab = 'persons';
 let clientsCache = [];
 let personsCache = [];
+/** Helps open everywhere (remembered in this browser). */
+const prefs = {
+  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } },
+};
+let helpsOpen = prefs.get('helpsOpen') === '1';
+/** Cards open (kept across reloads of the list). */
+const expanded = new Set();
 const t = (k, vars = {}) => (T[lang][k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? '');
 const $ = (id) => document.getElementById(id);
 
@@ -214,6 +228,24 @@ function showSecret(value) {
 
 const when = (d) => (d ? new Date(d).toLocaleString(lang === 'it' ? 'it-IT' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' }) : t('never'));
 
+/** A card that folds: the head (name, chips, counters) is a button; the body shows when open. */
+function foldCard(id, head, ...body) {
+  const open = expanded.has(id);
+  const card = h('div', { class: `card panel${open ? ' open corner' : ''}` });
+  const bodyEl = h('div', { class: 'card-body', hidden: !open }, ...body);
+  const toggle = h('button', {
+    class: 'card-head', type: 'button', 'aria-expanded': String(open),
+    onclick: () => {
+      const now = !expanded.has(id);
+      if (now) expanded.add(id); else expanded.delete(id);
+      card.classList.toggle('open', now); card.classList.toggle('corner', now);
+      bodyEl.hidden = !now; toggle.setAttribute('aria-expanded', String(now));
+    },
+  }, h('span', { class: 'chev', 'aria-hidden': 'true' }), ...head);
+  card.append(toggle, bodyEl);
+  return card;
+}
+
 // ── People ─────────────────────────────────────────────────────────────────────
 
 function personCard(p) {
@@ -247,7 +279,7 @@ function personCard(p) {
     HOURS.map((x) => h('option', { value: x, selected: Number(value) === x }, `${String(x).padStart(2, '0')}:00`)));
   const runNow = (path, label) => h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `memories/${p.id}/${path}`), t('done')) }, label);
 
-  return h('div', { class: 'card' },
+  return foldCard(p.id, [
     h('div', { class: 'head' },
       h('span', { class: 'name' }, p.name),
       h('span', { class: `chip ${p.mode === 'entity' ? 'warn' : ''}` }, t(p.mode)),
@@ -260,7 +292,7 @@ function personCard(p) {
       h('span', {}, h('b', {}, p.notes), ` ${t('notes')}`),
       h('span', {}, h('b', {}, p.contacts), ` ${t('contacts')}`),
       h('span', {}, `${t('last')}: ${when(p.lastMessage)}`),
-    ),
+    )],
     h('div', { class: 'grid' },
       h('label', { class: 'field' }, h('span', {}, t('mode')), mode, help('mode')),
       h('label', { class: 'field' }, h('span', {}, t('gender')), gender, help('gender')),
@@ -321,7 +353,7 @@ function personCard(p) {
       }, t('newToken'))) : null,
       clientsCache.length ? help('scopesLegend') : null,
     ),
-    h('div', { class: 'row' },
+    h('div', { class: 'row actions' },
       h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `memories/${p.id}/consolidate`), t('consolidated')) }, t('consolidate')),
       h('span', { class: 'muted' }, `${t('run')}:`),
       runNow('review-facts', t('reviewFacts')), runNow('patterns', t('patterns')), runNow('thoughts', t('thoughts')), runNow('initiatives', t('initiatives')),
@@ -333,7 +365,7 @@ function personCard(p) {
         },
       }, t('erase')),
     ),
-    help('actions'), help('erase'),
+    help('actions', 'erase'),
   );
 }
 
@@ -341,7 +373,7 @@ function newPersonForm() {
   const name = h('input', { placeholder: t('personName'), required: true, maxlength: 200 });
   const mode = h('select', {}, h('option', { value: 'personal' }, t('modePersonal')), h('option', { value: 'entity' }, t('modeEntity')));
   const form = h('form', {
-    class: 'card',
+    class: 'card panel corner form open',
     onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'memories', { displayName: name.value.trim(), mode: mode.value })); },
   }, h('div', { class: 'row' }, name, mode, h('button', { type: 'submit' }, t('create')),
     h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))), help('mode'));
@@ -364,24 +396,29 @@ function clientCard(c) {
   const hookUrl = h('input', { placeholder: t('webhookUrl'), size: 40 });
   const hookDescription = h('input', { placeholder: t('description'), maxlength: 200 });
   const hookEvents = boxes(EVENTS, (e) => e === 'initiative.deliver');
-  return h('div', { class: 'card' },
+  return foldCard(c.id, [
     h('div', { class: 'head' },
       h('span', { class: 'name' }, c.name), h('span', { class: 'chip' }, c.kind),
       h('span', { class: `chip ${c.disabledAt ? 'danger' : 'ok'}` }, c.disabledAt ? t('disabled') : t('active')),
     ),
+    h('div', { class: 'stats' },
+      h('span', {}, h('b', {}, c.keys.length), ` ${t('keys').toLowerCase()}`),
+      h('span', {}, h('b', {}, (c.webhooks ?? []).length), ' webhook'),
+      h('span', {}, `${t('channels').replace(/\s*\(.*\)/, '')}: ${(c.channels ?? []).map((x) => t(x.kind)).join(', ') || t('noneM')}`),
+    )],
     h('div', { class: 'grid' },
-      h('label', { class: 'switch' }, h('input', {
+      h('div', { class: 'field' }, h('label', { class: 'switch' }, h('input', {
         type: 'checkbox', checked: c.autoProvision, onchange: (e) => act(() => api('PATCH', `clients/${c.id}`, { autoProvision: e.target.checked })),
       }), t('autoProvision')),
-      help('autoProvision'),
-      h('label', { class: 'switch' }, h('input', {
+      help('autoProvision')),
+      h('div', { class: 'field' }, h('label', { class: 'switch' }, h('input', {
         type: 'checkbox', checked: !!c.disabledAt,
         onchange: (e) => {
           if (e.target.checked && !confirm(t('disableConfirm'))) { e.target.checked = false; return; }
           act(() => api('PATCH', `clients/${c.id}`, { disabled: e.target.checked }));
         },
       }), t('disabled')),
-      help('disabled'),
+      help('disabled')),
       h('label', { class: 'field' }, h('span', {}, t('rawLog')), h('select', { onchange: (e) => patch({ rawLogScope: e.target.value }) },
         h('option', { value: 'own', selected: c.rawLogScope === 'own' }, t('rawOwn')),
         h('option', { value: 'all', selected: c.rawLogScope === 'all' }, t('rawAll'))), help('rawLog')),
@@ -409,7 +446,7 @@ function clientCard(c) {
           }, null);
         },
       }, t('register'))),
-      help('webhookUrl'), help('eventsLegend'),
+      help('webhookUrl', 'eventsLegend'),
     ),
     h('div', { class: 'sub' },
       h('h4', {}, t('keys')), help('keys'),
@@ -434,7 +471,7 @@ function newClientForm() {
   const name = h('input', { placeholder: t('clientName'), required: true, maxlength: 200 });
   const kind = h('select', {}, ['platform', 'mcp_client', 'import'].map((k) => h('option', { value: k }, k)));
   const form = h('form', {
-    class: 'card',
+    class: 'card panel corner form open',
     onsubmit: (e) => { e.preventDefault(); act(() => api('POST', 'clients', { name: name.value.trim(), kind: kind.value })); },
   }, h('div', { class: 'row' }, name, kind, h('button', { type: 'submit' }, t('create')),
     h('button', { type: 'button', class: 'ghost', onclick: () => form.remove() }, t('cancel'))), help('newClientKind'));
@@ -447,6 +484,10 @@ function applyText() {
   document.documentElement.lang = lang;
   for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = t(el.dataset.i18n);
   $('lang').textContent = lang === 'it' ? 'EN' : 'IT';
+  $('helps').textContent = helpsOpen ? t('helpsHide') : t('helpsShow');
+  $('helps').setAttribute('aria-pressed', String(helpsOpen));
+  $('status').textContent = adminKey ? t('connected') : t('signedOut');
+  $('status').className = `status${adminKey ? ' on' : ''}`;
   $('key').placeholder = 'ADMIN_API_KEY';
   $('person-search').placeholder = t('search');
   $('client-search').placeholder = t('search');
@@ -460,6 +501,7 @@ async function render() {
   $('persons').hidden = !signedIn || tab !== 'persons';
   $('clients').hidden = !signedIn || tab !== 'clients';
   for (const b of document.querySelectorAll('#tabs button')) b.classList.toggle('active', b.dataset.tab === tab);
+  applyText();
   if (!signedIn) return;
   try {
     clientsCache = await api('GET', 'clients');
@@ -475,8 +517,16 @@ function draw() {
   const match = (input) => (x) => x.name.toLowerCase().includes($(input).value.trim().toLowerCase());
   const list = (items, input, card, target) => {
     const shown = items.filter(match(input));
-    $(target).replaceChildren(h('p', { class: 'intro' }, HELP[lang][tab === 'persons' ? 'introPersons' : 'introClients']),
-      ...(shown.length < items.length ? [h('p', { class: 'muted' }, t('shown', { n: shown.length, total: items.length }))] : []),
+    if (items.length === 1) expanded.add(items[0].id); // a single card opens by itself
+    const allOpen = shown.length > 0 && shown.every((x) => expanded.has(x.id));
+    $(target).replaceChildren(h('p', { class: 'intro panel' }, HELP[lang][tab === 'persons' ? 'introPersons' : 'introClients']),
+      h('div', { class: 'row' },
+        shown.length < items.length ? h('span', { class: 'muted' }, t('shown', { n: shown.length, total: items.length })) : null,
+        h('span', { class: 'spacer' }),
+        shown.length > 1 ? h('button', { class: 'ghost small', onclick: () => {
+          for (const x of shown) { if (allOpen) expanded.delete(x.id); else expanded.add(x.id); }
+          draw();
+        } }, allOpen ? t('collapseAll') : t('expandAll')) : null),
       ...shown.map(card));
   };
   if (tab === 'persons') list(personsCache, 'person-search', personCard, 'person-list');
@@ -505,6 +555,12 @@ $('login-form').addEventListener('submit', async (e) => {
   render();
 });
 $('logout').addEventListener('click', signOut);
+$('helps').addEventListener('click', () => {
+  helpsOpen = !helpsOpen;
+  prefs.set('helpsOpen', helpsOpen ? '1' : '0');
+  for (const d of document.querySelectorAll('details.help')) d.open = helpsOpen;
+  applyText();
+});
 $('lang').addEventListener('click', () => { lang = lang === 'it' ? 'en' : 'it'; store.set('lang', lang); applyText(); render(); });
 for (const b of document.querySelectorAll('#tabs button')) b.addEventListener('click', () => { tab = b.dataset.tab; render(); });
 $('person-search').addEventListener('input', draw);
