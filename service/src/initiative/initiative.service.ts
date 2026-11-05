@@ -39,8 +39,11 @@ export const DELIVERY_CHANNELS = ['turn', 'chat', 'messaging', 'voice', 'panel']
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
 export type Reaction = 'positive' | 'neutral' | 'negative';
 
+/** A way to reach a person (D55 §5c): one of their verified identities on a channel — `homeassistant` / `person.chloe`, `telegram` / a chat id. */
+export interface Address { channel: string; id: string }
+
 export interface InitiativeView {
-  id: string; seq: number; kind: InitiativeKind; for: { personId: string; name: string } | null; text: string; reason: string; worth: number | null;
+  id: string; seq: number; kind: InitiativeKind; for: { personId: string; name: string; addresses: Address[] } | null; text: string; reason: string; worth: number | null;
   episodeIds: string[]; dueAt: string; expiresAt: string; status: InitiativeStatus; outcomeAt: string | null; reply: string | null;
   createdAt: string;
   /** D55: timed (a time was asked for) or flexible (a window, the moment chosen by Recordare). */
@@ -48,6 +51,8 @@ export interface InitiativeView {
   window: { notBefore: string; notAfter: string };
   /** Where it was offered, or will be delivered (a client's declared channel); null: at the person's next presence or turn. */
   channel: string | null;
+  /** The acceptable channels in order (D55 §5b): the client delivers on the first that reaches the person now. */
+  channels: string[];
   /** How surely the person must be recognised before hearing it (D55: medium, or high for what came from a private message). */
   identity: { required: 'medium' | 'high' };
   /** The client's own ids of the messages its intent came from: a host recognises a reminder it scheduled itself. */
@@ -60,13 +65,16 @@ export interface InitiativeView {
 interface Row {
   id: string; seq: string; kind: InitiativeKind; for_person_id: string | null; for_name: string | null; text: string; reason: string; worth: number | null;
   episode_ids: string[]; due_at: Date; expires_at: Date; status: InitiativeStatus; outcome_at: Date | null; reply: string | null; created_at: Date;
-  timing: 'timed' | 'flexible'; identity_required: 'medium' | 'high'; channel: string | null; offered_at: Date | null;
+  timing: 'timed' | 'flexible'; identity_required: 'medium' | 'high'; channel: string | null; channels: string[]; offered_at: Date | null;
+  for_addresses: Address[] | null;
   source_conversation: string | null; source_messages: string[]; pushed_at: Date | null;
 }
 
 const COLUMNS = `i.id, i.seq::text, i.kind::text, i.for_person_id, (SELECT display_name FROM persons WHERE id = i.for_person_id) AS for_name,
   i.text, i.reason, i.worth, i.episode_ids, i.due_at, i.expires_at, i.status::text, i.outcome_at, i.reply, i.created_at,
-  i.timing, i.identity_required, i.channel, i.offered_at, i.pushed_at,
+  i.timing, i.identity_required, i.channel, i.channels, i.offered_at, i.pushed_at,
+  (SELECT json_agg(json_build_object('channel', x.channel, 'id', x.external_id) ORDER BY x.created_at) FROM external_identities x
+     WHERE x.person_id = i.for_person_id AND x.kind = 'participant' AND x.channel IS NOT NULL AND x.verified_at IS NOT NULL) AS for_addresses,
   (SELECT c.external_id FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE m.id = i.source_message_ids[1]) AS source_conversation,
   ARRAY(SELECT m.external_id FROM messages m WHERE m.id = ANY(i.source_message_ids) ORDER BY m.sent_at) AS source_messages`;
 
@@ -114,10 +122,11 @@ function updated<T>(res: unknown): T[] {
 
 export function view(r: Row): InitiativeView {
   return {
-    id: r.id, seq: Number(r.seq), kind: r.kind, for: r.for_person_id ? { personId: r.for_person_id, name: r.for_name ?? '' } : null,
+    id: r.id, seq: Number(r.seq), kind: r.kind,
+    for: r.for_person_id ? { personId: r.for_person_id, name: r.for_name ?? '', addresses: r.for_addresses ?? [] } : null,
     text: r.text, reason: r.reason, worth: r.worth, episodeIds: r.episode_ids, dueAt: r.due_at.toISOString(), expiresAt: r.expires_at.toISOString(),
     status: r.status, outcomeAt: r.outcome_at?.toISOString() ?? null, reply: r.reply, createdAt: r.created_at.toISOString(),
-    timing: r.timing, window: { notBefore: r.due_at.toISOString(), notAfter: r.expires_at.toISOString() }, channel: r.channel,
+    timing: r.timing, window: { notBefore: r.due_at.toISOString(), notAfter: r.expires_at.toISOString() }, channel: r.channel, channels: r.channels,
     identity: { required: r.identity_required },
     source: r.source_conversation ? { conversation: r.source_conversation, messageIds: r.source_messages } : null,
     offeredAt: r.offered_at?.toISOString() ?? null,
@@ -377,16 +386,17 @@ export class InitiativeService {
       const days = sayDays(t, now, memory.timezone);
       const todayOnly = days.from === days.to && days.from === localDate(now, memory.timezone);
       const content = said && (todayOnly || !saysRelativeDay(said)) ? said : fallback;
+      const acceptable = acceptableChannels(kind as InitiativeKind, t.kind);
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
           `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at, worth,
-               timing, identity_required, channel, source_message_ids, preferred_from, preferred_to)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *)
+               timing, identity_required, channel, source_message_ids, preferred_from, preferred_to, channels)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *)
            SELECT ${COLUMNS} FROM i`,
           [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > at ? t.due_at : at, t.expires_at, w?.worth ?? null,
             // High: from a private message, or a question about someone asked to another person (it tells what I know of them).
-            t.timed ? 'timed' : 'flexible', t.private || (t.kind === 'own' && t.for_person_id && t.note_subject !== t.for_person_id) ? 'high' : 'medium', kind === 'lookup' ? null : pickChannel(channels, t.timed),
-            t.message_id ? [t.message_id] : [], w?.hours?.[0] ?? null, w?.hours?.[1] ?? null]);
+            t.timed ? 'timed' : 'flexible', t.private || (t.kind === 'own' && t.for_person_id && t.note_subject !== t.for_person_id) ? 'high' : 'medium', pickChannel(channels, acceptable),
+            t.message_id ? [t.message_id] : [], w?.hours?.[0] ?? null, w?.hours?.[1] ?? null, acceptable]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
       });
@@ -436,12 +446,16 @@ export class InitiativeService {
    * (something waits for them; nothing of it is told). An initiative for a person reaches only that person, recognised
    * at least as surely as it requires; one for nobody in particular reaches the holder of a personal memory, and in an
    * entity memory anyone identified — or whoever talks in the conversation it came from (the one who asked is there).
-   * A look-up goes to the agent (its tools) only when the host says it has some.
+   * A look-up goes to the agent (its tools) only when the host says it has some. By voice only what accepts voice
+   * (§5b); `timedOwedOnly`: only a timed request or promise (a refresh of a presence, the pace, the quiet hours — §5c);
+   * `open`: others are in the room — the initiative is not given, only marked opened (the agent says the opening, and a
+   * "yes" in the next turn gets it).
    */
-  async offer(memoryId: string, who: Recipient, channel: DeliveryChannel, now: Date, opts: { lookups?: boolean } = {}):
-    Promise<{ initiative: InitiativeView | null; askWho: { personId: string; name: string } | null }> {
+  async offer(memoryId: string, who: Recipient, channel: DeliveryChannel, now: Date,
+    opts: { lookups?: boolean; timedOwedOnly?: boolean; open?: boolean } = {}):
+    Promise<{ initiative: InitiativeView | null; askWho: { personId: string; name: string } | null; opened: boolean }> {
     const [memory]: Array<{ mode: string }> = await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
-    if (!memory) return { initiative: null, askWho: null };
+    if (!memory) return { initiative: null, askWho: null, opened: false };
     const entity = memory.mode === 'entity';
     const self = who.personId === memoryId;
     const contact = who.personId && !self ? who.personId : null;
@@ -450,6 +464,8 @@ export class InitiativeService {
        WHERE i.memory_id = $1 AND i.status = 'pending' AND i.due_at <= $2 AND i.expires_at > $2
          AND (t.id IS NULL OR t.status = 'fired')
          AND (i.kind <> 'lookup' OR $3)
+         AND (NOT $11 OR (i.timing = 'timed' AND t.kind IN ('request', 'promise')))
+         AND ($12::text IS NULL OR $12 = ANY(i.channels))
          AND (
            (i.kind = 'lookup' AND i.for_person_id IS NULL)
            OR (i.for_person_id IS NOT NULL AND i.for_person_id = $4 AND $5 >= CASE i.identity_required WHEN 'high' THEN $8 ELSE $7 END)
@@ -460,8 +476,19 @@ export class InitiativeService {
          )
        -- what is owed first (a request, a promise), then what has a time, then the worth (dev_timing g5, 2026-11-04)
        ORDER BY (t.kind IN ('request', 'promise')) DESC NULLS LAST, (i.timing = 'timed') DESC, i.worth DESC NULLS LAST, i.due_at LIMIT 1`,
-      [memoryId, now, !!opts.lookups, contact, who.confidence, entity, IDENTITY_THRESHOLD.medium, IDENTITY_THRESHOLD.high, self, who.conversationId ?? null]);
-    if (hit) {
+      [memoryId, now, !!opts.lookups, contact, who.confidence, entity, IDENTITY_THRESHOLD.medium, IDENTITY_THRESHOLD.high, self, who.conversationId ?? null,
+        !!opts.timedOwedOnly, channel === 'voice' ? 'voice' : null]);
+    if (hit && opts.open) {
+      // Others in the room: only the opening is said; the initiative stays pending for a "yes" in the next turn.
+      const rows = updated<Row>(await this.db.query(
+        `UPDATE initiatives i SET opened_at = $3, updated_at = now() WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`,
+        [memoryId, hit.id, now]));
+      if (rows[0]) {
+        await this.logDecision(memoryId, rows[0].id, 'presence', now, 1, 0, false, { channel, confidence: who.confidence, reason: 'opening' });
+        return { initiative: view(rows[0]), askWho: null, opened: true };
+      }
+    }
+    if (hit && !opts.open) {
       const rows = updated<Row>(await this.db.query(
         `UPDATE initiatives i SET status = 'offered', offered_at = $3, channel = $4, offered_conversation_id = $5, updated_at = now()
          WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`,
@@ -474,16 +501,16 @@ export class InitiativeService {
           { channel, confidence: who.confidence, reason: 'present' });
         this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: v.id, status: 'offered' });
         await this.webhooks.notify(memoryId, 'initiative.updated', v, v.id);
-        return { initiative: v, askWho: null };
+        return { initiative: v, askWho: null, opened: false };
       }
     }
-    if (!entity || who.personId) return { initiative: null, askWho: null };
+    if (!entity || who.personId) return { initiative: null, askWho: null, opened: false };
     const [waiting]: Array<{ person_id: string; name: string }> = await this.db.query(
       `SELECT i.for_person_id AS person_id, p.display_name AS name FROM initiatives i JOIN persons p ON p.id = i.for_person_id
        LEFT JOIN intents t ON t.id = i.intent_id
        WHERE i.memory_id = $1 AND i.status = 'pending' AND i.due_at <= $2 AND i.expires_at > $2 AND (t.id IS NULL OR t.status = 'fired')
        ORDER BY i.worth DESC NULLS LAST, i.due_at LIMIT 1`, [memoryId, now]);
-    return { initiative: null, askWho: waiting ? { personId: waiting.person_id, name: waiting.name } : null };
+    return { initiative: null, askWho: waiting ? { personId: waiting.person_id, name: waiting.name } : null, opened: false };
   }
 
   /**
@@ -517,25 +544,41 @@ export class InitiativeService {
   }
 
   /**
-   * The clock's trigger (D55 F2a): pending initiatives with a channel that always reaches the person, decided one by one
+   * The clock's trigger (D55 F2a): pending initiatives with a channel that reaches the person now, decided one by one
    * (`decideMoment`), every decision logged; pushed ones become `offered` and go out as `initiative.deliver`. Never in the
-   * memory's quiet hours; look-ups stay with the turn (they are for the agent's tools).
+   * memory's quiet hours; look-ups stay with the turn (they are for the agent's tools). The channel (§5b–§5c): a timed
+   * request or promise whose person is live in a room goes by voice; in an entity memory, what is for one person never
+   * goes on its shared channels (a panel, the agent's own chat) — only by voice so, or by messaging to an address of
+   * theirs; otherwise the first acceptable channel a client declared as always reaching.
    */
   private async push(memoryId: string, now: Date): Promise<void> {
     const [memory]: Array<{ timezone: string; quiet_from: number; quiet_to: number; mode: string }> = await this.db.query(
       `SELECT timezone, quiet_from, quiet_to, mode FROM memories WHERE person_id = $1`, [memoryId]);
     if (!memory) return;
     const policy = this.config.get('INITIATIVE_TIMING', { infer: true }) ?? 'v0';
-    const candidates: Array<{ id: string; kind: InitiativeKind; timing: 'timed' | 'flexible'; worth: number | null; due_at: Date; expires_at: Date;
-      for_person_id: string | null; channel: string; preferred_from: number | null; preferred_to: number | null; intent_kind: string | null }> = await this.db.query(
-      `SELECT i.id, i.kind::text, i.timing, i.worth, i.due_at, i.expires_at, i.for_person_id, i.channel, i.preferred_from, i.preferred_to, t.kind::text AS intent_kind
+    const entity = memory.mode === 'entity';
+    const listed: Array<{ id: string; kind: InitiativeKind; timing: 'timed' | 'flexible'; worth: number | null; due_at: Date; expires_at: Date;
+      for_person_id: string | null; channel: string | null; channels: string[]; preferred_from: number | null; preferred_to: number | null;
+      intent_kind: string | null; live_room: boolean; addressed: boolean }> = await this.db.query(
+      `SELECT i.id, i.kind::text, i.timing, i.worth, i.due_at, i.expires_at, i.for_person_id, i.channel, i.channels, i.preferred_from, i.preferred_to,
+         t.kind::text AS intent_kind,
+         EXISTS (SELECT 1 FROM presences p WHERE p.memory_id = i.memory_id AND p.person_id = COALESCE(i.for_person_id, CASE WHEN NOT $3 THEN i.memory_id END)
+           AND p.channel IN ('voice', 'camera') AND p.seen_at <= $2 AND p.expires_at > $2) AS live_room,
+         EXISTS (SELECT 1 FROM external_identities x WHERE x.person_id = i.for_person_id AND x.kind = 'participant' AND x.channel IS NOT NULL
+           AND x.verified_at IS NOT NULL) AS addressed
        FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
-       WHERE i.memory_id = $1 AND i.status = 'pending' AND i.pushed_at IS NULL AND i.channel IS NOT NULL AND i.kind <> 'lookup'
+       WHERE i.memory_id = $1 AND i.status = 'pending' AND i.pushed_at IS NULL AND i.kind <> 'lookup'
          AND i.due_at <= $2 AND i.expires_at > $2 AND (t.id IS NULL OR t.status = 'fired')
-         -- an entity memory's channels are shared (a panel, the agent's own chat): what is for one person waits for their
-         -- presence or their turn, where who it is gets checked (D55)
-         AND NOT ($3 AND i.for_person_id IS NOT NULL)
-       ORDER BY i.due_at`, [memoryId, now, memory.mode === 'entity']);
+       ORDER BY i.due_at`, [memoryId, now, entity]);
+    const declared = await this.declaredChannels(memoryId);
+    const messaging = declared.some((c) => c.kind === 'messaging' && c.reach === 'always');
+    const candidates = listed.flatMap((c) => {
+      const owed = c.intent_kind === 'request' || c.intent_kind === 'promise';
+      const channel = c.timing === 'timed' && owed && c.live_room && c.channels.includes('voice') ? 'voice'
+        : entity && c.for_person_id ? (c.channels.includes('messaging') && messaging && c.addressed ? 'messaging' : null)
+          : c.channel;
+      return channel ? [{ ...c, channel }] : [];
+    });
     if (!candidates.length) return;
     const quiet = afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to).getTime() !== now.getTime();
     // The window ends for the clock where the quiet hours begin: a last chance at 22:30 would be no chance (dev_timing g5).
@@ -558,8 +601,8 @@ export class InitiativeService {
         { reason: held && d.deliver ? 'quiet_hours' : d.reason, channel: c.channel, localHour, deliveredToday: n, timing: c.timing, kind: c.kind, policy });
       if (!deliver) continue;
       const rows = updated<Row>(await this.db.query(
-        `UPDATE initiatives i SET status = 'offered', offered_at = $3, pushed_at = $3, updated_at = now()
-         WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`, [memoryId, c.id, now]));
+        `UPDATE initiatives i SET status = 'offered', offered_at = $3, pushed_at = $3, channel = $4, updated_at = now()
+         WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`, [memoryId, c.id, now, c.channel]));
       const r = rows[0];
       if (!r) continue;
       const v = view(r);
@@ -584,7 +627,7 @@ export class InitiativeService {
       `SELECT 'intent-' || id AS key, memory_id, due_at AS at FROM intents WHERE status = 'armed' AND timed AND due_at > $1 AND due_at <= $2
        UNION ALL
        SELECT 'initiative-' || id, memory_id, due_at FROM initiatives WHERE status = 'pending' AND timing = 'timed' AND pushed_at IS NULL
-         AND channel IS NOT NULL AND due_at > $1 AND due_at <= $2`, [now, new Date(now.getTime() + horizonMs)]);
+         AND due_at > $1 AND due_at <= $2`, [now, new Date(now.getTime() + horizonMs)]);
     return rows.map((r) => ({ key: r.key, memoryId: r.memory_id, at: r.at }));
   }
 
@@ -671,12 +714,21 @@ export function nextLocalHour(now: Date, tz: string, hour: number): Date {
 }
 
 /**
- * Where a new initiative will reach the person (D55), among the channels that reach them at any time: a timed one where
- * it is noticed now (messaging before chat), a flexible one where it can wait (chat before messaging); none: at their
- * next presence impulse or turn.
+ * The acceptable channels of an initiative, in order (D55 §5b, maintainer 2026-11-05): messaging interrupts, so only what
+ * was asked or promised — a request, a promise (a timed reminder is one of them) — may go there: voice → messaging → chat;
+ * anything else waits for a voice presence, a turn or the chat: voice → chat; a look-up is for the agent's tools: the turn
+ * only (none). The turn is always acceptable and never listed. The client delivers on the first that reaches the person now.
  */
-export function pickChannel(channels: Array<{ kind: string; reach: string }>, timed: boolean): string | null {
-  const always = new Set(channels.filter((c) => c.reach === 'always').map((c) => c.kind));
-  for (const kind of timed ? ['messaging', 'chat'] : ['chat', 'messaging']) if (always.has(kind)) return kind;
-  return null;
+export function acceptableChannels(kind: InitiativeKind, intentKind: string | null): string[] {
+  if (kind === 'lookup') return [];
+  return intentKind === 'request' || intentKind === 'promise' ? ['voice', 'messaging', 'chat'] : ['voice', 'chat'];
+}
+
+/**
+ * Where the clock may push an initiative (D55): the first acceptable channel some client declared as reaching the person
+ * at any time (`always`); none: at their next presence impulse or turn.
+ */
+export function pickChannel(declared: Array<{ kind: string; reach: string }>, acceptable: string[]): string | null {
+  const always = new Set(declared.filter((c) => c.reach === 'always').map((c) => c.kind));
+  return acceptable.find((c) => always.has(c)) ?? null;
 }

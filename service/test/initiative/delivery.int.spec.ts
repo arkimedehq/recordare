@@ -94,12 +94,15 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     // Someone the agent cannot name: nothing is told, but it may ask whether this is Eriona.
     const unknown = await presence('casa', { channel: 'voice', person: { identity: { channel: 'voice', externalId: 'stranger' } } });
     expect(unknown.status).toBe(200);
-    expect(unknown.body).toEqual({ person: null, initiative: null, askWho: { personId: eriona, name: 'Eriona' } });
+    expect(unknown.body).toEqual({ person: null, people: [], initiative: null, askWho: { personId: eriona, name: 'Eriona' }, opening: null });
     // Eriona, but the voiceprint is unsure: below the medium threshold, nothing yet.
     const unsure = await presence('casa', { channel: 'voice', confidence: 0.5, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
     expect(unsure.body).toMatchObject({ person: { personId: eriona, name: 'Eriona' }, initiative: null });
     const sure = await presence('casa', { channel: 'voice', confidence: 0.9, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } }, place: 'kitchen' });
-    expect(sure.body.initiative).toMatchObject({ id, status: 'offered', channel: 'voice', for: { name: 'Eriona' }, timing: 'flexible', identity: { required: 'medium' } });
+    expect(sure.body.initiative).toMatchObject({ id, status: 'offered', channel: 'voice', timing: 'flexible', identity: { required: 'medium' },
+      // How to reach her (§5c): her verified identities; what it accepts, in order (a request: messaging allowed).
+      for: { name: 'Eriona', addresses: [{ channel: 'voice', id: 'eriona-voiceprint' }] }, channels: ['voice', 'messaging', 'chat'] });
+    expect(sure.body).toMatchObject({ person: { personId: eriona }, people: [{ personId: eriona, name: 'Eriona' }], opening: null });
     expect(sure.body.initiative.text).toContain('stendere i panni');
     expect(sure.body.initiative.source).toEqual({ conversation: 'eriona-chat', messageIds: ['e1'] });
     // Given once.
@@ -121,7 +124,10 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     expect(await row(id)).toMatchObject({ identity_required: 'high' });
     const medium = await presence('casa', { channel: 'voice', confidence: 0.7, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
     expect(medium.body.initiative).toBeNull();
-    const high = await presence('casa', { channel: 'camera', confidence: 0.95, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
+    // An hour later (a new arrival, past the voice pace of the first test's offer): a sure recognition gets it.
+    const later = { 'x-recordare-now': new Date(NOW.getTime() + HOUR).toISOString() };
+    const high = await call(url, 'POST', '/api/v1/presence', { ...as('casa', later),
+      body: { channel: 'camera', confidence: 0.95, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } } });
     expect(high.body.initiative).toMatchObject({ id, status: 'offered', channel: 'voice', identity: { required: 'high' } });
   });
 
@@ -206,9 +212,13 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     const bad = await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY, body: { channels: [{ kind: 'chat', reach: 'always' }, { kind: 'chat', reach: 'presence' }] } });
     expect(bad.status).toBe(400);
     const timed = await request(marco, 'prendere la medicina', { timed: true });
-    const flexible = await request(marco, 'sentire Luca');
+    const flexible = await request(marco, 'Hai sentito Luca?', { kind: 'followup' });
+    const owed = await request(marco, 'sentire Luca');
     expect(await row(timed)).toMatchObject({ timing: 'timed', channel: 'messaging' });
+    // Messaging interrupts: only what was asked or promised goes there (§5b); an ask waits in the chat.
     expect(await row(flexible)).toMatchObject({ timing: 'flexible', channel: 'chat' });
+    expect(await row(owed)).toMatchObject({ timing: 'flexible', channel: 'messaging' });
+    expect((await db.query(`SELECT channels FROM initiatives WHERE id = $1`, [flexible]))[0].channels).toEqual(['voice', 'chat']);
     expect((await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY, body: { rawLogScope: 'all' } })).status).toBe(204);
     const listed = (await call(url, 'GET', '/api/v1/admin/clients', { token: ADMIN_KEY })).body.find((c: { id: string }) => c.id === clientId);
     expect(listed.channels).toHaveLength(3);
@@ -217,16 +227,96 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     expect(listed.webhooks.map((w: { url: string; events: string[] | null }) => [w.url.replace(/:\d+/, ':P'), w.events]))
       .toEqual([['http://127.0.0.1:P/all', null], ['http://127.0.0.1:P/created', ['initiative.created']]]);
     expect(JSON.stringify(listed.webhooks)).not.toContain('whsec_');
-    expect(pickChannel([{ kind: 'voice', reach: 'presence' }], true)).toBeNull();
+    expect(pickChannel([{ kind: 'voice', reach: 'presence' }], ['voice', 'messaging', 'chat'])).toBeNull();
     expect((await feed('marco')).find((i) => i.id === timed)).toMatchObject({ timing: 'timed', channel: 'messaging' });
   });
 
   it('the presence of someone who left ends it; no person in a personal memory is its holder', async () => {
     const left = await presence('casa', { channel: 'camera', left: true, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } } });
-    expect(left.body).toEqual({ person: { personId: eriona, name: 'Eriona' }, initiative: null, askWho: null });
+    expect(left.body).toEqual({ person: { personId: eriona, name: 'Eriona' }, people: [{ personId: eriona, name: 'Eriona' }], initiative: null, askWho: null, opening: null });
     const [open] = await db.query(`SELECT count(*)::int AS n FROM presences WHERE person_id = $1 AND expires_at > $2`, [eriona, NOW]);
     expect(open.n).toBe(0);
     const holder = await presence('marco', { channel: 'panel' });
     expect(holder.body.person).toEqual({ personId: marco, name: 'Marco' });
   });
+
+  describe('presence and voice (§5c): places, arrivals, the pace, the quiet hours, the opening, the clock', () => {
+    const T = (h: number) => new Date(NOW.getTime() + h * HOUR);
+    const voice = (user: string, h: number, body: object) => call(url, 'POST', '/api/v1/presence', { ...as(user, { 'x-recordare-now': T(h).toISOString() }), body });
+    const eri = { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } };
+    let leo: string;
+    /** A pending initiative for a person, due at hour h, kept a day. */
+    async function due(memoryId: string, content: string, h: number, opts: { for?: string; kind?: string; timed?: boolean } = {}): Promise<string> {
+      await db.query(`UPDATE initiatives SET status = 'expired' WHERE memory_id = $1 AND status IN ('pending', 'offered')`, [memoryId]);
+      await db.query(`INSERT INTO intents (memory_id, kind, content, for_person_id, due_at, expires_at, timed) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [memoryId, opts.kind ?? 'followup', content, opts.for ?? null, T(h), T(h + 24), opts.timed ?? false]);
+      await app.get(InitiativeService).sweep(memoryId, T(h));
+      return (await db.query(`SELECT id FROM initiatives WHERE text LIKE '%' || $1 || '%' ORDER BY created_at DESC LIMIT 1`, [content]))[0].id as string;
+    }
+
+    beforeAll(async () => {
+      await ingest('casa', 'leo-chat', [{ externalId: 'l1', role: 'other', authorRef: 'leo', content: 'Ciao!', sentAt: '2026-10-12T08:00:00Z' }],
+        [{ ref: 'leo', role: 'other', displayName: 'Leo', identity: { channel: 'homeassistant', externalId: 'person.leo' } }]);
+      leo = (await db.query(`SELECT id FROM persons WHERE memory_id = $1 AND display_name = 'Leo'`, [home]))[0].id;
+    });
+
+    it('with others in the room only the opening is said; the initiative waits, and the pace holds the next one', async () => {
+      const id = await due(home, 'Hai steso i panni?', 30, { for: eriona });
+      const crowd = await voice('casa', 30, { channel: 'camera', place: 'kitchen', people: [{ ...eri, confidence: 0.9 }, { identity: { channel: 'homeassistant', externalId: 'person.leo' }, confidence: 0.9 }] });
+      expect(crowd.body).toMatchObject({ person: { personId: eriona }, initiative: { id, status: 'pending' }, opening: 'Eriona, ho una cosa per te: vuoi sentirla?' });
+      expect(crowd.body.people.map((p: { name: string }) => p.name)).toEqual(['Eriona', 'Leo']);
+      expect(await row(id)).toMatchObject({ status: 'pending' });
+      // Someone unknown counts as another person too.
+      await db.query(`UPDATE initiatives SET opened_at = NULL WHERE id = $1`, [id]);
+      const someone = await voice('casa', 31, { channel: 'voice', place: 'hall', people: [{ ...eri, confidence: 0.9 }], someone: 1 });
+      expect(someone.body.opening).toContain('Eriona');
+      // Alone ten minutes later, in another room: an arrival, but within the pace of the opening — nothing.
+      const soon = await voice('casa', 31.2, { channel: 'voice', place: 'bathroom', person: eri, confidence: 0.9 });
+      expect(soon.body.initiative).toBeNull();
+      // Past the pace, alone, arriving in the living room: given.
+      const alone = await voice('casa', 32, { channel: 'voice', place: 'living room', person: eri, confidence: 0.9 });
+      expect(alone.body).toMatchObject({ initiative: { id, status: 'offered', channel: 'voice' }, opening: null });
+    });
+
+    it('a refresh is not an arrival; at home is not enough to speak; the quiet hours hold all but a timed request', async () => {
+      await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY, body: { channels: [] } }); // nothing the clock could push on
+      const id = await due(home, 'Hai ritirato il pacco?', 40, { for: leo });
+      const leoId = { identity: { channel: 'homeassistant', externalId: 'person.leo' } };
+      expect((await voice('casa', 40, { channel: 'home', person: leoId })).body.initiative).toBeNull();
+      expect(await db.query(`SELECT channel FROM presences WHERE person_id = $1 AND channel = 'home'`, [leo])).toHaveLength(1);
+      // In the kitchen already (a presence still live): the next impulse is a refresh.
+      await db.query(`INSERT INTO presences (memory_id, person_id, channel, confidence, place, seen_at, expires_at) VALUES ($1, $2, 'camera', 0.9, 'kitchen', $3, $4)`,
+        [home, leo, T(39.9), T(40.5)]);
+      expect((await voice('casa', 40, { channel: 'camera', place: 'kitchen', person: leoId })).body.initiative).toBeNull();
+      expect(await row(id)).toMatchObject({ status: 'pending' });
+      // At night (Rome 23:00) an arrival gets nothing spontaneous …
+      const night = 61; // 2026-10-14 23:00 Rome
+      const nightId = await due(home, 'Hai chiamato la nonna?', night, { for: leo });
+      expect((await voice('casa', night, { channel: 'voice', place: 'bedroom', person: leoId })).body.initiative).toBeNull();
+      // … but a timed request he made is his: given.
+      const timed = await due(home, 'chiudere il gas', night + 0.1, { for: leo, kind: 'request', timed: true });
+      expect((await voice('casa', night + 0.2, { channel: 'voice', place: 'hall', person: leoId })).body.initiative).toMatchObject({ id: timed, status: 'offered' });
+      expect(await row(nightId)).toMatchObject({ status: 'expired' }); // the timed one's set-up expired it: nothing else was given
+    });
+
+    it('the clock: a timed request whose person is live in a room goes by voice; in an entity memory, by messaging only to an address of theirs', async () => {
+      await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY,
+        body: { channels: [{ kind: 'chat', reach: 'always' }, { kind: 'messaging', reach: 'always' }, { kind: 'voice', reach: 'presence' }] } });
+      const leoId = { identity: { channel: 'homeassistant', externalId: 'person.leo' } };
+      const timed = await due(home, 'prendere le chiavi', 80, { for: leo, kind: 'request', timed: true });
+      // Not live anywhere: pushed by messaging, to his address.
+      await app.get(InitiativeService).sweep(home, T(80));
+      expect(await row(timed)).toMatchObject({ status: 'offered', channel: 'messaging' });
+      // Live in the kitchen: by voice.
+      await voice('casa', 81.9, { channel: 'camera', place: 'kitchen', person: leoId, ttlSeconds: 600 });
+      const next = await due(home, 'spegnere il forno', 82, { for: leo, kind: 'request', timed: true });
+      expect(await row(next)).toMatchObject({ status: 'offered', channel: 'voice' });
+      // A flexible ask is never pushed by messaging, address or not: it waits for a presence or a turn.
+      const ask = await due(home, 'Hai finito il libro?', 84, { for: leo });
+      await app.get(InitiativeService).sweep(home, T(84));
+      expect(await row(ask)).toMatchObject({ status: 'pending' });
+      await call(url, 'PATCH', `/api/v1/admin/clients/${clientId}`, { token: ADMIN_KEY, body: { channels: [] } });
+    });
+  });
 });
+

@@ -6,6 +6,18 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Initiatives: the channel chosen at delivery, presence by place, voice** (D55 §5b–§5c). An initiative carries
+  `channels` — the acceptable ones in order; messaging only for a request or a promise (it interrupts) — and
+  `for.addresses`, the person's verified identities (a Home Assistant person, a Telegram chat), bound from the console
+  (a memory's card: link an address to one of its people) or the admin API. Presence impulses describe a place
+  (`people`, `someone`, the channel `home`); in a room an arrival may give anything due, a refresh only a timed request
+  or promise; one spontaneous announcement per person every `INITIATIVE_VOICE_PACE_MINUTES` (30, on trial); the quiet
+  hours hold voice too; with others in the room only an opening is said ("Chloé, I have something for you: do you want
+  to hear it?", in every language) and the initiative waits for her "yes". The clock reads live presences: a timed
+  request whose person is in a room goes by voice; in an entity memory, what is for one person goes only so or by
+  messaging to an address of theirs.
+
 ### Fixed
 - **An initiative said days later no longer says "yesterday".** An ask about a plan is worded two days after it and may
   be said for a week: "Yesterday you had the geometry test" was false from the start (seen on a real memory). The wording

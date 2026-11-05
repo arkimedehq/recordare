@@ -109,9 +109,9 @@ and per moment (voice reaches someone only while they are there). Decided:
 - **Voice: spontaneous announcement at every presence**, with an opening that reveals nothing when others are
   present: §5c.
 
-Contract changes (additive, to build): `channels: [kind…]` in order on the initiative (feed, webhook, presence, context)
-in place of the single `channel` chosen at creation; the outcome carries `channel`; the per-client declaration stays as
-the list of kinds a client may have at all (what it can never reach is never offered).
+Contract changes (additive, built 2026-11-05, `API.md` §4b): `channels: [kind…]` in order on the initiative (feed, webhook,
+presence, context) beside `channel` (where it was offered or pushed); the outcome carries `channel`; the per-client declaration stays as
+what the clock may push on (`channels` lists what the initiative accepts; the client uses those it has).
 
 ### 5c. Presence and voice (maintainer, 2026-11-05)
 
@@ -203,7 +203,7 @@ event (it is already a Home Assistant sensor). Later the duck's camera with face
 5. mmWave occupancy, to know someone is there even without a phone;
 6. a mobile satellite (the quacksat duck).
 
-**Contract changes** (additive, to build): the initiative carries `for.addresses: [{channel, id}]` (the person's
+**Contract changes** (additive, built 2026-11-05, `API.md` §4b): the initiative carries `for.addresses: [{channel, id}]` (the person's
 identities); the presence impulse per place (`people[]`, `someone`); the opening sentence with the initiative when
 others are present (`opening`); the outcome's `channel`; an initiative kept pending after an unanswered opening.
 

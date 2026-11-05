@@ -113,9 +113,9 @@ Telegram, Chloé no) e da momento a momento (la voce raggiunge qualcuno solo men
   chiude (fatta, risposta, imparata) senza chiamate LLM in più, come nel turno (§7).
 - **Voce: annuncio spontaneo a ogni presenza**, con un'apertura che non rivela niente quando ci sono altri: §5c.
 
-Cambi al contratto (additivi, da costruire): `channels: [kind…]` in ordine sull'iniziativa (feed, webhook, presenza,
-contesto) al posto del singolo `channel` scelto alla nascita; l'esito porta `channel`; la dichiarazione per client resta
-come l'elenco dei tipi che un client può avere in assoluto (ciò che non può mai raggiungere non viene mai offerto).
+Cambi al contratto (additivi, costruiti il 2026-11-05, `API_it.md` §4b): `channels: [kind…]` in ordine sull'iniziativa
+(feed, webhook, presenza, contesto) accanto a `channel` (dove è stata offerta o spinta); l'esito porta `channel`; la dichiarazione per client resta
+ciò su cui l'orologio può spingere (`channels` elenca ciò che l'iniziativa accetta; il client usa quelli che ha).
 
 ### 5c. Presenza e voce (maintainer, 2026-11-05)
 
@@ -211,7 +211,7 @@ mobile.
 5. occupazione mmWave, per sapere che c'è qualcuno anche senza telefono;
 6. un satellite mobile (la papera di quacksat).
 
-**Cambi al contratto** (additivi, da costruire): l'iniziativa porta `for.addresses: [{channel, id}]` (le identità della
+**Cambi al contratto** (additivi, costruiti il 2026-11-05, `API_it.md` §4b): l'iniziativa porta `for.addresses: [{channel, id}]` (le identità della
 persona); l'impulso di presenza per luogo (`people[]`, `someone`); la frase di apertura con l'iniziativa quando ci sono
 altri (`opening`); il `channel` dell'esito; un'iniziativa che resta in attesa dopo un'apertura senza risposta.
 

@@ -705,6 +705,30 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 >   (condivisi) ciò che è per una persona; il contesto di memoria porta comunque la scheda di sé e un'iniziativa quando il
 >   server di embedding è giù. `INITIATIVE_TIMING=due` (confronto di base): spinge appena dovuta.
 
+> **Il canale scelto alla consegna; presenza e voce** (D55 §5b–§5c, costruito il 2026-11-05). Additivo:
+> - **L'iniziativa** ottiene `channels` — i canali accettabili in ordine; consegnala sul primo che raggiunge la persona
+>   adesso (il turno è sempre accettabile e mai elencato): una richiesta o una promessa (un promemoria a orario è una di
+>   queste) `[voice, messaging, chat]`, tutto il resto `[voice, chat]` (la messaggistica interrompe: solo ciò che è stato
+>   chiesto o promesso), una ricerca `[]` (solo il turno). `channel` resta dove è stata offerta o spinta (quello
+>   dell'orologio: un canale dichiarato che raggiunge sempre — ora il primo accettabile). `for.addresses: [{channel, id}]`:
+>   le identità di partecipante verificate della persona (`homeassistant` / `person.chloe`, `telegram` / un chat id) —
+>   dove l'ospite la trova; collegale con `POST api/v1/admin/identities {kind: participant, memoryId, personId, channel,
+>   externalId, verified: true}` o dalla console (la scheda di una memoria: collega un indirizzo a una delle sue persone).
+> - **Presenza per luogo**: `POST api/v1/presence` accetta `people: [{identity, confidence}]` (tutti quelli riconosciuti
+>   nel luogo) e `someone` (le persone che non sa nominare) al posto di `person` + `confidence` (che resta: un luogo con
+>   una persona), e il canale `home` (in casa: registrato, niente offerto — non basta per parlare). In una stanza
+>   (`voice`, `camera`): un impulso per qualcuno senza presenza valida in quel luogo è un **arrivo** e può dare qualunque
+>   cosa dovuta; un rinnovo, le ore di quiete, o un annuncio spontaneo a quella persona entro
+>   `INITIATIVE_VOICE_PACE_MINUTES` (30) danno solo una richiesta o promessa a orario; a voce solo ciò che accetta la voce.
+>   **Altri nella stanza** (due o più persone, nominate o no): la risposta porta `opening` ("Chloé, ho una cosa per te:
+>   vuoi sentirla?", nella lingua della memoria) e l'iniziativa resta `pending` (`opened_at` impostato; il ritmo lo conta) —
+>   di' solo l'apertura; il suo "sì" nel turno successivo la ottiene attraverso il contesto di memoria. La risposta ottiene
+>   `people` (tutti i riconosciuti) e `opening`; `person` è quella a cui è destinata l'iniziativa, altrimenti la prima
+>   riconosciuta.
+> - **L'orologio legge le presenze valide**: una richiesta o promessa a orario la cui persona è presente in una stanza è
+>   spinta con `channel: voice`; in una memoria di entità ciò che è per una persona è spinto solo così, o con `messaging`
+>   quando un client lo ha dichiarato e la persona ha un indirizzo — mai sui suoi canali condivisi; altrimenti come prima.
+
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o
 fare, per una persona, da quando e fino a quando. Le sue fonti: un piano oltre la sua data senza esito raccontato diventa un `ask` due giorni

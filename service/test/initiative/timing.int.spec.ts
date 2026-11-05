@@ -134,7 +134,7 @@ describe('timing v0 (D55 F2a): the clock chooses the moment, every decision logg
       [marco, eri.id, rome('11:00', '2026-10-16'), rome('21:00', '2026-10-16')]);
     await sweep(rome('12:00', '2026-10-16'));
     const s = await state('stendere i panni');
-    expect(s).toMatchObject({ status: 'pending', channel: 'chat' });
+    expect(s).toMatchObject({ status: 'pending', channel: 'messaging' }); // where a client could push it — not to her: she has no address
     expect(await decisions(s.id)).toEqual([]); // not even considered by the clock
     await db.query(`UPDATE memories SET mode = 'personal' WHERE person_id = $1`, [marco]);
   });
