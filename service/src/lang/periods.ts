@@ -6,7 +6,7 @@
  * yesterday", "last / this week | month | year" and the month names; the table below adds what Intl has not (common
  * synonyms, seasons). Built once at start-up.
  */
-import { LOCALES, normalize } from './locales';
+import { containsPhrase, LOCALES, normalize } from './locales';
 import { type PeriodKey } from './types';
 
 /** Synonyms and seasons Intl does not give, by language. */
@@ -54,6 +54,28 @@ for (const list of PHRASES.values()) list.sort((a, b) => b.length - a.length);
 
 /** Every phrase for a period, in all supported languages, longest first. */
 export const periodPhrases = (key: PeriodKey): readonly string[] => PHRASES.get(key) ?? [];
+
+/**
+ * Days named relative to now — the day before yesterday … the day after tomorrow — in all languages (Intl, plus the
+ * synonyms above), longest first. A sentence said days after it was written must not hold one (initiative wording).
+ */
+const RELATIVE_DAYS: readonly string[] = (() => {
+  const out = new Set<string>(periodPhrases('dayBeforeYesterday'));
+  for (const locale of LOCALES) {
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    for (const n of [-2, -1, 0, 1, 2]) {
+      const s = normalize(rtf.format(n, 'day'));
+      if (!/\d/.test(s)) out.add(s); // "in 2 days" where the language has no word: not a relative day word
+    }
+  }
+  return [...out].sort((a, b) => b.length - a.length);
+})();
+
+/** Whether a text names a day relative to now ("yesterday", "oggi", "明天", …), in any supported language. */
+export const saysRelativeDay = (text: string): boolean => {
+  const t = normalize(text);
+  return RELATIVE_DAYS.some((p) => containsPhrase(t, p));
+};
 
 /** Month names (long and, where distinct, short forms) in all languages → 1..12, longest first. */
 export const MONTH_NAMES: ReadonlyArray<readonly [string, number]> = (() => {

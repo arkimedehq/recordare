@@ -6,6 +6,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Corretto
+- **Un'iniziativa detta giorni dopo non dice più "ieri".** Una domanda su un piano viene formulata due giorni dopo e
+  può essere detta per una settimana: "Ieri avevi la verifica di geometria" era falsa fin dall'inizio (visto su una
+  memoria reale). La formulazione (`initiative.v4`) riceve ora i giorni in cui ogni iniziativa può essere detta e nomina
+  un giorno relativo a oggi solo quando è detta soltanto oggi (un promemoria nel suo giorno dice ancora "oggi");
+  altrimenti il giorno della settimana o la data. Il servizio lo controlla anche, in ogni lingua (Intl): un testo che
+  può essere detto in un giorno successivo e ne nomina uno lascia il posto alla frase del servizio, che nomina il giorno.
+
 ## [0.8.0] — 2026-11-05
 
 **Consegnare le iniziative in un pezzo solo, ogni impostazione dalla console.** La libreria client ottiene

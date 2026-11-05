@@ -25,6 +25,7 @@ import { qualityProfile, type QualityProfileName } from '../engine/quality-profi
 import { localDate, type Precision } from '../engine/time';
 import { INITIATIVE_SYSTEM, INITIATIVE_VERSION, type InitiativeOutput, initiativeSchema } from './initiative.prompt';
 import { initiativeText } from '../lang/initiative';
+import { saysRelativeDay } from '../lang/periods';
 import { overlap } from '../lang/overlap';
 import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { TelemetryService } from '../telemetry/telemetry.service';
@@ -86,6 +87,15 @@ export interface Recipient {
 
 /** How far back a past plan is still asked about, how far ahead a plan is reminded of; the ask waits two days after the
  * plan's end — people tell how it went the day after on their own, and asking first is a nag. */
+/**
+ * The local days an intent may be said on: from its due day (today at the earliest) to the last before it lapses. A
+ * timed request or promise is said at the moment the person chose (pushed then, quiet hours or not): that day alone.
+ */
+function sayDays(t: { kind: string; timed: boolean; due_at: Date; expires_at: Date }, now: Date, tz: string): { from: string; to: string } {
+  const from = localDate(t.due_at > now ? t.due_at : now, tz);
+  return { from, to: t.timed && (t.kind === 'request' || t.kind === 'promise') ? from : localDate(new Date(t.expires_at.getTime() - 1), tz) };
+}
+
 const ASK_BACK_DAYS = 30;
 const ASK_AFTER_DAYS = 2;
 const ASK_KEEP_DAYS = 7;
@@ -361,7 +371,12 @@ export class InitiativeService {
               // A question of mine for someone who could know (D55 F2b): the question as the thought pass wrote it.
               : t.kind === 'own' ? ['ask', t.content.trim(), 'a question I hold, for someone who could know']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
-      const content = w?.text?.trim() || fallback;
+      // A day relative to now ("yesterday") is true only today: in a text that may be said on a later day (an ask, a
+      // look-up: days of window), the service's own sentence, which names the day.
+      const said = w?.text?.trim();
+      const days = sayDays(t, now, memory.timezone);
+      const todayOnly = days.from === days.to && days.from === localDate(now, memory.timezone);
+      const content = said && (todayOnly || !saysRelativeDay(said)) ? said : fallback;
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
           `WITH i AS (INSERT INTO initiatives (memory_id, intent_id, kind, for_person_id, text, reason, episode_ids, due_at, expires_at, worth,
@@ -385,7 +400,7 @@ export class InitiativeService {
 
   /** The model words each due intent as the agent would say it and weighs it (balanced, full); on a failure, the templates. */
   private async word(memoryId: string, memory: { locale: string; timezone: string; display_name: string; mode: string },
-    due: Array<{ id: string; kind: string; content: string; for_name: string | null; due_at: Date; occurred_at: Date | null }>, now: Date,
+    due: Array<{ id: string; kind: string; content: string; for_name: string | null; due_at: Date; expires_at: Date; timed: boolean; occurred_at: Date | null }>, now: Date,
   ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
     const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
@@ -394,11 +409,13 @@ export class InitiativeService {
       : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me'
         : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)'
           : k === 'own' ? 'a question I hold, to ask the person FOR, who could know (WHAT is the question)' : 'a question I hold');
+    // The days it may be said on: one day alone when it is said today or lapses.
+    const said = (t: { kind: string; timed: boolean; due_at: Date; expires_at: Date }) => { const d = sayDays(t, now, memory.timezone); return d.from === d.to ? d.from : `${d.from} to ${d.to}`; };
     const user = [
       `ME: ${memory.display_name}${memory.mode === 'entity' ? ' (a shared agent several people talk to)' : ''}`,
       `MEMORY LANGUAGE: ${memory.locale}`,
       `TODAY: ${localDate(now, memory.timezone)}`,
-      `CANDIDATES:\n${due.map((t, i) => `C${i + 1}. kind ${kindOf(t.kind)} · FOR ${t.for_name ?? (memory.mode === 'entity' ? 'anyone' : 'holder')} · WHAT ${t.content} · WHEN ${localDate(t.occurred_at ?? t.due_at, memory.timezone)} · SOURCE ${sourceOf(t.kind)}`).join('\n')}`,
+      `CANDIDATES:\n${due.map((t, i) => `C${i + 1}. kind ${kindOf(t.kind)} · FOR ${t.for_name ?? (memory.mode === 'entity' ? 'anyone' : 'holder')} · WHAT ${t.content} · WHEN ${localDate(t.occurred_at ?? t.due_at, memory.timezone)} · SOURCE ${sourceOf(t.kind)} · SAID ${said(t)}`).join('\n')}`,
     ].join('\n\n');
     try {
       const res: InitiativeOutput = await this.llm.completeJson({ promptId: INITIATIVE_VERSION, system: INITIATIVE_SYSTEM, user, schema: initiativeSchema, maxTokens: 1500, task: 'initiative' }, { memoryId });

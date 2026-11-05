@@ -2050,3 +2050,19 @@ now only an open plan's outcome is left to the ask after its day. Still owed: th
 falling as knowledge grows) with simulated answers, and recording a text-declared speaker as a message's author (D50).
 Cost ≈ 0.03 USD a run.
 
+### No relative days in what is said later — `initiative.v4` (2026-11-05, DeepSeek direct, balanced)
+
+Found on Kinox: an ask created on November 5 about a test on November 3 said "Ieri avevi la verifica di geometria" —
+false from the start (asks are worded two days after the plan) and, said up to November 12, ever more so. v3's own
+examples taught it ("Ieri avevi in programma…", "Domani alle 15…", "è oggi"): of the 13 texts of i17 (v3), 9 named a
+relative day — the asks rightly used the weekday, the reminders "oggi". v4 gives each candidate SAID (the days it may
+be said on; a timed request or promise: its day, as it is pushed at that moment) and allows a relative day only when
+SAID is today alone; the service checks it in every language (`saysRelativeDay`, Intl's day words −2…+2) and falls back
+to its own sentence when a text that may be said later names one. A first, stricter cut (no relative day ever) kept the
+asks right but sent 5 of 13 reminders to the fallback sentence (stiff: "Un promemoria per venerdì 25 settembre:
+Ricordarmi di…"); the second without the timed rule still 5 (timed windows run 24 h past the chosen time, across
+midnight). On `dataset_dev_initiatives`: fresh run i18v4 (strict) **12 / 14**, traps 1, false 0; re-runs of its passes
+(REUSE_RUN eval1793878799) r18v4b 12 / 14, traps 0, false 0; **r18v4c (adopted) 12 / 14, traps 0, false 0**, every ask
+with weekday and date ("Martedì 8 settembre avevi la visita dal dentista…"), the day's reminders with "oggi", no fallback.
+v3 on its own extractions: 11, 10, 11 / 14. Cost ≈ 0.25 USD the fresh run, ≈ 0.03 each re-run.
+

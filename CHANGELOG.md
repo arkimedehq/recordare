@@ -6,6 +6,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Fixed
+- **An initiative said days later no longer says "yesterday".** An ask about a plan is worded two days after it and may
+  be said for a week: "Yesterday you had the geometry test" was false from the start (seen on a real memory). The wording
+  (`initiative.v4`) now gets the days each initiative may be said on and names a day relative to today only when it is
+  said today alone (a reminder on its day still says "today"); otherwise the weekday or the date. The service checks it
+  too, in every language (Intl): a text that may be said on a later day and names one gives way to the service's own
+  sentence, which names the day.
+
 ## [0.8.0] — 2026-11-05
 
 **Delivering initiatives in one piece, every setting from the console.** The client library gains `InitiativeInbox`:

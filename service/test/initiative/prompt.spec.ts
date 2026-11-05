@@ -18,7 +18,16 @@ describe('initiative.v3 hours', () => {
   });
 
   it('asks for them in the prompt, versioned', () => {
-    expect(INITIATIVE_VERSION).toBe('initiative.v3');
+    expect(INITIATIVE_VERSION).toBe('initiative.v4');
     expect(INITIATIVE_SYSTEM).toContain('"hours": [from, to]');
+  });
+});
+
+describe('initiative.v4 days', () => {
+  it('names a day relative to today only when the candidate is said today alone (an ask may be said days later)', () => {
+    expect(INITIATIVE_SYSTEM).toContain('only when SAID is TODAY alone');
+    // Its own examples hold no relative day either.
+    expect(INITIATIVE_SYSTEM).not.toMatch(/"(Ieri|Domani)\b/);
+    expect(INITIATIVE_SYSTEM).not.toContain('è oggi');
   });
 });

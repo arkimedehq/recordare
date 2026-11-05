@@ -11,7 +11,7 @@ export { canonicalLocale, containsPhrase, language, LOCALES, normalize } from '.
 export { messages, type Messages } from './messages';
 export { selfLeak, type SelfLeak } from './self';
 export { isFullName, isProperName } from './names';
-export { MONTH_NAMES, periodPhrases, WEEKDAY_NAMES } from './periods';
+export { MONTH_NAMES, periodPhrases, saysRelativeDay, WEEKDAY_NAMES } from './periods';
 export { PERIOD_KEYS, type PeriodKey, type RelationKey } from './types';
 export { wordCount } from './words';
 import { RELATIONS } from './relations';

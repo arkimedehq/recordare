@@ -10,24 +10,29 @@
  * postponed: no nagging. v2: no ask about a date that happens on its own (a birthday, a deadline); no judgement of the
  * person in a reminder. v3 (D55 F2b): the local hours when saying it would be natural (an evening plan asked about in
  * the evening, a work matter in office hours) — the clock's timing v0 uses them in place of the kind's default hours.
+ * v4: SAID, the days a candidate may be said on; a day relative to TODAY ("yesterday", "today", "tomorrow") only when that
+ * is today alone — an ask said days later names the weekday or date (the code checks too: a text that may be said on a
+ * later day and names one falls back to the service's own sentence).
  */
 import { z } from 'zod';
 
-export const INITIATIVE_VERSION = 'initiative.v3';
+export const INITIATIVE_VERSION = 'initiative.v4';
 
 export const INITIATIVE_SYSTEM = `You word what an agent's memory decided to say on its own, and weigh whether it is \
 worth saying. I am ME: the agent (in a personal memory, one self with the person whose memory this is). You get ME, \
 MEMORY LANGUAGE, TODAY and the CANDIDATES (C-numbers): each with its kind — "ask" (a plan of theirs past its date: did \
 it happen?), "say" (a reminder: a plan coming up, a promise I made, a request they made to me), "lookup" (a question I \
 hold, for the agent that hosts me to find out) —, whom it is for (FOR; "holder" is the person whose memory this is, \
-"anyone" whoever is there), WHAT (the plan, promise, request or question as the memory holds it), WHEN (its date) and \
-SOURCE (the memory it comes from).
+"anyone" whoever is there), WHAT (the plan, promise, request or question as the memory holds it), WHEN (its date), \
+SOURCE (the memory it comes from) and SAID (the days it may be said on: one day, or a span).
 
 For each candidate:
 - "text": one or two short sentences, as I would say them to that person, in MEMORY LANGUAGE, first person, natural, \
-with the reason in it ("Ieri avevi in programma di portare la macchina dal meccanico: è andata?"; "Domani alle 15 hai \
-il dentista."; "Mi avevi chiesto di ricordarti di chiamare il commercialista: è oggi."). A "lookup" is for the host \
-agent, not a person: state what to find out ("Cerca se Marta ha prenotato il volo per Lisbona.").
+with the reason in it ("Lunedì avevi in programma di portare la macchina dal meccanico: è andata?"; "Giovedì alle 15 \
+hai il dentista."; "Mi avevi chiesto di ricordarti di chiamare il commercialista, il 12 marzo."). A day relative to \
+TODAY ("yesterday", "today", "tomorrow", in any language) only when SAID is TODAY alone; when it may be said on later \
+days, name the day by its weekday or its date: "yesterday" would turn false. A "lookup" is for the host agent, not a person: state what to find out ("Cerca \
+se Marta ha prenotato il volo per Lisbona.").
 - "worth": 0 to 1 — how much it is worth saying now: a date near or just passed that matters to them, something they \
 asked for: high; small, long past, something they surely know or already settled: low.
 - "skip": true when it should not be said at all (it makes no sense, it would only annoy, the matter is clearly \

@@ -33,11 +33,12 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     llm.queue.push(out);
     await app.get<ExtractionRunner>(EXTRACTION_RUNNER).runForConversation(conversationId);
   }
+  let wording = 'Marta, ti avevo promesso di farti sapere del preventivo venerdì: eccomi.';
   const intents = () => db.query(`SELECT kind::text, content, status::text, due_at, (SELECT display_name FROM persons WHERE id = for_person_id) AS who FROM intents ORDER BY due_at, created_at`);
 
   beforeAll(async () => {
     llm = await startFakeLlm((req) => (req.messages[0]?.content === INITIATIVE_SYSTEM
-      ? { initiatives: [{ candidate: 'C1', text: 'Marta, mi avevi chiesto di ricordarti di chiamare il commercialista: è oggi.', worth: 0.9 }] }
+      ? { initiatives: [{ candidate: 'C1', text: wording, worth: 0.9 }] }
       : {}));
     const fake = await startFakeEmbeddings();
     emb = fake.server;
@@ -119,10 +120,28 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     expect(r).toMatchObject({ fired: 1 });
     const feed = await call(url, 'GET', '/api/v1/initiatives', { token: key, headers: { 'x-recordare-user': 'u1' } });
     expect(feed.body.items).toHaveLength(1);
-    expect(feed.body.items[0]).toMatchObject({ kind: 'say', for: { name: 'Marta' }, text: 'Marta, mi avevi chiesto di ricordarti di chiamare il commercialista: è oggi.' });
+    expect(feed.body.items[0]).toMatchObject({ kind: 'say', for: { name: 'Marta' }, text: 'Marta, ti avevo promesso di farti sapere del preventivo venerdì: eccomi.' });
     expect(feed.body.items[0].reason).toBe('a promise I made');
     // The model's prompt named the candidate with its kind, whom it is for and the date.
     const asked = llm.requests.at(-1)!.messages[1]!.content;
     expect(asked).toContain('C1. kind say · FOR Marta · WHAT far sapere a Marta del preventivo · WHEN 2026-10-09 · SOURCE a promise I made');
+  });
+
+  it('a day relative to now ("oggi") is kept in a text said today alone, not in one that may be said later', async () => {
+    const [{ person_id }] = await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'u1'`);
+    const sweep = async () => {
+      await db.query(`DELETE FROM initiatives`);
+      await db.query(`UPDATE intents SET status = 'armed' WHERE kind = 'promise'`);
+      expect(await app.get(InitiativeService).sweep(person_id, new Date('2026-10-09T08:30:00+02:00'))).toMatchObject({ fired: 1 });
+      return (await db.query(`SELECT text FROM initiatives`))[0].text as string;
+    };
+    wording = 'Marta, ti avevo promesso di farti sapere del preventivo: è oggi.';
+    // Due on the 9th, lapsing at its end: said on the 9th alone, "oggi" stays true.
+    expect(await sweep()).toBe(wording);
+    expect(llm.requests.at(-1)!.messages[1]!.content).toContain('SOURCE a promise I made · SAID 2026-10-09');
+    // A window of days: "oggi" could be said on the 11th: the service's own sentence, which names the day.
+    await db.query(`UPDATE intents SET expires_at = due_at + interval '3 days' WHERE kind = 'promise'`);
+    expect(await sweep()).toBe('Un promemoria per venerdì 9 ottobre: far sapere a Marta del preventivo.');
+    expect(llm.requests.at(-1)!.messages[1]!.content).toContain('SAID 2026-10-09 to 2026-10-11');
   });
 });
