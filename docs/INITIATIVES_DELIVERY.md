@@ -85,6 +85,38 @@ A client declares its channels once (admin, per client: `channels: [{kind: chat 
 presence}]`). The in-turn channel needs no declaration: every full-level client already calls `POST api/v1/context`
 before each turn (D54).
 
+### 5b. The channel is chosen at delivery (maintainer, 2026-11-05)
+
+Choosing the channel when an initiative is created (`pickChannel`: timed → messaging then chat, flexible → chat then
+messaging; voice never) is wrong twice: what a client reaches differs per person (Andrea has Telegram, Chloé does not)
+and per moment (voice reaches someone only while they are there). Decided:
+
+- **Acceptable channels, in order, on the initiative; the channel is chosen at delivery.** Recordare says which channels
+  are acceptable and in what order; the client delivers on the first one that reaches **that person now**, and reports
+  the channel it used with the outcome. Once delivered on one channel the initiative is taken (exclusive, as `offered`
+  today): never twice. Recordare need not know what Telegram is: the same contract fits any platform.
+- **Messaging only for what was asked or promised at a time**: a timed reminder, a request the person made, a promise I
+  made. Asks, follow-ups, questions and look-ups never interrupt by message: they wait for a turn, a presence or the
+  chat. Quiet hours and the daily limit always apply; in a group conversation nothing private and nothing that needs
+  `identity: high` — only a direct conversation with the person it is for.
+  - Order for a timed reminder, a request, a promise: voice (if present) → messaging → chat.
+  - Order for everything else: voice (if present) or the turn → chat.
+- **A timed reminder is not lost**: if at its moment no channel reaches the person now, the next one in the order takes
+  it (messaging, then chat, which always reaches). A flexible one waits for its moment; at the window's end, `ignored`.
+- **The reply comes back as a turn.** The person answers where the message reached them; the client ingests the reply in
+  the conversation that holds the delivered message (`source` points to the initiative), and the extraction closes it
+  (done, answered, learned) with no extra LLM call, as in the turn (§7).
+- **Voice: spontaneous announcement at every presence** (decided; how is still to be designed, F5). With others in the
+  room the agent first says only an opening that reveals nothing ("Chloé, I have something for you — want to hear
+  it?"), in the memory's language; if the person answers yes, it says the initiative; otherwise it stays pending (not
+  `ignored`). The presence impulse will need to say whether others are present; the opening sentence comes from
+  `service/src/lang` (every language). Still to reason about with the maintainer: when an announcement is welcome, how
+  the answer is heard, what counts as said.
+
+Contract changes (additive, to build): `channels: [kind…]` in order on the initiative (feed, webhook, presence, context)
+in place of the single `channel` chosen at creation; the outcome carries `channel`; the per-client declaration stays as
+the list of kinds a client may have at all (what it can never reach is never offered).
+
 ## 6. Learning by asking (entity memory)
 
 An entity memory starts empty and must come to **know** the people and the world around it, then act on its own.
@@ -143,6 +175,14 @@ Path facts verified 2026-11-04 (connector code, OpenClaw 2026.10.10, hermes-agen
   **presence impulses** from Voce (the Wyoming user, `ConversationFocusService`), later voiceprint / face through Home
   Assistant or a camera; delivery in chat + notification; deduplication of a `say` against the user's own
   `scheduled_tasks` (`source`, ±2 h, shared words); outcomes reported.
+  - **Messaging, universally (decided 2026-11-05, way B)**: a skill declares itself a channel to the user in its
+    `SKILL.md` — e.g. `user-channel: {kind: messaging, script: scripts/send_message.js}` plus how to tell whether a user
+    is linked — and Arkimede calls that script directly with the text, no model in between (certain outcome, no cost).
+    Any messaging skill (Telegram, WhatsApp, Signal, e-mail) joins with two lines; `telegram-bot` first (its
+    `send_message` already reaches the linked user). With several, the user's preferred one (a setting), else the first
+    linked. The delivered message is also written in the Arkimede chat the bot uses, so the reply arrives with its
+    context and reaches Recordare as a turn. Rejected: delivery through an agent run (way A: an LLM call per message,
+    the tool and the outcome not certain).
 - **OpenClaw**: in-turn already (`before_prompt_build`). Push by a webhook route (`registerHttpRoute`, `auth: "plugin"`)
   or the feed from the plugin's service (`registerService`); delivery as a system event on the person's session plus a
   heartbeat wake (`enqueueSystemEvent`, `requestHeartbeat` with `target: "last"`), confirmed by `message_sent`; channels
@@ -161,9 +201,9 @@ Path facts verified 2026-11-04 (connector code, OpenClaw 2026.10.10, hermes-agen
 | **F0** | literature (H14: interruptibility, notification timing, proactive LLM agents, curiosity / active learning); D55; this spec — **done 2026-11-04** (sources, verdict and design consequences in H14) | docs |
 | **F1** | contract: channels, presence impulse, timing / window / channel / identity / `source`, `offered`, `events`; the in-turn channel with identity thresholds; "are you …?" for an unknown speaker — **built 2026-11-04** (the window is `dueAt` / `expiresAt` until F2; the shared Claude Code / Codex hook's `lookups` line comes with F3) | Recordare |
 | **F2** | timing v0 (classes, windows by rules and by the model, a decision on three triggers: the clock, an impulse, a turn); the new source "something left unfinished"; questions to people (§6); dev sets with timelines (timing) and a growing household (learning by asking) — **F2a built 2026-11-04**: the clock's cost-sensitive gate with rule windows, timed reminders at their minute, `initiative.deliver`, every decision logged; F2b **built 2026-11-04**: `dataset_dev_timing` + four timing rules, the model's hours (`initiative.v3`), things left to finish (`extract.v23`), questions routed to who could know (deterministic; the growing-household curve with simulated answers is still owed) | Recordare + evaluation |
-| **F3** | clients: Arkimede first (receiver, chat + notification, Telegram opt-in, impulses from Voce), then OpenClaw and Hermes — **in progress**: the client library's `InitiativeInbox` (0.8.0: webhooks, presence, the feed, once each, outcomes reported); the Claude Code / Codex hook asks for look-ups (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): webhook receiver + feed through `InitiativeInbox`, delivery in a dedicated chat with a notification, a presence impulse when the user opens the app, a reminder already scheduled reported `done`, connection and webhook secret from its settings. Still owed: Arkimede's impulses from Voce and Telegram (opt-in), push for OpenClaw and Hermes | clients |
+| **F3** | clients: Arkimede first (receiver, chat + notification, Telegram opt-in, impulses from Voce), then OpenClaw and Hermes — **in progress**: the client library's `InitiativeInbox` (0.8.0: webhooks, presence, the feed, once each, outcomes reported); the Claude Code / Codex hook asks for look-ups (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): webhook receiver + feed through `InitiativeInbox`, delivery in a dedicated chat with a notification, a presence impulse when the user opens the app, a reminder already scheduled reported `done`, connection and webhook secret from its settings. Still owed: the channel chosen at delivery (§5b: Recordare, the client library), Arkimede's `user-channel` skills (§8: Telegram first), push for OpenClaw and Hermes | clients |
 | **F4** | timing v1: learning from outcomes; measured on the dev set and on Kinox | Recordare |
-| **F5** | voiceprint and face in Arkimede (Home Assistant, camera), announce by voice; timing v2 | Arkimede, Recordare |
+| **F5** | voiceprint and face in Arkimede (Home Assistant, camera), announce by voice at every presence, with the opening when others are present (§5b, to design); impulses from Voce; timing v2 | Arkimede, Recordare |
 
 Cost (D35): economy — rules for windows and channels, no LLM; balanced — the model's window in the existing
 `initiative` call; full — the same with reasoning. Learning from outcomes costs no LLM call.

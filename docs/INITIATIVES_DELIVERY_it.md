@@ -88,6 +88,40 @@ Un client dichiara i suoi canali una volta (admin, per client: `channels: [{kind
 always | presence}]`). Il canale nel turno non va dichiarato: ogni client di livello completo chiama già `POST
 api/v1/context` prima di ogni turno (D54).
 
+### 5b. Il canale si sceglie alla consegna (maintainer, 2026-11-05)
+
+Scegliere il canale quando l'iniziativa nasce (`pickChannel`: a orario → messaggistica poi chat, flessibile → chat poi
+messaggistica; la voce mai) è sbagliato due volte: ciò che un client raggiunge cambia da persona a persona (Andrea ha
+Telegram, Chloé no) e da momento a momento (la voce raggiunge qualcuno solo mentre è lì). Deciso:
+
+- **Canali accettabili, in ordine, sull'iniziativa; il canale si sceglie alla consegna.** Recordare dice quali canali
+  vanno bene e in che ordine; il client consegna sul primo che raggiunge **quella persona adesso** e riporta, con
+  l'esito, il canale usato. Consegnata su un canale l'iniziativa è presa (esclusiva, come `offered` oggi): mai due
+  volte. Recordare non ha bisogno di sapere cos'è Telegram: lo stesso contratto vale per ogni piattaforma.
+- **Messaggistica solo per ciò che è stato chiesto o promesso a un'ora**: un promemoria a orario, una richiesta della
+  persona, una mia promessa. Domande, cose lasciate a metà, questioni e ricerche non interrompono mai con un messaggio:
+  aspettano un turno, una presenza o la chat. Ore di quiete e limite giornaliero valgono sempre; in una conversazione di
+  gruppo niente di privato e niente che richieda `identity: high` — solo una conversazione diretta con la persona a cui
+  è destinata.
+  - Ordine per un promemoria a orario, una richiesta, una promessa: voce (se presente) → messaggistica → chat.
+  - Ordine per tutto il resto: voce (se presente) o il turno → chat.
+- **Un promemoria a orario non si perde**: se al suo momento nessun canale raggiunge la persona adesso, lo prende il
+  successivo nell'ordine (messaggistica, poi la chat, che raggiunge sempre). Una flessibile aspetta il suo momento; a
+  fine finestra, `ignored`.
+- **La risposta torna come turno.** La persona risponde dove il messaggio l'ha raggiunta; il client acquisisce la
+  risposta nella conversazione che contiene il messaggio consegnato (`source` punta all'iniziativa), e l'estrazione la
+  chiude (fatta, risposta, imparata) senza chiamate LLM in più, come nel turno (§7).
+- **Voce: annuncio spontaneo a ogni presenza** (deciso; il come è ancora da progettare, F5). Con altre persone nella
+  stanza l'agente dice prima solo un'apertura che non rivela niente ("Chloé, ho una cosa per te: vuoi sentirla?"),
+  nella lingua della memoria; se la persona risponde di sì, dice l'iniziativa; altrimenti resta in attesa (non
+  `ignored`). L'impulso di presenza dovrà dire se ci sono altri presenti; la frase di apertura viene da
+  `service/src/lang` (ogni lingua). Da ragionare ancora con il maintainer: quando un annuncio è gradito, come si ascolta
+  la risposta, cosa conta come detta.
+
+Cambi al contratto (additivi, da costruire): `channels: [kind…]` in ordine sull'iniziativa (feed, webhook, presenza,
+contesto) al posto del singolo `channel` scelto alla nascita; l'esito porta `channel`; la dichiarazione per client resta
+come l'elenco dei tipi che un client può avere in assoluto (ciò che non può mai raggiungere non viene mai offerto).
+
 ## 6. Imparare chiedendo (memoria di entità)
 
 Una memoria di entità parte vuota e deve arrivare a **conoscere** le persone e il mondo intorno a sé, poi agire da sé.
@@ -150,6 +184,14 @@ Fatti verificati il 2026-11-04 (codice dei connettori, OpenClaw 2026.10.10, herm
   Voce (l'utente Wyoming, `ConversationFocusService`), poi impronta vocale / volto tramite Home Assistant o una camera;
   consegna in chat + notifica; deduplica di un `say` rispetto agli `scheduled_tasks` dell'utente (`source`, ±2 h, parole
   in comune); esiti riportati.
+  - **Messaggistica, in modo universale (deciso il 2026-11-05, strada B)**: uno skill si dichiara canale verso l'utente
+    nel suo `SKILL.md` — p. es. `user-channel: {kind: messaging, script: scripts/send_message.js}` più come sapere se un
+    utente è collegato — e Arkimede chiama direttamente quello script con il testo, senza modello in mezzo (esito certo,
+    nessun costo). Ogni skill di messaggistica (Telegram, WhatsApp, Signal, e-mail) aderisce con due righe; per primo
+    `telegram-bot` (il suo `send_message` raggiunge già l'utente collegato). Con più canali, quello preferito
+    dall'utente (un'impostazione), altrimenti il primo collegato. Il messaggio consegnato è scritto anche nella chat di
+    Arkimede che il bot usa, così la risposta arriva con il suo contesto e raggiunge Recordare come turno. Scartata: la
+    consegna tramite una run dell'agente (strada A: una chiamata LLM per messaggio, strumento ed esito non certi).
 - **OpenClaw**: nel turno già oggi (`before_prompt_build`). Push con una rotta webhook (`registerHttpRoute`, `auth:
   "plugin"`) o con il feed dal servizio del plugin (`registerService`); consegna come evento di sistema sulla sessione
   della persona più un risveglio heartbeat (`enqueueSystemEvent`, `requestHeartbeat` con `target: "last"`), confermata
@@ -169,9 +211,9 @@ Fatti verificati il 2026-11-04 (codice dei connettori, OpenClaw 2026.10.10, herm
 | **F0** | letteratura (H14: interrompibilità, tempismo delle notifiche, agenti LLM proattivi, curiosità / apprendimento attivo); D55; questa specifica — **fatta il 2026-11-04** (fonti, verdetto e conseguenze per il progetto in H14) | docs |
 | **F1** | contratto: canali, impulso di presenza, timing / finestra / canale / identità / `source`, `offered`, `events`; il canale nel turno con le soglie di identità; "sei …?" per chi parla ed è sconosciuto — **costruita il 2026-11-04** (la finestra è `dueAt` / `expiresAt` fino a F2; la riga `lookups` dell'hook condiviso di Claude Code / Codex arriva con F3) | Recordare |
 | **F2** | tempo v0 (classi, finestre da regole e dal modello, una decisione su tre eventi: l'orologio, un impulso, un turno); la fonte nuova "qualcosa lasciato a metà"; domande alle persone (§6); dev set con linee temporali (tempo) e una casa che cresce (imparare chiedendo) — **F2a costruita il 2026-11-04**: il filtro sensibile ai costi dell'orologio con finestre da regole, promemoria a orario al loro minuto, `initiative.deliver`, ogni decisione registrata; F2b **costruita il 2026-11-04**: `dataset_dev_timing` + quattro regole di tempo, le ore del modello (`initiative.v3`), le cose lasciate a metà (`extract.v23`), domande indirizzate a chi potrebbe sapere (deterministico; la curva della casa che cresce con risposte simulate è ancora da fare) | Recordare + valutazione |
-| **F3** | client: prima Arkimede (ricevitore, chat + notifica, Telegram su scelta, impulsi da Voce), poi OpenClaw e Hermes — **in corso**: `InitiativeInbox` nella libreria client (0.8.0: webhook, presenza, feed, ognuno una volta, esiti riportati); l'hook di Claude Code / Codex chiede le ricerche (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): ricevitore webhook + feed tramite `InitiativeInbox`, consegna in una chat dedicata con notifica, un impulso di presenza quando l'utente apre l'app, un promemoria già programmato riportato `done`, connessione e segreto del webhook dalle sue impostazioni. Restano: gli impulsi da Voce e Telegram (su scelta) in Arkimede, il push per OpenClaw e Hermes | client |
+| **F3** | client: prima Arkimede (ricevitore, chat + notifica, Telegram su scelta, impulsi da Voce), poi OpenClaw e Hermes — **in corso**: `InitiativeInbox` nella libreria client (0.8.0: webhook, presenza, feed, ognuno una volta, esiti riportati); l'hook di Claude Code / Codex chiede le ricerche (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): ricevitore webhook + feed tramite `InitiativeInbox`, consegna in una chat dedicata con notifica, un impulso di presenza quando l'utente apre l'app, un promemoria già programmato riportato `done`, connessione e segreto del webhook dalle sue impostazioni. Restano: il canale scelto alla consegna (§5b: Recordare, la libreria client), gli skill `user-channel` di Arkimede (§8: per primo Telegram), il push per OpenClaw e Hermes | client |
 | **F4** | tempo v1: apprendimento dagli esiti; misurato sul dev set e sul Kinox | Recordare |
-| **F5** | impronta vocale e volto in Arkimede (Home Assistant, camera), annuncio a voce; tempo v2 | Arkimede, Recordare |
+| **F5** | impronta vocale e volto in Arkimede (Home Assistant, camera), annuncio a voce a ogni presenza, con l'apertura quando ci sono altri (§5b, da progettare); impulsi da Voce; tempo v2 | Arkimede, Recordare |
 
 Costo (D35): economy — regole per finestre e canali, nessuna chiamata LLM; balanced — la finestra del modello nella
 chiamata `initiative` che esiste già; full — lo stesso con il ragionamento. Imparare dagli esiti non costa chiamate LLM.
