@@ -3,6 +3,8 @@
 
 import { z } from 'zod';
 
+/** Where an initiative reaches the person (D55): the outcome's channel, and the acceptable ones in order. */
+export const DELIVERY_CHANNELS = ['turn', 'chat', 'messaging', 'voice', 'panel'] as const;
 export const INITIATIVE_KINDS = ['say', 'ask', 'lookup', 'do'] as const;
 export const INITIATIVE_STATUSES = ['pending', 'offered', 'said', 'asked', 'ignored', 'declined', 'done', 'failed', 'expired'] as const;
 
@@ -29,7 +31,7 @@ export const initiative = z.object({
   timing: z.enum(['timed', 'flexible']).describe('timed: a time was asked for; flexible: a window, the moment chosen by Recordare (D55).'),
   window: z.object({ notBefore: z.string(), notAfter: z.string() }),
   channel: z.string().nullable().describe('Where it was offered, or will be delivered (a declared channel); null: at the person\'s next presence or turn.'),
-  channels: z.array(z.string()).describe('The acceptable channels in order (D55 §5b): deliver on the first that reaches the person now; the turn is always acceptable. Messaging only for a request or a promise.'),
+  channels: z.array(z.enum(DELIVERY_CHANNELS)).describe('The acceptable channels in order (D55 §5b): deliver on the first that reaches the person now; the turn is always acceptable. Messaging only for a request or a promise.'),
   identity: z.object({ required: z.enum(['medium', 'high']) }).describe('How surely the person must be recognised before hearing it.'),
   source: z.object({ conversation: z.string(), messageIds: z.array(z.string()) }).nullable()
     .describe('The client\'s own ids of the messages its intent came from: a host recognises a reminder it scheduled itself.'),

@@ -237,7 +237,8 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > nominare, `home` per "in casa" (non basta per parlare). Un arrivo può ottenere qualunque cosa dovuta, un rinnovo solo
 > una richiesta o promessa a orario; con altri nella stanza ricevi `opening`: di' solo quella e ascolta — il "sì" della
 > persona è un suo turno, e il contesto di memoria ti dà l'iniziativa allora. Lega per qualche minuto il punto voce che ha
-> parlato alla conversazione, così la risposta arriva lì.
+> parlato alla conversazione, così la risposta arriva lì. Con la libreria client: `deliver` restituisce `{outcome, channel}`,
+> `addressesOn` trova la persona su un canale, e `open` dice l'apertura (`packages/client/README_it.md`).
 
 Recordare spinge ciò che l'agente ha deciso di dire, chiedere o cercare (`API.md` §4b). La tua piattaforma lo consegna
 **quando la persona c'è** (la presenza è tua: una chat aperta ora, una voce riconosciuta nella stanza, qualcuno al

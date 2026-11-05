@@ -17,6 +17,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   dice solo un'apertura ("Chloé, ho una cosa per te: vuoi sentirla?", in ogni lingua) e l'iniziativa aspetta il suo
   "sì". L'orologio legge le presenze valide: una richiesta a orario la cui persona è in una stanza va a voce; in una
   memoria di entità, ciò che è per una persona va solo così o per messaggio a un suo indirizzo.
+- **Libreria client: canali, indirizzi e apertura in `InitiativeInbox`.** I tipi portano `channels`, `for.addresses`,
+  la presenza per luogo (`people`, `someone`, `home`) e `opening`. `deliver(user, initiative, {via})` può restituire
+  `{outcome, channel}` — viene riportato il canale su cui ha raggiunto la persona; `addressesOn(initiative, 'telegram')`
+  trova la persona lì. Con altri nella stanza l'apertura va al nuovo `open(user, initiative, opening)` e mai a
+  `deliver`: l'iniziativa non viene presa e torna a una presenza successiva (un ospite senza `open` non dice nulla). Una
+  presenza da una telecamera è riportata come voce. Gli ospiti esistenti funzionano senza modifiche.
 
 ### Corretto
 - **Un'iniziativa detta giorni dopo non dice più "ieri".** Una domanda su un piano viene formulata due giorni dopo e

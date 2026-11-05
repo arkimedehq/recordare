@@ -300,8 +300,12 @@ export interface Initiative {
   seq: number;
   /** say: tell it; ask: ask it; lookup: find it out with the host agent's own tools (the web, the room); do: an action. */
   kind: 'say' | 'ask' | 'lookup' | 'do';
-  /** Whom it is for: a contact, or null for the holder (anyone, in an entity memory). Deliver it when they are there. */
-  for: { personId: string; name: string } | null;
+  /**
+   * Whom it is for: a contact, or null for the holder (anyone, in an entity memory). Deliver it when they are there.
+   * `addresses`: the person's verified identities with a channel (D55 §5c — `homeassistant` / `person.chloe`, `telegram` /
+   * a chat id): where to find them (`addressesOn`).
+   */
+  for: { personId: string; name: string; addresses: InitiativeAddress[] } | null;
   /** In the memory's language, ready to be said. */
   text: string;
   reason: string;
@@ -322,6 +326,11 @@ export interface Initiative {
   window: { notBefore: string; notAfter: string };
   /** Where it was offered, or will be delivered (a declared channel); null: at the person's next presence or turn. */
   channel: string | null;
+  /**
+   * The acceptable channels in order (D55 §5b): deliver on the first that reaches the person now and report the one used;
+   * the turn is always acceptable. Messaging only for a timed reminder, a request or a promise; empty for a look-up.
+   */
+  channels: DeliveryChannel[];
   /** How surely the person must be recognised before hearing it. */
   identity: { required: 'medium' | 'high' };
   /** Your own ids of the messages its intent came from: recognise a reminder you scheduled yourself (and report it done). */
@@ -330,15 +339,31 @@ export interface Initiative {
   /** When Recordare pushed it to its channel (event `initiative.deliver`): deliver it there now. */
   pushedAt: string | null;
 }
+/** One address of the person an initiative is for: an identity of theirs on a channel (a Telegram chat id, a Home Assistant person). */
+export interface InitiativeAddress { channel: string; id: string }
 export type InitiativeOutcome = 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
 /** Where an initiative reached the person (D55). */
 export type DeliveryChannel = 'turn' | 'chat' | 'messaging' | 'voice' | 'panel';
 
-/** A presence impulse (D55): who the agent sees or hears now. The agent recognises; Recordare never reads a sensor. */
+export type PresenceIdentity = { channel: string; externalId: string } | { externalUserId: string };
+
+/**
+ * A presence impulse (D55): who the agent sees or hears now. The agent recognises; Recordare never reads a sensor.
+ * §5c: an impulse describes a place — everyone recognised there (`people`) and how many it cannot name (`someone`).
+ * An impulse for someone with no live presence in that place is an arrival; send it again to keep the presence live.
+ */
 export interface PresenceImpulse {
   /** An identity as in ingest (a voice profile, a face: `{channel, externalId}`; or `{externalUserId}`); none: the holder of a personal memory. */
-  person?: { identity: { channel: string; externalId: string } | { externalUserId: string } };
-  channel: 'voice' | 'camera' | 'panel' | 'chat';
+  person?: { identity: PresenceIdentity };
+  /** Everyone recognised in the place, each with how sure (in place of `person` + `confidence`; at most 20). */
+  people?: Array<{ identity: PresenceIdentity; confidence?: number }>;
+  /** People in the place the agent cannot name (an occupancy sensor, a face it does not know). */
+  someone?: number;
+  /**
+   * `voice` / `camera`: a room the agent can speak in (arrival, pace, quiet hours, the opening apply); `home`: at home
+   * only — recorded, nothing offered; `panel`, `chat`: a screen, an app opened.
+   */
+  channel: 'home' | 'voice' | 'camera' | 'panel' | 'chat';
   /** How sure the agent is of who it is (its model's score; 1 for an account). Default 1. */
   confidence?: number;
   /** How long the presence holds (default 120 s). */
@@ -351,7 +376,15 @@ export interface PresenceImpulse {
 /** What Recordare answers to a presence impulse: who it is, what to tell or ask them now (offered), or whom to ask about. */
 export interface PresenceResult {
   person: { personId: string; name: string } | null;
+  /** Everyone recognised in the place. */
+  people: Array<{ personId: string; name: string }>;
+  /** To deliver now (it is `offered`); with `opening`, not given yet. */
   initiative: Initiative | null;
+  /**
+   * Others are in the room (§5c): say only this ("Chloé, I have something for you: want to hear it?"); the initiative
+   * stays pending and the person's "yes" in their next turn gets it.
+   */
+  opening: string | null;
   /** Nobody identified and something waits for this person: ask whether it is them, revealing nothing of it. */
   askWho: { personId: string; name: string } | null;
 }

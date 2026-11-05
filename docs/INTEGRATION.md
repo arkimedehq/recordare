@@ -215,7 +215,8 @@ known participant who shows up under a new name on the channel keeps their conta
 > cannot name, `home` for "at home" (not enough to speak). An arrival may get anything due, a refresh only a timed
 > request or promise; with others in the room you get `opening`: say only that and listen — the person's "yes" is a turn
 > of theirs, and the memory context gives you the initiative then. Bind the voice point that spoke to the conversation for
-> a few minutes so the reply lands with it.
+> a few minutes so the reply lands with it. With the client library: `deliver` returns `{outcome, channel}`,
+> `addressesOn` finds the person on a channel, and `open` says the opening (`packages/client/README.md`).
 
 Recordare pushes what the agent decided to say, ask or look up (`API.md` §4b). Your platform delivers it **when the
 person is there** (presence is yours: a chat open now, a recognised voice in the room, someone at the panel), reports

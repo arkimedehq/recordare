@@ -17,6 +17,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   to hear it?", in every language) and the initiative waits for her "yes". The clock reads live presences: a timed
   request whose person is in a room goes by voice; in an entity memory, what is for one person goes only so or by
   messaging to an address of theirs.
+- **Client library: channels, addresses and the opening in `InitiativeInbox`.** The types carry `channels`,
+  `for.addresses`, presence by place (`people`, `someone`, `home`) and `opening`. `deliver(user, initiative, {via})` may
+  return `{outcome, channel}` — the channel it reached the person on is reported; `addressesOn(initiative, 'telegram')`
+  finds the person there. With others in the room the opening goes to the new `open(user, initiative, opening)` and
+  never to `deliver`: the initiative is not taken, and comes back at a later presence (a host without `open` says
+  nothing). A presence from a camera is reported as voice. Existing hosts work unchanged.
 
 ### Fixed
 - **An initiative said days later no longer says "yesterday".** An ask about a plan is worded two days after it and may

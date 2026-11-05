@@ -119,6 +119,20 @@ inbox.start();                                 // il feed ogni 15 min
 await inbox.presence(userId, { channel: 'chat' }); // quando l'utente si presenta
 ```
 Passa `seen` / `cursors` per tenerli nel tuo archivio tra un riavvio e l'altro.
+Canali e stanze (D55 §5b–§5c): `initiative.channels` elenca i canali accettabili in ordine — consegna sul primo che
+raggiunge la persona adesso e restituisci `{outcome, channel}` così il canale viene riportato; `addressesOn(i, 'telegram')`
+dà gli id della persona su un canale (`for.addresses`, collegati dalla console). Manda la presenza per luogo —
+`presence(user, {channel: 'voice', place, people: [{identity, confidence}], someone})`, `home` per "in casa" — e dai
+`open(user, i, opening)`: con altri nella stanza si dice solo l'apertura, l'iniziativa resta in attesa, e il "sì" della
+persona è il suo turno successivo (il contesto di memoria allora la porta).
+```ts
+deliver: async (user, i) => {
+  const chat = i.channels.includes('messaging') ? addressesOn(i, 'telegram')[0] : undefined;
+  if (chat) return (await telegram.send(chat, i.text), { outcome: 'said', channel: 'messaging' });
+  return (await postToChat(user, i.text), i.kind === 'ask' ? 'asked' : 'said');
+},
+open: async (user, i, opening) => speakInRoom(user, opening),
+```
 
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:

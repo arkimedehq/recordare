@@ -117,6 +117,20 @@ inbox.start();                                 // the feed every 15 min
 await inbox.presence(userId, { channel: 'chat' }); // when the user shows up
 ```
 Pass `seen` / `cursors` to keep them in your own store across restarts.
+Channels and rooms (D55 §5b–§5c): `initiative.channels` lists the acceptable channels in order — deliver on the first
+that reaches the person now and return `{outcome, channel}` so the channel is reported; `addressesOn(i, 'telegram')`
+gives the person's ids on a channel (`for.addresses`, bound in the console). Send presence by place —
+`presence(user, {channel: 'voice', place, people: [{identity, confidence}], someone})`, `home` for "at home" — and give
+`open(user, i, opening)`: with others in the room only the opening is said, the initiative stays pending, and the
+person's "yes" is their next turn (the memory context then carries it).
+```ts
+deliver: async (user, i) => {
+  const chat = i.channels.includes('messaging') ? addressesOn(i, 'telegram')[0] : undefined;
+  if (chat) return (await telegram.send(chat, i.text), { outcome: 'said', channel: 'messaging' });
+  return (await postToChat(user, i.text), i.kind === 'ask' ? 'asked' : 'said');
+},
+open: async (user, i, opening) => speakInRoom(user, opening),
+```
 
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,
