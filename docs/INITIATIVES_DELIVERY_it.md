@@ -113,9 +113,9 @@ Telegram, Chloé no) e da momento a momento (la voce raggiunge qualcuno solo men
   chiude (fatta, risposta, imparata) senza chiamate LLM in più, come nel turno (§7).
 - **Voce: annuncio spontaneo a ogni presenza**, con un'apertura che non rivela niente quando ci sono altri: §5c.
 
-Cambi al contratto (additivi, da costruire): `channels: [kind…]` in ordine sull'iniziativa (feed, webhook, presenza,
-contesto) al posto del singolo `channel` scelto alla nascita; l'esito porta `channel`; la dichiarazione per client resta
-come l'elenco dei tipi che un client può avere in assoluto (ciò che non può mai raggiungere non viene mai offerto).
+Cambi al contratto (additivi, costruiti il 2026-11-05, `API_it.md` §4b): `channels: [kind…]` in ordine sull'iniziativa
+(feed, webhook, presenza, contesto) accanto a `channel` (dove è stata offerta o spinta); l'esito porta `channel`; la dichiarazione per client resta
+ciò su cui l'orologio può spingere (`channels` elenca ciò che l'iniziativa accetta; il client usa quelli che ha).
 
 ### 5c. Presenza e voce (maintainer, 2026-11-05)
 
@@ -211,7 +211,7 @@ mobile.
 5. occupazione mmWave, per sapere che c'è qualcuno anche senza telefono;
 6. un satellite mobile (la papera di quacksat).
 
-**Cambi al contratto** (additivi, da costruire): l'iniziativa porta `for.addresses: [{channel, id}]` (le identità della
+**Cambi al contratto** (additivi, costruiti il 2026-11-05, `API_it.md` §4b): l'iniziativa porta `for.addresses: [{channel, id}]` (le identità della
 persona); l'impulso di presenza per luogo (`people[]`, `someone`); la frase di apertura con l'iniziativa quando ci sono
 altri (`opening`); il `channel` dell'esito; un'iniziativa che resta in attesa dopo un'apertura senza risposta.
 
@@ -310,7 +310,7 @@ Fatti verificati il 2026-11-04 (codice dei connettori, OpenClaw 2026.10.10, herm
 | **F0** | letteratura (H14: interrompibilità, tempismo delle notifiche, agenti LLM proattivi, curiosità / apprendimento attivo); D55; questa specifica — **fatta il 2026-11-04** (fonti, verdetto e conseguenze per il progetto in H14) | docs |
 | **F1** | contratto: canali, impulso di presenza, timing / finestra / canale / identità / `source`, `offered`, `events`; il canale nel turno con le soglie di identità; "sei …?" per chi parla ed è sconosciuto — **costruita il 2026-11-04** (la finestra è `dueAt` / `expiresAt` fino a F2; la riga `lookups` dell'hook condiviso di Claude Code / Codex arriva con F3) | Recordare |
 | **F2** | tempo v0 (classi, finestre da regole e dal modello, una decisione su tre eventi: l'orologio, un impulso, un turno); la fonte nuova "qualcosa lasciato a metà"; domande alle persone (§6); dev set con linee temporali (tempo) e una casa che cresce (imparare chiedendo) — **F2a costruita il 2026-11-04**: il filtro sensibile ai costi dell'orologio con finestre da regole, promemoria a orario al loro minuto, `initiative.deliver`, ogni decisione registrata; F2b **costruita il 2026-11-04**: `dataset_dev_timing` + quattro regole di tempo, le ore del modello (`initiative.v3`), le cose lasciate a metà (`extract.v23`), domande indirizzate a chi potrebbe sapere (deterministico; la curva della casa che cresce con risposte simulate è ancora da fare) | Recordare + valutazione |
-| **F3** | client: prima Arkimede (ricevitore, chat + notifica, Telegram su scelta, impulsi da Voce), poi OpenClaw e Hermes — **in corso**: `InitiativeInbox` nella libreria client (0.8.0: webhook, presenza, feed, ognuno una volta, esiti riportati); l'hook di Claude Code / Codex chiede le ricerche (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): ricevitore webhook + feed tramite `InitiativeInbox`, consegna in una chat dedicata con notifica, un impulso di presenza quando l'utente apre l'app, un promemoria già programmato riportato `done`, connessione e segreto del webhook dalle sue impostazioni. Restano: il canale scelto alla consegna (§5b: Recordare, la libreria client), gli skill `user-channel` di Arkimede (§8: per primo Telegram), il push per OpenClaw e Hermes | client |
+| **F3** | client: prima Arkimede (ricevitore, chat + notifica, Telegram su scelta, impulsi da Voce), poi OpenClaw e Hermes — **in corso**: `InitiativeInbox` nella libreria client (0.8.0: webhook, presenza, feed, ognuno una volta, esiti riportati); l'hook di Claude Code / Codex chiede le ricerche (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): ricevitore webhook + feed tramite `InitiativeInbox`, consegna in una chat dedicata con notifica, un impulso di presenza quando l'utente apre l'app, un promemoria già programmato riportato `done`, connessione e segreto del webhook dalle sue impostazioni. F3a costruita il 2026-11-05 (Recordare: `channels` in ordine, `for.addresses`, presenza per luogo, l'orologio che legge le presenze valide, ritmo della voce, l'apertura, indirizzi in console). Restano: la libreria client (F3b, 0.9.0), gli skill `user-channel` di Arkimede (§8: per primo Telegram), il push per OpenClaw e Hermes | client |
 | **F4** | tempo v1: apprendimento dagli esiti; misurato sul dev set e sul Kinox | Recordare |
 | **F5** | impronta vocale e volto in Arkimede (Home Assistant, camera), presenza da Home Assistant (tre livelli), punti voce, annuncio e ascolto a ogni presenza, l'apertura quando ci sono altri, la papera con Arkimede come bridge (§5c); tempo v2 | Arkimede, Recordare |
 

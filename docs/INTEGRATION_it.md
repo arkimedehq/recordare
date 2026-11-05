@@ -229,6 +229,16 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > promemoria programmato da sé. L'`InitiativeInbox` della libreria fa (c)–(e) in un pezzo solo: scrivi solo come ne consegni
 > una. I passi qui sotto valgono ancora per la consegna push.
 
+> **Canali e presenza per luogo** (D55 §5b–§5c, 2026-11-05): un'iniziativa porta `channels` — quelli accettabili in ordine
+> (`voice`, `messaging` solo per una richiesta o una promessa, `chat`) — consegnala sul primo che dalla tua parte
+> raggiunge la persona **adesso**, e riporta il canale usato; `for.addresses` dice dove trovare la persona (le sue identità
+> verificate: una persona di Home Assistant, una chat Telegram — collegale dalla console). Manda la presenza **per luogo**:
+> `{channel, place, people: [{identity, confidence}], someone}` — tutti quelli che riconosci nella stanza e quanti non sai
+> nominare, `home` per "in casa" (non basta per parlare). Un arrivo può ottenere qualunque cosa dovuta, un rinnovo solo
+> una richiesta o promessa a orario; con altri nella stanza ricevi `opening`: di' solo quella e ascolta — il "sì" della
+> persona è un suo turno, e il contesto di memoria ti dà l'iniziativa allora. Lega per qualche minuto il punto voce che ha
+> parlato alla conversazione, così la risposta arriva lì.
+
 Recordare spinge ciò che l'agente ha deciso di dire, chiedere o cercare (`API.md` §4b). La tua piattaforma lo consegna
 **quando la persona c'è** (la presenza è tua: una chat aperta ora, una voce riconosciuta nella stanza, qualcuno al
 pannello), riporta che fine ha fatto e svolge le ricerche con i propri strumenti.

@@ -9,56 +9,123 @@
  * Recordare never stores a voice or a face, only who was recognised, by what, how sure, until when.
  */
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { InitiativeService, type InitiativeView } from './initiative.service';
+import { type Env } from '../config/env';
+import { initiativeText } from '../lang/initiative';
+import { afterQuiet, InitiativeService, type InitiativeView } from './initiative.service';
 
-/** How the agent perceived the person: heard (voice), seen (camera), at a screen it shows (panel), writing (chat). */
-export const PRESENCE_CHANNELS = ['voice', 'camera', 'panel', 'chat'] as const;
+/**
+ * How the agent perceived the person: at home (`home`: an account's presence, not enough to speak), heard (voice), seen
+ * (camera), at a screen it shows (panel), writing (chat).
+ */
+export const PRESENCE_CHANNELS = ['home', 'voice', 'camera', 'panel', 'chat'] as const;
+/** In a room the agent can speak in: where §5c's rules hold (arrival, pace, quiet hours, the opening). */
+const ROOM = new Set(['voice', 'camera']);
+
+type Identity = { channel: string; externalId: string } | { externalUserId: string };
 
 export interface PresenceInput {
-  person?: { identity: { channel: string; externalId: string } | { externalUserId: string } };
-  channel: (typeof PRESENCE_CHANNELS)[number];
+  /** One person (the shorthand of a place with one person); none: the holder of a personal memory, nobody known in an entity memory. */
+  person?: { identity: Identity };
   confidence: number;
+  /** D55 §5c: everyone the agent recognises in the place, each with how sure. */
+  people?: Array<{ identity: Identity; confidence: number }>;
+  /** People in the place the agent cannot name. */
+  someone?: number;
+  channel: (typeof PRESENCE_CHANNELS)[number];
   ttlSeconds: number;
   place?: string;
   left?: boolean;
 }
 
+type Person = { personId: string; name: string };
+
 export interface PresenceResult {
-  person: { personId: string; name: string } | null;
+  /** The person the initiative is for, else the first recognised. */
+  person: Person | null;
+  people: Person[];
   initiative: InitiativeView | null;
-  askWho: { personId: string; name: string } | null;
+  askWho: Person | null;
+  /** Others are in the room: say only this; the initiative waits for the person's "yes" (their next turn gets it). */
+  opening: string | null;
 }
 
 @Injectable()
 export class PresenceService {
-  constructor(private readonly db: DataSource, private readonly initiatives: InitiativeService) {}
+  constructor(private readonly db: DataSource, private readonly initiatives: InitiativeService, private readonly config: ConfigService<Env, true>) {}
 
   async report(memoryId: string, clientId: string | null, input: PresenceInput, now: Date): Promise<PresenceResult> {
-    const person = await this.resolve(memoryId, clientId, input.person);
+    const entries = input.people ?? [{ identity: input.person?.identity, confidence: input.confidence }];
+    const resolved = await Promise.all(entries.map(async (e) => ({ person: await this.resolve(memoryId, clientId, e.identity), confidence: e.confidence })));
+    const people = resolved.flatMap((r) => (r.person ? [r.person] : []));
+    const none: PresenceResult = { person: people[0] ?? null, people, initiative: null, askWho: null, opening: null };
     if (input.left) {
-      await this.db.query(`UPDATE presences SET expires_at = $3 WHERE memory_id = $1 AND person_id IS NOT DISTINCT FROM $2 AND expires_at > $3`,
-        [memoryId, person?.personId ?? null, now]);
-      return { person, initiative: null, askWho: null };
+      for (const r of resolved) {
+        await this.db.query(`UPDATE presences SET expires_at = $3 WHERE memory_id = $1 AND person_id IS NOT DISTINCT FROM $2 AND expires_at > $3`,
+          [memoryId, r.person?.personId ?? null, now]);
+      }
+      return none;
     }
-    await this.db.query(
-      `INSERT INTO presences (memory_id, person_id, client_id, channel, confidence, place, seen_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [memoryId, person?.personId ?? null, clientId, input.channel, input.confidence, input.place ?? null, now, new Date(now.getTime() + input.ttlSeconds * 1000)]);
-    // Seen or heard: what is offered is said by voice (a camera or a panel sighting is answered in the agent's voice too, or
-    // on its screen); a chat presence is the chat.
+    const room = ROOM.has(input.channel);
+    const arrived = new Set<string>();
+    for (const r of resolved) {
+      // An arrival: nobody of theirs was live in this place (a refresh only keeps the presence live) — §5c.
+      if (r.person && room) {
+        const [live] = await this.db.query(
+          `SELECT 1 FROM presences WHERE memory_id = $1 AND person_id = $2 AND place IS NOT DISTINCT FROM $3 AND channel = ANY($4) AND expires_at > $5 LIMIT 1`,
+          [memoryId, r.person.personId, input.place ?? null, [...ROOM], now]);
+        if (!live) arrived.add(r.person.personId);
+      }
+      await this.db.query(
+        `INSERT INTO presences (memory_id, person_id, client_id, channel, confidence, place, seen_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [memoryId, r.person?.personId ?? null, clientId, input.channel, r.confidence, input.place ?? null, now, new Date(now.getTime() + input.ttlSeconds * 1000)]);
+    }
+    // At home is not enough to speak: recorded (the clock reads it), nothing offered.
+    if (input.channel === 'home') return none;
+    // Seen or heard: what is offered is said by voice (a camera sighting is answered in the agent's voice); a panel on its
+    // screen; a chat presence is the chat.
     const channel = input.channel === 'chat' ? 'chat' : input.channel === 'panel' ? 'panel' : 'voice';
-    const { initiative, askWho } = await this.initiatives.offer(memoryId, { personId: person?.personId ?? null, confidence: person ? input.confidence : 0 }, channel, now);
-    return { person, initiative, askWho };
+    const others = resolved.length + (input.someone ?? 0) > 1;
+    const [memory]: Array<{ locale: string; timezone: string; quiet_from: number; quiet_to: number }> = await this.db.query(
+      `SELECT locale, timezone, quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]);
+    const quiet = !!memory && afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to).getTime() !== now.getTime();
+    for (const r of resolved) {
+      if (!r.person) continue;
+      // In a room, spontaneous only at an arrival, within the pace, outside the quiet hours; else only a timed request or promise.
+      const timedOwedOnly = room && (!arrived.has(r.person.personId) || quiet || await this.paced(memoryId, r.person.personId, now));
+      const res = await this.initiatives.offer(memoryId, { personId: r.person.personId, confidence: r.confidence }, channel, now,
+        { timedOwedOnly, open: room && others });
+      if (res.initiative) {
+        return { person: r.person, people, initiative: res.initiative, askWho: null,
+          opening: res.opened ? initiativeText(memory?.locale ?? 'en').opening(r.person.name) : null };
+      }
+    }
+    if (people.length) return none;
+    // Nobody identified: an entity memory may ask whether this is someone something waits for.
+    const { askWho } = await this.initiatives.offer(memoryId, { personId: null, confidence: 0 }, channel, now);
+    return { ...none, askWho };
+  }
+
+  /** Whether this person had a spontaneous announcement (an initiative by voice, or an opening) within the pace (§5c). */
+  private async paced(memoryId: string, personId: string, now: Date): Promise<boolean> {
+    const minutes = this.config.get('INITIATIVE_VOICE_PACE_MINUTES', { infer: true }) ?? 30;
+    if (!minutes) return false;
+    const since = new Date(now.getTime() - minutes * 60_000);
+    const [hit] = await this.db.query(
+      `SELECT 1 FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2
+         AND ((channel = 'voice' AND offered_at > $3) OR opened_at > $3) LIMIT 1`, [memoryId, personId === memoryId ? null : personId, since]);
+    return !!hit;
   }
 
   /** The person in this memory: the self (personal memory: no identity, or the account's own user), a known contact, or nobody. */
-  private async resolve(memoryId: string, clientId: string | null, person: PresenceInput['person']): Promise<{ personId: string; name: string } | null> {
+  private async resolve(memoryId: string, clientId: string | null, identity: Identity | undefined): Promise<Person | null> {
     const [memory]: Array<{ mode: string; name: string }> = await this.db.query(
       `SELECT o.mode, p.display_name AS name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory) return null;
     const selfOf = { personId: memoryId, name: memory.name };
-    if (!person) return memory.mode === 'personal' ? selfOf : null;
-    const id = person.identity;
+    if (!identity) return memory.mode === 'personal' ? selfOf : null;
+    const id = identity;
     if ('externalUserId' in id) {
       if (!clientId) return null;
       const [own] = await this.db.query(

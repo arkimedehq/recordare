@@ -165,6 +165,8 @@ describe('memory identity (D50)', () => {
     const casa = listed.find((p) => p.id === entity);
     expect(casa).toMatchObject({ mode: 'entity', gender: 'masculine', contacts: 1 });
     expect(casa?.identities.map((i) => i.kind).sort()).toEqual(['account', 'participant', 'participant']);
+    // Its people — the self and the contacts — to bind an address to one from the console (D55 §5c).
+    expect((casa as unknown as { people: Array<{ id: string; name: string }> }).people.map((x) => x.id)).toEqual([entity, contactId]);
   });
 
   it('stores whose each memory is: the self in a personal memory; a contact, someone or the agent itself in an entity memory (8.5)', async () => {

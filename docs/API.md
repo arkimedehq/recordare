@@ -686,6 +686,29 @@ private or public again (§2) has its days written again.
 >   memory never pushes what is for one person on its (shared) channels; the memory context still carries the self card
 >   and an initiative when the embedding server is down. `INITIATIVE_TIMING=due` (baseline): push as soon as due.
 
+> **The channel chosen at delivery; presence and voice** (D55 §5b–§5c, built 2026-11-05). Additive:
+> - **The initiative** gains `channels` — the acceptable channels in order; deliver on the first that reaches the person
+>   now (the turn is always acceptable and never listed): a request or a promise (a timed reminder is one)
+>   `[voice, messaging, chat]`, anything else `[voice, chat]` (messaging interrupts: only what was asked or promised), a
+>   look-up `[]` (the turn only). `channel` stays where it was offered or pushed (the clock's: a declared channel that
+>   always reaches — now the first acceptable one). `for.addresses: [{channel, id}]`: the person's verified participant
+>   identities (`homeassistant` / `person.chloe`, `telegram` / a chat id) — where the host finds them; bind them with
+>   `POST api/v1/admin/identities {kind: participant, memoryId, personId, channel, externalId, verified: true}` or from the
+>   console (a memory's card: link an address to one of its people).
+> - **Presence per place**: `POST api/v1/presence` takes `people: [{identity, confidence}]` (everyone recognised in the
+>   place) and `someone` (people it cannot name) in place of `person` + `confidence` (kept: a place with one person), and
+>   the channel `home` (at home: recorded, nothing offered — not enough to speak). In a room (`voice`, `camera`): an
+>   impulse for someone with no live presence in that place is an **arrival** and may give anything due; a refresh, the
+>   quiet hours, or a spontaneous announcement to that person within `INITIATIVE_VOICE_PACE_MINUTES` (30) give only a
+>   timed request or promise; by voice only what accepts voice. **Others in the room** (two or more people, named or not):
+>   the response carries `opening` ("Chloé, I have something for you: do you want to hear it?", the memory's language)
+>   and the initiative stays `pending` (`opened_at` set; the pace counts it) — say only the opening; her "yes" in her next
+>   turn gets it through the memory context. The response gains `people` (everyone recognised) and `opening`; `person` is
+>   the one the initiative is for, else the first recognised.
+> - **The clock reads live presences**: a timed request or promise whose person is live in a room is pushed with
+>   `channel: voice`; in an entity memory what is for one person is pushed only so, or by `messaging` when a client
+>   declared it and the person has an address — never on its shared channels; otherwise as before.
+
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,
 for a person, from when and until when. Its sources: a plan past its date with no outcome told becomes an `ask` two days

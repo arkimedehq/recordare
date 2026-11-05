@@ -13,6 +13,10 @@ describe('the initiatives\' sentences (all languages)', () => {
       expect(t.remindPlan('PLAN.', 'DAY')).toContain('PLAN.');
       expect(t.remindPlan('PLAN.', 'DAY')).toContain('DAY');
       expect(t.lookup('Q?')).toContain('Q?');
+      // The opening said with others in the room (D55 §5c): the name, a question, nothing of the initiative.
+      expect(t.opening('NAME')).toMatch(/^NAME/);
+      expect(t.opening('NAME')).toMatch(/[?？;؟;]|ไหม$/);
+      if (locale !== 'en') expect(t.opening('NAME')).not.toBe(initiativeText('en').opening('NAME'));
       if (locale !== 'en') expect(t).not.toBe(initiativeText('en'));
     }
     expect(initiativeText('xx-YY')).toBe(initiativeText('en'));

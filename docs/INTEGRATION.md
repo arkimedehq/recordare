@@ -207,6 +207,16 @@ known participant who shows up under a new name on the channel keeps their conta
 > on `data.channel`), takes the other events as information, and recognises a reminder it scheduled itself by `source`. The
 > library's `InitiativeInbox` does (c)–(e) in one piece: you only write how you deliver one. The steps below still hold for push delivery.
 
+> **Channels and presence by place** (D55 §5b–§5c, 2026-11-05): an initiative carries `channels` — the acceptable ones in
+> order (`voice`, `messaging` only for a request or a promise, `chat`) — deliver on the first that reaches the person
+> **now** on your side, and report the channel you used; `for.addresses` tells where to find the person (their verified
+> identities: a Home Assistant person, a Telegram chat — bind them in the console). Send presence **by place**:
+> `{channel, place, people: [{identity, confidence}], someone}` — everyone you recognise in the room and how many you
+> cannot name, `home` for "at home" (not enough to speak). An arrival may get anything due, a refresh only a timed
+> request or promise; with others in the room you get `opening`: say only that and listen — the person's "yes" is a turn
+> of theirs, and the memory context gives you the initiative then. Bind the voice point that spoke to the conversation for
+> a few minutes so the reply lands with it.
+
 Recordare pushes what the agent decided to say, ask or look up (`API.md` §4b). Your platform delivers it **when the
 person is there** (presence is yours: a chat open now, a recognised voice in the room, someone at the panel), reports
 what became of it, and runs the look-ups with its own tools.

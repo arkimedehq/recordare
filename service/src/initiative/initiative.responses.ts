@@ -11,7 +11,11 @@ export const initiative = z.object({
   id: z.uuid(),
   seq: z.number().int().describe('The feed position: pass the last one back as `since`.'),
   kind: z.enum(INITIATIVE_KINDS).describe('say: tell it; ask: ask it; lookup: find it out (for the host agent, with its own tools); do: an action.'),
-  for: z.object({ personId: z.uuid(), name: z.string() }).nullable().describe('Whom it is for; null: the holder, or anyone in an entity memory.'),
+  for: z.object({
+    personId: z.uuid(), name: z.string(),
+    addresses: z.array(z.object({ channel: z.string(), id: z.string() }))
+      .describe('How to reach them (D55 §5c): their verified identities by channel — `homeassistant` / `person.chloe`, `telegram` / a chat id.'),
+  }).nullable().describe('Whom it is for; null: the holder, or anyone in an entity memory.'),
   text: z.string().describe('In the memory\'s language, ready to be said.'),
   reason: z.string(),
   worth: z.number().min(0).max(1).nullable().describe('How much the model found it worth saying (balanced, full); null when the sentence is the service\'s own.'),
@@ -25,6 +29,7 @@ export const initiative = z.object({
   timing: z.enum(['timed', 'flexible']).describe('timed: a time was asked for; flexible: a window, the moment chosen by Recordare (D55).'),
   window: z.object({ notBefore: z.string(), notAfter: z.string() }),
   channel: z.string().nullable().describe('Where it was offered, or will be delivered (a declared channel); null: at the person\'s next presence or turn.'),
+  channels: z.array(z.string()).describe('The acceptable channels in order (D55 §5b): deliver on the first that reaches the person now; the turn is always acceptable. Messaging only for a request or a promise.'),
   identity: z.object({ required: z.enum(['medium', 'high']) }).describe('How surely the person must be recognised before hearing it.'),
   source: z.object({ conversation: z.string(), messageIds: z.array(z.string()) }).nullable()
     .describe('The client\'s own ids of the messages its intent came from: a host recognises a reminder it scheduled itself.'),
@@ -45,9 +50,12 @@ export const webhookCreatedResponse = webhook.extend({ secret: z.string().descri
 export const webhooksResponse = z.array(webhook);
 
 /** `POST api/v1/presence` (D55): who was recognised, and what to tell or ask them now, if this is the moment. */
+const person = z.object({ personId: z.uuid(), name: z.string() });
 export const presenceResponse = z.object({
-  person: z.object({ personId: z.uuid(), name: z.string() }).nullable().describe('The person recognised in this memory; null: not identified.'),
-  initiative: initiative.nullable().describe('To deliver now (it is `offered`); report the outcome afterwards.'),
+  person: person.nullable().describe('The person the initiative is for, else the first recognised in this memory; null: not identified.'),
+  people: z.array(person).describe('Everyone recognised in the place.'),
+  initiative: initiative.nullable().describe('To deliver now (it is `offered`); report the outcome afterwards. With `opening`: not given yet.'),
+  opening: z.string().nullable().describe('Others are in the room (D55 §5c): say only this; the initiative stays pending and the person\'s "yes" in their next turn gets it.'),
   askWho: z.object({ personId: z.uuid(), name: z.string() }).nullable()
     .describe('Nobody identified, something waits for this person: the agent may ask whether it is them — revealing nothing of it.'),
 });

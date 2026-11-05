@@ -6,6 +6,18 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Iniziative: il canale scelto alla consegna, la presenza per luogo, la voce** (D55 §5b–§5c). Un'iniziativa porta
+  `channels` — quelli accettabili in ordine; la messaggistica solo per una richiesta o una promessa (interrompe) — e
+  `for.addresses`, le identità verificate della persona (una persona di Home Assistant, una chat Telegram), collegate
+  dalla console (la scheda di una memoria: collega un indirizzo a una delle sue persone) o dall'API admin. Gli impulsi
+  di presenza descrivono un luogo (`people`, `someone`, il canale `home`); in una stanza un arrivo può dare qualunque
+  cosa dovuta, un rinnovo solo una richiesta o promessa a orario; un annuncio spontaneo per persona ogni
+  `INITIATIVE_VOICE_PACE_MINUTES` (30, in prova); le ore di quiete valgono anche per la voce; con altri nella stanza si
+  dice solo un'apertura ("Chloé, ho una cosa per te: vuoi sentirla?", in ogni lingua) e l'iniziativa aspetta il suo
+  "sì". L'orologio legge le presenze valide: una richiesta a orario la cui persona è in una stanza va a voce; in una
+  memoria di entità, ciò che è per una persona va solo così o per messaggio a un suo indirizzo.
+
 ### Corretto
 - **Un'iniziativa detta giorni dopo non dice più "ieri".** Una domanda su un piano viene formulata due giorni dopo e
   può essere detta per una settimana: "Ieri avevi la verifica di geometria" era falsa fin dall'inizio (visto su una

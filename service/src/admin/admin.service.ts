@@ -109,7 +109,8 @@ export class AdminService {
 
   /**
    * Memories with their settings, size, contacts count, identities (the accounts that open it and the participant ids
-   * that name its self or contacts) and personal tokens.
+   * that name its self or contacts), personal tokens, and its people (its self and contacts: to bind an address to one —
+   * a Home Assistant person, a Telegram chat — D55 §5c).
    */
   async listPersons(): Promise<unknown[]> {
     const memories: Array<Record<string, unknown> & { id: string }> = await this.db.query(
@@ -138,8 +139,11 @@ export class AdminService {
               l.claim_display_name AS "displayName", l.claimed_at AS "claimedAt"
        FROM link_codes l LEFT JOIN clients c ON c.id = l.claim_client_id
        WHERE l.claimed_at > now() - make_interval(days => $1) ORDER BY l.claimed_at`, [CLAIM_TTL_DAYS]);
+    const people: Array<{ memoryId: string; id: string; name: string }> = await this.db.query(
+      `SELECT memory_id AS "memoryId", id, display_name AS name FROM persons WHERE memory_id IS NOT NULL ORDER BY display_name`);
     return memories.map((o) => ({
       ...o,
+      people: [{ id: o.id, name: o.name }, ...people.filter((c) => c.memoryId === o.id).map(({ id, name }) => ({ id, name }))],
       identities: identities.filter((i) => (i.memoryId ?? i.personId) === o.id),
       tokens: tokens.filter((t) => t.memoryId === o.id),
       linkClaims: claims.filter((l) => l.memoryId === o.id),

@@ -34,11 +34,14 @@ const outcomeBody = z.object({
   channel: z.enum(DELIVERY_CHANNELS).optional(),
   reaction: z.enum(['positive', 'neutral', 'negative']).optional(),
 });
+const identity = z.union([z.object({ channel: z.string().min(1), externalId: z.string().min(1) }), z.object({ externalUserId: z.string().min(1) })]);
 const presenceBody = z.object({
   /** Who it is: an identity as in ingest (`{channel, externalId}` — a voice profile, a face —, or `{externalUserId}`); none: the holder of a personal memory, nobody known in an entity memory. */
-  person: z.object({
-    identity: z.union([z.object({ channel: z.string().min(1), externalId: z.string().min(1) }), z.object({ externalUserId: z.string().min(1) })]),
-  }).optional(),
+  person: z.object({ identity }).optional(),
+  /** D55 §5c: everyone recognised in the place, each with how sure (in place of `person` + `confidence`). */
+  people: z.array(z.object({ identity, confidence: z.number().min(0).max(1).default(1) })).max(20).optional(),
+  /** People in the place the agent cannot name (an occupancy sensor, a face it does not know). */
+  someone: z.number().int().min(0).max(50).optional(),
   channel: z.enum(PRESENCE_CHANNELS),
   /** How sure the agent is of who it is (its voiceprint's or face model's score; 1 for an account). */
   confidence: z.number().min(0).max(1).default(1),
@@ -46,7 +49,7 @@ const presenceBody = z.object({
   place: z.string().trim().max(200).optional(),
   /** The person left: the presence ends, nothing is offered. */
   left: z.boolean().optional(),
-});
+}).refine((b) => !(b.person && b.people), { message: 'person or people, not both' });
 
 @Controller('api/v1/initiatives')
 export class InitiativeController {

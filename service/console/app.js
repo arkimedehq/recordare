@@ -17,6 +17,7 @@ const T = {
     name: 'Nome', rename: 'Rinomina', renameHint: 'Se la persona è collegata a un client, il nome segue il suo profilo lì e verrà riscritto.',
     messages: 'messaggi', pending: 'da estrarre', episodes: 'episodi', facts: 'fatti', notes: 'note', last: 'ultimo messaggio',
     identities: 'Identità collegate', none: 'nessuna', noneM: 'nessuno', unlink: 'Scollega', link: 'Collega un utente di un client',
+    address: 'Collega un indirizzo', addressChannel: 'canale (es. homeassistant, telegram)', addressId: 'id (es. person.chloe)',
     externalId: 'id utente nel client', tokens: 'Token personali', newToken: 'Nuovo token', revoke: 'Revoca',
     consolidate: 'Consolida ora', consolidated: 'Consolidamento eseguito', saved: 'Salvato',
     modeConfirm: 'La memoria contiene già ricordi: cambiare modo mescola ricordi in prima persona e ricordi di "qualcuno". Continuare?',
@@ -55,6 +56,7 @@ const T = {
     name: 'Name', rename: 'Rename', renameHint: 'If the person is linked to a client, the name follows their profile there and will be overwritten.',
     messages: 'messages', pending: 'to extract', episodes: 'episodes', facts: 'facts', notes: 'notes', last: 'last message',
     identities: 'Linked identities', none: 'none', noneM: 'none', unlink: 'Unlink', link: 'Link a client\'s user',
+    address: 'Link an address', addressChannel: 'channel (e.g. homeassistant, telegram)', addressId: 'id (e.g. person.chloe)',
     externalId: 'user id in the client', tokens: 'Personal tokens', newToken: 'New token', revoke: 'Revoke',
     consolidate: 'Consolidate now', consolidated: 'Consolidation done', saved: 'Saved',
     modeConfirm: 'The memory already holds memories: changing its mode mixes first-person memories with "someone"\'s. Continue?',
@@ -97,6 +99,7 @@ const HELP = {
     timezone: 'Il fuso orario della persona: serve per capire "domani", "stasera", le ore di quiete e l\'ora dei promemoria.',
     quiet: 'Le ore in cui la memoria non disturba: nessun messaggio spontaneo, salvo un promemoria chiesto proprio per quell\'ora.',
     identities: 'Chi può aprire questa memoria: un "account" è un utente di un client (es. l\'utente di Arkimede) che arriva qui. Scollegare non cancella i ricordi.',
+    address: 'Come raggiungere una persona di questa memoria e riconoscerla (D55): la persona di Home Assistant (canale homeassistant, id person.chloe), la chat Telegram (canale telegram, id del chat). L\'agente la usa per consegnarle un\'iniziativa a voce o per messaggio, e per sapere chi è quando la vede.',
     link: 'Collega un utente di un client a questa memoria: scegli il client e scrivi l\'id che quel client usa per l\'utente.',
     linkCode: 'Un codice monouso per riconoscere il titolare quando scrive da un altro canale (es. Telegram): lo invia all\'agente in chat diretta, poi confermi qui.',
     claims: 'Richieste arrivate con un codice di collegamento: conferma solo se quel mittente è davvero il titolare.',
@@ -130,6 +133,7 @@ const HELP = {
     timezone: 'The person\'s time zone: it resolves "tomorrow", "tonight", the quiet hours and when reminders are due.',
     quiet: 'Hours when the memory does not disturb: no message of its own, except a reminder asked for that very hour.',
     identities: 'Who can open this memory: an "account" is a client\'s user (e.g. Arkimede\'s user) arriving here. Unlinking deletes no memory.',
+    address: 'How to reach a person of this memory and recognise them (D55): their Home Assistant person (channel homeassistant, id person.chloe), their Telegram chat (channel telegram, the chat id). The agent uses it to deliver an initiative by voice or by message, and to know who it is when it sees them.',
     link: 'Link a client\'s user to this memory: pick the client and type the id that client uses for the user.',
     linkCode: 'A one-time code to recognise the holder writing from another channel (e.g. Telegram): they send it to the agent in a direct chat, then you confirm here.',
     claims: 'Claims made with a link code: confirm only if that sender really is the holder.',
@@ -279,6 +283,9 @@ function personCard(p) {
   const clientOptions = () => clientsCache.map((c) => h('option', { value: c.id }, c.name));
   const linkClient = h('select', {}, clientOptions());
   const linkId = h('input', { placeholder: t('externalId') });
+  const addressPerson = h('select', {}, (p.people ?? []).map((x) => h('option', { value: x.id }, x.name)));
+  const addressChannel = h('input', { placeholder: t('addressChannel'), list: `channels-${p.id}` });
+  const addressId = h('input', { placeholder: t('addressId') });
   const tokenClient = h('select', {}, clientOptions());
   const tokenScopes = boxes(TOKEN_SCOPES, (v) => ['mcp', 'read', 'write'].includes(v));
   const patch = (body) => act(() => api('PATCH', `memories/${p.id}`, body));
@@ -332,6 +339,15 @@ function personCard(p) {
           { kind: 'account', personId: p.id, clientId: linkClient.value, externalId: linkId.value.trim() })),
       }, t('link'))) : null,
       clientsCache.length ? help('link') : null,
+      // D55 §5c: an address of one of its people (the self or a contact) — verified, it reaches and recognises them.
+      h('datalist', { id: `channels-${p.id}` }, ['homeassistant', 'telegram', 'whatsapp', 'voice', 'face'].map((c) => h('option', { value: c }))),
+      h('div', { class: 'row' }, addressPerson, addressChannel, addressId, h('button', {
+        class: 'ghost small',
+        onclick: () => addressChannel.value.trim() && addressId.value.trim() && act(() => api('POST', 'identities', {
+          kind: 'participant', memoryId: p.id, personId: addressPerson.value, channel: addressChannel.value.trim(), externalId: addressId.value.trim(), verified: true,
+        })),
+      }, t('address'))),
+      help('address'),
       // D51: the holder's channel identities — a one-time code, then the claim it made is confirmed here.
       p.linkClaims.length ? h('h4', {}, t('claims')) : null,
       p.linkClaims.length ? help('claims') : null,

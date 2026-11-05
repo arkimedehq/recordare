@@ -109,9 +109,9 @@ and per moment (voice reaches someone only while they are there). Decided:
 - **Voice: spontaneous announcement at every presence**, with an opening that reveals nothing when others are
   present: §5c.
 
-Contract changes (additive, to build): `channels: [kind…]` in order on the initiative (feed, webhook, presence, context)
-in place of the single `channel` chosen at creation; the outcome carries `channel`; the per-client declaration stays as
-the list of kinds a client may have at all (what it can never reach is never offered).
+Contract changes (additive, built 2026-11-05, `API.md` §4b): `channels: [kind…]` in order on the initiative (feed, webhook,
+presence, context) beside `channel` (where it was offered or pushed); the outcome carries `channel`; the per-client declaration stays as
+what the clock may push on (`channels` lists what the initiative accepts; the client uses those it has).
 
 ### 5c. Presence and voice (maintainer, 2026-11-05)
 
@@ -203,7 +203,7 @@ event (it is already a Home Assistant sensor). Later the duck's camera with face
 5. mmWave occupancy, to know someone is there even without a phone;
 6. a mobile satellite (the quacksat duck).
 
-**Contract changes** (additive, to build): the initiative carries `for.addresses: [{channel, id}]` (the person's
+**Contract changes** (additive, built 2026-11-05, `API.md` §4b): the initiative carries `for.addresses: [{channel, id}]` (the person's
 identities); the presence impulse per place (`people[]`, `someone`); the opening sentence with the initiative when
 others are present (`opening`); the outcome's `channel`; an initiative kept pending after an unanswered opening.
 
@@ -297,7 +297,7 @@ Path facts verified 2026-11-04 (connector code, OpenClaw 2026.10.10, hermes-agen
 | **F0** | literature (H14: interruptibility, notification timing, proactive LLM agents, curiosity / active learning); D55; this spec — **done 2026-11-04** (sources, verdict and design consequences in H14) | docs |
 | **F1** | contract: channels, presence impulse, timing / window / channel / identity / `source`, `offered`, `events`; the in-turn channel with identity thresholds; "are you …?" for an unknown speaker — **built 2026-11-04** (the window is `dueAt` / `expiresAt` until F2; the shared Claude Code / Codex hook's `lookups` line comes with F3) | Recordare |
 | **F2** | timing v0 (classes, windows by rules and by the model, a decision on three triggers: the clock, an impulse, a turn); the new source "something left unfinished"; questions to people (§6); dev sets with timelines (timing) and a growing household (learning by asking) — **F2a built 2026-11-04**: the clock's cost-sensitive gate with rule windows, timed reminders at their minute, `initiative.deliver`, every decision logged; F2b **built 2026-11-04**: `dataset_dev_timing` + four timing rules, the model's hours (`initiative.v3`), things left to finish (`extract.v23`), questions routed to who could know (deterministic; the growing-household curve with simulated answers is still owed) | Recordare + evaluation |
-| **F3** | clients: Arkimede first (receiver, chat + notification, Telegram opt-in, impulses from Voce), then OpenClaw and Hermes — **in progress**: the client library's `InitiativeInbox` (0.8.0: webhooks, presence, the feed, once each, outcomes reported); the Claude Code / Codex hook asks for look-ups (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): webhook receiver + feed through `InitiativeInbox`, delivery in a dedicated chat with a notification, a presence impulse when the user opens the app, a reminder already scheduled reported `done`, connection and webhook secret from its settings. Still owed: the channel chosen at delivery (§5b: Recordare, the client library), Arkimede's `user-channel` skills (§8: Telegram first), push for OpenClaw and Hermes | clients |
+| **F3** | clients: Arkimede first (receiver, chat + notification, Telegram opt-in, impulses from Voce), then OpenClaw and Hermes — **in progress**: the client library's `InitiativeInbox` (0.8.0: webhooks, presence, the feed, once each, outcomes reported); the Claude Code / Codex hook asks for look-ups (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): webhook receiver + feed through `InitiativeInbox`, delivery in a dedicated chat with a notification, a presence impulse when the user opens the app, a reminder already scheduled reported `done`, connection and webhook secret from its settings. F3a built 2026-11-05 (Recordare: ordered `channels`, `for.addresses`, presence by place, the clock reading live presences, voice pace, the opening, addresses in the console). Still owed: the client library (F3b, 0.9.0), Arkimede's `user-channel` skills (§8: Telegram first), push for OpenClaw and Hermes | clients |
 | **F4** | timing v1: learning from outcomes; measured on the dev set and on Kinox | Recordare |
 | **F5** | voiceprint and face in Arkimede (Home Assistant, camera), presence from Home Assistant (three levels), voice points, announce and listen at every presence, the opening when others are present, the duck with Arkimede as its bridge (§5c); timing v2 | Arkimede, Recordare |
 
