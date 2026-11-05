@@ -6,7 +6,18 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-11-05
+
+**Delivering initiatives in one piece, every setting from the console.** The client library gains `InitiativeInbox`:
+webhooks, presence impulses and the feed together, each initiative handed to the host once and its outcome reported —
+a host writes only how it speaks one. The admin console sets everything a memory and a client have (language, time
+zone, quiet hours, passes on demand, token scopes, erasure, raw-log scope, channels, webhooks), explains every field and
+moves to the Atlas style. The Claude Code and Codex hooks ask for look-ups. No breaking change, no migration: upgrade the
+service, then the client library (`InitiativeInbox`) and the connectors.
+
 ### Added
+- **Claude Code / Codex hooks ask for look-ups** (`initiatives: {lookups: true}` in the memory context, D55): these
+  agents have tools, so a look-up the memory wants done may be given to them in the turn.
 - **The admin console explains every field** (Italian and English): what it does and when to change it, under each
   setting; a legend of key and token scopes and of webhook events; a short introduction to people and clients.
 - **The admin console in the Atlas style**: dark panels with corner brackets, display caps, monospace data; each card
@@ -22,6 +33,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   presence), the webhooks (register with their events — the `whsec_` secret shown once —, list, remove) and the `erase`
   scope for keys. `PATCH api/v1/admin/clients/{id}` takes `rawLogScope`; `GET api/v1/admin/clients` lists each client's
   webhooks (never their secret).
+
+### Fixed
+- **Proxy image build**: the bundle is built once on the runner's own platform and copied into the amd64 and arm64
+  images (the arm64 build under QEMU crashed in `npm ci` and hung the v0.7.0 job until its 6-hour limit; the 0.7.0 image
+  was published by hand on 2026-11-05); the job stops after 30 minutes.
 
 ## [0.7.0] — 2026-11-04
 

@@ -6,7 +6,20 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.8.0] — 2026-11-05
+
+**Consegnare le iniziative in un pezzo solo, ogni impostazione dalla console.** La libreria client ottiene
+`InitiativeInbox`: webhook, impulsi di presenza e feed insieme, ogni iniziativa passata all'ospite una volta e il suo
+esito riportato — un ospite scrive solo come ne pronuncia una. La console di amministrazione imposta tutto ciò che hanno
+una memoria e un client (lingua, fuso orario, ore di quiete, passate su richiesta, permessi dei token, cancellazione,
+ambito del registro grezzo, canali, webhook), spiega ogni campo e passa allo stile di Atlas. Gli hook di Claude Code e
+Codex chiedono le ricerche. Nessuna modifica incompatibile, nessuna migrazione: aggiornare il servizio, poi la libreria
+client (`InitiativeInbox`) e i connettori.
+
 ### Aggiunto
+- **Gli hook di Claude Code / Codex chiedono le ricerche** (`initiatives: {lookups: true}` nel contesto di memoria,
+  D55): questi agenti hanno degli strumenti, quindi una ricerca che la memoria vuole fare può essere loro affidata nel
+  turno.
 - **La console di amministrazione spiega ogni campo** (italiano e inglese): cosa fa e quando cambiarlo, sotto ogni
   impostazione; una legenda dei permessi di chiavi e token e degli eventi dei webhook; una breve introduzione a persone e
   client.
@@ -25,6 +38,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   `whsec_` mostrato una volta —, elenco, rimozione) e il permesso `erase` per le chiavi. `PATCH
   api/v1/admin/clients/{id}` accetta `rawLogScope`; `GET api/v1/admin/clients` elenca i webhook di ogni client (mai il
   loro segreto).
+
+### Corretto
+- **Build dell'immagine del proxy**: il bundle viene costruito una volta sulla piattaforma del runner e copiato nelle
+  immagini amd64 e arm64 (la build arm64 sotto QEMU andava in crash in `npm ci` e ha bloccato il job della v0.7.0 fino al
+  limite di 6 ore; l'immagine 0.7.0 è stata pubblicata a mano il 2026-11-05); il job si ferma dopo 30 minuti.
 
 ## [0.7.0] — 2026-11-04
 
