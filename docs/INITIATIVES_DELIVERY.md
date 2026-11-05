@@ -106,16 +106,106 @@ and per moment (voice reaches someone only while they are there). Decided:
 - **The reply comes back as a turn.** The person answers where the message reached them; the client ingests the reply in
   the conversation that holds the delivered message (`source` points to the initiative), and the extraction closes it
   (done, answered, learned) with no extra LLM call, as in the turn (§7).
-- **Voice: spontaneous announcement at every presence** (decided; how is still to be designed, F5). With others in the
-  room the agent first says only an opening that reveals nothing ("Chloé, I have something for you — want to hear
-  it?"), in the memory's language; if the person answers yes, it says the initiative; otherwise it stays pending (not
-  `ignored`). The presence impulse will need to say whether others are present; the opening sentence comes from
-  `service/src/lang` (every language). Still to reason about with the maintainer: when an announcement is welcome, how
-  the answer is heard, what counts as said.
+- **Voice: spontaneous announcement at every presence**, with an opening that reveals nothing when others are
+  present: §5c.
 
 Contract changes (additive, to build): `channels: [kind…]` in order on the initiative (feed, webhook, presence, context)
 in place of the single `channel` chosen at creation; the outcome carries `channel`; the per-client declaration stays as
 the list of kinds a client may have at all (what it can never reach is never offered).
+
+### 5c. Presence and voice (maintainer, 2026-11-05)
+
+Worked out on the maintainer's home (Home Assistant with persons, cameras, a voice satellite in the kitchen; soon the
+quacksat duck, a mobile voice satellite) but written as a **standard**: we do not know what users will have, so the
+agent integrates as many devices as it can through one hub and the guide says what can be used (§5c.8).
+
+**1. Who is the agent, who are the people.** The most used set-up is an **entity memory**: a new digital being with a
+brain of its own (Arkim3de on Kinox), whose body is one account on the platform (Arkimede's Wyoming user). The people of
+the house are **contacts of that memory**, not users of the platform: Chloé needs no Arkimede account. Every address of
+a person is an identity on **their card in Recordare** — a verified participant identity: `homeassistant` /
+`person.chloe`, `telegram` / her chat id, later a voiceprint or a face label — bound once from the console (the admin's
+`POST api/v1/admin/identities`) or by a link code (D51). One list, used both ways: a presence impulse naming
+`person.chloe` resolves to Chloé (as today), and an initiative for Chloé carries **her addresses per channel**, so the
+body knows where to find her. The addresses are the agent's own (D50: the memory belongs to the agent), given back to
+the body that registered them. Personal memories (a user's own) keep chat and messaging; voice at home for them can be
+added later without changing this.
+
+**2. Three levels of presence.**
+
+| Level | Example source | Enough to speak? |
+|---|---|---|
+| **at home** | Home Assistant `person.*` is `home` (companion app, router, GPS) | no: keeps what is due ready |
+| **in a room** | per-room Bluetooth (Bermuda, ESPresense), a face recognised by Frigate, the duck seeing someone | yes, if the room has a voice point and the identity is sure enough |
+| **talking** | a voice turn on a satellite | already the in-turn channel |
+
+An occupancy sensor without identity (mmWave, motion, Frigate's "person" without a face) is **someone** in the room:
+it can lead to "are you Chloé?" (§3), never to the content.
+
+**3. Everything from Home Assistant.** The platform reads presence from Home Assistant and speaks through it. MCP is not
+enough: its tools are called by the model on request — presence must arrive by itself, with no model, and an
+announcement must go to one chosen satellite, certain and free (Home Assistant's broadcast intent speaks on every
+satellite). The **same URL and token** already configured for Home Assistant's MCP server open its **WebSocket API**:
+the platform subscribes to the events (persons, area sensors, the duck's place) and calls the satellites' actions
+directly. No new setting. Without Home Assistant a platform has chat, messaging and voice in the turn.
+
+**4. Presence sources and voice points** — two registries the platform derives from Home Assistant, nothing to keep
+by hand:
+- **presence sources**: who is in which area and how sure, from any entity Home Assistant has (above);
+- **voice points**: every `assist_satellite` entity with its area from Home Assistant; a **mobile** one takes its area
+  from a sensor (the duck: `sensor.quacksat_where` / the MQTT `place`; quacksat already asks to name the duck's places
+  after Home Assistant's areas, so the two match).
+
+To reach a person by voice the platform uses **the voice point in the area where the person is** — a fixed satellite
+before the duck; none there → the next channel in the order (§5b). Later the duck may walk to the person for a timed
+reminder (`go_to`).
+
+**5. Impulses and the moment.**
+- The impulse describes **a place**, not one person: `{place, people: [{identity, confidence, by}], someone: n,
+  ttlSeconds}`. Recordare sees whether others are there and decides on the opening (6) itself.
+- **Changes, not states**: an impulse for someone with no live presence in that place is an **arrival** (a natural
+  break: it may start a flexible initiative); a refresh only keeps the presence live.
+- The **clock reads live presences** (today the `presences` table is written and never read): at a timed reminder's
+  minute, a live room presence makes voice the first channel.
+- **Pace**: at most one spontaneous announcement per person every **30 minutes** (on trial, to be corrected from
+  outcomes); none while the platform says the person is talking with someone; quiet hours apply to voice too, except a
+  timed reminder (asked for that moment).
+
+**6. Saying it and hearing the answer.**
+- **Alone in the room**: the voice point says the initiative **and then listens**, no wake word — on a Home Assistant
+  satellite `assist_satellite.start_conversation` (to verify on the installed version; `announce` without listening as
+  the fallback: the person answers with the wake word); on the duck the bridge speaks and opens the microphone (7).
+- **The answer lands in the same conversation**: when it speaks, the platform writes the message in the person's chat
+  and **binds that satellite to that chat for a few minutes** (Arkimede: `ConversationFocusService`, already used for
+  satellites); the reply turn goes there, with the speaker known (the platform just addressed Chloé: medium
+  confidence), reaches Recordare as a turn, and the extraction closes the initiative — answered, done, learned — with
+  no extra call.
+- **Others in the room**: only the opening, which reveals nothing — "Chloé, I have something for you: want to hear
+  it?" (the memory's language, from `service/src/lang`, every language) — then listening. A "yes, tell me" is an
+  ordinary turn of Chloé's: the memory context already carries the initiative for the identified speaker (in-turn
+  channel), so the agent says it and listens again. "Later" or silence: it **stays pending** (not `ignored`) and comes
+  back at a later presence, within the pace.
+- **What counts as said**: the announcement played → said (`said` / `asked`, channel `voice`); an answer → closed by the
+  extraction, as in chat; played and unanswered → an ask stays open to the end of its window, as in chat; an opening
+  without a yes → not said, still pending.
+
+**7. The duck (quacksat) with Arkimede as its bridge.** The duck runs quacksat's `agent` backend and Arkimede becomes its
+bridge (quacksat's agent protocol v1: audio and events over WebSocket, the platform runs STT → LLM → TTS, several ducks
+on one bridge by name). Owed on quacksat's side: a server-initiated announcement (protocol v1.2: `announce` from the
+server, then `listen.start` to hear the answer — today `say` goes only from the duck to the server) and the place as an
+event (it is already a Home Assistant sensor). Later the duck's camera with face recognition is a mobile presence source.
+
+**8. What users can install** (the guide, from the minimum to the full set):
+1. the Home Assistant companion app and one voice satellite (Voice PE or similar): presence at home, voice in the turn;
+2. a satellite in every room people live in;
+3. per-room Bluetooth (Bermuda with ESPHome proxies, or ESPresense) with a phone or a watch: who is in which room,
+   without cameras, cheap;
+4. Frigate with face recognition where there are cameras;
+5. mmWave occupancy, to know someone is there even without a phone;
+6. a mobile satellite (the quacksat duck).
+
+**Contract changes** (additive, to build): the initiative carries `for.addresses: [{channel, id}]` (the person's
+identities); the presence impulse per place (`people[]`, `someone`); the opening sentence with the initiative when
+others are present (`opening`); the outcome's `channel`; an initiative kept pending after an unanswered opening.
 
 ## 6. Learning by asking (entity memory)
 
@@ -175,14 +265,20 @@ Path facts verified 2026-11-04 (connector code, OpenClaw 2026.10.10, hermes-agen
   **presence impulses** from Voce (the Wyoming user, `ConversationFocusService`), later voiceprint / face through Home
   Assistant or a camera; delivery in chat + notification; deduplication of a `say` against the user's own
   `scheduled_tasks` (`source`, ±2 h, shared words); outcomes reported.
-  - **Messaging, universally (decided 2026-11-05, way B)**: a skill declares itself a channel to the user in its
-    `SKILL.md` — e.g. `user-channel: {kind: messaging, script: scripts/send_message.js}` plus how to tell whether a user
-    is linked — and Arkimede calls that script directly with the text, no model in between (certain outcome, no cost).
-    Any messaging skill (Telegram, WhatsApp, Signal, e-mail) joins with two lines; `telegram-bot` first (its
-    `send_message` already reaches the linked user). With several, the user's preferred one (a setting), else the first
-    linked. The delivered message is also written in the Arkimede chat the bot uses, so the reply arrives with its
-    context and reaches Recordare as a turn. Rejected: delivery through an agent run (way A: an LLM call per message,
-    the tool and the outcome not certain).
+  - **Messaging, universally (decided 2026-11-05, way B)**: a skill declares itself a channel in its `SKILL.md` —
+    e.g. `user-channel: {kind: messaging, script: scripts/send_message.js}` — and Arkimede calls that script directly
+    with **the text and an address**, no model in between (certain outcome, no cost). The address comes with the
+    initiative (§5c.1: the person's identities on their card in Recordare — Chloé's Telegram chat id), so a contact of
+    the entity memory needs no Arkimede account; for a user's personal memory the skill's own linked user is the
+    address. Any messaging skill (Telegram, WhatsApp, Signal, e-mail) joins with two lines; `telegram-bot` first (its
+    `send_message` reaches a linked user today: it gains the address). With several channels for a person, the first in
+    a preference order (a setting), else the first the person has an address on. The delivered message is also written
+    in the Arkimede chat the bot uses for that person, so the reply arrives with its context and reaches Recordare as a
+    turn. Rejected: delivery through an agent run (way A: an LLM call per message, the tool and the outcome not
+    certain).
+  - **Presence and voice**: from Home Assistant over its WebSocket API with the MCP server's credentials, the two
+    registries (presence sources, voice points), the reply bound to the chat, the duck with Arkimede as its bridge:
+    §5c.
 - **OpenClaw**: in-turn already (`before_prompt_build`). Push by a webhook route (`registerHttpRoute`, `auth: "plugin"`)
   or the feed from the plugin's service (`registerService`); delivery as a system event on the person's session plus a
   heartbeat wake (`enqueueSystemEvent`, `requestHeartbeat` with `target: "last"`), confirmed by `message_sent`; channels
@@ -203,7 +299,7 @@ Path facts verified 2026-11-04 (connector code, OpenClaw 2026.10.10, hermes-agen
 | **F2** | timing v0 (classes, windows by rules and by the model, a decision on three triggers: the clock, an impulse, a turn); the new source "something left unfinished"; questions to people (§6); dev sets with timelines (timing) and a growing household (learning by asking) — **F2a built 2026-11-04**: the clock's cost-sensitive gate with rule windows, timed reminders at their minute, `initiative.deliver`, every decision logged; F2b **built 2026-11-04**: `dataset_dev_timing` + four timing rules, the model's hours (`initiative.v3`), things left to finish (`extract.v23`), questions routed to who could know (deterministic; the growing-household curve with simulated answers is still owed) | Recordare + evaluation |
 | **F3** | clients: Arkimede first (receiver, chat + notification, Telegram opt-in, impulses from Voce), then OpenClaw and Hermes — **in progress**: the client library's `InitiativeInbox` (0.8.0: webhooks, presence, the feed, once each, outcomes reported); the Claude Code / Codex hook asks for look-ups (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): webhook receiver + feed through `InitiativeInbox`, delivery in a dedicated chat with a notification, a presence impulse when the user opens the app, a reminder already scheduled reported `done`, connection and webhook secret from its settings. Still owed: the channel chosen at delivery (§5b: Recordare, the client library), Arkimede's `user-channel` skills (§8: Telegram first), push for OpenClaw and Hermes | clients |
 | **F4** | timing v1: learning from outcomes; measured on the dev set and on Kinox | Recordare |
-| **F5** | voiceprint and face in Arkimede (Home Assistant, camera), announce by voice at every presence, with the opening when others are present (§5b, to design); impulses from Voce; timing v2 | Arkimede, Recordare |
+| **F5** | voiceprint and face in Arkimede (Home Assistant, camera), presence from Home Assistant (three levels), voice points, announce and listen at every presence, the opening when others are present, the duck with Arkimede as its bridge (§5c); timing v2 | Arkimede, Recordare |
 
 Cost (D35): economy — rules for windows and channels, no LLM; balanced — the model's window in the existing
 `initiative` call; full — the same with reasoning. Learning from outcomes costs no LLM call.

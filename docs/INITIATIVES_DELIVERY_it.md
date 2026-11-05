@@ -111,16 +111,109 @@ Telegram, Chloé no) e da momento a momento (la voce raggiunge qualcuno solo men
 - **La risposta torna come turno.** La persona risponde dove il messaggio l'ha raggiunta; il client acquisisce la
   risposta nella conversazione che contiene il messaggio consegnato (`source` punta all'iniziativa), e l'estrazione la
   chiude (fatta, risposta, imparata) senza chiamate LLM in più, come nel turno (§7).
-- **Voce: annuncio spontaneo a ogni presenza** (deciso; il come è ancora da progettare, F5). Con altre persone nella
-  stanza l'agente dice prima solo un'apertura che non rivela niente ("Chloé, ho una cosa per te: vuoi sentirla?"),
-  nella lingua della memoria; se la persona risponde di sì, dice l'iniziativa; altrimenti resta in attesa (non
-  `ignored`). L'impulso di presenza dovrà dire se ci sono altri presenti; la frase di apertura viene da
-  `service/src/lang` (ogni lingua). Da ragionare ancora con il maintainer: quando un annuncio è gradito, come si ascolta
-  la risposta, cosa conta come detta.
+- **Voce: annuncio spontaneo a ogni presenza**, con un'apertura che non rivela niente quando ci sono altri: §5c.
 
 Cambi al contratto (additivi, da costruire): `channels: [kind…]` in ordine sull'iniziativa (feed, webhook, presenza,
 contesto) al posto del singolo `channel` scelto alla nascita; l'esito porta `channel`; la dichiarazione per client resta
 come l'elenco dei tipi che un client può avere in assoluto (ciò che non può mai raggiungere non viene mai offerto).
+
+### 5c. Presenza e voce (maintainer, 2026-11-05)
+
+Ragionata sulla casa del maintainer (Home Assistant con persone, telecamere, un satellite vocale in cucina; presto la
+papera di quacksat, un satellite vocale mobile) ma scritta come **standard**: non sappiamo cosa avranno gli utenti, così
+l'agente integra quanti più dispositivi può attraverso un solo hub e la guida dice cosa si può usare (§5c.8).
+
+**1. Chi è l'agente, chi sono le persone.** La configurazione più usata è una **memoria di entità**: un nuovo essere
+digitale con un cervello suo (Arkim3de sul Kinox), il cui corpo è un account sulla piattaforma (l'utente Wyoming di
+Arkimede). Le persone di casa sono **contatti di quella memoria**, non utenti della piattaforma: a Chloé non serve un
+account Arkimede. Ogni indirizzo di una persona è un'identità sulla **sua scheda in Recordare** — un'identità di
+partecipante verificata: `homeassistant` / `person.chloe`, `telegram` / il suo chat id, più avanti un'impronta vocale o
+l'etichetta di un volto — collegata una volta dalla console (`POST api/v1/admin/identities` dell'admin) o con un codice di
+collegamento (D51). Un solo elenco, usato nei due sensi: un impulso di presenza che nomina `person.chloe` porta a Chloé
+(come oggi), e un'iniziativa per Chloé porta **i suoi indirizzi per canale**, così il corpo sa dove trovarla. Gli
+indirizzi sono dell'agente (D50: la memoria appartiene all'agente), restituiti al corpo che li ha registrati. Le memorie
+personali (quella di un utente) tengono chat e messaggistica; la voce di casa per loro si può aggiungere dopo senza
+cambiare questo.
+
+**2. Tre livelli di presenza.**
+
+| Livello | Fonte di esempio | Basta per parlare? |
+|---|---|---|
+| **in casa** | `person.*` di Home Assistant è `home` (app companion, router, GPS) | no: tiene pronto ciò che è dovuto |
+| **in una stanza** | Bluetooth per stanza (Bermuda, ESPresense), un volto riconosciuto da Frigate, la papera che vede qualcuno | sì, se la stanza ha un punto voce e l'identità è abbastanza sicura |
+| **sta parlando** | un turno vocale su un satellite | è già il canale nel turno |
+
+Un sensore di occupazione senza identità (mmWave, movimento, la "persona" di Frigate senza volto) è **qualcuno** nella
+stanza: può portare a "sei Chloé?" (§3), mai al contenuto.
+
+**3. Tutto da Home Assistant.** La piattaforma legge la presenza da Home Assistant e parla attraverso di esso. MCP non
+basta: i suoi strumenti li chiama il modello, su richiesta — la presenza deve arrivare da sola, senza modello, e un
+annuncio deve andare a un satellite scelto, certo e senza costo (l'intento di broadcast di Home Assistant parla su tutti
+i satelliti). **Lo stesso URL e lo stesso token** già configurati per l'MCP server di Home Assistant aprono le sue **API
+WebSocket**: la piattaforma si iscrive agli eventi (persone, sensori delle aree, il posto della papera) e chiama
+direttamente le azioni dei satelliti. Nessuna impostazione nuova. Senza Home Assistant una piattaforma ha chat,
+messaggistica e voce nel turno.
+
+**4. Fonti di presenza e punti voce** — due anagrafiche che la piattaforma ricava da Home Assistant, niente da tenere a
+mano:
+- **fonti di presenza**: chi è in quale area e quanto è sicuro, da qualunque entità abbia Home Assistant (sopra);
+- **punti voce**: ogni entità `assist_satellite` con la sua area presa da Home Assistant; uno **mobile** prende l'area da
+  un sensore (la papera: `sensor.quacksat_where` / il `place` MQTT; quacksat chiede già di dare ai posti della papera i
+  nomi delle aree di Home Assistant, così le due cose coincidono).
+
+Per raggiungere una persona a voce la piattaforma usa **il punto voce nell'area dove si trova la persona** — un satellite
+fisso prima della papera; nessuno lì → il canale successivo nell'ordine (§5b). Più avanti la papera potrà andare dalla
+persona per un promemoria a orario (`go_to`).
+
+**5. Impulsi e momento.**
+- L'impulso descrive **un luogo**, non una persona: `{place, people: [{identity, confidence, by}], someone: n,
+  ttlSeconds}`. Recordare vede se ci sono altri e decide da sé l'apertura (6).
+- **Cambiamenti, non stati**: un impulso per qualcuno senza presenza valida in quel luogo è un **arrivo** (una pausa
+  naturale: può far partire un'iniziativa flessibile); un rinnovo tiene solo viva la presenza.
+- **L'orologio legge le presenze valide** (oggi la tabella `presences` è scritta e mai letta): al minuto di un promemoria
+  a orario, una presenza valida in una stanza mette la voce come primo canale.
+- **Ritmo**: al massimo un annuncio spontaneo per persona ogni **30 minuti** (in prova, da correggere con gli esiti);
+  nessuno mentre la piattaforma dice che la persona parla con qualcuno; le ore di quiete valgono anche per la voce,
+  tranne un promemoria a orario (chiesto per quel momento).
+
+**6. Dirlo e sentire la risposta.**
+- **Sola nella stanza**: il punto voce dice l'iniziativa **e poi ascolta**, senza parola di attivazione — su un satellite
+  di Home Assistant `assist_satellite.start_conversation` (da verificare sulla versione installata; `announce` senza
+  ascolto come ripiego: la persona risponde con la parola di attivazione); sulla papera il bridge parla e apre il
+  microfono (7).
+- **La risposta arriva nella stessa conversazione**: quando parla, la piattaforma scrive il messaggio nella chat della
+  persona e **lega quel satellite a quella chat per qualche minuto** (Arkimede: `ConversationFocusService`, già usato per
+  i satelliti); il turno di risposta va lì, con chi parla noto (la piattaforma si è appena rivolta a Chloé: sicurezza
+  media), arriva a Recordare come turno, e l'estrazione chiude l'iniziativa — risposta, fatta, imparata — senza chiamate
+  in più.
+- **Altri nella stanza**: solo l'apertura, che non rivela niente — "Chloé, ho una cosa per te: vuoi sentirla?" (la
+  lingua della memoria, da `service/src/lang`, ogni lingua) — poi ascolto. Un "sì, dimmi" è un turno normale di Chloé:
+  il contesto di memoria porta già l'iniziativa per chi parla ed è identificato (canale nel turno), così l'agente la dice
+  e ascolta di nuovo. "Dopo" o silenzio: **resta in attesa** (non `ignored`) e torna a una presenza successiva, nel
+  ritmo.
+- **Cosa conta come detta**: annuncio riprodotto → detta (`said` / `asked`, canale `voice`); una risposta → chiusa
+  dall'estrazione, come in chat; riprodotta senza risposta → una domanda resta aperta fino alla fine della sua finestra,
+  come in chat; un'apertura senza sì → non detta, ancora in attesa.
+
+**7. La papera (quacksat) con Arkimede come bridge.** La papera usa il backend `agent` di quacksat e Arkimede diventa il
+suo bridge (protocollo agent v1 di quacksat: audio ed eventi su WebSocket, la piattaforma fa STT → LLM → TTS, più papere
+su un bridge per nome). Da fare lato quacksat: un annuncio voluto dal server (protocollo v1.2: `announce` dal server, poi
+`listen.start` per sentire la risposta — oggi `say` va solo dalla papera al server) e il posto come evento (è già un
+sensore di Home Assistant). Più avanti la telecamera della papera con il riconoscimento dei volti è una fonte di presenza
+mobile.
+
+**8. Cosa possono installare gli utenti** (la guida, dal minimo al completo):
+1. l'app companion di Home Assistant e un satellite vocale (Voice PE o simili): presenza in casa, voce nel turno;
+2. un satellite in ogni stanza dove si vive;
+3. Bluetooth per stanza (Bermuda con proxy ESPHome, o ESPresense) con telefono o orologio: chi è in quale stanza, senza
+   telecamere, poco costoso;
+4. Frigate con riconoscimento dei volti dove ci sono telecamere;
+5. occupazione mmWave, per sapere che c'è qualcuno anche senza telefono;
+6. un satellite mobile (la papera di quacksat).
+
+**Cambi al contratto** (additivi, da costruire): l'iniziativa porta `for.addresses: [{channel, id}]` (le identità della
+persona); l'impulso di presenza per luogo (`people[]`, `someone`); la frase di apertura con l'iniziativa quando ci sono
+altri (`opening`); il `channel` dell'esito; un'iniziativa che resta in attesa dopo un'apertura senza risposta.
 
 ## 6. Imparare chiedendo (memoria di entità)
 
@@ -184,14 +277,20 @@ Fatti verificati il 2026-11-04 (codice dei connettori, OpenClaw 2026.10.10, herm
   Voce (l'utente Wyoming, `ConversationFocusService`), poi impronta vocale / volto tramite Home Assistant o una camera;
   consegna in chat + notifica; deduplica di un `say` rispetto agli `scheduled_tasks` dell'utente (`source`, ±2 h, parole
   in comune); esiti riportati.
-  - **Messaggistica, in modo universale (deciso il 2026-11-05, strada B)**: uno skill si dichiara canale verso l'utente
-    nel suo `SKILL.md` — p. es. `user-channel: {kind: messaging, script: scripts/send_message.js}` più come sapere se un
-    utente è collegato — e Arkimede chiama direttamente quello script con il testo, senza modello in mezzo (esito certo,
-    nessun costo). Ogni skill di messaggistica (Telegram, WhatsApp, Signal, e-mail) aderisce con due righe; per primo
-    `telegram-bot` (il suo `send_message` raggiunge già l'utente collegato). Con più canali, quello preferito
-    dall'utente (un'impostazione), altrimenti il primo collegato. Il messaggio consegnato è scritto anche nella chat di
-    Arkimede che il bot usa, così la risposta arriva con il suo contesto e raggiunge Recordare come turno. Scartata: la
-    consegna tramite una run dell'agente (strada A: una chiamata LLM per messaggio, strumento ed esito non certi).
+  - **Messaggistica, in modo universale (deciso il 2026-11-05, strada B)**: uno skill si dichiara canale nel suo
+    `SKILL.md` — p. es. `user-channel: {kind: messaging, script: scripts/send_message.js}` — e Arkimede chiama
+    direttamente quello script con **il testo e un indirizzo**, senza modello in mezzo (esito certo, nessun costo).
+    L'indirizzo arriva con l'iniziativa (§5c.1: le identità della persona sulla sua scheda in Recordare — il chat id
+    Telegram di Chloé), così a un contatto della memoria di entità non serve un account Arkimede; per la memoria
+    personale di un utente l'indirizzo è l'utente collegato allo skill. Ogni skill di messaggistica (Telegram, WhatsApp,
+    Signal, e-mail) aderisce con due righe; per primo `telegram-bot` (il suo `send_message` oggi raggiunge un utente
+    collegato: riceve l'indirizzo). Con più canali per una persona, il primo in un ordine di preferenza
+    (un'impostazione), altrimenti il primo su cui la persona ha un indirizzo. Il messaggio consegnato è scritto anche
+    nella chat di Arkimede che il bot usa per quella persona, così la risposta arriva con il suo contesto e raggiunge
+    Recordare come turno. Scartata: la consegna tramite una run dell'agente (strada A: una chiamata LLM per messaggio,
+    strumento ed esito non certi).
+  - **Presenza e voce**: da Home Assistant con le sue API WebSocket e le credenziali dell'MCP server, le due anagrafiche
+    (fonti di presenza, punti voce), la risposta legata alla chat, la papera con Arkimede come bridge: §5c.
 - **OpenClaw**: nel turno già oggi (`before_prompt_build`). Push con una rotta webhook (`registerHttpRoute`, `auth:
   "plugin"`) o con il feed dal servizio del plugin (`registerService`); consegna come evento di sistema sulla sessione
   della persona più un risveglio heartbeat (`enqueueSystemEvent`, `requestHeartbeat` con `target: "last"`), confermata
@@ -213,7 +312,7 @@ Fatti verificati il 2026-11-04 (codice dei connettori, OpenClaw 2026.10.10, herm
 | **F2** | tempo v0 (classi, finestre da regole e dal modello, una decisione su tre eventi: l'orologio, un impulso, un turno); la fonte nuova "qualcosa lasciato a metà"; domande alle persone (§6); dev set con linee temporali (tempo) e una casa che cresce (imparare chiedendo) — **F2a costruita il 2026-11-04**: il filtro sensibile ai costi dell'orologio con finestre da regole, promemoria a orario al loro minuto, `initiative.deliver`, ogni decisione registrata; F2b **costruita il 2026-11-04**: `dataset_dev_timing` + quattro regole di tempo, le ore del modello (`initiative.v3`), le cose lasciate a metà (`extract.v23`), domande indirizzate a chi potrebbe sapere (deterministico; la curva della casa che cresce con risposte simulate è ancora da fare) | Recordare + valutazione |
 | **F3** | client: prima Arkimede (ricevitore, chat + notifica, Telegram su scelta, impulsi da Voce), poi OpenClaw e Hermes — **in corso**: `InitiativeInbox` nella libreria client (0.8.0: webhook, presenza, feed, ognuno una volta, esiti riportati); l'hook di Claude Code / Codex chiede le ricerche (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): ricevitore webhook + feed tramite `InitiativeInbox`, consegna in una chat dedicata con notifica, un impulso di presenza quando l'utente apre l'app, un promemoria già programmato riportato `done`, connessione e segreto del webhook dalle sue impostazioni. Restano: il canale scelto alla consegna (§5b: Recordare, la libreria client), gli skill `user-channel` di Arkimede (§8: per primo Telegram), il push per OpenClaw e Hermes | client |
 | **F4** | tempo v1: apprendimento dagli esiti; misurato sul dev set e sul Kinox | Recordare |
-| **F5** | impronta vocale e volto in Arkimede (Home Assistant, camera), annuncio a voce a ogni presenza, con l'apertura quando ci sono altri (§5b, da progettare); impulsi da Voce; tempo v2 | Arkimede, Recordare |
+| **F5** | impronta vocale e volto in Arkimede (Home Assistant, camera), presenza da Home Assistant (tre livelli), punti voce, annuncio e ascolto a ogni presenza, l'apertura quando ci sono altri, la papera con Arkimede come bridge (§5c); tempo v2 | Arkimede, Recordare |
 
 Costo (D35): economy — regole per finestre e canali, nessuna chiamata LLM; balanced — la finestra del modello nella
 chiamata `initiative` che esiste già; full — lo stesso con il ragionamento. Imparare dagli esiti non costa chiamate LLM.
