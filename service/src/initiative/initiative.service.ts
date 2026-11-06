@@ -207,6 +207,8 @@ export class InitiativeService {
       `SELECT o.person_id FROM memories o WHERE EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = o.person_id AND e.kind IN ('plan', 'event'))
          OR EXISTS (SELECT 1 FROM notes n WHERE n.memory_id = o.person_id AND n.category = 'question')
          OR EXISTS (SELECT 1 FROM intents t WHERE t.memory_id = o.person_id AND t.status IN ('armed', 'fired'))
+         -- someone heard named whom it does not know (a gap, D55 F2b)
+         OR EXISTS (SELECT 1 FROM persons p JOIN episode_people ep ON ep.person_id = p.id WHERE p.memory_id = o.person_id AND p.relation IS NULL)
          -- what was given or waits to be (D55): settled, pushed or lapsed even when no intent is open any more
          OR EXISTS (SELECT 1 FROM initiatives i WHERE i.memory_id = o.person_id AND i.status IN ('pending', 'offered'))`);
     for (const { person_id } of memories) {
@@ -277,7 +279,7 @@ export class InitiativeService {
          AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN messages m ON m.id = x.message_id WHERE x.note_id = n.id AND m.role = 'assistant')
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.supersedes)
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.id)`, [memoryId]);
-    const [mem]: Array<{ mode: string }> = questions.length ? await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]) : [];
+    const [mem]: Array<{ mode: string }> = await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
     for (const q of questions) {
       // D55 F2b: whom to ask. A question about the world goes to the agent's tools (a look-up); one about a person to
       // someone who could know — that person when they talk to me, else whoever told me most about them (the holder of a
@@ -287,7 +289,7 @@ export class InitiativeService {
       if (q.subject && to === undefined) continue;
       if (to !== null && to !== undefined) {
         const [busy] = await this.db.query(
-          `SELECT 1 FROM intents WHERE memory_id = $1 AND kind = 'own' AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
+          `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
           [memoryId, to === 'holder' ? null : to]);
         if (busy) continue;
       }
@@ -297,6 +299,7 @@ export class InitiativeService {
         [memoryId, q.subject ? 'own' : 'lookup', q.content, to && to !== 'holder' ? to : null, q.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
       armed += r.length;
     }
+    armed += await this.armGaps(memoryId, now, mem?.mode === 'entity');
     // A source that moved on closes its intent: the plan confirmed, cancelled or rescheduled; the question answered or forgotten.
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM episodes e
@@ -310,8 +313,53 @@ export class InitiativeService {
   }
 
   /**
+   * Gaps (D55 F2b): someone the memory heard named (in an episode) but does not know who they are — no relation, nothing
+   * held about them (a fact, a note), and not a speaker of their own — is asked about once, of whoever named them most:
+   * "Who is Elena?". No model. One question at a time per person asked; never twice about the same person (an answer
+   * or a "don't know" alike: the intent is done). Closed when the gap closes before it is asked.
+   */
+  private async armGaps(memoryId: string, now: Date, entity: boolean): Promise<number> {
+    const gaps: Array<{ id: string; display_name: string }> = await this.db.query(
+      `SELECT p.id, p.display_name FROM persons p
+       WHERE p.memory_id = $1 AND p.id <> $1 AND p.relation IS NULL
+         AND EXISTS (SELECT 1 FROM episodes e WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL
+           AND (e.subject_person_id = p.id OR EXISTS (SELECT 1 FROM episode_people ep WHERE ep.episode_id = e.id AND ep.person_id = p.id)))
+         AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.memory_id = $1 AND m.author_person_id = p.id)
+         AND NOT EXISTS (SELECT 1 FROM external_identities x WHERE x.person_id = p.id)
+         AND NOT EXISTS (SELECT 1 FROM facts f WHERE f.memory_id = $1 AND f.subject_person_id = p.id AND f.status = 'current' AND f.deleted_at IS NULL)
+         AND NOT EXISTS (SELECT 1 FROM notes n WHERE n.memory_id = $1 AND n.subject_person_id = p.id AND n.status = 'current'
+           AND n.deleted_at IS NULL AND n.category <> 'question')
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'who' AND t.about_person_id = p.id)
+       ORDER BY p.created_at`, [memoryId]);
+    let armed = 0;
+    for (const g of gaps) {
+      const to = await this.answerer(memoryId, g.id, entity);
+      if (to === undefined || to === g.id) continue; // nobody to ask (they would be asked who they are themselves)
+      const [busy] = await this.db.query(
+        `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
+        [memoryId, to === 'holder' ? null : to]);
+      if (busy) continue;
+      const r = await this.db.query(
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, about_person_id, due_at, expires_at) VALUES ($1, 'who', $2, $3, $4, $5, $6)
+         ON CONFLICT (about_person_id, kind) WHERE about_person_id IS NOT NULL DO NOTHING RETURNING id`,
+        [memoryId, g.display_name, to === 'holder' ? null : to, g.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
+      armed += r.length;
+    }
+    // The gap closed before it was asked (a relation set, something learnt about them): nothing to ask.
+    await this.db.query(
+      `UPDATE intents t SET status = 'done', updated_at = now() FROM persons p
+       WHERE t.memory_id = $1 AND t.kind = 'who' AND t.status = 'armed' AND p.id = t.about_person_id
+         AND (p.relation IS NOT NULL
+           OR EXISTS (SELECT 1 FROM facts f WHERE f.subject_person_id = p.id AND f.status = 'current' AND f.deleted_at IS NULL)
+           OR EXISTS (SELECT 1 FROM notes n WHERE n.subject_person_id = p.id AND n.status = 'current' AND n.deleted_at IS NULL AND n.category <> 'question'))`,
+      [memoryId]);
+    return armed;
+  }
+
+  /**
    * Who could answer a question about `subject` (D55 F2b): the subject when they talk to me (a message of theirs in this
-   * memory); else whoever told me most about them — 'holder' (a personal memory's own turns) or an identified contact; in
+   * memory); else whoever told me most about them (episodes about them or naming them) — 'holder' (a personal memory's
+   * own turns) or an identified contact; in
    * an entity memory only an identified contact. undefined: nobody to ask.
    */
   private async answerer(memoryId: string, subject: string, entity: boolean): Promise<string | 'holder' | undefined> {
@@ -321,7 +369,8 @@ export class InitiativeService {
     const [teller]: Array<{ who: string }> = await this.db.query(
       `SELECT CASE WHEN m.author_kind = 'self' THEN 'holder' ELSE m.author_person_id::text END AS who
        FROM episodes e JOIN episode_evidence v ON v.episode_id = e.id JOIN messages m ON m.id = v.message_id
-       WHERE e.memory_id = $1 AND e.subject_person_id = $2 AND e.deleted_at IS NULL
+       WHERE e.memory_id = $1 AND e.deleted_at IS NULL
+         AND (e.subject_person_id = $2 OR EXISTS (SELECT 1 FROM episode_people ep WHERE ep.episode_id = e.id AND ep.person_id = $2))
          AND ((m.author_kind = 'self' AND NOT $3) OR (m.author_kind = 'contact' AND m.author_person_id IS NOT NULL AND m.author_person_id <> $2))
        GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1`, [memoryId, subject, entity]);
     return teller?.who;
@@ -393,6 +442,8 @@ export class InitiativeService {
             : t.kind === 'followup' ? ['ask', t.content.trim(), 'something they left unfinished']
               // A question of mine for someone who could know (D55 F2b): the question as the thought pass wrote it.
               : t.kind === 'own' ? ['ask', t.content.trim(), 'a question I hold, for someone who could know']
+                // Someone heard named whom I do not know (a gap): the service's own sentence, the name only.
+                : t.kind === 'who' ? ['ask', text.whoIs(t.content.trim()), 'someone I heard named and do not know']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
       // A day relative to now ("yesterday") is true only today: in a text that may be said on a later day (an ask, a
       // look-up: days of window), the service's own sentence, which names the day.
@@ -428,11 +479,12 @@ export class InitiativeService {
   ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
     const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
-    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' || k === 'own' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' || k === 'own' || k === 'who' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
     const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
       : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me'
         : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)'
-          : k === 'own' ? 'a question I hold, to ask the person FOR, who could know (WHAT is the question)' : 'a question I hold');
+          : k === 'own' ? 'a question I hold, to ask the person FOR, who could know (WHAT is the question)'
+            : k === 'who' ? 'someone I heard named and do not know (WHAT is their name): ask the person FOR who they are' : 'a question I hold');
     // The days it may be said on: one day alone when it is said today or lapses.
     const said = (t: { kind: string; timed: boolean; due_at: Date; expires_at: Date }) => { const d = sayDays(t, now, memory.timezone); return d.from === d.to ? d.from : `${d.from} to ${d.to}`; };
     const user = [

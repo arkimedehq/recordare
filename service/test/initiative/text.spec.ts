@@ -17,6 +17,10 @@ describe('the initiatives\' sentences (all languages)', () => {
       expect(t.opening('NAME')).toMatch(/^NAME/);
       expect(t.opening('NAME')).toMatch(/[?？;؟;]|ไหม$/);
       if (locale !== 'en') expect(t.opening('NAME')).not.toBe(initiativeText('en').opening('NAME'));
+      // Who someone heard named is (D55 F2b, a gap): the name and a question, in that language.
+      expect(t.whoIs('NAME')).toContain('NAME');
+      expect(t.whoIs('NAME')).toMatch(/[?？;؟]|ใคร/);
+      if (locale !== 'en') expect(t.whoIs('NAME')).not.toBe(initiativeText('en').whoIs('NAME'));
       if (locale !== 'en') expect(t).not.toBe(initiativeText('en'));
     }
     expect(initiativeText('xx-YY')).toBe(initiativeText('en'));

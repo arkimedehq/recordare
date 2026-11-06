@@ -105,4 +105,46 @@ describe('learning by asking: whom a question goes to', () => {
     await app.get(InitiativeService).sweep(casa, NOW);
     expect(await intentOf('Giada ha vinto una medaglia?')).toMatchObject({ kind: 'own', for_person_id: paolo });
   });
+
+  it('a gap: someone heard named and not known is asked about once, of who named them; never a speaker; closed when known', async () => {
+    const home = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Casa Bianchi', mode: 'entity' } })).body.personId;
+    const clientId = (await db.query(`SELECT id FROM clients WHERE name = 'A'`))[0].id;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: home, clientId, externalId: 'bianchi' } });
+    const who = [{ ref: 'nina', role: 'other', displayName: 'Nina', identity: { channel: 'voice', externalId: 'nina' } }];
+    await ingest('bianchi', 'hall', [
+      { externalId: 'n1', role: 'other', authorRef: 'nina', content: 'Domani Bruna ci porta al museo.', sentAt: '2026-10-05T18:00:00+02:00' },
+      { externalId: 'n2', role: 'other', authorRef: 'nina', content: 'Anche Teo viene al museo.', sentAt: '2026-10-05T18:05:00+02:00' },
+    ], who);
+    const nina = await person(home, 'Nina');
+    await db.query(`INSERT INTO persons (memory_id, display_name) VALUES ($1, 'Bruna'), ($1, 'Teo')`, [home]);
+    // Bruna and Teo are only named (people of an episode about Nina), never the subject.
+    for (const [name, ext] of [['Bruna', 'n1'], ['Teo', 'n2']] as const) {
+      const [e] = await db.query(
+        `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, subject_kind, subject_person_id)
+         VALUES ($1, 'event', $2, 'holder_told', 'holder', 'stated', ARRAY[$1::uuid], '2026-10-06', 'day', 'contact', $3) RETURNING id`, [home, `${name} e Nina al museo`, nina]);
+      await db.query(`INSERT INTO episode_evidence (episode_id, message_id) SELECT $1, id FROM messages WHERE external_id = $2`, [e.id, ext]);
+      await db.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [e.id, name, await person(home, name)]);
+    }
+    const gaps = async () => db.query(
+      `SELECT t.content, t.status::text, t.for_person_id, i.text, i.kind::text AS initiative, i.reason FROM intents t LEFT JOIN initiatives i ON i.intent_id = t.id
+       WHERE t.memory_id = $1 AND t.kind = 'who' ORDER BY t.created_at`, [home]);
+    const sweep = app.get(InitiativeService);
+    await sweep.sweep(home, NOW);
+    // Asked of Nina, who named her, in the memory's language; Nina herself (a speaker) is never asked about; one at a time.
+    expect(await gaps()).toMatchObject([{ content: 'Bruna', for_person_id: nina, initiative: 'ask', text: 'Chi è Bruna? Ho sentito il nome, ma non so chi sia.',
+      reason: 'someone I heard named and do not know' }]);
+    await sweep.sweep(home, NOW);
+    expect(await gaps()).toHaveLength(1);
+    // Asked (answer or not): done, never asked again; Teo is next. Teo becomes known before he is asked: closed.
+    await db.query(`UPDATE intents SET status = 'done' WHERE memory_id = $1 AND kind = 'who'`, [home]);
+    await db.query(`UPDATE initiatives SET status = 'asked' WHERE memory_id = $1 AND status IN ('pending', 'offered')`, [home]);
+    await sweep.sweep(home, NOW);
+    const after = await gaps();
+    expect(after.map((g: { content: string }) => g.content)).toEqual(['Bruna', 'Teo']);
+    await db.query(`UPDATE persons SET relation = 'maestra' WHERE id = $1`, [await person(home, 'Teo')]);
+    await db.query(`UPDATE initiatives SET status = 'expired' WHERE memory_id = $1 AND status IN ('pending', 'offered')`, [home]);
+    await db.query(`UPDATE intents SET status = 'armed' WHERE memory_id = $1 AND content = 'Teo'`, [home]);
+    await sweep.sweep(home, NOW);
+    expect((await gaps()).find((g: { content: string }) => g.content === 'Teo')).toMatchObject({ status: 'done' });
+  });
 });
