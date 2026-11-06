@@ -13,7 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { type Env } from '../config/env';
 import { initiativeText } from '../lang/initiative';
-import { afterQuiet, InitiativeService, type InitiativeView } from './initiative.service';
+import { afterQuiet, InitiativeService, TIMING, type InitiativeView } from './initiative.service';
+import { dayPart, shouldHold } from './learning';
 
 /**
  * How the agent perceived the person: at home (`home`: an account's presence, not enough to speak), heard (voice), seen
@@ -90,12 +91,25 @@ export class PresenceService {
     const [memory]: Array<{ locale: string; timezone: string; quiet_from: number; quiet_to: number }> = await this.db.query(
       `SELECT locale, timezone, quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]);
     const quiet = !!memory && afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to).getTime() !== now.getTime();
+    const policy = this.config.get('INITIATIVE_TIMING', { infer: true }) ?? 'v0';
+    const learn = policy === 'v1' || (policy === 'v0' && this.config.get('INITIATIVE_TIMING_SHADOW', { infer: true }));
     for (const r of resolved) {
       if (!r.person) continue;
       // In a room, spontaneous only at an arrival, within the pace, outside the quiet hours; else only a timed request or promise.
       const timedOwedOnly = room && (!arrived.has(r.person.personId) || quiet || await this.paced(memoryId, r.person.personId, now));
+      // Timing v1 (F4): where this person has often ignored or declined what was said to them (this part of the day, this
+      // channel), a flexible one waits for a better moment; a time they chose still goes.
+      let learnt: boolean | null = null;
+      if (learn && memory && !timedOwedOnly) {
+        const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: memory.timezone }).format(now)) % 24;
+        const self = r.person.personId === memoryId;
+        const exp = await this.initiatives.experienceOf(memoryId, self ? null : r.person.personId, memory.timezone, now);
+        learnt = shouldHold(exp, dayPart(hour), channel, TIMING.defaultPrior);
+      }
+      const hold = policy === 'v1' && !!learnt;
       const res = await this.initiatives.offer(memoryId, { personId: r.person.personId, confidence: r.confidence }, channel, now,
-        { timedOwedOnly, open: room && others });
+        { timedOwedOnly: timedOwedOnly || hold, open: room && others,
+          features: learnt === null ? undefined : policy === 'v1' ? { learntHold: learnt } : { shadow: { policy: 'v1', hold: learnt } } });
       if (res.initiative) {
         return { person: r.person, people, initiative: res.initiative, askWho: null,
           opening: res.opened ? initiativeText(memory?.locale ?? 'en').opening(r.person.name) : null };
