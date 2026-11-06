@@ -17,6 +17,8 @@ const T = {
     name: 'Nome', rename: 'Rinomina', renameHint: 'Se la persona è collegata a un client, il nome segue il suo profilo lì e verrà riscritto.',
     messages: 'messaggi', pending: 'da estrarre', episodes: 'episodi', facts: 'fatti', notes: 'note', last: 'ultimo messaggio',
     identities: 'Identità collegate', none: 'nessuna', noneM: 'nessuno', unlink: 'Scollega', link: 'Collega un utente di un client',
+    people: 'Persone', merge: 'Unisci', mergeInto: 'in', mentions: 'citazioni',
+    mergeConfirm: 'Unire le due schede? La prima confluisce nella seconda (nomi, indirizzi, ricordi, iniziative); non si può annullare.',
     address: 'Collega un indirizzo', addressChannel: 'canale (es. homeassistant, telegram)', addressId: 'id (es. person.chloe)',
     externalId: 'id utente nel client', tokens: 'Token personali', newToken: 'Nuovo token', revoke: 'Revoca',
     consolidate: 'Consolida ora', consolidated: 'Consolidamento eseguito', saved: 'Salvato',
@@ -56,6 +58,8 @@ const T = {
     name: 'Name', rename: 'Rename', renameHint: 'If the person is linked to a client, the name follows their profile there and will be overwritten.',
     messages: 'messages', pending: 'to extract', episodes: 'episodes', facts: 'facts', notes: 'notes', last: 'last message',
     identities: 'Linked identities', none: 'none', noneM: 'none', unlink: 'Unlink', link: 'Link a client\'s user',
+    people: 'People', merge: 'Merge', mergeInto: 'into', mentions: 'mentions',
+    mergeConfirm: 'Merge the two cards? The first goes into the second (names, addresses, memories, initiatives); it cannot be undone.',
     address: 'Link an address', addressChannel: 'channel (e.g. homeassistant, telegram)', addressId: 'id (e.g. person.chloe)',
     externalId: 'user id in the client', tokens: 'Personal tokens', newToken: 'New token', revoke: 'Revoke',
     consolidate: 'Consolidate now', consolidated: 'Consolidation done', saved: 'Saved',
@@ -99,6 +103,7 @@ const HELP = {
     timezone: 'Il fuso orario della persona: serve per capire "domani", "stasera", le ore di quiete e l\'ora dei promemoria.',
     quiet: 'Le ore in cui la memoria non disturba: nessun messaggio spontaneo, salvo un promemoria chiesto proprio per quell\'ora.',
     identities: 'Chi può aprire questa memoria: un "account" è un utente di un client (es. l\'utente di Arkimede) che arriva qui. Scollegare non cancella i ricordi.',
+    merge: 'La stessa persona conosciuta due volte (es. "Eriona" e "Eriona Rossi"): la prima scheda confluisce nella seconda, che tiene tutti i nomi, gli indirizzi, ciò che la memoria sa di lei e ciò che intende dirle. Le citazioni aiutano a scegliere quale tenere.',
     address: 'Come raggiungere una persona di questa memoria e riconoscerla (D55): la persona di Home Assistant (canale homeassistant, id person.chloe), la chat Telegram (canale telegram, id del chat). L\'agente la usa per consegnarle un\'iniziativa a voce o per messaggio, e per sapere chi è quando la vede.',
     link: 'Collega un utente di un client a questa memoria: scegli il client e scrivi l\'id che quel client usa per l\'utente.',
     linkCode: 'Un codice monouso per riconoscere il titolare quando scrive da un altro canale (es. Telegram): lo invia all\'agente in chat diretta, poi confermi qui.',
@@ -133,6 +138,7 @@ const HELP = {
     timezone: 'The person\'s time zone: it resolves "tomorrow", "tonight", the quiet hours and when reminders are due.',
     quiet: 'Hours when the memory does not disturb: no message of its own, except a reminder asked for that very hour.',
     identities: 'Who can open this memory: an "account" is a client\'s user (e.g. Arkimede\'s user) arriving here. Unlinking deletes no memory.',
+    merge: 'The same person known twice (e.g. "Eriona" and "Eriona Rossi"): the first card goes into the second, which keeps every name, address, what the memory knows about them and what it means to tell them. The mentions help to choose which one to keep.',
     address: 'How to reach a person of this memory and recognise them (D55): their Home Assistant person (channel homeassistant, id person.chloe), their Telegram chat (channel telegram, the chat id). The agent uses it to deliver an initiative by voice or by message, and to know who it is when it sees them.',
     link: 'Link a client\'s user to this memory: pick the client and type the id that client uses for the user.',
     linkCode: 'A one-time code to recognise the holder writing from another channel (e.g. Telegram): they send it to the agent in a direct chat, then you confirm here.',
@@ -230,6 +236,9 @@ function toast(msg, error = false) {
 }
 
 /** Runs an action, reports its outcome, reloads the current tab. */
+/** A person in a select: the name, and how often the memory mentions them (to tell two cards with one name apart). */
+const personLabel = (x) => (x.self || x.mentions === undefined ? x.name : `${x.name} · ${x.mentions} ${t('mentions')}`);
+
 async function act(fn, done = t('saved')) {
   try { await fn(); if (done) toast(done); } catch (e) { toast(e.message, true); }
   await render();
@@ -283,7 +292,12 @@ function personCard(p) {
   const clientOptions = () => clientsCache.map((c) => h('option', { value: c.id }, c.name));
   const linkClient = h('select', {}, clientOptions());
   const linkId = h('input', { placeholder: t('externalId') });
-  const addressPerson = h('select', {}, (p.people ?? []).map((x) => h('option', { value: x.id }, x.name)));
+  const addressPerson = h('select', {}, (p.people ?? []).map((x) => h('option', { value: x.id }, personLabel(x))));
+  // The memory's contacts (never its self) for a merge: the same person known twice.
+  const contacts = (p.people ?? []).filter((x) => !x.self);
+  const contactSelect = () => h('select', {}, contacts.map((x) => h('option', { value: x.id }, personLabel(x))));
+  const mergeFrom = contactSelect();
+  const mergeInto = contactSelect();
   const addressChannel = h('input', { placeholder: t('addressChannel'), list: `channels-${p.id}` });
   const addressId = h('input', { placeholder: t('addressId') });
   const tokenClient = h('select', {}, clientOptions());
@@ -348,6 +362,14 @@ function personCard(p) {
         })),
       }, t('address'))),
       help('address'),
+      // Two cards of the same person: the first goes into the second (engine/contacts.ts mergeContacts).
+      contacts.length > 1 ? h('h4', {}, t('people')) : null,
+      contacts.length > 1 ? h('div', { class: 'row' }, mergeFrom, t('mergeInto'), mergeInto, h('button', {
+        class: 'ghost small',
+        onclick: () => mergeFrom.value !== mergeInto.value && confirm(t('mergeConfirm'))
+          && act(() => api('POST', `memories/${p.id}/persons/${mergeFrom.value}/merge`, { into: mergeInto.value })),
+      }, t('merge'))) : null,
+      contacts.length > 1 ? help('merge') : null,
       // D51: the holder's channel identities — a one-time code, then the claim it made is confirmed here.
       p.linkClaims.length ? h('h4', {}, t('claims')) : null,
       p.linkClaims.length ? help('claims') : null,

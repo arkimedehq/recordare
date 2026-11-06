@@ -237,7 +237,8 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > nominare, `home` per "in casa" (non basta per parlare). Un arrivo può ottenere qualunque cosa dovuta, un rinnovo solo
 > una richiesta o promessa a orario; con altri nella stanza ricevi `opening`: di' solo quella e ascolta — il "sì" della
 > persona è un suo turno, e il contesto di memoria ti dà l'iniziativa allora. Lega per qualche minuto il punto voce che ha
-> parlato alla conversazione, così la risposta arriva lì.
+> parlato alla conversazione, così la risposta arriva lì. Con la libreria client: `deliver` restituisce `{outcome, channel}`,
+> `addressesOn` trova la persona su un canale, e `open` dice l'apertura (`packages/client/README_it.md`).
 
 Recordare spinge ciò che l'agente ha deciso di dire, chiedere o cercare (`API.md` §4b). La tua piattaforma lo consegna
 **quando la persona c'è** (la presenza è tua: una chat aperta ora, una voce riconosciuta nella stanza, qualcuno al
@@ -254,7 +255,11 @@ pannello), riporta che fine ha fatto e svolge le ricerche con i propri strumenti
    (`learnSource`) o come percezione; la domanda dell'agente allora si chiude.
 4. Riporta l'esito: `client.reportInitiative(user, id, 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed')`.
    Guida l'agente: declined è definitivo, ignored viene riproposta una volta a una settimana di distanza, poi lasciata
-   cadere.
+   cadere. **Un promemoria che i tuoi strumenti hanno già programmato** (l'agente ha impostato un'automazione nella
+   stessa conversazione): riporta `done` invece di dirlo due volte — ma solo quando il tuo task è per la stessa persona
+   (`data.for`: la nomina o raggiunge un suo indirizzo) ed è ancora da eseguire o è stato eseguito vicino all'orario
+   dell'iniziativa. Il tuo task esplicito e confermato è la verità (vale il suo orario); un task fallito o cancellato
+   non copre niente, quindi consegna l'iniziativa: è la rete di sicurezza che impedisce di perdere un promemoria.
 5. Le ore di quiete (`quietFrom` / `quietTo`, admin `PATCH api/v1/admin/memories/{id}`) e il limite giornaliero per
    persona (`INITIATIVE_DAILY_LIMIT`) sono di Recordare; il tuo non disturbare e i tuoi limiti di frequenza sono ben
    accetti in più.

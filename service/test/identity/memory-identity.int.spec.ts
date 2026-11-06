@@ -169,6 +169,32 @@ describe('memory identity (D50)', () => {
     expect((casa as unknown as { people: Array<{ id: string; name: string }> }).people.map((x) => x.id)).toEqual([entity, contactId]);
   });
 
+  it('merges two cards of the same person from the admin API: names, addresses (once), intents move; never the self or across memories', async () => {
+    const [{ id: a }] = await db.query(`INSERT INTO persons (memory_id, display_name, relation) VALUES ($1, 'Eriona', 'moglie') RETURNING id`, [entity]);
+    const [{ id: b }] = await db.query(`INSERT INTO persons (memory_id, display_name) VALUES ($1, 'Eriona Rossi') RETURNING id`, [entity]);
+    const link = (personId: string, channel: string, externalId: string) => call(url, 'POST', '/api/v1/admin/identities',
+      { token: ADMIN_KEY, body: { kind: 'participant', memoryId: entity, personId, channel, externalId, verified: true } });
+    expect((await link(a, 'homeassistant', 'person.eriona')).status).toBe(201);
+    expect((await link(b, 'telegram', '4242001')).status).toBe(201);
+    await db.query(`INSERT INTO intents (memory_id, kind, content, for_person_id, due_at, expires_at) VALUES ($1, 'request', 'stendere i panni', $2, now(), now() + interval '1 day')`, [entity, b]);
+    // The listing tells the two apart by how often the memory mentions them.
+    const people = ((await call(url, 'GET', '/api/v1/admin/persons', { token: ADMIN_KEY })).body as Array<{ id: string; people: Array<{ id: string; mentions?: number; self?: boolean }> }>)
+      .find((p) => p.id === entity)!.people;
+    expect(people.find((x) => x.id === entity)).toMatchObject({ self: true });
+    expect(people.find((x) => x.id === b)).toMatchObject({ mentions: 0 });
+
+    const merge = (memory: string, from: string, into: string) => call(url, 'POST', `/api/v1/admin/memories/${memory}/persons/${from}/merge`, { token: ADMIN_KEY, body: { into } });
+    expect(await merge(personal, b, a)).toMatchObject({ status: 400, body: { code: 'cannot_merge' } }); // not that memory's contacts
+    expect(await merge(entity, entity, a)).toMatchObject({ status: 400, body: { code: 'cannot_merge' } }); // the memory's self
+    expect(await merge(entity, b, b)).toMatchObject({ status: 400, body: { code: 'cannot_merge' } });
+    expect(await merge(entity, b, a)).toMatchObject({ status: 201, body: { merged: true, into: a } });
+
+    expect(await db.query(`SELECT id, relation FROM persons WHERE id = ANY($1::uuid[])`, [[a, b]])).toEqual([{ id: a, relation: 'moglie' }]);
+    expect(await db.query(`SELECT channel, external_id FROM external_identities WHERE person_id = $1 ORDER BY channel`, [a]))
+      .toEqual([{ channel: 'homeassistant', external_id: 'person.eriona' }, { channel: 'telegram', external_id: '4242001' }]);
+    expect(await db.query(`SELECT for_person_id FROM intents WHERE content = 'stendere i panni'`)).toEqual([{ for_person_id: a }]);
+  });
+
   it('stores whose each memory is: the self in a personal memory; a contact, someone or the agent itself in an entity memory (8.5)', async () => {
     const extract = async (user: string, conversation: string, content: string, out: object) => {
       const res = await ingest(user, { conversation: { externalId: conversation }, messages: [{ externalId: `${conversation}-1`, role: 'user', content, sentAt: at(1) }] });

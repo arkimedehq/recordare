@@ -88,6 +88,9 @@ export const createIdentitySchema = z.discriminatedUnion('kind', [
   }).refine((b) => (b.clientId === undefined) !== (b.channel === undefined), { message: 'exactly one of clientId or channel' }),
 ]);
 
+/** Merge a contact of a memory into another (the same person known twice): every reference moves to `into`. */
+export const mergePersonSchema = z.object({ into: z.uuid() });
+
 export const createTokenSchema = z.object({
   clientId: z.uuid(),
   scopes,
@@ -101,3 +104,4 @@ export type CreateMemory = z.infer<typeof createMemorySchema>;
 export type UpdateMemory = z.infer<typeof updateMemorySchema>;
 export type CreateIdentity = z.infer<typeof createIdentitySchema>;
 export type CreateToken = z.infer<typeof createTokenSchema>;
+export type MergePerson = z.infer<typeof mergePersonSchema>;

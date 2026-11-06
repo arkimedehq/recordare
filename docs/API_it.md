@@ -177,7 +177,8 @@ questo collegamento tra client ne avrà di propri):
 2. Quel client lo invia: `POST api/v1/identities/link {code, externalUserId}`; il riscatto da parte di qualsiasi
    altro client è rifiutato. Il titolare riceve una notifica.
 3. Se l'`externalUserId` è già legato a un'altra memoria, il collegamento fallisce con un generico
-   `400 cannot_link` (nessun indizio che l'id esista) — l'unione di persone non è supportata nella v1.
+   `400 cannot_link` (nessun indizio che l'id esista) — un collegamento del titolare non unisce mai memorie (due contatti di
+   una stessa memoria li unisce l'admin: "Console admin" più avanti).
 4. Il titolare può elencare e revocare in qualsiasi momento i client e le identità connessi:
    `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` (sessione del titolare).
 
@@ -820,7 +821,11 @@ partecipante del suo sé e dei suoi contatti —, token personali attivi per pre
 collegamento del D51 in attesa di conferma), `GET api/v1/admin/clients` (client
 con chiavi attive per prefisso), `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = tutte le chiavi
 e i token del client smettono subito di funzionare), `DELETE api/v1/admin/identities/:id` (scollega l'utente di un client
-da una persona; i ricordi restano). Per il resto la console usa le altre rotte admin della §1 (modo e
+da una persona; i ricordi restano), `POST api/v1/admin/memories/:id/persons/:person/merge {into}` (due schede della stessa
+persona in una memoria: nomi, indirizzi, ciò che la memoria sa di lei e intende dirle passano a `into`, poi `person` sparisce;
+`400 cannot_merge` per il sé della memoria, una persona che ha una memoria o una persona di un'altra memoria; `people` in
+`GET api/v1/admin/persons` porta per ogni contatto `mentions`, in quanti episodi è nominato, per distinguere due schede con
+lo stesso nome). Per il resto la console usa le altre rotte admin della §1 (modo e
 genere della memoria, profilo di qualità, nome, identità, token personali, chiavi dei client, consolidamento); è in italiano e in
 inglese.
 

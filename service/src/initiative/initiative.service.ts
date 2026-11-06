@@ -29,13 +29,14 @@ import { saysRelativeDay } from '../lang/periods';
 import { overlap } from '../lang/overlap';
 import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { TelemetryService } from '../telemetry/telemetry.service';
+import { DELIVERY_CHANNELS } from './initiative.responses';
 import { WebhooksService } from './webhooks.service';
 
 export type InitiativeKind = 'say' | 'ask' | 'lookup' | 'do';
 export type InitiativeStatus = 'pending' | 'offered' | 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed' | 'expired';
 export const OUTCOMES = ['said', 'asked', 'ignored', 'declined', 'done', 'failed', 'expired'] as const;
 /** Where an initiative reached the person (D55): in a turn (the memory context), a chat, messaging, by voice, on a panel. */
-export const DELIVERY_CHANNELS = ['turn', 'chat', 'messaging', 'voice', 'panel'] as const;
+export { DELIVERY_CHANNELS } from './initiative.responses';
 export type DeliveryChannel = (typeof DELIVERY_CHANNELS)[number];
 export type Reaction = 'positive' | 'neutral' | 'negative';
 
@@ -52,7 +53,7 @@ export interface InitiativeView {
   /** Where it was offered, or will be delivered (a client's declared channel); null: at the person's next presence or turn. */
   channel: string | null;
   /** The acceptable channels in order (D55 §5b): the client delivers on the first that reaches the person now. */
-  channels: string[];
+  channels: DeliveryChannel[];
   /** How surely the person must be recognised before hearing it (D55: medium, or high for what came from a private message). */
   identity: { required: 'medium' | 'high' };
   /** The client's own ids of the messages its intent came from: a host recognises a reminder it scheduled itself. */
@@ -65,7 +66,7 @@ export interface InitiativeView {
 interface Row {
   id: string; seq: string; kind: InitiativeKind; for_person_id: string | null; for_name: string | null; text: string; reason: string; worth: number | null;
   episode_ids: string[]; due_at: Date; expires_at: Date; status: InitiativeStatus; outcome_at: Date | null; reply: string | null; created_at: Date;
-  timing: 'timed' | 'flexible'; identity_required: 'medium' | 'high'; channel: string | null; channels: string[]; offered_at: Date | null;
+  timing: 'timed' | 'flexible'; identity_required: 'medium' | 'high'; channel: string | null; channels: DeliveryChannel[]; offered_at: Date | null;
   for_addresses: Address[] | null;
   source_conversation: string | null; source_messages: string[]; pushed_at: Date | null;
 }
@@ -719,7 +720,7 @@ export function nextLocalHour(now: Date, tz: string, hour: number): Date {
  * anything else waits for a voice presence, a turn or the chat: voice → chat; a look-up is for the agent's tools: the turn
  * only (none). The turn is always acceptable and never listed. The client delivers on the first that reaches the person now.
  */
-export function acceptableChannels(kind: InitiativeKind, intentKind: string | null): string[] {
+export function acceptableChannels(kind: InitiativeKind, intentKind: string | null): DeliveryChannel[] {
   if (kind === 'lookup') return [];
   return intentKind === 'request' || intentKind === 'promise' ? ['voice', 'messaging', 'chat'] : ['voice', 'chat'];
 }

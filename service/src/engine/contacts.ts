@@ -99,7 +99,9 @@ const replaced = (col: 'subject_candidates' | 'audience' | 'candidates') =>
  */
 export async function mergeContacts(db: Queryable, memoryId: string, from: string, into: string, at: Date): Promise<boolean> {
   if (from === into) return false;
-  const both: Array<{ id: string }> = await db.query(`SELECT id FROM persons WHERE id = ANY($1::uuid[]) AND memory_id = $2`, [[from, into], memoryId]);
+  // Contacts of this memory only; never a person who holds a memory of their own (deleting it would erase that memory).
+  const both: Array<{ id: string }> = await db.query(`SELECT id FROM persons p WHERE id = ANY($1::uuid[]) AND memory_id = $2
+    AND NOT EXISTS (SELECT 1 FROM memories m WHERE m.person_id = p.id)`, [[from, into], memoryId]);
   if (both.length !== 2) return false;
   const args = [memoryId, from, into];
 
@@ -108,6 +110,10 @@ export async function mergeContacts(db: Queryable, memoryId: string, from: strin
   await db.query(`DELETE FROM person_aliases a WHERE a.person_id = $2 AND a.memory_id = $1
     AND EXISTS (SELECT 1 FROM person_aliases b WHERE b.person_id = $3 AND b.alias_norm = a.alias_norm)`, args);
   await db.query(`UPDATE person_aliases SET person_id = $3 WHERE person_id = $2 AND memory_id = $1`, args);
+  // An address both have (the same channel id) stays once, on the merged contact.
+  await db.query(`DELETE FROM external_identities a WHERE a.person_id = $2 AND a.memory_id = $1
+    AND EXISTS (SELECT 1 FROM external_identities b WHERE b.person_id = $3 AND b.memory_id = $1 AND b.kind = a.kind
+      AND b.external_id = a.external_id AND b.channel IS NOT DISTINCT FROM a.channel AND b.client_id IS NOT DISTINCT FROM a.client_id)`, args);
   await db.query(`UPDATE external_identities SET person_id = $3 WHERE person_id = $2 AND memory_id = $1`, args);
   await db.query(`UPDATE conversation_participants cp SET person_id = $3 FROM conversations c
     WHERE c.id = cp.conversation_id AND c.memory_id = $1 AND cp.person_id = $2`, args);
@@ -115,6 +121,13 @@ export async function mergeContacts(db: Queryable, memoryId: string, from: strin
   await db.query(`UPDATE messages SET private_owner_id = $3 WHERE memory_id = $1 AND private_owner_id = $2`, args);
   await db.query(`UPDATE episode_people ep SET person_id = $3 FROM episodes e
     WHERE e.id = ep.episode_id AND e.memory_id = $1 AND ep.person_id = $2`, args);
+  // What the memory forgot about them stays forgotten; their sources, promotions and what it means to tell them move too.
+  await db.query(`UPDATE forget_tombstones SET subject_person_id = $3 WHERE memory_id = $1 AND subject_person_id = $2`, args);
+  await db.query(`UPDATE sources SET provided_by_person_id = $3 WHERE memory_id = $1 AND provided_by_person_id = $2`, args);
+  await db.query(`UPDATE episode_promotions SET subject_person_id = $3 WHERE memory_id = $1 AND subject_person_id = $2`, args);
+  await db.query(`UPDATE intents SET for_person_id = $3 WHERE memory_id = $1 AND for_person_id = $2`, args);
+  await db.query(`UPDATE initiatives SET for_person_id = $3 WHERE memory_id = $1 AND for_person_id = $2`, args);
+  await db.query(`UPDATE presences SET person_id = $3 WHERE memory_id = $1 AND person_id = $2`, args);
 
   // Single-value slots current for both: the older becomes superseded (one current row per slot and subject).
   await db.query(`

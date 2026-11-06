@@ -6,6 +6,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-11-06
+
+**Initiatives where the person is: by message, by voice, in the room.** An initiative now carries the channels it may
+go on, in order, and the person's addresses (their Telegram chat, their Home Assistant person), bound once from the
+console; presence impulses describe a place — who is in the room, or just someone — so a timed reminder can be said
+by the satellite of the room the person is in, with only an opening when others are there. The client library hands
+the host the channel to use and the person's address. Two cards of the same person merge from the console. Hosts:
+a reminder your own tools scheduled covers an initiative only for the same person; a failed one covers nothing.
+
 ### Added
 - **Initiatives: the channel chosen at delivery, presence by place, voice** (D55 §5b–§5c). An initiative carries
   `channels` — the acceptable ones in order; messaging only for a request or a promise (it interrupts) — and
@@ -17,6 +26,18 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   to hear it?", in every language) and the initiative waits for her "yes". The clock reads live presences: a timed
   request whose person is in a room goes by voice; in an entity memory, what is for one person goes only so or by
   messaging to an address of theirs.
+- **Client library: channels, addresses and the opening in `InitiativeInbox`.** The types carry `channels`,
+  `for.addresses`, presence by place (`people`, `someone`, `home`) and `opening`. `deliver(user, initiative, {via})` may
+  return `{outcome, channel}` — the channel it reached the person on is reported; `addressesOn(initiative, 'telegram')`
+  finds the person there. With others in the room the opening goes to the new `open(user, initiative, opening)` and
+  never to `deliver`: the initiative is not taken, and comes back at a later presence (a host without `open` says
+  nothing). A presence from a camera is reported as voice. Existing hosts work unchanged.
+
+- **Merge two cards of the same person** (admin console, a memory's card → People): "Eriona" and "Eriona Rossi"
+  become one — names, addresses, what the memory knows about her and what it means to tell her move to the card kept
+  (`POST api/v1/admin/memories/:id/persons/:person/merge`). Each contact shows how many episodes name it, to choose.
+  Merging no longer drops what was forgotten about the merged contact, nor their sources, promotions, intents,
+  initiatives and presences; a person who holds a memory is never merged.
 
 ### Fixed
 - **An initiative said days later no longer says "yesterday".** An ask about a plan is worded two days after it and may

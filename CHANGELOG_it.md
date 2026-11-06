@@ -6,6 +6,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.9.0] — 2026-11-06
+
+**Iniziative dove si trova la persona: per messaggio, a voce, nella stanza.** Un'iniziativa porta ora i canali su cui
+può andare, in ordine, e gli indirizzi della persona (la sua chat Telegram, la sua persona di Home Assistant),
+collegati una volta dalla console; gli impulsi di presenza descrivono un luogo — chi è nella stanza, o solo qualcuno —
+così un promemoria con orario può essere detto dal satellite della stanza in cui si trova la persona, con solo
+un'apertura quando ci sono altri. La libreria client dà all'host il canale da usare e l'indirizzo della persona. Due
+schede della stessa persona si uniscono dalla console. Host: un promemoria programmato dai tuoi strumenti copre
+un'iniziativa solo per la stessa persona; uno fallito non copre niente.
+
 ### Aggiunto
 - **Iniziative: il canale scelto alla consegna, la presenza per luogo, la voce** (D55 §5b–§5c). Un'iniziativa porta
   `channels` — quelli accettabili in ordine; la messaggistica solo per una richiesta o una promessa (interrompe) — e
@@ -17,6 +27,18 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   dice solo un'apertura ("Chloé, ho una cosa per te: vuoi sentirla?", in ogni lingua) e l'iniziativa aspetta il suo
   "sì". L'orologio legge le presenze valide: una richiesta a orario la cui persona è in una stanza va a voce; in una
   memoria di entità, ciò che è per una persona va solo così o per messaggio a un suo indirizzo.
+- **Libreria client: canali, indirizzi e apertura in `InitiativeInbox`.** I tipi portano `channels`, `for.addresses`,
+  la presenza per luogo (`people`, `someone`, `home`) e `opening`. `deliver(user, initiative, {via})` può restituire
+  `{outcome, channel}` — viene riportato il canale su cui ha raggiunto la persona; `addressesOn(initiative, 'telegram')`
+  trova la persona lì. Con altri nella stanza l'apertura va al nuovo `open(user, initiative, opening)` e mai a
+  `deliver`: l'iniziativa non viene presa e torna a una presenza successiva (un ospite senza `open` non dice nulla). Una
+  presenza da una telecamera è riportata come voce. Gli ospiti esistenti funzionano senza modifiche.
+
+- **Unire due schede della stessa persona** (console admin, la scheda di una memoria → Persone): "Eriona" ed "Eriona
+  Rossi" diventano una — nomi, indirizzi, ciò che la memoria sa di lei e ciò che intende dirle passano alla scheda
+  tenuta (`POST api/v1/admin/memories/:id/persons/:person/merge`). Ogni contatto mostra in quanti episodi è nominato, per
+  scegliere. L'unione non perde più ciò che era stato dimenticato del contatto unito, né le sue fonti, promozioni,
+  intenti, iniziative e presenze; una persona che ha una memoria non viene mai unita.
 
 ### Corretto
 - **Un'iniziativa detta giorni dopo non dice più "ieri".** Una domanda su un piano viene formulata due giorni dopo e

@@ -12,4 +12,4 @@ export { TOOLS } from './tools.js';
 export { isLinkCode, LINK_CODE, LINK_CODE_INSTRUCTION } from './links.js';
 export { afterFailure, backoffMs, DEFAULT_DELIVERY, type DeliveryPolicy, type Next } from './delivery.js';
 export { verifyWebhook, WebhookVerificationError, type WebhookHeaders } from './webhooks.js';
-export { InitiativeInbox, type InitiativeInboxOptions } from './inbox.js';
+export { addressesOn, type Delivered, type DeliveryContext, InitiativeInbox, type InitiativeInboxOptions } from './inbox.js';

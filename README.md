@@ -14,7 +14,7 @@ twin** of that person. Any agent platform can use it through **MCP** (any MCP cl
 (the platform pushes its conversations and Recordare extracts the memory in the background).
 [Arkimede](https://github.com/arkimedehq/arkimede) is the first client.
 
-> **Status (2026-11-05).** **v0.8.0 is public** (2026-11-05, the initiatives inbox in the client library, every setting from the admin console; v0.7.0 on 2026-11-04, initiatives decided by the memory — who, when, where —, presence impulses, things left to finish, questions to who could know, interactive embeddings first; v0.6.0 on 2026-11-03, the agent's own mind: thoughts, self-model, procedures, initiatives, the memory-first contract; v0.5.0 on 2026-10-27, private memories; v0.4.0 on 2026-10-26, plans apart from facts, my own replies, cards and erasure; v0.3.0 on 2026-10-17, memory quality and control; v0.2.0 on 2026-10-10, the agent memory; first public release v0.1.0 on 2026-10-08, the private profile; [CHANGELOG](CHANGELOG.md)). Phase 1
+> **Status (2026-11-06).** **v0.9.0 is public** (2026-11-06, initiatives where the person is — by message, by voice, in the room —, the person's addresses, two cards of one person merged; v0.8.0 on 2026-11-05, the initiatives inbox in the client library, every setting from the admin console; v0.7.0 on 2026-11-04, initiatives decided by the memory — who, when, where —, presence impulses, things left to finish, questions to who could know, interactive embeddings first; v0.6.0 on 2026-11-03, the agent's own mind: thoughts, self-model, procedures, initiatives, the memory-first contract; v0.5.0 on 2026-10-27, private memories; v0.4.0 on 2026-10-26, plans apart from facts, my own replies, cards and erasure; v0.3.0 on 2026-10-17, memory quality and control; v0.2.0 on 2026-10-10, the agent memory; first public release v0.1.0 on 2026-10-08, the private profile; [CHANGELOG](CHANGELOG.md)). Phase 1
 > (episodic memory) is implemented in `service/` (NestJS, Postgres + pgvector, BullMQ). It covers the raw log,
 > episodes, plans, facts, notes, nightly digests, MCP recall and write tools, the pre-turn memory context, the read
 > API (the person's diary), the admin API and console, and live telemetry. Clients: Arkimede, and full-level
@@ -337,7 +337,7 @@ co-hosted with Arkimede on a small server).
 | `deploy/` | Installer, update and backup scripts, Compose files (standalone / co-hosted) |
 | `spikes/memory-eval/` | Evaluation harness and datasets: engine comparison, blind sets, results ([RESULTS.md](spikes/memory-eval/RESULTS.md)) |
 | `docs/` | Vision, design decisions D1–D48 ([episodic memory design](docs/EPISODIC_MEMORY_TODO.md)), [work plan](docs/WORK_PLAN.md), contracts, [every setting](docs/KNOBS.md), [supported models](docs/MODELS.md), research notes, literature cards, connector research notes (`docs/connectors/`) |
-| `CHANGELOG.md` | Release notes ([v0.8.0](CHANGELOG.md)) |
+| `CHANGELOG.md` | Release notes ([v0.9.0](CHANGELOG.md)) |
 | `docker-compose.yml` | Local development stack (Postgres + pgvector, Redis, service) |
 | `CLAUDE.md` | Context and conventions for development sessions |
 

@@ -215,7 +215,8 @@ known participant who shows up under a new name on the channel keeps their conta
 > cannot name, `home` for "at home" (not enough to speak). An arrival may get anything due, a refresh only a timed
 > request or promise; with others in the room you get `opening`: say only that and listen — the person's "yes" is a turn
 > of theirs, and the memory context gives you the initiative then. Bind the voice point that spoke to the conversation for
-> a few minutes so the reply lands with it.
+> a few minutes so the reply lands with it. With the client library: `deliver` returns `{outcome, channel}`,
+> `addressesOn` finds the person on a channel, and `open` says the opening (`packages/client/README.md`).
 
 Recordare pushes what the agent decided to say, ask or look up (`API.md` §4b). Your platform delivers it **when the
 person is there** (presence is yours: a chat open now, a recognised voice in the room, someone at the panel), reports
@@ -232,6 +233,11 @@ what became of it, and runs the look-ups with its own tools.
    perception; the agent's question then closes.
 4. Report the outcome: `client.reportInitiative(user, id, 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed')`.
    It steers the agent: declined is final, ignored is offered once more a week later, then dropped.
+   **A reminder your own tools already scheduled** (the agent set an automation in the same conversation): report
+   `done` instead of saying it twice — but only when your task is for the same person (`data.for`: it names them or
+   reaches one of their addresses) and is still to run or ran near the initiative's time. Your explicit, confirmed task
+   is the truth (its time wins); a task that failed or was deleted covers nothing, so deliver the initiative: it is the
+   safety net that keeps a reminder from being lost.
 5. Quiet hours (`quietFrom` / `quietTo`, admin `PATCH api/v1/admin/memories/{id}`) and the daily limit per person
    (`INITIATIVE_DAILY_LIMIT`) are Recordare's; your own do-not-disturb and rate limits are welcome on top.
 
