@@ -121,7 +121,8 @@ export class ContextService {
     const { initiative, askWho } = await this.initiatives.offer(memoryId, { personId, confidence: personId ? 1 : 0, ...(conversationId ? { conversationId } : {}) },
       'turn', now, { lookups });
     if (initiative) return [initiativeLine(initiative)];
-    if (askWho) return [`- if natural, ask whether you are talking with ${askWho.name} (something waits for them; say nothing of it before they confirm)`];
+    // Nobody identified for sure: ask who it is, naming no one — a name would tell whoever is there that something waits for that person.
+    if (askWho) return ['- if natural, ask who you are talking with (you do not know: name no one, and say nothing of what waits for someone)'];
     return [];
   }
 

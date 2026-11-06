@@ -6,6 +6,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-11-06
+
+### Changed
+- **Asking who it is names no one.** With nobody identified and something waiting for someone, the memory context
+  asks the agent to find out who it is talking with — no longer "are you Chloé?", which told whoever was there that
+  something waited for Chloé. Charter `charter.v3`. A name said by the speaker ("sono Eriona") stays what it is: not an
+  identity, since anyone can say it.
+
 ## [0.9.0] — 2026-11-06
 
 **Initiatives where the person is: by message, by voice, in the room.** An initiative now carries the channels it may

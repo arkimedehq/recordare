@@ -42,7 +42,7 @@ can register Recordare's `/mcp` directly (`docs/INTEGRATION.md`).
   follow-up ("and him?") is matched with the previous turn by Recordare itself.
 - **Initiatives in the turn** (Recordare 0.7.0, D55): the memory context also carries what the agent meant to tell or
   ask whoever is talking — a reminder they asked for, "how did it go?", "did you hang the laundry?" — offered once,
-  with no setup; the memory charter (`charter.v2`) says how to use it.
+  with no setup; the memory charter (`charter.v3`) says how to use it.
 - **The charter's form**: the proxy gives the model no memory tools (Limits), so by default it asks for the
   context-only charter (`GET api/v1/charter?tools=false`): what came to mind is all the model can recall — when it is not
   enough, it says it does not remember rather than guessing, and never claims to search. Where the platform also

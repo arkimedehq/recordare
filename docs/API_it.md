@@ -549,7 +549,7 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 la sua mente, non uno strumento tra tanti; ragionare da ciò che gli è venuto in mente, cercare nella memoria prima degli
 altri strumenti e prima di dire "non lo so", "ricordi / ricordare" vogliono dire questa memoria, usarla con naturalezza,
 non usarla quando gli viene chiesto. Lo stesso testo per ogni memoria, in inglese per tutte le lingue come il blocco,
-stabile finché `version` non cambia (`charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
+stabile finché `version` non cambia (`charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
 cacheabile) e lo rilegge solo quando cambia la versione. Il server MCP manda lo stesso testo come sue `instructions`
 all'`initialize`, e il blocco `<memory-context>` lo nomina. Il contratto memory-first che ogni client segue:
 `INTEGRATION.md` §4. `?tools=false` dà la forma per un ospite che offre all'agente solo il contesto di memoria, senza
@@ -665,12 +665,13 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 >   `X-Recordare-Now` con `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: la persona risolta in questa memoria
 >   (un'identità come nell'ingest; nessuna: il titolare di una memoria personale; un'identità sconosciuta non crea nessuno),
 >   l'unica iniziativa da consegnare adesso (segnata `offered`, `channel` voice / panel / chat — riportarne poi l'esito),
->   oppure, in una memoria di entità senza nessuno identificato, a chi l'agente può chiedere "sei tu?" (senza rivelare
->   nulla).
+>   oppure, in una memoria di entità senza nessuno identificato, `askWho`: qualcuno per cui c'è qualcosa
+>   in attesa — chiedi con chi stai parlando, senza fare nomi (un nome direbbe a chi è lì che c'è qualcosa per quella
+>   persona).
 > - **Nel turno**: `POST api/v1/context` aggiunge al massimo un'iniziativa dovuta per chi sta parlando, come riga del
 >   blocco (`- something I meant to tell you (my own initiative; say it if natural, once): …`, `ask`, e `lookup` solo con
->   `initiatives: {lookups: true}` nel corpo — l'agente dell'ospite ha strumenti), oppure `- if natural, ask whether you
->   are talking with <nome> …`; segnata `offered` (`channel: turn`, la conversazione registrata), mai due volte. Nessun
+>   `initiatives: {lookups: true}` nel corpo — l'agente dell'ospite ha strumenti), oppure `- if natural, ask who you
+>   are talking with (you do not know: name no one …)`; segnata `offered` (`channel: turn`, la conversazione registrata), mai due volte. Nessun
 >   campo nuovo nella risposta.
 > - **A chi**: un'iniziativa per una persona raggiunge solo quella persona, riconosciuta con sicurezza ≥ 0,6
 >   (`identity.required: medium`) o ≥ 0,85 (`high`: nasce da un messaggio privato); una per nessuno in particolare
