@@ -1993,6 +1993,22 @@ any run: a reminder asked for 23:00 was held until the morning (a time the perso
 and an entity memory would push an initiative for Eriona on the shared panel (person-specific ones now wait for their
 presence or turn). **Caveat**: tuned on this set, by its writer — 9 / 9 is not a measurement; a held-out set is owed.
 
+### Timing v1 — learning from outcomes (D55 F4, 2026-11-06; no LLM)
+
+A fourth memory, Casa Verdi (entity; Sara in the kitchen at 08:30 and at 19:00 for six days, one flexible request a
+day), with outcomes reported as she behaves: the morning voice ignored, the evening one taken (`behavior`). Same set,
+same clock, three runs.
+
+| policy | set right | Casa Verdi outcomes |
+|---|---|---|
+| v0 | 23 / 23 | ignored 6 |
+| **v1** | **23 / 23** | **ignored 3, said 3** — from the fourth day the request waits for 19:00 |
+| v0 + shadow | 23 / 23 | ignored 6; the log holds "v1 would hold" on exactly days 4–6 |
+
+v1 needs three outcomes in a part of the day on a channel before it holds anything back (estimate below 0.35, prior =
+v0's guess with strength 2); every other case of the set came out identical. **Caveat**: a simulated person written to
+show the mechanism; real outcomes on Kinox in shadow first, then the switch.
+
 ### Presence by place — `dataset_dev_timing` b1–b9 (D55 §5c, 2026-11-06; no LLM)
 
 The third memory, Casa Bianchi (entity; voice in two rooms, Home Assistant persons, one Telegram address), replayed with

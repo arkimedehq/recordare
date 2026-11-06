@@ -74,8 +74,13 @@ const baseSchema = z.object({
   INITIATIVE_WORDING: bool.optional(),
   /** Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow. */
   INITIATIVE_DAILY_LIMIT: z.coerce.number().int().min(0).max(50).default(3),
-  /** D55: how the clock chooses the moment to push — `v0` (the cost-sensitive gate) or `due` (as soon as due: the baseline). */
-  INITIATIVE_TIMING: z.enum(['v0', 'due']).default('v0'),
+  /**
+   * D55: how the moment and the channel are chosen — `v0` (the cost-sensitive gate), `v1` (v0 corrected by each person's
+   * outcomes: when, and on which channel, they take an initiative — F4) or `due` (as soon as due: the baseline).
+   */
+  INITIATIVE_TIMING: z.enum(['v0', 'v1', 'due']).default('v0'),
+  /** D55 F4: with `v0`, also work out and log what `v1` would have decided (beside v0's decision; nothing changes). */
+  INITIATIVE_TIMING_SHADOW: bool.default(false),
   /** D55 §5c: at most one spontaneous announcement (an initiative or an opening said aloud) per person this often, in minutes. */
   INITIATIVE_VOICE_PACE_MINUTES: z.coerce.number().int().min(0).max(1_440).default(30),
   /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */

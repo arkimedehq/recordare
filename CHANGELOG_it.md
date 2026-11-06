@@ -6,6 +6,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Tempo v1: la memoria impara quando ogni persona accoglie ciò che dice** (D55 F4, `INITIATIVE_TIMING=v1`). Ogni esito
+  riportato da un host (detta, chiesta, fatta — oppure ignorata, rifiutata) viene contato per persona, parte del giorno e
+  canale; dove qualcuno ha lasciato cadere spesso (la voce della cucina la mattina), un'iniziativa flessibile aspetta un
+  momento in cui la accoglie, e un canale chiaramente migliore per lei viene preferito. Con pochi esiti non cambia
+  niente (la stima di v0 è il prior); un orario scelto dalla persona, le ore di quiete, l'identità e le regole delle
+  stanze non vengono mai toccati. Misurato sulla serie di test sui tempi (una persona che ignora la voce del mattino:
+  ignorate 6 → 3, gli altri casi invariati). `INITIATIVE_TIMING_SHADOW` registra cosa deciderebbe v1 accanto a v0, per
+  confrontare prima di passare.
+
 ### Corretto
 - **Un promemoria chiesto per un orario viene detto a quell'orario, per quanto piena sia la giornata.** Il limite
   giornaliero delle iniziative tratteneva una richiesta con orario: chiesta per le 18:00 dopo altre tre cose dette quel

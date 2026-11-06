@@ -14,6 +14,11 @@ when others are in the room and the person's "yes" in a turn, the clock reading 
 real address. Eight items (b1–b9) and two event checks (`expect` on a presence: nothing given and "who is it?" for
 someone unnamed; only the opening with others there).
 
+A fourth memory (2026-11-06), **Casa Verdi**, measures timing v1 (D55 F4): its `behavior` says how Sara takes what is
+said by part of the day (the morning voice ignored, the evening one taken), and `timing_eval.py` reports each
+initiative's outcome accordingly — the outcomes v1 learns from. Six days (19–24 October: daylight saving ends on the
+25th and the set's times are fixed +02:00).
+
 Scored per item: `in_window`, `outside` (a needless interruption), `wrong_trigger`, `wrong_channel`, `no_opening`,
 `lapsed`, `rightly_silent`, `wrong_delivery`. Fictional content. `python build.py` writes `timelines.json`; `python check.py` verifies it.
 Written by the developer who tuned timing v0 on it: a held-out set is still owed.

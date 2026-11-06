@@ -24,6 +24,7 @@ import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { qualityProfile, type QualityProfileName } from '../engine/quality-profile';
 import { localDate, type Precision } from '../engine/time';
 import { INITIATIVE_SYSTEM, INITIATIVE_VERSION, type InitiativeOutput, initiativeSchema } from './initiative.prompt';
+import { ACCEPTED, REJECTED, LEARNING, acceptance, dayPart, experience, preferredChannel, type Experience } from './learning';
 import { initiativeText } from '../lang/initiative';
 import { saysRelativeDay } from '../lang/periods';
 import { overlap } from '../lang/overlap';
@@ -169,6 +170,8 @@ export interface MomentInput {
   deliveredToday: number;
   sinceDueMs: number;
   untilEndMs: number;
+  /** Timing v1 (F4): the fit of this moment learnt from the person's outcomes, in place of v0's fit of the hour. */
+  fit?: number;
 }
 
 export function decideMoment(m: MomentInput): { p: number; threshold: number; deliver: boolean; reason: string } {
@@ -179,7 +182,8 @@ export function decideMoment(m: MomentInput): { p: number; threshold: number; de
   }
   const [from, to] = m.preferred;
   const fits = from <= to ? m.localHour >= from && m.localHour < to : m.localHour >= from || m.localHour < to;
-  const p = Math.min(1, Math.max(0, (m.worth ?? TIMING.defaultPrior) * (fits ? 1 : TIMING.offHoursFit) / (1 + m.deliveredToday)));
+  const fit = m.fit ?? (fits ? 1 : TIMING.offHoursFit);
+  const p = Math.min(1, Math.max(0, (m.worth ?? TIMING.defaultPrior) * fit / (1 + m.deliveredToday)));
   if (p >= threshold) return { p, threshold, deliver: true, reason: 'moment' };
   if (m.owed && m.untilEndMs <= TIMING.lastChanceMs) return { p, threshold, deliver: true, reason: 'last_chance' };
   return { p, threshold, deliver: false, reason: fits ? 'low' : 'off_hours' };
@@ -462,7 +466,7 @@ export class InitiativeService {
    * "yes" in the next turn gets it).
    */
   async offer(memoryId: string, who: Recipient, channel: DeliveryChannel, now: Date,
-    opts: { lookups?: boolean; timedOwedOnly?: boolean; open?: boolean } = {}):
+    opts: { lookups?: boolean; timedOwedOnly?: boolean; open?: boolean; features?: Record<string, unknown> } = {}):
     Promise<{ initiative: InitiativeView | null; askWho: { personId: string; name: string } | null; opened: boolean }> {
     const [memory]: Array<{ mode: string }> = await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
     if (!memory) return { initiative: null, askWho: null, opened: false };
@@ -494,7 +498,7 @@ export class InitiativeService {
         `UPDATE initiatives i SET opened_at = $3, updated_at = now() WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`,
         [memoryId, hit.id, now]));
       if (rows[0]) {
-        await this.logDecision(memoryId, rows[0].id, 'presence', now, 1, 0, false, { channel, confidence: who.confidence, reason: 'opening' });
+        await this.logDecision(memoryId, rows[0].id, 'presence', now, 1, 0, false, { channel, confidence: who.confidence, reason: 'opening', ...opts.features });
         return { initiative: view(rows[0]), askWho: null, opened: true };
       }
     }
@@ -508,7 +512,7 @@ export class InitiativeService {
         const v = view(r);
         // The person is there (a turn, a presence): v0 takes the moment; logged like the clock's decisions (F4 learns from all).
         await this.logDecision(memoryId, v.id, channel === 'turn' ? 'turn' : 'presence', now, 1, 0, true,
-          { channel, confidence: who.confidence, reason: 'present' });
+          { channel, confidence: who.confidence, reason: 'present', ...opts.features });
         this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: v.id, status: 'offered' });
         await this.webhooks.notify(memoryId, 'initiative.updated', v, v.id);
         return { initiative: v, askWho: null, opened: false };
@@ -594,6 +598,11 @@ export class InitiativeService {
     // The window ends for the clock where the quiet hours begin: a last chance at 22:30 would be no chance (dev_timing g5).
     const quietStart = quiet ? now : nextLocalHour(now, memory.timezone, memory.quiet_from);
     const localHour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: memory.timezone }).format(now)) % 24;
+    // Timing v1 (F4): each person's outcomes — applied with `v1`, only logged beside v0 in shadow.
+    const learn = policy === 'v1' || (policy === 'v0' && this.config.get('INITIATIVE_TIMING_SHADOW', { infer: true }));
+    const part = dayPart(localHour);
+    const experiences = new Map<string, Experience>();
+    const always = declared.filter((d) => d.reach === 'always').map((d) => d.kind);
     for (const c of candidates) {
       const counted: Array<{ n: number }> = await this.db.query(
         `SELECT count(*)::int AS n FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2 AND offered_at IS NOT NULL
@@ -603,13 +612,35 @@ export class InitiativeService {
       const input: MomentInput = { kind: c.kind, timing: c.timing, worth: c.worth, owed: c.intent_kind === 'request' || c.intent_kind === 'promise',
         localHour, preferred, deliveredToday: n, sinceDueMs: now.getTime() - c.due_at.getTime(),
         untilEndMs: Math.min(c.expires_at.getTime(), memory.quiet_from === memory.quiet_to ? Infinity : quietStart.getTime()) - now.getTime() };
-      const d = policy === 'due' ? { p: 1, threshold: 0, deliver: true, reason: 'due' } : decideMoment(input);
+      // v1: the fit of this moment and the channel from the person's own outcomes (a flexible one; a chosen time is kept).
+      let learnt: { fit: number; channel: string; outcomes: number } | null = null;
+      if (learn && c.timing === 'flexible') {
+        const key = c.for_person_id ?? '';
+        const exp = experiences.get(key) ?? await this.experienceOf(memoryId, c.for_person_id, memory.timezone, now);
+        experiences.set(key, exp);
+        const [from, to] = preferred;
+        const fits = from <= to ? localHour >= from && localHour < to : localHour >= from || localHour < to;
+        const prior = fits ? 1 : TIMING.offHoursFit;
+        // Another channel only where the channel is not the room's or the person's address (§5c): a shared one, by choice.
+        const switchable = !(entity && c.for_person_id) && c.channel !== 'voice';
+        const channel = switchable
+          ? preferredChannel(exp, part, [c.channel, ...c.channels.filter((ch) => ch !== c.channel && ch !== 'voice' && always.includes(ch))], prior) ?? c.channel
+          : c.channel;
+        const a = acceptance(exp, part, channel, prior);
+        learnt = { fit: a.estimate, channel, outcomes: a.outcomes };
+      }
+      const v1 = learnt && policy !== 'due' ? decideMoment({ ...input, fit: learnt.fit }) : null;
+      const d = policy === 'due' ? { p: 1, threshold: 0, deliver: true, reason: 'due' } : policy === 'v1' && v1 ? v1 : decideMoment(input);
+      const channelNow = policy === 'v1' && learnt ? learnt.channel : c.channel;
       // Quiet hours hold everything but a time the person chose themselves (a timed request or promise).
       const held = quiet && !(c.timing === 'timed' && input.owed);
       const deliver = d.deliver && !held;
       await this.logDecision(memoryId, c.id, 'clock', now, d.p, d.threshold, deliver,
-        { reason: held && d.deliver ? 'quiet_hours' : d.reason, channel: c.channel, localHour, deliveredToday: n, timing: c.timing, kind: c.kind, policy });
+        { reason: held && d.deliver ? 'quiet_hours' : d.reason, channel: channelNow, localHour, deliveredToday: n, timing: c.timing, kind: c.kind, policy,
+          ...(learnt ? { learnt: { fit: learnt.fit, outcomes: learnt.outcomes, channel: learnt.channel } } : {}),
+          ...(policy === 'v0' && v1 && learnt ? { shadow: { policy: 'v1', p: v1.p, deliver: v1.deliver && !held, channel: learnt.channel } } : {}) });
       if (!deliver) continue;
+      c.channel = channelNow;
       const rows = updated<Row>(await this.db.query(
         `UPDATE initiatives i SET status = 'offered', offered_at = $3, pushed_at = $3, channel = $4, updated_at = now()
          WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`, [memoryId, c.id, now, c.channel]));
@@ -619,6 +650,19 @@ export class InitiativeService {
       this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: v.id, status: 'offered' });
       await this.webhooks.notify(memoryId, 'initiative.deliver', v, v.id);
     }
+  }
+
+  /**
+   * A person's outcomes of the last weeks (F4): accepted (said, asked, done) or rejected (ignored, declined), by part of
+   * their day and the channel they reached them on. `personId` null: the initiatives for nobody in particular.
+   */
+  async experienceOf(memoryId: string, personId: string | null, timezone: string, now: Date): Promise<Experience> {
+    const rows: Array<{ status: string; hour: number; channel: string | null }> = await this.db.query(
+      `SELECT status::text, extract(hour FROM (offered_at AT TIME ZONE $3))::int AS hour, COALESCE(outcome_channel, channel) AS channel
+       FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2 AND offered_at IS NOT NULL
+         AND offered_at > $4::timestamptz - make_interval(days => $5) AND status::text = ANY($6)`,
+      [memoryId, personId, timezone, now, LEARNING.windowDays, [...ACCEPTED, ...REJECTED]]);
+    return experience(rows.map((r) => ({ status: r.status, localHour: r.hour, channel: r.channel })));
   }
 
   private async logDecision(memoryId: string, initiativeId: string, trigger: 'clock' | 'presence' | 'turn', at: Date, p: number, threshold: number,

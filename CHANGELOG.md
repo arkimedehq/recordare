@@ -6,6 +6,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Timing v1: the memory learns when each person takes what it says** (D55 F4, `INITIATIVE_TIMING=v1`). Every outcome
+  a host reports (said, asked, done — or ignored, declined) is counted per person, part of the day and channel; where
+  someone has often let it go (the kitchen's voice in the morning), a flexible initiative waits for a moment they do
+  take it, and a channel clearly better for them is preferred. With few outcomes nothing changes (v0's guess is the
+  prior); a time the person chose, the quiet hours, identity and the room rules are never touched. Measured on the
+  timing dev set (a person who ignores the morning voice: ignored 6 → 3, the other cases unchanged).
+  `INITIATIVE_TIMING_SHADOW` logs what v1 would decide beside v0, to compare before switching.
+
 ### Fixed
 - **A reminder asked for a time is said at that time, however busy the day.** The daily limit of initiatives held back
   a timed request: asked for 18:00 after three other things that day, it waited for the next day. A time the person

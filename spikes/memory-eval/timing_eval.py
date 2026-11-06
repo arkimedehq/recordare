@@ -19,12 +19,14 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import httpx
 import psycopg
 
 HERE = Path(__file__).resolve().parent
+ROME = ZoneInfo("Europe/Rome")
 URL = os.getenv("RECORDARE_URL", "http://localhost:8095")
 ADMIN = os.environ.get("RECORDARE_ADMIN_KEY", "")
 DB_URL = os.getenv("RECORDARE_DB_URL", "postgres://recordare:recordare@localhost:5433/recordare_eval_timing")
@@ -97,6 +99,23 @@ def run_event(e: dict, ctx: dict) -> dict:
     return api("POST", "/api/v1/context", ctx["key"], headers, {"ingest": turn, "query": e["text"], "card": False})
 
 
+def part_of_day(at: datetime) -> str:
+    h = at.astimezone(ROME).hour
+    return "morning" if 8 <= h < 12 else "afternoon" if 12 <= h < 18 else "evening" if 18 <= h < 22 else "night"
+
+
+def report_outcomes(m: dict, ctx: dict, db: psycopg.Connection, reported: dict) -> None:
+    """D55 F4: the host reports what became of each initiative given, as the memory's `behavior` says the person acts
+    (by part of the day) — the outcomes timing v1 learns from."""
+    rows = db.execute("""SELECT id, offered_at, channel FROM initiatives WHERE memory_id = %s AND status = 'offered' AND offered_at IS NOT NULL""",
+                      (ctx["memory"],)).fetchall()
+    for iid, offered_at, channel in rows:
+        status = m["behavior"].get(part_of_day(offered_at), "said")
+        api("POST", f"/api/v1/initiatives/{iid}/outcome", ctx["key"], {"x-recordare-user": ctx["user"]},
+            {"status": status, "at": (offered_at + timedelta(minutes=5)).isoformat(), **({"channel": channel} if channel else {})})
+        reported[status] = reported.get(status, 0) + 1
+
+
 def score(item: dict, got: dict | None) -> str:
     gold = item["gold"]
     if gold.get("deliver") is False:
@@ -125,6 +144,7 @@ def main() -> None:
         ctxs = {m["id"]: setup(m, db) for m in data["memories"]}
         events = sorted(((datetime.fromisoformat(e["at"]), m["id"], e) for m in data["memories"] for e in m["events"]), key=lambda x: x[0])
         log: list[dict] = []
+        outcomes: dict[str, dict[str, int]] = {}
         tick = datetime.fromisoformat(data["start"])
         end = datetime.fromisoformat(data["end"])
         while tick <= end:
@@ -145,6 +165,9 @@ def main() -> None:
                 log.append(entry)
             for c in ctxs.values():
                 api("POST", f"/api/v1/admin/memories/{c['memory']}/initiatives", headers={"x-recordare-now": tick.isoformat()})
+            for m in data["memories"]:
+                if m.get("behavior"):
+                    report_outcomes(m, ctxs[m["id"]], db, outcomes.setdefault(m["id"], {}))
             tick += timedelta(minutes=data["tick_minutes"])
         results = []
         for m in data["memories"]:
@@ -163,6 +186,8 @@ def main() -> None:
     print(f"policy {LABEL}: {good}/{len(results)} right — {counts}")
     for r in results:
         print(f"  {r['id']:4} {r['outcome']:15} {r['offered_at'] or '-':26} {r['channel'] or '-':10} {r['via'] or '-'}")
+    for mid, counts_by in outcomes.items():
+        print(f"outcomes reported in {mid}: {counts_by}")
     checks = [x for x in log if "check" in x]
     if checks:
         print(f"event checks: {sum(1 for x in checks if x['check'] == 'ok')}/{len(checks)}")
@@ -170,7 +195,7 @@ def main() -> None:
             print(f"  {x['at']} {x['memory']}: {x['check']}")
     out = HERE / "results" / f"timing_{LABEL}_{RUN}.json"
     out.parent.mkdir(exist_ok=True)
-    out.write_text(json.dumps({"label": LABEL, "counts": counts, "results": results, "events": log}, ensure_ascii=False, indent=1, default=str))
+    out.write_text(json.dumps({"label": LABEL, "counts": counts, "results": results, "outcomes": outcomes, "events": log}, ensure_ascii=False, indent=1, default=str))
     print(f"→ {out}")
 
 
