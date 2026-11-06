@@ -312,7 +312,12 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
         body: { channels: [{ kind: 'chat', reach: 'always' }, { kind: 'messaging', reach: 'always' }, { kind: 'voice', reach: 'presence' }] } });
       const leoId = { identity: { channel: 'homeassistant', externalId: 'person.leo' } };
       const timed = await due(home, 'prendere le chiavi', 80, { for: leo, kind: 'request', timed: true });
-      // Not live anywhere: pushed by messaging, to his address.
+      // Not live anywhere, and his Home Assistant person recognises him but is no address for a message: it waits.
+      await app.get(InitiativeService).sweep(home, T(80));
+      expect(await row(timed)).toMatchObject({ status: 'pending' });
+      // With a Telegram chat on his card: pushed by messaging, to that address.
+      expect((await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY,
+        body: { kind: 'participant', memoryId: home, personId: leo, channel: 'telegram', externalId: '4242003', verified: true } })).status).toBe(201);
       await app.get(InitiativeService).sweep(home, T(80));
       expect(await row(timed)).toMatchObject({ status: 'offered', channel: 'messaging' });
       // Live in the kitchen: by voice.

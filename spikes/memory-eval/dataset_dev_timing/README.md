@@ -7,6 +7,13 @@ items — intents as the extraction writes them, one plan the sweep asks about �
 windows (and the trigger, when only a presence or a turn may deliver it) or "must not be delivered". Events: a turn of
 Giulia's, five presence impulses (a stranger, Eriona unsure, Eriona sure, Eriona by voice and by camera).
 
-Scored per item: `in_window`, `outside` (a needless interruption), `wrong_trigger`, `lapsed`, `rightly_silent`,
-`wrong_delivery`. Fictional content. `python build.py` writes `timelines.json`; `python check.py` verifies it.
+A third memory (2026-11-06), **Casa Bianchi** (entity; voice in the kitchen and the living room, Eriona and Luca known by
+their Home Assistant person, Luca with a Telegram address), measures D55 §5c: presence by place (`people`, `place`,
+`someone`, `left`, the `home` channel), arrival vs refresh, the 30-minute voice pace, quiet hours for voice, the opening
+when others are in the room and the person's "yes" in a turn, the clock reading live presences, messaging only to a
+real address. Eight items (b1–b9) and two event checks (`expect` on a presence: nothing given and "who is it?" for
+someone unnamed; only the opening with others there).
+
+Scored per item: `in_window`, `outside` (a needless interruption), `wrong_trigger`, `wrong_channel`, `no_opening`,
+`lapsed`, `rightly_silent`, `wrong_delivery`. Fictional content. `python build.py` writes `timelines.json`; `python check.py` verifies it.
 Written by the developer who tuned timing v0 on it: a held-out set is still owed.

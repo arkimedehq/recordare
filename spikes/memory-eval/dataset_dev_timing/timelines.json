@@ -263,6 +263,407 @@
      "channel": "camera"
     }
    ]
+  },
+  {
+   "id": "casa_bianchi",
+   "name": "Casa Bianchi",
+   "mode": "entity",
+   "channels": [
+    {
+     "kind": "chat",
+     "reach": "always"
+    },
+    {
+     "kind": "messaging",
+     "reach": "always"
+    },
+    {
+     "kind": "voice",
+     "reach": "presence"
+    }
+   ],
+   "people": [
+    {
+     "name": "Eriona",
+     "ha": "person.eriona"
+    },
+    {
+     "name": "Luca",
+     "ha": "person.luca",
+     "telegram": "4242002"
+    }
+   ],
+   "messages": [],
+   "items": [
+    {
+     "id": "b1",
+     "content": "annaffiare le piante",
+     "for": "Eriona",
+     "due": "2026-10-20T07:00:00+02:00",
+     "until": "2026-10-20T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T08:30:00+02:00",
+        "2026-10-20T08:45:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "Eriona walks into the kitchen at 08:30: said at her arrival, by the kitchen's voice"
+    },
+    {
+     "id": "b2",
+     "content": "comprare il pane",
+     "for": "Eriona",
+     "due": "2026-10-20T07:00:00+02:00",
+     "until": "2026-10-20T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T09:20:00+02:00",
+        "2026-10-20T09:35:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "not at the refresh (08:40), not at her return at 08:55 (within 30 minutes of b1), not at the refresh at 09:05; said at her arrival at 09:20, the pace over"
+    },
+    {
+     "id": "b4",
+     "content": "chiamare la nonna",
+     "for": "Eriona",
+     "due": "2026-10-20T22:30:00+02:00",
+     "until": "2026-10-21T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T08:30:00+02:00",
+        "2026-10-21T08:45:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "she walks into the living room at 23:00, in the quiet hours: held; said at her arrival the next morning"
+    },
+    {
+     "id": "b5",
+     "content": "spegnere il forno",
+     "for": "Eriona",
+     "due": "2026-10-20T23:15:00+02:00",
+     "until": "2026-10-21T23:15:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T23:15:00+02:00",
+        "2026-10-20T23:30:00+02:00"
+       ]
+      ],
+      "channel": "voice"
+     },
+     "why": "asked for 23:15 while she is in the living room: said at 23:15 by its voice, quiet hours or not (she chose the time)"
+    },
+    {
+     "id": "b6",
+     "content": "ritirare il pacco",
+     "for": "Eriona",
+     "due": "2026-10-20T14:00:00+02:00",
+     "until": "2026-10-20T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T15:00:00+02:00",
+        "2026-10-20T15:15:00+02:00"
+       ]
+      ],
+      "via": [
+       "turn"
+      ],
+      "channel": "turn",
+      "opened": [
+       "2026-10-20T15:00:00+02:00",
+       "2026-10-20T15:05:00+02:00"
+      ]
+     },
+     "why": "she walks into the living room where Luca is: only the opening; her \"yes\" in the next turn gets it"
+    },
+    {
+     "id": "b7",
+     "content": "prendere le medicine",
+     "for": "Eriona",
+     "due": "2026-10-20T18:00:00+02:00",
+     "until": "2026-10-21T18:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T18:00:00+02:00",
+        "2026-10-20T18:15:00+02:00"
+       ]
+      ],
+      "channel": "voice"
+     },
+     "why": "asked for 18:00 and she is in the kitchen then: the clock reads her live presence and says it there"
+    },
+    {
+     "id": "b8",
+     "content": "pagare la bolletta",
+     "for": "Luca",
+     "due": "2026-10-20T12:00:00+02:00",
+     "until": "2026-10-21T12:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T12:00:00+02:00",
+        "2026-10-20T12:15:00+02:00"
+       ]
+      ],
+      "channel": "messaging"
+     },
+     "why": "Luca is only known to be at home (no room): no voice; asked for 12:00, so by message to his address"
+    },
+    {
+     "id": "b9",
+     "content": "portare la bici dal meccanico",
+     "for": "Luca",
+     "due": "2026-10-20T09:00:00+02:00",
+     "until": "2026-10-20T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T09:00:00+02:00",
+        "2026-10-20T21:00:00+02:00"
+       ]
+      ],
+      "channel": "messaging"
+     },
+     "why": "a request for Luca with no time, only at home: by message during the day, never at night"
+    }
+   ],
+   "plans": [],
+   "events": [
+    {
+     "at": "2026-10-20T08:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T08:40:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T08:45:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-20T08:55:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T09:05:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T09:10:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-20T09:20:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T11:30:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.luca",
+       1.0
+      ]
+     ],
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-20T14:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "someone": 1,
+     "expect": {
+      "initiative": false,
+      "askWho": true
+     },
+     "why": "someone the house cannot name in the kitchen while b6 waits for Eriona: nothing told, the agent may ask who it is"
+    },
+    {
+     "at": "2026-10-20T15:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ],
+      [
+       "person.luca",
+       0.9
+      ]
+     ],
+     "expect": {
+      "initiative": false,
+      "opening": true
+     }
+    },
+    {
+     "at": "2026-10-20T15:02:00+02:00",
+     "type": "turn",
+     "conversation": "soggiorno",
+     "author": "Eriona",
+     "text": "Sì, dimmi pure."
+    },
+    {
+     "at": "2026-10-20T17:50:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T17:58:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T23:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T23:08:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T23:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-21T08:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.eriona",
+       0.9
+      ]
+     ]
+    }
+   ]
   }
  ]
 }

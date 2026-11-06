@@ -196,4 +196,18 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     expect((await call(url, 'DELETE', `/api/v1/admin/webhooks/${list.body[0].id}`, { token: ADMIN_KEY })).status).toBe(204);
     expect((await call(url, 'GET', `/api/v1/admin/clients/${clientId}/webhooks`, { token: ADMIN_KEY })).body).toEqual([]);
   });
+
+  it('a time the person chose is kept past the daily limit (dev_timing b7)', async () => {
+    const day = new Date(NOW.getTime() + 50 * DAY); // a day of its own: 12:00 in Rome
+    const at = (h: number) => new Date(day.getTime() + h * 3_600_000);
+    const intent = (content: string, due: Date, timed: boolean) => db.query(
+      `INSERT INTO intents (memory_id, kind, content, due_at, expires_at, timed) VALUES ($1, 'request', $2, $3, $4, $5)`,
+      [memoryId, content, due, new Date(day.getTime() + DAY), timed]);
+    for (const c of ['comprare il pane', 'chiamare il fabbro', 'pagare la luce']) await intent(c, at(-3), false);
+    expect((await sweep(at(-2))).fired).toBe(3); // the day's share (3) is spent
+    await intent('ritirare le foto', at(-1), false);
+    expect((await sweep(at(0))).fired).toBe(0); // a fourth for the day: tomorrow
+    await intent('prendere la medicina', at(6), true); // asked for 18:00
+    expect((await sweep(at(6))).fired).toBe(1); // kept: the person chose that time
+  });
 });

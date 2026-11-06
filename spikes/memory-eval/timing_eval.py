@@ -48,8 +48,9 @@ def setup(m: dict, db: psycopg.Connection) -> dict:
     user = f"{RUN}-{m['id']}"
     api("POST", "/api/v1/admin/identities", body={"kind": "account", "personId": memory, "clientId": client["id"], "externalId": user})
     as_user = {"x-recordare-user": user}
-    participants = [{"ref": p["name"].lower(), "role": "other", "displayName": p["name"], "identity": {"channel": "voice", "externalId": p["voice"]}}
-                    for p in m["people"]]
+    # A person is known by their voiceprint, or (D55 §5c) by their Home Assistant person.
+    ident = lambda p: {"channel": "voice", "externalId": p["voice"]} if p.get("voice") else {"channel": "homeassistant", "externalId": p["ha"]}
+    participants = [{"ref": p["name"].lower(), "role": "other", "displayName": p["name"], "identity": ident(p)} for p in m["people"]]
     # Everyone the memory knows says hello once (a contact with a verified identity), then the messages items come from.
     hello = [{"externalId": f"{RUN}-hi-{p['ref']}", "role": "other", "authorRef": p["ref"], "content": "Ciao!", "sentAt": "2026-10-18T10:00:00+02:00"}
              for p in participants]
@@ -60,6 +61,11 @@ def setup(m: dict, db: psycopg.Connection) -> dict:
                **({"authorRef": x["author"].lower()} if x.get("author") else {}), **({"private": True} if x.get("private") else {})}
         api("POST", "/api/v1/ingest/messages", key, as_user, {"conversation": {"externalId": f"{RUN}-{x['conversation']}", "participants": participants}, "messages": [msg]})
     person = lambda name: db.execute("SELECT id FROM persons WHERE memory_id = %s AND display_name = %s", (memory, name)).fetchone()[0]
+    # Their other addresses (a Telegram chat): what messaging reaches them on (D55 §5c.1).
+    for p in m["people"]:
+        if p.get("telegram"):
+            api("POST", "/api/v1/admin/identities", body={"kind": "participant", "memoryId": memory, "personId": str(person(p["name"])),
+                                                          "channel": "telegram", "externalId": p["telegram"], "verified": True})
     message = lambda mid: db.execute("SELECT id FROM messages WHERE external_id = %s", (f"{RUN}-{mid}",)).fetchone()[0]
     for it in m["items"]:
         db.execute("INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at, timed) VALUES (%s, 'request', %s, %s, %s, %s, %s, %s)",
@@ -68,17 +74,27 @@ def setup(m: dict, db: psycopg.Connection) -> dict:
     for p in m["plans"]:
         db.execute("""INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, plan_status)
                       VALUES (%s, 'plan', %s, 'holder_lived', 'holder', 'stated', ARRAY[%s::uuid], %s, 'day', 'open')""", (memory, p["content"], memory, p["at"]))
-    return {"memory": memory, "key": key, "user": user}
+    return {"memory": memory, "key": key, "user": user, "participants": participants}
 
 
 def run_event(e: dict, ctx: dict) -> dict:
     headers = {"x-recordare-user": ctx["user"], "x-recordare-now": e["at"]}
-    if e["type"] == "presence":
+    if e["type"] == "presence" and "voice" in e:
         body = {"channel": e["channel"], "confidence": e["confidence"], "person": {"identity": {"channel": "voice", "externalId": e["voice"]}}}
         return api("POST", "/api/v1/presence", ctx["key"], headers, body)
-    turn = {"conversation": {"externalId": f"{RUN}-{e['conversation']}"},
-            "messages": [{"externalId": f"{RUN}-turn-{e['at']}", "role": "user", "content": e["text"], "sentAt": e["at"]}]}
-    return api("POST", "/api/v1/context", ctx["key"], headers, {"ingest": turn, "card": False})
+    if e["type"] == "presence":
+        # A place as a host describes it (D55 §5c): who is recognised there, how sure, and anyone it cannot name.
+        body = {"channel": e["channel"], "ttlSeconds": e.get("ttl", 900),
+                **({"place": e["place"]} if e.get("place") else {}),
+                **({"people": [{"identity": {"channel": "homeassistant", "externalId": ha}, "confidence": c} for ha, c in e["people"]]} if e.get("people") else {}),
+                **({"someone": e["someone"]} if e.get("someone") else {}), **({"left": True} if e.get("left") else {})}
+        return api("POST", "/api/v1/presence", ctx["key"], headers, body)
+    author = next((p for p in ctx["participants"] if e.get("author") and p["displayName"] == e["author"]), None)
+    msg = {"externalId": f"{RUN}-turn-{e['at']}", "role": "other" if author else "user", "content": e["text"], "sentAt": e["at"],
+           **({"authorRef": author["ref"]} if author else {})}
+    turn = {"conversation": {"externalId": f"{RUN}-{e['conversation']}", **({"participants": ctx["participants"]} if author else {})},
+            "messages": [msg]}
+    return api("POST", "/api/v1/context", ctx["key"], headers, {"ingest": turn, "query": e["text"], "card": False})
 
 
 def score(item: dict, got: dict | None) -> str:
@@ -93,6 +109,11 @@ def score(item: dict, got: dict | None) -> str:
         return "outside"
     if gold.get("via") and got["via"] not in gold["via"]:
         return "wrong_trigger"
+    if gold.get("channel") and got["channel"] != gold["channel"]:
+        return "wrong_channel"
+    if gold.get("opened") and not (got.get("opened_at") and
+                                   datetime.fromisoformat(gold["opened"][0]) <= got["opened_at"] <= datetime.fromisoformat(gold["opened"][1])):
+        return "no_opening"
     return "in_window"
 
 
@@ -110,18 +131,29 @@ def main() -> None:
             while events and events[0][0] <= tick:
                 at, mid, e = events.pop(0)
                 res = run_event(e, ctxs[mid])
-                log.append({"at": e["at"], "memory": mid, "type": e["type"], "result": {k: (v.get("text") if isinstance(v, dict) and "text" in v else v)
-                                                                                         for k, v in (res or {}).items() if k in ("initiative", "askWho", "block")}})
+                kept = {k: (v.get("text") if isinstance(v, dict) and "text" in v else v)
+                        for k, v in (res or {}).items() if k in ("initiative", "askWho", "block", "opening")}
+                entry = {"at": e["at"], "memory": mid, "type": e["type"], "result": kept}
+                if e.get("expect"):
+                    # An event's own gold (D55 §5c): what this presence must and must not bring.
+                    want = e["expect"]
+                    # Given = an initiative offered now; an opening returns it still pending (said only after a "yes").
+                    seen = {"initiative": bool((res or {}).get("initiative")) and (res or {}).get("initiative", {}).get("status") == "offered",
+                            "askWho": bool((res or {}).get("askWho")), "opening": bool((res or {}).get("opening"))}
+                    ok = all(seen[k] == v for k, v in want.items())
+                    entry["check"] = "ok" if ok else f"expected {want}, got {{{', '.join(f'{k}: {seen[k]}' for k in want)}}}"
+                log.append(entry)
             for c in ctxs.values():
                 api("POST", f"/api/v1/admin/memories/{c['memory']}/initiatives", headers={"x-recordare-now": tick.isoformat()})
             tick += timedelta(minutes=data["tick_minutes"])
         results = []
         for m in data["memories"]:
-            rows = db.execute("""SELECT i.text, i.status::text, i.offered_at, i.channel,
+            rows = db.execute("""SELECT i.text, i.status::text, i.offered_at, i.channel, i.opened_at,
                                    (SELECT d.trigger FROM initiative_decisions d WHERE d.initiative_id = i.id AND d.delivered ORDER BY d.at LIMIT 1) AS via
                                  FROM initiatives i WHERE i.memory_id = %s""", (ctxs[m["id"]]["memory"],)).fetchall()
             for it in m["items"] + m["plans"]:
-                hit = next(({"text": r[0], "status": r[1], "offered_at": r[2], "channel": r[3], "via": r[4]} for r in rows if it["content"].lower() in r[0].lower()), None)
+                hit = next(({"text": r[0], "status": r[1], "offered_at": r[2], "channel": r[3], "opened_at": r[4], "via": r[5]}
+                            for r in rows if it["content"].lower() in r[0].lower()), None)
                 results.append({"id": it["id"], "outcome": score(it, hit), "offered_at": hit["offered_at"].isoformat() if hit and hit["offered_at"] else None,
                                 "channel": hit["channel"] if hit else None, "via": hit["via"] if hit else None, "why": it["why"]})
     counts: dict[str, int] = {}
@@ -131,6 +163,11 @@ def main() -> None:
     print(f"policy {LABEL}: {good}/{len(results)} right — {counts}")
     for r in results:
         print(f"  {r['id']:4} {r['outcome']:15} {r['offered_at'] or '-':26} {r['channel'] or '-':10} {r['via'] or '-'}")
+    checks = [x for x in log if "check" in x]
+    if checks:
+        print(f"event checks: {sum(1 for x in checks if x['check'] == 'ok')}/{len(checks)}")
+        for x in checks:
+            print(f"  {x['at']} {x['memory']}: {x['check']}")
     out = HERE / "results" / f"timing_{LABEL}_{RUN}.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps({"label": LABEL, "counts": counts, "results": results, "events": log}, ensure_ascii=False, indent=1, default=str))

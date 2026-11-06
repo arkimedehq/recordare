@@ -6,6 +6,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Fixed
+- **A reminder asked for a time is said at that time, however busy the day.** The daily limit of initiatives held back
+  a timed request: asked for 18:00 after three other things that day, it waited for the next day. A time the person
+  chose now passes the limit, as it already passed the quiet hours.
+- **Messaging only to a real address.** A person recognised by their Home Assistant person, voiceprint or face counted
+  as reachable by message; such identities now only recognise someone, and an initiative goes by messaging only to an
+  address on another channel (a Telegram chat). Both found by the new presence-by-place cases of the timing dev set
+  (D55 §5c: 17 / 17 after the fixes).
+
 ## [0.9.1] — 2026-11-06
 
 ### Changed
