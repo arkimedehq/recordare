@@ -24,6 +24,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   `deliver`: l'iniziativa non viene presa e torna a una presenza successiva (un ospite senza `open` non dice nulla). Una
   presenza da una telecamera è riportata come voce. Gli ospiti esistenti funzionano senza modifiche.
 
+- **Unire due schede della stessa persona** (console admin, la scheda di una memoria → Persone): "Eriona" ed "Eriona
+  Rossi" diventano una — nomi, indirizzi, ciò che la memoria sa di lei e ciò che intende dirle passano alla scheda
+  tenuta (`POST api/v1/admin/memories/:id/persons/:person/merge`). Ogni contatto mostra in quanti episodi è nominato, per
+  scegliere. L'unione non perde più ciò che era stato dimenticato del contatto unito, né le sue fonti, promozioni,
+  intenti, iniziative e presenze; una persona che ha una memoria non viene mai unita.
+
 ### Corretto
 - **Un'iniziativa detta giorni dopo non dice più "ieri".** Una domanda su un piano viene formulata due giorni dopo e
   può essere detta per una settimana: "Ieri avevi la verifica di geometria" era falsa fin dall'inizio (visto su una

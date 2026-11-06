@@ -16,8 +16,8 @@ import { InitiativeService } from '../initiative/initiative.service';
 import { WebhooksService } from '../initiative/webhooks.service';
 import { webhookCreatedResponse, webhooksResponse } from '../initiative/initiative.responses';
 import {
-  createClientSchema, createIdentitySchema, createKeySchema, createMemorySchema, createTokenSchema, registerWebhookSchema, updateClientSchema, updateMemorySchema,
-  type CreateClient, type RegisterWebhook, type CreateIdentity, type CreateKey, type CreateMemory, type CreateToken, type UpdateClient, type UpdateMemory,
+  createClientSchema, createIdentitySchema, createKeySchema, createMemorySchema, createTokenSchema, mergePersonSchema, registerWebhookSchema, updateClientSchema, updateMemorySchema,
+  type CreateClient, type RegisterWebhook, type CreateIdentity, type CreateKey, type CreateMemory, type CreateToken, type MergePerson, type UpdateClient, type UpdateMemory,
 } from './admin.schemas';
 
 /** Admin API (no @RequireScopes → admin credential only). */
@@ -128,6 +128,14 @@ export class AdminController {
   @Returns(adminObject)
   updateMemory(@Param('id', ParseUUIDPipe) id: string, @Body(new ZodBody(updateMemorySchema)) body: UpdateMemory) {
     return this.admin.updateMemory(id, body);
+  }
+
+  /** Merges a contact of the memory into another one (the same person known twice). */
+  @Post('memories/:id/persons/:person/merge')
+  @Returns(adminObject)
+  mergePerson(@Param('id', ParseUUIDPipe) id: string, @Param('person', ParseUUIDPipe) person: string,
+    @Body(new ZodBody(mergePersonSchema)) body: MergePerson) {
+    return this.admin.mergePerson(id, person, body.into);
   }
 
   @Post('identities')

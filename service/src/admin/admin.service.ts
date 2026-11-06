@@ -6,6 +6,7 @@ import { DataSource, QueryFailedError } from 'typeorm';
 import { CLAIM_TTL_DAYS, confirmClaim, createLinkCode, type LinkCode, rejectClaim } from '../identity/holder-links';
 import { AccessToken, ApiKey, Client, ExternalIdentity, Memory, Person } from '../identity/identity.entities';
 import { generateCredential, hashCredential } from '../auth/credentials';
+import { mergeContacts } from '../engine/contacts';
 import { AuthService } from '../auth/auth.service';
 import { type CreateClient, type CreateIdentity, type CreateKey, type CreateMemory, type CreateToken, type UpdateClient, type UpdateMemory } from './admin.schemas';
 
@@ -78,6 +79,17 @@ export class AdminService {
     }
   }
 
+  /**
+   * Merges contact `from` of memory `memoryId` into contact `into` (the same person known twice — "Eriona" and "Eriona
+   * Rossi"): names, addresses, what the memory knows and means to tell them all move to `into`, then `from` is gone.
+   * Only two contacts of that memory; never its self or a person who holds a memory (400 `cannot_merge`).
+   */
+  async mergePerson(memoryId: string, from: string, into: string): Promise<{ merged: true; into: string }> {
+    const merged = await this.db.transaction((tx) => mergeContacts(tx, memoryId, from, into, new Date()));
+    if (!merged) throw new BadRequestException({ code: 'cannot_merge' });
+    return { merged: true, into };
+  }
+
   async createToken(memoryId: string, input: CreateToken): Promise<{ id: string; token: string; prefix: string }> {
     const memory = await this.db.getRepository(Memory).findOneBy({ personId: memoryId });
     const client = await this.db.getRepository(Client).findOneBy({ id: input.clientId });
@@ -139,11 +151,13 @@ export class AdminService {
               l.claim_display_name AS "displayName", l.claimed_at AS "claimedAt"
        FROM link_codes l LEFT JOIN clients c ON c.id = l.claim_client_id
        WHERE l.claimed_at > now() - make_interval(days => $1) ORDER BY l.claimed_at`, [CLAIM_TTL_DAYS]);
-    const people: Array<{ memoryId: string; id: string; name: string }> = await this.db.query(
-      `SELECT memory_id AS "memoryId", id, display_name AS name FROM persons WHERE memory_id IS NOT NULL ORDER BY display_name`);
+    const people: Array<{ memoryId: string; id: string; name: string; mentions: number }> = await this.db.query(
+      `SELECT p.memory_id AS "memoryId", p.id, p.display_name AS name,
+              (SELECT count(*)::int FROM episode_people ep WHERE ep.person_id = p.id) AS mentions
+       FROM persons p WHERE p.memory_id IS NOT NULL ORDER BY p.display_name`);
     return memories.map((o) => ({
       ...o,
-      people: [{ id: o.id, name: o.name }, ...people.filter((c) => c.memoryId === o.id).map(({ id, name }) => ({ id, name }))],
+      people: [{ id: o.id, name: o.name, self: true }, ...people.filter((c) => c.memoryId === o.id).map(({ id, name, mentions }) => ({ id, name, mentions }))],
       identities: identities.filter((i) => (i.memoryId ?? i.personId) === o.id),
       tokens: tokens.filter((t) => t.memoryId === o.id),
       linkClaims: claims.filter((l) => l.memoryId === o.id),

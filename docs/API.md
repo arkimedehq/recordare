@@ -165,7 +165,8 @@ cross-client link will need its own):
 2. That client submits it: `POST api/v1/identities/link {code, externalUserId}`; redemption by any
    other client is rejected. The holder receives a notification.
 3. If the `externalUserId` is already bound to another memory, the link fails with a generic
-   `400 cannot_link` (no hint that the id exists) — person merge is not supported in v1.
+   `400 cannot_link` (no hint that the id exists) — a holder link never merges memories (two contacts of one memory can be
+   merged by the admin: "Admin console" below).
 4. The holder can list and revoke connected clients and identities at any time:
    `GET api/v1/me/identities`, `DELETE api/v1/me/identities/{id}` (holder session).
 
@@ -793,7 +794,11 @@ written, dropped and why, counts only; WORK_PLAN 4.12), `GET api/v1/admin/person
 contact counts, pending extraction, last message, identities — the accounts that open the memory and the participant
 ids of its self and contacts —, active personal tokens by prefix, `linkClaims` — D51 claims waiting for confirmation), `GET api/v1/admin/clients` (clients with active keys by prefix),
 `PATCH api/v1/admin/clients/:id {autoProvision?, disabled?}` (disabled = every key and token of the client stops at
-once), `DELETE api/v1/admin/identities/:id` (unlinks a client's user from a person; memories stay). The console uses
+once), `DELETE api/v1/admin/identities/:id` (unlinks a client's user from a person; memories stay),
+`POST api/v1/admin/memories/:id/persons/:person/merge {into}` (two cards of the same person in one memory: names, addresses,
+what the memory knows about them and means to tell them move to `into`, then `person` is gone; `400 cannot_merge` for
+the memory's self, a person who holds a memory or a person of another memory; `people` in `GET api/v1/admin/persons`
+carries each contact's `mentions`, how many episodes name them, to tell two cards with one name apart). The console uses
 the other admin routes of §1 for the rest (memory mode and gender, quality profile, name, identities, personal tokens,
 client keys, consolidate); it is in Italian and English.
 

@@ -24,6 +24,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   never to `deliver`: the initiative is not taken, and comes back at a later presence (a host without `open` says
   nothing). A presence from a camera is reported as voice. Existing hosts work unchanged.
 
+- **Merge two cards of the same person** (admin console, a memory's card → People): "Eriona" and "Eriona Rossi"
+  become one — names, addresses, what the memory knows about her and what it means to tell her move to the card kept
+  (`POST api/v1/admin/memories/:id/persons/:person/merge`). Each contact shows how many episodes name it, to choose.
+  Merging no longer drops what was forgotten about the merged contact, nor their sources, promotions, intents,
+  initiatives and presences; a person who holds a memory is never merged.
+
 ### Fixed
 - **An initiative said days later no longer says "yesterday".** An ask about a plan is worded two days after it and may
   be said for a week: "Yesterday you had the geometry test" was false from the start (seen on a real memory). The wording
