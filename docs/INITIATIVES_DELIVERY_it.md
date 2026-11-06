@@ -242,6 +242,13 @@ persona, mai su chi parla con lei, una risposta o un "non lo so" la chiudono per
 fatta quando la lacuna si colma (una relazione impostata, qualcosa imparato su di lei). Animali e cose sentiti nominare
 (senza scheda persona) per ora non vengono chiesti.
 
+**Conferme** (costruite il 2026-11-06, senza modello): una nota su una persona che la memoria ha dedotto o sentito una
+volta — un'abitudine, una preferenza, il profilo, una relazione, vecchia di almeno un giorno — viene chiesta una volta a
+chi potrebbe sapere: "Ho capito questo: Giada va a nuoto il mercoledì. È così, o c'è altro?" (`confirm` in ogni lingua;
+in balanced e full la formula il modello). Dopo le lacune; una domanda alla volta e una conferma al giorno per persona;
+mai una nota imparata dalla risposta a una domanda della memoria, una privata, o una che corregge una nota già chiesta. I
+fatti solo negli episodi, o mai detti ad alta voce, non si raggiungono così.
+
 ## 7. Il contratto (cambi, tutti additivi)
 
 - **Impulso di presenza** `POST api/v1/presence {user?, person: {ref | personId}, channel: voice | camera | chat | panel,

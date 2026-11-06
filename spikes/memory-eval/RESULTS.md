@@ -2125,6 +2125,30 @@ unknown; animals and things heard named (Tobia, Micia) have no card and are not 
 not made (budget). Cost ≈ 0.6–0.8 USD for pilots and three runs (estimate from tokens: engine ≈ 0.4 M input of which
 ≈ 0.32 M cached, ≈ 16 k output a run; the judge's reasoning ≈ 0.25 M output a run is most of it).
 
+### Confirmations — `dataset_dev_household` (D55 F2b, 2026-11-06, DeepSeek direct, balanced)
+
+The household curve's main limit: most of what the memory half-knew sat in a note heard once or guessed ("Giada goes
+swimming on Wednesdays" — Mondays too; "Luca often goes to training"). Built: a **confirmation** — such a note (a habit,
+a preference, a profile, a relation; at least a day old) asked about once of who could know, "Ho capito questo: … È così,
+o c'è altro?", after the gaps, one a day for each person (`INITIATIVES_DELIVERY.md` §6). Two runs against run2–run3:
+
+| run | questions (answered / ignored) | confirmations | wrong person | nagging | known / partial day 14 | learnt by asking |
+|---|---|---|---|---|---|---|
+| run2 (before) | 11 (10 / 1) | — | 0 | 0 | 8 / 10 | f16, f18, f22 |
+| run3 (before) | 10 (9 / 1) | — | 0 | 0 | 9 / 9 | f16, f18, f22 |
+| confirm1 | 12 (8 / 4) | 1 (ignored) | 0 | 0 | 10 / 6 | f16, f18, f22 |
+| confirm2 | 13 (12 / 1) | 4 | 0 | 0 | 8 / 6 | f06, f07, f09, f11, f16, f18, f22 |
+
+When a confirmation is asked and answered, the fact completes: in confirm2 "Giada goes swimming often" became "on Mondays
+and Wednesday afternoons" (f07 known), Luca's training "on Tuesdays and Thursdays at 18" (f06), Marta's night shifts "one
+week a month" (f09 known). In confirm1 only one confirmation was armed, late (day 11), and ignored: the children were
+busy with other questions most evenings, and the pattern pass rewrites its inferred notes each night (a new note to wait a
+day for). The end count does not move beyond the runs' noise (8–10 known; facts outside the questions come and go between
+runs, e.g. f04 and f11), and ignored questions rose in confirm1 (4: a child with patience 1 asked twice in an evening —
+a gap or an outcome question at 19:00, another at 20:30). Errors stayed zero. Possible next steps, not built: one
+learning question a day for each person (any kind), and confirming a pattern note on its first version rather than its
+nightly rewrites. Cost ≈ 0.5 USD for the two runs.
+
 ### No relative days in what is said later — `initiative.v4` (2026-11-05, DeepSeek direct, balanced)
 
 Found on Kinox: an ask created on November 5 about a test on November 3 said "Ieri avevi la verifica di geometria" —

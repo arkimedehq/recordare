@@ -233,6 +233,13 @@ and full the model words it). Same rules: one question at a time per person, a p
 an answer or a "don't know" alike closes it for good, and it is closed before being asked when the gap closes (a
 relation set, something learnt about them). Animals and things heard named (no person card) are not asked about yet.
 
+**Confirmations** (built 2026-11-06, no model): a note about a person the memory guessed or heard once — a habit, a
+preference, their profile, a relation, at least a day old — is asked about once of who could know: "I understood this:
+Giada goes swimming on Wednesdays. Is that right, or is there more?" (`confirm` in every language; worded by the model in
+balanced and full). After the gaps; one question at a time and one confirmation a day for each person; never a note
+learnt from an answer to the memory's own question, a private one, or one revising a note already asked about. Facts
+only in episodes, or never said aloud, are not reached this way.
+
 ## 7. The contract (changes, all additive)
 
 - **Presence impulse** `POST api/v1/presence {user?, person: {ref | personId}, channel: voice | camera | chat | panel,

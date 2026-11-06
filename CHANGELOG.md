@@ -12,6 +12,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   Elena?", in the memory's language; no model). One question at a time per person; a card whose name already says who
   they are through someone known ("Luca's mom") is not asked about; never dropped as not worth it. Migration
   `IntentWho` (intent kind `who`, `intents.about_person_id`).
+- **Confirmations: the memory checks what it half-knows** (D55 F2b). A note about a person heard once or guessed (a
+  habit, a preference, their profile, a relation; at least a day old) is asked about once of who could know: "I
+  understood this: … Is that right, or is there more?" (no model; every language). After the gaps; one question at a
+  time and one confirmation a day for each person; never a note learnt from an answer to the memory's own question, a
+  private one, or one revising a note already asked about. Migration `IntentConfirm` (intent kind `confirm`).
 
 ### Changed
 - Whom a question about a person goes to counts the episodes that only name them too, not just those about them.
