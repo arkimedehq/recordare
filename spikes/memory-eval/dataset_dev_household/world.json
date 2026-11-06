@@ -1,0 +1,278 @@
+{
+ "_note": "The household's hidden truth: each fact and who knows it (the members' knowledge in the simulation).",
+ "start": "2026-10-05T00:00:00+02:00",
+ "days": 14,
+ "timezone": "Europe/Rome",
+ "members": {
+  "Paolo": {
+   "voice": "paolo-voice",
+   "patience": 2,
+   "about": "Paolo, 46, elettricista, il padre"
+  },
+  "Marta": {
+   "voice": "marta-voice",
+   "patience": 2,
+   "about": "Marta, 44, infermiera, la madre"
+  },
+  "Luca": {
+   "voice": "luca-voice",
+   "patience": 1,
+   "about": "Luca, 16, il figlio, risponde a monosillabi"
+  },
+  "Giada": {
+   "voice": "giada-voice",
+   "patience": 1,
+   "about": "Giada, 9, la figlia, chiacchierona"
+  }
+ },
+ "facts": [
+  {
+   "id": "f01",
+   "fact": "Marta è la moglie di Paolo",
+   "knowers": [
+    "Paolo",
+    "Marta",
+    "Luca",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f02",
+   "fact": "Luca è il figlio di Paolo e Marta e ha 16 anni",
+   "knowers": [
+    "Paolo",
+    "Marta",
+    "Luca",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f03",
+   "fact": "Giada è la figlia di Paolo e Marta e ha 9 anni",
+   "knowers": [
+    "Paolo",
+    "Marta",
+    "Luca",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f04",
+   "fact": "Nonna Rosa è la madre di Marta",
+   "knowers": [
+    "Paolo",
+    "Marta",
+    "Luca",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f05",
+   "fact": "Nonna Rosa vive a Pistoia",
+   "knowers": [
+    "Paolo",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f06",
+   "fact": "Luca gioca a basket, allenamenti il martedì e il giovedì alle 18",
+   "knowers": [
+    "Luca",
+    "Paolo",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f07",
+   "fact": "Giada fa nuoto il lunedì e il mercoledì pomeriggio",
+   "knowers": [
+    "Giada",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f08",
+   "fact": "Marta lavora come infermiera all'ospedale di Prato",
+   "knowers": [
+    "Marta",
+    "Paolo"
+   ]
+  },
+  {
+   "id": "f09",
+   "fact": "Marta fa i turni di notte una settimana al mese",
+   "knowers": [
+    "Marta"
+   ]
+  },
+  {
+   "id": "f10",
+   "fact": "Paolo fa l'elettricista",
+   "knowers": [
+    "Paolo",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f11",
+   "fact": "Paolo esce di casa alle 7 del mattino",
+   "knowers": [
+    "Paolo",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f12",
+   "fact": "Tobia è il cane di famiglia",
+   "knowers": [
+    "Paolo",
+    "Marta",
+    "Luca",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f13",
+   "fact": "Tobia lo porta fuori la sera Luca",
+   "knowers": [
+    "Luca",
+    "Paolo"
+   ]
+  },
+  {
+   "id": "f14",
+   "fact": "Giada è allergica alle noci",
+   "knowers": [
+    "Marta",
+    "Paolo",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f15",
+   "fact": "Il compleanno di Giada è il 3 dicembre",
+   "knowers": [
+    "Marta",
+    "Paolo",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f16",
+   "fact": "Zio Franco è il fratello di Paolo",
+   "knowers": [
+    "Paolo"
+   ]
+  },
+  {
+   "id": "f17",
+   "fact": "Zio Franco abita a Firenze",
+   "knowers": [
+    "Paolo"
+   ]
+  },
+  {
+   "id": "f18",
+   "fact": "Simone è il migliore amico di Luca",
+   "knowers": [
+    "Luca"
+   ]
+  },
+  {
+   "id": "f19",
+   "fact": "Luca vuole studiare ingegneria all'università",
+   "knowers": [
+    "Luca",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f20",
+   "fact": "La spesa grande si fa il sabato mattina",
+   "knowers": [
+    "Marta",
+    "Paolo"
+   ]
+  },
+  {
+   "id": "f21",
+   "fact": "Il riscaldamento si accende alle 6:30",
+   "knowers": [
+    "Paolo"
+   ]
+  },
+  {
+   "id": "f22",
+   "fact": "Elena è la maestra di Giada",
+   "knowers": [
+    "Giada",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f23",
+   "fact": "Giada va a scuola a piedi con Luca",
+   "knowers": [
+    "Luca",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f24",
+   "fact": "Marta non beve caffè dopo le 15",
+   "knowers": [
+    "Marta"
+   ]
+  },
+  {
+   "id": "f25",
+   "fact": "Paolo tifa Fiorentina",
+   "knowers": [
+    "Paolo",
+    "Luca"
+   ]
+  },
+  {
+   "id": "f26",
+   "fact": "L'auto di famiglia è una Panda rossa",
+   "knowers": [
+    "Paolo",
+    "Marta"
+   ]
+  },
+  {
+   "id": "f27",
+   "fact": "Il venerdì sera la famiglia mangia la pizza",
+   "knowers": [
+    "Paolo",
+    "Marta",
+    "Luca",
+    "Giada"
+   ]
+  },
+  {
+   "id": "f28",
+   "fact": "Luca ha il patentino per lo scooter",
+   "knowers": [
+    "Luca",
+    "Paolo"
+   ]
+  },
+  {
+   "id": "f29",
+   "fact": "Micia è la gatta della vicina che entra in giardino",
+   "knowers": [
+    "Giada"
+   ]
+  },
+  {
+   "id": "f30",
+   "fact": "Marta canta nel coro della parrocchia il giovedì sera",
+   "knowers": [
+    "Marta",
+    "Paolo"
+   ]
+  }
+ ]
+}

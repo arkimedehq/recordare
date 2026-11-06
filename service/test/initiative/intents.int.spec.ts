@@ -144,4 +144,17 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     expect(await sweep()).toBe('Un promemoria per venerdì 9 ottobre: far sapere a Marta del preventivo.');
     expect(llm.requests.at(-1)!.messages[1]!.content).toContain('SAID 2026-10-09 to 2026-10-11');
   });
+
+  it('a gap ("who is…") the model would skip is asked anyway, once, with the service\'s sentence (D55 F2b)', async () => {
+    const [{ person_id }] = await db.query(`SELECT person_id FROM external_identities WHERE external_id = 'u1'`);
+    await db.query(`DELETE FROM initiatives`);
+    await db.query(`UPDATE intents SET status = 'done'`);
+    const [bruna] = await db.query(`INSERT INTO persons (memory_id, display_name) VALUES ($1, 'Bruna') RETURNING id`, [person_id]);
+    await db.query(`INSERT INTO intents (memory_id, kind, content, about_person_id, due_at, expires_at) VALUES ($1, 'who', 'Bruna', $2, '2026-10-09T06:00:00Z', '2026-10-20T00:00:00Z')`,
+      [person_id, bruna.id]);
+    llm.queue.push({ initiatives: [{ candidate: 'C1', text: '', worth: 0.1, skip: true }] });
+    expect(await app.get(InitiativeService).sweep(person_id, new Date('2026-10-09T08:30:00+02:00'))).toMatchObject({ fired: 1 });
+    expect((await db.query(`SELECT kind::text, text FROM initiatives`))[0]).toEqual({ kind: 'ask', text: 'Chi è Bruna? Ho sentito il nome, ma non so chi sia.' });
+  });
 });
+
