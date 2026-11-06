@@ -44,7 +44,7 @@ Il richiamo con **strumenti MCP** non fa parte del proxy: le piattaforme che sup
   Recordare). Una breve domanda di seguito ("e lui?") viene collegata al turno precedente da Recordare stesso.
 - **Le iniziative nel turno** (Recordare 0.7.0, D55): il contesto di memoria porta anche ciò che l'agente voleva dire
   o chiedere a chi sta parlando — un promemoria richiesto, "com'è andata?", "hai steso i panni?" — offerto una volta,
-  senza configurazione; la carta della memoria (`charter.v2`) dice come usarlo.
+  senza configurazione; la carta della memoria (`charter.v3`) dice come usarlo.
 - **La forma della carta**: il proxy non dà al modello strumenti di memoria (Limiti), quindi di default chiede la carta
   per il solo contesto (`GET api/v1/charter?tools=false`): ciò che è venuto in mente è tutto ciò che il modello può
   ricordare — quando non basta, dice che non se lo ricorda invece di tirare a indovinare, e non dice mai di stare

@@ -32,7 +32,7 @@ is empty); the plugin has no setting for them.
   follow-up ("and him?") is matched with the previous turn by Recordare itself.
 - **Initiatives in the turn** (Recordare 0.7.0, D55): the memory context also carries what the agent meant to tell or
   ask whoever is talking — a reminder they asked for, "how did it go?", "did you hang the laundry?" — offered once,
-  with no setup; the memory charter (`charter.v2`) says how to use it. Since 0.8.0 the hook also asks for look-ups
+  with no setup; the memory charter (`charter.v3`) says how to use it. Since 0.8.0 the hook also asks for look-ups
   (`initiatives: {lookups: true}`): the agent has tools, so something the memory wants checked may be given to it in the
   turn.
 - **Fallback**: if Recordare does not answer, no charter and no block — the session and the turn go on without memory.

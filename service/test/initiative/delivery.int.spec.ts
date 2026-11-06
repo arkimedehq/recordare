@@ -131,6 +131,14 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     expect(high.body.initiative).toMatchObject({ id, status: 'offered', channel: 'voice', identity: { required: 'high' } });
   });
 
+  it('in the turn, nobody identified while something waits for someone: ask who it is, naming no one', async () => {
+    await request(home, 'portare fuori il cane', { for: eriona });
+    await ingest('casa', 'anon-chat', [{ externalId: 'a1', role: 'other', content: 'Che tempo fa domani?', sentAt: '2026-10-12T07:00:00Z' }]);
+    const block = (await context('casa', 'anon-chat')).body.block as string;
+    expect(block).toContain('- if natural, ask who you are talking with');
+    expect(block).not.toContain('Eriona');
+  });
+
   it('in the turn: the holder\'s initiative enters the memory context once, then closes when the reminder was given', async () => {
     await ingest('marco', 'm-chat', [{ externalId: 'm1', role: 'user', content: 'Ricordami di chiamare il commercialista.', sentAt: '2026-10-12T07:00:00Z' }]);
     const id = await request(marco, 'chiamare il commercialista', { message: 'm1' });

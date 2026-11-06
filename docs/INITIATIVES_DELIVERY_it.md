@@ -41,16 +41,17 @@ quale canale**; l'agente gli dà i **sensi** (chi c'è adesso, con che sicurezza
 |---|---|---|
 | account della piattaforma / mittente del canale (chat, messaggistica) | la piattaforma | alta |
 | codice di collegamento confermato dal titolare (D51) | Recordare + la persona | alta |
-| "sono Eriona" in chat o a voce | la persona | media (chiunque può dirlo) |
+| "sono Eriona" in chat o a voce | nessuno: chiunque può dire un nome (manutentore, 2026-11-06) | nessuna — ricordato, mai un'identità |
 | impronta vocale | l'agente (per esempio Wyoming / Home Assistant) | quella dell'agente, mandata come numero |
 | volto | l'agente (camera) | quella dell'agente, mandata come numero |
 
 - **Soglie per delicatezza**: un'iniziativa innocua ("hai steso i panni?") basta con sicurezza media; una che nasce da un
   ricordo privato (D52) o che tocca le cose personali di qualcuno richiede sicurezza alta; una persona non identificata
   non viene mai a sapere il contenuto.
-- **Chi parla è sconosciuto** mentre un'iniziativa aspetta qualcuno: l'agente può chiedere "sei Eriona?" (senza rivelare
-  nulla) — lo stesso meccanismo delle chiarificazioni (visione L1). La risposta è un'identità di sicurezza media, e un
-  ricordo.
+- **Chi parla è sconosciuto** mentre un'iniziativa aspetta qualcuno: l'agente può chiedere con chi sta parlando — senza
+  fare nomi (un nome direbbe a chi è lì che c'è qualcosa per quella persona; manutentore, 2026-11-06) e senza rivelare
+  contenuti — lo stesso meccanismo delle chiarificazioni (visione L1). La risposta viene ricordata, non è un'identità:
+  chiunque può dire un nome.
 - I modelli biometrici restano all'agente (visione: impronte vocali sul dispositivo); Recordare salva chi è stato
   riconosciuto, con cosa, con che sicurezza — mai una voce o un volto.
 
@@ -144,7 +145,7 @@ cambiare questo.
 | **sta parlando** | un turno vocale su un satellite | è già il canale nel turno |
 
 Un sensore di occupazione senza identità (mmWave, movimento, la "persona" di Frigate senza volto) è **qualcuno** nella
-stanza: può portare a "sei Chloé?" (§3), mai al contenuto.
+stanza: può portare a "con chi sto parlando?" (§3), mai al contenuto.
 
 **3. Tutto da Home Assistant.** La piattaforma legge la presenza da Home Assistant e parla attraverso di esso. MCP non
 basta: i suoi strumenti li chiama il modello, su richiesta — la presenza deve arrivare da sola, senza modello, e un
@@ -219,7 +220,7 @@ altri (`opening`); il `channel` dell'esito; un'iniziativa che resta in attesa do
 
 Una memoria di entità parte vuota e deve arrivare a **conoscere** le persone e il mondo intorno a sé, poi agire da sé.
 Oltre a ricordare e riprendere le cose, **chiede**:
-- **chi** — "come ti chiamo?", "sei Eriona?" (identità, §3);
+- **chi** — "come ti chiamo?", "con chi sto parlando?" (identità, §3);
 - **sulle persone** — relazioni, ruoli, preferenze, abitudini che non conosce ancora ("chi è Marta per te?", "Leo ha
   scuola il sabato?");
 - **sul mondo** — ciò che ha visto o sentito e non sa collocare ("cos'era quel rumore stanotte?"), cosa vuol dire una

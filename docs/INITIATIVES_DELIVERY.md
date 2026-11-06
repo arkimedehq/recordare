@@ -39,15 +39,17 @@ how sure), **channels** (what it can reach), **delivery** and the **outcome**.
 |---|---|---|
 | platform account / channel sender (chat, messaging) | the platform | high |
 | link code confirmed by the holder (D51) | Recordare + the person | high |
-| "sono Eriona" in chat or by voice | the person | medium (anyone can say it) |
+| "sono Eriona" in chat or by voice | nobody: anyone can say a name (maintainer, 2026-11-06) | none — remembered, never an identity |
 | voiceprint | the agent (e.g. Wyoming / Home Assistant) | the agent's, sent as a number |
 | face | the agent (camera) | the agent's, sent as a number |
 
 - **Thresholds by sensitivity**: a harmless initiative ("did you hang the laundry?") needs medium confidence; one drawn
   from a private memory (D52) or about someone's personal matters needs high confidence; an unidentified person never
   learns the content.
-- **Unknown speaker** while an initiative waits for someone: the agent may ask "are you Eriona?" (no content revealed) —
-  the same mechanism as clarifications (vision L1). The answer is an identity of medium confidence, and a memory.
+- **Unknown speaker** while an initiative waits for someone: the agent may ask who it is talking with — naming no one
+  (a name would tell whoever is there that something waits for that person; maintainer, 2026-11-06) and revealing no
+  content — the same mechanism as clarifications (vision L1). The answer is remembered, not an identity: anyone can say
+  a name.
 - Biometric templates stay with the agent (vision: voiceprints on the device); Recordare stores who was recognised, by
   what, how sure — never a voice or a face.
 
@@ -139,7 +141,7 @@ added later without changing this.
 | **talking** | a voice turn on a satellite | already the in-turn channel |
 
 An occupancy sensor without identity (mmWave, motion, Frigate's "person" without a face) is **someone** in the room:
-it can lead to "are you Chloé?" (§3), never to the content.
+it can lead to "who am I talking with?" (§3), never to the content.
 
 **3. Everything from Home Assistant.** The platform reads presence from Home Assistant and speaks through it. MCP is not
 enough: its tools are called by the model on request — presence must arrive by itself, with no model, and an
@@ -211,7 +213,7 @@ others are present (`opening`); the outcome's `channel`; an initiative kept pend
 
 An entity memory starts empty and must come to **know** the people and the world around it, then act on its own.
 Besides reminding and following up, it **asks**:
-- **who** — "how should I call you?", "is this Eriona?" (identity, §3);
+- **who** — "how should I call you?", "who am I talking with?" (identity, §3);
 - **about people** — relations, roles, preferences, routines it does not know yet ("who is Marta for you?", "does Leo
   have school on Saturdays?");
 - **about the world** — what it saw or heard and could not place ("what was that noise at night?"), what a word means

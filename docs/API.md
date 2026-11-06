@@ -528,7 +528,7 @@ synonyms); Monday-based weeks, the memory's timezone; "now" is the server clock 
 `GET api/v1/charter` (scope `read`, no user header) → `{charter, version}`: how the agent uses its memory — its own
 mind, not a tool among others; reason from what came to mind, search the memory before other tools and before saying
 "I don't know", "remember / memories" mean this memory, use it naturally, not when asked not to. The same text for every
-memory, in English for every language like the block, stable until `version` changes (`charter.v2` since 0.7.0: how to use an initiative line): the host puts it in
+memory, in English for every language like the block, stable until `version` changes (`charter.v3` since 0.9.1: asking who it is names no one; `charter.v2` since 0.7.0: how to use an initiative line): the host puts it in
 the agent's system prompt (stable part, cacheable) and re-reads it only when the version changes. The MCP server sends
 the same text as its `instructions` at `initialize`, and the `<memory-context>` block names it. The memory-first
 contract every client follows: `INTEGRATION.md` §4. `?tools=false` gives the form for a host that offers the agent
@@ -649,11 +649,12 @@ private or public again (§2) has its days written again.
 >   `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: the person resolved in this memory (an identity as in ingest;
 >   none: the holder of a personal memory; an unknown identity creates nobody), the one initiative to deliver now (marked
 >   `offered`, `channel` voice / panel / chat — report its outcome afterwards), or, in an entity memory with nobody
->   identified, whom the agent may ask "is it you?" (nothing of it revealed).
+>   identified, `askWho`: someone something waits for — ask who you are talking with, naming no one (a name would tell
+  whoever is there that something waits for that person).
 > - **In the turn**: `POST api/v1/context` adds at most one initiative due for whoever is talking, as a block line
 >   (`- something I meant to tell you (my own initiative; say it if natural, once): …`, `ask`, and `lookup` only with
->   `initiatives: {lookups: true}` in the body — the host's agent has tools), or `- if natural, ask whether you are talking
->   with <name> …`; marked `offered` (`channel: turn`, the conversation kept), never twice. No new response field.
+>   `initiatives: {lookups: true}` in the body — the host's agent has tools), or `- if natural, ask who you are talking
+>   with (you do not know: name no one …)`; marked `offered` (`channel: turn`, the conversation kept), never twice. No new response field.
 > - **Who**: an initiative for a person reaches only that person, recognised with confidence ≥ 0.6 (`identity.required:
 >   medium`) or ≥ 0.85 (`high`: it came from a private message); one for nobody in particular reaches the holder of a
 >   personal memory and, in an entity memory, anyone identified — or whoever talks in the conversation it came from. A

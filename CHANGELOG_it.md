@@ -6,6 +6,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.9.1] — 2026-11-06
+
+### Cambiato
+- **Chiedere chi è non fa nomi.** Con nessuno identificato e qualcosa in attesa per qualcuno, il contesto di memoria
+  chiede all'agente di scoprire con chi sta parlando — non più "sei Chloé?", che diceva a chi era lì che c'era qualcosa
+  per Chloé. Carta `charter.v3`. Un nome detto da chi parla ("sono Eriona") resta quello che è: non un'identità, perché
+  chiunque può dirlo.
+
 ## [0.9.0] — 2026-11-06
 
 **Iniziative dove si trova la persona: per messaggio, a voce, nella stanza.** Un'iniziativa porta ora i canali su cui
