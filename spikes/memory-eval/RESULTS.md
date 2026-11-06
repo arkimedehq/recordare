@@ -2083,9 +2083,47 @@ nobody could be found as "who told me"): found 2, 2, 2, 1 / 4, **false 0 ×4, tr
 Sara every time the thought pass wrote it (3 of 4); Marta's diet came as D53's ask after a plan; the questions about
 Giada were written only in a1 (none in a2–a4) and the bike-shop look-up never — the thought pass's recall on this set,
 not the routing. The first run also found the plan rule too broad (a question resting on a confirmed plan was dropped):
-now only an open plan's outcome is left to the ask after its day. Still owed: the growing-household curve (questions
-falling as knowledge grows) with simulated answers, and recording a text-declared speaker as a message's author (D50).
+now only an open plan's outcome is left to the ask after its day. The growing-household curve is measured below (2026-11-06).
+A text-declared speaker is not recorded as a message's author, by decision (maintainer, 2026-11-06: "I am X" said by a
+speaker is never an identity).
 Cost ≈ 0.03 USD a run.
+
+### The growing household — `dataset_dev_household` (D55 F2b, 2026-11-06, DeepSeek direct, balanced)
+
+An entity memory meets a family of four (Paolo, Marta, Luca 16, Giada 9; each recognised by voice, a platform identity)
+over 14 days: 3 sessions a day through REST ingest; each evening, twice (19:00 and 20:30), the initiative sweep runs and
+every member comes home alone (a presence impulse); an offered ask is answered by a model playing the member, only from
+the facts they know (`world.json`: 30 household facts, each with its knowers), or let go past their patience (questions a
+day: 2 parents, 1 child) and reported `ignored`; the answer goes back as the member's turn. Night: patterns and thoughts.
+Each day a judge reads what the memory holds (facts, notes, episodes, contacts) against the 30 facts, 6 at a time, with
+the memory line that proves each: known, partial (the core without a detail — one of two days, a place), or not.
+Runner `household_eval.py`.
+
+**What the first runs found.** Pilot 1: 0 questions in 2 days — the thought pass wrote 2 questions with no subject (how
+things went: "was the bed made for grandma?"), which no routing can give to anyone, and nothing asked who the people heard
+named are. Built: **gaps** (`INITIATIVES_DELIVERY.md` §6) — someone heard named, with no relation and nothing held about
+them, not a speaker, is asked about once of whoever named them most ("Who is Elena?", `whoIs` in every language, no
+model). Run 1 then found two faults, fixed: the wording model dropped "who is Elena?" as not worth it (Giada surely knows
+— which is why she is asked; a gap is now never dropped on worth), and cards whose name says who they are through someone
+known ("la mamma di Luca", asked of Luca) were asked about (now skipped: a relation word and another person's name, any
+language). Run 1's judge (all 30 facts in one call) exhausted its tokens on empty answers from day 10: its curve is
+discarded (re-judged at the end: 6 known + 8 partial; 7 questions, 0 errors).
+
+| run | questions (answered / ignored) | wrong person | nagging | known day 7 → 14 | partial day 14 | learnt by asking |
+|---|---|---|---|---|---|---|
+| run2 | 11 (10 / 1) | 0 | 0 | 3 → 8 | 10 | f16, f18, f22 |
+| run3 | 10 (9 / 1) | 0 | 0 | 6 → 9 | 9 | f16, f18, f22 |
+
+Questions per day: run2 6 in the first week, 5 in the second; run3 6 and 4 — gaps run out by day 11 (Elena, Simone,
+Franco, Sara), the rest are outcome questions of the thought pass ("did Paolo take grandma to the station?"), well routed
+(about the grandmother's leaving to Paolo, who drove her). An ignored question comes back days later (Simone, day 3 →
+day 11: the existing back-off; an answered one never). Errors that must stay zero stayed zero in both runs.
+
+**Still owed.** The memory learns most by listening and asks little: it never asks to complete a partial fact ("is
+swimming only on Wednesdays?"), and facts nobody says aloud (grandma Rosa is Marta's mother, where she lives) stay
+unknown; animals and things heard named (Tobia, Micia) have no card and are not asked about. A no-asking control run was
+not made (budget). Cost ≈ 0.6–0.8 USD for pilots and three runs (estimate from tokens: engine ≈ 0.4 M input of which
+≈ 0.32 M cached, ≈ 16 k output a run; the judge's reasoning ≈ 0.25 M output a run is most of it).
 
 ### No relative days in what is said later — `initiative.v4` (2026-11-05, DeepSeek direct, balanced)
 

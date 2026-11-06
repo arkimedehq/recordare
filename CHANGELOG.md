@@ -6,6 +6,16 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Gaps: the memory asks who someone is** (D55 F2b). Someone heard named in its episodes but not known — no relation,
+  nothing held about them, not a speaker of their own — is asked about once, of whoever named them most ("Who is
+  Elena?", in the memory's language; no model). One question at a time per person; a card whose name already says who
+  they are through someone known ("Luca's mom") is not asked about; never dropped as not worth it. Migration
+  `IntentWho` (intent kind `who`, `intents.about_person_id`).
+
+### Changed
+- Whom a question about a person goes to counts the episodes that only name them too, not just those about them.
+
 ## [0.10.0] — 2026-11-06
 
 **The memory learns when each person takes what it says.** Timing v1 (`INITIATIVE_TIMING=v1`) reads the outcomes a host

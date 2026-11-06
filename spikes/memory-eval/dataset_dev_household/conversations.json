@@ -1,0 +1,980 @@
+{
+ "_note": "dev_household (D55 F2b §6): an entity memory meets a family over two weeks; see build.py.",
+ "users": {
+  "casa_neri": "Casa Neri, Prato"
+ },
+ "genders": {
+  "casa_neri": "feminine"
+ },
+ "entities": [
+  "casa_neri"
+ ],
+ "sessions": [
+  {
+   "id": "h011",
+   "user": "casa_neri",
+   "ts": "2026-10-05T07:00:00+02:00",
+   "day": 1,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Accendi il riscaldamento, oggi fa freddo. Io esco, ci vediamo stasera."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h012",
+   "user": "casa_neri",
+   "ts": "2026-10-05T16:30:00+02:00",
+   "day": 1,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Sono tornata dal nuoto! Tobia mi ha leccato tutta."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h013",
+   "user": "casa_neri",
+   "ts": "2026-10-05T20:30:00+02:00",
+   "day": 1,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Domani sera arriva la nonna, prepariamo il letto nella stanza degli ospiti."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h021",
+   "user": "casa_neri",
+   "ts": "2026-10-06T17:15:00+02:00",
+   "day": 2,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Esco, ho allenamento. Torno per cena."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h022",
+   "user": "casa_neri",
+   "ts": "2026-10-06T19:00:00+02:00",
+   "day": 2,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "La nonna è arrivata, ha portato le sue frittelle. Giada, niente torta con le noci, mi raccomando."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h023",
+   "user": "casa_neri",
+   "ts": "2026-10-06T21:00:00+02:00",
+   "day": 2,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Domani Elena ci porta al museo!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h031",
+   "user": "casa_neri",
+   "ts": "2026-10-07T06:55:00+02:00",
+   "day": 3,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Ho lasciato la Panda a Marta, prendo il furgone."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h032",
+   "user": "casa_neri",
+   "ts": "2026-10-07T17:00:00+02:00",
+   "day": 3,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Oggi in piscina ho fatto la virata!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h033",
+   "user": "casa_neri",
+   "ts": "2026-10-07T21:00:00+02:00",
+   "day": 3,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Porto fuori Tobia e poi vado da Simone a fare i compiti."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h041",
+   "user": "casa_neri",
+   "ts": "2026-10-08T14:30:00+02:00",
+   "day": 4,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Ho fatto la notte, vado a dormire un po'. Niente caffè per me."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h042",
+   "user": "casa_neri",
+   "ts": "2026-10-08T17:20:00+02:00",
+   "day": 4,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Allenamento, poi pizza con la squadra. Avvisa la mamma."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h043",
+   "user": "casa_neri",
+   "ts": "2026-10-08T20:45:00+02:00",
+   "day": 4,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Stasera c'è prova del coro, torno alle 23."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h051",
+   "user": "casa_neri",
+   "ts": "2026-10-09T16:00:00+02:00",
+   "day": 5,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Stasera pizza? Io la voglio con le patatine!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h052",
+   "user": "casa_neri",
+   "ts": "2026-10-09T19:30:00+02:00",
+   "day": 5,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Franco ha chiamato, domenica viene a pranzo."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h053",
+   "user": "casa_neri",
+   "ts": "2026-10-09T20:00:00+02:00",
+   "day": 5,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "La nonna riparte domattina, la accompagna Paolo."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h061",
+   "user": "casa_neri",
+   "ts": "2026-10-10T09:00:00+02:00",
+   "day": 6,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Andiamo a fare la spesa grande, serve la lista."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h062",
+   "user": "casa_neri",
+   "ts": "2026-10-10T15:00:00+02:00",
+   "day": 6,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Prendo lo scooter e vado al campetto."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h063",
+   "user": "casa_neri",
+   "ts": "2026-10-10T18:00:00+02:00",
+   "day": 6,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Micia è entrata di nuovo in giardino, Tobia impazzisce!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h071",
+   "user": "casa_neri",
+   "ts": "2026-10-11T12:30:00+02:00",
+   "day": 7,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Franco è arrivato, apparecchia per sei."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h072",
+   "user": "casa_neri",
+   "ts": "2026-10-11T18:00:00+02:00",
+   "day": 7,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Bella partita oggi, abbiamo vinto due a zero!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h073",
+   "user": "casa_neri",
+   "ts": "2026-10-11T21:30:00+02:00",
+   "day": 7,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Domani ricomincio con i turni di notte, tutta la settimana."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h081",
+   "user": "casa_neri",
+   "ts": "2026-10-12T16:30:00+02:00",
+   "day": 8,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Nuoto finito. Elena ha detto che a dicembre facciamo la recita."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h082",
+   "user": "casa_neri",
+   "ts": "2026-10-12T19:30:00+02:00",
+   "day": 8,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Esco per il turno, a domattina."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h083",
+   "user": "casa_neri",
+   "ts": "2026-10-12T21:10:00+02:00",
+   "day": 8,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Porto fuori Tobia."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h091",
+   "user": "casa_neri",
+   "ts": "2026-10-13T17:10:00+02:00",
+   "day": 9,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Vado all'allenamento."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h092",
+   "user": "casa_neri",
+   "ts": "2026-10-13T19:30:00+02:00",
+   "day": 9,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Marta stanotte lavora, cucino io. Giada, niente noci nell'insalata."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h093",
+   "user": "casa_neri",
+   "ts": "2026-10-13T20:30:00+02:00",
+   "day": 9,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Mancano due mesi al mio compleanno!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h101",
+   "user": "casa_neri",
+   "ts": "2026-10-14T16:40:00+02:00",
+   "day": 10,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Oggi in piscina gara con Sara, ho vinto io!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h102",
+   "user": "casa_neri",
+   "ts": "2026-10-14T20:00:00+02:00",
+   "day": 10,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Simone ha detto che domani ci danno i risultati della verifica."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h103",
+   "user": "casa_neri",
+   "ts": "2026-10-14T21:30:00+02:00",
+   "day": 10,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Domattina esco alle 7 come sempre, sveglia alle 6:15."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h111",
+   "user": "casa_neri",
+   "ts": "2026-10-15T17:15:00+02:00",
+   "day": 11,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Allenamento. Il coach dice che sabato gioco titolare."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h112",
+   "user": "casa_neri",
+   "ts": "2026-10-15T15:00:00+02:00",
+   "day": 11,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Ultima notte di turno, poi riposo."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h113",
+   "user": "casa_neri",
+   "ts": "2026-10-15T20:40:00+02:00",
+   "day": 11,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Marta stasera non va al coro, è stanca."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h121",
+   "user": "casa_neri",
+   "ts": "2026-10-16T16:00:00+02:00",
+   "day": 12,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Venerdì! Pizza stasera?"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h122",
+   "user": "casa_neri",
+   "ts": "2026-10-16T18:30:00+02:00",
+   "day": 12,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Ho preso otto nella verifica di matematica. Mamma dice che ingegneria fa per me."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h123",
+   "user": "casa_neri",
+   "ts": "2026-10-16T20:00:00+02:00",
+   "day": 12,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Pizza per tutti, ordino io."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h131",
+   "user": "casa_neri",
+   "ts": "2026-10-17T09:30:00+02:00",
+   "day": 13,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Spesa grande, e domenica viene la nonna."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h132",
+   "user": "casa_neri",
+   "ts": "2026-10-17T17:00:00+02:00",
+   "day": 13,
+   "participants": [
+    {
+     "name": "Luca",
+     "identity": "luca-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Luca",
+     "content": "Abbiamo vinto la partita, ho segnato dodici punti!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h133",
+   "user": "casa_neri",
+   "ts": "2026-10-17T19:00:00+02:00",
+   "day": 13,
+   "participants": [
+    {
+     "name": "Giada",
+     "identity": "giada-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Giada",
+     "content": "Micia ha portato un topolino, che schifo!"
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h141",
+   "user": "casa_neri",
+   "ts": "2026-10-18T11:00:00+02:00",
+   "day": 14,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "La nonna arriva con il treno da Pistoia, la vado a prendere."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h142",
+   "user": "casa_neri",
+   "ts": "2026-10-18T16:00:00+02:00",
+   "day": 14,
+   "participants": [
+    {
+     "name": "Paolo",
+     "identity": "paolo-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Paolo",
+     "content": "Che delusione la Fiorentina oggi."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  },
+  {
+   "id": "h143",
+   "user": "casa_neri",
+   "ts": "2026-10-18T21:00:00+02:00",
+   "day": 14,
+   "participants": [
+    {
+     "name": "Marta",
+     "identity": "marta-voice"
+    }
+   ],
+   "messages": [
+    {
+     "role": "other",
+     "author": "Marta",
+     "content": "Settimana prossima porto Giada dall'allergologo per le noci."
+    },
+    {
+     "role": "assistant",
+     "content": "Va bene."
+    }
+   ]
+  }
+ ]
+}

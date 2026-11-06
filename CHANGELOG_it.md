@@ -6,6 +6,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Lacune: la memoria chiede chi è qualcuno** (D55 F2b). Qualcuno sentito nominare nei suoi episodi ma non conosciuto —
+  senza relazione, nulla tenuto su di lui, che non parla con lei — viene chiesto una volta, a chi l'ha nominato di più
+  ("Chi è Elena?", nella lingua della memoria; senza modello). Una domanda alla volta per persona; una scheda il cui nome
+  dice già chi è tramite qualcuno di noto ("la mamma di Luca") non viene chiesta; mai scartata come non meritevole.
+  Migrazione `IntentWho` (tipo di intento `who`, `intents.about_person_id`).
+
+### Modificato
+- A chi va una domanda su una persona conta anche gli episodi che la nominano soltanto, non solo quelli su di lei.
+
 ## [0.10.0] — 2026-11-06
 
 **La memoria impara quando ogni persona accoglie ciò che dice.** Il tempo v1 (`INITIATIVE_TIMING=v1`) legge gli esiti che
