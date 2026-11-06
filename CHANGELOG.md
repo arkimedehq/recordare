@@ -6,6 +6,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-11-06
+
+**The memory learns when each person takes what it says.** Timing v1 (`INITIATIVE_TIMING=v1`) reads the outcomes a host
+reports — said, asked, done, or ignored, declined — per person, part of the day and channel, and lets a flexible
+initiative wait where it is usually let go; `INITIATIVE_TIMING_SHADOW` logs what it would decide beside v0 first. Two
+faults found by the new presence-by-place cases are fixed: a reminder asked for a time is said at that time however
+busy the day, and messaging goes only to a real address. Service only: the client library and the connectors stay 0.9.0.
+
 ### Added
 - **Timing v1: the memory learns when each person takes what it says** (D55 F4, `INITIATIVE_TIMING=v1`). Every outcome
   a host reports (said, asked, done — or ignored, declined) is counted per person, part of the day and channel; where

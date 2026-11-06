@@ -6,6 +6,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.10.0] — 2026-11-06
+
+**La memoria impara quando ogni persona accoglie ciò che dice.** Il tempo v1 (`INITIATIVE_TIMING=v1`) legge gli esiti che
+un host riporta — detta, chiesta, fatta, oppure ignorata, rifiutata — per persona, parte del giorno e canale, e fa
+aspettare un'iniziativa flessibile dove di solito viene lasciata cadere; `INITIATIVE_TIMING_SHADOW` registra prima cosa
+deciderebbe accanto a v0. Corretti due difetti trovati dai nuovi casi di presenza per luogo: un promemoria chiesto per un
+orario viene detto a quell'orario per quanto piena sia la giornata, e i messaggi vanno solo a un indirizzo vero. Solo il
+servizio: la libreria client e i connettori restano alla 0.9.0.
+
 ### Aggiunto
 - **Tempo v1: la memoria impara quando ogni persona accoglie ciò che dice** (D55 F4, `INITIATIVE_TIMING=v1`). Ogni esito
   riportato da un host (detta, chiesta, fatta — oppure ignorata, rifiutata) viene contato per persona, parte del giorno e
