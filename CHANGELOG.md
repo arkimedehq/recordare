@@ -6,6 +6,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-11-06
+
+**Initiatives where the person is: by message, by voice, in the room.** An initiative now carries the channels it may
+go on, in order, and the person's addresses (their Telegram chat, their Home Assistant person), bound once from the
+console; presence impulses describe a place — who is in the room, or just someone — so a timed reminder can be said
+by the satellite of the room the person is in, with only an opening when others are there. The client library hands
+the host the channel to use and the person's address. Two cards of the same person merge from the console. Hosts:
+a reminder your own tools scheduled covers an initiative only for the same person; a failed one covers nothing.
+
 ### Added
 - **Initiatives: the channel chosen at delivery, presence by place, voice** (D55 §5b–§5c). An initiative carries
   `channels` — the acceptable ones in order; messaging only for a request or a promise (it interrupts) — and

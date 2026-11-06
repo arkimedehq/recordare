@@ -6,6 +6,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.9.0] — 2026-11-06
+
+**Iniziative dove si trova la persona: per messaggio, a voce, nella stanza.** Un'iniziativa porta ora i canali su cui
+può andare, in ordine, e gli indirizzi della persona (la sua chat Telegram, la sua persona di Home Assistant),
+collegati una volta dalla console; gli impulsi di presenza descrivono un luogo — chi è nella stanza, o solo qualcuno —
+così un promemoria con orario può essere detto dal satellite della stanza in cui si trova la persona, con solo
+un'apertura quando ci sono altri. La libreria client dà all'host il canale da usare e l'indirizzo della persona. Due
+schede della stessa persona si uniscono dalla console. Host: un promemoria programmato dai tuoi strumenti copre
+un'iniziativa solo per la stessa persona; uno fallito non copre niente.
+
 ### Aggiunto
 - **Iniziative: il canale scelto alla consegna, la presenza per luogo, la voce** (D55 §5b–§5c). Un'iniziativa porta
   `channels` — quelli accettabili in ordine; la messaggistica solo per una richiesta o una promessa (interrompe) — e
