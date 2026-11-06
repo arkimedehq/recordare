@@ -116,7 +116,9 @@ describe('learning by asking: whom a question goes to', () => {
       { externalId: 'n2', role: 'other', authorRef: 'nina', content: 'Anche Teo viene al museo.', sentAt: '2026-10-05T18:05:00+02:00' },
     ], who);
     const nina = await person(home, 'Nina');
-    await db.query(`INSERT INTO persons (memory_id, display_name) VALUES ($1, 'Bruna'), ($1, 'Teo')`, [home]);
+    // Bruna heard first (two inserts: one statement would give them the same creation time).
+    await db.query(`INSERT INTO persons (memory_id, display_name, created_at) VALUES ($1, 'Bruna', now() - interval '1 minute')`, [home]);
+    await db.query(`INSERT INTO persons (memory_id, display_name) VALUES ($1, 'Teo')`, [home]);
     // Bruna and Teo are only named (people of an episode about Nina), never the subject.
     for (const [name, ext] of [['Bruna', 'n1'], ['Teo', 'n2']] as const) {
       const [e] = await db.query(
@@ -147,4 +149,50 @@ describe('learning by asking: whom a question goes to', () => {
     await sweep.sweep(home, NOW);
     expect((await gaps()).find((g: { content: string }) => g.content === 'Teo')).toMatchObject({ status: 'done' });
   });
+
+  it('a confirmation: a note heard once or guessed is asked about once of who could know, one a day each; never one learnt from an answer', async () => {
+    const home = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Casa Verdi', mode: 'entity' } })).body.personId;
+    const clientId = (await db.query(`SELECT id FROM clients WHERE name = 'A'`))[0].id;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: home, clientId, externalId: 'verdi' } });
+    const who = [{ ref: 'ada', role: 'other', displayName: 'Ada', identity: { channel: 'voice', externalId: 'ada' } }];
+    await ingest('verdi', 'room', [
+      { externalId: 'v1', role: 'other', authorRef: 'ada', content: 'Il mercoledì vado in piscina.', sentAt: '2026-10-05T18:00:00+02:00' },
+      { externalId: 'v2', role: 'other', authorRef: 'ada', content: 'Il gelato lo prendo sempre al pistacchio.', sentAt: '2026-10-06T18:00:00+02:00' },
+      { externalId: 'v3', role: 'other', authorRef: 'ada', content: 'Vado anche al corso di ceramica il venerdì.', sentAt: '2026-10-10T18:00:00+02:00' },
+      { externalId: 'v4', role: 'other', authorRef: 'ada', content: 'Mi piace il tè verde.', sentAt: '2026-10-11T18:00:00+02:00' },
+    ], who);
+    const ada = await person(home, 'Ada');
+    const note = async (content: string, ext: string, extra = '', category = 'habit') => {
+      const [n] = await db.query(
+        `INSERT INTO notes (memory_id, category, content, origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_person_id, valid_from, support_count)
+         VALUES ($1, $2, $3, 'holder_lived', 'holder', 'stated', 1, 'holder', ARRAY[$1::uuid], 'contact', $4,
+           (SELECT sent_at FROM messages WHERE external_id = $5), ${extra || '1'}) RETURNING id`, [home, category, content, ada, ext]);
+      await db.query(`INSERT INTO note_evidence (note_id, message_id) SELECT $1, id FROM messages WHERE external_id = $2`, [n.id, ext]);
+    };
+    await note('Ada va in piscina il mercoledì.', 'v1');
+    await note('Ada prende sempre il gelato al pistacchio.', 'v2', '3', 'preference'); // heard three times: settled
+    await note('Ada va al corso di ceramica il venerdì.', 'v3');
+    // Ada answered one of my questions with v4: that note is her answer, nothing to confirm.
+    await db.query(`INSERT INTO initiatives (memory_id, kind, for_person_id, text, reason, due_at, expires_at, status, outcome_at)
+      VALUES ($1, 'ask', $2, 'Cosa bevi la sera?', 'x', '2026-10-11T15:55:00Z', '2026-10-12T00:00:00Z', 'asked', '2026-10-11T16:00:00Z')`, [home, ada]);
+    await note('Ada preferisce il tè verde.', 'v4', '1', 'preference');
+    const confirms = async () => db.query(
+      `SELECT t.content, t.status::text, t.for_person_id, i.text, i.identity_required FROM intents t LEFT JOIN initiatives i ON i.intent_id = t.id
+       WHERE t.memory_id = $1 AND t.kind = 'confirm' ORDER BY t.created_at`, [home]);
+    const sweep = app.get(InitiativeService);
+    await sweep.sweep(home, NOW);
+    expect(await confirms()).toMatchObject([{ content: 'Ada va in piscina il mercoledì.', for_person_id: ada, identity_required: 'medium',
+      text: 'Ho capito questo: Ada va in piscina il mercoledì. È così, o c\'è altro?' }]);
+    // Asked; the next one waits for the next day (one confirmation a day each).
+    await db.query(`UPDATE intents SET status = 'done' WHERE memory_id = $1 AND kind = 'confirm'`, [home]);
+    await sweep.sweep(home, NOW);
+    expect(await confirms()).toHaveLength(1);
+    await sweep.sweep(home, new Date(NOW.getTime() + 25 * 3600_000));
+    expect((await confirms()).map((c: { content: string }) => c.content)).toEqual(['Ada va in piscina il mercoledì.', 'Ada va al corso di ceramica il venerdì.']);
+    // Never the settled preference, never the answer: nothing more, days later.
+    await db.query(`UPDATE intents SET status = 'done' WHERE memory_id = $1 AND kind = 'confirm'`, [home]);
+    await sweep.sweep(home, new Date(NOW.getTime() + 5 * 24 * 3600_000));
+    expect(await confirms()).toHaveLength(2);
+  });
 });
+

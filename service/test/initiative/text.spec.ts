@@ -21,6 +21,10 @@ describe('the initiatives\' sentences (all languages)', () => {
       expect(t.whoIs('NAME')).toContain('NAME');
       expect(t.whoIs('NAME')).toMatch(/[?？;؟]|ใคร/);
       if (locale !== 'en') expect(t.whoIs('NAME')).not.toBe(initiativeText('en').whoIs('NAME'));
+      // A confirmation (D55 F2b): the belief as held, then a question.
+      expect(t.confirm('BELIEF.')).toContain('BELIEF.');
+      expect(t.confirm('BELIEF.')).toMatch(/[?？;؟]$/);
+      if (locale !== 'en') expect(t.confirm('BELIEF.')).not.toBe(initiativeText('en').confirm('BELIEF.'));
       if (locale !== 'en') expect(t).not.toBe(initiativeText('en'));
     }
     expect(initiativeText('xx-YY')).toBe(initiativeText('en'));

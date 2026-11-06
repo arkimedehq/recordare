@@ -29,7 +29,7 @@ import { initiativeText } from '../lang/initiative';
 import { saysRelativeDay } from '../lang/periods';
 import { overlap } from '../lang/overlap';
 import { containsPhrase, normalize, RELATION_GROUPS } from '../lang';
-import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
+import { episodeVisible, noteVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { DELIVERY_CHANNELS } from './initiative.responses';
 import { WebhooksService } from './webhooks.service';
@@ -290,7 +290,7 @@ export class InitiativeService {
       if (q.subject && to === undefined) continue;
       if (to !== null && to !== undefined) {
         const [busy] = await this.db.query(
-          `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
+          `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who', 'confirm') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
           [memoryId, to === 'holder' ? null : to]);
         if (busy) continue;
       }
@@ -301,6 +301,7 @@ export class InitiativeService {
       armed += r.length;
     }
     armed += await this.armGaps(memoryId, now, mem?.mode === 'entity');
+    armed += await this.armConfirms(memoryId, now, mem?.mode === 'entity');
     // A source that moved on closes its intent: the plan confirmed, cancelled or rescheduled; the question answered or forgotten.
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM episodes e
@@ -331,7 +332,7 @@ export class InitiativeService {
          AND NOT EXISTS (SELECT 1 FROM notes n WHERE n.memory_id = $1 AND n.subject_person_id = p.id AND n.status = 'current'
            AND n.deleted_at IS NULL AND n.category <> 'question')
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'who' AND t.about_person_id = p.id)
-       ORDER BY p.created_at`, [memoryId]);
+       ORDER BY p.created_at, p.display_name`, [memoryId]);
     let armed = 0;
     const names: Array<{ id: string; display_name: string }> = gaps.length
       ? await this.db.query(`SELECT id, display_name FROM persons WHERE memory_id = $1`, [memoryId]) : [];
@@ -340,7 +341,7 @@ export class InitiativeService {
       const to = await this.answerer(memoryId, g.id, entity);
       if (to === undefined || to === g.id) continue; // nobody to ask (they would be asked who they are themselves)
       const [busy] = await this.db.query(
-        `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
+        `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who', 'confirm') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
         [memoryId, to === 'holder' ? null : to]);
       if (busy) continue;
       const r = await this.db.query(
@@ -357,6 +358,47 @@ export class InitiativeService {
            OR EXISTS (SELECT 1 FROM facts f WHERE f.subject_person_id = p.id AND f.status = 'current' AND f.deleted_at IS NULL)
            OR EXISTS (SELECT 1 FROM notes n WHERE n.subject_person_id = p.id AND n.status = 'current' AND n.deleted_at IS NULL AND n.category <> 'question'))`,
       [memoryId]);
+    return armed;
+  }
+
+  /**
+   * Confirmations (D55 F2b, the household curve: most of what the memory half-knows is a note heard once — "Giada goes
+   * swimming on Wednesdays", not Mondays too): a note about a person — a habit, a preference, their profile, a
+   * relation — that the memory guessed (inferred) or heard once, at least a day old, is asked about once of who could
+   * know: "I understood this: … Is that right, or is there more?". No model. Not a note learnt from an answer to one of
+   * my questions (that is the answer), not a private one, not one revising a note already asked about. After the gaps;
+   * one question at a time per person and one confirmation a day for each.
+   */
+  private async armConfirms(memoryId: string, now: Date, entity: boolean): Promise<number> {
+    const notes: Array<{ id: string; content: string; subject: string }> = await this.db.query(
+      `SELECT n.id, n.content, n.subject_person_id AS subject FROM notes n
+       WHERE n.memory_id = $1 AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
+         AND n.category IN ('habit', 'preference', 'profile', 'relationship') AND n.subject_kind = 'contact' AND n.subject_person_id IS NOT NULL
+         AND (n.stance = 'inferred' OR n.support_count <= 1) AND n.origin <> 'assistant_stated'
+         AND COALESCE(n.valid_from, n.recorded_at) <= $2::timestamptz - interval '1 day'
+         AND ${noteVisible('n', PUBLIC_ONLY)}
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'confirm' AND (t.note_id = n.id OR t.note_id = n.supersedes))
+         -- learnt from an answer to one of my questions: the answer itself, nothing to confirm
+         AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN messages m ON m.id = x.message_id JOIN initiatives i ON i.memory_id = n.memory_id
+           AND i.kind = 'ask' AND i.status = 'asked' AND i.for_person_id IS NOT DISTINCT FROM m.author_person_id
+           AND m.sent_at BETWEEN i.due_at AND COALESCE(i.outcome_at, i.due_at) + interval '30 minutes' WHERE x.note_id = n.id)
+       ORDER BY n.stance = 'inferred' DESC, COALESCE(n.valid_from, n.recorded_at), n.content`, [memoryId, now]);
+    let armed = 0;
+    for (const n of notes) {
+      const to = await this.answerer(memoryId, n.subject, entity);
+      if (to === undefined) continue;
+      const forId = to === 'holder' ? null : to;
+      const [busy] = await this.db.query(
+        `SELECT 1 FROM intents WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2
+           AND ((kind IN ('own', 'who', 'confirm') AND status IN ('armed', 'fired')) OR (kind = 'confirm' AND due_at > $3::timestamptz - interval '1 day'))`,
+        [memoryId, forId, now]);
+      if (busy) continue;
+      const r = await this.db.query(
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at) VALUES ($1, 'confirm', $2, $3, $4, $5, $6)
+         ON CONFLICT (note_id, kind) WHERE note_id IS NOT NULL DO NOTHING RETURNING id`,
+        [memoryId, n.content, forId, n.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
+      armed += r.length;
+    }
     return armed;
   }
 
@@ -426,8 +468,9 @@ export class InitiativeService {
       const w = worded.get(t.id);
       if (w && (w.skip || w.worth < WORTH_FLOOR)) {
         // Not worth saying: dropped, not postponed (a request or a promise is never skipped: the prompt says so, the code too).
-        // Nor a gap (D55 F2b run 1: "Who is Elena?" judged not worth asking Giada, who surely knows — that is why she is asked).
-        if (t.kind === 'promise' || t.kind === 'request' || t.kind === 'who') { /* owed, or asked once anyway */ } else {
+        // Nor a gap or a confirmation (D55 F2b run 1: "Who is Elena?" judged not worth asking Giada, who surely knows — that
+        // is why she is asked).
+        if (t.kind === 'promise' || t.kind === 'request' || t.kind === 'who' || t.kind === 'confirm') { /* owed, or asked once anyway */ } else {
           await this.db.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [t.id]);
           this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: t.id, status: 'not_worth' });
           continue;
@@ -449,6 +492,8 @@ export class InitiativeService {
               : t.kind === 'own' ? ['ask', t.content.trim(), 'a question I hold, for someone who could know']
                 // Someone heard named whom I do not know (a gap): the service's own sentence, the name only.
                 : t.kind === 'who' ? ['ask', text.whoIs(t.content.trim()), 'someone I heard named and do not know']
+                  // Something I believe about someone, heard once or guessed: is it so, or is there more?
+                  : t.kind === 'confirm' ? ['ask', text.confirm(plan), 'something I believe about them, heard once or guessed']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
       // A day relative to now ("yesterday") is true only today: in a text that may be said on a later day (an ask, a
       // look-up: days of window), the service's own sentence, which names the day.
@@ -465,7 +510,7 @@ export class InitiativeService {
            SELECT ${COLUMNS} FROM i`,
           [memoryId, t.id, kind, t.for_person_id, content, reason, t.episode_id ? [t.episode_id] : [], t.due_at > at ? t.due_at : at, t.expires_at, w?.worth ?? null,
             // High: from a private message, or a question about someone asked to another person (it tells what I know of them).
-            t.timed ? 'timed' : 'flexible', t.private || (t.kind === 'own' && t.for_person_id && t.note_subject !== t.for_person_id) ? 'high' : 'medium', pickChannel(channels, acceptable),
+            t.timed ? 'timed' : 'flexible', t.private || ((t.kind === 'own' || t.kind === 'confirm') && t.for_person_id && t.note_subject !== t.for_person_id) ? 'high' : 'medium', pickChannel(channels, acceptable),
             t.message_id ? [t.message_id] : [], w?.hours?.[0] ?? null, w?.hours?.[1] ?? null, acceptable]);
         await tx.query(`UPDATE intents SET status = 'fired', attempts = attempts + 1, updated_at = now() WHERE id = $1`, [t.id]);
         return inserted;
@@ -484,12 +529,14 @@ export class InitiativeService {
   ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
     const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
-    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' || k === 'own' || k === 'who' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' || k === 'own' || k === 'who' || k === 'confirm' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
     const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
       : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me'
         : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)'
           : k === 'own' ? 'a question I hold, to ask the person FOR, who could know (WHAT is the question)'
-            : k === 'who' ? 'someone I heard named and do not know (WHAT is their name): ask the person FOR who they are' : 'a question I hold');
+            : k === 'who' ? 'someone I heard named and do not know (WHAT is their name): ask the person FOR who they are'
+              : k === 'confirm' ? 'something I believe about someone, heard once or guessed (WHAT): ask the person FOR whether it is so or there is more'
+                : 'a question I hold');
     // The days it may be said on: one day alone when it is said today or lapses.
     const said = (t: { kind: string; timed: boolean; due_at: Date; expires_at: Date }) => { const d = sayDays(t, now, memory.timezone); return d.from === d.to ? d.from : `${d.from} to ${d.to}`; };
     const user = [
