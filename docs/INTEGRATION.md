@@ -233,6 +233,11 @@ what became of it, and runs the look-ups with its own tools.
    perception; the agent's question then closes.
 4. Report the outcome: `client.reportInitiative(user, id, 'said' | 'asked' | 'ignored' | 'declined' | 'done' | 'failed')`.
    It steers the agent: declined is final, ignored is offered once more a week later, then dropped.
+   **A reminder your own tools already scheduled** (the agent set an automation in the same conversation): report
+   `done` instead of saying it twice — but only when your task is for the same person (`data.for`: it names them or
+   reaches one of their addresses) and is still to run or ran near the initiative's time. Your explicit, confirmed task
+   is the truth (its time wins); a task that failed or was deleted covers nothing, so deliver the initiative: it is the
+   safety net that keeps a reminder from being lost.
 5. Quiet hours (`quietFrom` / `quietTo`, admin `PATCH api/v1/admin/memories/{id}`) and the daily limit per person
    (`INITIATIVE_DAILY_LIMIT`) are Recordare's; your own do-not-disturb and rate limits are welcome on top.
 
