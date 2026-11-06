@@ -13,7 +13,8 @@ start, end = datetime.fromisoformat(data["start"]), datetime.fromisoformat(data[
 ids: set[str] = set()
 for m in data["memories"]:
     people = {p["name"] for p in m["people"]}
-    voices = {p["voice"] for p in m["people"]}
+    voices = {p["voice"] for p in m["people"] if p.get("voice")}
+    has = {p["ha"] for p in m["people"] if p.get("ha")}
     messages = {x["id"] for x in m["messages"]}
     for it in m["items"] + m["plans"]:
         if it["id"] in ids:
@@ -35,8 +36,15 @@ for m in data["memories"]:
         at = datetime.fromisoformat(e["at"])
         if not start <= at <= end:
             errors.append(f"{m['id']}: event out of range {e['at']}")
-        if e["type"] == "presence" and e["voice"] not in voices and not e["voice"].startswith("stranger"):
+        if e["type"] == "presence" and "voice" in e and e["voice"] not in voices and not e["voice"].startswith("stranger"):
             errors.append(f"{m['id']}: unknown voice {e['voice']}")
+        for ha, conf in e.get("people", []):
+            if ha not in has or not 0 <= conf <= 1:
+                errors.append(f"{m['id']}: unknown person {ha} at {e['at']}")
+        if e["type"] == "turn" and e.get("author") and e["author"] not in people:
+            errors.append(f"{m['id']}: unknown author {e['author']}")
+        if e["type"] == "presence" and e.get("channel") == "voice" and "people" in e and not e.get("place"):
+            errors.append(f"{m['id']}: a room presence without a place at {e['at']}")
 if errors:
     print("\n".join(errors))
     sys.exit(1)

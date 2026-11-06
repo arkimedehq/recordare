@@ -1993,6 +1993,27 @@ any run: a reminder asked for 23:00 was held until the morning (a time the perso
 and an entity memory would push an initiative for Eriona on the shared panel (person-specific ones now wait for their
 presence or turn). **Caveat**: tuned on this set, by its writer — 9 / 9 is not a measurement; a held-out set is owed.
 
+### Presence by place — `dataset_dev_timing` b1–b9 (D55 §5c, 2026-11-06; no LLM)
+
+The third memory, Casa Bianchi (entity; voice in two rooms, Home Assistant persons, one Telegram address), replayed with
+the 15-minute clock next to the first nine items (`timing_eval.py` now sends presences by place and turns with an
+author, and scores the channel and the opening).
+
+| run | right | event checks | wrong |
+|---|---|---|---|
+| first | 16 / 17 | 1 / 2 | b7 outside |
+| after the two fixes | **17 / 17** | **2 / 2** | — |
+
+b7 (medicine asked for 18:00, Eriona in the kitchen) was not said at 18:00 but at 22:00 by messaging. Two faults,
+fixed in the service with a test each: the daily limit (3) held back a time the person chose — three other things had
+been said that day; and "has an address" counted any verified identity, so her Home Assistant person made messaging
+look possible. A chosen time now passes the limit, as it passes the quiet hours; voice, face and Home Assistant
+identities recognise a person but are no address for a message. The failed event check was the set's own: an opening
+returns the initiative still pending. Arrival vs refresh, the pace, quiet hours for voice, the opening and the "yes" in
+a turn, the clock's live presences, "at home" never enough to speak, and the unnamed someone all held at the first run.
+**Caveat**: written by the developer who built §5c — 17 / 17 is a regression check, not a measurement; a held-out set
+is still owed.
+
 ### The model's hours — `initiative.v3` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
 
 `initiative.v3` adds to each worded initiative the local hours when saying it would be natural (`hours: [from, to]`, at

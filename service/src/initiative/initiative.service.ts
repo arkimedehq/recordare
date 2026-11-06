@@ -136,6 +136,12 @@ export function view(r: Row): InitiativeView {
 }
 
 /**
+ * Identities that recognise a person present — a voiceprint, a face, a Home Assistant person (D55 §5c.1) — not addresses
+ * a message can reach: an initiative goes by messaging only to an address on another channel (dev_timing b7, 2026-11-06).
+ */
+export const PRESENCE_IDENTITY_CHANNELS = ['voice', 'face', 'homeassistant'] as const;
+
+/**
  * Timing v0 (D55 F2a; RESEARCH_NOTES H14): the clock's decision to push an initiative now on a channel that always
  * reaches the person — an explicit cost-sensitive gate (PRISM-like): deliver when p ≥ the kind's threshold. A timed one
  * is pushed at its time (within a grace); a flexible one when p = prior (the model's worth, or a default) × the fit of the
@@ -372,7 +378,10 @@ export class InitiativeService {
       const counted: Array<{ n: number }> = await this.db.query(
         `SELECT count(*)::int AS n FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2
            AND (due_at AT TIME ZONE $3)::date = ($4::timestamptz AT TIME ZONE $3)::date`, [memoryId, t.for_person_id, memory.timezone, when]);
-      if ((counted[0]?.n ?? 0) >= limit) continue; // the day's share is spent: tomorrow
+      // The day's share is spent: tomorrow — except a time the person chose (dev_timing b7, 2026-11-06: a reminder asked
+      // for 18:00 waited for the next day because three other things had been said that day).
+      const chosen = t.timed && (t.kind === 'request' || t.kind === 'promise');
+      if (!chosen && (counted[0]?.n ?? 0) >= limit) continue;
       const plan = t.content.trim().replace(/([^.!?])$/, '$1.');
       const [kind, fallback, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
           : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']
@@ -566,11 +575,11 @@ export class InitiativeService {
          EXISTS (SELECT 1 FROM presences p WHERE p.memory_id = i.memory_id AND p.person_id = COALESCE(i.for_person_id, CASE WHEN NOT $3 THEN i.memory_id END)
            AND p.channel IN ('voice', 'camera') AND p.seen_at <= $2 AND p.expires_at > $2) AS live_room,
          EXISTS (SELECT 1 FROM external_identities x WHERE x.person_id = i.for_person_id AND x.kind = 'participant' AND x.channel IS NOT NULL
-           AND x.verified_at IS NOT NULL) AS addressed
+           AND x.verified_at IS NOT NULL AND NOT (x.channel = ANY($4))) AS addressed
        FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
        WHERE i.memory_id = $1 AND i.status = 'pending' AND i.pushed_at IS NULL AND i.kind <> 'lookup'
          AND i.due_at <= $2 AND i.expires_at > $2 AND (t.id IS NULL OR t.status = 'fired')
-       ORDER BY i.due_at`, [memoryId, now, entity]);
+       ORDER BY i.due_at`, [memoryId, now, entity, [...PRESENCE_IDENTITY_CHANNELS]]);
     const declared = await this.declaredChannels(memoryId);
     const messaging = declared.some((c) => c.kind === 'messaging' && c.reach === 'always');
     const candidates = listed.flatMap((c) => {

@@ -6,6 +6,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Corretto
+- **Un promemoria chiesto per un orario viene detto a quell'orario, per quanto piena sia la giornata.** Il limite
+  giornaliero delle iniziative tratteneva una richiesta con orario: chiesta per le 18:00 dopo altre tre cose dette quel
+  giorno, aspettava il giorno dopo. Un orario scelto dalla persona ora supera il limite, come già superava le ore di
+  quiete.
+- **Messaggi solo a un indirizzo vero.** Una persona riconosciuta dalla sua persona di Home Assistant, dall'impronta
+  vocale o dal volto risultava raggiungibile per messaggio; queste identità ora servono solo a riconoscere qualcuno, e
+  un'iniziativa va per messaggio solo a un indirizzo su un altro canale (una chat Telegram). Entrambi trovati dai nuovi
+  casi di presenza per luogo della serie di test sui tempi (D55 §5c: 17 / 17 dopo le correzioni).
+
 ## [0.9.1] — 2026-11-06
 
 ### Cambiato
