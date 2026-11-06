@@ -28,6 +28,7 @@ import { ACCEPTED, REJECTED, LEARNING, acceptance, dayPart, experience, preferre
 import { initiativeText } from '../lang/initiative';
 import { saysRelativeDay } from '../lang/periods';
 import { overlap } from '../lang/overlap';
+import { containsPhrase, normalize, RELATION_GROUPS } from '../lang';
 import { episodeVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { DELIVERY_CHANNELS } from './initiative.responses';
@@ -332,7 +333,10 @@ export class InitiativeService {
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'who' AND t.about_person_id = p.id)
        ORDER BY p.created_at`, [memoryId]);
     let armed = 0;
+    const names: Array<{ id: string; display_name: string }> = gaps.length
+      ? await this.db.query(`SELECT id, display_name FROM persons WHERE memory_id = $1`, [memoryId]) : [];
     for (const g of gaps) {
+      if (relationInName(g, names)) continue;
       const to = await this.answerer(memoryId, g.id, entity);
       if (to === undefined || to === g.id) continue; // nobody to ask (they would be asked who they are themselves)
       const [busy] = await this.db.query(
@@ -422,7 +426,8 @@ export class InitiativeService {
       const w = worded.get(t.id);
       if (w && (w.skip || w.worth < WORTH_FLOOR)) {
         // Not worth saying: dropped, not postponed (a request or a promise is never skipped: the prompt says so, the code too).
-        if (t.kind === 'promise' || t.kind === 'request') { /* owed: said anyway */ } else {
+        // Nor a gap (D55 F2b run 1: "Who is Elena?" judged not worth asking Giada, who surely knows — that is why she is asked).
+        if (t.kind === 'promise' || t.kind === 'request' || t.kind === 'who') { /* owed, or asked once anyway */ } else {
           await this.db.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [t.id]);
           this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: t.id, status: 'not_worth' });
           continue;
@@ -837,4 +842,14 @@ export function acceptableChannels(kind: InitiativeKind, intentKind: string | nu
 export function pickChannel(declared: Array<{ kind: string; reach: string }>, acceptable: string[]): string | null {
   const always = new Set(declared.filter((c) => c.reach === 'always').map((c) => c.kind));
   return acceptable.find((c) => always.has(c)) ?? null;
+}
+
+/**
+ * A card whose name already says who they are, through someone known ("la mamma di Luca", "Marta's grandmother"): a
+ * relation word and another person's name — not a gap (asking who it is would ask what the name says). Any language.
+ */
+export function relationInName(card: { id: string; display_name: string }, people: Array<{ id: string; display_name: string }>): boolean {
+  const name = normalize(card.display_name);
+  if (!RELATION_GROUPS.some((g) => g.words.some((w) => containsPhrase(name, w)))) return false;
+  return people.some((p) => p.id !== card.id && !!p.display_name.trim() && normalize(p.display_name) !== name && containsPhrase(name, normalize(p.display_name)));
 }
