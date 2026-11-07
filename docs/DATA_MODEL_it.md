@@ -702,8 +702,10 @@ o dopo un impulso di presenza, chiusa da ciò che succede dopo); `initiatives` r
 (`{reaction, latencyMs}`); `intents.timed boolean` (è stata chiesta un'ora); `clients.channels jsonb` (`[{kind: chat |
 messaging | voice, reach: always | presence}]`); `client_webhooks.events text[] null` (null: tutti);
 `presences(id, memory_id, person_id null (non identificata), client_id null, channel (voice|camera|panel|chat), confidence
-real, place null, seen_at, expires_at)` — chi l'agente ha visto o sentito, con cosa, con che sicurezza, fino a quando; mai
+real, place null, seen_at, expires_at, busy bool, talking bool, arrival_held bool)` — chi l'agente ha visto o sentito, con cosa, con che sicurezza, fino a quando; mai
 una voce o un volto.
+Tempo v2 (F6, migrazione `PresenceMoment1791320000000`): `busy` e `talking` come li ha detti il client; `arrival_held` — un arrivo il cui
+momento spontaneo è stato trattenuto per una persona occupata o una conversazione (il prossimo impulso in quel luogo conta ancora come arrivo).
 **Tempo v0** (F2a, migrazione `InitiativeTiming1791270000000`): `initiatives.pushed_at` (spinta come `initiative.deliver`),
 `preferred_from` / `preferred_to smallint null` (le ore locali adatte; null: il default del tipo);
 `initiative_decisions(id bigserial, memory_id, initiative_id → initiatives (CASCADE), trigger (clock|presence|turn), at,

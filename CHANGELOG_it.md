@@ -18,6 +18,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   per imparare (una domanda su qualcuno, una lacuna, una conferma) alla volta e al massimo una al giorno per persona;
   una deduzione che il passaggio delle abitudini riscrive ogni notte è vecchia quanto la sua prima versione; mai una
   nota imparata dalla risposta a una domanda della memoria, una privata, o una versione di una nota già chiesta. Migrazione `IntentConfirm` (tipo di intento `confirm`).
+- **Tempo v2: il contesto del momento** (D55 F6, `INITIATIVE_TIMING=v2`, v1 compreso). Dopo un'iniziativa rifiutata o
+  una reazione negativa niente di flessibile per quella persona per 3 ore, dopo una ignorata subito dopo averla ricevuta
+  per 1 ora; un impulso di presenza può dire `busy` (una chiamata, una riunione, non disturbare: niente di flessibile su
+  nessun canale finché dura) e `talking` (nel luogo si sta parlando: l'apertura aspetta una pausa); un arrivo trattenuto
+  per una persona occupata o una conversazione resta dovuto; ciò che è stato ricevuto con altri si impara separato da
+  quello da soli. Un orario scelto dalla persona parte comunque; ogni attesa è registrata con il suo motivo, e
+  `INITIATIVE_TIMING_SHADOW` registra le attese di v2 accanto a v0. Nuove impostazioni
+  `INITIATIVE_COOLDOWN_DECLINED_MINUTES`, `INITIATIVE_COOLDOWN_IGNORED_MINUTES`, `INITIATIVE_CONVERSATION_GAP_SECONDS`;
+  libreria client `PresenceImpulse.busy` / `talking`. Migrazione `PresenceMoment`. Dev set `dataset_dev_timing` con Casa
+  Neri: v2 28 / 28, v1 e v0 25 / 28.
 
 ### Modificato
 - A chi va una domanda su una persona conta anche gli episodi che la nominano soltanto, non solo quelli su di lei.

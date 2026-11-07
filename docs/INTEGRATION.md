@@ -202,7 +202,8 @@ known participant who shows up under a new name on the channel keeps their conta
 > in-turn channel — the memory context you already ask for before every turn (§4) carries the initiative due for whoever
 > is talking (send `initiatives: {lookups: true}` when your agent has tools); (c) sends a **presence impulse** when it
 > recognises someone (`client.presence(user, {channel, person?, confidence})` — your voiceprint or face model's score; an
-> account is 1) and speaks the `initiative` it gets back, or asks "is it you?" for `askWho`; (d) reports outcomes with
+> account is 1; add `busy: true` while you know the person is occupied — a call, a meeting, do-not-disturb — and `talking: true`
+> while people in the place are talking, if you can tell) and speaks the `initiative` it gets back, or asks "is it you?" for `askWho`; (d) reports outcomes with
 > `channel` and `reaction`; (e) delivers on the webhook event `initiative.deliver` (Recordare chose the moment; deliver
 > on `data.channel`), takes the other events as information, and recognises a reminder it scheduled itself by `source`. The
 > library's `InitiativeInbox` does (c)–(e) in one piece: you only write how you deliver one. The steps below still hold for push delivery.

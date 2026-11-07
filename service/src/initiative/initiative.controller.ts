@@ -49,6 +49,10 @@ const presenceBody = z.object({
   place: z.string().trim().max(200).optional(),
   /** The person left: the presence ends, nothing is offered. */
   left: z.boolean().optional(),
+  /** Timing v2 (D55 F6): the person(s) of this impulse are busy now (a call, a meeting, do-not-disturb) — nothing flexible until it ends or `false`. */
+  busy: z.boolean().optional(),
+  /** Timing v2 (D55 F6): people in the place are talking now — an opening waits for a pause. */
+  talking: z.boolean().optional(),
 }).refine((b) => !(b.person && b.people), { message: 'person or people, not both' });
 
 @Controller('api/v1/initiatives')

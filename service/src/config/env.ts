@@ -76,11 +76,18 @@ const baseSchema = z.object({
   INITIATIVE_DAILY_LIMIT: z.coerce.number().int().min(0).max(50).default(3),
   /**
    * D55: how the moment and the channel are chosen — `v0` (the cost-sensitive gate), `v1` (v0 corrected by each person's
-   * outcomes: when, and on which channel, they take an initiative — F4) or `due` (as soon as due: the baseline).
+   * outcomes: when, and on which channel, they take an initiative — F4), `v2` (`v1` and the moment's context: a pause after
+   * a refusal, a busy person, a conversation in progress, company learnt apart — F6) or `due` (as soon as due: the baseline).
    */
-  INITIATIVE_TIMING: z.enum(['v0', 'v1', 'due']).default('v0'),
-  /** D55 F4: with `v0`, also work out and log what `v1` would have decided (beside v0's decision; nothing changes). */
+  INITIATIVE_TIMING: z.enum(['v0', 'v1', 'v2', 'due']).default('v0'),
+  /** D55 F4 / F6: with `v0`, also work out and log what `v1` and `v2` would have decided (beside v0's decision; nothing changes). */
   INITIATIVE_TIMING_SHADOW: bool.default(false),
+  /** D55 F6 (timing v2): after a declined initiative or a negative reaction, nothing flexible for that person for this long, in minutes. */
+  INITIATIVE_COOLDOWN_DECLINED_MINUTES: z.coerce.number().int().min(0).max(1_440).default(180),
+  /** D55 F6 (timing v2): after an ignored initiative, nothing flexible for that person for this long, in minutes. */
+  INITIATIVE_COOLDOWN_IGNORED_MINUTES: z.coerce.number().int().min(0).max(1_440).default(60),
+  /** D55 F6 (timing v2): a client's `talking` in a place holds an opening there for this many seconds (a conversation in progress). */
+  INITIATIVE_CONVERSATION_GAP_SECONDS: z.coerce.number().int().min(0).max(3_600).default(90),
   /** D55 §5c: at most one spontaneous announcement (an initiative or an opening said aloud) per person this often, in minutes. */
   INITIATIVE_VOICE_PACE_MINUTES: z.coerce.number().int().min(0).max(1_440).default(30),
   /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */

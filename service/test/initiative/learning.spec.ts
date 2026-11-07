@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright © 2026 Andrea Genovese
 /** Timing v1 (D55 F4): what a person's outcomes teach — part of the day, the estimate from v0's prior, holding, the channel. */
-import { acceptance, dayPart, experience, preferredChannel, shouldHold } from '../../src/initiative/learning';
+import { acceptance, dayPart, experience, preferredChannel, shouldHold, withOthers } from '../../src/initiative/learning';
 import { decideMoment, type MomentInput } from '../../src/initiative/initiative.service';
 
 const outcomes = (n: number, status: string, localHour: number, channel: string) => Array.from({ length: n }, () => ({ status, localHour, channel }));
@@ -47,5 +47,15 @@ describe('timing v1 (F4)', () => {
     expect(decideMoment(base)).toMatchObject({ deliver: true }); // v0: in hours
     expect(decideMoment({ ...base, fit: 0.28 })).toMatchObject({ deliver: false, reason: 'low' }); // v1: three ignored mornings
     expect(decideMoment({ ...base, localHour: 23, fit: 1 })).toMatchObject({ deliver: true }); // the fit replaces the hour's
+  });
+
+  it('timing v2 (F6): with company, what was given with others counts on its own key; without, with alone (v1 unchanged)', () => {
+    const rows = [...outcomes(3, 'ignored', 15, 'voice').map((r) => ({ ...r, others: true })), ...outcomes(2, 'said', 15, 'voice')];
+    expect(experience(rows).get('afternoon|voice')).toEqual({ accepted: 2, rejected: 3 });
+    const exp = experience(rows, { company: true });
+    expect(exp.get('afternoon|voice')).toEqual({ accepted: 2, rejected: 0 });
+    expect(exp.get(`afternoon|${withOthers('voice')}`)).toEqual({ accepted: 0, rejected: 3 });
+    expect(shouldHold(exp, 'afternoon', withOthers('voice'), 0.7)).toBe(true);
+    expect(shouldHold(exp, 'afternoon', 'voice', 0.7)).toBe(false);
   });
 });

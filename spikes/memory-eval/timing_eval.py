@@ -8,7 +8,7 @@ an acceptable window (and through the right trigger), delivered outside (a needl
 it should have been (lapsed), or rightly not delivered.
 
 The service must run with ALLOW_CLOCK_OVERRIDE=true, CONSOLIDATION_SCHEDULE=false, INITIATIVE_WORDING=false and a long
-IDLE_DELAY_SECONDS (no extraction); INITIATIVE_TIMING=v0 or due selects the policy compared. Env: RECORDARE_URL,
+IDLE_DELAY_SECONDS (no extraction); INITIATIVE_TIMING=v0, v1, v2 or due selects the policy compared. Env: RECORDARE_URL,
 RECORDARE_ADMIN_KEY, RECORDARE_DB_URL, TIMING_LABEL (names the result file).
 Run: uv run --directory <spike> python timing_eval.py
 """
@@ -76,7 +76,7 @@ def setup(m: dict, db: psycopg.Connection) -> dict:
     for p in m["plans"]:
         db.execute("""INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, plan_status)
                       VALUES (%s, 'plan', %s, 'holder_lived', 'holder', 'stated', ARRAY[%s::uuid], %s, 'day', 'open')""", (memory, p["content"], memory, p["at"]))
-    return {"memory": memory, "key": key, "user": user, "participants": participants}
+    return {"memory": memory, "key": key, "user": user, "participants": participants, "db": db}
 
 
 def run_event(e: dict, ctx: dict) -> dict:
@@ -89,8 +89,18 @@ def run_event(e: dict, ctx: dict) -> dict:
         body = {"channel": e["channel"], "ttlSeconds": e.get("ttl", 900),
                 **({"place": e["place"]} if e.get("place") else {}),
                 **({"people": [{"identity": {"channel": "homeassistant", "externalId": ha}, "confidence": c} for ha, c in e["people"]]} if e.get("people") else {}),
-                **({"someone": e["someone"]} if e.get("someone") else {}), **({"left": True} if e.get("left") else {})}
+                **({"someone": e["someone"]} if e.get("someone") else {}), **({"left": True} if e.get("left") else {}),
+                # Timing v2 (D55 F6): what the host knows of the moment — busy (a call, do-not-disturb), people talking.
+                **({"busy": e["busy"]} if "busy" in e else {}), **({"talking": True} if e.get("talking") else {})}
         return api("POST", "/api/v1/presence", ctx["key"], headers, body)
+    if e["type"] == "outcome":
+        # The host reports how an initiative was taken (D55 F6: a refusal the moment's context remembers).
+        row = ctx["db"].execute("SELECT id FROM initiatives WHERE memory_id = %s AND lower(text) LIKE %s ORDER BY created_at DESC LIMIT 1",
+                                (ctx["memory"], f"%{e['content'].lower()}%")).fetchone()
+        if not row:
+            return {"outcome": "no initiative"}
+        api("POST", f"/api/v1/initiatives/{row[0]}/outcome", ctx["key"], {"x-recordare-user": ctx["user"]}, {"status": e["status"], "at": e["at"]})
+        return {"outcome": e["status"]}
     author = next((p for p in ctx["participants"] if e.get("author") and p["displayName"] == e["author"]), None)
     msg = {"externalId": f"{RUN}-turn-{e['at']}", "role": "other" if author else "user", "content": e["text"], "sentAt": e["at"],
            **({"authorRef": author["ref"]} if author else {})}
@@ -152,7 +162,7 @@ def main() -> None:
                 at, mid, e = events.pop(0)
                 res = run_event(e, ctxs[mid])
                 kept = {k: (v.get("text") if isinstance(v, dict) and "text" in v else v)
-                        for k, v in (res or {}).items() if k in ("initiative", "askWho", "block", "opening")}
+                        for k, v in (res or {}).items() if k in ("initiative", "askWho", "block", "opening", "outcome")}
                 entry = {"at": e["at"], "memory": mid, "type": e["type"], "result": kept}
                 if e.get("expect"):
                     # An event's own gold (D55 §5c): what this presence must and must not bring.

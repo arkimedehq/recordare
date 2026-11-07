@@ -13,8 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { type Env } from '../config/env';
 import { initiativeText } from '../lang/initiative';
-import { afterQuiet, InitiativeService, TIMING, type InitiativeView } from './initiative.service';
-import { dayPart, shouldHold } from './learning';
+import { afterQuiet, InitiativeService, TIMING, timingPolicy, type InitiativeView, type MomentHold } from './initiative.service';
+import { dayPart, shouldHold, withOthers } from './learning';
 
 /**
  * How the agent perceived the person: at home (`home`: an account's presence, not enough to speak), heard (voice), seen
@@ -38,6 +38,10 @@ export interface PresenceInput {
   ttlSeconds: number;
   place?: string;
   left?: boolean;
+  /** Timing v2 (F6): the client knows the person(s) of this impulse are busy now (a call, a meeting, do-not-disturb); false: no longer. */
+  busy?: boolean;
+  /** Timing v2 (F6): the client knows people in the place are talking now (a conversation in progress). */
+  talking?: boolean;
 }
 
 type Person = { personId: string; name: string };
@@ -70,17 +74,27 @@ export class PresenceService {
     }
     const room = ROOM.has(input.channel);
     const arrived = new Set<string>();
+    const rowOf = new Map<string, string>();
     for (const r of resolved) {
-      // An arrival: nobody of theirs was live in this place (a refresh only keeps the presence live) — §5c.
+      // An arrival: nobody of theirs was live in this place (a refresh only keeps the presence live) — §5c; or the last
+      // presence there was an arrival held for a busy person or a conversation (timing v2: the moment is still owed).
       if (r.person && room) {
-        const [live] = await this.db.query(
-          `SELECT 1 FROM presences WHERE memory_id = $1 AND person_id = $2 AND place IS NOT DISTINCT FROM $3 AND channel = ANY($4) AND expires_at > $5 LIMIT 1`,
+        const [live]: Array<{ arrival_held: boolean }> = await this.db.query(
+          `SELECT arrival_held FROM presences WHERE memory_id = $1 AND person_id = $2 AND place IS NOT DISTINCT FROM $3 AND channel = ANY($4) AND expires_at > $5
+           ORDER BY seen_at DESC LIMIT 1`,
           [memoryId, r.person.personId, input.place ?? null, [...ROOM], now]);
-        if (!live) arrived.add(r.person.personId);
+        if (!live || live.arrival_held) arrived.add(r.person.personId);
       }
-      await this.db.query(
-        `INSERT INTO presences (memory_id, person_id, client_id, channel, confidence, place, seen_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [memoryId, r.person?.personId ?? null, clientId, input.channel, r.confidence, input.place ?? null, now, new Date(now.getTime() + input.ttlSeconds * 1000)]);
+      // No longer busy: the earlier busy presences of theirs end being busy.
+      if (input.busy === false && r.person) {
+        await this.db.query(`UPDATE presences SET busy = false WHERE memory_id = $1 AND person_id = $2 AND busy AND expires_at > $3`, [memoryId, r.person.personId, now]);
+      }
+      const [row]: Array<{ id: string }> = await this.db.query(
+        `INSERT INTO presences (memory_id, person_id, client_id, channel, confidence, place, seen_at, expires_at, busy, talking)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        [memoryId, r.person?.personId ?? null, clientId, input.channel, r.confidence, input.place ?? null, now, new Date(now.getTime() + input.ttlSeconds * 1000),
+          !!input.busy, !!input.talking]);
+      if (r.person && row) rowOf.set(r.person.personId, row.id);
     }
     // At home is not enough to speak: recorded (the clock reads it), nothing offered.
     if (input.channel === 'home') return none;
@@ -91,25 +105,39 @@ export class PresenceService {
     const [memory]: Array<{ locale: string; timezone: string; quiet_from: number; quiet_to: number }> = await this.db.query(
       `SELECT locale, timezone, quiet_from, quiet_to FROM memories WHERE person_id = $1`, [memoryId]);
     const quiet = !!memory && afterQuiet(now, memory.timezone, memory.quiet_from, memory.quiet_to).getTime() !== now.getTime();
-    const policy = this.config.get('INITIATIVE_TIMING', { infer: true }) ?? 'v0';
-    const learn = policy === 'v1' || (policy === 'v0' && this.config.get('INITIATIVE_TIMING_SHADOW', { infer: true }));
+    const { learns, learn, context, v2 } = timingPolicy(this.config);
+    // Timing v2 (F6): others here and talking now — the opening waits for a pause.
+    const conversation = context && room && others && await this.conversing(memoryId, input.place ?? null, now);
     for (const r of resolved) {
       if (!r.person) continue;
       // In a room, spontaneous only at an arrival, within the pace, outside the quiet hours; else only a timed request or promise.
       const timedOwedOnly = room && (!arrived.has(r.person.personId) || quiet || await this.paced(memoryId, r.person.personId, now));
       // Timing v1 (F4): where this person has often ignored or declined what was said to them (this part of the day, this
-      // channel), a flexible one waits for a better moment; a time they chose still goes.
+      // channel), a flexible one waits for a better moment; a time they chose still goes. v2 learns company apart.
       let learnt: boolean | null = null;
-      if (learn && memory && !timedOwedOnly) {
+      let moment: MomentHold | null = null;
+      if ((learn || context) && memory && !timedOwedOnly) {
         const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: memory.timezone }).format(now)) % 24;
         const self = r.person.personId === memoryId;
-        const exp = await this.initiatives.experienceOf(memoryId, self ? null : r.person.personId, memory.timezone, now);
-        learnt = shouldHold(exp, dayPart(hour), channel, TIMING.defaultPrior);
+        const forId = self ? null : r.person.personId;
+        if (learn) {
+          const exp = await this.initiatives.experienceOf(memoryId, forId, memory.timezone, now, { company: v2 });
+          learnt = shouldHold(exp, dayPart(hour), channel, TIMING.defaultPrior);
+        }
+        if (context && conversation) moment = 'conversation';
+        else if (context && room && others) {
+          const company = await this.initiatives.experienceOf(memoryId, forId, memory.timezone, now, { company: true });
+          if (shouldHold(company, dayPart(hour), withOthers(channel), TIMING.defaultPrior)) moment = 'learnt_company';
+        }
       }
-      const hold = policy === 'v1' && !!learnt;
+      const hold = learns && !!learnt;
       const res = await this.initiatives.offer(memoryId, { personId: r.person.personId, confidence: r.confidence }, channel, now,
-        { timedOwedOnly: timedOwedOnly || hold, open: room && others,
-          features: learnt === null ? undefined : policy === 'v1' ? { learntHold: learnt } : { shadow: { policy: 'v1', hold: learnt } } });
+        { timedOwedOnly: timedOwedOnly || hold, open: room && others, moment,
+          features: learnt === null ? undefined : learns ? { learntHold: learnt } : { shadow: { policy: 'v1', hold: learnt } } });
+      // A spontaneous moment held for a busy person or a conversation stays owed: the next impulse here is still the arrival.
+      if (v2 && (res.held === 'busy' || res.held === 'conversation') && arrived.has(r.person.personId)) {
+        await this.db.query(`UPDATE presences SET arrival_held = true WHERE id = $1`, [rowOf.get(r.person.personId)]);
+      }
       if (res.initiative) {
         return { person: r.person, people, initiative: res.initiative, askWho: null,
           opening: res.opened ? initiativeText(memory?.locale ?? 'en').opening(r.person.name) : null };
@@ -119,6 +147,20 @@ export class PresenceService {
     // Nobody identified: an entity memory may ask whether this is someone something waits for.
     const { askWho } = await this.initiatives.offer(memoryId, { personId: null, confidence: 0 }, channel, now);
     return { ...none, askWho };
+  }
+
+  /**
+   * Timing v2 (F6): a conversation in progress in this place — a client said people are talking there within
+   * `INITIATIVE_CONVERSATION_GAP_SECONDS`. Only the client's word: a `voice` impulse naming several people describes the
+   * room, not who speaks.
+   */
+  private async conversing(memoryId: string, place: string | null, now: Date): Promise<boolean> {
+    const gap = this.config.get('INITIATIVE_CONVERSATION_GAP_SECONDS', { infer: true }) ?? 90;
+    if (!gap) return false;
+    const [hit] = await this.db.query(
+      `SELECT 1 FROM presences WHERE memory_id = $1 AND place IS NOT DISTINCT FROM $2 AND talking
+         AND seen_at > $3::timestamptz - make_interval(secs => $4) AND seen_at <= $3 LIMIT 1`, [memoryId, place, now, gap]);
+    return !!hit;
   }
 
   /** Whether this person had a spontaneous announcement (an initiative by voice, or an opening) within the pace (§5c). */

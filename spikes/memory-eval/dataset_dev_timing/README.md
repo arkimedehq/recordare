@@ -19,6 +19,10 @@ said by part of the day (the morning voice ignored, the evening one taken), and 
 initiative's outcome accordingly — the outcomes v1 learns from. Six days (19–24 October: daylight saving ends on the
 25th and the set's times are fixed +02:00).
 
+A fifth memory (2026-11-07), **Casa Neri**, measures timing v2 (D55 F6): a refusal reported as an `outcome` event (the
+pause that follows), a client's `busy` on a presence (a call; the arrival stays owed, a chosen time goes anyway) and
+`talking` (the opening waits for a pause). Five items (n1–n5), three event checks.
+
 Scored per item: `in_window`, `outside` (a needless interruption), `wrong_trigger`, `wrong_channel`, `no_opening`,
 `lapsed`, `rightly_silent`, `wrong_delivery`. Fictional content. `python build.py` writes `timelines.json`; `python check.py` verifies it.
 Written by the developer who tuned timing v0 on it: a held-out set is still owed.

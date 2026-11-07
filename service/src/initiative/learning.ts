@@ -43,15 +43,25 @@ export interface Counts {
 /** A person's experience: counts by part of the day and channel (`${part}|${channel}`). */
 export type Experience = Map<string, Counts>;
 
-/** Builds an experience from outcome rows (their status, the local hour they were given at, the channel). */
-export function experience(rows: Array<{ status: string; localHour: number; channel: string | null }>): Experience {
+/** Timing v2 (F6): the channel key of what was given with others in the room (after an opening), learnt apart from alone. */
+export function withOthers(channel: string): string {
+  return `${channel}+others`;
+}
+
+/**
+ * Builds an experience from outcome rows (their status, the local hour they were given at, the channel). `company`
+ * (timing v2): what was given with others present (`others`) counts on its own key (`withOthers`), not with alone.
+ */
+export function experience(rows: Array<{ status: string; localHour: number; channel: string | null; others?: boolean }>,
+  opts: { company?: boolean } = {}): Experience {
   const exp: Experience = new Map();
   for (const r of rows) {
     if (!r.channel) continue;
+    const channel = opts.company && r.others ? withOthers(r.channel) : r.channel;
     const accepted = (ACCEPTED as readonly string[]).includes(r.status);
     const rejected = (REJECTED as readonly string[]).includes(r.status);
     if (!accepted && !rejected) continue;
-    const key = `${dayPart(r.localHour)}|${r.channel}`;
+    const key = `${dayPart(r.localHour)}|${channel}`;
     const c = exp.get(key) ?? { accepted: 0, rejected: 0 };
     if (accepted) c.accepted++; else c.rejected++;
     exp.set(key, c);
