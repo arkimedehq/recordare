@@ -15,8 +15,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - **Conferme: la memoria verifica ciò che sa a metà** (D55 F2b). Una nota su una persona sentita una volta o dedotta
   (un'abitudine, una preferenza, il profilo, una relazione; vecchia di almeno un giorno) viene chiesta una volta a chi
   potrebbe sapere: "Ho capito questo: … È così, o c'è altro?" (senza modello; ogni lingua). Dopo le lacune; una domanda
-  alla volta e una conferma al giorno per persona; mai una nota imparata dalla risposta a una domanda della memoria,
-  una privata, o una che corregge una nota già chiesta. Migrazione `IntentConfirm` (tipo di intento `confirm`).
+  per imparare (una domanda su qualcuno, una lacuna, una conferma) alla volta e al massimo una al giorno per persona;
+  una deduzione che il passaggio delle abitudini riscrive ogni notte è vecchia quanto la sua prima versione; mai una
+  nota imparata dalla risposta a una domanda della memoria, una privata, o una versione di una nota già chiesta. Migrazione `IntentConfirm` (tipo di intento `confirm`).
 
 ### Modificato
 - A chi va una domanda su una persona conta anche gli episodi che la nominano soltanto, non solo quelli su di lei.

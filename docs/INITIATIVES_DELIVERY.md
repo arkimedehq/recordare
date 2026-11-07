@@ -236,8 +236,11 @@ relation set, something learnt about them). Animals and things heard named (no p
 **Confirmations** (built 2026-11-06, no model): a note about a person the memory guessed or heard once — a habit, a
 preference, their profile, a relation, at least a day old — is asked about once of who could know: "I understood this:
 Giada goes swimming on Wednesdays. Is that right, or is there more?" (`confirm` in every language; worded by the model in
-balanced and full). After the gaps; one question at a time and one confirmation a day for each person; never a note
-learnt from an answer to the memory's own question, a private one, or one revising a note already asked about. Facts
+balanced and full). After the gaps. A learning question — a question about someone, a gap, a confirmation — goes to each person one at a
+time and at most once in 20 hours, whatever its kind (a child who answers once a day is not asked twice in an evening).
+A note's versions count as one: a guess the patterns pass rewrites every night is as old as its first version, and a
+confirmation asked about any version covers the later ones. Never a note learnt from an answer to the memory's own
+question, or a private one. Facts
 only in episodes, or never said aloud, are not reached this way.
 
 ## 7. The contract (changes, all additive)

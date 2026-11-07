@@ -59,14 +59,15 @@ Output JSON only: {"verdicts": [{"id": "<fact id>", "known": "known" | "partial"
 
 
 def chat(*args, **kwargs) -> str:
-    """The eval's own calls survive a network blip (run 1 stopped on day 10 on a DNS failure)."""
-    for attempt in range(4):
+    """The eval's own calls survive a network blip (run 1 stopped on day 10 on a DNS failure) or a provider's bad
+    minutes (confirm3: HTTP 500 and empty responses with no body)."""
+    for attempt in range(6):
         try:
             return _chat(*args, **kwargs)
-        except (openai.APIConnectionError, openai.APITimeoutError):
-            if attempt == 3:
+        except (openai.APIConnectionError, openai.APITimeoutError, openai.InternalServerError, AttributeError):
+            if attempt == 5:
                 raise
-            time.sleep(20 * (attempt + 1))
+            time.sleep(30 * (attempt + 1))
     raise AssertionError
 
 

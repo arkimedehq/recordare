@@ -2149,6 +2149,24 @@ a gap or an outcome question at 19:00, another at 20:30). Errors stayed zero. Po
 learning question a day for each person (any kind), and confirming a pattern note on its first version rather than its
 nightly rewrites. Cost ≈ 0.5 USD for the two runs.
 
+**Both built (2026-11-07)**: a learning question (`own`, `who`, `confirm`) goes to each person one at a time and at
+most once in 20 hours; a note's age is its first version's (the `supersedes` chain), and a confirmation asked about any
+version covers them all. Two more runs (a first attempt stopped on the provider's HTTP 500s and was rerun from scratch):
+
+| run | questions (answered / ignored) | confirmations | wrong person | nagging | known / partial day 14 | learnt by asking |
+|---|---|---|---|---|---|---|
+| confirm3 | 15 (14 / 1) | 3 (days 11–13: f07, f06, a test mark) | 0 | 0 | 7 / 8 | f07, f16, f18, f20, f22 |
+| confirm4 | 15 (14 / 1) | 4 (days 9–13: f09, f07, f06, f19) | 0 | 0 | 11 / 6 | f06, f07, f09, f16, f18, f20, f22, f30 |
+
+Both runs asked 3–4 confirmations, against 1 and 4 before, and no person got two learning questions in an evening;
+ignored is back to 1. The one left is the same in both runs: Giada asked about the museum trip at 19:00 (an open plan's
+outcome, not a learning question) and again at 20:30 by a question of the thought pass about the same trip — open-plan
+asks are outside the one-a-day rule, and the two say the same thing. The first confirmation still comes late (day 9 and
+11): the notes worth confirming are written by the patterns pass from day 7–8 on. More is learnt by asking (5 and 8
+facts, against 3 before confirmations), but the end count still sits in the runs' noise (7–11 known: confirm3 lost
+facts outside the questions). Errors stay zero. Possible next step, not built: a thought-pass question about a plan
+that has its own outcome ask counts as that ask. Cost ≈ 0.5 USD for the two runs.
+
 ### No relative days in what is said later — `initiative.v4` (2026-11-05, DeepSeek direct, balanced)
 
 Found on Kinox: an ask created on November 5 about a test on November 3 said "Ieri avevi la verifica di geometria" —
