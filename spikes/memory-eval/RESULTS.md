@@ -2167,6 +2167,28 @@ facts, against 3 before confirmations), but the end count still sits in the runs
 facts outside the questions). Errors stay zero. Possible next step, not built: a thought-pass question about a plan
 that has its own outcome ask counts as that ask. Cost ≈ 0.5 USD for the two runs.
 
+### A reminder moved, a reminder asked again — `extract.v24` (2026-11-07, DeepSeek direct, balanced)
+
+Found on Kinox (2026-11-06): a person asked "remind me tonight to make the yogurt", then three minutes later "Sposta
+alle 21" — the reminder came at 20:00, the time first guessed; the same person asked again for the pancakes reminder
+from the holder's account, the agent answered "it is already set", and a second reminder was said at 21:15. v24: the
+time is the last one agreed; a move gives the entry again; a request already held, or answered as already set, is not
+a new intent; the extraction sees MY REMINDERS (armed promises and requests, only when there are some); in code, a new
+request or promise matching an armed one of the same person within a week moves it. Two cases added to
+`dataset_dev_initiatives` (Giulia moves the photos from Tuesday 22 to Wednesday 23, trap [10]; Tommaso asks for
+Paola's flour reminder and is told it is set, trap [11]); 57 sessions, 15 expected (was 54 / 14). The evaluator now
+counts duplicates and **ingests only what was said before each sweep** (it used to ingest a whole period first: with
+MY REMINDERS the model rightly closed a reminder on "picked Mum up yesterday", before the sweep of the day it was due).
+
+| run | found | traps | false | duplicates | note |
+|---|---|---|---|---|---|
+| k24 (v24 without MY REMINDERS) | 11 / 15 | 2 ([10], [11]) | 4 | 0 | the move in a later conversation not seen |
+| k24b (with MY REMINDERS) | 9 / 15 | 0 | 3 | 0 | three reminders closed by later sessions ingested first (evaluator) |
+| k24c (same, interleaved ingestion) | **13 / 15** | **0** | 3 | 0 | missed: b-ask-haccp, b-lookup-roadworks |
+
+The three false are "who is X?" gaps (D55 F2b), newer than the gold. One run each (exploring); cost ≈ 0.45 USD for the
+three runs.
+
 ### No relative days in what is said later — `initiative.v4` (2026-11-05, DeepSeek direct, balanced)
 
 Found on Kinox: an ask created on November 5 about a test on November 3 said "Ieri avevi la verifica di geometria" —

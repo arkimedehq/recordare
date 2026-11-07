@@ -764,7 +764,10 @@ export class ExtractionWriter {
    * fires that morning (one per message and kind); a withdrawn request cancels the armed one its words match best.
    */
   private async applyIntents(out: ExtractionOutput): Promise<void> {
-    for (const i of out.intents) {
+    // In the order they were said: a move later in the window wins over the time first given.
+    const said = (e: number[]) => (e.length ? Math.min(...e) : 0);
+    const byEvidence = [...out.intents].sort((a, b) => said(a.evidence) - said(b.evidence));
+    for (const i of byEvidence) {
       const [m] = this.evidence(i.evidence);
       if (!m || m.role === 'tool') { this.drop('intent', 'no_evidence'); continue; }
       // Whom it concerns: a contact by C-number or name (a new name becomes a contact, as a person in an episode would); the self is nobody.
@@ -787,6 +790,20 @@ export class ExtractionWriter {
       if (!day.at || i.due === null || i.due === undefined) { this.drop('intent', 'no_date'); continue; }
       const time = (i.due ?? '').match(/T(\d{2}):(\d{2})/);
       const due = { at: time ? new Date(day.at.getTime() + (Number(time[1]) * 60 + Number(time[2])) * 60_000) : day.at };
+      if (i.kind !== 'followup') {
+        // A move ("sposta alle 21", "make it Friday instead") or the same request again: the armed one of that person whose
+        // words it shares, due within a week of the new time, takes the new time — never a second reminder (Kinox, 2026-11-07).
+        const armed: Array<{ id: string; content: string }> = await this.tx.query(
+          `SELECT id, content FROM intents WHERE memory_id = $1 AND kind = $2 AND status = 'armed' AND for_person_id IS NOT DISTINCT FROM $3
+             AND (message_id IS NULL OR message_id <> $4) AND abs(extract(epoch FROM due_at - $5::timestamptz)) <= 7 * 86400
+           ORDER BY created_at DESC`, [this.ctx.memoryId, i.kind, forId, m.id, due.at]);
+        const same = armed.find((a) => overlap(a.content, content));
+        if (same) {
+          await this.tx.query(`UPDATE intents SET due_at = $2, expires_at = $2::timestamptz + interval '1 day', timed = $3, updated_at = now() WHERE id = $1`,
+            [same.id, due.at, !!time]);
+          continue;
+        }
+      }
       await this.tx.query(
         // A follow-up (D55 F2b) is a flexible check: the question, from when it makes sense, for half a day when timed.
         `INSERT INTO intents (memory_id, kind, content, for_person_id, message_id, due_at, expires_at, timed)

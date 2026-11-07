@@ -22,6 +22,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ### Modificato
 - A chi va una domanda su una persona conta anche gli episodi che la nominano soltanto, non solo quelli su di lei.
 
+### Corretto
+- **Un promemoria spostato si dice all'ora nuova, e uno chiesto di nuovo non si dice due volte** (`extract.v24` /
+  `entity.v12`; trovato su Kinox). L'estrazione ora vede i promemoria che la memoria ha ancora in attesa (MY
+  REMINDERS, solo quando ce ne sono): uno spostamento ("sposta alle 21", subito o in una conversazione successiva)
+  porta il promemoria all'ora nuova, e una richiesta per uno già in attesa — o uno che l'agente dice già impostato —
+  non ne aggiunge un altro, chiunque lo chieda. Nel codice, una richiesta o promessa che corrisponde a una già attiva
+  della stessa persona entro una settimana la sposta; in una finestra vince l'ultima ora detta. Dev set
+  `dataset_dev_initiatives` con i due casi: 13 / 15, nessuna trappola, nessun doppione.
+
 ## [0.10.0] — 2026-11-06
 
 **La memoria impara quando ogni persona accoglie ciò che dice.** Il tempo v1 (`INITIATIVE_TIMING=v1`) legge gli esiti che

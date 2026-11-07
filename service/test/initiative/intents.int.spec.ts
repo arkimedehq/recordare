@@ -92,6 +92,29 @@ describe('intents from conversation: requests and promises, withdrawn requests, 
     expect(last.summary.dropped).toEqual({ intent: { nothing_done: 1 } });
   });
 
+  it('a move takes the armed reminder to the new time, in the same window or a later one; the same request again adds none (extract.v24)', async () => {
+    await window([
+      say('y1', 'marta', 'Ricordami che stasera devo preparare lo yogurt.', '2026-10-12T11:17:00+02:00'),
+      say('y2', null, 'Fatto, te lo ricordo stasera alle 20.', '2026-10-12T11:17:30+02:00'),
+      say('y3', 'marta', 'Sposta alle 21. Grazie', '2026-10-12T11:20:00+02:00'),
+    ], { intents: [ // listed out of order: the move, said later, still wins
+      { kind: 'request', content: 'preparare lo yogurt', due: '2026-10-12T21:00', for: 'Marta', evidence: [3] },
+      { kind: 'request', content: 'preparare lo yogurt', due: '2026-10-12T20:00', for: 'Marta', evidence: [1] },
+    ] });
+    const yogurt = () => db.query(`SELECT due_at, status::text FROM intents WHERE content LIKE '%yogurt%'`);
+    expect((await yogurt()).map((r: { due_at: Date }) => new Date(r.due_at).toISOString())).toEqual(['2026-10-12T19:00:00.000Z']);
+    // A later conversation moves it again to the next day; then the same request again (the agent: already set) adds nothing.
+    await window([say('y4', 'marta', 'Lo yogurt fallo domani sera alle 21, stasera non ce la faccio.', '2026-10-12T18:00:00+02:00')],
+      { intents: [{ kind: 'request', content: 'preparare lo yogurt', due: '2026-10-13T21:00', for: 'Marta', evidence: [1] }] });
+    // The extraction sees what I already hold (MY REMINDERS), to move it or not add it again.
+    const seen = llm.requests.at(-1)?.messages.find((m) => m.role === 'user')?.content ?? '';
+    expect(seen).toContain('MY REMINDERS (still to say):\n- preparare lo yogurt (request, for Marta; due');
+    await window([say('y5', 'marta', 'Domani alle 21 ricordami lo yogurt.', '2026-10-12T19:00:00+02:00')],
+      { intents: [{ kind: 'request', content: 'preparare lo yogurt', due: '2026-10-13T21:00', for: 'Marta', evidence: [1] }] });
+    expect((await yogurt()).map((r: { due_at: Date; status: string }) => [new Date(r.due_at).toISOString(), r.status])).toEqual([['2026-10-13T19:00:00.000Z', 'armed']]);
+    await db.query(`DELETE FROM intents WHERE content LIKE '%yogurt%'`);
+  });
+
   it('a follow-up (extract.v23): something Marta left to finish becomes, a few hours later, the question the extraction wrote; done closes it', async () => {
     await window([say('f1', 'marta', 'Ho messo la lavatrice, poi stendo.', '2026-10-09T10:00:00+02:00')],
       { intents: [{ kind: 'followup', content: 'Hai steso i panni?', due: '2026-10-09T12:00', for: 'Marta', evidence: [1] }] });

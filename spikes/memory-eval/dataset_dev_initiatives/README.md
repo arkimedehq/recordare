@@ -32,7 +32,11 @@ tests the move to 8:00.
 Traps: [1] a plan confirmed as done later (no ask); [2] a request withdrawn (no say); [3] a plan cancelled (no
 reminder); [4] a private plan, "non dirlo a nessuno" (nothing); [5] a promise the agent already kept in a later
 conversation (no say); [6] a vague wish with no date (nothing); [7] a question the person answered later (no lookup);
-[8] something the assistant suggested that the person never agreed to (no reminder).
+[8] something the assistant suggested that the person never agreed to (no reminder). Added 2026-11-07 (found on Kinox: a reminder said at
+the time first given though the person moved it, and one said twice when asked again): [10] a request moved to
+another day (Giulia's photos, Tuesday 22 → Wednesday 23: the say on the new day only); [11] a request asked again by
+someone else and answered as already set (Tommaso asks for Paola's flour reminder: no second say). 57 sessions, 15
+expected; earlier runs had 54 and 14.
 
 ## Memories
 - **marco** (personal, Italian, Padova; 13 sessions; 5 expected). The dentist on Sep 8 → reminder *say* Sep 7 by 1,

@@ -21,6 +21,9 @@
  * - v22 / entity v10 (D55 F2b): INTENTS also a follow-up — something a person started that must be finished later and is
  *   easy to forget (the laundry to hang, the oven on): the question I would ask, and when; closed when they say it is done.
  *   v23 / entity v11: the same, said in half the words (blind12 h11, 2026-11-04).
+ * - v24 / entity v12 (Kinox, 2026-11-07): INTENTS — the time is the last one agreed ("Sposta alle 21" after "stasera"
+ *   was ignored: the reminder came at 20:00); a move, in this window or a later one, repeats the entry with the new "due"; a request I
+ *   answer is already set (asked again, on the same account by someone else) is not a new intent.
  */
 export interface PromptMessage {
   n: number;
@@ -47,6 +50,8 @@ export interface PromptContext {
   messageDay: string;
   calendar: string;
   openPlans: string[];
+  /** MY REMINDERS (extract.v24): my promises and the requests I took on, still to say. */
+  reminders: string[];
   currentFacts: string[];
   currentNotes: string[];
   knownEpisodes: string[];
@@ -62,7 +67,7 @@ const NONE = '(none)';
  * use. Who said a message stays as data (`messages.author_kind`); the text never tells the person and the assistant
  * apart. Other people are contacts by name (PEOPLE I KNOW), and an ambiguous name becomes a question (OPEN QUESTIONS).
  */
-export const EXTRACTION_PROMPT_VERSION = 'extract.v23';
+export const EXTRACTION_PROMPT_VERSION = 'extract.v24';
 
 const P_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): the person whose account this is and the assistant that talks and acts for them are \
@@ -314,11 +319,15 @@ you tomorrow") or a person asks me to do something at a time ("ricordami lunedì
 "avvisami il 20 della scadenza", "remind me on Thursday to order the flour"), add one "intents" entry: "kind" \
 "promise" (mine) or "request" (theirs), "content" what is to be done, in MEMORY LANGUAGE, short, in the words I would \
 use to remind them of it ("chiamare il commercialista"), "due" the ISO date it is due (resolve "lunedì", "domani", \
-"il 12" against the message's date: the next such day), with the time when one is said ("2026-11-03T09:00"), "for" the Name of the person it concerns when it is not me \
+"il 12" against the message's date: the next such day), with the time when one is said ("2026-11-03T09:00") — the last one agreed: when they or I move it ("sposta alle \
+21", "make it Friday instead", now or in a later conversation), give the entry again with the new "due" and the \
+move's evidence —, "for" the Name of the person it concerns when it is not me \
 (the one asking, or the one I promised to; in a personal memory, nothing for the holder), "evidence" the message's \
 number.
 - Without a time ("dovrei andare dal dentista", "ricordamelo"), or when I only suggested it and nobody agreed, it is \
-not an intent. A plan of theirs is an episode (PLANS), not an intent: intents are what I am to do.
+not an intent. Nor a request for something already in MY REMINDERS, or one I answer is already set ("quel promemoria \
+c'è già", "that one's already booked for Friday"), whoever asks: it is the one I have. A move of one of MY REMINDERS \
+gives its entry again, with its content as listed and the new "due". A plan of theirs is an episode (PLANS), not an intent: intents are what I am to do.
 - When they take a request back ("lascia stare", "non serve più ricordarmelo", "never mind the reminder"), add an \
 entry with "kind" "request", "cancel": true, "content" what it was about, "for" and "evidence" as above.
 - When I do in the conversation what I promised or was asked ("bins out tonight, the collection is tomorrow" on the \
@@ -358,7 +367,7 @@ export const EXTRACTION_SYSTEM = P_INTRO + schema("first person for me ('Sono st
  * conversation identifies them, "someone" until then. Shares the personal prompt's schema, dates, plans, notes and
  * corrections; its own intro, voice, identification, episode, fact and safety rules.
  */
-export const ENTITY_PROMPT_VERSION = 'entity.v11';
+export const ENTITY_PROMPT_VERSION = 'entity.v12';
 
 const E_INTRO = `You are the memory of an agent and you write its memories in the FIRST PERSON. The agent \
 is one self, "I" (ME in the input): a shared agent — a device, a place, a robot or a service — that several people talk \
@@ -511,6 +520,7 @@ export function buildExtractionUser(ctx: PromptContext): string {
     // Only when there are some: every other input stays byte-identical to the measured one.
     ...(ctx.learnedSources.length ? [`SOURCES LEARNED IN THIS CONVERSATION (the episode that tells of learning or using one names it in "sources", e.g. ["S1"]):\n${ctx.learnedSources.join('\n')}`] : []),
     `OPEN PLANS:\n${ctx.openPlans.join('\n') || NONE}`,
+    ...(ctx.reminders.length ? [`MY REMINDERS (still to say):\n${ctx.reminders.join('\n')}`] : []),
     `CURRENT FACTS:\n${ctx.currentFacts.join('\n') || NONE}`,
     `KNOWN SLOTS: ${ctx.knownSlots.join(', ') || NONE}`,
     `CURRENT NOTES:\n${ctx.currentNotes.join('\n') || NONE}`,
