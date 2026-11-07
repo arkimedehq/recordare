@@ -174,6 +174,11 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
     `SELECT id, content, occurred_at, occurred_until, date_precision FROM episodes
      WHERE memory_id = $1 AND kind = 'plan' AND plan_status = 'open' AND deleted_at IS NULL AND invalidated_at IS NULL
      ORDER BY recorded_at DESC LIMIT $2`, [memory.id, MAX_OPEN_PLANS]);
+  // My reminders still to say (extract.v24): a move, a request asked again or a cancel in a later conversation needs them.
+  const reminders: Array<{ kind: string; content: string; due_at: Date; timed: boolean; who: string | null }> = await tx.query(
+    `SELECT t.kind::text, t.content, t.due_at, t.timed, p.display_name AS who FROM intents t LEFT JOIN persons p ON p.id = t.for_person_id
+     WHERE t.memory_id = $1 AND t.kind IN ('promise', 'request') AND t.status = 'armed' AND t.due_at IS NOT NULL
+     ORDER BY t.due_at LIMIT 20`, [memory.id]);
   // Facts of the memory's self and of the people it knows (both modes since 8.4), each labelled with its subject.
   const facts: Array<{ id: string; key: string; value: string | null; valid_from: Date | null; subject_id: string | null; subject: string | null }> = await tx.query(
     `SELECT f.id, f.key, f.value, f.valid_from, f.subject_person_id AS subject_id, p.display_name AS subject
@@ -254,6 +259,10 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
         planMap.set(`P${i + 1}`, p.id);
         const until = p.occurred_until ? ` → ${localDate(p.occurred_until, tz)}` : '';
         return `P${i + 1}: ${p.content} (planned ${when(p.occurred_at, p.date_precision)}${until})`;
+      }),
+      reminders: reminders.map((r) => {
+        const day = describe(r.due_at, 'day', tz, memory.locale);
+        return `- ${r.content} (${r.kind}${r.who ? `, for ${r.who}` : ''}; due ${r.timed ? `${day} ${clock.format(r.due_at)}` : day})`;
       }),
       currentFacts: facts.map((f, i) => {
         factMap.set(`F${i + 1}`, { id: f.id, key: f.key, validFrom: f.valid_from, subjectId: f.subject_id });

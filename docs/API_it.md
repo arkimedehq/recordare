@@ -739,7 +739,9 @@ richiesto** (maintainer, 2026-11-03): un piano o un evento solo raccontato ("dom
 ricordato, non promemorato; una **promessa che ho fatto o una richiesta
 fattami** con una data ("ricordami giovedì di ordinare la farina", "te lo ricordo venerdì" — gli INTENTS dell'estrazione,
 `extract.v21`) un `say` quel giorno, per la persona a cui si riferisce — ritirata ("lascia stare") o fatta in
-conversazione, si chiude; quando una richiesta e un piano sono la stessa cosa, parla la richiesta; **qualcosa che una
+conversazione, si chiude; spostata ("sposta alle 21", subito o dopo) si dice all'ora nuova, e chiesta di nuovo — o
+detta già impostata — non si dice due volte, chiunque la chieda (`extract.v24`: l'estrazione vede i promemoria ancora in
+attesa); quando una richiesta e un piano sono la stessa cosa, parla la richiesta; **qualcosa che una
 persona ha iniziato e lasciato da finire** (D55 F2b, `extract.v23`: i panni da stendere, un arrosto in forno, un modulo a
 metà prima della scadenza — non ciò che finisce da sé, che è finito nella conversazione, banale, un'abitudine o compito
 d'altri) un `ask` qualche ora dopo — la domanda scritta dall'estrazione, nella lingua della memoria, per chi deve finirlo,

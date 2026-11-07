@@ -719,7 +719,9 @@ day — a decision is no appointment; an event told ahead of its day is an appoi
 for** (maintainer, 2026-11-03): a plan or an event only told ("domani Chloé ha la verifica") is remembered, not
 reminded; a **promise I made or a request made to me** with a date ("ricordami
 giovedì di ordinare la farina", "te lo ricordo venerdì" — the extraction's INTENTS, `extract.v21`) a `say` that day, for
-the person it concerns — withdrawn ("lascia stare") or done in the conversation, it closes; when a request and a plan are
+the person it concerns — withdrawn ("lascia stare") or done in the conversation, it closes; moved ("sposta alle 21",
+now or later) it is said at the new time, and asked again — or answered as already set — it is not said twice, whoever
+asks (`extract.v24`: the extraction sees the reminders still held); when a request and a plan are
 the same thing, the request speaks; **something a person started and left to finish** (D55 F2b, `extract.v23`: the
 laundry to hang, a roast in the oven, a half-filled form before its deadline — not what ends on its own, is finished in
 the conversation, is trivial, a routine or someone else's job) an `ask` a few hours later — the question the extraction

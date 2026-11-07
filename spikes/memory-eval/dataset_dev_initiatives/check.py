@@ -15,7 +15,7 @@ ERRORS: list[str] = []
 START, END = date(2026, 9, 1), date(2026, 9, 30)
 CHECKPOINTS = ["2026-09-10T22:00:00+02:00", "2026-09-20T22:00:00+02:00", "2026-09-30T22:00:00+02:00"]
 KINDS = {"say", "ask", "lookup"}
-TRAP_KINDS = set(range(1, 10))  # [9]: a reminder nobody asked for (2026-11-03)
+TRAP_KINDS = set(range(1, 12))  # [9]: a reminder nobody asked for (2026-11-03); [10] a request moved, [11] asked again, already set (2026-11-07)
 OFFSETS = {"oliver": "+01:00"}
 
 DAYS = {"it": ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"],
@@ -94,8 +94,8 @@ def main() -> None:
                 if target.weekday() != wd:
                     err(f"{where}#{i}: '{mt.group(0)}' but {target} is weekday {target.weekday()}")
     for p in users:
-        if not 10 <= per_user[p] <= 16:
-            err(f"{p}: {per_user[p]} sessions (want 10–16)")
+        if not 10 <= per_user[p] <= 17:
+            err(f"{p}: {per_user[p]} sessions (want 10–17)")
 
     # gold
     if set(gold) != {"_note", "checkpoints", "memories"}:
@@ -151,9 +151,9 @@ def main() -> None:
             if set(tr) != {"id", "desc", "why"}:
                 err(f"{tr['id']}: keys {sorted(tr)}")
                 continue
-            m = re.search(r"\[(\d)\]$", tr["why"])
+            m = re.search(r"\[(\d+)\]$", tr["why"])
             if not m or int(m.group(1)) not in TRAP_KINDS:
-                err(f"{tr['id']}: why must end with its trap kind [1-9]")
+                err(f"{tr['id']}: why must end with its trap kind [1-11]")
             else:
                 trap_kinds[int(m.group(1))] += 1
         if not 3 <= len(g["expected"]) <= 9 or not 2 <= len(g["traps"]) <= 7:

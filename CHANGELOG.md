@@ -22,6 +22,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Changed
 - Whom a question about a person goes to counts the episodes that only name them too, not just those about them.
 
+### Fixed
+- **A reminder moved is said at the new time, and one asked again is not said twice** (`extract.v24` / `entity.v12`;
+  found on Kinox). The extraction now sees the reminders the memory still holds (MY REMINDERS, only when there are
+  some): a move ("sposta alle 21", now or in a later conversation) takes the armed reminder to the new time, and a
+  request for one already held — or one the agent answers is already set — adds none, whoever asks. In code, a
+  request or promise matching an armed one of the same person within a week moves it; in a window, the time said
+  last wins. Dev set `dataset_dev_initiatives` with the two cases: 13 / 15, no trap, no duplicate.
+
 ## [0.10.0] — 2026-11-06
 
 **The memory learns when each person takes what it says.** Timing v1 (`INITIATIVE_TIMING=v1`) reads the outcomes a host

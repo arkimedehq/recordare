@@ -92,7 +92,7 @@ def match(user: str, gold: dict, items: list[dict]) -> list[str]:
 
 
 def score(gold: dict, snap: dict[str, list[dict]], cp_index: int) -> dict:
-    found = due = traps = false = total = wrong_day = wrong_for = 0
+    found = due = traps = false = total = wrong_day = wrong_for = dup = 0
     detail = {}
     for user, g in gold.items():
         items = snap.get(user, [])
@@ -106,6 +106,8 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int) -> dict:
             ok_day = e is None or not e.get("due_day") or e["due_day"] == i["due_day"]
             ok_for = e is None or (e.get("for", "holder") == i["for"])
             if e and m in expected:
+                if m in hit:
+                    dup += 1  # the same thing said twice (Kinox 2026-11-07)
                 hit.add(m)
                 wrong_day += 0 if ok_day else 1
                 wrong_for += 0 if ok_for else 1
@@ -117,7 +119,7 @@ def score(gold: dict, snap: dict[str, list[dict]], cp_index: int) -> dict:
         found += len(hit); due += len(expected); total += len(items)
         detail[user] = {"due": sorted(expected), "found": sorted(hit), "missed": sorted(set(expected) - hit),
                         "traps_hit": [m for m in matches if m in trap_ids], "initiatives": judged}
-    return {"found": found, "due": due, "traps": traps, "false": false, "wrong_day": wrong_day, "wrong_for": wrong_for, "initiatives": total, "detail": detail}
+    return {"found": found, "due": due, "traps": traps, "false": false, "wrong_day": wrong_day, "wrong_for": wrong_for, "duplicates": dup, "initiatives": total, "detail": detail}
 
 
 def rescore(path: str) -> None:
@@ -171,9 +173,6 @@ def main() -> None:
     for i, cp in enumerate(gold["checkpoints"]):
         batch = [s for s in sessions[done:] if ts(s["ts"]) < ts(cp)]
         print(f"checkpoint {cp}: {len(batch)} sessions", flush=True)
-        if not reuse:
-            system.ingest(batch)
-        done += len(batch)
         # Sweeps at SWEEP_HOURS local (default one a day at 09:00) between the checkpoints, as the hourly sweep of a real night would (the gold's
         # due days follow), then the checkpoint itself; SWEEP_DAILY=0 keeps the checkpoints only.
         moments = []
@@ -187,19 +186,27 @@ def main() -> None:
                 day += timedelta(days=1)
         moments.append(cp)
         reports = {u: {"patterns": None, "thoughts": None, "sweeps": []} for u in ids}
-        for user, mid in ids.items():
-            for step in ("patterns", "thoughts"):
-                r = system.http.post(f"/api/v1/admin/memories/{mid}/{step}", headers={"x-recordare-now": cp}, timeout=600)
-                r.raise_for_status()
-                reports[user][step] = r.json()
-            for at in moments:
+        # Each sweep sees only what was said before it (2026-11-07: ingesting the whole period first let a later
+        # "picked Mum up yesterday" close the reminder before the day it was due — in production a window is extracted
+        # within the hour). Patterns and thoughts run at the checkpoint, before its sweep, as before.
+        for at in moments:
+            now_batch = [s for s in sessions[done:] if ts(s["ts"]) < ts(at)]
+            if now_batch and not reuse:
+                system.ingest(now_batch)
+            done += len(now_batch)
+            for user, mid in ids.items():
+                if at == cp:
+                    for step in ("patterns", "thoughts"):
+                        r = system.http.post(f"/api/v1/admin/memories/{mid}/{step}", headers={"x-recordare-now": cp}, timeout=600)
+                        r.raise_for_status()
+                        reports[user][step] = r.json()
                 r = system.http.post(f"/api/v1/admin/memories/{mid}/initiatives", headers={"x-recordare-now": at}, timeout=600)
                 r.raise_for_status()
                 reports[user]["sweeps"].append({"at": at, **r.json()})
         snap = snapshot(ids, tz)
         s = score(gold["memories"], snap, i)
         result["checkpoints"][cp] = {"reports": reports, "initiatives": snap, "score": s}
-        print(f"  found {s['found']}/{s['due']}  traps {s['traps']}  false {s['false']}  wrong day {s['wrong_day']}  wrong for {s['wrong_for']}  of {s['initiatives']}", flush=True)
+        print(f"  found {s['found']}/{s['due']}  traps {s['traps']}  false {s['false']}  wrong day {s['wrong_day']}  wrong for {s['wrong_for']}  dup {s['duplicates']}  of {s['initiatives']}", flush=True)
         previous = cp
     final = result["checkpoints"][gold["checkpoints"][-1]]["score"]
     result["score"] = {k: v for k, v in final.items() if k != "detail"}
