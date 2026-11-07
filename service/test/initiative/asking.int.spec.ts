@@ -100,9 +100,11 @@ describe('learning by asking: whom a question goes to', () => {
     // Only someone unidentified spoke of Ugo: nobody to ask.
     expect(await intentOf('Che macchina ha preso Ugo?')).toBeUndefined();
 
-    // The first answered, the next one for Paolo is armed.
+    // The first answered: the next one for Paolo waits for the next day (one learning question a day each), then is armed.
     await db.query(`UPDATE intents SET status = 'done' WHERE content = 'Com''è andata la gara di nuoto di Giada?'`);
     await app.get(InitiativeService).sweep(casa, NOW);
+    expect(await intentOf('Giada ha vinto una medaglia?')).toBeUndefined();
+    await app.get(InitiativeService).sweep(casa, new Date(NOW.getTime() + 21 * 3600_000));
     expect(await intentOf('Giada ha vinto una medaglia?')).toMatchObject({ kind: 'own', for_person_id: paolo });
   });
 
@@ -137,16 +139,19 @@ describe('learning by asking: whom a question goes to', () => {
       reason: 'someone I heard named and do not know' }]);
     await sweep.sweep(home, NOW);
     expect(await gaps()).toHaveLength(1);
-    // Asked (answer or not): done, never asked again; Teo is next. Teo becomes known before he is asked: closed.
+    // Asked (answer or not): done, never asked again; Teo is next, the next day. Teo becomes known before he is asked: closed.
     await db.query(`UPDATE intents SET status = 'done' WHERE memory_id = $1 AND kind = 'who'`, [home]);
     await db.query(`UPDATE initiatives SET status = 'asked' WHERE memory_id = $1 AND status IN ('pending', 'offered')`, [home]);
     await sweep.sweep(home, NOW);
+    expect(await gaps()).toHaveLength(1);
+    const later = new Date(NOW.getTime() + 21 * 3600_000);
+    await sweep.sweep(home, later);
     const after = await gaps();
     expect(after.map((g: { content: string }) => g.content)).toEqual(['Bruna', 'Teo']);
     await db.query(`UPDATE persons SET relation = 'maestra' WHERE id = $1`, [await person(home, 'Teo')]);
     await db.query(`UPDATE initiatives SET status = 'expired' WHERE memory_id = $1 AND status IN ('pending', 'offered')`, [home]);
     await db.query(`UPDATE intents SET status = 'armed' WHERE memory_id = $1 AND content = 'Teo'`, [home]);
-    await sweep.sweep(home, NOW);
+    await sweep.sweep(home, later);
     expect((await gaps()).find((g: { content: string }) => g.content === 'Teo')).toMatchObject({ status: 'done' });
   });
 
@@ -183,7 +188,7 @@ describe('learning by asking: whom a question goes to', () => {
     await sweep.sweep(home, NOW);
     expect(await confirms()).toMatchObject([{ content: 'Ada va in piscina il mercoledì.', for_person_id: ada, identity_required: 'medium',
       text: 'Ho capito questo: Ada va in piscina il mercoledì. È così, o c\'è altro?' }]);
-    // Asked; the next one waits for the next day (one confirmation a day each).
+    // Asked; the next one waits for the next day (one learning question a day each).
     await db.query(`UPDATE intents SET status = 'done' WHERE memory_id = $1 AND kind = 'confirm'`, [home]);
     await sweep.sweep(home, NOW);
     expect(await confirms()).toHaveLength(1);
@@ -194,5 +199,43 @@ describe('learning by asking: whom a question goes to', () => {
     await sweep.sweep(home, new Date(NOW.getTime() + 5 * 24 * 3600_000));
     expect(await confirms()).toHaveLength(2);
   });
-});
 
+  it('one learning question a day each, of any kind; a guess rewritten every night is as old as its first version and confirmed once', async () => {
+    const home = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Casa Gialli', mode: 'entity' } })).body.personId;
+    const clientId = (await db.query(`SELECT id FROM clients WHERE name = 'A'`))[0].id;
+    await call(url, 'POST', '/api/v1/admin/identities', { token: ADMIN_KEY, body: { kind: 'account', personId: home, clientId, externalId: 'gialli' } });
+    const who = [{ ref: 'bea', role: 'other', displayName: 'Bea', identity: { channel: 'voice', externalId: 'bea' } }];
+    await ingest('gialli', 'room', [
+      { externalId: 'g1', role: 'other', authorRef: 'bea', content: 'Dino mi ha prestato la bici.', sentAt: '2026-10-07T18:00:00+02:00' },
+      { externalId: 'g2', role: 'other', authorRef: 'bea', content: 'Sono andata a correre.', sentAt: '2026-10-07T19:00:00+02:00' },
+    ], who);
+    const bea = await person(home, 'Bea');
+    await db.query(`INSERT INTO persons (memory_id, display_name) VALUES ($1, 'Dino')`, [home]);
+    await told(home, await person(home, 'Dino'), 'Dino ha prestato la bici a Bea', 'g1');
+    // The patterns pass guessed a habit five days ago and has rewritten it every night since: the current version is an hour old.
+    const version = async (content: string, validFrom: string, supersedes: string | null, status: string) => (await db.query(
+      `INSERT INTO notes (memory_id, category, content, origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_person_id, valid_from, recorded_at, supersedes, status)
+       VALUES ($1, 'habit', $2, 'reflected', 'holder', 'inferred', 0.6, 'holder', ARRAY[$1::uuid], 'contact', $3, $4, $4, $5, $6) RETURNING id`,
+      [home, content, bea, validFrom, supersedes, status]))[0].id as string;
+    const v1 = await version('Bea corre la sera.', '2026-10-07T17:00:00Z', null, 'superseded');
+    const v2 = await version('Bea corre spesso la sera.', new Date(NOW.getTime() - 3600_000).toISOString(), v1, 'current');
+    const learning = async () => db.query(
+      `SELECT t.kind::text, t.content, t.note_id FROM intents t WHERE t.memory_id = $1 AND t.kind IN ('who', 'confirm') ORDER BY t.created_at`, [home]);
+    const sweep = app.get(InitiativeService);
+    await sweep.sweep(home, NOW);
+    expect(await learning()).toMatchObject([{ kind: 'who', content: 'Dino' }]);
+    // Bea answered at once: no second question that day, whatever its kind.
+    await db.query(`UPDATE intents SET status = 'done' WHERE memory_id = $1`, [home]);
+    await sweep.sweep(home, new Date(NOW.getTime() + 2 * 3600_000));
+    expect(await learning()).toHaveLength(1);
+    // The next day: the guess, though its latest version is a day old only now, was first heard days ago.
+    await sweep.sweep(home, new Date(NOW.getTime() + 21 * 3600_000));
+    expect(await learning()).toMatchObject([{ kind: 'who' }, { kind: 'confirm', content: 'Bea corre spesso la sera.', note_id: v2 }]);
+    // Rewritten again after it was asked about: the new version is not asked about again.
+    await db.query(`UPDATE intents SET status = 'done' WHERE memory_id = $1`, [home]);
+    await db.query(`UPDATE notes SET status = 'superseded' WHERE id = $1`, [v2]);
+    await version('Bea corre il martedì sera.', new Date(NOW.getTime() + 22 * 3600_000).toISOString(), v2, 'current');
+    await sweep.sweep(home, new Date(NOW.getTime() + 4 * 24 * 3600_000));
+    expect(await learning()).toHaveLength(2);
+  });
+});

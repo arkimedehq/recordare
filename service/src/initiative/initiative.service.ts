@@ -115,6 +115,8 @@ const LOOKUP_KEEP_DAYS = 14;
 const RETRY_AFTER_DAYS = 7;
 const MAX_ATTEMPTS = 2;
 const DAY_MS = 86_400_000;
+/** A learning question to a person at most once a day: less than 24 h, so one given at the same hour each day is not pushed later and later. */
+const LEARN_GAP_HOURS = 20;
 /** Below this worth (the model's, balanced and full) an initiative is not said — and its intent is dropped, not postponed. */
 const WORTH_FLOOR = 0.3;
 
@@ -289,10 +291,7 @@ export class InitiativeService {
       const to = q.subject ? await this.answerer(memoryId, q.subject, mem?.mode === 'entity') : null;
       if (q.subject && to === undefined) continue;
       if (to !== null && to !== undefined) {
-        const [busy] = await this.db.query(
-          `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who', 'confirm') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
-          [memoryId, to === 'holder' ? null : to]);
-        if (busy) continue;
+        if (await this.learningBusy(memoryId, to === 'holder' ? null : to, now)) continue;
       }
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -340,10 +339,7 @@ export class InitiativeService {
       if (relationInName(g, names)) continue;
       const to = await this.answerer(memoryId, g.id, entity);
       if (to === undefined || to === g.id) continue; // nobody to ask (they would be asked who they are themselves)
-      const [busy] = await this.db.query(
-        `SELECT 1 FROM intents WHERE memory_id = $1 AND kind IN ('own', 'who', 'confirm') AND status IN ('armed', 'fired') AND for_person_id IS NOT DISTINCT FROM $2`,
-        [memoryId, to === 'holder' ? null : to]);
-      if (busy) continue;
+      if (await this.learningBusy(memoryId, to === 'holder' ? null : to, now)) continue;
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, about_person_id, due_at, expires_at) VALUES ($1, 'who', $2, $3, $4, $5, $6)
          ON CONFLICT (about_person_id, kind) WHERE about_person_id IS NOT NULL DO NOTHING RETURNING id`,
@@ -367,17 +363,26 @@ export class InitiativeService {
    * relation — that the memory guessed (inferred) or heard once, at least a day old, is asked about once of who could
    * know: "I understood this: … Is that right, or is there more?". No model. Not a note learnt from an answer to one of
    * my questions (that is the answer), not a private one, not one revising a note already asked about. After the gaps;
-   * one question at a time per person and one confirmation a day for each.
+   * one learning question at a time per person, at most one a day (`learningBusy`).
    */
   private async armConfirms(memoryId: string, now: Date, entity: boolean): Promise<number> {
+    // A note's versions (the patterns pass rewrites a guess every night) count as one: its age is the first version's,
+    // and a confirmation asked about any version covers them all (D55 F2b confirm1: a guess rewritten nightly never
+    // turned a day old).
     const notes: Array<{ id: string; content: string; subject: string }> = await this.db.query(
-      `SELECT n.id, n.content, n.subject_person_id AS subject FROM notes n
+      `WITH RECURSIVE chain AS (
+         SELECT n.id AS head, n.id, n.supersedes, COALESCE(n.valid_from, n.recorded_at) AS since, 0 AS depth FROM notes n
+         WHERE n.memory_id = $1 AND n.status = 'current' AND n.deleted_at IS NULL
+         UNION ALL
+         SELECT c.head, o.id, o.supersedes, COALESCE(o.valid_from, o.recorded_at), c.depth + 1 FROM chain c JOIN notes o ON o.id = c.supersedes
+         WHERE c.depth < 50)
+       SELECT n.id, n.content, n.subject_person_id AS subject FROM notes n
        WHERE n.memory_id = $1 AND n.status = 'current' AND n.deleted_at IS NULL AND NOT n.pending
          AND n.category IN ('habit', 'preference', 'profile', 'relationship') AND n.subject_kind = 'contact' AND n.subject_person_id IS NOT NULL
          AND (n.stance = 'inferred' OR n.support_count <= 1) AND n.origin <> 'assistant_stated'
-         AND COALESCE(n.valid_from, n.recorded_at) <= $2::timestamptz - interval '1 day'
+         AND (SELECT min(c.since) FROM chain c WHERE c.head = n.id) <= $2::timestamptz - interval '1 day'
          AND ${noteVisible('n', PUBLIC_ONLY)}
-         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind = 'confirm' AND (t.note_id = n.id OR t.note_id = n.supersedes))
+         AND NOT EXISTS (SELECT 1 FROM intents t JOIN chain c ON c.id = t.note_id WHERE t.kind = 'confirm' AND c.head = n.id)
          -- learnt from an answer to one of my questions: the answer itself, nothing to confirm
          AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN messages m ON m.id = x.message_id JOIN initiatives i ON i.memory_id = n.memory_id
            AND i.kind = 'ask' AND i.status = 'asked' AND i.for_person_id IS NOT DISTINCT FROM m.author_person_id
@@ -388,11 +393,7 @@ export class InitiativeService {
       const to = await this.answerer(memoryId, n.subject, entity);
       if (to === undefined) continue;
       const forId = to === 'holder' ? null : to;
-      const [busy] = await this.db.query(
-        `SELECT 1 FROM intents WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2
-           AND ((kind IN ('own', 'who', 'confirm') AND status IN ('armed', 'fired')) OR (kind = 'confirm' AND due_at > $3::timestamptz - interval '1 day'))`,
-        [memoryId, forId, now]);
-      if (busy) continue;
+      if (await this.learningBusy(memoryId, forId, now)) continue;
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at) VALUES ($1, 'confirm', $2, $3, $4, $5, $6)
          ON CONFLICT (note_id, kind) WHERE note_id IS NOT NULL DO NOTHING RETURNING id`,
@@ -400,6 +401,20 @@ export class InitiativeService {
       armed += r.length;
     }
     return armed;
+  }
+
+  /**
+   * Learning questions (a question of mine about someone, a gap, a confirmation) go one at a time to each person and at
+   * most one a day (D55 F2b confirm1: a child who answers once a day was asked twice in an evening once the first was
+   * answered): busy while one is open, or one was given in the last LEARN_GAP_HOURS.
+   */
+  private async learningBusy(memoryId: string, forId: string | null, now: Date): Promise<boolean> {
+    const [busy] = await this.db.query(
+      `SELECT 1 FROM intents t WHERE t.memory_id = $1 AND t.kind IN ('own', 'who', 'confirm') AND t.for_person_id IS NOT DISTINCT FROM $2
+         AND (t.status IN ('armed', 'fired') OR EXISTS (SELECT 1 FROM initiatives i WHERE i.intent_id = t.id
+           AND i.status NOT IN ('failed', 'expired') AND i.due_at > $3::timestamptz - make_interval(hours => $4)))
+       LIMIT 1`, [memoryId, forId, now, LEARN_GAP_HOURS]);
+    return !!busy;
   }
 
   /**
