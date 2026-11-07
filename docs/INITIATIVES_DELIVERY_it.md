@@ -242,6 +242,16 @@ persona, mai su chi parla con lei, una risposta o un "non lo so" la chiudono per
 fatta quando la lacuna si colma (una relazione impostata, qualcosa imparato su di lei). Animali e cose sentiti nominare
 (senza scheda persona) per ora non vengono chiesti.
 
+**Conferme** (costruite il 2026-11-06, senza modello): una nota su una persona che la memoria ha dedotto o sentito una
+volta — un'abitudine, una preferenza, il profilo, una relazione, vecchia di almeno un giorno — viene chiesta una volta a
+chi potrebbe sapere: "Ho capito questo: Giada va a nuoto il mercoledì. È così, o c'è altro?" (`confirm` in ogni lingua;
+in balanced e full la formula il modello). Dopo le lacune. Una domanda per imparare — una domanda su qualcuno, una lacuna, una conferma — va a ogni persona una
+alla volta e al massimo una ogni 20 ore, di qualsiasi tipo (un bambino che risponde una volta al giorno non riceve due
+domande in una sera). Le versioni di una nota contano come una: una deduzione che il passaggio delle abitudini riscrive
+ogni notte è vecchia quanto la sua prima versione, e una conferma chiesta su una versione vale per le successive. Mai una
+nota imparata dalla risposta a una domanda della memoria, o una privata. I
+fatti solo negli episodi, o mai detti ad alta voce, non si raggiungono così.
+
 ## 7. Il contratto (cambi, tutti additivi)
 
 - **Impulso di presenza** `POST api/v1/presence {user?, person: {ref | personId}, channel: voice | camera | chat | panel,

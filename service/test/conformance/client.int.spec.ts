@@ -146,6 +146,8 @@ describe('client conformance (packages/client against the service)', () => {
   it('gives an initiative to the person present, reads it in the feed, reports it with its context (D55)', async () => {
     const { memoryId } = await rc.me('user-1');
     const now = new Date();
+    // The real clock: no quiet hours, or after 22:00 the presence would rightly be given nothing.
+    await db().query(`UPDATE memories SET quiet_from = 0, quiet_to = 0 WHERE person_id = $1`, [memoryId]);
     await db().query(`INSERT INTO intents (memory_id, kind, content, due_at, expires_at) VALUES ($1, 'request', 'stendere i panni', $2, $3)`,
       [memoryId, new Date(now.getTime() - 60_000), new Date(now.getTime() + 86_400_000)]);
     await app.get(InitiativeService).sweep(memoryId, now);

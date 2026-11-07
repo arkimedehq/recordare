@@ -26,6 +26,11 @@ export interface InitiativeText {
    * Someone the memory has heard named but does not know who they are (D55 F2b, a gap): asked of whoever named them most.
    */
   whoIs: (name: string) => string;
+  /**
+   * Something the memory believes about someone but heard once or guessed (D55 F2b, a confirmation): `belief` as the
+   * memory holds it, a whole sentence; is it so, or is there more?
+   */
+  confirm: (belief: string) => string;
 }
 
 const TEXTS: Record<string, InitiativeText> = {
@@ -35,6 +40,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `I would like to find out: ${q}`,
     opening: (n) => `${n}, I have something for you: do you want to hear it?`,
     whoIs: (n) => `Who is ${n}? I have heard the name but do not know who they are.`,
+    confirm: (b) => `I understood this: ${b} Is that right, or is there more?`,
   },
   it: {
     askPlan: (p, d) => `Per ${d} era previsto: ${p} È andata?`,
@@ -42,6 +48,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Vorrei scoprire: ${q}`,
     opening: (n) => `${n}, ho una cosa per te: vuoi sentirla?`,
     whoIs: (n) => `Chi è ${n}? Ho sentito il nome, ma non so chi sia.`,
+    confirm: (b) => `Ho capito questo: ${b} È così, o c'è altro?`,
   },
   es: {
     askPlan: (p, d) => `Para el ${d} estaba previsto: ${p} ¿Se hizo?`,
@@ -49,6 +56,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Me gustaría averiguar: ${q}`,
     opening: (n) => `${n}, tengo algo para ti: ¿quieres oírlo?`,
     whoIs: (n) => `¿Quién es ${n}? He oído el nombre, pero no sé quién es.`,
+    confirm: (b) => `Entendí esto: ${b} ¿Es así, o hay algo más?`,
   },
   fr: {
     askPlan: (p, d) => `Pour le ${d} c'était prévu : ${p} Cela a-t-il eu lieu ?`,
@@ -56,6 +64,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `J'aimerais savoir : ${q}`,
     opening: (n) => `${n}, j'ai quelque chose pour toi : tu veux l'entendre ?`,
     whoIs: (n) => `Qui est ${n} ? J'ai entendu ce nom, mais je ne sais pas qui c'est.`,
+    confirm: (b) => `J'ai compris ceci : ${b} C'est bien ça, ou il y a autre chose ?`,
   },
   de: {
     askPlan: (p, d) => `Für den ${d} war geplant: ${p} Hat es stattgefunden?`,
@@ -63,6 +72,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Ich würde gern herausfinden: ${q}`,
     opening: (n) => `${n}, ich habe etwas für dich: Möchtest du es hören?`,
     whoIs: (n) => `Wer ist ${n}? Ich habe den Namen gehört, weiß aber nicht, wer das ist.`,
+    confirm: (b) => `Ich habe Folgendes verstanden: ${b} Stimmt das, oder gibt es noch mehr?`,
   },
   pt: {
     askPlan: (p, d) => `Para ${d} estava previsto: ${p} Aconteceu?`,
@@ -70,6 +80,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Gostaria de descobrir: ${q}`,
     opening: (n) => `${n}, tenho uma coisa para você: quer ouvir?`,
     whoIs: (n) => `Quem é ${n}? Ouvi o nome, mas não sei quem é.`,
+    confirm: (b) => `Entendi isto: ${b} É isso, ou há mais alguma coisa?`,
   },
   zh: {
     askPlan: (p, d) => `${d}原本有计划：${p}后来实现了吗？`,
@@ -77,6 +88,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `我想弄清楚：${q}`,
     opening: (n) => `${n}，我有件事要告诉你：你想听吗？`,
     whoIs: (n) => `${n}是谁？我听到过这个名字，但不知道是谁。`,
+    confirm: (b) => `我的理解是：${b}对吗？还有别的吗？`,
   },
   hi: {
     askPlan: (p, d) => `${d} के लिए योजना थी: ${p} क्या ऐसा हुआ?`,
@@ -84,6 +96,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `मुझे यह जानना है: ${q}`,
     opening: (n) => `${n}, आपके लिए कुछ है: क्या आप सुनना चाहेंगे?`,
     whoIs: (n) => `${n} कौन है? मैंने यह नाम सुना है, पर मुझे नहीं पता कि वह कौन है।`,
+    confirm: (b) => `मैंने यह समझा: ${b} क्या यह सही है, या कुछ और भी है?`,
   },
   ar: {
     askPlan: (p, d) => `كان مخططًا في ${d}: ${p} هل حدث ذلك؟`,
@@ -91,6 +104,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `أودّ أن أعرف: ${q}`,
     opening: (n) => `${n}، لديّ شيء لك: هل تريد أن تسمعه؟`,
     whoIs: (n) => `من هو ${n}؟ سمعت الاسم لكني لا أعرف من هو.`,
+    confirm: (b) => `فهمت ما يلي: ${b} هل هذا صحيح، أم هناك المزيد؟`,
   },
   bn: {
     askPlan: (p, d) => `${d}-এর জন্য পরিকল্পনা ছিল: ${p} সেটা কি হয়েছিল?`,
@@ -98,6 +112,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `আমি জানতে চাই: ${q}`,
     opening: (n) => `${n}, তোমার জন্য একটা কথা আছে: শুনতে চাও?`,
     whoIs: (n) => `${n} কে? নামটা শুনেছি, কিন্তু জানি না সে কে।`,
+    confirm: (b) => `আমি এটা বুঝেছি: ${b} এটা কি ঠিক, নাকি আরও কিছু আছে?`,
   },
   ru: {
     askPlan: (p, d) => `На ${d} было запланировано: ${p} Это состоялось?`,
@@ -105,6 +120,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Мне хотелось бы выяснить: ${q}`,
     opening: (n) => `${n}, у меня есть кое-что для тебя: хочешь послушать?`,
     whoIs: (n) => `Кто такой ${n}? Я слышал это имя, но не знаю, кто это.`,
+    confirm: (b) => `Я понял так: ${b} Это верно, или есть что-то ещё?`,
   },
   ur: {
     askPlan: (p, d) => `${d} کے لیے منصوبہ تھا: ${p} کیا ایسا ہوا؟`,
@@ -112,6 +128,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `مجھے یہ معلوم کرنا ہے: ${q}`,
     opening: (n) => `${n}، آپ کے لیے ایک بات ہے: کیا آپ سننا چاہیں گے؟`,
     whoIs: (n) => `${n} کون ہے؟ میں نے یہ نام سنا ہے، مگر نہیں جانتا کہ وہ کون ہے۔`,
+    confirm: (b) => `میں نے یہ سمجھا: ${b} کیا یہ درست ہے، یا کچھ اور بھی ہے؟`,
   },
   id: {
     askPlan: (p, d) => `Untuk ${d} sudah direncanakan: ${p} Apakah itu terlaksana?`,
@@ -119,6 +136,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Saya ingin mencari tahu: ${q}`,
     opening: (n) => `${n}, ada sesuatu untukmu: mau dengar?`,
     whoIs: (n) => `Siapa ${n}? Saya pernah mendengar namanya, tapi tidak tahu siapa dia.`,
+    confirm: (b) => `Saya memahami ini: ${b} Benar begitu, atau ada yang lain?`,
   },
   ja: {
     askPlan: (p, d) => `${d}の予定でした：${p}予定どおりになりましたか？`,
@@ -126,6 +144,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `確かめたいことがあります：${q}`,
     opening: (n) => `${n}さん、お伝えしたいことがあります。聞きますか？`,
     whoIs: (n) => `${n}さんはどなたですか？お名前は聞きましたが、どなたか分かりません。`,
+    confirm: (b) => `このように理解しています：${b}合っていますか？ほかにもありますか？`,
   },
   tr: {
     askPlan: (p, d) => `${d} için planlanmıştı: ${p} Oldu mu?`,
@@ -133,6 +152,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Öğrenmek isterim: ${q}`,
     opening: (n) => `${n}, senin için bir şey var: dinlemek ister misin?`,
     whoIs: (n) => `${n} kim? Adını duydum ama kim olduğunu bilmiyorum.`,
+    confirm: (b) => `Şunu anladım: ${b} Doğru mu, yoksa başka bir şey var mı?`,
   },
   ko: {
     askPlan: (p, d) => `${d}에 예정되어 있었습니다: ${p} 잘 진행되었나요?`,
@@ -140,6 +160,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `알아보고 싶은 것이 있습니다: ${q}`,
     opening: (n) => `${n}님, 전해 드릴 말이 있어요. 들으시겠어요?`,
     whoIs: (n) => `${n}님은 누구인가요? 이름은 들었지만 누구인지 모르겠어요.`,
+    confirm: (b) => `이렇게 이해했어요: ${b} 맞나요, 아니면 더 있나요?`,
   },
   vi: {
     askPlan: (p, d) => `Vào ${d} đã có kế hoạch: ${p} Việc đó đã diễn ra chưa?`,
@@ -147,6 +168,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Tôi muốn tìm hiểu: ${q}`,
     opening: (n) => `${n}, có điều này dành cho bạn: bạn có muốn nghe không?`,
     whoIs: (n) => `${n} là ai? Tôi đã nghe tên này nhưng không biết là ai.`,
+    confirm: (b) => `Tôi hiểu thế này: ${b} Có đúng không, hay còn gì nữa?`,
   },
   fa: {
     askPlan: (p, d) => `برای ${d} برنامه‌ریزی شده بود: ${p} انجام شد؟`,
@@ -154,6 +176,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `دوست دارم بدانم: ${q}`,
     opening: (n) => `${n}، چیزی برایت دارم: می‌خواهی بشنوی؟`,
     whoIs: (n) => `${n} کیست؟ اسمش را شنیده‌ام اما نمی‌دانم کیست.`,
+    confirm: (b) => `این را فهمیدم: ${b} درست است، یا چیز دیگری هم هست؟`,
   },
   pl: {
     askPlan: (p, d) => `Na ${d} zaplanowano: ${p} Czy do tego doszło?`,
@@ -161,6 +184,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Chcę się dowiedzieć: ${q}`,
     opening: (n) => `${n}, mam coś dla ciebie: chcesz posłuchać?`,
     whoIs: (n) => `Kim jest ${n}? Słyszałem to imię, ale nie wiem, kto to jest.`,
+    confirm: (b) => `Zrozumiałem to tak: ${b} Czy tak jest, czy jest coś jeszcze?`,
   },
   nl: {
     askPlan: (p, d) => `Voor ${d} stond gepland: ${p} Is het doorgegaan?`,
@@ -168,6 +192,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Ik zou graag willen weten: ${q}`,
     opening: (n) => `${n}, ik heb iets voor je: wil je het horen?`,
     whoIs: (n) => `Wie is ${n}? Ik heb de naam gehoord, maar weet niet wie het is.`,
+    confirm: (b) => `Ik heb dit begrepen: ${b} Klopt dat, of is er meer?`,
   },
   th: {
     askPlan: (p, d) => `มีแผนไว้สำหรับ ${d}: ${p} เกิดขึ้นหรือไม่`,
@@ -175,6 +200,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `อยากทราบว่า: ${q}`,
     opening: (n) => `${n} มีเรื่องจะบอก อยากฟังไหม`,
     whoIs: (n) => `${n} คือใคร ได้ยินชื่อนี้แต่ไม่รู้ว่าเป็นใคร`,
+    confirm: (b) => `เข้าใจว่า: ${b} ถูกต้องไหม หรือมีอะไรเพิ่มเติมอีก?`,
   },
   sw: {
     askPlan: (p, d) => `Kwa ${d} ilipangwa: ${p} Je, ilifanyika?`,
@@ -182,6 +208,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Ningependa kujua: ${q}`,
     opening: (n) => `${n}, nina jambo lako: ungependa kulisikia?`,
     whoIs: (n) => `${n} ni nani? Nimesikia jina hilo lakini sijui ni nani.`,
+    confirm: (b) => `Nimeelewa hivi: ${b} Ni sahihi, au kuna zaidi?`,
   },
   uk: {
     askPlan: (p, d) => `На ${d} було заплановано: ${p} Це відбулося?`,
@@ -189,6 +216,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Мені хотілося б з'ясувати: ${q}`,
     opening: (n) => `${n}, у мене є дещо для тебе: хочеш послухати?`,
     whoIs: (n) => `Хто такий ${n}? Я чув це ім'я, але не знаю, хто це.`,
+    confirm: (b) => `Я зрозумів так: ${b} Це правильно, чи є ще щось?`,
   },
   ro: {
     askPlan: (p, d) => `Pentru ${d} era planificat: ${p} S-a întâmplat?`,
@@ -196,6 +224,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Aș vrea să aflu: ${q}`,
     opening: (n) => `${n}, am ceva pentru tine: vrei să auzi?`,
     whoIs: (n) => `Cine este ${n}? Am auzit numele, dar nu știu cine este.`,
+    confirm: (b) => `Am înțeles asta: ${b} Așa este, sau mai e ceva?`,
   },
   el: {
     askPlan: (p, d) => `Για τις ${d} είχε προγραμματιστεί: ${p} Έγινε;`,
@@ -203,6 +232,7 @@ const TEXTS: Record<string, InitiativeText> = {
     lookup: (q) => `Θα ήθελα να μάθω: ${q}`,
     opening: (n) => `${n}, έχω κάτι για σένα: θέλεις να το ακούσεις;`,
     whoIs: (n) => `Ποιος είναι ο/η ${n}; Έχω ακούσει το όνομα, αλλά δεν ξέρω ποιος είναι.`,
+    confirm: (b) => `Κατάλαβα το εξής: ${b} Ισχύει, ή υπάρχει κάτι ακόμα;`,
   },
 };
 
