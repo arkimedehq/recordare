@@ -924,7 +924,7 @@ does, to become autonomous. Refines D53, whose "when to deliver is the host's ca
   webhook `events`; outcomes with context; `charter.v2`.
 - **Phases**: F0 literature and spec; F1 contract and the in-turn channel; F2 timing v0, the "left unfinished" source,
   questions to people, dev sets (timelines, a growing household); F3 clients (Arkimede first); F4 learning from
-  outcomes; F5 voiceprint / face and voice announce in Arkimede.
+  outcomes; F5 voiceprint / face and voice announce in Arkimede (client work); F6 timing v2, the moment's context.
 
 ## Open questions (to discuss)
 

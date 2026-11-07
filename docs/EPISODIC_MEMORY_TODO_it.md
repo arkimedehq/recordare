@@ -960,7 +960,7 @@ Specifica: `docs/INITIATIVES_DELIVERY_it.md`; ricerca: `RESEARCH_NOTES_it.md` H1
   `offered`; `events` dei webhook; esiti con contesto; `charter.v2`.
 - **Fasi**: F0 letteratura e specifica; F1 contratto e canale nel turno; F2 tempo v0, la fonte "lasciato a metà",
   domande alle persone, dev set (linee temporali, una casa che cresce); F3 client (prima Arkimede); F4 apprendimento
-  dagli esiti; F5 impronta vocale / volto e annuncio a voce in Arkimede.
+  dagli esiti; F5 impronta vocale / volto e annuncio a voce in Arkimede (lavoro del client); F6 tempo v2, il contesto del momento.
 
 ## Questioni aperte (da discutere)
 
