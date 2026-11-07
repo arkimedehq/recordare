@@ -2030,6 +2030,28 @@ a turn, the clock's live presences, "at home" never enough to speak, and the unn
 **Caveat**: written by the developer who built §5c — 17 / 17 is a regression check, not a measurement; a held-out set
 is still owed.
 
+### Timing v2 — the moment's context (D55 F6, 2026-11-07; no LLM)
+
+A fifth memory, Casa Neri (entity; Anna and Piero by their Home Assistant person; voice in three rooms), five items
+(n1–n5) and three event checks: Anna declines n1 at 09:05 and walks into another room at 10:00 (n2 must wait the pause:
+3 hours), a client says Piero is on a call from 15:00 to 15:45 while he is in the kitchen (n3 must wait, his arrival
+stays owed; n4, asked for 15:15, goes anyway), and Anna walks into the living room while a client says Piero is talking
+(n5: no opening at 18:01, the opening at 18:04, her "yes" in a turn). Same clock, one run per policy.
+
+| policy | set right | event checks | Casa Neri |
+|---|---|---|---|
+| v0 + shadow | 25 / 28 | 2 / 5 | n2 at 10:00, n3 at 15:10 (outside), n5's opening mid-conversation; the log holds "v2 would hold" on exactly n2 (cooldown), n3 (busy), n5 (conversation) |
+| v1 | 25 / 28 | 2 / 5 | as v0; Casa Verdi ignored 3 |
+| **v2** | **28 / 28** | **5 / 5** | n2 at 12:30, n3 at 15:55 (the owed arrival), n5 opened at 18:04; Casa Verdi ignored 3 (v1's learning kept) |
+
+Every case of the first 23 came out identical. Designing the set changed the design once, before any run: "two people
+heard in a place within 90 s" was to count as a conversation, but a `voice` impulse naming several people (Casa
+Bianchi b6) describes the room, not who speaks — it would have held b6's opening; a conversation is now only a client's
+`talking`. Company learnt apart is not in the set (it needs openings answered "yes" and then let go, which the replay
+cannot simulate honestly); an integration test covers it. **Caveat**: written by the developer who built v2, the gold
+encodes v2's own rules (a 3-hour pause) — a regression check and a demonstration, not a measurement; on Kinox in
+shadow first, then the switch.
+
 ### The model's hours — `initiative.v3` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
 
 `initiative.v3` adds to each worded initiative the local hours when saying it would be natural (`hours: [from, to]`, at

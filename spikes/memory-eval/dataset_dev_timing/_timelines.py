@@ -188,6 +188,54 @@ MEMORIES = [
             {"at": t(24, "19:15"), "type": "presence", "channel": "voice", "place": "Cucina", "people": [["person.sara", 0.9]], "left": True},
         ],
     },
+    {
+        # D55 F6 (2026-11-07): timing v2, the moment's context — a pause after a refusal (Anna declines one at 09:05), a busy
+        # person (a client says Piero is on a call; his arrival stays owed), a conversation in progress (a client says
+        # Piero is talking: the opening waits for a pause), and a time he chose that goes anyway.
+        "id": "casa_neri", "name": "Casa Neri", "mode": "entity",
+        "channels": [{"kind": "chat", "reach": "always"}, {"kind": "voice", "reach": "presence"}],
+        "people": [{"name": "Anna", "ha": "person.anna"}, {"name": "Piero", "ha": "person.piero"}],
+        "messages": [],
+        "items": [
+            {"id": "n1", "content": "sistemare il garage", "for": "Anna", "due": t(19, "08:00"), "until": t(19, "21:30"),
+             "gold": {"windows": [[t(19, "09:00"), t(19, "09:15")]], "via": ["presence"], "channel": "voice"},
+             "why": "Anna walks into the kitchen at 09:00: said at her arrival (she declines it at 09:05)"},
+            {"id": "n2", "content": "stirare le camicie", "for": "Anna", "due": t(19, "09:30"), "until": t(19, "21:30"),
+             "gold": {"windows": [[t(19, "12:05"), t(19, "21:30")]], "via": ["presence"], "channel": "voice"},
+             "why": "she just declined something: not at her arrival in the bathroom at 10:00 (within three hours), said at "
+                    "her arrival in the living room at 12:30"},
+            {"id": "n3", "content": "riparare la bici", "for": "Piero", "due": t(20, "15:00"), "until": t(20, "21:30"),
+             "gold": {"windows": [[t(20, "15:45"), t(20, "16:10")]], "via": ["presence"], "channel": "voice"},
+             "why": "a client says Piero is on a call from 15:00 to 15:45: not at his arrival in the kitchen at 15:10; his "
+                    "arrival stays owed, so the next impulse there at 15:55 (the call over) brings it"},
+            {"id": "n4", "content": "chiamare la mamma", "for": "Piero", "due": t(20, "15:15"), "until": t(21, "15:15"), "timed": True,
+             "gold": {"windows": [[t(20, "15:15"), t(20, "15:30")]], "channel": "voice"},
+             "why": "asked for 15:15 while he is busy in the kitchen: a time he chose goes anyway, by the kitchen's voice"},
+            {"id": "n5", "content": "prenotare il dentista", "for": "Anna", "due": t(21, "17:00"), "until": t(21, "21:30"),
+             "gold": {"windows": [[t(21, "18:04"), t(21, "18:20")]], "via": ["turn"], "channel": "turn", "opened": [t(21, "18:03"), t(21, "18:05")]},
+             "why": "she walks into the living room at 18:01 while Piero is talking: no opening in the middle of it; at 18:04, "
+                    "nobody talking, the opening; her \"yes\" in the next turn gets it"},
+        ],
+        "plans": [],
+        "events": [
+            {"at": t(19, "09:00"), "type": "presence", "channel": "voice", "place": "Cucina", "people": [["person.anna", 0.9]]},
+            {"at": t(19, "09:05"), "type": "outcome", "content": "sistemare il garage", "status": "declined"},
+            {"at": t(19, "09:10"), "type": "presence", "channel": "voice", "place": "Cucina", "people": [["person.anna", 0.9]], "left": True},
+            {"at": t(19, "10:00"), "type": "presence", "channel": "voice", "place": "Bagno", "people": [["person.anna", 0.9]], "ttl": 600},
+            {"at": t(19, "12:30"), "type": "presence", "channel": "voice", "place": "Soggiorno", "people": [["person.anna", 0.9]]},
+            {"at": t(20, "15:00"), "type": "presence", "channel": "home", "people": [["person.piero", 1.0]], "busy": True, "ttl": 3600},
+            {"at": t(20, "15:10"), "type": "presence", "channel": "voice", "place": "Cucina", "people": [["person.piero", 0.9]], "ttl": 3600,
+             "expect": {"initiative": False}},
+            {"at": t(20, "15:45"), "type": "presence", "channel": "home", "people": [["person.piero", 1.0]], "busy": False, "ttl": 3600},
+            {"at": t(20, "15:55"), "type": "presence", "channel": "voice", "place": "Cucina", "people": [["person.piero", 0.9]], "ttl": 3600},
+            {"at": t(21, "18:00"), "type": "presence", "channel": "voice", "place": "Soggiorno", "people": [["person.piero", 0.9]], "talking": True},
+            {"at": t(21, "18:01"), "type": "presence", "channel": "voice", "place": "Soggiorno", "people": [["person.anna", 0.9], ["person.piero", 0.9]],
+             "expect": {"initiative": False, "opening": False}},
+            {"at": t(21, "18:04"), "type": "presence", "channel": "camera", "place": "Soggiorno", "people": [["person.anna", 0.9], ["person.piero", 0.9]],
+             "expect": {"initiative": False, "opening": True}},
+            {"at": t(21, "18:05"), "type": "turn", "conversation": "soggiorno-neri", "author": "Anna", "text": "Sì, dimmi pure."},
+        ],
+    },
 ]
 
 START = t(19, "06:00")

@@ -18,6 +18,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   question (a question about someone, a gap, a confirmation) at a time and at most one a day for each person; a guess
   the patterns pass rewrites every night is as old as its first version; never a note learnt from an answer to the
   memory's own question, a private one, or a version of a note already asked about. Migration `IntentConfirm` (intent kind `confirm`).
+- **Timing v2: the moment's context** (D55 F6, `INITIATIVE_TIMING=v2`, v1 included). After a declined initiative or a
+  negative reaction nothing flexible for that person for 3 hours, after one ignored soon after it was given for 1 hour;
+  a presence impulse may say `busy` (a call, a meeting, do-not-disturb: nothing flexible on any channel until it ends) and
+  `talking` (people in the place are talking: the opening waits for a pause); an arrival held for a busy person or a
+  conversation stays owed; what was given with others is learnt apart from alone. A time the person chose goes anyway;
+  every hold is logged with its reason, and `INITIATIVE_TIMING_SHADOW` logs v2's holds beside v0. New knobs
+  `INITIATIVE_COOLDOWN_DECLINED_MINUTES`, `INITIATIVE_COOLDOWN_IGNORED_MINUTES`, `INITIATIVE_CONVERSATION_GAP_SECONDS`;
+  client library `PresenceImpulse.busy` / `talking`. Migration `PresenceMoment`. Dev set `dataset_dev_timing` with Casa
+  Neri: v2 28 / 28, v1 and v0 25 / 28.
 
 ### Changed
 - Whom a question about a person goes to counts the episodes that only name them too, not just those about them.

@@ -70,7 +70,15 @@ Choosing the moment is the core of the work, learned in steps (H14):
   the same call that words the initiative today (`initiative` task); in economy, windows by kind from rules.
 - **v1** — learning from outcomes per person × channel × time of day × time since the event: a simple bandit over time
   slots, its prior from v0.
-- **v2** — the moment's context (busy, talking with others, just declined something).
+- **v2** — the moment's context (busy, talking with others, just declined something) — **built 2026-11-07**
+  (`INITIATIVE_TIMING=v2`, v1 included): after a declined initiative or a negative reaction nothing flexible for that
+  person for 3 hours, after one ignored soon after it was given for 1 hour (in a room, a turn and the clock); a client's
+  `busy` on a presence holds what is flexible on every channel (not in a turn: they are talking to the agent); a client's
+  `talking` in a place holds the opening for 90 seconds (several people named on a voice impulse describe the room, not a
+  conversation); an arrival held for a busy person or a conversation stays owed (the next impulse there is still the
+  arrival); v1's outcomes given with others (after an opening) are learnt apart from alone, and where they are usually
+  let go the opening waits for the person alone. A time the person chose goes anyway; every hold logged with its reason
+  (`features.moment`; in shadow beside v0).
 - Measured on a dev set of **timelines** (events, presences, turns) with gold acceptable windows and a penalty for
   needless interruptions; observed on Kinox.
 
@@ -337,7 +345,7 @@ Path facts verified 2026-11-04 (connector code, OpenClaw 2026.10.10, hermes-agen
 | **F3** | clients: Arkimede first (receiver, chat + notification, Telegram opt-in, impulses from Voce), then OpenClaw and Hermes — **in progress**: the client library's `InitiativeInbox` (0.8.0: webhooks, presence, the feed, once each, outcomes reported); the Claude Code / Codex hook asks for look-ups (0.8.0); Arkimede (2026-11-05, Arkimede 0.6.0): webhook receiver + feed through `InitiativeInbox`, delivery in a dedicated chat with a notification, a presence impulse when the user opens the app, a reminder already scheduled reported `done`, connection and webhook secret from its settings. F3a built 2026-11-05 (Recordare: ordered `channels`, `for.addresses`, presence by place, the clock reading live presences, voice pace, the opening, addresses in the console). F3b built 2026-11-05 (client library: `channels`, `for.addresses`, `addressesOn`, the channel used returned by `deliver`, the opening to `open`; released in 0.9.0 on 2026-11-06). F3c built 2026-11-05 (Arkimede: messaging through a skill's `user-channel`, run with no model, the address in the script's `_config`; `telegram-bot` 1.3.0 — the linked user, a contact who started the bot — and `telegram-account` 1.1.0 — any contact, as the owner's own account; the reply of a contact without an Arkimede account does not come back yet). F3d built 2026-11-06 (Arkimede: one `telegram` skill, a contact's reply back to the memory with its speaker, words only unless authorized, deduplication with the host's task as the source of truth — §8). Still owed: push for OpenClaw and Hermes | clients |
 | **F4** | timing v1: learning from outcomes; measured on the dev set and on Kinox — **built 2026-11-06** (`INITIATIVE_TIMING=v1`: each person's accepted / rejected outcomes per part of the day and channel hold a flexible initiative back where it is ignored and prefer a channel clearly better; a chosen time, quiet hours, identity and §5c untouched; dev set Casa Verdi: ignored 6 → 3 with v0's other 17 cases unchanged; on Kinox in shadow first) | Recordare |
 | **F5** | voiceprint and face in Arkimede (Home Assistant, camera), presence from Home Assistant (three levels), voice points, announce and listen at every presence, the opening when others are present, the duck with Arkimede as its bridge (§5c) — client work, not Recordare's: Recordare only receives presences, voice points and outcomes through the contract — **F5a built 2026-11-06** in Arkimede (Home Assistant native: presence at home and per room, voice points, the voice channel, a satellite turn as a presence; §8); still owed in Arkimede: voiceprint and face, the duck (F5b) | Arkimede |
-| **F6** | timing v2: the moment's context (busy, talking with others, just declined something), from generic signals any client may send; measured on the dev set and on Kinox | Recordare |
+| **F6** | timing v2: the moment's context (busy, talking with others, just declined something), from generic signals any client may send; measured on the dev set and on Kinox — **built 2026-11-07** (§4; dev set Casa Neri: v2 28 / 28 with 5 / 5 event checks, v1 and v0 25 / 28; on Kinox in shadow first) | Recordare |
 
 Cost (D35): economy — rules for windows and channels, no LLM; balanced — the model's window in the existing
 `initiative` call; full — the same with reasoning. Learning from outcomes costs no LLM call.

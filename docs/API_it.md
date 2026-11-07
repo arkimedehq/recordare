@@ -661,7 +661,9 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 ## 4b. Iniziative — ciò che l'agente dice o fa da sé (D53, WORK_PLAN 8.12c) — prima versione costruita il 2026-11-01
 > **D55 — la consegna la decide Recordare** (F1 costruita il 2026-11-04; `INITIATIVES_DELIVERY_it.md`). Additivo:
 > - **Impulso di presenza** `POST api/v1/presence {person?: {identity}, channel: voice | camera | panel | chat,
->   confidence? (0–1, default 1), ttlSeconds? (default 120), place?, left?}` (scope `ingest`, l'header dell'utente;
+>   confidence? (0–1, default 1), ttlSeconds? (default 120), place?, left?, busy?, talking?}` (tempo v2, F6: `busy` — la
+>   persona è occupata, una chiamata, una riunione, non disturbare: niente di flessibile su nessun canale finché la presenza
+>   finisce o `busy: false`; `talking` — nel luogo si sta parlando adesso: un'apertura aspetta una pausa) (scope `ingest`, l'header dell'utente;
 >   `X-Recordare-Now` con `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: la persona risolta in questa memoria
 >   (un'identità come nell'ingest; nessuna: il titolare di una memoria personale; un'identità sconosciuta non crea nessuno),
 >   l'unica iniziativa da consegnare adesso (segnata `offered`, `channel` voice / panel / chat — riportarne poi l'esito),

@@ -122,7 +122,8 @@ Passa `seen` / `cursors` per tenerli nel tuo archivio tra un riavvio e l'altro.
 Canali e stanze (D55 §5b–§5c): `initiative.channels` elenca i canali accettabili in ordine — consegna sul primo che
 raggiunge la persona adesso e restituisci `{outcome, channel}` così il canale viene riportato; `addressesOn(i, 'telegram')`
 dà gli id della persona su un canale (`for.addresses`, collegati dalla console). Manda la presenza per luogo —
-`presence(user, {channel: 'voice', place, people: [{identity, confidence}], someone})`, `home` per "in casa" — e dai
+`presence(user, {channel: 'voice', place, people: [{identity, confidence}], someone})`, `home` per "in casa"; `busy: true` finché
+sai che la persona è occupata (una chiamata, non disturbare; `busy: false` quando finisce), `talking: true` finché lì si parla — e dai
 `open(user, i, opening)`: con altri nella stanza si dice solo l'apertura, l'iniziativa resta in attesa, e il "sì" della
 persona è il suo turno successivo (il contesto di memoria allora la porta).
 ```ts

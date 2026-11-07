@@ -674,7 +674,9 @@ after a presence impulse, closed by what happens next); `initiatives` gain `timi
 (`{reaction, latencyMs}`); `intents.timed boolean` (a time was asked for); `clients.channels jsonb` (`[{kind: chat |
 messaging | voice, reach: always | presence}]`); `client_webhooks.events text[] null` (null: all);
 `presences(id, memory_id, person_id null (not identified), client_id null, channel (voice|camera|panel|chat), confidence
-real, place null, seen_at, expires_at)` — who the agent saw or heard, by what, how sure, until when; never a voice or a face.
+real, place null, seen_at, expires_at, busy bool, talking bool, arrival_held bool)` — who the agent saw or heard, by what, how sure, until when; never a voice or a face.
+Timing v2 (F6, migration `PresenceMoment1791320000000`): `busy` and `talking` as the client said them; `arrival_held` — an arrival whose
+spontaneous moment was held for a busy person or a conversation (the next impulse in that place still counts as the arrival).
 **Timing v0** (F2a, migration `InitiativeTiming1791270000000`): `initiatives.pushed_at` (pushed as `initiative.deliver`),
 `preferred_from` / `preferred_to smallint null` (the local hours that suit it; null: the kind's default);
 `initiative_decisions(id bigserial, memory_id, initiative_id → initiatives (CASCADE), trigger (clock|presence|turn), at,

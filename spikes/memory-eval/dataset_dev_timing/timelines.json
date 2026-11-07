@@ -1117,6 +1117,310 @@
      "left": true
     }
    ]
+  },
+  {
+   "id": "casa_neri",
+   "name": "Casa Neri",
+   "mode": "entity",
+   "channels": [
+    {
+     "kind": "chat",
+     "reach": "always"
+    },
+    {
+     "kind": "voice",
+     "reach": "presence"
+    }
+   ],
+   "people": [
+    {
+     "name": "Anna",
+     "ha": "person.anna"
+    },
+    {
+     "name": "Piero",
+     "ha": "person.piero"
+    }
+   ],
+   "messages": [],
+   "items": [
+    {
+     "id": "n1",
+     "content": "sistemare il garage",
+     "for": "Anna",
+     "due": "2026-10-19T08:00:00+02:00",
+     "until": "2026-10-19T21:30:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T09:00:00+02:00",
+        "2026-10-19T09:15:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "Anna walks into the kitchen at 09:00: said at her arrival (she declines it at 09:05)"
+    },
+    {
+     "id": "n2",
+     "content": "stirare le camicie",
+     "for": "Anna",
+     "due": "2026-10-19T09:30:00+02:00",
+     "until": "2026-10-19T21:30:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T12:05:00+02:00",
+        "2026-10-19T21:30:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "she just declined something: not at her arrival in the bathroom at 10:00 (within three hours), said at her arrival in the living room at 12:30"
+    },
+    {
+     "id": "n3",
+     "content": "riparare la bici",
+     "for": "Piero",
+     "due": "2026-10-20T15:00:00+02:00",
+     "until": "2026-10-20T21:30:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T15:45:00+02:00",
+        "2026-10-20T16:10:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "a client says Piero is on a call from 15:00 to 15:45: not at his arrival in the kitchen at 15:10; his arrival stays owed, so the next impulse there at 15:55 (the call over) brings it"
+    },
+    {
+     "id": "n4",
+     "content": "chiamare la mamma",
+     "for": "Piero",
+     "due": "2026-10-20T15:15:00+02:00",
+     "until": "2026-10-21T15:15:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T15:15:00+02:00",
+        "2026-10-20T15:30:00+02:00"
+       ]
+      ],
+      "channel": "voice"
+     },
+     "why": "asked for 15:15 while he is busy in the kitchen: a time he chose goes anyway, by the kitchen's voice"
+    },
+    {
+     "id": "n5",
+     "content": "prenotare il dentista",
+     "for": "Anna",
+     "due": "2026-10-21T17:00:00+02:00",
+     "until": "2026-10-21T21:30:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T18:04:00+02:00",
+        "2026-10-21T18:20:00+02:00"
+       ]
+      ],
+      "via": [
+       "turn"
+      ],
+      "channel": "turn",
+      "opened": [
+       "2026-10-21T18:03:00+02:00",
+       "2026-10-21T18:05:00+02:00"
+      ]
+     },
+     "why": "she walks into the living room at 18:01 while Piero is talking: no opening in the middle of it; at 18:04, nobody talking, the opening; her \"yes\" in the next turn gets it"
+    }
+   ],
+   "plans": [],
+   "events": [
+    {
+     "at": "2026-10-19T09:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.anna",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-19T09:05:00+02:00",
+     "type": "outcome",
+     "content": "sistemare il garage",
+     "status": "declined"
+    },
+    {
+     "at": "2026-10-19T09:10:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.anna",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-19T10:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Bagno",
+     "people": [
+      [
+       "person.anna",
+       0.9
+      ]
+     ],
+     "ttl": 600
+    },
+    {
+     "at": "2026-10-19T12:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.anna",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T15:00:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.piero",
+       1.0
+      ]
+     ],
+     "busy": true,
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-20T15:10:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.piero",
+       0.9
+      ]
+     ],
+     "ttl": 3600,
+     "expect": {
+      "initiative": false
+     }
+    },
+    {
+     "at": "2026-10-20T15:45:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.piero",
+       1.0
+      ]
+     ],
+     "busy": false,
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-20T15:55:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.piero",
+       0.9
+      ]
+     ],
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-21T18:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.piero",
+       0.9
+      ]
+     ],
+     "talking": true
+    },
+    {
+     "at": "2026-10-21T18:01:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.anna",
+       0.9
+      ],
+      [
+       "person.piero",
+       0.9
+      ]
+     ],
+     "expect": {
+      "initiative": false,
+      "opening": false
+     }
+    },
+    {
+     "at": "2026-10-21T18:04:00+02:00",
+     "type": "presence",
+     "channel": "camera",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.anna",
+       0.9
+      ],
+      [
+       "person.piero",
+       0.9
+      ]
+     ],
+     "expect": {
+      "initiative": false,
+      "opening": true
+     }
+    },
+    {
+     "at": "2026-10-21T18:05:00+02:00",
+     "type": "turn",
+     "conversation": "soggiorno-neri",
+     "author": "Anna",
+     "text": "Sì, dimmi pure."
+    }
+   ]
   }
  ]
 }

@@ -192,6 +192,24 @@ export function decideMoment(m: MomentInput): { p: number; threshold: number; de
   return { p, threshold, deliver: false, reason: fits ? 'low' : 'off_hours' };
 }
 
+/** The timing policies (D55): which of them learn from outcomes (F4) and which weigh the moment's context (F6). */
+export type TimingPolicy = 'v0' | 'v1' | 'v2' | 'due';
+export function timingPolicy(config: ConfigService<Env, true>): { policy: TimingPolicy; learns: boolean; learn: boolean; context: boolean; v2: boolean } {
+  const policy = (config.get('INITIATIVE_TIMING', { infer: true }) ?? 'v0') as TimingPolicy;
+  const shadow = policy === 'v0' && !!config.get('INITIATIVE_TIMING_SHADOW', { infer: true });
+  const v2 = policy === 'v2';
+  const learns = policy === 'v1' || v2;
+  // learn / context: worked out — applied by the policy, only logged beside v0 in shadow.
+  return { policy, learns, learn: learns || shadow, context: v2 || shadow, v2 };
+}
+
+/**
+ * Timing v2 (F6): why the moment's context holds a flexible initiative back — the person just declined or ignored one
+ * (`cooldown`), is busy (`busy`, a client said so), is in a conversation with others (`conversation`), or has often not
+ * taken one in company (`learnt_company`). Never a time the person chose: a timed request or promise goes anyway.
+ */
+export type MomentHold = 'cooldown' | 'busy' | 'conversation' | 'learnt_company';
+
 @Injectable()
 export class InitiativeService {
   private readonly log = new Logger(InitiativeService.name);
@@ -585,15 +603,15 @@ export class InitiativeService {
    * "yes" in the next turn gets it).
    */
   async offer(memoryId: string, who: Recipient, channel: DeliveryChannel, now: Date,
-    opts: { lookups?: boolean; timedOwedOnly?: boolean; open?: boolean; features?: Record<string, unknown> } = {}):
-    Promise<{ initiative: InitiativeView | null; askWho: { personId: string; name: string } | null; opened: boolean }> {
+    opts: { lookups?: boolean; timedOwedOnly?: boolean; open?: boolean; features?: Record<string, unknown>; moment?: MomentHold | null } = {}):
+    Promise<{ initiative: InitiativeView | null; askWho: { personId: string; name: string } | null; opened: boolean; held?: MomentHold }> {
     const [memory]: Array<{ mode: string }> = await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
     if (!memory) return { initiative: null, askWho: null, opened: false };
     const entity = memory.mode === 'entity';
     const self = who.personId === memoryId;
     const contact = who.personId && !self ? who.personId : null;
-    const [hit]: Array<{ id: string }> = await this.db.query(
-      `SELECT i.id FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
+    const [hit]: Array<{ id: string; for_person_id: string | null; timing: string; intent_kind: string | null }> = await this.db.query(
+      `SELECT i.id, i.for_person_id, i.timing, t.kind::text AS intent_kind FROM initiatives i LEFT JOIN intents t ON t.id = i.intent_id
        WHERE i.memory_id = $1 AND i.status = 'pending' AND i.due_at <= $2 AND i.expires_at > $2
          AND (t.id IS NULL OR t.status = 'fired')
          AND (i.kind <> 'lookup' OR $3)
@@ -611,13 +629,25 @@ export class InitiativeService {
        ORDER BY (t.kind IN ('request', 'promise')) DESC NULLS LAST, (i.timing = 'timed') DESC, i.worth DESC NULLS LAST, i.due_at LIMIT 1`,
       [memoryId, now, !!opts.lookups, contact, who.confidence, entity, IDENTITY_THRESHOLD.medium, IDENTITY_THRESHOLD.high, self, who.conversationId ?? null,
         !!opts.timedOwedOnly, channel === 'voice' ? 'voice' : null]);
+    // Timing v2 (F6): the moment's context — what the caller saw (a conversation, company), else a pause after a refusal
+    // or (not in a turn: they are talking to the agent) a busy person; held with v2, only logged beside v0 in shadow. A
+    // time the person chose goes anyway.
+    const t = timingPolicy(this.config);
+    const chosen = hit && hit.timing === 'timed' && (hit.intent_kind === 'request' || hit.intent_kind === 'promise');
+    const moment = hit && t.context && !chosen ? opts.moment ?? (await this.momentHold(memoryId, hit.for_person_id, entity, now, { busy: channel !== 'turn' })) : null;
+    const features = { ...opts.features, ...(moment ? { moment } : {}) };
+    if (hit && moment && t.v2) {
+      await this.logDecision(memoryId, hit.id, channel === 'turn' ? 'turn' : 'presence', now, 0, 0, false,
+        { channel, confidence: who.confidence, reason: moment, ...features });
+      return { initiative: null, askWho: null, opened: false, held: moment };
+    }
     if (hit && opts.open) {
       // Others in the room: only the opening is said; the initiative stays pending for a "yes" in the next turn.
       const rows = updated<Row>(await this.db.query(
         `UPDATE initiatives i SET opened_at = $3, updated_at = now() WHERE i.memory_id = $1 AND i.id = $2 AND i.status = 'pending' RETURNING ${COLUMNS}`,
         [memoryId, hit.id, now]));
       if (rows[0]) {
-        await this.logDecision(memoryId, rows[0].id, 'presence', now, 1, 0, false, { channel, confidence: who.confidence, reason: 'opening', ...opts.features });
+        await this.logDecision(memoryId, rows[0].id, 'presence', now, 1, 0, false, { channel, confidence: who.confidence, reason: 'opening', ...features });
         return { initiative: view(rows[0]), askWho: null, opened: true };
       }
     }
@@ -631,7 +661,7 @@ export class InitiativeService {
         const v = view(r);
         // The person is there (a turn, a presence): v0 takes the moment; logged like the clock's decisions (F4 learns from all).
         await this.logDecision(memoryId, v.id, channel === 'turn' ? 'turn' : 'presence', now, 1, 0, true,
-          { channel, confidence: who.confidence, reason: 'present', ...opts.features });
+          { channel, confidence: who.confidence, reason: 'present', ...features });
         this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: v.id, status: 'offered' });
         await this.webhooks.notify(memoryId, 'initiative.updated', v, v.id);
         return { initiative: v, askWho: null, opened: false };
@@ -688,7 +718,7 @@ export class InitiativeService {
     const [memory]: Array<{ timezone: string; quiet_from: number; quiet_to: number; mode: string }> = await this.db.query(
       `SELECT timezone, quiet_from, quiet_to, mode FROM memories WHERE person_id = $1`, [memoryId]);
     if (!memory) return;
-    const policy = this.config.get('INITIATIVE_TIMING', { infer: true }) ?? 'v0';
+    const { policy, learns, learn, context, v2 } = timingPolicy(this.config);
     const entity = memory.mode === 'entity';
     const listed: Array<{ id: string; kind: InitiativeKind; timing: 'timed' | 'flexible'; worth: number | null; due_at: Date; expires_at: Date;
       for_person_id: string | null; channel: string | null; channels: string[]; preferred_from: number | null; preferred_to: number | null;
@@ -717,8 +747,7 @@ export class InitiativeService {
     // The window ends for the clock where the quiet hours begin: a last chance at 22:30 would be no chance (dev_timing g5).
     const quietStart = quiet ? now : nextLocalHour(now, memory.timezone, memory.quiet_from);
     const localHour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: memory.timezone }).format(now)) % 24;
-    // Timing v1 (F4): each person's outcomes — applied with `v1`, only logged beside v0 in shadow.
-    const learn = policy === 'v1' || (policy === 'v0' && this.config.get('INITIATIVE_TIMING_SHADOW', { infer: true }));
+    // Timing v1 (F4): each person's outcomes — applied with `v1` / `v2`, only logged beside v0 in shadow.
     const part = dayPart(localHour);
     const experiences = new Map<string, Experience>();
     const always = declared.filter((d) => d.reach === 'always').map((d) => d.kind);
@@ -735,7 +764,7 @@ export class InitiativeService {
       let learnt: { fit: number; channel: string; outcomes: number } | null = null;
       if (learn && c.timing === 'flexible') {
         const key = c.for_person_id ?? '';
-        const exp = experiences.get(key) ?? await this.experienceOf(memoryId, c.for_person_id, memory.timezone, now);
+        const exp = experiences.get(key) ?? await this.experienceOf(memoryId, c.for_person_id, memory.timezone, now, { company: v2 });
         experiences.set(key, exp);
         const [from, to] = preferred;
         const fits = from <= to ? localHour >= from && localHour < to : localHour >= from || localHour < to;
@@ -749,13 +778,17 @@ export class InitiativeService {
         learnt = { fit: a.estimate, channel, outcomes: a.outcomes };
       }
       const v1 = learnt && policy !== 'due' ? decideMoment({ ...input, fit: learnt.fit }) : null;
-      const d = policy === 'due' ? { p: 1, threshold: 0, deliver: true, reason: 'due' } : policy === 'v1' && v1 ? v1 : decideMoment(input);
-      const channelNow = policy === 'v1' && learnt ? learnt.channel : c.channel;
+      const d = policy === 'due' ? { p: 1, threshold: 0, deliver: true, reason: 'due' } : learns && v1 ? v1 : decideMoment(input);
+      const channelNow = learns && learnt ? learnt.channel : c.channel;
       // Quiet hours hold everything but a time the person chose themselves (a timed request or promise).
-      const held = quiet && !(c.timing === 'timed' && input.owed);
-      const deliver = d.deliver && !held;
+      const chosen = c.timing === 'timed' && input.owed;
+      const held = quiet && !chosen;
+      // Timing v2 (F6): a pause after a refusal, a busy person — held with v2, only logged beside v0 in shadow.
+      const moment = context && !chosen && d.deliver && !held ? await this.momentHold(memoryId, c.for_person_id, entity, now) : null;
+      const deliver = d.deliver && !held && !(v2 && moment);
       await this.logDecision(memoryId, c.id, 'clock', now, d.p, d.threshold, deliver,
-        { reason: held && d.deliver ? 'quiet_hours' : d.reason, channel: channelNow, localHour, deliveredToday: n, timing: c.timing, kind: c.kind, policy,
+        { reason: held && d.deliver ? 'quiet_hours' : v2 && moment ? moment : d.reason, channel: channelNow, localHour, deliveredToday: n, timing: c.timing, kind: c.kind, policy,
+          ...(moment ? { moment } : {}),
           ...(learnt ? { learnt: { fit: learnt.fit, outcomes: learnt.outcomes, channel: learnt.channel } } : {}),
           ...(policy === 'v0' && v1 && learnt ? { shadow: { policy: 'v1', p: v1.p, deliver: v1.deliver && !held, channel: learnt.channel } } : {}) });
       if (!deliver) continue;
@@ -775,13 +808,38 @@ export class InitiativeService {
    * A person's outcomes of the last weeks (F4): accepted (said, asked, done) or rejected (ignored, declined), by part of
    * their day and the channel they reached them on. `personId` null: the initiatives for nobody in particular.
    */
-  async experienceOf(memoryId: string, personId: string | null, timezone: string, now: Date): Promise<Experience> {
-    const rows: Array<{ status: string; hour: number; channel: string | null }> = await this.db.query(
-      `SELECT status::text, extract(hour FROM (offered_at AT TIME ZONE $3))::int AS hour, COALESCE(outcome_channel, channel) AS channel
+  async experienceOf(memoryId: string, personId: string | null, timezone: string, now: Date, opts: { company?: boolean } = {}): Promise<Experience> {
+    const rows: Array<{ status: string; hour: number; channel: string | null; others: boolean }> = await this.db.query(
+      `SELECT status::text, extract(hour FROM (offered_at AT TIME ZONE $3))::int AS hour, COALESCE(outcome_channel, channel) AS channel,
+         opened_at IS NOT NULL AS others
        FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2 AND offered_at IS NOT NULL
          AND offered_at > $4::timestamptz - make_interval(days => $5) AND status::text = ANY($6)`,
       [memoryId, personId, timezone, now, LEARNING.windowDays, [...ACCEPTED, ...REJECTED]]);
-    return experience(rows.map((r) => ({ status: r.status, localHour: r.hour, channel: r.channel })));
+    return experience(rows.map((r) => ({ status: r.status, localHour: r.hour, channel: r.channel, others: r.others })), opts);
+  }
+
+  /**
+   * Timing v2 (F6): whether the moment's context holds a flexible initiative for this person back (`forPersonId` as on an
+   * initiative: null is the holder of a personal memory, nobody in particular in an entity memory). A pause after a
+   * refusal: a declined one or a negative reaction within `INITIATIVE_COOLDOWN_DECLINED_MINUTES`, one given and ignored
+   * within `INITIATIVE_COOLDOWN_IGNORED_MINUTES` (an ignore settled long after it was given — its window lapsed — is not
+   * "just"). Busy: a live presence of theirs a client marked busy (`busy: false` lets the caller skip it — it saw the
+   * presence itself).
+   */
+  async momentHold(memoryId: string, forPersonId: string | null, entity: boolean, now: Date, opts: { busy?: boolean } = {}): Promise<MomentHold | null> {
+    const declined = this.config.get('INITIATIVE_COOLDOWN_DECLINED_MINUTES', { infer: true }) ?? 180;
+    const ignored = this.config.get('INITIATIVE_COOLDOWN_IGNORED_MINUTES', { infer: true }) ?? 60;
+    const [cool] = await this.db.query(
+      `SELECT 1 FROM initiatives WHERE memory_id = $1 AND for_person_id IS NOT DISTINCT FROM $2 AND outcome_at IS NOT NULL AND outcome_at <= $3
+         AND (((status = 'declined' OR outcome_context->>'reaction' = 'negative') AND outcome_at > $3::timestamptz - make_interval(mins => $4))
+           OR (status = 'ignored' AND outcome_at > $3::timestamptz - make_interval(mins => $5) AND offered_at > $3::timestamptz - make_interval(mins => $5 * 2)))
+       LIMIT 1`, [memoryId, forPersonId, now, declined, ignored]);
+    if (cool) return 'cooldown';
+    const person = forPersonId ?? (entity ? null : memoryId);
+    if (opts.busy === false || !person) return null;
+    const [busy] = await this.db.query(
+      `SELECT 1 FROM presences WHERE memory_id = $1 AND person_id = $2 AND busy AND seen_at <= $3 AND expires_at > $3 LIMIT 1`, [memoryId, person, now]);
+    return busy ? 'busy' : null;
   }
 
   private async logDecision(memoryId: string, initiativeId: string, trigger: 'clock' | 'presence' | 'turn', at: Date, p: number, threshold: number,

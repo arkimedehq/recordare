@@ -371,6 +371,13 @@ export interface PresenceImpulse {
   place?: string;
   /** The person left. */
   left?: boolean;
+  /**
+   * The person(s) of this impulse are busy now — a call, a meeting, do-not-disturb (timing v2): nothing flexible reaches
+   * them on any channel until the presence ends or an impulse says `busy: false`; a time they chose still goes.
+   */
+  busy?: boolean;
+  /** People in the place are talking now (timing v2): an opening when others are present waits for a pause. */
+  talking?: boolean;
 }
 
 /** What Recordare answers to a presence impulse: who it is, what to tell or ask them now (offered), or whom to ask about. */

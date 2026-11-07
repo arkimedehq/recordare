@@ -223,7 +223,8 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > canale nel turno non fa altro — il contesto di memoria che già chiedi prima di ogni turno (§4) porta l'iniziativa dovuta
 > per chi sta parlando (manda `initiatives: {lookups: true}` quando il tuo agente ha strumenti); (c) manda un **impulso di
 > presenza** quando riconosce qualcuno (`client.presence(user, {channel, person?, confidence})` — il punteggio del tuo
-> modello di impronta vocale o di volto; un account vale 1) e dice l'`initiative` che riceve, o chiede "sei tu?" per
+> modello di impronta vocale o di volto; un account vale 1; aggiungi `busy: true` finché sai che la persona è occupata — una
+> chiamata, una riunione, non disturbare — e `talking: true` finché nel luogo si sta parlando, se lo sai capire) e dice l'`initiative` che riceve, o chiede "sei tu?" per
 > `askWho`; (d) riporta gli esiti con `channel` e `reaction`; (e) consegna sull'evento webhook `initiative.deliver` (Recordare ha
 > scelto il momento; consegna su `data.channel`), prende gli altri eventi come informazione, e riconosce da `source` un
 > promemoria programmato da sé. L'`InitiativeInbox` della libreria fa (c)–(e) in un pezzo solo: scrivi solo come ne consegni

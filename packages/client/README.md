@@ -120,7 +120,8 @@ Pass `seen` / `cursors` to keep them in your own store across restarts.
 Channels and rooms (D55 §5b–§5c): `initiative.channels` lists the acceptable channels in order — deliver on the first
 that reaches the person now and return `{outcome, channel}` so the channel is reported; `addressesOn(i, 'telegram')`
 gives the person's ids on a channel (`for.addresses`, bound in the console). Send presence by place —
-`presence(user, {channel: 'voice', place, people: [{identity, confidence}], someone})`, `home` for "at home" — and give
+`presence(user, {channel: 'voice', place, people: [{identity, confidence}], someone})`, `home` for "at home"; `busy: true` while you
+know the person is occupied (a call, do-not-disturb; `busy: false` when it ends), `talking: true` while people there talk — and give
 `open(user, i, opening)`: with others in the room only the opening is said, the initiative stays pending, and the
 person's "yes" is their next turn (the memory context then carries it).
 ```ts
