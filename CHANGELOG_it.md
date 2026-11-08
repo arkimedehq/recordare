@@ -33,6 +33,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 - A chi va una domanda su una persona conta anche gli episodi che la nominano soltanto, non solo quelli su di lei.
 
 ### Corretto
+- **Anche una giornata densa ha il suo diario.** Il riassunto di un giorno era tagliato a 600 token: una giornata piena di
+  dettagli concreti, in italiano, li superava, la riparazione veniva tagliata di nuovo e il giorno era ritentato, e falliva,
+  ogni notte (trovato su Kinox). Ora il riassunto del giorno ha 1200 token, come quello del mese; un riassunto saltato
+  scrive nel log il motivo, non solo il nome dell'errore.
 - **Un promemoria spostato si dice all'ora nuova, e uno chiesto di nuovo non si dice due volte** (`extract.v24` /
   `entity.v12`; trovato su Kinox). L'estrazione ora vede i promemoria che la memoria ha ancora in attesa (MY
   REMINDERS, solo quando ce ne sono): uno spostamento ("sposta alle 21", subito o in una conversazione successiva)

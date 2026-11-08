@@ -151,8 +151,10 @@ export class ConsolidationService {
         const hash = fingerprint([dayVersion, ...lines]);
         if (currentDay.get(day)?.source_hash === hash) continue;
         report.llmCalls++;
+        // 1200 like a month: a dense day kept with every concrete detail runs past 600 tokens in Italian (Kinox, 2026-10-29
+        // failed nightly, truncated), and a repair with the same cap is cut again.
         const out = await this.llm.completeJson({
-          promptId: dayVersion, system: entity ? ENTITY_DAY_DIGEST_SYSTEM : DAY_DIGEST_SYSTEM, task: 'digest', maxTokens: 600,
+          promptId: dayVersion, system: entity ? ENTITY_DAY_DIGEST_SYSTEM : DAY_DIGEST_SYSTEM, task: 'digest', maxTokens: 1200,
           user: `${me}\nDAY: ${day}\nITEMS:\n${lines.join('\n')}`, schema: digestSchema,
         }, ctx).catch((err: unknown) => this.skip(report, `day ${day}`, err));
         if (!out) continue;
@@ -274,7 +276,8 @@ export class ConsolidationService {
 
   private skip(report: ConsolidationReport, what: string, err: unknown): null {
     report.failed++;
-    this.log.warn(`digest skipped (${what}): ${(err as Error).name}`);
+    // The message says why (Kinox, 2026-11-08: a day digest cut at 600 tokens failed every night, logged by name only).
+    this.log.warn(`digest skipped (${what}): ${(err as Error).name}: ${(err as Error).message}`);
     return null;
   }
 

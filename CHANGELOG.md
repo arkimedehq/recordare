@@ -32,6 +32,9 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 - Whom a question about a person goes to counts the episodes that only name them too, not just those about them.
 
 ### Fixed
+- **A dense day gets its diary entry.** A day digest was cut at 600 tokens: a day full of concrete details, in Italian,
+  ran past it, the repair was cut again, and the day was retried and failed every night (found on Kinox). The day digest
+  now has 1200 tokens, like the month; a skipped digest logs why, not only the error's name.
 - **A reminder moved is said at the new time, and one asked again is not said twice** (`extract.v24` / `entity.v12`;
   found on Kinox). The extraction now sees the reminders the memory still holds (MY REMINDERS, only when there are
   some): a move ("sposta alle 21", now or in a later conversation) takes the armed reminder to the new time, and a
