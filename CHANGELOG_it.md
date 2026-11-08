@@ -6,6 +6,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.11.0] — 2026-11-08
+
+**La memoria impara a conoscere la casa, e aspetta il momento giusto.** Chiede chi è una persona sentita nominare, a chi
+l'ha nominata, e verifica quello che sa a metà di una persona (D55 F2b: al massimo una domanda per imparare al giorno).
+Il tempo v2 (`INITIATIVE_TIMING=v2`) aggiunge il contesto del momento: una pausa dopo un rifiuto, una persona che un
+client dice occupata, persone che parlano nella stanza. Un promemoria spostato si dice all'ora nuova e uno chiesto di
+nuovo non si ripete; anche una giornata densa ha il suo diario. Libreria client e connettori 0.11.0
+(`PresenceImpulse.busy` / `talking`).
+
 ### Aggiunto
 - **Lacune: la memoria chiede chi è qualcuno** (D55 F2b). Qualcuno sentito nominare nei suoi episodi ma non conosciuto —
   senza relazione, nulla tenuto su di lui, che non parla con lei — viene chiesto una volta, a chi l'ha nominato di più

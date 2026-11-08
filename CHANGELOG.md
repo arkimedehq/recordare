@@ -6,6 +6,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-11-08
+
+**The memory learns about the household, and waits for the right moment.** It asks who someone heard named is, of
+whoever named them, and checks what it half-knows about a person (D55 F2b: one learning question a day at most). Timing
+v2 (`INITIATIVE_TIMING=v2`) adds the moment's context: a pause after a refusal, a person a client says is busy, people
+talking in the room. A reminder moved is said at the new time and one asked again is not said twice; a dense day gets its
+diary entry. Client library and connectors 0.11.0 (`PresenceImpulse.busy` / `talking`).
+
 ### Added
 - **Gaps: the memory asks who someone is** (D55 F2b). Someone heard named in its episodes but not known — no relation,
   nothing held about them, not a speaker of their own — is asked about once, of whoever named them most ("Who is
