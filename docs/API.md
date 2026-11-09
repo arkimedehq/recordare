@@ -645,7 +645,7 @@ private or public again (§2) has its days written again.
 ## 4b. Initiatives — what the agent says or does on its own (D53, WORK_PLAN 8.12c) — first cut built 2026-11-01
 > **D55 — delivery decided by Recordare** (F1 built 2026-11-04; `INITIATIVES_DELIVERY.md`). Additive:
 > - **Presence impulse** `POST api/v1/presence {person?: {identity}, channel: voice | camera | panel | chat, confidence?
->   (0–1, default 1), ttlSeconds? (default 120), place?, left?, busy?, talking?}` (timing v2, F6: `busy` — the person is
+>   (0–1, default 1), ttlSeconds? (default 120, at most 3600: renew a longer presence), place?, left?, busy?, talking?}` (timing v2, F6: `busy` — the person is
 >   occupied, a call, a meeting, do-not-disturb: nothing flexible on any channel until the presence ends or `busy: false`;
 >   `talking` — people in the place are talking now: an opening waits for a pause) (scope `ingest`, the user header; `X-Recordare-Now` with
 >   `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: the person resolved in this memory (an identity as in ingest;

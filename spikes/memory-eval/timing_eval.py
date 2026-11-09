@@ -9,7 +9,7 @@ it should have been (lapsed), or rightly not delivered.
 
 The service must run with ALLOW_CLOCK_OVERRIDE=true, CONSOLIDATION_SCHEDULE=false, INITIATIVE_WORDING=false and a long
 IDLE_DELAY_SECONDS (no extraction); INITIATIVE_TIMING=v0, v1, v2 or due selects the policy compared. Env: RECORDARE_URL,
-RECORDARE_ADMIN_KEY, RECORDARE_DB_URL, TIMING_LABEL (names the result file).
+RECORDARE_ADMIN_KEY, RECORDARE_DB_URL, TIMING_LABEL (names the result file), TIMING_DATASET (default dataset_dev_timing).
 Run: uv run --directory <spike> python timing_eval.py
 """
 from __future__ import annotations
@@ -28,6 +28,8 @@ import psycopg
 HERE = Path(__file__).resolve().parent
 ROME = ZoneInfo("Europe/Rome")
 URL = os.getenv("RECORDARE_URL", "http://localhost:8095")
+# The timelines replayed: the dev set (default) or the held-out one (`TIMING_DATASET=dataset_holdout_timing`, kept blind).
+DATASET = os.getenv("TIMING_DATASET", "dataset_dev_timing")
 ADMIN = os.environ.get("RECORDARE_ADMIN_KEY", "")
 DB_URL = os.getenv("RECORDARE_DB_URL", "postgres://recordare:recordare@localhost:5433/recordare_eval_timing")
 LABEL = os.getenv("TIMING_LABEL", "v0")
@@ -149,7 +151,7 @@ def score(item: dict, got: dict | None) -> str:
 def main() -> None:
     if not ADMIN:
         sys.exit("RECORDARE_ADMIN_KEY not set")
-    data = json.loads((HERE / "dataset_dev_timing" / "timelines.json").read_text())
+    data = json.loads((HERE / DATASET / "timelines.json").read_text())
     with psycopg.connect(DB_URL, autocommit=True) as db:
         ctxs = {m["id"]: setup(m, db) for m in data["memories"]}
         events = sorted(((datetime.fromisoformat(e["at"]), m["id"], e) for m in data["memories"] for e in m["events"]), key=lambda x: x[0])

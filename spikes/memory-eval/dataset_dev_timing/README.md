@@ -25,4 +25,5 @@ pause that follows), a client's `busy` on a presence (a call; the arrival stays 
 
 Scored per item: `in_window`, `outside` (a needless interruption), `wrong_trigger`, `wrong_channel`, `no_opening`,
 `lapsed`, `rightly_silent`, `wrong_delivery`. Fictional content. `python build.py` writes `timelines.json`; `python check.py` verifies it.
-Written by the developer who tuned timing v0 on it: a held-out set is still owed.
+Written by the developer who tuned timing v0 on it; the held-out set, written blind by a separate author, is
+`dataset_holdout_timing` (2026-11-09).

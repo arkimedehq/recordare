@@ -1,0 +1,1122 @@
+{
+ "_note": "holdout_timing (D55 F2b/F4/F6, H14): held-out timelines written blind, replayed with a moving clock, no LLM. Do not tune on it. See README.md.",
+ "start": "2026-10-19T06:00:00+02:00",
+ "end": "2026-10-24T20:30:00+02:00",
+ "tick_minutes": 15,
+ "memories": [
+  {
+   "id": "ilaria",
+   "name": "Ilaria",
+   "mode": "personal",
+   "channels": [
+    {
+     "kind": "chat",
+     "reach": "always"
+    },
+    {
+     "kind": "messaging",
+     "reach": "always"
+    }
+   ],
+   "people": [],
+   "messages": [],
+   "items": [
+    {
+     "id": "i1",
+     "content": "prendere il collirio",
+     "due": "2026-10-19T08:15:00+02:00",
+     "until": "2026-10-19T20:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T08:15:00+02:00",
+        "2026-10-19T08:30:00+02:00"
+       ]
+      ]
+     },
+     "why": "a reminder asked for 08:15: given at 08:15, not later in the day"
+    },
+    {
+     "id": "i3",
+     "content": "rinnovare l'abbonamento della piscina",
+     "due": "2026-10-19T00:00:00+02:00",
+     "until": "2026-10-20T00:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T09:00:00+02:00",
+        "2026-10-19T22:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "a request for the day with no time, i1 already given: within the day's hours, before the quiet hours at 22 (judgement: an owed request at its last chance up to 22:00 is acceptable)"
+    },
+    {
+     "id": "i2",
+     "content": "svegliare Corrado per il treno",
+     "due": "2026-10-20T06:30:00+02:00",
+     "until": "2026-10-20T12:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T06:30:00+02:00",
+        "2026-10-20T06:45:00+02:00"
+       ]
+      ]
+     },
+     "why": "she asked for 06:30, inside the quiet hours: a time the person chose goes anyway"
+    },
+    {
+     "id": "i4",
+     "content": "spedire il pacco alla zia Teresa",
+     "due": "2026-10-21T09:00:00+02:00",
+     "until": "2026-10-21T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T09:00:00+02:00",
+        "2026-10-21T21:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "a request owed today: given during the day (first, or at its last chance after others)"
+    },
+    {
+     "id": "i5",
+     "content": "disdire la palestra",
+     "due": "2026-10-21T09:00:00+02:00",
+     "until": "2026-10-21T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T09:00:00+02:00",
+        "2026-10-21T21:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "a request owed today: given during the day (first, or at its last chance after others)"
+    },
+    {
+     "id": "i6",
+     "content": "togliere il pane dal forno",
+     "due": "2026-10-21T12:00:00+02:00",
+     "until": "2026-10-21T18:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T12:00:00+02:00",
+        "2026-10-21T12:15:00+02:00"
+       ]
+      ]
+     },
+     "why": "asked for 12:00: at its time, however many things she got today"
+    },
+    {
+     "id": "i7",
+     "content": "prenotare il ristorante per sabato",
+     "due": "2026-10-21T15:00:00+02:00",
+     "until": "2026-10-22T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-22T09:00:00+02:00",
+        "2026-10-22T21:00:00+02:00"
+       ]
+      ]
+     },
+     "why": "Wednesday already brings her three things (the daily limit, 3) and this one may wait: given Thursday in the day, not Wednesday"
+    }
+   ],
+   "plans": [
+    {
+     "id": "i8",
+     "content": "Cena di compleanno di Corrado",
+     "at": "2026-10-20T20:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-22T10:00:00+02:00",
+        "2026-10-22T20:00:00+02:00"
+       ],
+       [
+        "2026-10-23T10:00:00+02:00",
+        "2026-10-23T20:00:00+02:00"
+       ],
+       [
+        "2026-10-24T10:00:00+02:00",
+        "2026-10-24T20:00:00+02:00"
+       ]
+      ],
+      "channel": "chat"
+     },
+     "why": "asking how Tuesday's dinner went: two days after it at the earliest, in the ask hours (10–20), by chat — an ask never interrupts by message"
+    }
+   ],
+   "events": []
+  },
+  {
+   "id": "davide",
+   "name": "Davide",
+   "mode": "personal",
+   "channels": [],
+   "people": [],
+   "messages": [],
+   "items": [
+    {
+     "id": "d1",
+     "content": "send the birthday card to aunt Wilma",
+     "due": "2026-10-19T09:00:00+02:00",
+     "until": "2026-10-20T09:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T23:10:00+02:00",
+        "2026-10-19T23:20:00+02:00"
+       ]
+      ],
+      "via": [
+       "turn"
+      ],
+      "channel": "turn"
+     },
+     "why": "no channel reaches him but the turn: said when he writes at 23:10 — quiet hours do not apply in the turn, and he asks what he forgot (judgement)"
+    },
+    {
+     "id": "d2",
+     "content": "take the bread out of the freezer",
+     "due": "2026-10-20T07:00:00+02:00",
+     "until": "2026-10-20T12:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T07:40:00+02:00",
+        "2026-10-20T07:50:00+02:00"
+       ]
+      ],
+      "via": [
+       "turn"
+      ],
+      "channel": "turn"
+     },
+     "why": "a timed reminder no channel reaches at 07:00: at his first turn before it expires (07:40), ahead of anything without a time"
+    },
+    {
+     "id": "d3",
+     "content": "renew the parking permit",
+     "due": "2026-10-20T10:00:00+02:00",
+     "until": "2026-10-21T10:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T12:30:00+02:00",
+        "2026-10-20T12:40:00+02:00"
+       ]
+      ],
+      "via": [
+       "turn"
+      ],
+      "channel": "turn"
+     },
+     "why": "not at the 09:00 turn (not due yet); due at 10:00: the next turn, 12:30"
+    }
+   ],
+   "plans": [],
+   "events": [
+    {
+     "at": "2026-10-19T23:10:00+02:00",
+     "type": "turn",
+     "conversation": "davide-chat",
+     "text": "Can't sleep. Anything I forgot today?"
+    },
+    {
+     "at": "2026-10-20T07:40:00+02:00",
+     "type": "turn",
+     "conversation": "davide-chat",
+     "text": "Morning! Coffee first, then the day."
+    },
+    {
+     "at": "2026-10-20T09:00:00+02:00",
+     "type": "turn",
+     "conversation": "davide-chat",
+     "text": "On the train now, what's the weather like?"
+    },
+    {
+     "at": "2026-10-20T12:30:00+02:00",
+     "type": "turn",
+     "conversation": "davide-chat",
+     "text": "Lunch break. Anything for me?"
+    }
+   ]
+  },
+  {
+   "id": "casa_lombardi",
+   "name": "Casa Lombardi",
+   "mode": "entity",
+   "channels": [
+    {
+     "kind": "chat",
+     "reach": "always"
+    },
+    {
+     "kind": "messaging",
+     "reach": "always"
+    },
+    {
+     "kind": "voice",
+     "reach": "presence"
+    }
+   ],
+   "people": [
+    {
+     "name": "Ottavia",
+     "ha": "person.ottavia_l",
+     "telegram": "tg-4711"
+    },
+    {
+     "name": "Bruno",
+     "ha": "person.bruno_l"
+    },
+    {
+     "name": "Nives",
+     "ha": "person.nives_l"
+    }
+   ],
+   "messages": [
+    {
+     "id": "m-nives-private",
+     "conversation": "nives-chat",
+     "author": "Nives",
+     "private": true,
+     "text": "Ricordami giovedì di ritirare gli esami del sangue."
+    }
+   ],
+   "items": [
+    {
+     "id": "l2",
+     "content": "chiudere l'acqua del giardino",
+     "for": "Bruno",
+     "due": "2026-10-19T17:00:00+02:00",
+     "until": "2026-10-20T17:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-19T18:20:00+02:00",
+        "2026-10-19T18:35:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "asked for 17:00, but Bruno has no messaging address and is only 'at home': no message, never the shared chat; said at his first room presence (the kitchen at 18:20)"
+    },
+    {
+     "id": "l3",
+     "content": "sistemare la mensola dello studio",
+     "for": "Bruno",
+     "due": "2026-10-19T20:00:00+02:00",
+     "until": "2026-10-20T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T09:10:00+02:00",
+        "2026-10-20T09:25:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "flexible: not at his arrivals at 22:30 or 07:30 (quiet hours apply to voice), said at his arrival in the study at 09:10"
+    },
+    {
+     "id": "l4",
+     "content": "comprare le lampadine",
+     "for": "Bruno",
+     "due": "2026-10-20T09:30:00+02:00",
+     "until": "2026-10-20T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-20T10:30:00+02:00",
+        "2026-10-20T10:45:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "not at his kitchen arrival at 09:35 (25 minutes after l3: the 30-minute pace) nor the 09:50 refresh; said at his living-room arrival at 10:30"
+    },
+    {
+     "id": "l5",
+     "content": "prenotare il tagliando dell'auto",
+     "for": "Ottavia",
+     "due": "2026-10-21T09:00:00+02:00",
+     "until": "2026-10-21T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T09:00:00+02:00",
+        "2026-10-21T21:00:00+02:00"
+       ]
+      ],
+      "channel": "messaging"
+     },
+     "why": "a request for Ottavia, never in a room that day, with a Telegram address: by message during the day"
+    },
+    {
+     "id": "l6",
+     "content": "restituire il trapano al vicino",
+     "for": "Bruno",
+     "due": "2026-10-21T09:00:00+02:00",
+     "until": "2026-10-21T20:00:00+02:00",
+     "gold": {
+      "deliver": false
+     },
+     "why": "for Bruno, no address, never present that day: never on the shared chat, never by message — lapses"
+    },
+    {
+     "id": "l12",
+     "content": "potare le rose",
+     "for": "Nives",
+     "due": "2026-10-21T08:00:00+02:00",
+     "until": "2026-10-21T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T09:00:00+02:00",
+        "2026-10-21T09:15:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "Nives walks into the kitchen at 09:00: said at her arrival (she declines it at 09:04)"
+    },
+    {
+     "id": "l13",
+     "content": "lavare il tappeto del bagno",
+     "for": "Nives",
+     "due": "2026-10-21T09:30:00+02:00",
+     "until": "2026-10-21T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-21T12:20:00+02:00",
+        "2026-10-21T12:35:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "she declined something at 09:04: not at her living-room arrival at 10:30 (within 3 hours), said at her kitchen arrival at 12:20"
+    },
+    {
+     "id": "l8",
+     "content": "ritirare gli esami del sangue",
+     "for": "Nives",
+     "message": "m-nives-private",
+     "due": "2026-10-22T09:00:00+02:00",
+     "until": "2026-10-22T12:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-22T10:40:00+02:00",
+        "2026-10-22T10:55:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ]
+     },
+     "why": "from her private message: not to someone unnamed (09:30), not to a 0.7 recognition (10:00); given to the sure one (0.92, the study camera, 10:40)"
+    },
+    {
+     "id": "l7",
+     "content": "firmare il modulo della gita",
+     "for": "Nives",
+     "due": "2026-10-22T14:00:00+02:00",
+     "until": "2026-10-22T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-22T16:00:00+02:00",
+        "2026-10-22T16:15:00+02:00"
+       ]
+      ],
+      "via": [
+       "turn"
+      ],
+      "channel": "turn",
+      "opened": [
+       "2026-10-22T16:00:00+02:00",
+       "2026-10-22T16:05:00+02:00"
+      ]
+     },
+     "why": "she walks into the living room with someone the house cannot name: only the opening; her \"yes\" at 16:02 gets it in the turn"
+    },
+    {
+     "id": "l11",
+     "content": "chiamare il notaio",
+     "for": "Ottavia",
+     "due": "2026-10-23T10:00:00+02:00",
+     "until": "2026-10-23T18:00:00+02:00",
+     "timed": true,
+     "gold": {
+      "windows": [
+       [
+        "2026-10-23T10:00:00+02:00",
+        "2026-10-23T10:15:00+02:00"
+       ]
+      ],
+      "channel": "messaging"
+     },
+     "why": "asked for 10:00 while a client says she is busy: a time she chose goes anyway, by message to her address"
+    },
+    {
+     "id": "l10",
+     "content": "rispondere alla mail dell'amministratore",
+     "for": "Ottavia",
+     "due": "2026-10-23T09:00:00+02:00",
+     "until": "2026-10-23T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-23T11:30:00+02:00",
+        "2026-10-23T21:00:00+02:00"
+       ]
+      ],
+      "channel": "messaging"
+     },
+     "why": "flexible while she is busy (08:50 – 11:30): held on every channel, by message once she is free"
+    },
+    {
+     "id": "l9",
+     "content": "chiamare l'assicurazione",
+     "for": "Bruno",
+     "due": "2026-10-23T17:00:00+02:00",
+     "until": "2026-10-23T21:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-23T18:03:00+02:00",
+        "2026-10-23T18:20:00+02:00"
+       ]
+      ],
+      "via": [
+       "turn"
+      ],
+      "channel": "turn",
+      "opened": [
+       "2026-10-23T18:03:00+02:00",
+       "2026-10-23T18:05:00+02:00"
+      ]
+     },
+     "why": "he arrives in the living room at 18:00 while people are talking (and at 18:01): no opening; at 18:03 nobody talking — his arrival still owed — the opening; his \"yes\" gets it (judgement: an arrival held over two impulses stays owed)"
+    },
+    {
+     "id": "l14",
+     "content": "pulire la griglia del barbecue",
+     "for": "Bruno",
+     "due": "2026-10-24T09:00:00+02:00",
+     "until": "2026-10-24T20:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-24T10:00:00+02:00",
+        "2026-10-24T10:15:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "Bruno walks into the kitchen at 10:00: said at his arrival (he ignores it, reported at 10:03)"
+    },
+    {
+     "id": "l15",
+     "content": "gonfiare le gomme della bici",
+     "for": "Bruno",
+     "due": "2026-10-24T10:30:00+02:00",
+     "until": "2026-10-24T20:00:00+02:00",
+     "gold": {
+      "windows": [
+       [
+        "2026-10-24T11:20:00+02:00",
+        "2026-10-24T11:35:00+02:00"
+       ]
+      ],
+      "via": [
+       "presence"
+      ],
+      "channel": "voice"
+     },
+     "why": "he let l14 go right after it was said: not at his garage arrival at 10:40 (the pace is over, the 1-hour pause is not), said at his kitchen arrival at 11:20"
+    }
+   ],
+   "plans": [],
+   "events": [
+    {
+     "at": "2026-10-19T17:05:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.bruno_l",
+       1.0
+      ]
+     ],
+     "ttl": 3600,
+     "expect": {
+      "initiative": false
+     },
+     "why": "Bruno only 'at home' while l2 is owed: at home is not enough to speak"
+    },
+    {
+     "at": "2026-10-19T18:20:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-19T18:40:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-19T22:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "expect": {
+      "initiative": false
+     },
+     "why": "an arrival in the quiet hours while l3 (flexible) is due: held"
+    },
+    {
+     "at": "2026-10-19T22:50:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-20T07:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T07:50:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-20T09:10:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Studio",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T09:25:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Studio",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-20T09:35:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "expect": {
+      "initiative": false
+     },
+     "why": "an arrival 25 minutes after l3 was said: within the 30-minute pace, l4 waits"
+    },
+    {
+     "at": "2026-10-20T09:50:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T10:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-20T10:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-20T10:50:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-21T09:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.nives_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-21T09:04:00+02:00",
+     "type": "outcome",
+     "content": "potare le rose",
+     "status": "declined"
+    },
+    {
+     "at": "2026-10-21T09:20:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.nives_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-21T10:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.nives_l",
+       0.9
+      ]
+     ],
+     "expect": {
+      "initiative": false
+     },
+     "why": "an arrival 86 minutes after a refusal: the 3-hour pause holds l13"
+    },
+    {
+     "at": "2026-10-21T11:15:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.nives_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-21T12:20:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.nives_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-21T12:40:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.nives_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-22T09:30:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "someone": 1,
+     "ttl": 300,
+     "expect": {
+      "initiative": false,
+      "askWho": true
+     },
+     "why": "someone the house cannot name while l8 waits for Nives: nothing told, the agent may ask who it is"
+    },
+    {
+     "at": "2026-10-22T10:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.nives_l",
+       0.7
+      ]
+     ],
+     "ttl": 300,
+     "expect": {
+      "initiative": false
+     },
+     "why": "Nives at 0.7: enough for a harmless item, not for one from a private message (0.85)"
+    },
+    {
+     "at": "2026-10-22T10:40:00+02:00",
+     "type": "presence",
+     "channel": "camera",
+     "place": "Studio",
+     "people": [
+      [
+       "person.nives_l",
+       0.92
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-22T10:55:00+02:00",
+     "type": "presence",
+     "channel": "camera",
+     "place": "Studio",
+     "people": [
+      [
+       "person.nives_l",
+       0.92
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-22T16:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.nives_l",
+       0.9
+      ]
+     ],
+     "someone": 1,
+     "expect": {
+      "initiative": false,
+      "opening": true
+     },
+     "why": "Nives arrives where someone else is: only the opening, which reveals nothing"
+    },
+    {
+     "at": "2026-10-22T16:02:00+02:00",
+     "type": "turn",
+     "conversation": "soggiorno-lombardi",
+     "author": "Nives",
+     "text": "Sì, dimmi."
+    },
+    {
+     "at": "2026-10-23T08:50:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.ottavia_l",
+       1.0
+      ]
+     ],
+     "busy": true,
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-23T09:50:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.ottavia_l",
+       1.0
+      ]
+     ],
+     "busy": true,
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-23T10:50:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.ottavia_l",
+       1.0
+      ]
+     ],
+     "busy": true,
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-23T11:30:00+02:00",
+     "type": "presence",
+     "channel": "home",
+     "people": [
+      [
+       "person.ottavia_l",
+       1.0
+      ]
+     ],
+     "busy": false,
+     "ttl": 3600
+    },
+    {
+     "at": "2026-10-23T18:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "someone": 1,
+     "talking": true,
+     "expect": {
+      "initiative": false,
+      "opening": false
+     },
+     "why": "Bruno arrives while people in the room are talking: no opening in the middle of it"
+    },
+    {
+     "at": "2026-10-23T18:01:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "someone": 1,
+     "talking": true
+    },
+    {
+     "at": "2026-10-23T18:03:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Soggiorno",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "someone": 1,
+     "expect": {
+      "initiative": false,
+      "opening": true
+     },
+     "why": "two minutes without talking: his arrival, still owed, brings the opening (judgement)"
+    },
+    {
+     "at": "2026-10-23T18:04:00+02:00",
+     "type": "turn",
+     "conversation": "soggiorno-lombardi-ven",
+     "author": "Bruno",
+     "text": "Dimmi pure."
+    },
+    {
+     "at": "2026-10-24T10:00:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-24T10:03:00+02:00",
+     "type": "outcome",
+     "content": "pulire la griglia del barbecue",
+     "status": "ignored"
+    },
+    {
+     "at": "2026-10-24T10:20:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-24T10:40:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Garage",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "expect": {
+      "initiative": false
+     },
+     "why": "an arrival 40 minutes after an initiative he let go at once: the 1-hour pause holds l15"
+    },
+    {
+     "at": "2026-10-24T10:55:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Garage",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    },
+    {
+     "at": "2026-10-24T11:20:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ]
+    },
+    {
+     "at": "2026-10-24T11:40:00+02:00",
+     "type": "presence",
+     "channel": "voice",
+     "place": "Cucina",
+     "people": [
+      [
+       "person.bruno_l",
+       0.9
+      ]
+     ],
+     "left": true
+    }
+   ]
+  }
+ ]
+}

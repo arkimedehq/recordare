@@ -2052,6 +2052,28 @@ cannot simulate honestly); an integration test covers it. **Caveat**: written by
 encodes v2's own rules (a 3-hour pause) — a regression check and a demonstration, not a measurement; on Kinox in
 shadow first, then the switch.
 
+### Timing held-out — `dataset_holdout_timing` (D55 §5c / F4 / F6, 2026-11-09; no LLM)
+
+Written blind by a separate author (a sub-agent given the docs and the runner's schema, not the service code nor the
+results): 3 memories over 19–24 October — Ilaria (personal; chat + messaging), Davide (personal; the turn only, English
+contents), Casa Lombardi (entity; chat + messaging + voice, three people by Home Assistant person, one with no Telegram
+address); 25 items, 10 event checks. One input fix before the first run, golds untouched: a 4-hour `busy` (ttl 14400)
+split into hourly renewals (the API takes at most 3600 s, now written in `API.md`). One run each (deterministic):
+
+| Policy | Items right | Event checks | Misses |
+|---|---|---|---|
+| v0 | 20 / 25 | 6 / 10 | l4, l13, l15 voice outside (a pause after a refusal / an ignore, a busy person), l10 messaging while busy, l9 no opening (people talking) |
+| v1 | 20 / 25 | 6 / 10 | as v0 (no behaviour data in this set: nothing to learn from) |
+| **v2** | **24 / 25** | **10 / 10** | l4 |
+
+The one v2 miss is a boundary: Bruno's kitchen presence of 09:35 (the runner's default ttl, 900 s) ends at 09:50:00, the
+instant of the next impulse, so the service counts that impulse as an arrival (a presence is live while it ends after
+now) and speaks; the set meant a refresh. Left as is (no tuning on the held-out set). The author listed twelve points
+where the docs are ambiguous (daily limit vs last chance, `busy` across channels, the ignore pause's start, `talking`
+in §5c vs v2, the holder's messaging address…): golds avoid depending on them, three golds are marked "(judgement)".
+Verdict: v2 generalises — every v2 rule the dev set taught holds on cases written by someone else; v0 and v1 make the
+interruptions v2 was built to avoid. Kinox (7 days in shadow, 4 decisions, none since v2): too few to compare.
+
 ### The model's hours — `initiative.v3` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
 
 `initiative.v3` adds to each worded initiative the local hours when saying it would be natural (`hours: [from, to]`, at
