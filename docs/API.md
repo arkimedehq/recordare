@@ -720,10 +720,10 @@ private or public again (§2) has its days written again.
 > answered from the service as built):
 > - **The daily limit and the last chance.** The limit (`INITIATIVE_DAILY_LIMIT`, 3 per person) is checked when an
 >   intent becomes an initiative, counting that person's initiatives due on that local day. An intent over the limit
->   stays as it is and is tried again on the next local day; if its window ends first it lapses — an owed flexible
->   request too, because the last chance is the clock's and the clock decides only initiatives that exist. Once an
->   initiative exists the limit no longer applies: what the person already got today only lowers its p (÷ (1 + n)), and an
->   owed one still goes at its last chance.
+>   stays as it is and is tried again on the next local day; if its window ends first it lapses. A request or a promise
+>   on the last day of its window is never held (since 2026-11-09: held, it lapsed unsaid, because the clock's last chance
+>   sees only initiatives that exist). Once an initiative exists the limit no longer applies: what the person already got
+>   today only lowers its p (÷ (1 + n)), and an owed one still goes at its last chance.
 > - **Timed reminders and the limit.** A time the person chose (a timed request or promise) is never held by the limit,
 >   but it counts toward it: after it, fewer flexible ones fire that day.
 > - **The last chance and the quiet hours.** For the clock a window ends at the earlier of `expiresAt` and the start of

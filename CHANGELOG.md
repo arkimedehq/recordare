@@ -6,6 +6,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Fixed
+- A request or a promise on the last day of its window is no longer held by the daily limit: held, it lapsed unsaid,
+  because the clock's last chance only sees initiatives already made (found writing the timing rules in detail,
+  `API.md` §4b).
+
 ## [0.12.0] — 2026-11-09
 
 **What the memory means to say reaches people on OpenClaw and Hermes too.** The OpenClaw plugin sends an initiative to

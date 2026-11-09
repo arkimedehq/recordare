@@ -210,4 +210,19 @@ describe('initiatives (D53, 8.12c): intents from plans and questions, pushed by 
     await intent('prendere la medicina', at(6), true); // asked for 18:00
     expect((await sweep(at(6))).fired).toBe(1); // kept: the person chose that time
   });
+
+  it('what is owed on its last day is kept past the daily limit; a later last day waits', async () => {
+    const day = new Date(NOW.getTime() + 60 * DAY); // a day of its own: 12:00 in Rome
+    const at = (h: number) => new Date(day.getTime() + h * 3_600_000);
+    const intent = (content: string, due: Date, expires: Date, kind = 'request') => db.query(
+      `INSERT INTO intents (memory_id, kind, content, due_at, expires_at, timed) VALUES ($1, $2, $3, $4, $5, false)`,
+      [memoryId, kind, content, due, expires]);
+    for (const c of ['lavare la macchina', 'scrivere a Bea', 'innaffiare le piante']) await intent(c, at(-3), at(DAY / 3_600_000), 'own');
+    expect((await sweep(at(-2))).fired).toBe(3); // the day's share (3) is spent
+    await intent('portare le scarpe a riparare', at(-1), at(DAY / 3_600_000 + 6)); // its window runs into tomorrow
+    await intent('restituire il libro', at(-1), at(9)); // its window ends tonight at 21:00
+    expect((await sweep(at(0))).fired).toBe(1); // only the one whose last day is today
+    expect((await db.query(`SELECT content, status::text FROM intents WHERE memory_id = $1 AND content IN ('portare le scarpe a riparare', 'restituire il libro') ORDER BY content`, [memoryId])))
+      .toEqual([{ content: 'portare le scarpe a riparare', status: 'armed' }, { content: 'restituire il libro', status: 'fired' }]);
+  });
 });

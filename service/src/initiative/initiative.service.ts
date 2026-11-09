@@ -525,7 +525,10 @@ export class InitiativeService {
       // The day's share is spent: tomorrow — except a time the person chose (dev_timing b7, 2026-11-06: a reminder asked
       // for 18:00 waited for the next day because three other things had been said that day).
       const chosen = t.timed && (t.kind === 'request' || t.kind === 'promise');
-      if (!chosen && (counted[0]?.n ?? 0) >= limit) continue;
+      // Nor what is owed on its last day: held, it would lapse unsaid — the clock's last chance only sees initiatives
+      // (held-out timing set, 2026-11-09).
+      const owedLastDay = (t.kind === 'request' || t.kind === 'promise') && sayDays(t, now, memory.timezone).to === localDate(when, memory.timezone);
+      if (!chosen && !owedLastDay && (counted[0]?.n ?? 0) >= limit) continue;
       const plan = t.content.trim().replace(/([^.!?])$/, '$1.');
       const [kind, fallback, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
           : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']

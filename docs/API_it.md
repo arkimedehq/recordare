@@ -739,10 +739,11 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 > `dataset_holdout_timing`, con la risposta presa dal servizio così com'è costruito):
 > - **Il limite giornaliero e l'ultima occasione.** Il limite (`INITIATIVE_DAILY_LIMIT`, 3 per persona) si controlla
 >   quando un intento diventa un'iniziativa, contando le iniziative di quella persona dovute in quel giorno locale. Un
->   intento oltre il limite resta com'è e si riprova il giorno locale dopo; se prima finisce la sua finestra, decade —
->   anche una richiesta flessibile dovuta, perché l'ultima occasione è dell'orologio e l'orologio decide solo le
->   iniziative che esistono. Una volta creata l'iniziativa, il limite non vale più: quello che la persona ha già ricevuto
->   oggi abbassa solo la sua p (÷ (1 + n)), e una dovuta parte comunque all'ultima occasione.
+>   intento oltre il limite resta com'è e si riprova il giorno locale dopo; se prima finisce la sua finestra, decade. Una
+>   richiesta o una promessa nell'ultimo giorno della sua finestra non viene mai trattenuta (dal 2026-11-09: trattenuta,
+>   decadeva senza essere detta, perché l'ultima occasione dell'orologio vede solo le iniziative che esistono). Una volta
+>   creata l'iniziativa, il limite non vale più: quello che la persona ha già ricevuto oggi abbassa solo la sua p
+>   (÷ (1 + n)), e una dovuta parte comunque all'ultima occasione.
 > - **Promemoria a orario e limite.** Un orario scelto dalla persona (una richiesta o promessa a orario) non viene mai
 >   trattenuto dal limite, ma conta: dopo di esso, quel giorno scattano meno iniziative flessibili.
 > - **L'ultima occasione e le ore di quiete.** Per l'orologio una finestra finisce al primo tra `expiresAt` e l'inizio

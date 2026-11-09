@@ -6,6 +6,11 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Corretto
+- Una richiesta o una promessa nell'ultimo giorno della sua finestra non viene più trattenuta dal limite giornaliero:
+  trattenuta, decadeva senza essere detta, perché l'ultima occasione dell'orologio vede solo le iniziative già create
+  (trovato scrivendo le regole del timing in dettaglio, `API_it.md` §4b).
+
 ## [0.12.0] — 2026-11-09
 
 **Ciò che la memoria vuole dire raggiunge le persone anche su OpenClaw e Hermes.** Il plugin OpenClaw invia
