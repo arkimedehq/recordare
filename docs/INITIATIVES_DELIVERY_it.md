@@ -76,12 +76,14 @@ Scegliere il momento è il cuore del lavoro, imparato per gradi (H14):
   2026-11-07** (`INITIATIVE_TIMING=v2`, v1 compreso): dopo un'iniziativa rifiutata o una reazione negativa niente di
   flessibile per quella persona per 3 ore, dopo una ignorata subito dopo averla ricevuta per 1 ora (in una stanza, in un
   turno e dall'orologio); il `busy` di un client su una presenza trattiene ciò che è flessibile su ogni canale (non in un
-  turno: sta parlando con l'agente); il `talking` di un client in un luogo trattiene l'apertura per 90 secondi (più persone
-  nominate in un impulso voce descrivono la stanza, non una conversazione); un arrivo trattenuto per una persona occupata o
+  turno: sta parlando con l'agente); il `talking` di un client in un luogo, con due o più persone presenti, trattiene lì ogni
+  iniziativa flessibile — apertura compresa — per 90 secondi dall'ultimo (più persone nominate in un impulso voce
+  descrivono la stanza, non una conversazione); un arrivo trattenuto per una persona occupata o
   una conversazione resta dovuto (il prossimo impulso lì è ancora l'arrivo); gli esiti di v1 ricevuti con altri (dopo
   un'apertura) si imparano separati da quelli da soli, e dove di solito vengono lasciati cadere l'apertura aspetta la
   persona da sola. Un orario scelto dalla persona parte comunque; ogni attesa registrata con il suo motivo
-  (`features.moment`; in ombra accanto a v0).
+  (`features.moment`; in ombra accanto a v0). Le regole esatte (il limite giornaliero contro l'ultima occasione, come
+  finisce `busy`, da quando parte la pausa…): `API_it.md` §4b, "Regole del timing in dettaglio".
 - Misurato su un dev set di **linee temporali** (eventi, presenze, turni) con un gold di finestre accettabili e una
   penalità per le interruzioni inutili; osservato sul Kinox.
 
@@ -183,7 +185,8 @@ persona per un promemoria a orario (`go_to`).
 - **L'orologio legge le presenze valide** (oggi la tabella `presences` è scritta e mai letta): al minuto di un promemoria
   a orario, una presenza valida in una stanza mette la voce come primo canale.
 - **Ritmo**: al massimo un annuncio spontaneo per persona ogni **30 minuti** (in prova, da correggere con gli esiti);
-  nessuno mentre la piattaforma dice che la persona parla con qualcuno; le ore di quiete valgono anche per la voce,
+  nessuno mentre la piattaforma dice che lì le persone parlano tra loro (costruito nel v2: `talking`, 90 secondi, con
+  due o più persone nel luogo); le ore di quiete valgono anche per la voce,
   tranne un promemoria a orario (chiesto per quel momento).
 
 **6. Dirlo e sentire la risposta.**

@@ -74,11 +74,12 @@ Choosing the moment is the core of the work, learned in steps (H14):
   (`INITIATIVE_TIMING=v2`, v1 included): after a declined initiative or a negative reaction nothing flexible for that
   person for 3 hours, after one ignored soon after it was given for 1 hour (in a room, a turn and the clock); a client's
   `busy` on a presence holds what is flexible on every channel (not in a turn: they are talking to the agent); a client's
-  `talking` in a place holds the opening for 90 seconds (several people named on a voice impulse describe the room, not a
-  conversation); an arrival held for a busy person or a conversation stays owed (the next impulse there is still the
+  `talking` in a place, with two or more people there, holds every flexible initiative there — the opening included —
+  for 90 seconds from the last one (several people named on a voice impulse describe the room, not a conversation); an arrival held for a busy person or a conversation stays owed (the next impulse there is still the
   arrival); v1's outcomes given with others (after an opening) are learnt apart from alone, and where they are usually
   let go the opening waits for the person alone. A time the person chose goes anyway; every hold logged with its reason
-  (`features.moment`; in shadow beside v0).
+  (`features.moment`; in shadow beside v0). The exact rules (the daily limit against the last chance, how `busy` ends,
+  when the pause starts…): `API.md` §4b, "Timing rules in detail".
 - Measured on a dev set of **timelines** (events, presences, turns) with gold acceptable windows and a penalty for
   needless interruptions; observed on Kinox.
 
@@ -177,7 +178,8 @@ reminder (`go_to`).
 - The **clock reads live presences** (today the `presences` table is written and never read): at a timed reminder's
   minute, a live room presence makes voice the first channel.
 - **Pace**: at most one spontaneous announcement per person every **30 minutes** (on trial, to be corrected from
-  outcomes); none while the platform says the person is talking with someone; quiet hours apply to voice too, except a
+  outcomes); none while the platform says people there are talking with each other (built in v2: `talking`, 90 seconds,
+  with two or more people in the place); quiet hours apply to voice too, except a
   timed reminder (asked for that moment).
 
 **6. Saying it and hearing the answer.**

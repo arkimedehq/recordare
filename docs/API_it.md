@@ -663,7 +663,7 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 > - **Impulso di presenza** `POST api/v1/presence {person?: {identity}, channel: voice | camera | panel | chat,
 >   confidence? (0–1, default 1), ttlSeconds? (default 120, al massimo 3600: una presenza più lunga si rinnova), place?, left?, busy?, talking?}` (tempo v2, F6: `busy` — la
 >   persona è occupata, una chiamata, una riunione, non disturbare: niente di flessibile su nessun canale finché la presenza
->   finisce o `busy: false`; `talking` — nel luogo si sta parlando adesso: un'apertura aspetta una pausa) (scope `ingest`, l'header dell'utente;
+>   finisce o `busy: false`; `talking` — nel luogo si sta parlando adesso: ciò che è flessibile, apertura compresa, aspetta una pausa; dettagli sotto, "Regole del timing in dettaglio") (scope `ingest`, l'header dell'utente;
 >   `X-Recordare-Now` con `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: la persona risolta in questa memoria
 >   (un'identità come nell'ingest; nessuna: il titolare di una memoria personale; un'identità sconosciuta non crea nessuno),
 >   l'unica iniziativa da consegnare adesso (segnata `offered`, `channel` voice / panel / chat — riportarne poi l'esito),
@@ -735,6 +735,48 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 >   spinta con `channel: voice`; in una memoria di entità ciò che è per una persona è spinto solo così, o con `messaging`
 >   quando un client lo ha dichiarato e la persona ha un indirizzo — mai sui suoi canali condivisi; altrimenti come prima.
 
+> **Regole del timing in dettaglio** (2026-11-09: le domande rimaste aperte all'autore cieco di
+> `dataset_holdout_timing`, con la risposta presa dal servizio così com'è costruito):
+> - **Il limite giornaliero e l'ultima occasione.** Il limite (`INITIATIVE_DAILY_LIMIT`, 3 per persona) si controlla
+>   quando un intento diventa un'iniziativa, contando le iniziative di quella persona dovute in quel giorno locale. Un
+>   intento oltre il limite resta com'è e si riprova il giorno locale dopo; se prima finisce la sua finestra, decade —
+>   anche una richiesta flessibile dovuta, perché l'ultima occasione è dell'orologio e l'orologio decide solo le
+>   iniziative che esistono. Una volta creata l'iniziativa, il limite non vale più: quello che la persona ha già ricevuto
+>   oggi abbassa solo la sua p (÷ (1 + n)), e una dovuta parte comunque all'ultima occasione.
+> - **Promemoria a orario e limite.** Un orario scelto dalla persona (una richiesta o promessa a orario) non viene mai
+>   trattenuto dal limite, ma conta: dopo di esso, quel giorno scattano meno iniziative flessibili.
+> - **L'ultima occasione e le ore di quiete.** Per l'orologio una finestra finisce al primo tra `expiresAt` e l'inizio
+>   delle prossime ore di quiete (`quietFrom`). L'ultima occasione si apre due ore prima di quella fine — le 20:00 con la
+>   quiete dalle 22:00 — al primo giro dell'orologio dentro quelle due ore (l'orologio gira ogni ora).
+> - **`busy`.** Appartiene alla presenza con cui è arrivato, qualunque canale o luogo: finché una presenza viva della
+>   persona è occupata (anche una `home`), non le arriva niente di flessibile — né dall'orologio, né da un impulso di
+>   presenza su qualsiasi canale o luogo; un turno sì. Un impulso successivo senza `busy` non lo toglie. Lo chiudono solo:
+>   `busy: false` (su qualsiasi canale o luogo: chiude tutte le sue presenze occupate), `left: true`, o la scadenza della
+>   presenza occupata. Una richiesta o promessa a orario parte comunque.
+> - **Un arrivo trattenuto più volte.** Un arrivo trattenuto per `busy` o per una conversazione segna la nuova presenza,
+>   e il prossimo impulso in quel luogo è di nuovo un arrivo — trattenuto di nuovo finché il motivo vale, tutte le volte
+>   che serve, finché la presenza resta viva (quando scade, il prossimo impulso è comunque un arrivo). La pausa dopo un
+>   rifiuto e la compagnia imparata dagli esiti trattengono il momento ma non tengono dovuto l'arrivo.
+> - **La pausa dopo un rifiuto.** Si conta dal momento dell'esito (`outcomeAt`: il report del client o la chiusura fatta
+>   dal servizio), per quella persona, anche nel turno:
+>   - rifiutata, o reazione negativa: 3 ore (`INITIATIVE_COOLDOWN_DECLINED_MINUTES`);
+>   - ignorata: 1 ora (`INITIATIVE_COOLDOWN_IGNORED_MINUTES`), e solo se quell'iniziativa era stata data entro il doppio
+>     di quel tempo (2 ore) prima di adesso. Un'ignorata chiusa alla scadenza della finestra, molto dopo averla data, non
+>     trattiene niente.
+> - **`talking`.** Con il v2, un `talking: true` in un luogo trattiene lì ogni iniziativa flessibile — apertura compresa
+>   — per 90 secondi dall'ultimo (`INITIATIVE_CONVERSATION_GAP_SECONDS`), e solo con due o più persone nel luogo (una
+>   persona al telefono è `busy`, non `talking`). Una richiesta o promessa a orario parte comunque (come apertura, se ci
+>   sono altri). Il v0 e il v1 ignorano `talking`.
+> - **Piani detti prima del loro giorno.** Un piano è detto in anticipo quando almeno un messaggio da cui viene è stato
+>   inviato prima del suo inizio. Un piano senza messaggio di origine (scritto da `log_episode` o importato) conta come
+>   detto in anticipo. Un piano detto solo il giorno stesso o dopo non viene chiesto.
+> - **Messaggi al titolare.** In una memoria personale, ciò che è per il titolare (`for: null`) non ha bisogno di un
+>   indirizzo: un client che ha dichiarato `messaging` (`always`) raggiunge il proprio utente, l'account. Un indirizzo
+>   (`for.addresses`) serve solo per una persona in una memoria di entità.
+> - **Una presenza da telecamera.** Un impulso `camera` è una presenza in una stanza: ciò che dà si dice a voce
+>   (`channel: voice`), sul punto voce del luogo, che sceglie il client. Un client senza un punto voce lì manda invece
+>   `home` (registrata, niente offerto).
+
 
 La memoria dell'agente lavora da sola e **spinge**: un'*iniziativa* è qualcosa che ha deciso di dire, chiedere, cercare o
 fare, per una persona, da quando e fino a quando. Le sue fonti: un piano oltre la sua data senza esito raccontato diventa un `ask` due giorni
@@ -758,9 +800,11 @@ l'agente ospite, che lo scopre con i propri strumenti — il web, la stanza — 
 risposta come fonte appresa o come percezione (D53: le fonti esterne passano sempre dall'agente). Ogni fonte arma un
 solo intento, una volta; scatta quando è dovuto, dopo le **ore di quiete** della memoria (`quietFrom` / `quietTo`,
 locali, default 22–8) e nel **limite giornaliero** per persona (`INITIATIVE_DAILY_LIMIT`, 3). **Quando consegnare lo
-decide l'ospite**: il momento migliore è quando c'è qualcuno che può rispondere — la persona a cui è destinata (`for`),
-oppure chiunque quando è destinata al titolare di una memoria di entità; l'ospite conosce la presenza (una chat aperta
-ora, una voce nella stanza, qualcuno al pannello). Se nessuno arriva prima di `expiresAt`, decade in silenzio.
+decide Recordare** (D55, sopra; questa prima versione lo lasciava all'ospite): l'orologio spinge su un canale che
+raggiunge sempre la persona, un impulso di presenza o un turno dà ciò che è dovuto a chi c'è — la persona a cui è
+destinata (`for`), oppure chiunque quando è destinata al titolare di una memoria di entità. L'ospite segnala la presenza
+(una chat aperta ora, una voce nella stanza, qualcuno al pannello), consegna ciò che riceve e riporta l'esito. Se nessuno
+arriva prima di `expiresAt`, decade in silenzio.
 
 In balanced e full il modello formula ogni iniziativa dovuta come la direbbe l'agente e le dà un `worth` (0–1) e le ore
 locali in cui dirla sarebbe naturale (`initiative.v3`, D55 F2b: almeno tre ore, altrimenti nessuna — il tempo

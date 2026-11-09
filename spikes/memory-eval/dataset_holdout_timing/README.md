@@ -27,3 +27,8 @@ except for timed reminders and presence-triggered deliveries, whose moment the t
 Scored per item as the dev set (`in_window`, `outside`, `wrong_trigger`, `wrong_channel`, `no_opening`, `lapsed`,
 `rightly_silent`, `wrong_delivery`) and per event check. Fictional content. `python build.py` writes `timelines.json`;
 `python check.py` verifies it.
+
+Known limit of the runner (2026-11-09): `timing_eval.py` creates every memory without a locale, so davide's English
+contents run with the default one. Timing does not read the locale (only the service's own sentences do), so the
+scores are unaffected. The doc ambiguities the author listed are answered in `docs/API.md` §4b, "Timing rules in
+detail" (written after the runs, from the service as built; no gold changed).

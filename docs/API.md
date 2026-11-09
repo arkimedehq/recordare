@@ -647,7 +647,8 @@ private or public again (§2) has its days written again.
 > - **Presence impulse** `POST api/v1/presence {person?: {identity}, channel: voice | camera | panel | chat, confidence?
 >   (0–1, default 1), ttlSeconds? (default 120, at most 3600: renew a longer presence), place?, left?, busy?, talking?}` (timing v2, F6: `busy` — the person is
 >   occupied, a call, a meeting, do-not-disturb: nothing flexible on any channel until the presence ends or `busy: false`;
->   `talking` — people in the place are talking now: an opening waits for a pause) (scope `ingest`, the user header; `X-Recordare-Now` with
+>   `talking` — people in the place are talking now: what is flexible, the opening included, waits for a pause; details
+>   below, "Timing rules in detail") (scope `ingest`, the user header; `X-Recordare-Now` with
 >   `ALLOW_CLOCK_OVERRIDE`) → `{person, initiative, askWho}`: the person resolved in this memory (an identity as in ingest;
 >   none: the holder of a personal memory; an unknown identity creates nobody), the one initiative to deliver now (marked
 >   `offered`, `channel` voice / panel / chat — report its outcome afterwards), or, in an entity memory with nobody
@@ -715,6 +716,47 @@ private or public again (§2) has its days written again.
 >   `channel: voice`; in an entity memory what is for one person is pushed only so, or by `messaging` when a client
 >   declared it and the person has an address — never on its shared channels; otherwise as before.
 
+> **Timing rules in detail** (2026-11-09: the questions the blind author of `dataset_holdout_timing` found open,
+> answered from the service as built):
+> - **The daily limit and the last chance.** The limit (`INITIATIVE_DAILY_LIMIT`, 3 per person) is checked when an
+>   intent becomes an initiative, counting that person's initiatives due on that local day. An intent over the limit
+>   stays as it is and is tried again on the next local day; if its window ends first it lapses — an owed flexible
+>   request too, because the last chance is the clock's and the clock decides only initiatives that exist. Once an
+>   initiative exists the limit no longer applies: what the person already got today only lowers its p (÷ (1 + n)), and an
+>   owed one still goes at its last chance.
+> - **Timed reminders and the limit.** A time the person chose (a timed request or promise) is never held by the limit,
+>   but it counts toward it: after it, fewer flexible ones fire that day.
+> - **The last chance and the quiet hours.** For the clock a window ends at the earlier of `expiresAt` and the start of
+>   the next quiet hours (`quietFrom`). The last chance opens two hours before that end — 20:00 with quiet hours from
+>   22:00 — at the first sweep inside those two hours (the clock sweeps hourly).
+> - **`busy`.** It belongs to the presence it came on, whatever its channel or place: while any live presence of the
+>   person is busy (a `home` one too), nothing flexible reaches them — not the clock, not a presence impulse on any
+>   channel or place; a turn still does. A later impulse without `busy` does not clear it. Only these end it: `busy: false`
+>   (on any channel or place: it ends every busy presence of theirs), `left: true`, or the busy presence's expiry. A timed
+>   request or promise goes anyway.
+> - **An arrival held more than once.** An arrival held for `busy` or a conversation marks the new presence, and the
+>   next impulse in that place is again an arrival — held again while the reason holds, as many times as needed, as long
+>   as the presence stays live (once it lapses, the next impulse is an arrival anyway). The pause after a refusal and
+>   company learnt from outcomes hold the moment but do not keep the arrival owed.
+> - **The pause after a refusal.** Counted from the outcome's time (`outcomeAt`: the client's report, or the service's
+>   own settlement), for that person, in the turn too:
+>   - declined, or a negative reaction: 3 hours (`INITIATIVE_COOLDOWN_DECLINED_MINUTES`);
+>   - ignored: 1 hour (`INITIATIVE_COOLDOWN_IGNORED_MINUTES`), and only when that initiative was given within twice that
+>     time (2 hours) before now. An ignore settled when its window lapsed, long after it was given, holds nothing.
+> - **`talking`.** With v2, a `talking: true` in a place holds every flexible initiative there — the opening included —
+>   for 90 seconds from the last one (`INITIATIVE_CONVERSATION_GAP_SECONDS`), and only when two or more people are in the
+>   place (one person on the phone is `busy`, not `talking`). A timed request or promise goes anyway (as the opening,
+>   when others are there). v0 and v1 ignore `talking`.
+> - **Plans told ahead of their day.** A plan is told ahead when at least one message it came from was sent before its
+>   start. A plan with no source message (written by `log_episode` or imported) counts as told ahead. A plan told only on
+>   or after its day is not asked about.
+> - **Messaging to the holder.** In a personal memory, what is for the holder (`for: null`) needs no address: a client
+>   that declared `messaging` (`always`) reaches its own user, the account. An address (`for.addresses`) is needed only
+>   for a person in an entity memory.
+> - **A camera presence.** A `camera` impulse is a room presence: what it gives is said by voice (`channel: voice`),
+>   on the place's voice point, which the client picks. A client with no voice point there sends `home` instead
+>   (recorded, nothing offered).
+
 
 The agent's memory works on its own and **pushes**: an *initiative* is something it decided to say, ask, look up or do,
 for a person, from when and until when. Its sources: a plan past its date with no outcome told becomes an `ask` two days
@@ -737,10 +779,11 @@ when it is about someone else; a question the agent holds about the world (a tho
 outcome nor my own doings) a `lookup` for the host agent, which finds it out with its own tools — the web, the room — and brings the answer back as a learned source
 or a perception (D53: external sources always through the agent). Each source arms one intent, once; it fires when
 due, after the memory's **quiet hours** (`quietFrom` / `quietTo`, local, default 22–8) and within the **daily limit** per
-person (`INITIATIVE_DAILY_LIMIT`, 3). **When to deliver is the host's call**: the best moment is when someone who can
-answer is there — the person it is for (`for`), or anyone when it is for the holder of an entity memory; the host knows
-presence (a chat open now, a voice in the room, someone at the panel). Nobody comes before `expiresAt`: it lapses,
-quietly.
+person (`INITIATIVE_DAILY_LIMIT`, 3). **When to deliver is Recordare's call** (D55, above; this first cut left it to
+the host): the clock pushes on a channel that always reaches the person, a presence impulse or a turn gives what is due
+to who is there — the person it is for (`for`), or anyone when it is for the holder of an entity memory. The host tells
+presence (a chat open now, a voice in the room, someone at the panel), delivers what it is given and reports the
+outcome. Nobody comes before `expiresAt`: it lapses, quietly.
 
 Two legs carry the same object:
 - **Webhooks** (admin, per client: `POST api/v1/admin/clients/{id}/webhooks {url, token?, authentication?: {scheme,
