@@ -6,6 +6,20 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Perceptions** (WORK_PLAN 8.12e, D56, `API.md` §4c): `POST api/v1/perceptions` and the client library's `perceive` — what
+  the agent's senses noticed (a camera, a microphone, a sensor, a photo), told in words by the client; Recordare never
+  receives an image, a sound or a face. Remembered without the model as an episode of the new origin `perceived` (seen,
+  not told), with who was recognised; a repeat within `PERCEPTION_DEDUP_MINUTES` (10) is one; it fades after
+  `keepDays` / the memory's `perceptionKeepDays` (console) / `PERCEPTION_KEEP_DAYS` (14), forgotten by the nightly
+  consolidation — what a person said about it and the memory's own patterns stay. Search marks it `seen`, the memory
+  context says `seen by me`, the diary shows its sensor and when it fades. Migration `Perceptions1791330000000`.
+  Dev set `dataset_dev_perception`: 8 / 8.
+
+### Fixed
+- A date known to the minute is described with its local time (it was shown as a day only, and the agent took the hour
+  from a UTC instant).
+
 ## [0.12.1] — 2026-11-09
 
 **A reminder owed on its last day is said even when the day's share is spent**, and the timing rules are written out

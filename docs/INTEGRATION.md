@@ -208,6 +208,12 @@ known participant who shows up under a new name on the channel keeps their conta
 > on `data.channel`), takes the other events as information, and recognises a reminder it scheduled itself by `source`. The
 > library's `InitiativeInbox` does (c)–(e) in one piece: you only write how you deliver one. The steps below still hold for push delivery.
 
+> **Perceptions** (8.12e, `API.md` §4c, optional): when your agent's senses notice something worth remembering — a person
+> or a stranger at a camera, a sensor going off, a photo the agent looked at — describe it in words and send
+> `client.perceive(user, {text, sensor, place?, people?, keepDays?})`. Your agent does the seeing; Recordare never
+> receives the image. Send events, not a stream (a repeat within minutes is answered as `duplicate`); telling someone at
+> once stays your job. Nothing else changes if you send none.
+
 > **Channels and presence by place** (D55 §5b–§5c, 2026-11-05): an initiative carries `channels` — the acceptable ones in
 > order (`voice`, `messaging` only for a request or a promise, `chat`) — deliver on the first that reaches the person
 > **now** on your side, and report the channel you used; `for.addresses` tells where to find the person (their verified

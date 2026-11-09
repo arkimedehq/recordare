@@ -35,7 +35,7 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 
 | Column | Type | Notes |
 |---|---|---|
-| `origin` | enum `holder_lived \| holder_told \| assistant_stated \| reflected` | Who lived / said it (D28, D30, H3). `holder_told` = what the holder reports about others, and messages written by others inside the holder's imports. `reflected` (D53, migration `Thoughts1791200000000`) = what the memory concluded by itself — the recurring patterns and the agent's own thoughts — never lived or said by anyone. `twin_experienced` is added with the twin phases |
+| `origin` | enum `holder_lived \| holder_told \| assistant_stated \| reflected \| perceived` | Who lived / said it (D28, D30, H3). `holder_told` = what the holder reports about others, and messages written by others inside the holder's imports. `reflected` (D53, migration `Thoughts1791200000000`) = what the memory concluded by itself — the recurring patterns and the agent's own thoughts — never lived or said by anyone. `perceived` (8.12e, migration `Perceptions1791330000000`) = noticed by the agent's own senses (a camera, a microphone, a sensor), told in words by the client — seen, not told. `twin_experienced` is added with the twin phases |
 | `stance` | enum `stated \| inferred` | Inferred items stay low-confidence / pending (D29) |
 | `author_role` | enum `holder \| assistant \| other \| tool` | Who wrote the evidence. Items whose only evidence comes from `other` / `tool` messages (group members, tool outputs, imported mail bodies) are extraction context, never `stance: stated`: at most `inferred` (facts: `pending`) — poisoning guard; recall labels them. An assistant reply after a non-Recordare tool's output in its turn counts as `tool` (turn taint, WORK_PLAN 5.7; origin `assistant_stated`) |
 | `confidence` | real 0–1 | |
@@ -595,6 +595,23 @@ learned on its own, or one the extraction left out, gets a code-written episode 
 locale not listed; tag `learned`, author `holder` when the self gave it, `other` otherwise, the provider in
 `episode_people`). `providedBy` by name resolves with the `ContactBook` (a new contact when unknown; ambiguous →
 `someone`).
+
+## Perceptions (WORK_PLAN 8.12e) — built 2026-11-09 (migration `Perceptions1791330000000`)
+
+What the agent's senses noticed, described by the client (API.md §4c): each is a raw-log message (a `perception`
+conversation per local day, `author_kind = own`, marked extracted by an `extraction_runs` row with model `perception`,
+`prompt_version` `perception.v1`, no LLM call) and one episode (`origin = perceived`, `date_precision = minute`, `tags`
+`{perception, <sensor>}`, importance 4; the subject is the one person recognised, else the memory itself; `audience` =
+the memory + everyone recognised; `confidence` = the lowest recognition score).
+
+### perceptions
+
+`id, memory_id → memories (cascade), message_id → messages (cascade), episode_id → episodes (set null), sensor
+('camera' | 'microphone' | 'sensor' | 'photo'), place, seen_at, expires_at (null = kept), created_at`; indexes on
+`(memory_id, seen_at)` and `(memory_id, expires_at)` where set. `memories.perception_keep_days` (smallint, null = the
+installation's `PERCEPTION_KEEP_DAYS`, 0 = kept). Fading (`fadePerceptions`, in the consolidation): the expired rows'
+messages and episodes are deleted with what only they supported (`forgetting.ts`); notes of origin `reflected` drawn
+from them stay.
 
 ## Engine bookkeeping
 

@@ -42,6 +42,8 @@ export interface EpisodeItem {
   /** This row replaced an earlier, wrong version (see the detail's history). */
   corrected: boolean;
   recordedAt: string;
+  /** Seen by the agent's senses (8.12e): by what, and when it fades. */
+  perception?: { sensor: string; expiresAt: string | null };
 }
 
 export interface EpisodeQuery {
@@ -97,6 +99,11 @@ const VISIBLE = `e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplica
 
 /** Keyset cursor: the last item's (occurred_at or recorded_at, id). Opaque to clients. */
 const encodeCursor = (at: string, id: string): string => Buffer.from(`${at}|${id}`).toString('base64url');
+/** The perception an episode remembers (8.12e), for the diary. */
+function perceptionOf(p: { sensor: string; expires_at: Date | null } | undefined): { perception?: { sensor: string; expiresAt: string | null } } {
+  return p ? { perception: { sensor: p.sensor, expiresAt: p.expires_at?.toISOString() ?? null } } : {};
+}
+
 function decodeCursor(cursor: string): { at: string; id: string } | null {
   const [at, id] = Buffer.from(cursor, 'base64url').toString().split('|');
   return at && id && !Number.isNaN(Date.parse(at)) && /^[0-9a-f-]{36}$/.test(id) ? { at, id } : null;
@@ -131,6 +138,8 @@ export class ReadService {
     const ids = rows.map((r) => r.id);
     const people: Array<{ episode_id: string; alias: string }> = ids.length
       ? await this.db.query(`SELECT episode_id, alias FROM episode_people WHERE episode_id = ANY($1)`, [ids]) : [];
+    const seen: Array<{ episode_id: string; sensor: string; expires_at: Date | null }> = rows.some((r) => r.origin === 'perceived')
+      ? await this.db.query(`SELECT episode_id, sensor, expires_at FROM perceptions WHERE episode_id = ANY($1)`, [ids]) : [];
     const day = (d: Date | null) => (d ? localDate(d, o.tz) : null);
     return rows.map((r) => {
       const planStatus = this.status(r, o.tz, now);
@@ -145,6 +154,7 @@ export class ReadService {
         origin: r.origin, authorRole: r.author_role, inferred: r.stance === 'inferred', corrected: !!r.corrects,
         recordedAt: (r.recorded_at as Date).toISOString(),
         ...mark(r.private_by),
+        ...perceptionOf(seen.find((s) => s.episode_id === r.id)),
       };
     });
   }

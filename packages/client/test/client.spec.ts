@@ -64,6 +64,14 @@ describe('RecordareClient', () => {
     expect(seen[1]).toMatchObject({ method: 'POST', path: '/api/v1/initiatives/i1/outcome', body: { status: 'said', channel: 'voice', reaction: 'positive' } });
   });
 
+  it('sends a perception (8.12e)', async () => {
+    reply = () => ({ status: 201, body: { episodeId: 'e1', duplicate: false, people: [], expiresAt: null } });
+    const res = await client().perceive('u1', { text: 'someone at the door', sensor: 'camera', place: 'door', keepDays: 30 });
+    expect(res).toEqual({ episodeId: 'e1', duplicate: false, people: [], expiresAt: null });
+    expect(seen[0]).toMatchObject({ method: 'POST', path: '/api/v1/perceptions', body: { text: 'someone at the door', sensor: 'camera', place: 'door', keepDays: 30 } });
+    expect(seen[0]?.headers).toMatchObject({ 'x-recordare-user': 'u1' });
+  });
+
   it('asks for the self card in the memory context and reads the cards', async () => {
     reply = () => ({ status: 200, body: { block: null, items: 0 } });
     await client().context('u1', 'chat-1', 'Che macchina ho?', { card: true });

@@ -926,6 +926,23 @@ does, to become autonomous. Refines D53, whose "when to deliver is the host's ca
   questions to people, dev sets (timelines, a growing household); F3 clients (Arkimede first); F4 learning from
   outcomes; F5 voiceprint / face and voice announce in Arkimede (client work); F6 timing v2, the moment's context.
 
+### D56 — Perceptions: the client sees and describes; seen, not told; they fade (maintainer's decision, 2026-11-09)
+WORK_PLAN 8.12e, `API.md` §4c. Recordare stable and Arkimede integrated: the perception part closed on Recordare's side,
+generic for any client.
+- **Who describes**: the client — its own vision or sensor model — in words; Recordare never receives an image, a sound
+  or a face (as for voices and faces: who was recognised, never the raw data).
+- **How it arrives**: `POST api/v1/perceptions` (text, when, place, sensor, people recognised, `keepDays`, private),
+  not ingest: simpler for clients, and it skips the extraction.
+- **What is kept**: one episode written without the model (the description already is the memory; no fact or note),
+  of a new origin **`perceived`** — reality monitoring: seen, apart from told (`holder_told`) and thought (`reflected`);
+  a raw-log message behind it, so privacy (D52) and forgetting work as for anything else.
+- **Fading**: `keepDays` → memory setting → `PERCEPTION_KEEP_DAYS` (14; 0 = kept); a nightly pass without the model
+  forgets the expired ones; what a person said about the event stays (own evidence), and so do the memory's own
+  conclusions (patterns, thoughts).
+- **Once**: the same thing by the same sensor in the same place within 10 minutes is one; clients send events, not streams.
+- **Not an initiative source**: telling at once (a stranger at the door) is the client's job (Arkimede's Home Assistant
+  flows); the memory is for later.
+
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 decided 2026-10-12 with WORK_PLAN 5.4). Open work is tracked

@@ -47,7 +47,7 @@ export interface EpisodeView {
   when: string;
   planStatus?: 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
   rescheduledTo?: string;
-  origin: 'holder_lived' | 'holder_told' | 'assistant_stated';
+  origin: 'holder_lived' | 'holder_told' | 'assistant_stated' | 'reflected' | 'perceived';
   authorRole: 'holder' | 'assistant' | 'other' | 'tool';
   /** Whose memory it is: the self (first person), a contact, someone, or undecided between candidates (D50). */
   subject: SubjectView;
@@ -57,6 +57,9 @@ export interface EpisodeView {
   /** Told by speech heard in the room by an always-listening device (WORK_PLAN 6.5): not said to me, and its speaker may
    * be misrecognised — what it says of me may be someone else's. */
   heard?: true;
+  /** Noticed by the agent's own senses (a camera, a microphone, a sensor — WORK_PLAN 8.12e): seen, not told; who was
+   * recognised in it may be wrong, and it fades after a while. */
+  seen?: true;
   people: string[];
   feelings: string[];
   opinion?: string;
@@ -372,6 +375,7 @@ export class EpisodeSearchService {
           ? { claimedBy: [...new Set(ev.filter((e) => e.role === 'other' || e.role === 'tool').map((e) => e.author ?? '?'))] } : {}),
         inferred: r.stance === 'inferred',
         ...(ev.length && ev.every((e) => e.heard) ? { heard: true as const } : {}),
+        ...(r.origin === 'perceived' ? { seen: true as const } : {}),
         people: people.filter((p) => p.episode_id === r.id).map((p) => p.alias),
         feelings: r.feelings, ...(r.opinion ? { opinion: r.opinion } : {}),
         source: { conversation: ev[0]?.external_id ?? '', messageIds: ev.map((e) => e.message_id), at: ev[0]?.sent_at.toISOString() ?? '' },

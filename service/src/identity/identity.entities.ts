@@ -46,6 +46,8 @@ export class Memory {
   /** The memory's quiet hours, local (D53, 8.12c). */
   @Column({ name: 'quiet_from', type: 'smallint', default: 22 }) quietFrom!: number;
   @Column({ name: 'quiet_to', type: 'smallint', default: 8 }) quietTo!: number;
+  /** Days a perception is kept before it fades (8.12e); null: the installation's `PERCEPTION_KEEP_DAYS`; 0: kept. */
+  @Column({ name: 'perception_keep_days', type: 'smallint', nullable: true }) perceptionKeepDays!: number | null;
   @Column({ type: 'enum', enumName: 'memory_mode', enum: MEMORY_MODES, default: 'personal' }) mode!: MemoryMode;
   @Column({ type: 'enum', enumName: 'memory_gender', enum: MEMORY_GENDERS, default: 'masculine' }) gender!: MemoryGender;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;

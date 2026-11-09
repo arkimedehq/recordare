@@ -838,6 +838,48 @@ giorno dopo. L'esito viene rimandato come `initiative.updated`; una ricerca ripo
 Telemetria: `initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Misurato su `dataset_dev_initiatives`
 (RESULTS.md): 11 su 14 in tre run, nessuna iniziativa falsa, nessun promemoria non richiesto, ognuna nel suo giorno e per la sua persona.
 
+## 4c. Percezioni — ciò che i sensi dell'agente hanno notato (WORK_PLAN 8.12e) — costruite il 2026-11-09
+
+`POST api/v1/perceptions` (scope `ingest`, l'header dell'utente; una chiave di client — la chiave admin è rifiutata;
+`X-Recordare-Now` con `ALLOW_CLOCK_OVERRIDE`):
+
+```json
+{ "text": "una persona che non conosco ha suonato il campanello e ha lasciato un volantino", "at": "2026-10-13T10:20:00+02:00",
+  "place": "ingresso", "sensor": "camera",
+  "people": [{ "identity": { "channel": "face", "externalId": "viola-face" }, "confidence": 0.9 }],
+  "keepDays": 30, "private": false }
+```
+
+→ `201 {episodeId, duplicate, people: [{personId, name}], expiresAt}`.
+
+- **Il client vede e descrive; Recordare non riceve mai un'immagine, un suono o un volto** — il testo (≤ 2000 caratteri,
+  come lo racconterebbe l'agente), quando (`at`, default adesso), dove (`place`), con cosa (`sensor`: `camera`,
+  `microphone`, `sensor`, `photo`) e chi è stato riconosciuto (`people`: identità come nell'ingest o in un impulso di
+  presenza, risolte in questa memoria; un'identità sconosciuta non nomina nessuno — si scrive "qualcuno" nel testo).
+- **Ricordata come vista, senza il modello**: un messaggio del log grezzo (la conversazione del giorno con sorgente
+  `perception`, dell'agente stesso, segnato come estratto da una run senza modello — nessuna estrazione lo rilegge) e un
+  episodio di origine **`perceived`** ("l'ho visto io", distinto da `holder_told` e `reflected`), datato al minuto, con il
+  suo luogo; è della persona quando ne è riconosciuta una sola (della memoria stessa altrimenti), e tutti i riconosciuti
+  sono tra le sue persone e nella sua audience. Non se ne ricavano fatti né note: ciò che una persona ne dice dopo è un
+  ricordo suo, con la sua evidenza.
+- **Una volta sola**: lo stesso testo (similarità trigrammi ≥ 0,6) dallo stesso sensore nello stesso luogo entro
+  `PERCEPTION_DEDUP_MINUTES` (10) risponde di nuovo la prima con `duplicate: true`. Mandare eventi, non uno stream.
+- **Svanisce**: `expiresAt` = visto + `keepDays` (quello della richiesta, 1–3650; altrimenti il `perceptionKeepDays`
+  della memoria, admin `PATCH api/v1/admin/memories/{id}` o la console; altrimenti `PERCEPTION_KEEP_DAYS`, 14; 0 =
+  conservata). Il consolidamento notturno (e `POST api/v1/admin/memories/{id}/consolidate`, voce `faded` del report)
+  dimentica quelle scadute prima di riscrivere il diario: i loro messaggi ed episodi se ne vanno con ciò che solo loro
+  sostenevano (`forgetting.ts`), i diari costruiti su di esse vengono riscritti. Ciò che una persona ha detto
+  sull'evento resta; e così le conclusioni della memoria stessa tratte da esso — uno schema ricorrente, un pensiero
+  (origine `reflected`).
+- **Privata** come ogni messaggio (D52, `private: true`): detta solo al titolare di una memoria personale; in una
+  memoria di entità a nessuno (la sa l'agente).
+- **Recall**: `search_episodes` segna un elemento così `seen: true` (raccontarlo come visto, non come detto; chi è stato
+  riconosciuto può essere sbagliato); il contesto di memoria lo etichetta `(seen by me; who I recognised may be wrong)`;
+  il diario (`GET episodes`) dà `origin: perceived` e `perception: {sensor, expiresAt}`.
+- **Non è una fonte di iniziative**: avvisare subito qualcuno (uno sconosciuto alla porta) è compito del client; la
+  memoria serve per dopo ("chi è passato oggi?", "quando è uscita Viola?").
+- Libreria client: `perceive(user, perception)`.
+
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (vedi il suo README): `RecordareClient` (`me`, `updateMe`, `ingest`

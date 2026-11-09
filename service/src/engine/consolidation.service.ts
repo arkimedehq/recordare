@@ -35,6 +35,7 @@ import { resolveNearDuplicates } from './episode-resolver';
 import { expireClarifications } from './clarifications';
 import { subjectLabel } from './subjects';
 import { vectorParam } from '../db/pgvector';
+import { fadePerceptions } from '../perception/perception.service';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
@@ -52,7 +53,9 @@ export interface ConsolidationReport { days: number; months: number; superseded:
   /** The agent's own thoughts written (new or revised) and retired by the thought pass (D53). */
   thoughts: number;
   /** Digests still naming the self in the third person (counts only, like the extraction's). */
-  leaks: number }
+  leaks: number;
+  /** Perceptions past their time forgotten (8.12e). */
+  faded: number }
 
 /** Multi-day items are listed on each of their days, up to this many. */
 const MAX_SPAN_DAYS = 14;
@@ -74,7 +77,7 @@ export class ConsolidationService {
 
   /** Consolidate every complete day (in the memory's timezone) before `now`. Idempotent; one run per memory at a time. */
   async consolidateMemory(memoryId: string, now: Date): Promise<ConsolidationReport> {
-    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0, patterns: 0, thoughts: 0 };
+    const report: ConsolidationReport = { days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0, patterns: 0, thoughts: 0, faded: 0 };
     const runner = this.db.createQueryRunner();
     await runner.connect();
     try {
@@ -105,6 +108,8 @@ export class ConsolidationService {
     const monthVersion = entity ? `${MONTH_DIGEST_VERSION}${ENTITY_DIGEST_SUFFIX}` : MONTH_DIGEST_VERSION;
     // Open clarifications nobody answered expire (D50 / 8.4; also checked on read and at extraction).
     await expireClarifications(this.db, memoryId, now);
+    // Perceptions past their time fade before the diary is written again (8.12e, no model).
+    report.faded = await fadePerceptions(this.db, memoryId, now);
     const tz: string = memory.timezone;
     const today = localDate(now, tz);
     const [run] = await this.db.query(

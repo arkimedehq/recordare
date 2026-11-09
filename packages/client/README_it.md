@@ -135,6 +135,14 @@ deliver: async (user, i) => {
 open: async (user, i, opening) => speakInRoom(user, opening),
 ```
 
+Percezioni (8.12e, `API_it.md` §4c): ciò che i sensi del tuo agente hanno notato, a parole — Recordare non riceve mai l'immagine.
+```ts
+await client.perceive(userId, { text: 'una persona che non conosco ha suonato il campanello', sensor: 'camera', place: 'ingresso',
+  people: [{ identity: { channel: 'face', externalId: faceId }, confidence: 0.9 }] }); // → { episodeId, duplicate, people, expiresAt }
+```
+Viene ricordata come vista (origine `perceived`, la ricerca la segna `seen`) e svanisce dopo `keepDays` (default: l'impostazione
+della memoria, altrimenti 14 giorni); una ripetizione entro pochi minuti torna come `duplicate`.
+
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:
 `linkCode(user)` → `{code, expiresAt}` (`RCD-XXXX-XXXX`, dieci minuti, un solo uso) — il titolare invia il codice da

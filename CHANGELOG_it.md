@@ -6,6 +6,20 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Percezioni** (WORK_PLAN 8.12e, D56, `API_it.md` §4c): `POST api/v1/perceptions` e il `perceive` della libreria client —
+  ciò che i sensi dell'agente hanno notato (una telecamera, un microfono, un sensore, una foto), raccontato a parole dal
+  client; Recordare non riceve mai un'immagine, un suono o un volto. Ricordate senza il modello come un episodio della
+  nuova origine `perceived` (visto, non detto), con chi è stato riconosciuto; una ripetizione entro
+  `PERCEPTION_DEDUP_MINUTES` (10) è una sola; svaniscono dopo `keepDays` / il `perceptionKeepDays` della memoria (console)
+  / `PERCEPTION_KEEP_DAYS` (14), dimenticate dal consolidamento notturno — ciò che una persona ne ha detto e gli schemi
+  della memoria restano. La ricerca le segna `seen`, il contesto di memoria dice `seen by me`, il diario mostra il
+  sensore e quando svaniscono. Migrazione `Perceptions1791330000000`. Dev set `dataset_dev_perception`: 8 / 8.
+
+### Corretto
+- Una data nota al minuto viene descritta con la sua ora locale (era mostrata solo come giorno, e l'agente prendeva l'ora
+  da un istante UTC).
+
 ## [0.12.1] — 2026-11-09
 
 **Un promemoria dovuto nel suo ultimo giorno viene detto anche quando la quota del giorno è esaurita**, e le regole del

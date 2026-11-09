@@ -37,7 +37,7 @@ Engine        extraction_runs ─ run_outputs   llm_calls   recall_log   forget_
 
 | Colonna | Tipo | Note |
 |---|---|---|
-| `origin` | enum `holder_lived \| holder_told \| assistant_stated \| reflected` | Chi l'ha vissuto / detto (D28, D30, H3). `holder_told` = ciò che il titolare riferisce sugli altri, e i messaggi scritti da altri all'interno degli import del titolare. `reflected` (D53, migrazione `Thoughts1791200000000`) = ciò che la memoria ha concluso da sola — i pattern ricorrenti e i pensieri propri dell'agente — mai vissuto né detto da nessuno. `twin_experienced` viene aggiunto con le fasi del twin |
+| `origin` | enum `holder_lived \| holder_told \| assistant_stated \| reflected \| perceived` | Chi l'ha vissuto / detto (D28, D30, H3). `holder_told` = ciò che il titolare riferisce sugli altri, e i messaggi scritti da altri all'interno degli import del titolare. `reflected` (D53, migrazione `Thoughts1791200000000`) = ciò che la memoria ha concluso da sola — i pattern ricorrenti e i pensieri propri dell'agente — mai vissuto né detto da nessuno. `perceived` (8.12e, migrazione `Perceptions1791330000000`) = notato dai sensi dell'agente stesso (una telecamera, un microfono, un sensore), raccontato a parole dal client — visto, non detto. `twin_experienced` viene aggiunto con le fasi del twin |
 | `stance` | enum `stated \| inferred` | Gli elementi inferiti restano a bassa confidenza / pending (D29) |
 | `author_role` | enum `holder \| assistant \| other \| tool` | Chi ha scritto l'evidenza. Gli elementi la cui unica evidenza proviene da messaggi `other` / `tool` (membri di un gruppo, output di strumenti, corpi di mail importate) sono contesto di estrazione, mai `stance: stated`: al massimo `inferred` (fatti: `pending`) — protezione contro l'avvelenamento; il recall li etichetta. Una risposta dell'assistente dopo l'output di uno strumento non di Recordare, nel suo turno, conta come `tool` (taint del turno, WORK_PLAN 5.7; origine `assistant_stated`) |
 | `confidence` | real 0–1 | |
@@ -620,6 +620,24 @@ tralasciato, riceve un episodio scritto nel codice (senza LLM, `service/src/lang
 imparato «titolo», da Paolo" nella lingua e nel genere della memoria, data da Intl, inglese per una lingua non elencata;
 tag `learned`, autore `holder` quando l'ha data il sé, `other` altrimenti, chi l'ha data in `episode_people`).
 `providedBy` per nome si risolve con la `ContactBook` (un nuovo contatto se sconosciuto; ambiguo → `someone`).
+
+## Percezioni (WORK_PLAN 8.12e) — costruite il 2026-11-09 (migrazione `Perceptions1791330000000`)
+
+Ciò che i sensi dell'agente hanno notato, descritto dal client (API_it.md §4c): ognuna è un messaggio del log grezzo
+(una conversazione `perception` per giorno locale, `author_kind = own`, segnato come estratto da una riga di
+`extraction_runs` con modello `perception`, `prompt_version` `perception.v1`, nessuna chiamata LLM) e un episodio
+(`origin = perceived`, `date_precision = minute`, `tags` `{perception, <sensore>}`, importanza 4; il soggetto è l'unica
+persona riconosciuta, altrimenti la memoria stessa; `audience` = la memoria + tutti i riconosciuti; `confidence` = il
+punteggio di riconoscimento più basso).
+
+### perceptions
+
+`id, memory_id → memories (cascade), message_id → messages (cascade), episode_id → episodes (set null), sensor
+('camera' | 'microphone' | 'sensor' | 'photo'), place, seen_at, expires_at (null = conservata), created_at`; indici su
+`(memory_id, seen_at)` e `(memory_id, expires_at)` quando valorizzato. `memories.perception_keep_days` (smallint, null =
+il `PERCEPTION_KEEP_DAYS` dell'installazione, 0 = conservata). Scadenza (`fadePerceptions`, nel consolidamento): i
+messaggi e gli episodi delle righe scadute vengono cancellati con ciò che solo loro sostenevano (`forgetting.ts`); le
+note di origine `reflected` tratte da esse restano.
 
 ## Contabilità del motore
 

@@ -74,6 +74,8 @@ export const updateMemorySchema = z.object({
   /** The memory's quiet hours, local (D53, 8.12c): no initiative is due inside them. */
   quietFrom: z.number().int().min(0).max(23).optional(),
   quietTo: z.number().int().min(0).max(23).optional(),
+  /** Days a perception is kept before it fades (8.12e); 0 = kept; null = back to the installation default. */
+  perceptionKeepDays: z.number().int().min(0).max(3_650).nullable().optional(),
 });
 
 /**

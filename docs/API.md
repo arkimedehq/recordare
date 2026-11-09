@@ -813,6 +813,47 @@ pushed back as `initiative.updated`; a look-up reported `done` retires the quest
 `initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Measured on `dataset_dev_initiatives` (RESULTS.md): 11 of
 14 in three runs, no false initiative, no unasked reminder, every one on its day and for its person.
 
+## 4c. Perceptions — what the agent's senses noticed (WORK_PLAN 8.12e) — built 2026-11-09
+
+`POST api/v1/perceptions` (scope `ingest`, the user header; a client key — the admin key is refused; `X-Recordare-Now`
+with `ALLOW_CLOCK_OVERRIDE`):
+
+```json
+{ "text": "someone I don't know rang the bell and left a leaflet", "at": "2026-10-13T10:20:00+02:00",
+  "place": "entrance", "sensor": "camera",
+  "people": [{ "identity": { "channel": "face", "externalId": "viola-face" }, "confidence": 0.9 }],
+  "keepDays": 30, "private": false }
+```
+
+→ `201 {episodeId, duplicate, people: [{personId, name}], expiresAt}`.
+
+- **The client sees and describes; Recordare never receives an image, a sound or a face** — the text (≤ 2000
+  characters, as the agent would tell it), when (`at`, default now), where (`place`), by what (`sensor`: `camera`,
+  `microphone`, `sensor`, `photo`) and who was recognised (`people`: identities as in ingest or a presence impulse,
+  resolved in this memory; an unknown identity names nobody — say "someone" in the text).
+- **Remembered as seen, without the model**: one message of the raw log (the day's conversation of source `perception`,
+  the agent's own, marked extracted by a run without a model — no extraction reads it) and one episode of origin
+  **`perceived`** ("I saw it", apart from `holder_told` and `reflected`), dated to the minute, with its place; it is the
+  person's when one person is recognised (the memory's own otherwise), and everyone recognised is in its people and its
+  audience. No fact or note is drawn from it: what a person later says about it is a memory of theirs, with its own
+  evidence.
+- **Once**: the same text (trigram similarity ≥ 0.6) by the same sensor in the same place within
+  `PERCEPTION_DEDUP_MINUTES` (10) answers the first again with `duplicate: true`. Send events, not a stream.
+- **It fades**: `expiresAt` = seen + `keepDays` (the request's, 1–3650; else the memory's `perceptionKeepDays`, admin
+  `PATCH api/v1/admin/memories/{id}` or the console; else `PERCEPTION_KEEP_DAYS`, 14; 0 = kept). The nightly
+  consolidation (and `POST api/v1/admin/memories/{id}/consolidate`, report `faded`) forgets the expired ones before the
+  diary is written again: their messages and episodes go with what only they supported (`forgetting.ts`), the digests
+  built on them are rewritten. What a person said about the event stays; so do the memory's own conclusions drawn from
+  it — a recurring pattern, a thought (origin `reflected`).
+- **Private** as any message (D52, `private: true`): told to the holder of a personal memory only; in an entity memory
+  to nobody (the agent knows it).
+- **Recall**: `search_episodes` marks such an item `seen: true` (tell it as seen, not told; who was recognised may be
+  wrong); the memory context labels it `(seen by me; who I recognised may be wrong)`; the diary (`GET episodes`) gives
+  `origin: perceived` and `perception: {sensor, expiresAt}`.
+- **Not an initiative source**: telling someone at once (a stranger at the door) is the client's job; the memory is for
+  later ("who came by today?", "when did Viola go out?").
+- Client library: `perceive(user, perception)`.
+
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (its README): `RecordareClient` (`me`, `updateMe`, `ingest` split

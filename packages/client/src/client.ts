@@ -6,7 +6,7 @@ import {
   type HolderIdentities, type IngestRequest, type IngestResult, type RoomRequest, type RoomResult, type LearnSource, type LinkCode, type LearnSourceResult, MAX_MESSAGES_PER_REQUEST, type Me, type MemorySettings,
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
-  type DeliveryChannel, type Initiative, type InitiativeOutcome, type PresenceImpulse, type PresenceResult,
+  type DeliveryChannel, type Initiative, type InitiativeOutcome, type PresenceImpulse, type PresenceResult, type Perception, type PerceptionResult,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
@@ -341,6 +341,14 @@ export class RecordareClient {
    */
   presence(user: string, impulse: PresenceImpulse): Promise<PresenceResult> {
     return this.http.request('POST', 'api/v1/presence', { user, body: impulse });
+  }
+
+  /**
+   * A perception (8.12e, needs `ingest`): something the agent's senses noticed, in words. Send events, not a stream: the
+   * same thing again in the same place within a few minutes is answered as `duplicate`.
+   */
+  perceive(user: string, perception: Perception): Promise<PerceptionResult> {
+    return this.http.request('POST', 'api/v1/perceptions', { user, body: perception });
   }
 
   settings(user: string): Promise<MemorySettings> {

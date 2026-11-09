@@ -46,6 +46,8 @@ export const episodeResponse = z.object({
   corrected: z.boolean().describe('This row replaced an earlier, wrong version (see the detail\'s history).'),
   recordedAt: z.string(),
   private: privateMark,
+  perception: z.object({ sensor: z.string(), expiresAt: z.string().nullable() }).optional()
+    .describe('Seen by the agent\'s senses (origin `perceived`, 8.12e): by what, and when it fades (null: kept).'),
 });
 
 export const episodesResponse = z.object({ items: z.array(episodeResponse), nextCursor: z.string().nullable() });

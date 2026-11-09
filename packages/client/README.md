@@ -133,6 +133,14 @@ deliver: async (user, i) => {
 open: async (user, i, opening) => speakInRoom(user, opening),
 ```
 
+Perceptions (8.12e, `API.md` §4c): what your agent's senses noticed, in words — Recordare never receives the image.
+```ts
+await client.perceive(userId, { text: 'someone I don\'t know rang the bell', sensor: 'camera', place: 'entrance',
+  people: [{ identity: { channel: 'face', externalId: faceId }, confidence: 0.9 }] }); // → { episodeId, duplicate, people, expiresAt }
+```
+It is remembered as seen (origin `perceived`, search marks it `seen`) and fades after `keepDays` (default: the memory's
+setting, else 14 days); a repeat within minutes comes back as `duplicate`.
+
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,
 expiresAt}` (`RCD-XXXX-XXXX`, ten minutes, one use) — the holder sends the code alone to the agent from that channel, in

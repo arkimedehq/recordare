@@ -2074,6 +2074,23 @@ in §5c vs v2, the holder's messaging address…): golds avoid depending on them
 Verdict: v2 generalises — every v2 rule the dev set taught holds on cases written by someone else; v0 and v1 make the
 interruptions v2 was built to avoid. Kinox (7 days in shadow, 4 decisions, none since v2): too few to compare.
 
+### Perceptions — `dataset_dev_perception` (WORK_PLAN 8.12e, 2026-11-09, DeepSeek direct, `deepseek-flash`)
+
+`perception_eval.py`: an invented entity memory (Viola, Tommaso; faces bound), six perceptions over two days posted as
+of their time (one a repeat three minutes later), one message telling what a perception was (real extraction), then a
+consolidation as of 10-15 and questions, a consolidation as of 10-30 (default keep 14 days; the smoke alarm kept 365)
+and questions again. Answers by an agent with Recordare's MCP read tools and the memory context (as `agent_eval`),
+graded by the usual judge. Not blind (written with the feature).
+
+| run | answers | checks | notes |
+|---|---|---|---|
+| 1 | 5 / 8 | 14 / 14 | q5, q8 gave 14:05 for 16:05 and q1 read the time "in UTC": a minute-precision date was described without its local time (the agent took the hour from the message's UTC instant); q6 ran out of tool rounds after the fade |
+| 2 (fix: `describe` adds the local time to the minute) | **8 / 8** | **14 / 14** | after the fade the agent no longer knows who rang (q6), still knows the van was the boiler technician's because Tommaso said so (q7), and the smoke alarm kept for a year (q8) |
+
+Checks: the repeat answered as `duplicate`, the people recognised (Viola, Tommaso; nobody for an unknown face), five
+perceived episodes after the first consolidation, one after the second (four faded). Cost ≈ 100 flash calls over the
+three runs (one aborted by the harness), a few cents.
+
 ### The model's hours — `initiative.v3` (D55 F2b, 2026-11-04, DeepSeek direct, balanced)
 
 `initiative.v3` adds to each worded initiative the local hours when saying it would be natural (`hours: [from, to]`, at

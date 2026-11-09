@@ -48,6 +48,8 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `CONSOLIDATION_SCHEDULE` | on | Nightly consolidation on its own, preceded by the extraction of messages left pending (4.1); off = only on demand (evaluations) |
 | `CONSOLIDATION_HOUR` | 3 | Local hour (person's timezone) after which the night runs |
 | `INITIATIVE_DAILY_LIMIT` | 3 | Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow |
+| `PERCEPTION_KEEP_DAYS` | 14 | Days a perception is kept before it fades (8.12e, API.md §4c); 0 = kept; a memory's `perceptionKeepDays` and a request's `keepDays` win. A first guess |
+| `PERCEPTION_DEDUP_MINUTES` | 10 | The same perception (sensor, place, words) again within these minutes is one; 0 = every one kept |
 | `WEBHOOK_ALLOW_PRIVATE` | false | Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
 | `LOG_LLM_CALLS` | on | One `llm_calls` row per call (tokens, latency; never content) |
@@ -81,6 +83,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `qualityProfile` | admin | installation default | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Language of the memories, local dates and the night |
 | `quietFrom`, `quietTo` | admin | 22, 8 | The memory's quiet hours (local): no initiative is due inside them (D53, 8.12c) |
+| `perceptionKeepDays` | admin (console) | installation default | Days a perception is kept before it fades (8.12e); 0 = kept |
 
 ## 5. Per client (admin API or console — every setting below, webhooks and channels included)
 

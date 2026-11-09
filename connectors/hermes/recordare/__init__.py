@@ -72,7 +72,8 @@ TOOLS: List[Dict[str, Any]] = [
                     "by name, someone, or undecided. Use from/to for questions about a period. mode: \"search\" = most "
                     "relevant, \"list\" = chronological in the period (overviews, counting), \"latest\" = most recent "
                     "first (\"when did I last…\"). An item marked heard was overheard in the room by a listening device, "
-                    "not said to you: tell it as heard at home; its speaker may have been misrecognised.",
+                    "not said to you: tell it as heard at home; its speaker may have been misrecognised. An item marked seen "
+                    "was noticed by your own senses (a camera, a sensor): tell it as seen, and who you recognised may be wrong.",
      "parameters": {"type": "object", "properties": {
          "query": _p("What to look for — pass the question also when listing a period"),
          "from": _p(f"Start date, {_ISO}"), "to": _p(f"End date (inclusive), {_ISO}"),
