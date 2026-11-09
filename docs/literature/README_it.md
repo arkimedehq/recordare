@@ -13,6 +13,7 @@ citarli all'esterno. Licenze del codice riutilizzabile: `../LICENSING_it.md`.
 | Scheda | Fonte | Tema |
 |---|---|---|
 | [pis-typed-intention-stores](pis-typed-intention-stores_it.md) | Zhao & Wu, arXiv:2609.01272 | Ciclo di vita di piani / intenzioni nel codice |
+| [disclosure](disclosure_it.md) | Rassegna: Recordare, privacy della memoria multi-utente, delegati, CPM (2026-11-09) | Cosa la memoria può dire a chi (H2, dopo D52) |
 | [reflection-and-initiative](reflection-and-initiative_it.md) | Rassegna: Recordare, sistemi di agenti, scienze cognitive (2026-11-01) | Pensieri, modello di sé, procedure, intenti e iniziativa (D53) |
 | [statemembench-state-tracking](statemembench-state-tracking_it.md) | Fan et al., arXiv:2608.19652 | Stato in evoluzione, anti-trappole, fatti derivati |
 | [stale-implicit-conflict](stale-implicit-conflict_it.md) | Chao et al., arXiv:2605.06527 | Invalidazione implicita, resistenza alle premesse |

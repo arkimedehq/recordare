@@ -126,6 +126,13 @@ interlocutori avversari.
 **Verdetto.** Parzialmente nuova. Il solo meccanismo non è nuovo; lo sono la combinazione specifica per il twin e
 la sua valutazione.
 
+**Aggiornamento 2026-11-09** (`docs/literature/disclosure_it.md`): più stretta. EP-Mem (arXiv:2609.35233) ora copre
+livelli per contatto con eccezioni per fatto, etichette LLM in scrittura e risposte diverse per pubblico; PiSAs, GateMem e
+MemArena coprono la valutazione multi-utente con utenti onesti. Ancora aperti: le confidenze di terzi come regola
+deterministica di proprietà del soggetto, le etichette portate nei diari (Recordare ce l'ha), la disclosure che tiene
+conto di chi ascolta in voce e nelle stanze, e il confronto avversariale tra modi di applicazione con perdita per
+inferenza e di esistenza e rifiuti eccessivi.
+
 **Misura.** Fuga: elemento vietato nel contesto, fuga nell'output (esatta / parafrasi), fuga per inferenza
 (combinando ricordi consentiti), fuga di esistenza ("non posso parlarti
 dell'intervento"). Utilità: accuratezza sugli elementi consentiti, rifiuti eccessivi. Avversari: dichiarazioni di

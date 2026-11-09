@@ -123,6 +123,12 @@ adversarial interlocutors.
 **Verdict.** Partially novel. The mechanism alone is not new; the twin-specific combination and
 its evaluation are.
 
+**Update 2026-11-09** (`docs/literature/disclosure.md`): narrower. EP-Mem (arXiv:2609.35233) now covers graded
+per-contact levels with per-fact exceptions, LLM labels at write time and audience-specific answers; PiSAs, GateMem and
+MemArena cover multi-user evaluation with honest users. Still open: third-party confidences as a deterministic
+subject-ownership rule, labels carried into digests (Recordare has it), audience-aware disclosure in voice / room
+settings, and the adversarial comparison of enforcement styles with inference / existence leakage and over-refusal.
+
 **Measure.** Leakage: forbidden item in context, output leakage (exact / paraphrase), inference
 leakage (combining allowed memories), existence leakage ("I can't tell you about the
 surgery"). Utility: accuracy on allowed items, over-refusal. Adversaries: impersonation claims,
