@@ -6,10 +6,21 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.12.1] — 2026-11-09
+
+**A reminder owed on its last day is said even when the day's share is spent**, and the timing rules are written out
+in detail. Service only; client library and connectors stay 0.12.0.
+
 ### Fixed
 - A request or a promise on the last day of its window is no longer held by the daily limit: held, it lapsed unsaid,
   because the clock's last chance only sees initiatives already made (found writing the timing rules in detail,
   `API.md` §4b).
+
+### Changed
+- `API.md` §4b, "Timing rules in detail": the daily limit against the last chance, timed reminders and the limit, the
+  last chance before the quiet hours, how `busy` ends, an arrival held more than once, when the pause after a refusal
+  starts, `talking` (every flexible initiative, two or more people, 90 s), plans told ahead, messaging to the holder, a
+  camera presence; the first cut's "when to deliver is the host's call" corrected (D55).
 
 ## [0.12.0] — 2026-11-09
 

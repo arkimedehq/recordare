@@ -6,10 +6,22 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.12.1] — 2026-11-09
+
+**Un promemoria dovuto nel suo ultimo giorno viene detto anche quando la quota del giorno è esaurita**, e le regole del
+timing sono scritte in dettaglio. Solo il servizio; libreria client e connettori restano alla 0.12.0.
+
 ### Corretto
 - Una richiesta o una promessa nell'ultimo giorno della sua finestra non viene più trattenuta dal limite giornaliero:
   trattenuta, decadeva senza essere detta, perché l'ultima occasione dell'orologio vede solo le iniziative già create
   (trovato scrivendo le regole del timing in dettaglio, `API_it.md` §4b).
+
+### Modificato
+- `API_it.md` §4b, "Regole del timing in dettaglio": il limite giornaliero contro l'ultima occasione, i promemoria a
+  orario e il limite, l'ultima occasione prima delle ore di quiete, come finisce `busy`, un arrivo trattenuto più volte,
+  da quando parte la pausa dopo un rifiuto, `talking` (ogni iniziativa flessibile, due o più persone, 90 s), i piani
+  detti in anticipo, i messaggi al titolare, una presenza da telecamera; corretto il "quando consegnare lo decide
+  l'ospite" della prima versione (D55).
 
 ## [0.12.0] — 2026-11-09
 
