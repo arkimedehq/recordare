@@ -6,6 +6,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-11-09
+
+**The agent remembers what its senses noticed — as seen, once, until it fades.** A client describes in words what a
+camera, a microphone or a sensor noticed; Recordare remembers it as seen, not told, with who was recognised, and lets it
+fade after a while. Client library and connectors 0.13.0 (`perceive`).
+
 ### Added
 - **Perceptions** (WORK_PLAN 8.12e, D56, `API.md` §4c): `POST api/v1/perceptions` and the client library's `perceive` — what
   the agent's senses noticed (a camera, a microphone, a sensor, a photo), told in words by the client; Recordare never

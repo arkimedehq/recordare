@@ -6,6 +6,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.13.0] — 2026-11-09
+
+**L'agente ricorda ciò che i suoi sensi hanno notato — come visto, una volta sola, finché svanisce.** Un client descrive
+a parole ciò che una telecamera, un microfono o un sensore hanno notato; Recordare lo ricorda come visto, non detto, con
+chi è stato riconosciuto, e lo lascia svanire dopo un po'. Libreria client e connettori 0.13.0 (`perceive`).
+
 ### Aggiunto
 - **Percezioni** (WORK_PLAN 8.12e, D56, `API_it.md` §4c): `POST api/v1/perceptions` e il `perceive` della libreria client —
   ciò che i sensi dell'agente hanno notato (una telecamera, un microfono, un sensore, una foto), raccontato a parole dal
