@@ -101,7 +101,7 @@ describe('initiative delivery (D55): presence impulses, the in-turn channel, ide
     const sure = await presence('casa', { channel: 'voice', confidence: 0.9, person: { identity: { channel: 'voice', externalId: 'eriona-voiceprint' } }, place: 'kitchen' });
     expect(sure.body.initiative).toMatchObject({ id, status: 'offered', channel: 'voice', timing: 'flexible', identity: { required: 'medium' },
       // How to reach her (§5c): her verified identities; what it accepts, in order (a request: messaging allowed).
-      for: { name: 'Eriona', addresses: [{ channel: 'voice', id: 'eriona-voiceprint' }] }, channels: ['voice', 'messaging', 'chat'] });
+      for: { name: 'Eriona', addresses: [{ channel: 'voice', id: 'eriona-voiceprint' }], addressOn: { voice: 'eriona-voiceprint' } }, channels: ['voice', 'messaging', 'chat'] });
     expect(sure.body).toMatchObject({ person: { personId: eriona }, people: [{ personId: eriona, name: 'Eriona' }], opening: null });
     expect(sure.body.initiative.text).toContain('stendere i panni');
     expect(sure.body.initiative.source).toEqual({ conversation: 'eriona-chat', messageIds: ['e1'] });

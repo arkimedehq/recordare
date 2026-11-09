@@ -51,7 +51,12 @@
     "capture": { "label": "Capture", "help": "Send the conversations to Recordare" },
     "tools": { "label": "Memory tools", "help": "Offer the recordare_* tools to the agent" },
     "groups": { "label": "Group chats", "help": "Capture group chats too (every member a participant)", "advanced": true },
-    "timeoutMs": { "label": "Timeout before the turn (ms)", "placeholder": "3000", "advanced": true }
+    "timeoutMs": { "label": "Timeout before the turn (ms)", "placeholder": "3000", "advanced": true },
+    "initiatives": {
+      "label": "Initiatives",
+      "help": "Send what the memory decides to say on its own (a reminder, a question) to the person's last direct chat, without the model. Declare the client's messaging channel in Recordare's console"
+    },
+    "initiativesPollSeconds": { "label": "Initiatives check (s)", "placeholder": "60", "advanced": true }
   },
   "configSchema": {
     "type": "object",
@@ -67,7 +72,9 @@
       "capture": { "type": "boolean" },
       "tools": { "type": "boolean" },
       "groups": { "type": "boolean" },
-      "timeoutMs": { "type": "integer", "minimum": 500, "maximum": 14000 }
+      "timeoutMs": { "type": "integer", "minimum": 500, "maximum": 14000 },
+      "initiatives": { "type": "boolean" },
+      "initiativesPollSeconds": { "type": "integer", "minimum": 15, "maximum": 3600 }
     }
   }
 }

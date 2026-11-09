@@ -11,7 +11,8 @@
  * - session_end: ends the conversation (`POST …/conversations/{id}/end`: extraction now instead of after the idle delay);
  * - message_received: senders' names (for their participants); in group chats, the other members' messages go with the
  *   next turn as context (role `other`);
- * - recordare_* tools: Recordare's MCP tools, bound in code to the memory and the conversation.
+ * - recordare_* tools: Recordare's MCP tools, bound in code to the memory and the conversation;
+ * - initiatives (opt-in, `push.ts`): what the memory decides to say on its own, sent to the person's last direct chat.
  * Which memory (D50): by default the agent's one memory, every sender a participant recognised inside it
  * (`memoryPer: agent`); optionally one memory per person (`memoryPer: user`).
  * Never blocks or breaks OpenClaw: every call is time-boxed, every failure is logged (no content) and swallowed;
@@ -32,6 +33,7 @@ import {
   conversationId, isGroupSession, isSystemRun, resolveSpeaker, resolveUser, senderParticipant, senderRef, type Speaker,
 } from './identity.js';
 import { Outbox, type Pending, pendingId } from './outbox.js';
+import { createInitiativePush, PushState } from './push.js';
 import { TOOLS, toolName } from './tools.js';
 import { cleanUserText, lastTurn } from './transcript.js';
 
@@ -84,10 +86,13 @@ interface Turn {
 /** The turn's identity, or null when the turn is not remembered. */
 interface Who { user: string; conversation: string; channel?: string; speaker: Speaker }
 
-/** `outboxDir`: where undelivered batches wait (`<OpenClaw state dir>/recordare/outbox`); null keeps them in memory. */
+/**
+ * `outboxDir`: where undelivered batches wait (`<OpenClaw state dir>/recordare/outbox`); null keeps them in memory.
+ * `pushFile`: the initiatives' state (`<OpenClaw state dir>/recordare/push.json`); null keeps it in memory.
+ */
 export function registerRecordare(
-  api: OpenClawPluginApi, cfg: RecordareConfig, kinds: SessionKinds, outboxDir: string | null = null,
-): { stop: () => Promise<void> } {
+  api: OpenClawPluginApi, cfg: RecordareConfig, kinds: SessionKinds, outboxDir: string | null = null, pushFile: string | null = null,
+): { start: () => void; stop: () => Promise<void> } {
   const log = api.logger;
   const clientInfo = { name: 'openclaw-recordare', version: VERSION };
   // Before the agent answers: short timeouts (the turn waits). Background sends and tools: Recordare's usual 15 s.
@@ -106,6 +111,8 @@ export function registerRecordare(
   const queue: Pending[] = outbox.load();
   let timer: NodeJS.Timeout | undefined;
   let stopped = false;
+  const pushState = new PushState(cfg.initiatives ? pushFile : null, (m) => log.warn(m));
+  const push = createInitiativePush(api, cfg, slow, pushState, headerUser);
   if (cfg.memoryPer === 'agent' && !cfg.defaultUser) {
     log.warn('recordare: set defaultUser (the agent\'s Recordare account) or use a personal token; memory is off');
   }
@@ -198,12 +205,21 @@ export function registerRecordare(
 
   // ── Hooks ─────────────────────────────────────────────────────────────────────────────────────────────────────
   api.on('before_prompt_build', async (event, ctx) => {
+    noteSession(ctx);
     // The charter, for any remembered turn the agent has its memory in (recall or tools), read alongside the context.
     const charterText = (cfg.autoRecall || cfg.tools) && who(ctx) ? charter.get() : undefined;
     const res = await turnContext(event, ctx);
     const text = await charterText;
     return text ? { ...res, appendSystemContext: text } : res;
   });
+
+  /** A person's direct chat, where initiatives can reach them later (only with initiatives on). */
+  function noteSession(ctx: AgentContext): void {
+    const key = ctx.sessionKey;
+    if (!push || !key || !ctx.senderId || isGroupSession(key) || isSystemRun(ctx)) return;
+    if (kinds.isIncognito(key) || kinds.isCron(key) || kinds.isSubagent(key)) return;
+    pushState.note(senderRef(ctx.channel ?? ctx.messageProvider, ctx.senderId), { agentId: ctx.agentId, sessionKey: key });
+  }
 
   /** The turn's message stored and its memory context (`prependContext`), or a link code's instruction. */
   async function turnContext(event: BeforePromptBuildEvent, ctx: AgentContext): Promise<BeforePromptBuildResult | undefined> {
@@ -349,8 +365,12 @@ export function registerRecordare(
   }
 
   return {
+    start() {
+      push?.start(cfg.initiativesPollSeconds * 1000);
+    },
     async stop() {
       stopped = true;
+      push?.stop();
       if (timer) clearTimeout(timer);
       timer = undefined;
       // One last bounded attempt for what is still queued (OpenClaw gives shutdown hooks ~2 s); on disk, the rest waits

@@ -312,3 +312,117 @@ describe('durable retry queue', () => {
     await plugin.stop();
   });
 });
+
+describe('initiatives pushed (D55 F3)', () => {
+  const NOW = new Date().toISOString();
+  const initiative = (over: Record<string, unknown>) => ({
+    id: 'i1', seq: 1, kind: 'say', for: null, text: 'Ricordati la cena di stasera.', reason: 'r', worth: null, episodeIds: [],
+    dueAt: NOW, expiresAt: NOW, status: 'offered', outcomeAt: null, reply: null, createdAt: NOW, timing: 'timed',
+    window: { notBefore: NOW, notAfter: NOW }, channel: 'messaging', channels: ['messaging', 'turn'], identity: { required: 'medium' },
+    source: null, offeredAt: NOW, pushedAt: NOW, ...over,
+  });
+  let feed: unknown[];
+  let outcomes: Array<{ url: string; user: string | null; body: Record<string, unknown> }>;
+  beforeEach(() => {
+    outcomes = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/api/v1/initiatives?')) return new Response(JSON.stringify({ items: feed.splice(0), next: 9, more: false }), { status: 200 });
+      if (u.endsWith('/outcome')) {
+        outcomes.push({ url: u, user: new Headers(init.headers).get('x-recordare-user'), body: JSON.parse(String(init.body)) });
+        return new Response(JSON.stringify(initiative({ status: 'said' })), { status: 200 });
+      }
+      return new Response(JSON.stringify({ block: null, items: 0, conversationId: 'c', accepted: 1, duplicates: 0, conflicts: [] }), { status: 200 });
+    }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  function withNotices(config: Record<string, unknown>, result: unknown = { status: 'posted', delivered: true }) {
+    const fake = fakeApi(config);
+    const notices: Array<Record<string, unknown>> = [];
+    const captured: Array<Record<string, unknown>> = [];
+    fake.api.runtime = {
+      system: {
+        captureSessionGeneration: (t) => { captured.push(t); return { agentId: t.agentId ?? 'main', sessionKey: t.sessionKey, sessionId: 'sx' }; },
+        postSessionNotice: async (n) => { notices.push(n as unknown as Record<string, unknown>); return result as never; },
+      },
+    };
+    return { ...fake, notices, captured };
+  }
+  const turn = (senderId: string, sessionKey: string) => ({ runId: `r-${senderId}`, sessionKey, sessionId: 's1', channel: 'telegram', senderId, agentId: 'main' });
+  const prompt = { prompt: 'p', currentUserMessage: 'ciao', currentUserMessageId: 'm', messages: [] };
+
+  it('sends a contact\'s initiative to their last direct chat as a session notice, no model, and reports it said', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rec-push-'));
+    const { api, hooks, notices, captured } = withNotices({ url: 'http://r', apiKey: 'rp_x', initiatives: true });
+    const plugin = registerRecordare(api, parseConfig(api.pluginConfig, {})!, kinds, null, join(dir, 'push.json'));
+    await hooks.before_prompt_build(prompt, turn('1001', 'agent:main:telegram:direct:1001'));
+    await hooks.before_prompt_build(prompt, turn('2002', 'agent:main:telegram:group:55')); // a group: never a target
+    feed = [initiative({ for: { personId: 'p', name: 'Chloé', addresses: [{ channel: 'telegram', id: '1001' }], addressOn: { telegram: '1001' } } })];
+    plugin.start();
+    await vi.waitFor(() => expect(outcomes).toHaveLength(1));
+    expect(captured).toEqual([{ agentId: 'main', sessionKey: 'agent:main:telegram:direct:1001' }]);
+    expect(notices[0]).toMatchObject({
+      notice: { type: 'recordare-initiative', text: 'Ricordati la cena di stasera.', data: { initiativeId: 'i1' } },
+      idempotencyKey: 'recordare:i1', deliver: {},
+    });
+    expect(String(notices[0]!.systemEvent)).toContain('to Chloé');
+    expect(outcomes[0]).toMatchObject({ url: 'http://r/api/v1/initiatives/i1/outcome', user: null, body: { status: 'said', channel: 'messaging' } });
+    await plugin.stop();
+    // The sessions survive a restart (owner-only file).
+    expect(JSON.parse(readFileSync(join(dir, 'push.json'), 'utf8')).senders['telegram:1001'].sessionKey).toBe('agent:main:telegram:direct:1001');
+    expect(JSON.parse(readFileSync(join(dir, 'push.json'), 'utf8')).senders['telegram:2002']).toBeUndefined();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('the holder\'s initiative goes to the holder\'s senders; a question is reported asked', async () => {
+    const { api, hooks, notices } = withNotices({ url: 'http://r', apiKey: 'rk_x', defaultUser: 'agent', selfSenders: ['telegram:7'], initiatives: true });
+    const plugin = registerRecordare(api, parseConfig(api.pluginConfig, {})!, kinds);
+    await hooks.before_prompt_build(prompt, turn('1001', 'agent:main:telegram:direct:1001'));
+    await hooks.before_prompt_build(prompt, turn('7', 'agent:main:telegram:direct:7'));
+    feed = [initiative({ kind: 'ask' })];
+    plugin.start();
+    await vi.waitFor(() => expect(outcomes).toHaveLength(1));
+    expect((notices[0]!.generation as { sessionKey: string }).sessionKey).toBe('agent:main:telegram:direct:7');
+    expect(outcomes[0]).toMatchObject({ user: 'agent', body: { status: 'asked', channel: 'messaging' } });
+    await plugin.stop();
+  });
+
+  it('gives back what it could not send (failed: Recordare arms it again), tries a reset session once more, leaves other channels', async () => {
+    const skipped = withNotices({ url: 'http://r', apiKey: 'rp_x', initiatives: true, selfSenders: ['telegram:7'] }, { status: 'skipped', reason: 'session-changed' });
+    const plugin = registerRecordare(skipped.api, parseConfig(skipped.api.pluginConfig, {})!, kinds);
+    await skipped.hooks.before_prompt_build(prompt, turn('7', 'agent:main:telegram:direct:7'));
+    feed = [
+      initiative({ id: 'nobody', for: { personId: 'p', name: 'X', addresses: [{ channel: 'telegram', id: '999' }], addressOn: { telegram: '999' } } }),
+      initiative({ id: 'voice', channel: 'voice' }),
+      initiative({ id: 'changed' }),
+    ];
+    plugin.start();
+    await vi.waitFor(() => expect(outcomes).toHaveLength(2));
+    // No chat with X: failed without a notice; the reset session: two tries, then failed; voice is another client's.
+    expect(skipped.notices.map((n) => (n.notice as { data: { initiativeId: string } }).data.initiativeId)).toEqual(['changed', 'changed']);
+    expect(outcomes.map((o) => [o.url.split('/').at(-2), o.body.status])).toEqual([['nobody', 'failed'], ['changed', 'failed']]);
+    expect(skipped.logs.some((m) => m.includes('no direct chat'))).toBe(true);
+    outcomes.splice(0);
+    await plugin.stop();
+
+    const failed = withNotices({ url: 'http://r', apiKey: 'rp_x', initiatives: true, selfSenders: ['telegram:7'] }, { status: 'failed', stage: 'delivery' });
+    const p2 = registerRecordare(failed.api, parseConfig(failed.api.pluginConfig, {})!, kinds);
+    await failed.hooks.before_prompt_build(prompt, turn('7', 'agent:main:telegram:direct:7'));
+    feed = [initiative({ id: 'f1' })];
+    p2.start();
+    await vi.waitFor(() => expect(outcomes).toHaveLength(1));
+    expect(outcomes[0]!.body).toMatchObject({ status: 'failed', channel: 'messaging' });
+    await p2.stop();
+  });
+
+  it('off by default; an OpenClaw without session notices keeps them in the turn, with one warning', async () => {
+    const off = fakeApi({ url: 'http://r', apiKey: 'rp_x' });
+    expect(parseConfig(off.api.pluginConfig, {})!.initiatives).toBe(false);
+    const old = fakeApi({ url: 'http://r', apiKey: 'rp_x', initiatives: true });
+    const plugin = registerRecordare(old.api, parseConfig(old.api.pluginConfig, {})!, kinds);
+    plugin.start();
+    expect(old.logs.some((m) => m.includes('no session notices'))).toBe(true);
+    await plugin.stop();
+  });
+});

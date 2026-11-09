@@ -45,8 +45,16 @@ export type Reaction = 'positive' | 'neutral' | 'negative';
 /** A way to reach a person (D55 §5c): one of their verified identities on a channel — `homeassistant` / `person.chloe`, `telegram` / a chat id. */
 export interface Address { channel: string; id: string }
 
+/** The first address on each channel (`for.addressOn`): a template that cannot index a list (a Hermes webhook route,
+ * `{data.for.addressOn.telegram}`) still finds the person. Addresses come oldest first. */
+export function addressOn(addresses: Address[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const a of addresses) if (!(a.channel in out)) out[a.channel] = a.id;
+  return out;
+}
+
 export interface InitiativeView {
-  id: string; seq: number; kind: InitiativeKind; for: { personId: string; name: string; addresses: Address[] } | null; text: string; reason: string; worth: number | null;
+  id: string; seq: number; kind: InitiativeKind; for: { personId: string; name: string; addresses: Address[]; addressOn: Record<string, string> } | null; text: string; reason: string; worth: number | null;
   episodeIds: string[]; dueAt: string; expiresAt: string; status: InitiativeStatus; outcomeAt: string | null; reply: string | null;
   createdAt: string;
   /** D55: timed (a time was asked for) or flexible (a window, the moment chosen by Recordare). */
@@ -128,7 +136,9 @@ function updated<T>(res: unknown): T[] {
 export function view(r: Row): InitiativeView {
   return {
     id: r.id, seq: Number(r.seq), kind: r.kind,
-    for: r.for_person_id ? { personId: r.for_person_id, name: r.for_name ?? '', addresses: r.for_addresses ?? [] } : null,
+    for: r.for_person_id
+      ? { personId: r.for_person_id, name: r.for_name ?? '', addresses: r.for_addresses ?? [], addressOn: addressOn(r.for_addresses ?? []) }
+      : null,
     text: r.text, reason: r.reason, worth: r.worth, episodeIds: r.episode_ids, dueAt: r.due_at.toISOString(), expiresAt: r.expires_at.toISOString(),
     status: r.status, outcomeAt: r.outcome_at?.toISOString() ?? null, reply: r.reply, createdAt: r.created_at.toISOString(),
     timing: r.timing, window: { notBefore: r.due_at.toISOString(), notAfter: r.expires_at.toISOString() }, channel: r.channel, channels: r.channels,

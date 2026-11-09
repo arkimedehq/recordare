@@ -698,7 +698,9 @@ private or public again (§2) has its days written again.
 >   always reaches — now the first acceptable one). `for.addresses: [{channel, id}]`: the person's verified participant
 >   identities (`homeassistant` / `person.chloe`, `telegram` / a chat id) — where the host finds them; bind them with
 >   `POST api/v1/admin/identities {kind: participant, memoryId, personId, channel, externalId, verified: true}` or from the
->   console (a memory's card: link an address to one of its people).
+>   console (a memory's card: link an address to one of its people). `for.addressOn` (0.12, F3): the first address on
+>   each channel, `{"telegram": "<chat id>"}` — for templates that cannot index a list (a Hermes webhook route,
+>   `{data.for.addressOn.telegram}`).
 > - **Presence per place**: `POST api/v1/presence` takes `people: [{identity, confidence}]` (everyone recognised in the
 >   place) and `someone` (people it cannot name) in place of `person` + `confidence` (kept: a place with one person), and
 >   the channel `home` (at home: recorded, nothing offered — not enough to speak). In a room (`voice`, `camera`): an

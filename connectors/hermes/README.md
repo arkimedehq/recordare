@@ -111,6 +111,73 @@ from the gateway's `chat_type` (`dm` direct, anything else a group, where a code
 person — unless an alias map is set: then only the mapped gateway users are remembered and everyone else writing to the
 same bot is left out. Upgrading with an alias map: add `RECORDARE_MEMORY_PER=user` to keep this.
 
+## Initiatives pushed (D55 F3, no code)
+
+In every turn the memory context already carries what the agent meant to tell or ask whoever is talking. To reach
+people who are **not** talking to the agent — a reminder they asked for, at its minute — use the Hermes gateway's own
+**webhook platform** in direct-delivery mode: Recordare pushes the initiative, Hermes sends its text as it is to the
+chat, **without the model**. No provider code is involved.
+
+1. **Recordare**: declare the client's channel `messaging` with reach `always` (console → the client → Channels, or
+   `PATCH api/v1/admin/clients/{id}` `{channels: [{kind: "messaging", reach: "always"}]}`), then register one webhook
+   per route below, with the event `initiative.deliver` only:
+   `POST api/v1/admin/clients/{id}/webhooks {url: "https://<gateway>/webhooks/recordare-contacts", events: ["initiative.deliver"]}`.
+   The answer shows the endpoint's `whsec_…` secret **once**: it is the route's `secret`. (Recordare sends only to
+   `https` on a public address, unless its deployer sets `WEBHOOK_ALLOW_PRIVATE` for a gateway on the same network.)
+2. **Hermes** (`~/.hermes/config.yaml`, webhook platform enabled — `WEBHOOK_ENABLED=true`):
+
+```yaml
+platforms:
+  webhook:
+    enabled: true
+    extra:
+      routes:
+        # Someone the agent knows, on their own Telegram chat.
+        recordare-contacts:
+          secret: "whsec_…"                    # the Recordare endpoint's secret
+          events: ["initiative.deliver"]
+          filters:
+            - field: "data.channel"
+              equals: "messaging"
+            - field: "data.for.addressOn.telegram"
+              exists: true                     # no Telegram address: not this route
+          deliver: "telegram"
+          deliver_only: true                   # the text as it is, no agent run
+          prompt: "{data.text}"
+          deliver_extra:
+            chat_id: "{data.for.addressOn.telegram}"
+          mirror_to_session: true              # their reply comes with the context
+        # The memory's holder (`for` is null), on the platform's home channel.
+        recordare-holder:
+          secret: "whsec_…"                    # the second endpoint's secret
+          events: ["initiative.deliver"]
+          filters:
+            - field: "data.channel"
+              equals: "messaging"
+            - field: "data.for"
+              equals: null
+          deliver: "telegram"
+          deliver_only: true
+          prompt: "{data.text}"
+          mirror_to_session: true
+```
+
+   Or the same with `hermes webhook subscribe recordare-holder --events initiative.deliver --deliver telegram
+   --deliver-only --prompt "{data.text}" --mirror-to-session --secret "whsec_…"` (filters are set in the config).
+   Another platform works the same (`deliver: discord`, `{data.for.addressOn.discord}`…).
+
+How it fits:
+- Hermes verifies Recordare's **Standard Webhooks** signature (`webhook-id`, `webhook-timestamp`, `webhook-signature`,
+  the `whsec_` secret decoded) and drops a repeated `webhook-id`; it reads the event from the envelope's `type`.
+- A contact's address is the identity this provider declares for them (`telegram` / their user id — in a private
+  chat, the chat id), bound and verified in the memory. Hermes's templates read objects, not lists, so Recordare gives
+  `for.addressOn` — the first address on each channel — beside `for.addresses`. A contact known through `user_aliases`
+  only (an id across platforms) has no channel address and is not reached this way.
+- **No outcome is reported**: a direct delivery does not tell Recordare it was said, so the initiative stays offered,
+  then lapses, and the timing learns nothing from it. The memory context does not offer it again in a turn.
+- Not used: a plugin calling `inject_message` — it runs an agent turn for every initiative (the model, and no
+  certainty the text is said as it is).
+
 ## How it maps
 
 | Hermes | Recordare |

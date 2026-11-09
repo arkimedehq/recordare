@@ -107,6 +107,8 @@ Richiede OpenClaw ≥ 2026.9.9 (Node ≥ 24, come OpenClaw stesso).
 | `tools` | `true` | Offre gli strumenti `recordare_*` |
 | `groups` | `true` | Cattura anche le chat di gruppo |
 | `timeoutMs` | `3000` | Per la chiamata prima del turno (l'invio del messaggio con il suo contesto) |
+| `initiatives` | `false` | Invia ciò che la memoria decide di dire da sé all'ultima chat diretta della persona (sotto) |
+| `initiativesPollSeconds` | `60` | Ogni quanto il plugin legge il feed delle iniziative (almeno 15) |
 
 **I tuoi sender id.** Con `memoryPer: "agent"` un mittente che non è in `selfSenders` è qualcuno che l'agente conosce,
 non tu: elenca lì i tuoi id (oppure chiedi all'amministratore di legarli al sé della memoria,
@@ -125,6 +127,27 @@ canale e stanza (dalla chiave di sessione), dove un codice non chiede nulla.
 
 **Aggiornare da una mappa `users`.** Il comportamento precedente (ogni mittente mappato un utente Recordare separato, i
 non mappati non ricordati) è `memoryPer: "user"`: aggiungilo per tenere le memorie divise per persona.
+
+### Iniziative inviate (D55 F3)
+In ogni turno il blocco di memoria porta già ciò che l'agente voleva dire o chiedere a chi sta parlando. Con
+`initiatives: true` arriva anche a chi **non** sta parlando con l'agente: un promemoria chiesto, al suo minuto, una
+domanda per chi può rispondere.
+- **Lato Recordare**: l'amministratore dichiara il canale `messaging` del client con portata `always` (console → il
+  client → Canali, oppure `PATCH api/v1/admin/clients/{id}` `{channels: [{kind: "messaging", reach: "always"}]}`). Un
+  contatto si raggiunge sulle identità di canale che il plugin ha dichiarato per lui (`telegram` / il suo sender id),
+  legate e verificate nella memoria.
+- **Il plugin** legge il feed delle iniziative ogni `initiativesPollSeconds` (non serve un indirizzo pubblico) e invia
+  ognuna come **avviso di sessione** OpenClaw sull'**ultima chat diretta** della persona con l'agente: il testo così
+  come Recordare l'ha scritto, sul canale di quella chat, **senza il modello**; all'agente viene detto cosa ha detto,
+  per il turno successivo. Un contatto si trova dai suoi indirizzi, il titolare da `selfSenders` (`memoryPer: agent`)
+  o dai mittenti mappati su di lui (`memoryPer: user`). Mai in un gruppo.
+- **Esiti**: `said` / `asked` su `messaging` quando il canale l'ha preso. Altrimenti `failed` — ancora nessuna chat
+  diretta con la persona (deve aver scritto all'agente almeno una volta), un invio fallito, un canale che non può
+  consegnare (una sessione azzerata nel frattempo viene ritentata una volta). Un'iniziativa inviata non viene offerta di
+  nuovo in un turno: `failed` la restituisce a Recordare, che la riarma il giorno dopo.
+- Le ultime sessioni dei mittenti e la posizione nel feed stanno in `<cartella di stato di OpenClaw>/recordare/push.json`
+  (solo il proprietario). Serve un OpenClaw con gli avvisi di sessione (`api.runtime.system.postSessionNotice`); su uno
+  più vecchio il plugin lo scrive una volta nel log e le iniziative restano nel turno.
 
 ### Più persone sullo stesso Gateway
 Il default di OpenClaw `session.dmScope: "main"` mette **tutti i messaggi diretti di tutte le persone in un'unica
@@ -150,6 +173,7 @@ emergere con un'altra; chi gestisce il Gateway lo dice alle persone che gli parl
 | fine sessione (`session_end`: new, reset, idle, daily, deleted) | `POST api/v1/ingest/conversations/{id}/end` → estrazione subito invece che dopo il ritardo di inattività (non su compaction, shutdown o restart) |
 | blocco di memoria | `prependContext` di `before_prompt_build` (solo per il modello in OpenClaw; mai rimandato a Recordare — il plugin lo rimuove) |
 | carta della memoria (D54) | `appendSystemContext` di `before_prompt_build`: `GET api/v1/charter`, in cache per versione, lo stesso testo a ogni turno |
+| un'iniziativa inviata su `messaging` (`initiatives: true`) | un avviso di sessione con `deliver` sull'ultima chat diretta della persona (`captureSessionGeneration` + `postSessionNotice`), esito `said` / `asked` / `failed` |
 | esecuzioni cron, heartbeat, sub-agente, tra agenti e incognito | non ricordate |
 
 ## Smoke test

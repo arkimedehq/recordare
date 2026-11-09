@@ -25,7 +25,7 @@ export default definePluginEntry({
       isIncognito: (k) => !!k && isIncognitoSessionKey(k),
       isCron: (k) => !!k && isCronSessionKey(k),
       isSubagent: (k) => !!k && isSubagentSessionKey(k),
-    }, join(stateDir, 'recordare', 'outbox'));
-    api.registerService({ id: 'recordare', start: () => undefined, stop: () => plugin.stop() });
+    }, join(stateDir, 'recordare', 'outbox'), join(stateDir, 'recordare', 'push.json'));
+    api.registerService({ id: 'recordare', start: () => plugin.start(), stop: () => plugin.stop() });
   },
 });

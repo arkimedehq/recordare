@@ -6,6 +6,24 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Iniziative inviate a OpenClaw e Hermes** (D55 F3). Ciò che la memoria decide di dire da sé ora raggiunge chi non
+  sta parlando con l'agente, senza il modello:
+  - **Plugin OpenClaw** (`initiatives: true`, spento di base): il plugin legge il feed delle iniziative ogni minuto
+    (nessun indirizzo pubblico) e invia ognuna di quelle spinte su `messaging` come avviso di sessione OpenClaw
+    sull'ultima chat diretta della persona — un contatto tramite i suoi indirizzi, il titolare tramite `selfSenders` o
+    i mittenti mappati su di lui; all'agente viene detto cosa ha detto, per il turno successivo. `said` / `asked` quando
+    il canale l'ha preso, altrimenti `failed` (Recordare la riarma il giorno dopo). Le sessioni dei mittenti e la
+    posizione nel feed sopravvivono a un riavvio (`recordare/push.json` nella cartella di stato di OpenClaw). Serve un
+    OpenClaw con gli avvisi di sessione.
+  - **Hermes Agent**, senza codice: una rotta webhook del gateway pronta, in consegna diretta (`deliver_only`, firma
+    Standard Webhooks, filtri sul canale e su per chi è, `mirror_to_session`) — `connectors/hermes/README_it.md`. Così
+    nessun esito viene riportato.
+  - **`for.addressOn`** su un'iniziativa: il primo indirizzo su ogni canale (`{"telegram": "<chat id>"}`), per i
+    template che non sanno indicizzare una lista. Additivo; facoltativo nel tipo della libreria client.
+  - `INITIATIVES_DELIVERY_it.md` §8 corretto: OpenClaw ha tolto il risveglio heartbeat previsto dal design; gli avvisi
+    di sessione lo sostituiscono.
+
 ### Corretto
 - **Un diario troncato viene scritto lo stesso** (trovato su Kinox: il 7/11 dell'agente condiviso falliva ancora con
   1200 token). Una risposta tagliata al limite di token non viene più "riparata" con lo stesso limite, che la tagliava di
