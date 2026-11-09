@@ -62,4 +62,12 @@ describe('AnthropicAdapter', () => {
     await expect(a.completeJson(req)).resolves.toEqual({ episodes: [] });
     expect(f.requests).toHaveLength(2);
   });
+
+  it('asks a reply cut at max_tokens again with twice the budget, without the repair note', async () => {
+    const f = fakeFetch([{ text: '{"episodes":[{"content":"cut', stop: 'max_tokens' }, { text: '{"episodes":[]}' }]);
+    const a = new AnthropicAdapter({ apiKey: 'k', model: 'claude-test', profile: resolveProfile('anthropic'), fetch: f.fn });
+    await expect(a.completeJson({ ...req, maxTokens: 1200 })).resolves.toEqual({ episodes: [] });
+    expect(f.requests.map((r) => r.body['max_tokens'])).toEqual([1200, 2400]);
+    expect(f.requests[1]?.body['messages']).toEqual([{ role: 'user', content: 'hello' }]);
+  });
 });

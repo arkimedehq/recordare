@@ -6,6 +6,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Fixed
+- **A diary entry cut short is written anyway** (found on Kinox: the shared agent's 2026-11-07 still failed with 1200
+  tokens). A reply cut at the output budget is no longer "repaired" with the same budget, which cut it again: it is asked
+  again once with twice the budget (every LLM adapter with a budget — OpenAI-compatible and Anthropic). The day diary
+  (`digest.day.v3`) gets a word limit that grows with the day's items — 120 words up to 10 items, 10 more for each
+  further one, at most 300 — instead of a fixed 120 the model ignored on a dense day. Every day diary is rewritten once
+  with the new version.
+
 ## [0.11.0] — 2026-11-08
 
 **The memory learns about the household, and waits for the right moment.** It asks who someone heard named is, of

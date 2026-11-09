@@ -33,9 +33,10 @@ export interface JsonCompletionRequest<T> {
   reasoning?: boolean;
 }
 
-/** Output budget for a request: reasoning models spend tokens before the visible answer. */
-export function outputBudget(req: { maxTokens?: number; reasoning?: boolean }): number {
-  const base = req.maxTokens ?? 4000;
+/** Output budget for a request: reasoning models spend tokens before the visible answer. `scale` doubles it for the
+ * one retry of a reply cut at the budget (a repair of a truncated reply with the same budget is cut again). */
+export function outputBudget(req: { maxTokens?: number; reasoning?: boolean }, scale = 1): number {
+  const base = (req.maxTokens ?? 4000) * scale;
   return req.reasoning ? base * 4 : base;
 }
 

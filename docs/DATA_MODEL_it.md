@@ -480,7 +480,7 @@ opinioni) e quattro su di me (note di sé, procedure).
 superseded_at null, embedding…, disclosure, audience, extraction_run_id, source_hash, created_at`; `source_hash` =
 impronta della versione del prompt e degli elementi da cui il digest è stato scritto (un giorno viene riscritto solo
 quando cambiano gli elementi o il prompt — M5, 8.6). Contenuto: il diario dell'agente in prima persona (8.6,
-`digest.day.v2` / `digest.month.v2`, `+entity` per le memorie di entità): gli elementi propri della memoria, la notizia che
+`digest.day.v3` / `digest.month.v2`, `+entity` per le memorie di entità; il limite di parole del giorno cresce con i suoi elementi): gli elementi propri della memoria, la notizia che
 una persona dà di sé, ciò che uno strumento ha insegnato — mai le affermazioni di altre persone (autore other, inferred);
 ogni elemento arriva al prompt con il suo soggetto. Unique
 parziale `(memory_id, level, period_start) WHERE superseded_at IS NULL`. La fase 3 richiederà

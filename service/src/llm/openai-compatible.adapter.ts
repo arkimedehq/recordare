@@ -5,7 +5,8 @@
  * LlmPort over any OpenAI-compatible chat endpoint (OpenAI, DeepSeek, Mistral, Groq, OpenRouter,
  * vLLM, LM Studio, Ollama, gateways). Provider differences come from the profile (D27).
  * Spike lessons: reasoning off (or capped tokens return empty content), validate every reply,
- * one repair attempt for invalid output, retries only for transient errors.
+ * one repair attempt for invalid output, retries only for transient errors. A reply cut at the output budget
+ * (finish_reason `length`) is not repaired but asked again once with twice the budget.
  */
 import OpenAI from 'openai';
 import { z } from 'zod';
@@ -66,8 +67,9 @@ export class OpenAiCompatibleAdapter implements LlmPort {
       { role: 'user', content: req.user },
     ];
     let lastIssue = '';
-    for (let repair = 0; repair < 2; repair++) {
-      const { content, usage } = await this.call(req, model, messages, ctx);
+    let scale = 1;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { content, usage, truncated } = await this.call(req, model, messages, ctx, scale);
       try {
         const parsed = req.schema.safeParse(parseJsonObject(content));
         if (parsed.success) {
@@ -79,6 +81,7 @@ export class OpenAiCompatibleAdapter implements LlmPort {
         lastIssue = (err as Error).message;
       }
       await this.recorder?.record({ ...usage, status: 'invalid_output' }, ctx);
+      if (truncated) { scale = 2; continue; } // same request, twice the budget
       messages.push({ role: 'assistant', content }, {
         role: 'user',
         content: `Your previous output was not valid (${lastIssue}). Return ONLY one JSON object that satisfies the requested schema, with actual values.`,
@@ -93,10 +96,10 @@ export class OpenAiCompatibleAdapter implements LlmPort {
     return `${req.system}\n\nReply with ONLY a JSON object matching this JSON Schema:\n${schema}`;
   }
 
-  private body<T>(req: JsonCompletionRequest<T>, model: string, messages: ChatMessage[]): Record<string, unknown> {
+  private body<T>(req: JsonCompletionRequest<T>, model: string, messages: ChatMessage[], scale: number): Record<string, unknown> {
     const p = this.cfg.profile;
     const body: Record<string, unknown> = { model, messages, ...(req.reasoning ? {} : p.reasoningOff) };
-    body[p.tokenParam] = outputBudget(req);
+    body[p.tokenParam] = outputBudget(req, scale);
     if (p.supportsTemperature) body['temperature'] = 0;
     if (p.structuredOutput === 'json_object') body['response_format'] = { type: 'json_object' };
     if (p.structuredOutput === 'json_schema') {
@@ -109,13 +112,13 @@ export class OpenAiCompatibleAdapter implements LlmPort {
   }
 
   private async call<T>(
-    req: JsonCompletionRequest<T>, model: string, messages: ChatMessage[], ctx: LlmCallContext,
-  ): Promise<{ content: string; usage: Omit<LlmCallRecord, 'status'> }> {
+    req: JsonCompletionRequest<T>, model: string, messages: ChatMessage[], ctx: LlmCallContext, scale: number,
+  ): Promise<{ content: string; usage: Omit<LlmCallRecord, 'status'>; truncated: boolean }> {
     for (let attempt = 1; ; attempt++) {
       const started = Date.now();
       try {
         const res = await this.client.chat.completions.create(
-          this.body(req, model, messages) as unknown as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
+          this.body(req, model, messages, scale) as unknown as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
         );
         const u = res.usage;
         const usage = {
@@ -127,7 +130,8 @@ export class OpenAiCompatibleAdapter implements LlmPort {
           outputTokens: u?.completion_tokens ?? 0,
           latencyMs: Date.now() - started,
         };
-        return { content: res.choices[0]?.message?.content ?? '', usage };
+        const choice = res.choices[0];
+        return { content: choice?.message?.content ?? '', usage, truncated: choice?.finish_reason === 'length' };
       } catch (err) {
         if (!isTransient(err) || attempt >= TRANSIENT_ATTEMPTS) {
           await this.recorder?.record({

@@ -6,6 +6,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Corretto
+- **Un diario troncato viene scritto lo stesso** (trovato su Kinox: il 7/11 dell'agente condiviso falliva ancora con
+  1200 token). Una risposta tagliata al limite di token non viene più "riparata" con lo stesso limite, che la tagliava di
+  nuovo: viene richiesta una volta con il doppio del limite (ogni adattatore LLM con un limite — compatibile OpenAI e
+  Anthropic). Il diario del giorno (`digest.day.v3`) ha un limite di parole che cresce con gli elementi del giorno — 120
+  parole fino a 10 elementi, 10 in più per ognuno dopo, al massimo 300 — invece di 120 fisse che il modello ignorava in
+  una giornata densa. Ogni diario del giorno viene riscritto una volta con la nuova versione.
+
 ## [0.11.0] — 2026-11-08
 
 **La memoria impara a conoscere la casa, e aspetta il momento giusto.** Chiede chi è una persona sentita nominare, a chi

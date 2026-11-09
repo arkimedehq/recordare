@@ -62,12 +62,13 @@ describe('nightly consolidation (M5): day and month digests', () => {
     const prompts = requests.map((r) => r.messages[1]?.content ?? '').join('\n');
     expect(requests[0]?.messages[0]?.content).toContain('first person singular');
     expect(prompts).toMatch(/^ME: Luca — gender masculine\nMEMORY LANGUAGE: it/);
+    expect(requests[0]?.messages[1]?.content).toContain('\nWORD LIMIT: 120 words\n');
     expect(prompts).toContain('- [Giulia] [event] Mia sorella Giulia ha vinto la gara di nuoto');
     expect(prompts).toContain('- [event] Ho giocato a calcetto');
     expect(prompts).not.toContain('Londra');
     expect(prompts).not.toContain('dentista');
     expect((await db.query(`SELECT prompt_version, summary FROM extraction_runs WHERE memory_id = $1 AND kind = 'consolidation'`, [memoryId]))[0])
-      .toMatchObject({ prompt_version: 'digest.day.v2', summary: { days: 2, months: 1, leaks: 0 } });
+      .toMatchObject({ prompt_version: 'digest.day.v3', summary: { days: 2, months: 1, leaks: 0 } });
 
     expect((await consolidate()).body).toEqual({ days: 0, months: 0, superseded: 0, llmCalls: 0, failed: 0, facts: 0, leaks: 0, duplicates: 0, patterns: 0, thoughts: 0 });
 
@@ -100,7 +101,7 @@ describe('nightly consolidation (M5): day and month digests', () => {
     const [day] = llm.requests.slice(before);
     expect(day?.messages[0]?.content).toContain('a shared agent');
     expect(day?.messages[1]?.content).toContain('- [someone] [event] Qualcuno in casa ha rotto un bicchiere.');
-    expect(await db.query(`SELECT prompt_version FROM extraction_runs WHERE memory_id = $1`, [casa])).toEqual([{ prompt_version: 'digest.day.v2+entity' }]);
+    expect(await db.query(`SELECT prompt_version FROM extraction_runs WHERE memory_id = $1`, [casa])).toEqual([{ prompt_version: 'digest.day.v3+entity' }]);
   });
 
   it('gives the diary of a period to search_episodes', async () => {

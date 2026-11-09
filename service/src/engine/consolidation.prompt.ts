@@ -6,15 +6,22 @@
  * Digests summarise; they never add — every detail comes from the listed items. Constant system prompts.
  * v2 (D50, WORK_PLAN 8.6): the agent's own diary in the first person — personal memories: my day, with what happened to
  * the people I know; entity memories: the shared agent's day, with the people by name and "someone".
+ * day v3: the word limit grows with the day's items (`dayWordLimit`): a fixed 120 words was ignored on a dense day, whose
+ * reply then ran past the output budget (Kinox, 2026-11-07).
  */
 import { z } from 'zod';
 
-export const DAY_DIGEST_VERSION = 'digest.day.v2';
+export const DAY_DIGEST_VERSION = 'digest.day.v3';
 export const MONTH_DIGEST_VERSION = 'digest.month.v2';
 /** Entity memories: the same version with the entity voice. */
 export const ENTITY_DIGEST_SUFFIX = '+entity';
 
 export const digestSchema = z.object({ summary: z.string().min(1) });
+
+/** The day's word limit: 120 words up to 10 items, 10 more per further item, at most 300. */
+export function dayWordLimit(items: number): number {
+  return Math.min(300, 120 + 10 * Math.max(0, items - 10));
+}
 
 const ITEMS = `Each item is mine unless it starts with [Name] (that person's), [someone] (a person nobody identified) or \
 [undecided: A / B] (one of those people — keep the doubt, never pick one).`;
@@ -33,7 +40,7 @@ replies, actions and place are mine; the people who talk to me are never "I": wr
 ("qualcuno in casa…", in the memory's language). ${ITEMS}`;
 
 const DAY = (who: string) => `You write my diary entry for one day, from the memories recorded for that day (events, \
-plans, changes, with their status). ${who} One paragraph, at most 120 words, in time order when the items say so. \
+plans, changes, with their status). ${who} One paragraph, at most the WORD LIMIT given, in time order when the items say so. \
 ${COMMON}`;
 
 const MONTH = (who: string) => `You write the summary of one month of my diary, from the diary of its days and the \

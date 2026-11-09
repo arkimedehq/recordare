@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
-import { DAY_DIGEST_SYSTEM, DAY_DIGEST_VERSION, digestSchema, ENTITY_DAY_DIGEST_SYSTEM, ENTITY_DIGEST_SUFFIX, ENTITY_MONTH_DIGEST_SYSTEM,
+import { DAY_DIGEST_SYSTEM, DAY_DIGEST_VERSION, dayWordLimit, digestSchema, ENTITY_DAY_DIGEST_SYSTEM, ENTITY_DIGEST_SUFFIX, ENTITY_MONTH_DIGEST_SYSTEM,
   MONTH_DIGEST_SYSTEM, MONTH_DIGEST_VERSION } from './consolidation.prompt';
 import { selfLeak } from '../lang';
 import { type SubjectKind } from '../identity/identity.entities';
@@ -152,10 +152,10 @@ export class ConsolidationService {
         if (currentDay.get(day)?.source_hash === hash) continue;
         report.llmCalls++;
         // 1200 like a month: a dense day kept with every concrete detail runs past 600 tokens in Italian (Kinox, 2026-10-29
-        // failed nightly, truncated), and a repair with the same cap is cut again.
+        // failed nightly, truncated); a reply still cut at the budget is asked again with twice the budget (the adapters).
         const out = await this.llm.completeJson({
           promptId: dayVersion, system: entity ? ENTITY_DAY_DIGEST_SYSTEM : DAY_DIGEST_SYSTEM, task: 'digest', maxTokens: 1200,
-          user: `${me}\nDAY: ${day}\nITEMS:\n${lines.join('\n')}`, schema: digestSchema,
+          user: `${me}\nDAY: ${day}\nWORD LIMIT: ${dayWordLimit(lines.length)} words\nITEMS:\n${lines.join('\n')}`, schema: digestSchema,
         }, ctx).catch((err: unknown) => this.skip(report, `day ${day}`, err));
         if (!out) continue;
         if (selfLeak(out.summary, selfNames)) report.leaks++;

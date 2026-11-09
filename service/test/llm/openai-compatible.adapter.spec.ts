@@ -8,7 +8,7 @@ import { LlmOutputError } from '../../src/llm/llm.port';
 import { type LlmCallRecord, type LlmCallRecorder } from '../../src/llm/llm-call-recorder';
 import { LlmRouter } from '../../src/llm/llm-router';
 
-type Reply = { status?: number; content?: string };
+type Reply = { status?: number; content?: string; finish?: string };
 
 /** Fake fetch: records request bodies, answers with the queued replies in order. */
 function fakeFetch(replies: Reply[]) {
@@ -21,7 +21,7 @@ function fakeFetch(replies: Reply[]) {
     }
     return new Response(JSON.stringify({
       id: 'x', object: 'chat.completion', created: 0, model: 'm',
-      choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: r.content ?? '' } }],
+      choices: [{ index: 0, finish_reason: r.finish ?? 'stop', message: { role: 'assistant', content: r.content ?? '' } }],
       usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
     }), { status: 200, headers: { 'content-type': 'application/json' } });
   };
@@ -75,6 +75,17 @@ describe('OpenAiCompatibleAdapter', () => {
     expect(r.calls.map((c) => c.status)).toEqual(['invalid_output', 'ok']);
     const repairMsgs = (f.bodies[1] as { messages: { role: string }[] }).messages;
     expect(repairMsgs.map((m) => m.role)).toEqual(['system', 'user', 'assistant', 'user']);
+  });
+
+  it('asks a reply cut at the budget again with twice the budget instead of repairing it', async () => {
+    const f = fakeFetch([{ content: '{"episodes":[{"content":"a long', finish: 'length' }, { content: '{"episodes":[{"content":"ok"}]}' }]);
+    const r = recorder();
+    const a = new OpenAiCompatibleAdapter({ model: 'm', profile: resolveProfile('deepseek'), fetch: f.fn, baseURL: 'http://x/v1' }, r.rec);
+    const out = await a.completeJson({ ...req, maxTokens: 1200 });
+    expect(out.episodes[0]?.content).toBe('ok');
+    expect(r.calls.map((c) => c.status)).toEqual(['invalid_output', 'ok']);
+    expect(f.bodies.map((b) => b['max_tokens'])).toEqual([1200, 2400]);
+    expect((f.bodies[1] as { messages: { role: string }[] }).messages.map((m) => m.role)).toEqual(['system', 'user']);
   });
 
   it('treats empty content (reasoning ate the budget) as invalid and fails after the repair', async () => {

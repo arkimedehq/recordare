@@ -41,6 +41,7 @@ export class AnthropicAdapter implements LlmPort {
     // Reasoning requests think adaptively unless the profile configures thinking explicitly.
     const thinking = a.thinking ?? (req.reasoning ? { type: 'adaptive' } : undefined);
     let lastIssue = '';
+    let scale = 1;
     for (let attempt = 0; attempt < 2; attempt++) {
       const started = Date.now();
       let usage: Omit<LlmCallRecord, 'status'> = {
@@ -49,9 +50,9 @@ export class AnthropicAdapter implements LlmPort {
       try {
         const res = await this.client.beta.messages.create({
           model,
-          max_tokens: outputBudget(req),
+          max_tokens: outputBudget(req, scale),
           system: [{ type: 'text', text: req.system, cache_control: { type: 'ephemeral' } }],
-          messages: [{ role: 'user', content: attempt === 0 ? req.user : `${req.user}\n\n(Previous output was invalid: ${lastIssue}. Follow the schema exactly.)` }],
+          messages: [{ role: 'user', content: attempt === 0 || scale > 1 ? req.user : `${req.user}\n\n(Previous output was invalid: ${lastIssue}. Follow the schema exactly.)` }],
           output_config: { format: betaZodOutputFormat(req.schema), ...(a.effort ? { effort: a.effort } : {}) },
           ...(thinking ? { thinking: thinking as unknown as Anthropic.Beta.BetaThinkingConfigParam } : {}),
           ...(a.refusalFallback ? { fallbacks: 'default' as const, betas: [FALLBACK_BETA] } : {}),
@@ -83,6 +84,8 @@ export class AnthropicAdapter implements LlmPort {
         }
         lastIssue = parsed.error.issues.slice(0, 5).map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
         await this.recorder?.record({ ...usage, status: 'invalid_output' }, ctx);
+        // A reply cut at the budget is asked again once with twice the budget, not repaired.
+        if (res.stop_reason === 'max_tokens') scale = 2;
       } catch (err) {
         if (err instanceof LlmOutputError) throw err;
         await this.recorder?.record({ ...usage, latencyMs: Date.now() - started, status: 'error' }, ctx);
