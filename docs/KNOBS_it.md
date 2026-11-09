@@ -50,6 +50,8 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `CONSOLIDATION_SCHEDULE` | on | Consolidamento notturno automatico, preceduto dall'estrazione dei messaggi rimasti in attesa (4.1); off = solo su richiesta (valutazioni) |
 | `CONSOLIDATION_HOUR` | 3 | Ora locale (fuso della persona) dopo la quale gira la notte |
 | `INITIATIVE_DAILY_LIMIT` | 3 | Iniziative che una persona riceve al giorno al massimo (D53, 8.12c); le altre aspettano domani |
+| `PERCEPTION_KEEP_DAYS` | 14 | Giorni in cui una percezione resta prima di svanire (8.12e, API_it.md §4c); 0 = conservata; vincono il `perceptionKeepDays` della memoria e il `keepDays` della richiesta. Una prima stima |
+| `PERCEPTION_DEDUP_MINUTES` | 10 | La stessa percezione (sensore, luogo, parole) di nuovo entro questi minuti è una sola; 0 = tenute tutte |
 | `WEBHOOK_ALLOW_PRIVATE` | false | I webhook possono puntare a indirizzi privati e a http semplice (un client ospitato insieme a Recordare); spento: solo https pubblico |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
 | `LOG_LLM_CALLS` | on | Una riga `llm_calls` per chiamata (token, latenza; mai il contenuto) |
@@ -83,6 +85,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `qualityProfile` | admin | predefinito dell'installazione | §1 |
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |
 | `quietFrom`, `quietTo` | admin | 22, 8 | Le ore di quiete della memoria (locali): nessuna iniziativa scatta al loro interno (D53, 8.12c) |
+| `perceptionKeepDays` | admin (console) | default dell'installazione | Giorni in cui una percezione resta prima di svanire (8.12e); 0 = conservata |
 
 ## 5. Per client (API admin o console — ogni impostazione qui sotto, webhook e canali compresi)
 

@@ -24,7 +24,7 @@ export const PRESENCE_CHANNELS = ['home', 'voice', 'camera', 'panel', 'chat'] as
 /** In a room the agent can speak in: where §5c's rules hold (arrival, pace, quiet hours, the opening). */
 const ROOM = new Set(['voice', 'camera']);
 
-type Identity = { channel: string; externalId: string } | { externalUserId: string };
+export type Identity = { channel: string; externalId: string } | { externalUserId: string };
 
 export interface PresenceInput {
   /** One person (the shorthand of a place with one person); none: the holder of a personal memory, nobody known in an entity memory. */
@@ -44,7 +44,7 @@ export interface PresenceInput {
   talking?: boolean;
 }
 
-type Person = { personId: string; name: string };
+export type Person = { personId: string; name: string };
 
 export interface PresenceResult {
   /** The person the initiative is for, else the first recognised. */
@@ -174,30 +174,34 @@ export class PresenceService {
     return !!hit;
   }
 
-  /** The person in this memory: the self (personal memory: no identity, or the account's own user), a known contact, or nobody. */
-  private async resolve(memoryId: string, clientId: string | null, identity: Identity | undefined): Promise<Person | null> {
-    const [memory]: Array<{ mode: string; name: string }> = await this.db.query(
-      `SELECT o.mode, p.display_name AS name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
-    if (!memory) return null;
-    const selfOf = { personId: memoryId, name: memory.name };
-    if (!identity) return memory.mode === 'personal' ? selfOf : null;
-    const id = identity;
-    if ('externalUserId' in id) {
-      if (!clientId) return null;
-      const [own] = await this.db.query(
-        `SELECT 1 FROM external_identities WHERE kind = 'account' AND client_id = $1 AND external_id = $2 AND person_id = $3`, [clientId, id.externalUserId, memoryId]);
-      if (own) return memory.mode === 'personal' ? selfOf : null; // an entity memory's account is the agent, not a person present
-    }
-    const [hit]: Array<{ person_id: string; name: string }> = 'externalUserId' in id
-      ? await this.db.query(
-        `SELECT x.person_id, p.display_name AS name FROM external_identities x JOIN persons p ON p.id = x.person_id
-         WHERE x.kind = 'participant' AND x.memory_id = $1 AND x.client_id = $2 AND x.external_id = $3 AND x.verified_at IS NOT NULL`,
-        [memoryId, clientId, id.externalUserId])
-      : await this.db.query(
-        `SELECT x.person_id, p.display_name AS name FROM external_identities x JOIN persons p ON p.id = x.person_id
-         WHERE x.kind = 'participant' AND x.memory_id = $1 AND x.channel = $2 AND x.external_id = $3 AND x.verified_at IS NOT NULL`,
-        [memoryId, id.channel, id.externalId]);
-    if (!hit) return null;
-    return hit.person_id === memoryId ? selfOf : { personId: hit.person_id, name: hit.name };
+  private resolve(memoryId: string, clientId: string | null, identity: Identity | undefined): Promise<Person | null> {
+    return resolvePresent(this.db, memoryId, clientId, identity);
   }
+}
+
+/** The person in this memory: the self (personal memory: no identity, or the account's own user), a known contact, or nobody. */
+export async function resolvePresent(db: DataSource, memoryId: string, clientId: string | null, identity: Identity | undefined): Promise<Person | null> {
+  const [memory]: Array<{ mode: string; name: string }> = await db.query(
+    `SELECT o.mode, p.display_name AS name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
+  if (!memory) return null;
+  const selfOf = { personId: memoryId, name: memory.name };
+  if (!identity) return memory.mode === 'personal' ? selfOf : null;
+  const id = identity;
+  if ('externalUserId' in id) {
+    if (!clientId) return null;
+    const [own] = await db.query(
+      `SELECT 1 FROM external_identities WHERE kind = 'account' AND client_id = $1 AND external_id = $2 AND person_id = $3`, [clientId, id.externalUserId, memoryId]);
+    if (own) return memory.mode === 'personal' ? selfOf : null; // an entity memory's account is the agent, not a person present
+  }
+  const [hit]: Array<{ person_id: string; name: string }> = 'externalUserId' in id
+    ? await db.query(
+      `SELECT x.person_id, p.display_name AS name FROM external_identities x JOIN persons p ON p.id = x.person_id
+       WHERE x.kind = 'participant' AND x.memory_id = $1 AND x.client_id = $2 AND x.external_id = $3 AND x.verified_at IS NOT NULL`,
+      [memoryId, clientId, id.externalUserId])
+    : await db.query(
+      `SELECT x.person_id, p.display_name AS name FROM external_identities x JOIN persons p ON p.id = x.person_id
+       WHERE x.kind = 'participant' AND x.memory_id = $1 AND x.channel = $2 AND x.external_id = $3 AND x.verified_at IS NOT NULL`,
+      [memoryId, id.channel, id.externalId]);
+  if (!hit) return null;
+  return hit.person_id === memoryId ? selfOf : { personId: hit.person_id, name: hit.name };
 }

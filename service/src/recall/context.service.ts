@@ -70,6 +70,9 @@ export interface MemoryContext {
 const HEARD = `NOT EXISTS (SELECT 1 FROM episode_evidence ev JOIN messages m ON m.id = ev.message_id JOIN conversations c ON c.id = m.conversation_id
   WHERE ev.episode_id = episodes.id AND c.source <> 'ambient') AND EXISTS (SELECT 1 FROM episode_evidence ev WHERE ev.episode_id = episodes.id)`;
 
+/** Noticed by the agent's own senses (8.12e). */
+const SEEN = `episodes.origin = 'perceived'`;
+
 const EMPTY: MemoryContext = { block: null, items: 0 };
 
 @Injectable()
@@ -185,15 +188,15 @@ export class ContextService {
          AND occurred_at >= ${at(1)}::timestamptz - interval '1 day' AND occurred_at < ${at(1)}::timestamptz + make_interval(days => ${at(2)})
          AND ${sim('embedding')} >= ${at(0)}
        ORDER BY ${sim('embedding')} DESC LIMIT ${at(3)}`, [memoryId, ...vectors, this.floors.plan, now, PLAN_HORIZON_DAYS, MAX_PLANS]);
-    const episodes: Array<{ id: string; content: string; occurred_at: Date | null; date_precision: Precision; about: string | null; heard: boolean }> = await this.db.query(
-      `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard FROM episodes
+    const episodes: Array<{ id: string; content: string; occurred_at: Date | null; date_precision: Precision; about: string | null; heard: boolean; seen: boolean }> = await this.db.query(
+      `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard, ${SEEN} AS seen FROM episodes
        WHERE ${visible} AND kind <> 'plan' AND ${sim('embedding')} >= ${at(0)}
        ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.episode, MAX_EPISODES]);
     // A message naming a period ("last week", "sabato scorso", "昨天"): what happened then, by relevance, with a lower bar.
     const period = namedPeriod(query, localDate(now, tz));
     if (period) {
       const inPeriod: typeof episodes = await this.db.query(
-        `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard FROM episodes
+        `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard, ${SEEN} AS seen FROM episodes
          WHERE ${visible} AND kind <> 'plan' AND ${sim('embedding')} >= ${at(0)}
            AND occurred_at >= (${at(1)}::date::timestamp AT TIME ZONE ${at(3)}) AND occurred_at < ((${at(2)}::date + 1)::timestamp AT TIME ZONE ${at(3)})
          ORDER BY ${sim('embedding')} DESC LIMIT ${at(4)}`, [memoryId, ...vectors, this.floors.period, period.from, period.to, tz, MAX_EPISODES]);
@@ -216,7 +219,10 @@ export class ContextService {
     for (const n of notes.filter((x) => !top.ids.has(x.id))) lines.push(`- ${label(n)}: ${whose(n.about)}${n.content}`);
     for (const p of plans) lines.push(`- plan: ${p.content} (${when(p.occurred_at, p.date_precision, tz, memory.locale)})`);
     // Overheard in the room (6.5): not said to me, its speaker possibly misrecognised.
-    for (const e of episodes) lines.push(`- episode${e.heard ? ' (heard in the room; the speaker may be misrecognised)' : ''}: ${whose(e.about)}${e.content} (${when(e.occurred_at, e.date_precision, tz, memory.locale)})`);
+    // Seen by my own senses (8.12e): not told; who was recognised may be wrong.
+    const tag = (e: { heard: boolean; seen: boolean }) => (e.seen ? ' (seen by me; who I recognised may be wrong)'
+      : e.heard ? ' (heard in the room; the speaker may be misrecognised)' : '');
+    for (const e of episodes) lines.push(`- episode${tag(e)}: ${whose(e.about)}${e.content} (${when(e.occurred_at, e.date_precision, tz, memory.locale)})`);
     // One passage of what I learned, when clearly about the message (its text, not a memory of what happened).
     const [passage]: Array<{ content: string; title: string }> = await this.db.query(
       `SELECT x.content, s.title FROM source_passages x JOIN sources s ON s.id = x.source_id

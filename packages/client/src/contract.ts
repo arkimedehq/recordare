@@ -397,6 +397,37 @@ export interface PresenceResult {
   askWho: { personId: string; name: string } | null;
 }
 
+/**
+ * A perception (WORK_PLAN 8.12e): something the agent's senses noticed, told in words — the agent sees and describes,
+ * Recordare never receives an image, a sound or a face. Remembered as seen (origin `perceived`) until it fades.
+ */
+export interface Perception {
+  /** What was noticed, as the agent would tell it ("someone I don't know on the driveway"); at most 2000 characters. */
+  text: string;
+  /** When it was noticed (ISO 8601 with offset; default: now). */
+  at?: string;
+  place?: string;
+  sensor: 'camera' | 'microphone' | 'sensor' | 'photo';
+  /** Who was recognised, with how sure (a face, a voiceprint, an account); at most 20. */
+  people?: Array<{ identity: PresenceIdentity; confidence?: number }>;
+  /** Days before it fades (default: the memory's setting, else the installation's); longer for a serious event. */
+  keepDays?: number;
+  /** Told only to the holder of a personal memory; to nobody in an entity memory. */
+  private?: boolean;
+}
+
+/** What Recordare answers to a perception. */
+export interface PerceptionResult {
+  /** The episode that remembers it. */
+  episodeId: string;
+  /** The same thing was noticed a moment ago (same sensor, place and words): that one is answered. */
+  duplicate: boolean;
+  /** Who was recognised in this memory. */
+  people: Array<{ personId: string; name: string }>;
+  /** When it fades; null: kept. */
+  expiresAt: string | null;
+}
+
 /** A webhook event (Standard Webhooks envelope): `data` is the initiative with the client's own `user` id for the memory. */
 export interface WebhookEvent {
   /** `initiative.deliver` (D55): Recordare chose this moment — deliver it now on `data.channel`. */

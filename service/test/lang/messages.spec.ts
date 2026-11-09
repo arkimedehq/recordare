@@ -42,6 +42,8 @@ describe('the service\'s sentences in every language (WORK_PLAN 2.6)', () => {
     expect(describeDate(at, 'approximate', 'Europe/Rome', 'it-IT')).toBe('circa lunedì 2026-10-05');
     expect(describeDate(at, 'approximate', 'Europe/Rome', 'es')).toBe('aproximadamente lunes 2026-10-05');
     expect(describeDate(null, 'unknown', 'Europe/Rome', 'fr')).toBe('date inconnue');
+    // To the minute (a perception): the local time, not the UTC one.
+    expect(describeDate(new Date('2026-10-13T14:05:00Z'), 'minute', 'Europe/Rome', 'it-IT')).toBe('martedì 2026-10-13 16:05');
   });
 
   it('a memory\'s language is any BCP 47 locale, stored canonical', () => {

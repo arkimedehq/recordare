@@ -85,6 +85,11 @@ export function periodEnd(at: Date, precision: Precision, tz: string): Date {
   return zonedMidnight(addDays(day, 1), tz);
 }
 
+/** HH:MM in `tz`. */
+export function localTime(d: Date, tz: string): string {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
+}
+
 /** Human-readable date with precision, in the memory's language. */
 export function describe(at: Date | null, precision: Precision, tz: string, locale: string): string {
   if (!at) return messages(locale).unknownDate;
@@ -92,5 +97,7 @@ export function describe(at: Date | null, precision: Precision, tz: string, loca
   if (precision === 'year') return day.slice(0, 4);
   if (precision === 'month') return day.slice(0, 7);
   const base = `${weekdayName(day, locale)} ${day}`;
+  // To the minute (a perception, 8.12e): the local time too — the UTC instant alone was read as the hour.
+  if (precision === 'minute') return `${base} ${localTime(at, tz)}`;
   return precision === 'approximate' ? messages(locale).about(base) : base;
 }

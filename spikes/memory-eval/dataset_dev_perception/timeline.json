@@ -1,0 +1,37 @@
+{
+  "_note": "Dev set for perceptions (WORK_PLAN 8.12e), not blind; invented household. An entity memory 'Casa' (Europe/Rome). People: Viola and Tommaso (voice and face bound). Perceptions are posted as of their own time; one conversation tells what one perception was; then questions, a consolidation 16 days later (default keep 14 days) and questions again.",
+  "memory": {"user": "casa-perc", "name": "Casa", "mode": "entity", "locale": "it", "timezone": "Europe/Rome"},
+  "people": [
+    {"name": "Viola", "voice": "viola-voice", "face": "viola-face"},
+    {"name": "Tommaso", "voice": "tommaso-voice", "face": "tommaso-face"}
+  ],
+  "intro": [
+    {"by": "Viola", "content": "Ciao, sono Viola.", "sentAt": "2026-10-12T17:00:00+02:00"},
+    {"by": "Tommaso", "content": "Ciao, sono Tommaso.", "sentAt": "2026-10-12T17:05:00+02:00"}
+  ],
+  "perceptions": [
+    {"id": "p1", "at": "2026-10-13T07:45:00+02:00", "sensor": "camera", "place": "vialetto", "people": ["Viola"], "text": "Viola è uscita di casa con lo zaino"},
+    {"id": "p2", "at": "2026-10-13T10:20:00+02:00", "sensor": "camera", "place": "ingresso", "unknown": 1, "text": "Una persona che non conosco ha suonato il campanello e ha lasciato un volantino nella cassetta"},
+    {"id": "p2b", "at": "2026-10-13T10:23:00+02:00", "sensor": "camera", "place": "ingresso", "unknown": 1, "text": "Una persona che non conosco ha suonato il campanello e ha lasciato un volantino nella cassetta", "expect_duplicate": true},
+    {"id": "p3", "at": "2026-10-13T16:05:00+02:00", "sensor": "sensor", "place": "cucina", "keepDays": 365, "text": "Il sensore di fumo in cucina è scattato per circa un minuto"},
+    {"id": "p4", "at": "2026-10-13T18:30:00+02:00", "sensor": "camera", "place": "strada", "text": "Un furgone bianco è rimasto parcheggiato davanti al cancello per mezz'ora"},
+    {"id": "p5", "at": "2026-10-14T08:10:00+02:00", "sensor": "camera", "place": "vialetto", "people": ["Tommaso"], "text": "Tommaso è partito in macchina"}
+  ],
+  "told": [
+    {"by": "Tommaso", "content": "Il furgone bianco di ieri sera era del tecnico della caldaia, è venuto a fare la revisione.", "sentAt": "2026-10-14T19:00:00+02:00"}
+  ],
+  "phases": [
+    {"consolidate_at": "2026-10-15T09:00:00+02:00", "perceived_after": 5, "asked_at": "2026-10-15T09:30:00+02:00", "questions": [
+      {"id": "q1", "category": "when-seen", "q": "A che ora è uscita Viola martedì mattina?", "expected": "Verso le 7:45 di martedì 13 ottobre, con lo zaino (vista dalla telecamera del vialetto).", "must_not": ["un orario diverso dalle 7:45 circa"]},
+      {"id": "q2", "category": "who-seen", "q": "Chi ha suonato il campanello martedì?", "expected": "Una persona sconosciuta (vista dalla telecamera), che ha lasciato un volantino nella cassetta.", "must_not": ["dare un nome a chi ha suonato"]},
+      {"id": "q3", "category": "seen-vs-told", "q": "Il furgone bianco davanti al cancello martedì: l'hai visto tu o te l'hanno detto? Di chi era?", "expected": "L'ho visto io (telecamera) martedì sera, parcheggiato per mezz'ora; Tommaso mi ha detto che era del tecnico della caldaia venuto per la revisione.", "must_not": ["dire che il furgone l'ha solo sentito raccontare senza averlo visto"]},
+      {"id": "q4", "category": "not-seen", "q": "Hai visto il gatto in giardino ieri?", "expected": "No: non ho nessun ricordo di un gatto in giardino.", "must_not": ["affermare di aver visto un gatto"]},
+      {"id": "q5", "category": "when-seen", "q": "È successo qualcosa in cucina martedì?", "expected": "Sì: martedì pomeriggio (verso le 16) il sensore di fumo in cucina è scattato per circa un minuto.", "must_not": []}
+    ]},
+    {"consolidate_at": "2026-10-30T09:00:00+02:00", "perceived_after": 1, "asked_at": "2026-10-30T09:30:00+02:00", "questions": [
+      {"id": "q6", "category": "faded", "q": "Chi ha suonato il campanello martedì 13 ottobre?", "expected": "Non lo ricordo più: non ho memoria di chi abbia suonato quel giorno.", "must_not": ["dire che è stata una persona sconosciuta con un volantino", "dare un nome"]},
+      {"id": "q7", "category": "told-stays", "q": "Chi era venuto con il furgone bianco a metà ottobre?", "expected": "Il tecnico della caldaia, per la revisione (me l'ha detto Tommaso).", "must_not": []},
+      {"id": "q8", "category": "kept", "q": "Il sensore di fumo in cucina è mai scattato?", "expected": "Sì, martedì 13 ottobre verso le 16, per circa un minuto.", "must_not": []}
+    ]}
+  ]
+}

@@ -23,6 +23,7 @@ import { McpModule } from './mcp/mcp.module';
 import { OpenApiModule } from './openapi/openapi.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
 import { InitiativeModule } from './initiative/initiative.module';
+import { PerceptionModule } from './perception/perception.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { InitiativeModule } from './initiative/initiative.module';
     RawLogModule,
     KnowledgeModule,
     InitiativeModule,
+    PerceptionModule,
     McpModule,
     OpenApiModule,
   ],

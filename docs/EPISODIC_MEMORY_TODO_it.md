@@ -962,6 +962,24 @@ Specifica: `docs/INITIATIVES_DELIVERY_it.md`; ricerca: `RESEARCH_NOTES_it.md` H1
   domande alle persone, dev set (linee temporali, una casa che cresce); F3 client (prima Arkimede); F4 apprendimento
   dagli esiti; F5 impronta vocale / volto e annuncio a voce in Arkimede (lavoro del client); F6 tempo v2, il contesto del momento.
 
+### D56 — Percezioni: il client vede e descrive; visto, non detto; svaniscono (decisione del maintainer, 2026-11-09)
+WORK_PLAN 8.12e, `API_it.md` §4c. Con Recordare stabile e Arkimede integrato, la parte di percezione chiusa dal lato di
+Recordare, generica per qualunque client.
+- **Chi descrive**: il client — il suo modello di visione o di sensori — a parole; Recordare non riceve mai un'immagine,
+  un suono o un volto (come per voci e volti: chi è stato riconosciuto, mai il dato grezzo).
+- **Come arriva**: `POST api/v1/perceptions` (testo, quando, luogo, sensore, persone riconosciute, `keepDays`, privata),
+  non l'ingest: più semplice per i client, e salta l'estrazione.
+- **Cosa si tiene**: un episodio scritto senza il modello (la descrizione è già il ricordo; nessun fatto né nota), di una
+  nuova origine **`perceived`** — reality monitoring: visto, distinto da detto (`holder_told`) e pensato (`reflected`);
+  dietro c'è un messaggio del log grezzo, così privacy (D52) e oblio funzionano come per tutto il resto.
+- **Svanire**: `keepDays` → impostazione della memoria → `PERCEPTION_KEEP_DAYS` (14; 0 = conservata); un passaggio
+  notturno senza modello dimentica quelle scadute; ciò che una persona ha detto sull'evento resta (evidenza propria), e
+  così le conclusioni della memoria stessa (schemi, pensieri).
+- **Una volta sola**: la stessa cosa dallo stesso sensore nello stesso luogo entro 10 minuti è una sola; i client mandano
+  eventi, non stream.
+- **Non è una fonte di iniziative**: avvisare subito (uno sconosciuto alla porta) è compito del client (i flussi Home
+  Assistant di Arkimede); la memoria serve per dopo.
+
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 decisa il 2026-10-12 con WORK_PLAN 5.4). Il lavoro aperto è tracciato

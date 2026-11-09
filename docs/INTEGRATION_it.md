@@ -230,6 +230,12 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > promemoria programmato da sé. L'`InitiativeInbox` della libreria fa (c)–(e) in un pezzo solo: scrivi solo come ne consegni
 > una. I passi qui sotto valgono ancora per la consegna push.
 
+> **Percezioni** (8.12e, `API_it.md` §4c, facoltative): quando i sensi del tuo agente notano qualcosa che vale la pena
+> ricordare — una persona o uno sconosciuto davanti a una telecamera, un sensore che scatta, una foto che l'agente ha
+> guardato — descrivilo a parole e manda `client.perceive(user, {text, sensor, place?, people?, keepDays?})`. A vedere è il
+> tuo agente; Recordare non riceve mai l'immagine. Manda eventi, non uno stream (una ripetizione entro pochi minuti torna
+> come `duplicate`); avvisare subito qualcuno resta compito tuo. Se non ne mandi, non cambia nulla.
+
 > **Canali e presenza per luogo** (D55 §5b–§5c, 2026-11-05): un'iniziativa porta `channels` — quelli accettabili in ordine
 > (`voice`, `messaging` solo per una richiesta o una promessa, `chat`) — consegnala sul primo che dalla tua parte
 > raggiunge la persona **adesso**, e riporta il canale usato; `for.addresses` dice dove trovare la persona (le sue identità

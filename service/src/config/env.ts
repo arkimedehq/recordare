@@ -88,6 +88,10 @@ const baseSchema = z.object({
   INITIATIVE_COOLDOWN_IGNORED_MINUTES: z.coerce.number().int().min(0).max(1_440).default(60),
   /** D55 F6 (timing v2): a client's `talking` in a place holds an opening there for this many seconds (a conversation in progress). */
   INITIATIVE_CONVERSATION_GAP_SECONDS: z.coerce.number().int().min(0).max(3_600).default(90),
+  /** Perceptions (8.12e): days a perception is kept before it fades (0 = kept); a memory's own setting wins. */
+  PERCEPTION_KEEP_DAYS: z.coerce.number().int().min(0).max(3_650).default(14),
+  /** The same perception again in the same place within these minutes is one (0 = every one is kept). */
+  PERCEPTION_DEDUP_MINUTES: z.coerce.number().int().min(0).max(1_440).default(10),
   /** D55 §5c: at most one spontaneous announcement (an initiative or an opening said aloud) per person this often, in minutes. */
   INITIATIVE_VOICE_PACE_MINUTES: z.coerce.number().int().min(0).max(1_440).default(30),
   /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */
