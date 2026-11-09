@@ -6,6 +6,13 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-11-09
+
+**What the memory means to say reaches people on OpenClaw and Hermes too.** The OpenClaw plugin sends an initiative to
+the person's last direct chat as a session notice, without the model (`initiatives: true`); Hermes takes it through a
+ready gateway webhook route, with no code. A diary entry cut short is written anyway. Client library and connectors
+0.12.0 (`for.addressOn`).
+
 ### Added
 - **Initiatives pushed to OpenClaw and Hermes** (D55 F3). What the memory decides to say on its own now reaches people
   who are not talking to the agent, without the model:

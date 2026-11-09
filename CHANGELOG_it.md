@@ -6,6 +6,13 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.12.0] — 2026-11-09
+
+**Ciò che la memoria vuole dire raggiunge le persone anche su OpenClaw e Hermes.** Il plugin OpenClaw invia
+un'iniziativa all'ultima chat diretta della persona come avviso di sessione, senza il modello (`initiatives: true`);
+Hermes la riceve tramite una rotta webhook del gateway pronta, senza codice. Un diario troncato viene scritto lo stesso.
+Libreria client e connettori 0.12.0 (`for.addressOn`).
+
 ### Aggiunto
 - **Iniziative inviate a OpenClaw e Hermes** (D55 F3). Ciò che la memoria decide di dire da sé ora raggiunge chi non
   sta parlando con l'agente, senza il modello:
