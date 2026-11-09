@@ -22,7 +22,7 @@ describe('timing v0 (D55 F2a): the clock chooses the moment, every decision logg
   let receiver: Server;
   let db: DataSource;
   let marco: string;
-  const received: Array<{ type: string; data: { id: string; status: string; channel: string } }> = [];
+  const received: Array<{ type: string; data: { id: string; status: string; channel: string; text: string; for: unknown; user: string } }> = [];
   const sweep = (at: Date) => app.get(InitiativeService).sweep(marco, at);
   const state = async (content: string) => (await db.query(
     `SELECT i.id, i.status::text, i.channel, i.pushed_at, i.timing FROM initiatives i WHERE i.text LIKE '%' || $1 || '%'`, [content]))[0];
@@ -75,6 +75,9 @@ describe('timing v0 (D55 F2a): the clock chooses the moment, every decision logg
     expect(s).toMatchObject({ status: 'offered', channel: 'messaging', timing: 'timed' });
     expect(new Date(s.pushed_at).toISOString()).toBe(rome('09:00').toISOString());
     expect(await delivered(s.id)).toEqual(['initiative.deliver']); // the endpoint takes the deliveries only
+    // The fields a Hermes webhook route reads (F3, connectors/hermes): the text, the channel, the holder as `for: null`.
+    expect(received.find((r) => r.data.id === s.id)?.data).toMatchObject({ channel: 'messaging', for: null, user: 'marco' });
+    expect(received.find((r) => r.data.id === s.id)?.data.text).toContain('medicina');
     expect(await decisions(s.id)).toEqual([expect.objectContaining({ trigger: 'clock', p: 1, delivered: true, reason: 'timed' })]);
   });
 

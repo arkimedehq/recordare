@@ -31,6 +31,14 @@ export interface RecordareConfig {
   groups: boolean;
   /** Per call to Recordare before the agent answers (ingest of the message, then the context): default 3000 ms. */
   timeoutMs: number;
+  /**
+   * Initiatives pushed (D55 F3): what the memory decided to say on its own, sent as a message to the person's last direct
+   * chat (OpenClaw session notices, no model). Off by default; Recordare's console declares the client's `messaging`
+   * channel.
+   */
+  initiatives: boolean;
+  /** How often the initiatives feed is read (seconds, default 60, at least 15). */
+  initiativesPollSeconds: number;
   /** True for a personal token: one memory, Recordare ignores the user header. */
   personal: boolean;
 }
@@ -66,6 +74,8 @@ export function parseConfig(raw: Record<string, unknown> | undefined, env: NodeJ
     tools: bool(c.tools, true),
     groups: bool(c.groups, true),
     timeoutMs: typeof c.timeoutMs === 'number' && c.timeoutMs > 0 ? c.timeoutMs : 3000,
+    initiatives: bool(c.initiatives, false),
+    initiativesPollSeconds: typeof c.initiativesPollSeconds === 'number' ? Math.max(15, c.initiativesPollSeconds) : 60,
     personal,
   };
 }

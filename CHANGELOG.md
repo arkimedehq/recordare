@@ -6,6 +6,23 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Initiatives pushed to OpenClaw and Hermes** (D55 F3). What the memory decides to say on its own now reaches people
+  who are not talking to the agent, without the model:
+  - **OpenClaw plugin** (`initiatives: true`, off by default): the plugin reads the initiatives feed every minute (no
+    public address) and sends each one pushed on `messaging` as an OpenClaw session notice on the person's last direct
+    chat — a contact by their addresses, the holder by `selfSenders` or the senders mapped to them; the agent is told
+    what it said for its next turn. `said` / `asked` when the channel took it, otherwise `failed` (Recordare arms it
+    again the next day). The senders' sessions and the feed position survive a restart (`recordare/push.json` in
+    OpenClaw's state dir). Needs an OpenClaw with session notices.
+  - **Hermes Agent**, no code: a ready gateway webhook route in direct delivery (`deliver_only`, Standard Webhooks
+    signature, filters on the channel and on whom it is for, `mirror_to_session`) — `connectors/hermes/README.md`. No
+    outcome is reported that way.
+  - **`for.addressOn`** on an initiative: the first address on each channel (`{"telegram": "<chat id>"}`), for templates
+    that cannot index a list. Additive; optional in the client library's type.
+  - `INITIATIVES_DELIVERY.md` §8 corrected: OpenClaw removed the heartbeat wake the design planned; session notices
+    replace it.
+
 ### Fixed
 - **A diary entry cut short is written anyway** (found on Kinox: the shared agent's 2026-11-07 still failed with 1200
   tokens). A reply cut at the output budget is no longer "repaired" with the same budget, which cut it again: it is asked

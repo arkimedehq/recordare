@@ -2,7 +2,8 @@
 // Copyright © 2026 Andrea Genovese
 
 /**
- * The subset of OpenClaw's plugin SDK this plugin uses (types read from openclaw@2026.9.9, `dist/*.d.ts`). OpenClaw
+ * The subset of OpenClaw's plugin SDK this plugin uses (types read from openclaw@2026.9.9, `dist/*.d.ts`; the session
+ * notices from the plugin SDK guide of openclaw main, 2026-11 — "Background session notices"). OpenClaw
  * resolves `openclaw/plugin-sdk/*` for the plugins it loads, so the plugin neither bundles nor installs OpenClaw.
  */
 declare module 'openclaw/plugin-sdk/plugin-entry' {
@@ -82,6 +83,23 @@ declare module 'openclaw/plugin-sdk/plugin-entry' {
     execute: (toolCallId: string, params: Record<string, unknown>, signal?: AbortSignal) => Promise<ToolResult>;
   }
 
+  /** `captureSessionGeneration`: a session's current run, plain data; undefined when it has no active conversation. */
+  export interface SessionGeneration { agentId: string; storePath?: string; sessionKey: string; sessionId: string; lifecycleRevision?: unknown }
+  export interface SessionNotice {
+    generation: SessionGeneration;
+    notice: { type: string; text: string; data?: Record<string, unknown> };
+    /** The same key retries safely. */
+    idempotencyKey: string;
+    /** Context for the agent's next turn (the model never sees the notice row itself). */
+    systemEvent?: string;
+    /** Also send the text to the session's channel, when it can deliver. */
+    deliver?: { skipChannels?: string[] };
+  }
+  export type SessionNoticeResult =
+    | { status: 'posted'; delivered?: unknown }
+    | { status: 'skipped'; reason: string }
+    | { status: 'failed'; stage: 'delivery' | 'transcript'; error?: unknown };
+
   export interface OpenClawPluginApi {
     id: string;
     pluginConfig?: Record<string, unknown>;
@@ -89,8 +107,14 @@ declare module 'openclaw/plugin-sdk/plugin-entry' {
     on<K extends keyof HookMap>(hookName: K, handler: HookMap[K], opts?: { timeoutMs?: number }): void;
     registerTool(factory: (ctx: ToolContext) => AgentTool | null | undefined, opts?: { name?: string }): void;
     registerService(service: { id: string; start: () => void | Promise<void>; stop?: () => void | Promise<void> }): void;
-    /** Runtime helpers; only the state-dir resolver is used (OPENCLAW_STATE_DIR, else ~/.openclaw). */
-    runtime?: { state?: { resolveStateDir?: (env?: NodeJS.ProcessEnv) => string } };
+    /** Runtime helpers: the state-dir resolver (OPENCLAW_STATE_DIR, else ~/.openclaw) and the session notices (initiatives). */
+    runtime?: {
+      state?: { resolveStateDir?: (env?: NodeJS.ProcessEnv) => string };
+      system?: {
+        captureSessionGeneration?: (target: { agentId?: string; sessionKey: string }) => Promise<SessionGeneration | undefined> | SessionGeneration | undefined;
+        postSessionNotice?: (notice: SessionNotice) => Promise<SessionNoticeResult>;
+      };
+    };
   }
 
   export interface PluginEntry {

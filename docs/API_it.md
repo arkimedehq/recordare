@@ -718,6 +718,8 @@ la persona; nessuna intestazione di conversazione, nessuna risoluzione della con
 >   le identità di partecipante verificate della persona (`homeassistant` / `person.chloe`, `telegram` / un chat id) —
 >   dove l'ospite la trova; collegale con `POST api/v1/admin/identities {kind: participant, memoryId, personId, channel,
 >   externalId, verified: true}` o dalla console (la scheda di una memoria: collega un indirizzo a una delle sue persone).
+>   `for.addressOn` (0.12, F3): il primo indirizzo su ogni canale, `{"telegram": "<chat id>"}` — per i template che non
+>   sanno indicizzare una lista (una rotta webhook di Hermes, `{data.for.addressOn.telegram}`).
 > - **Presenza per luogo**: `POST api/v1/presence` accetta `people: [{identity, confidence}]` (tutti quelli riconosciuti
 >   nel luogo) e `someone` (le persone che non sa nominare) al posto di `person` + `confidence` (che resta: un luogo con
 >   una persona), e il canale `home` (in casa: registrato, niente offerto — non basta per parlare). In una stanza

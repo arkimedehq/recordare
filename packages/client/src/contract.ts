@@ -303,9 +303,10 @@ export interface Initiative {
   /**
    * Whom it is for: a contact, or null for the holder (anyone, in an entity memory). Deliver it when they are there.
    * `addresses`: the person's verified identities with a channel (D55 §5c — `homeassistant` / `person.chloe`, `telegram` /
-   * a chat id): where to find them (`addressesOn`).
+   * a chat id): where to find them (`addressesOn`). `addressOn`: the first address on each channel, e.g.
+   * `{ telegram: '<chat id>' }`, for templates that cannot index a list (a Hermes webhook route); absent from services before 0.12.
    */
-  for: { personId: string; name: string; addresses: InitiativeAddress[] } | null;
+  for: { personId: string; name: string; addresses: InitiativeAddress[]; addressOn?: Record<string, string> } | null;
   /** In the memory's language, ready to be said. */
   text: string;
   reason: string;

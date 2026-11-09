@@ -115,6 +115,74 @@ persona del token — a meno che sia impostata una mappa di alias: allora solo g
 ricordati e chiunque altro scriva allo stesso bot resta fuori. Aggiornando con una mappa di alias: aggiungi
 `RECORDARE_MEMORY_PER=user` per mantenere questo comportamento.
 
+## Iniziative inviate (D55 F3, senza codice)
+
+In ogni turno il contesto di memoria porta già ciò che l'agente voleva dire o chiedere a chi sta parlando. Per
+raggiungere chi **non** sta parlando con l'agente — un promemoria chiesto, al suo minuto — si usa la **piattaforma
+webhook** del gateway di Hermes in consegna diretta: Recordare invia l'iniziativa, Hermes ne manda il testo così com'è
+alla chat, **senza il modello**. Il provider non c'entra.
+
+1. **Recordare**: dichiara il canale `messaging` del client con portata `always` (console → il client → Canali, oppure
+   `PATCH api/v1/admin/clients/{id}` `{channels: [{kind: "messaging", reach: "always"}]}`), poi registra un webhook per
+   ciascuna rotta qui sotto, con il solo evento `initiative.deliver`:
+   `POST api/v1/admin/clients/{id}/webhooks {url: "https://<gateway>/webhooks/recordare-contacts", events: ["initiative.deliver"]}`.
+   La risposta mostra il segreto `whsec_…` dell'endpoint **una volta**: è il `secret` della rotta. (Recordare invia solo
+   a `https` su un indirizzo pubblico, a meno che chi lo installa imposti `WEBHOOK_ALLOW_PRIVATE` per un gateway sulla
+   stessa rete.)
+2. **Hermes** (`~/.hermes/config.yaml`, piattaforma webhook attiva — `WEBHOOK_ENABLED=true`):
+
+```yaml
+platforms:
+  webhook:
+    enabled: true
+    extra:
+      routes:
+        # Qualcuno che l'agente conosce, sulla sua chat Telegram.
+        recordare-contacts:
+          secret: "whsec_…"                    # il segreto dell'endpoint di Recordare
+          events: ["initiative.deliver"]
+          filters:
+            - field: "data.channel"
+              equals: "messaging"
+            - field: "data.for.addressOn.telegram"
+              exists: true                     # senza indirizzo Telegram: non questa rotta
+          deliver: "telegram"
+          deliver_only: true                   # il testo così com'è, nessun turno dell'agente
+          prompt: "{data.text}"
+          deliver_extra:
+            chat_id: "{data.for.addressOn.telegram}"
+          mirror_to_session: true              # la sua risposta arriva con il contesto
+        # Il titolare della memoria (`for` è null), sul canale principale della piattaforma.
+        recordare-holder:
+          secret: "whsec_…"                    # il segreto del secondo endpoint
+          events: ["initiative.deliver"]
+          filters:
+            - field: "data.channel"
+              equals: "messaging"
+            - field: "data.for"
+              equals: null
+          deliver: "telegram"
+          deliver_only: true
+          prompt: "{data.text}"
+          mirror_to_session: true
+```
+
+   Oppure lo stesso con `hermes webhook subscribe recordare-holder --events initiative.deliver --deliver telegram
+   --deliver-only --prompt "{data.text}" --mirror-to-session --secret "whsec_…"` (i filtri si impostano nella
+   configurazione). Un'altra piattaforma funziona allo stesso modo (`deliver: discord`, `{data.for.addressOn.discord}`…).
+
+Come si incastra:
+- Hermes verifica la firma **Standard Webhooks** di Recordare (`webhook-id`, `webhook-timestamp`, `webhook-signature`,
+  il segreto `whsec_` decodificato) e scarta un `webhook-id` ripetuto; legge l'evento dal `type` della busta.
+- L'indirizzo di un contatto è l'identità che questo provider dichiara per lui (`telegram` / il suo user id — in una
+  chat privata, il chat id), legata e verificata nella memoria. I template di Hermes leggono oggetti, non liste, quindi
+  Recordare dà `for.addressOn` — il primo indirizzo su ogni canale — accanto a `for.addresses`. Un contatto noto solo
+  tramite `user_aliases` (un id tra piattaforme) non ha un indirizzo di canale e non si raggiunge così.
+- **Nessun esito riportato**: una consegna diretta non dice a Recordare che è stata detta, quindi l'iniziativa resta
+  offerta, poi scade, e il tempo non ne impara nulla. Il contesto di memoria non la offre di nuovo in un turno.
+- Non usato: un plugin che chiama `inject_message` — fa girare un turno dell'agente per ogni iniziativa (il modello, e
+  nessuna certezza che il testo venga detto così com'è).
+
 ## Corrispondenze
 
 | Hermes | Recordare |

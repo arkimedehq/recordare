@@ -17,6 +17,8 @@ export const initiative = z.object({
     personId: z.uuid(), name: z.string(),
     addresses: z.array(z.object({ channel: z.string(), id: z.string() }))
       .describe('How to reach them (D55 §5c): their verified identities by channel — `homeassistant` / `person.chloe`, `telegram` / a chat id.'),
+    addressOn: z.record(z.string(), z.string())
+      .describe('The first address on each channel, e.g. `{"telegram": "<chat id>"}`: for templates that cannot index a list (a Hermes webhook route).'),
   }).nullable().describe('Whom it is for; null: the holder, or anyone in an entity memory.'),
   text: z.string().describe('In the memory\'s language, ready to be said.'),
   reason: z.string(),

@@ -102,6 +102,8 @@ Requires OpenClaw ≥ 2026.9.9 (Node ≥ 24, as OpenClaw itself).
 | `tools` | `true` | Offer the `recordare_*` tools |
 | `groups` | `true` | Capture group chats too |
 | `timeoutMs` | `3000` | For the call before the turn (the message's ingest with its context) |
+| `initiatives` | `false` | Send what the memory decides to say on its own to the person's last direct chat (below) |
+| `initiativesPollSeconds` | `60` | How often the plugin reads the initiatives feed (at least 15) |
 
 **Your own sender ids.** With `memoryPer: "agent"` a sender not in `selfSenders` is somebody the agent knows, not you:
 list your ids there (or have the admin bind them to the memory's self, `POST api/v1/admin/identities`
@@ -120,6 +122,27 @@ claims nothing.
 
 **Upgrading from a `users` map.** The earlier behaviour (each mapped sender a separate Recordare user, unmapped senders
 not remembered) is `memoryPer: "user"`: add it to keep your memories split per person.
+
+### Initiatives pushed (D55 F3)
+In every turn the memory block already carries what the agent meant to tell or ask whoever is talking. With
+`initiatives: true` it also reaches people who are **not** talking to the agent: a reminder they asked for at its
+minute, a question for whoever could answer it.
+- **Recordare side**: the admin declares the client's channel `messaging` with reach `always` (console → the client →
+  Channels, or `PATCH api/v1/admin/clients/{id}` `{channels: [{kind: "messaging", reach: "always"}]}`). A contact is
+  reached on the channel identities the plugin declared for them (`telegram` / their sender id), bound and verified in
+  the memory.
+- **The plugin** reads the initiatives feed every `initiativesPollSeconds` (no public address needed) and sends each
+  one as an OpenClaw **session notice** on the person's **last direct chat** with the agent: the text exactly as
+  Recordare wrote it, on that chat's channel, **without the model**; the agent is told what it said for its next turn.
+  A contact is found by their addresses, the account holder by `selfSenders` (`memoryPer: agent`) or by the senders
+  mapped to them (`memoryPer: user`). Never in a group.
+- **Outcomes**: `said` / `asked` on `messaging` when the channel took it. Otherwise `failed` — no direct chat with the
+  person yet (they must have written to the agent once), a send that failed, a channel that cannot deliver (a session
+  reset in between is tried once more). A pushed initiative is not offered again in a turn: `failed` gives it back to
+  Recordare, which arms it again the next day.
+- The senders' last sessions and the feed position are kept in `<OpenClaw state dir>/recordare/push.json`
+  (owner-only). Needs an OpenClaw with session notices (`api.runtime.system.postSessionNotice`); on an older one the
+  plugin logs it once and initiatives stay in the turn.
 
 ### Several people on one Gateway
 OpenClaw's default `session.dmScope: "main"` puts **all direct messages of all people into one session**. Every message
@@ -144,6 +167,7 @@ the agent can come up with another; whoever runs the Gateway tells the people wh
 | session end (`session_end`: new, reset, idle, daily, deleted) | `POST api/v1/ingest/conversations/{id}/end` → extraction now instead of after the idle delay (not on compaction, shutdown or restart) |
 | memory block | `prependContext` of `before_prompt_build` (model-only in OpenClaw; never sent back to Recordare — the plugin strips it) |
 | memory charter (D54) | `appendSystemContext` of `before_prompt_build`: `GET api/v1/charter`, cached by version, the same text every turn |
+| an initiative pushed on `messaging` (`initiatives: true`) | a session notice with `deliver` on the person's last direct chat (`captureSessionGeneration` + `postSessionNotice`), outcome `said` / `asked` / `failed` |
 | cron, heartbeat, sub-agent, agent-to-agent and incognito runs | not remembered |
 
 ## Smoke test
