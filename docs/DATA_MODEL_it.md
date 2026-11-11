@@ -639,6 +639,34 @@ il `PERCEPTION_KEEP_DAYS` dell'installazione, 0 = conservata). Scadenza (`fadePe
 messaggi e gli episodi delle righe scadute vengono cancellati con ciò che solo loro sostenevano (`forgetting.ts`); le
 note di origine `reflected` tratte da esse restano.
 
+## Imparare dall'esterno (WORK_PLAN 8.16 F1, D57) — costruito il 2026-11-11 (migrazione `Learning1791340000000`)
+
+Una memoria di entità impara da sola da ciò che le viene detto e che legge (`memories.learn_from_outside`, booleano null =
+attivo per una memoria di entità, spento per una personale). Il tipo di origine guadagna **`learned`** (letto nell'output
+di uno strumento o in una pagina) — su fatti, note ed episodi (un evento letto, detto nel contesto della memoria come "read
+by me, not told"). Fatti e note tengono chi li ha portati; le note tengono quanto durano.
+
+### informants
+`id, memory_id → memories (cascade), kind ('person' | 'tool' | 'site'), key (l'id di una persona, 'account' — il parlante
+proprio dell'account di entità —, 'someone', il nome di uno strumento, o l'unico host che l'output di uno strumento nomina),
+person_id → persons (set null), class ('household' | 'contact' | 'own_tool' | 'site' | 'anonymous'), confirmed, corrected,
+created_at`; unico `(memory_id, kind, key)`. Fiducia = min(tetto, (a priori × 4 + confirmed) / (4 + confirmed +
+corrected)); a priori 0.9 / 0.7 / 0.8 / 0.5 / 0.3, tetti 1 / 0.9 / 0.95 / 0.6 / 0.4 (`service/src/engine/learning.ts`); a
+0.75 o più ciò che insegna si tiene subito. Un membro della casa è il parlante proprio dell'account di entità o una persona
+con un'identità verificata.
+
+### item_informants
+`id bigserial, memory_id, fact_id → facts (cascade) | note_id → notes (cascade) (esattamente uno), informant_id →
+informants (cascade), conversation_id → conversations (set null), at` — ogni appoggio di un elemento; un appoggio è
+indipendente quando nessuno precedente ha lo stesso informatore o la stessa conversazione. Confermare un elemento in
+attesa (`pending.ts`) aggiunge un `confirmed` ai suoi informatori; un elemento corretto aggiunge un `corrected`.
+
+### notes (aggiunte)
+`lasts` ('perishable' | 'changing' | 'lasting', null), `expires_at` (deperibile: la fine del suo giorno `until`, locale,
+oppure appreso + `LEARNED_NEWS_KEEP_DAYS`), `recheck_at` (a lenta variazione: appreso + `LEARNED_RECHECK_DAYS`); indice su
+`(memory_id, expires_at)` dove valorizzato. Svanire (`fadeLearned`, nel consolidamento, rapporto `faded`): le note oltre
+`expires_at` vengono cancellate, una voce `forgotten` in `note_changes`.
+
 ## Contabilità del motore
 
 ### extraction_runs

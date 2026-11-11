@@ -490,7 +490,20 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   these alone also enter the self card and the memory context's self block as "about me as an agent"; or
   `procedure`, 8.12d — how it does a recurring task for a person or place, learned from an outcome (taught, corrected,
   explicitly approved): "when <situation>, <how I do it>"; the memory context tells it as "how I do it (learned)" when
-  the turn is about that task).
+  the turn is about that task). A note the memory **read** (origin `learned`, 8.16) carries `learned: {from, at, confirmed,
+  until?, mayBeOutdated?}` — the site or tool it came from, the day, whether confirmed since, its last day when it is
+  perishable, and whether it may have changed (slowly changing knowledge past `LEARNED_RECHECK_DAYS`); such a note is
+  returned even while pending, and the agent says where it read it.
+- **Learning from outside** (WORK_PLAN 8.16 F1, D57; entity memories, `learnFromOutside` in `PATCH
+  api/v1/admin/memories/{id}` or the console, null = on for an entity memory): nothing to call — the tool output the client
+  already ingests (role `tool`) and what people say are enough. Lasting knowledge of the place or the people's world, and
+  what a person deliberately teaches, become `knowledge` notes with who brought them: read in a page → origin `learned`,
+  pending unless the tool is one of the agent's own (`LEARNING_OWN_TOOLS`); taught by a household member about the place
+  (the account's own speaker, or a person with a verified identity) → kept at once; someone unknown → pending. The same page
+  read again confirms nothing; a trusted person or a second independent source does. Perishable knowledge fades
+  (`LEARNED_NEWS_KEEP_DAYS`, at its own date when said); a correction takes the old value out of recall. Instructions
+  inside a page or a tool's output never become an intent or a rule. The memory context labels such a note `learned (read
+  on <day>, from <site>; not confirmed)`.
 
 ### `search_knowledge` and `learn_source` (D49, WORK_PLAN 8.9 — learned sources)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passages of the sources the agent learned, ranked by

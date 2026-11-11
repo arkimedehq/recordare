@@ -8,6 +8,7 @@
  * Measured on dev_ambient (2026-10-15): a sister's "I turn 39" heard as the holder's retired the holder's stated age.
  */
 import { type EntityManager } from 'typeorm';
+import { creditInformants } from './learning';
 
 type Db = Pick<EntityManager, 'query'>;
 
@@ -27,10 +28,15 @@ export async function confirmPending(db: Db, table: 'facts' | 'notes', id: strin
   if (!row) return false;
   await retireReplaced(db, table, id);
   await db.query(`UPDATE ${table} SET pending = false, stance = 'stated', confidence = 1 WHERE id = $1`, [id]);
+  // 8.16: whoever brought it was right — trust learned from outcomes.
+  await creditInformants(db, { table, id }, 'confirmed');
   return true;
 }
 
 async function retireReplaced(db: Db, table: 'facts' | 'notes', id: string): Promise<void> {
+  // 8.16: an item this one corrects turned out wrong — whoever brought it loses trust.
+  const [fix]: Array<{ corrects: string | null }> = await db.query(`SELECT corrects FROM ${table} WHERE id = $1`, [id]);
+  if (fix?.corrects) await creditInformants(db, { table, id: fix.corrects }, 'corrected');
   if (table === 'facts') {
     await db.query(
       `UPDATE facts o SET status = CASE WHEN o.id = n.corrects THEN 'corrected'::fact_status ELSE 'superseded'::fact_status END,

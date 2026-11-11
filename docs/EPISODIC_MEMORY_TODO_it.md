@@ -980,6 +980,45 @@ Recordare, generica per qualunque client.
 - **Non è una fonte di iniziative**: avvisare subito (uno sconosciuto alla porta) è compito del client (i flussi Home
   Assistant di Arkimede); la memoria serve per dopo.
 
+### D57 — Imparare dall'esterno, come un bambino (decisione del maintainer, 2026-11-11)
+WORK_PLAN 8.16, RESEARCH_NOTES H15, `docs/literature/learning-from-outside_it.md`. L'obiettivo finale: una memoria di entità
+su un robot che impara da sola da ciò che le viene detto, mostrato e che legge — ricerche web e altro output di strumenti
+compresi — e prende iniziativa da lì. Costruito per fasi, ognuna misurata prima su un dev set.
+- **Chi**: le memorie di entità, attivo di default (`memories.learn_from_outside`, console; null = attivo per una memoria di
+  entità). Una memoria personale è il riflesso della sua persona: impara dall'esterno solo ciò che impara la sua persona —
+  più avanti, e solo con il via libera del maintainer; il suo prompt resta identico byte per byte.
+- **Tre classi di scrittura** (F1): ciò che tocca una vita nota → un episodio, come prima (News LEARNED); la conoscenza
+  duratura del luogo o del mondo in cui vivono le persone di qui (orari di apertura, come funziona qualcosa, il nome di un
+  vicino), o ciò che una persona di qui insegna di proposito → una nota `knowledge` con quanto dura (`lasts`: perishable /
+  changing / lasting, `until`); il resto (titoli, curiosità, risposte a domande generali) → solo il registro grezzo. Il
+  modello propone (sezione LEARNING, `learn.v1`); chi l'ha portato e quanto fidarsi si decide nel codice.
+- **Origine `learned`** (F1): letto nell'output di uno strumento o in una pagina, distinta da detto, percepito e riflesso;
+  il richiamo dice dove e quando, e se è confermato. Ce l'ha anche un episodio letto nell'output di uno strumento
+  (direttamente o riferito dalla risposta dell'agente) — ha toccato una vita, ma nessuno qui l'ha detto — e resta fuori da
+  schemi, pensieri e iniziative fino a F3.
+- **Informatori e fiducia** (F1): ogni fatto o nota tiene chi l'ha portato — una persona, uno strumento, un sito (l'unico
+  host che l'output di uno strumento nomina). Una classe dà la fiducia di partenza e un tetto (membro della casa > contatto >
+  strumento proprio > sito > sconosciuto); gli esiti spostano la fiducia per informatore (confermato la alza, corretto la
+  abbassa), mai le parole. A 0.75 o più (la soglia dell'insegnamento) si tiene subito — un membro della casa che insegna sul
+  luogo (maintainer: tienilo), gli strumenti propri dell'agente (`LEARNING_OWN_TOOLS`); sotto, aspetta, detto con la sua
+  fonte.
+- **Corroborazione indipendente** (F1): un altro informatore in un'altra conversazione; la stessa pagina letta di nuovo, lo
+  stesso gruppo che ripete o il riassunto dell'agente stesso contano una volta. Un informatore fidato o due indipendenti
+  confermano.
+- **Scadenza e ritrattazioni** (F1): la conoscenza deperibile svanisce alla sua data o dopo `LEARNED_NEWS_KEEP_DAYS`, quella a
+  lenta variazione è segnata come forse superata dopo `LEARNED_RECHECK_DAYS`; una correzione toglie dal richiamo il vecchio
+  valore e costa fiducia al suo informatore.
+- **Le istruzioni in ciò che legge sono informazione, mai una regola o un intento** (F1, come la guardia già esistente
+  sull'output degli strumenti).
+- **Procedure** (F2): un compito a più passaggi tenuto intero — passaggi in ordine, fonte, insegnante, le varianti della casa
+  sopra i passaggi generici, riviste dalle esecuzioni del robot. Due modi: **A** l'agente lo struttura (`learn_procedure`);
+  **B** automatico, Recordare trova le procedure in una fonte appresa con il suo modello, con limiti da definire (spento di
+  default, solo per una fonte appresa perché era stato chiesto un compito, un tetto per fonte e al giorno, sempre in
+  attesa finché confermata o eseguita con successo). Le procedure di una riga di 8.12d restano.
+- **Iniziative da conoscenza appresa** (F3): solo quando tocca una vita e la sua fonte è fidata, altrimenti come domanda,
+  sempre con fonte e data; il ciclo di apprendimento (notare → chiedere / cercare → tenere → usare → essere corretta);
+  stadi da bambino (più domande, meno iniziative finché è giovane).
+
 ## Questioni aperte (da discutere)
 
 Nessuna — risolte in D1–D48 (D24–D26: vedi `WORK_PLAN.md`; D26 decisa il 2026-10-12 con WORK_PLAN 5.4). Il lavoro aperto è tracciato

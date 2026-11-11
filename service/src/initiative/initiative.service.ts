@@ -268,7 +268,7 @@ export class InitiativeService {
        WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
          AND (e.kind = 'plan' OR (e.kind = 'event' AND EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id
            WHERE pv.episode_id = e.id AND pm.sent_at < e.occurred_at)))
-         AND e.occurred_at IS NOT NULL AND e.author_role <> 'tool' AND e.origin <> 'assistant_stated'
+         AND e.occurred_at IS NOT NULL AND e.author_role <> 'tool' AND e.origin NOT IN ('assistant_stated', 'learned')
          AND (e.kind = 'event' OR e.plan_status IN ('open', 'confirmed'))
          AND COALESCE(e.occurred_until, e.occurred_at) < $2::timestamptz - make_interval(days => $4) AND e.occurred_at > $2::timestamptz - make_interval(days => $3)
          AND ${episodeVisible('e', PUBLIC_ONLY)}

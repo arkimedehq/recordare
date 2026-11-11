@@ -27,6 +27,7 @@ import { relevantClarifications } from '../engine/clarifications';
 import { speakerOf } from './subjects';
 import { vectorParam } from '../db/pgvector';
 import { buildCards, selfCardLines } from './cards';
+import { learnedFromSql, learnedView } from './memory-search.service';
 import { episodeVisible, factVisible, messageVisible, noteVisible, readerOf, type Reader } from './privacy';
 import { InitiativeService, type InitiativeView } from '../initiative/initiative.service';
 
@@ -72,6 +73,9 @@ const HEARD = `NOT EXISTS (SELECT 1 FROM episode_evidence ev JOIN messages m ON 
 
 /** Noticed by the agent's own senses (8.12e). */
 const SEEN = `episodes.origin = 'perceived'`;
+
+/** Read in a tool's output or a page (8.16). */
+const READ = `episodes.origin = 'learned'`;
 
 const EMPTY: MemoryContext = { block: null, items: 0 };
 
@@ -175,11 +179,14 @@ export class ContextService {
        WHERE f.memory_id = $1 AND f.status = 'current' AND NOT f.pending AND f.deleted_at IS NULL AND f.embedding IS NOT NULL
          AND ${sim('f.embedding')} >= ${at(0)} AND ${factVisible('f', reader)}
        ORDER BY ${sim('f.embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_FACTS]);
-    const notes: Array<{ id: string; category: string; content: string; about: string | null; pattern: boolean; thought: boolean }> = await this.db.query(
-      `SELECT id, category::text, content, 'pattern' = ANY(tags) AS pattern, 'thought' = ANY(tags) AS thought, (SELECT display_name FROM persons WHERE id = notes.subject_person_id) AS about FROM notes
-       WHERE memory_id = $1 AND status = 'current' AND NOT pending AND deleted_at IS NULL AND embedding IS NOT NULL
-         AND ${sim('embedding')} >= ${at(0)} AND ${noteVisible('notes', reader)}
-       ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_NOTES]);
+    // 8.16: what the memory read (origin learned) enters even before it is confirmed — said with its source; past its time, never.
+    const notes: Array<{ id: string; category: string; content: string; about: string | null; pattern: boolean; thought: boolean;
+      origin: string; pending: boolean; learned_at: Date; expires_at: Date | null; recheck_at: Date | null; learned_from: string | null }> = await this.db.query(
+      `SELECT id, category::text, content, 'pattern' = ANY(tags) AS pattern, 'thought' = ANY(tags) AS thought, (SELECT display_name FROM persons WHERE id = notes.subject_person_id) AS about,
+         origin::text, pending, COALESCE(valid_from, recorded_at) AS learned_at, expires_at, recheck_at, CASE WHEN origin = 'learned' THEN ${learnedFromSql('notes')} END AS learned_from FROM notes
+       WHERE memory_id = $1 AND status = 'current' AND (NOT pending OR origin = 'learned') AND deleted_at IS NULL AND embedding IS NOT NULL
+         AND (expires_at IS NULL OR expires_at > ${at(2)}) AND ${sim('embedding')} >= ${at(0)} AND ${noteVisible('notes', reader)}
+       ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.fact, MAX_NOTES, now]);
     const visible = `memory_id = $1 AND deleted_at IS NULL AND invalidated_at IS NULL AND duplicate_of IS NULL AND embedding IS NOT NULL
       AND ${episodeVisible('episodes', reader)}`;
     const plans: Array<{ content: string; occurred_at: Date | null; date_precision: Precision }> = await this.db.query(
@@ -188,15 +195,15 @@ export class ContextService {
          AND occurred_at >= ${at(1)}::timestamptz - interval '1 day' AND occurred_at < ${at(1)}::timestamptz + make_interval(days => ${at(2)})
          AND ${sim('embedding')} >= ${at(0)}
        ORDER BY ${sim('embedding')} DESC LIMIT ${at(3)}`, [memoryId, ...vectors, this.floors.plan, now, PLAN_HORIZON_DAYS, MAX_PLANS]);
-    const episodes: Array<{ id: string; content: string; occurred_at: Date | null; date_precision: Precision; about: string | null; heard: boolean; seen: boolean }> = await this.db.query(
-      `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard, ${SEEN} AS seen FROM episodes
+    const episodes: Array<{ id: string; content: string; occurred_at: Date | null; date_precision: Precision; about: string | null; heard: boolean; seen: boolean; read: boolean }> = await this.db.query(
+      `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard, ${SEEN} AS seen, ${READ} AS read FROM episodes
        WHERE ${visible} AND kind <> 'plan' AND ${sim('embedding')} >= ${at(0)}
        ORDER BY ${sim('embedding')} DESC LIMIT ${at(1)}`, [memoryId, ...vectors, this.floors.episode, MAX_EPISODES]);
     // A message naming a period ("last week", "sabato scorso", "昨天"): what happened then, by relevance, with a lower bar.
     const period = namedPeriod(query, localDate(now, tz));
     if (period) {
       const inPeriod: typeof episodes = await this.db.query(
-        `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard, ${SEEN} AS seen FROM episodes
+        `SELECT id, content, occurred_at, date_precision, (SELECT display_name FROM persons WHERE id = episodes.subject_person_id) AS about, ${HEARD} AS heard, ${SEEN} AS seen, ${READ} AS read FROM episodes
          WHERE ${visible} AND kind <> 'plan' AND ${sim('embedding')} >= ${at(0)}
            AND occurred_at >= (${at(1)}::date::timestamp AT TIME ZONE ${at(3)}) AND occurred_at < ((${at(2)}::date + 1)::timestamp AT TIME ZONE ${at(3)})
          ORDER BY ${sim('embedding')} DESC LIMIT ${at(4)}`, [memoryId, ...vectors, this.floors.period, period.from, period.to, tz, MAX_EPISODES]);
@@ -216,12 +223,19 @@ export class ContextService {
     const label = (n: { pattern: boolean; thought: boolean; category: string }) =>
       (n.category === 'self' ? 'what I learned about myself as an agent' : n.category === 'procedure' ? 'how I do it (learned)'
         : n.thought ? `my own thought (${n.category})` : n.pattern ? 'pattern I noticed' : 'note');
-    for (const n of notes.filter((x) => !top.ids.has(x.id))) lines.push(`- ${label(n)}: ${whose(n.about)}${n.content}`);
+    // Read in a tool's output or a page (8.16): where and when, not confirmed yet, possibly out of date.
+    const read = (n: (typeof notes)[number]) => {
+      if (n.origin !== 'learned') return label(n);
+      const v = learnedView(n, now, tz);
+      return `learned (read on ${v.at}${v.from !== '?' ? `, from ${v.from}` : ''}${v.confirmed ? '' : '; not confirmed'}${v.mayBeOutdated ? '; may be out of date' : ''})`;
+    };
+    for (const n of notes.filter((x) => !top.ids.has(x.id))) lines.push(`- ${read(n)}: ${whose(n.about)}${n.content}`);
     for (const p of plans) lines.push(`- plan: ${p.content} (${when(p.occurred_at, p.date_precision, tz, memory.locale)})`);
     // Overheard in the room (6.5): not said to me, its speaker possibly misrecognised.
     // Seen by my own senses (8.12e): not told; who was recognised may be wrong.
-    const tag = (e: { heard: boolean; seen: boolean }) => (e.seen ? ' (seen by me; who I recognised may be wrong)'
-      : e.heard ? ' (heard in the room; the speaker may be misrecognised)' : '');
+    // Read in a tool's output or a page (8.16): not told by anyone here.
+    const tag = (e: { heard: boolean; seen: boolean; read: boolean }) => (e.seen ? ' (seen by me; who I recognised may be wrong)'
+      : e.read ? ' (read by me, not told)' : e.heard ? ' (heard in the room; the speaker may be misrecognised)' : '');
     for (const e of episodes) lines.push(`- episode${tag(e)}: ${whose(e.about)}${e.content} (${when(e.occurred_at, e.date_precision, tz, memory.locale)})`);
     // One passage of what I learned, when clearly about the message (its text, not a memory of what happened).
     const [passage]: Array<{ content: string; title: string }> = await this.db.query(

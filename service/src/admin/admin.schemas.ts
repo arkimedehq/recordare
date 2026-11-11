@@ -76,6 +76,8 @@ export const updateMemorySchema = z.object({
   quietTo: z.number().int().min(0).max(23).optional(),
   /** Days a perception is kept before it fades (8.12e); 0 = kept; null = back to the installation default. */
   perceptionKeepDays: z.number().int().min(0).max(3_650).nullable().optional(),
+  /** Learning from outside (8.16): learn by itself from what it is told and reads; null = the mode's default (on for an entity memory). */
+  learnFromOutside: z.boolean().nullable().optional(),
 });
 
 /**

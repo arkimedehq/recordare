@@ -943,6 +943,41 @@ generic for any client.
 - **Not an initiative source**: telling at once (a stranger at the door) is the client's job (Arkimede's Home Assistant
   flows); the memory is for later.
 
+### D57 — Learning from outside, like a child (maintainer's decision, 2026-11-11)
+WORK_PLAN 8.16, RESEARCH_NOTES H15, `docs/literature/learning-from-outside.md`. The end goal: an entity memory on a robot
+that learns by itself from what it is told, shown and reads — web searches and other tool output included — and takes
+initiative from it. Built in phases, each measured on a dev set first.
+- **Who**: entity memories, on by default (`memories.learn_from_outside`, console; null = on for an entity memory). A
+  personal memory is its person's reflection: it learns from outside only what its person learns — later, and only with
+  the maintainer's go; its prompt stays byte-identical.
+- **Three write classes** (F1): what touches a known life → an episode, as before (News LEARNED); lasting knowledge of
+  the place or the world the people here live in (opening hours, how something works, a neighbour's name), or what a
+  person here deliberately teaches → a note `knowledge` with how long it holds (`lasts`: perishable / changing /
+  lasting, `until`); the rest (headlines, trivia, answers to general questions) → the raw log only. The model proposes
+  (section LEARNING, `learn.v1`); who brought it and how far to trust it are decided in code.
+- **Origin `learned`** (F1): read in a tool's output or a page, apart from told, perceived and reflected; recall says where
+  and when, and whether it is confirmed. An episode read in a tool's output (directly or relayed by the agent's reply) has
+  it too — it touched a life, but nobody here told it — and stays out of patterns, thoughts and initiatives until F3.
+- **Informants and trust** (F1): each fact or note keeps who brought it — a person, a tool, a site (the one host a tool's
+  output names). A class gives the starting trust and a cap (household > contact > own tool > site > someone unknown);
+  outcomes move it per informant (confirmed raises, corrected lowers), never the wording. At or above the teaching
+  threshold (0.75) it is kept at once — a household member teaching about the place (maintainer: keep it), the agent's
+  own tools (`LEARNING_OWN_TOOLS`); below it waits, said with its source.
+- **Independent corroboration** (F1): another informant in another conversation; the same page read again, the same group
+  repeating or the agent's own summary count once. A trusted informant or two independent ones confirm.
+- **Expiry and retractions** (F1): perishable knowledge fades at its own date or after `LEARNED_NEWS_KEEP_DAYS`, changing
+  knowledge is marked possibly out of date after `LEARNED_RECHECK_DAYS`; a correction takes the old value out of recall
+  and costs its informant trust.
+- **Instructions in what it reads are information, never a rule or an intent** (F1, as the existing guard on tool output).
+- **Procedures** (F2): a multi-step task kept whole — steps in order, source, teacher, the household's variants above the
+  generic steps, revised from the robot's runs. Two modes: **A** the agent structures it (`learn_procedure`); **B**
+  automatic, Recordare finds procedures in a learned source with its own model, with limits to define (off by default,
+  only for a source learned because a task was asked, a cap per source and per day, always pending until confirmed or run
+  successfully). The one-line procedures of 8.12d stay.
+- **Initiatives from learned knowledge** (F3): only when it touches a life and its source is trusted, otherwise as a
+  question, always with source and date; the learning loop (notice → ask / look up → keep → use → be corrected); child-like
+  stages (more questions, fewer initiatives while young).
+
 ## Open questions (to discuss)
 
 None — resolved in D1–D48 (D24–D26: see `WORK_PLAN.md`; D26 decided 2026-10-12 with WORK_PLAN 5.4). Open work is tracked

@@ -73,6 +73,9 @@ export const extractionSchema = z.object({
     verdict: z.enum(['new', 'keep', 'replace', 'corrects']).default('new'),
     target: z.string().nullable().optional(),
     stance: z.enum(['stated', 'inferred']).default('stated'),
+    /** 8.16 (entity prompt with LEARNING): how long learned knowledge holds, and its own last day when said. */
+    lasts: z.enum(['perishable', 'changing', 'lasting']).nullable().optional().catch(null),
+    until: date,
     evidence,
   })).default([]),
   /** OPEN QUESTIONS the window answers (Q-number → the chosen C-number). */

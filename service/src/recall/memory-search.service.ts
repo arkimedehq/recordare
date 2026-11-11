@@ -49,7 +49,9 @@ export interface MemorySearchResult {
   speaker: { kind: 'self' } | { kind: 'someone' } | { kind: 'contact'; name: string };
   /** `inferred`: drawn by the memory, not said (a recurring pattern — `pattern` —, one of my own thoughts — `thought`, D53 — or a
    * pending note). */
-  notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; inferred: boolean; pattern: boolean; thought: boolean; authorRole: string; subject: SubjectView }>;
+  notes: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; inferred: boolean; pattern: boolean; thought: boolean; authorRole: string; subject: SubjectView;
+    /** 8.16: read in a tool's output or a page — where, when, whether confirmed since, and whether it may be out of date. */
+    learned?: LearnedView }>;
   facts: FactView[];
   notes_info: string[];
   /** Open questions about the people involved, to ask if natural (entity memories: only to an identified speaker). */
@@ -57,6 +59,19 @@ export interface MemorySearchResult {
 }
 
 const MIN_VECTOR_SIMILARITY = 0.35;
+
+export interface LearnedView { from: string; at: string | null; confirmed: boolean; until?: string; mayBeOutdated?: true }
+
+/** SQL: the source a note was read from (8.16) — the first informant's key (a site or a tool). `n` is the alias of `notes`. */
+/** A learned note's view: its source, when it was learned, confirmed or not, until when it holds, possibly out of date. */
+export function learnedView(n: { learned_from: string | null; learned_at: Date; pending: boolean; expires_at: Date | null; recheck_at: Date | null },
+  now: Date, tz: string): LearnedView {
+  return { from: n.learned_from ?? '?', at: localDate(n.learned_at, tz), confirmed: !n.pending,
+    ...(n.expires_at ? { until: localDate(n.expires_at, tz) } : {}), ...(n.recheck_at && n.recheck_at <= now ? { mayBeOutdated: true as const } : {}) };
+}
+
+export const learnedFromSql = (n: string): string =>
+  `(SELECT i.key FROM item_informants ii JOIN informants i ON i.id = ii.informant_id WHERE ii.note_id = ${n}.id ORDER BY ii.at LIMIT 1)`;
 
 @Injectable()
 export class MemorySearchService {
@@ -88,15 +103,17 @@ export class MemorySearchService {
     }
     const tsq = toOrTsQuery(args.query);
 
-    const noteRows: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; thought: boolean; author_role: string; sim: number | null; fts: boolean }
+    const noteRows: Array<{ id: string; category: string; content: string; pinned: boolean; pending: boolean; stance: string; pattern: boolean; thought: boolean; author_role: string; sim: number | null; fts: boolean;
+      origin: string; learned_at: Date; expires_at: Date | null; recheck_at: Date | null; learned_from: string | null }
       & SubjectRow> =
       await this.db.query(
         `SELECT id, category, content, pinned, pending, stance, 'pattern' = ANY(tags) AS pattern, 'thought' = ANY(tags) AS thought, author_role, subject_kind, subject_person_id, subject_candidates,
+                origin::text, COALESCE(valid_from, recorded_at) AS learned_at, expires_at, recheck_at, CASE WHEN origin = 'learned' THEN ${learnedFromSql('notes')} END AS learned_from,
                 CASE WHEN $2::text IS NULL OR embedding IS NULL THEN NULL ELSE 1 - (embedding <=> $2::vector) END AS sim,
                 ($3::text <> '' AND to_tsvector('simple', content || ' ' || array_to_string(keywords, ' ')) @@ to_tsquery('simple', NULLIF($3, ''))) AS fts
-         FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending)
-           AND ${noteVisible('notes', reader)}`,
-        [memoryId, vec ? vectorParam(vec) : null, tsq, args.includePending ?? false]);
+         FROM notes WHERE memory_id = $1 AND status = 'current' AND deleted_at IS NULL AND ($4::boolean OR NOT pending OR origin = 'learned')
+           AND (expires_at IS NULL OR expires_at > $5) AND ${noteVisible('notes', reader)}`,
+        [memoryId, vec ? vectorParam(vec) : null, tsq, args.includePending ?? false, now]);
     const notes = noteRows.filter((n) => n.pinned || n.fts || (n.sim ?? 0) >= MIN_VECTOR_SIMILARITY)
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || (b.sim ?? 0) + (b.fts ? 0.1 : 0) - ((a.sim ?? 0) + (a.fts ? 0.1 : 0)))
       .slice(0, limit);
@@ -150,7 +167,7 @@ export class MemorySearchService {
       memory: { name: memory.display_name, mode: memory.mode },
       speaker: speaker.kind === 'contact' ? { kind: 'contact', name: speaker.name } : speaker,
       notes: notes.map((n) => ({ id: n.id, category: n.category, content: n.content, pinned: n.pinned, pending: n.pending, inferred: n.stance === 'inferred', pattern: n.pattern, thought: n.thought, authorRole: n.author_role,
-        subject: subjectView(n, names) })),
+        subject: subjectView(n, names), ...(n.origin === 'learned' ? { learned: learnedView(n, now, tz) } : {}) })),
       facts, notes_info: info,
     };
     if (memory.mode === 'personal' || speaker.kind === 'contact') {

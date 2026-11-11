@@ -92,6 +92,12 @@ const baseSchema = z.object({
   PERCEPTION_KEEP_DAYS: z.coerce.number().int().min(0).max(3_650).default(14),
   /** The same perception again in the same place within these minutes is one (0 = every one is kept). */
   PERCEPTION_DEDUP_MINUTES: z.coerce.number().int().min(0).max(1_440).default(10),
+  /** Learning from outside (8.16 F1): days perishable knowledge (news, a forecast, a price) is kept when it names no date of its own. */
+  LEARNED_NEWS_KEEP_DAYS: z.coerce.number().int().min(1).max(3_650).default(7),
+  /** Days after which slowly changing knowledge (opening hours, a phone number) is marked as possibly out of date. */
+  LEARNED_RECHECK_DAYS: z.coerce.number().int().min(1).max(3_650).default(180),
+  /** Tool names (a regular expression, case-insensitive) that are the agent's own first-party tools (a calendar, a device); empty: none. */
+  LEARNING_OWN_TOOLS: z.string().default(''),
   /** D55 §5c: at most one spontaneous announcement (an initiative or an opening said aloud) per person this often, in minutes. */
   INITIATIVE_VOICE_PACE_MINUTES: z.coerce.number().int().min(0).max(1_440).default(30),
   /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */

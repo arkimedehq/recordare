@@ -99,7 +99,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     description: 'Search your memory of preferences, habits, values, relationships, knowledge and current state (car, home, '
       + 'job…) — yours and of the people you know; each item has its subject. Use `as_of` (ISO date) for "what was it on '
       + 'that date" questions; each fact comes with its history. A note with `pattern` is a habit you noticed yourself in '
-      + 'repeated episodes, not something said: tell it as such.',
+      + 'repeated episodes, not something said: tell it as such. A note with `learned` you read (a search, a page): say where '
+      + 'and when; unless `confirmed`, it is not confirmed yet, and with `mayBeOutdated` it may have changed since.',
     inputSchema: {
       query: z.string().describe('Topic'),
       as_of: isoDay.optional().describe('ISO date (YYYY-MM-DD); default today'),

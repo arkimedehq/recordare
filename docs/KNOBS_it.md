@@ -52,6 +52,9 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `INITIATIVE_DAILY_LIMIT` | 3 | Iniziative che una persona riceve al giorno al massimo (D53, 8.12c); le altre aspettano domani |
 | `PERCEPTION_KEEP_DAYS` | 14 | Giorni in cui una percezione resta prima di svanire (8.12e, API_it.md §4c); 0 = conservata; vincono il `perceptionKeepDays` della memoria e il `keepDays` della richiesta. Una prima stima |
 | `PERCEPTION_DEDUP_MINUTES` | 10 | La stessa percezione (sensore, luogo, parole) di nuovo entro questi minuti è una sola; 0 = tenute tutte |
+| `LEARNED_NEWS_KEEP_DAYS` | 7 | Imparare dall'esterno (8.16, D57): giorni in cui si tiene la conoscenza deperibile (una notizia, una previsione, un prezzo) quando non nomina una data propria; svanisce al consolidamento notturno |
+| `LEARNED_RECHECK_DAYS` | 180 | Giorni dopo i quali la conoscenza appresa a lenta variazione (orari di apertura, un numero di telefono) è detta come forse superata |
+| `LEARNING_OWN_TOOLS` | vuoto | Nomi di strumenti (un'espressione regolare, senza distinzione maiuscole/minuscole) che sono gli strumenti propri dell'agente (un calendario, un dispositivo): ciò che dicono è abbastanza fidato da essere tenuto subito; vuoto: ogni strumento vale come un sito |
 | `WEBHOOK_ALLOW_PRIVATE` | false | I webhook possono puntare a indirizzi privati e a http semplice (un client ospitato insieme a Recordare); spento: solo https pubblico |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
 | `LOG_LLM_CALLS` | on | Una riga `llm_calls` per chiamata (token, latenza; mai il contenuto) |
@@ -86,6 +89,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |
 | `quietFrom`, `quietTo` | admin | 22, 8 | Le ore di quiete della memoria (locali): nessuna iniziativa scatta al loro interno (D53, 8.12c) |
 | `perceptionKeepDays` | admin (console) | default dell'installazione | Giorni in cui una percezione resta prima di svanire (8.12e); 0 = conservata |
+| `learnFromOutside` | admin (console) | attivo per una memoria di entità, spento per una personale | Imparare dall'esterno (8.16, D57): la memoria tiene la conoscenza duratura che legge o le viene detta, con la sua fonte e fiducia; spento: le regole di oggi (prompt `entity.v12`) |
 
 ## 5. Per client (API admin o console — ogni impostazione qui sotto, webhook e canali compresi)
 

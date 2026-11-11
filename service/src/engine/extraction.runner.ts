@@ -13,7 +13,8 @@ import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port'
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
 import { type ExtractionRunner } from '../queue/queue.port';
 import { buildInput, pendingWindows, type Memory, type WindowMessage } from './extraction.context';
-import { buildExtractionUser, ENTITY_PROMPT_VERSION, ENTITY_SYSTEM, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
+import { buildExtractionUser, ENTITY_LEARNING_SYSTEM, ENTITY_PROMPT_VERSION, ENTITY_SYSTEM, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
+import { LEARNING_PROMPT_VERSION } from './learning.prompt';
 import { extractionSchema } from './extraction.schema';
 import { ConcurrentExtractionError, ExtractionWriter, type WrittenRow } from './extraction.writer';
 import { resolveNearDuplicates } from './episode-resolver';
@@ -21,7 +22,7 @@ import { SEED_SLOTS } from '../db/migrations/1790960000000-Notes';
 import { ConfigService } from '@nestjs/config';
 import { type Env } from '../config/env';
 import { qualityProfile, type QualityProfile, type QualityProfileName } from './quality-profile';
-import { EPISODES_ONLY_NOTE, ENTITY_FACTS_SYSTEM, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
+import { EPISODES_ONLY_NOTE, ENTITY_FACTS_LEARNING_SYSTEM, ENTITY_FACTS_SYSTEM, FACTS_PROMPT_VERSION, FACTS_SYSTEM, factsSchema } from './facts.prompt';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { writeLearnedEpisode } from '../knowledge/learned-episode';
 import { storeEmbeddings } from '../db/pgvector';
@@ -42,6 +43,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
   private readonly defaultProfile: QualityProfileName;
   private readonly windowCharsOverride: number | undefined;
   private readonly factsPassOverride: QualityProfile['factsPass'] | undefined;
+  private readonly learningKnobs: { ownTools: RegExp | null; newsKeepDays: number; recheckDays: number };
 
   constructor(
     private readonly db: DataSource,
@@ -53,16 +55,20 @@ export class EngineExtractionRunner implements ExtractionRunner {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
     this.windowCharsOverride = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
     this.factsPassOverride = config.get('FACTS_PASS', { infer: true });
+    const own = config.get('LEARNING_OWN_TOOLS', { infer: true }).trim();
+    this.learningKnobs = { ownTools: own ? new RegExp(own, 'i') : null, newsKeepDays: config.get('LEARNED_NEWS_KEEP_DAYS', { infer: true }),
+      recheckDays: config.get('LEARNED_RECHECK_DAYS', { infer: true }) };
   }
 
   async runForConversation(conversationId: string): Promise<void> {
     const [conv] = await this.db.query(
-      `SELECT c.memory_id, c.client_id, o.locale, o.timezone, o.quality_profile, o.mode, o.gender, p.display_name
+      `SELECT c.memory_id, c.client_id, o.locale, o.timezone, o.quality_profile, o.mode, o.gender, o.learn_from_outside, p.display_name
        FROM conversations c JOIN memories o ON o.person_id = c.memory_id JOIN persons p ON p.id = c.memory_id
        WHERE c.id = $1 AND c.deleted_at IS NULL`, [conversationId]);
     if (!conv) return;
+    // 8.16: an entity memory learns by itself unless switched off; a personal one only what its person learns (later).
     const memory: Memory = { id: conv.memory_id, name: conv.display_name, locale: conv.locale, timezone: conv.timezone, entity: conv.mode === 'entity',
-      gender: conv.gender };
+      gender: conv.gender, learning: conv.mode === 'entity' && conv.learn_from_outside !== false };
     const profile = qualityProfile(conv.quality_profile, this.defaultProfile, this.windowCharsOverride, this.factsPassOverride);
 
     // One extraction per conversation at a time (session advisory lock); a concurrent job leaves
@@ -113,7 +119,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
       const [episodesOut, factsOut] = await Promise.all([
         this.llm.completeJson({
           promptId: extractionVersion(memory),
-          system: memory.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
+          system: memory.learning ? ENTITY_LEARNING_SYSTEM : memory.entity ? ENTITY_SYSTEM : EXTRACTION_SYSTEM,
           user: separate ? `${user}\n\n${EPISODES_ONLY_NOTE}` : user,
           schema: extractionSchema,
           maxTokens: extractionOutputBudget(window),
@@ -121,13 +127,14 @@ export class EngineExtractionRunner implements ExtractionRunner {
           reasoning: profile.reasoning,
         }, ctx),
         separate
-          ? this.llm.completeJson({ promptId: memory.entity ? `${FACTS_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : FACTS_PROMPT_VERSION,
-            system: memory.entity ? ENTITY_FACTS_SYSTEM : FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
+          ? this.llm.completeJson({ promptId: memory.entity ? `${FACTS_PROMPT_VERSION}+${entityVersion(memory)}` : FACTS_PROMPT_VERSION,
+            system: memory.learning ? ENTITY_FACTS_LEARNING_SYSTEM : memory.entity ? ENTITY_FACTS_SYSTEM : FACTS_SYSTEM, user, schema: factsSchema, maxTokens: 4000, task: 'facts', reasoning: profile.reasoning }, ctx)
           : Promise.resolve(null),
       ]);
       const output = factsOut ? { ...episodesOut, facts: factsOut.facts, notes: factsOut.notes } : episodesOut;
       const written = await this.db.transaction(async (tx) => {
-        const writer = new ExtractionWriter(tx, { memoryId: memory.id, timezone: memory.timezone, runId, conversationId, entity: !!memory.entity }, input);
+        const writer = new ExtractionWriter(tx, { memoryId: memory.id, timezone: memory.timezone, runId, conversationId, entity: !!memory.entity,
+          ...(memory.learning ? { learning: this.learningKnobs } : {}) }, input);
         const rows = await writer.apply(output);
         // Sources of this conversation the episodes did not tell of get their learning episode in code (D49).
         for (const sourceId of input.sources.values()) {
@@ -213,4 +220,6 @@ export class EngineExtractionRunner implements ExtractionRunner {
  * The prompt version as recorded and traced (rule 9 compares these): personal memories `extract.v20`; entity memories
  * the same base plus their sections' version (`extract.v20+entity.v8`).
  */
-const extractionVersion = (memory: Memory): string => memory.entity ? `${EXTRACTION_PROMPT_VERSION}+${ENTITY_PROMPT_VERSION}` : EXTRACTION_PROMPT_VERSION;
+const extractionVersion = (memory: Memory): string => memory.entity ? `${EXTRACTION_PROMPT_VERSION}+${entityVersion(memory)}` : EXTRACTION_PROMPT_VERSION;
+/** An entity memory's sections, with the LEARNING section's version when it learns by itself (8.16): `entity.v12+learn.v1`. */
+const entityVersion = (memory: Memory): string => memory.learning ? `${ENTITY_PROMPT_VERSION}+${LEARNING_PROMPT_VERSION}` : ENTITY_PROMPT_VERSION;

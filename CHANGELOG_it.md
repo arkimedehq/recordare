@@ -6,6 +6,19 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Imparare dall'esterno** (WORK_PLAN 8.16 F1, D57, `docs/literature/learning-from-outside_it.md`): una memoria di entità
+  tiene da sola la conoscenza duratura che legge o le viene detta — la risposta di una ricerca web, una pagina, ciò che
+  insegna un membro della casa — come nota `knowledge` con chi l'ha portata e quanto fidarsi, deciso dal codice: letto in
+  una pagina → la nuova origine `learned`, in attesa e detto con la sua fonte finché una persona fidata o una seconda
+  fonte indipendente lo conferma (la stessa pagina di nuovo non conferma nulla); un evento letto che ha toccato una vita → un episodio
+  di origine `learned`; un membro della casa che insegna sul
+  luogo → tenuto subito; la fiducia per informatore imparata dagli esiti (`informants`); le notizie deperibili svaniscono
+  (`LEARNED_NEWS_KEEP_DAYS`), la conoscenza a lenta variazione è detta come forse superata (`LEARNED_RECHECK_DAYS`); le
+  istruzioni dentro ciò che legge non diventano mai un intento o una regola. Attiva di default per le memorie di entità
+  (`learnFromOutside`, console; spenta: il prompt e le regole di prima); le memorie personali restano invariate. Prompt
+  `extract.v24+entity.v12+learn.v1`; migrazione `Learning1791340000000`; le note di `search_memory` portano `learned`.
+
 ## [0.13.0] — 2026-11-09
 
 **L'agente ricorda ciò che i suoi sensi hanno notato — come visto, una volta sola, finché svanisce.** Un client descrive

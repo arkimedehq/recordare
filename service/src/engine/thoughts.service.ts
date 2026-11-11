@@ -103,7 +103,7 @@ export class ThoughtsService {
          AND (COALESCE(e.occurred_at, e.recorded_at) <= $2 OR (e.kind = 'plan' AND e.plan_status = 'open'
            AND EXISTS (SELECT 1 FROM episode_evidence pv JOIN messages pm ON pm.id = pv.message_id WHERE pv.episode_id = e.id AND pm.sent_at <= $2)))
          AND COALESCE(e.occurred_at, e.recorded_at) > $2::timestamptz - make_interval(days => $3)
-         AND e.origin <> 'assistant_stated' AND e.author_role <> 'tool' AND NOT (e.author_role = 'other' AND e.stance = 'inferred')
+         AND e.origin NOT IN ('assistant_stated', 'learned') AND e.author_role <> 'tool' AND NOT (e.author_role = 'other' AND e.stance = 'inferred')
          AND ${episodeVisible('e', PUBLIC_ONLY)}
        ORDER BY COALESCE(e.occurred_at, e.recorded_at) DESC, e.id DESC LIMIT $4`, [memoryId, now, LOOKBACK_DAYS, MAX_EPISODES]) as EpisodeRow[]).reverse();
     // Not enough new since the last pass: no call (the watermark stays, so the importance keeps adding up).

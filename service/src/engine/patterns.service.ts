@@ -79,7 +79,7 @@ export class PatternsService {
        WHERE e.memory_id = $1 AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
          AND e.kind IN ('event', 'state_change') AND e.occurred_at IS NOT NULL
          AND e.occurred_at <= $2 AND e.occurred_at > $2::timestamptz - make_interval(days => $3)
-         AND e.origin <> 'assistant_stated' AND e.author_role <> 'tool' AND NOT (e.author_role = 'other' AND e.stance = 'inferred')
+         AND e.origin NOT IN ('assistant_stated', 'learned') AND e.author_role <> 'tool' AND NOT (e.author_role = 'other' AND e.stance = 'inferred')
          AND ${episodeVisible('e', PUBLIC_ONLY)} -- a pattern is drawn from public memories only (D52)
        ORDER BY e.occurred_at DESC, e.id DESC LIMIT $4`, [memoryId, now, LOOKBACK_DAYS, MAX_EPISODES]) as EpisodeRow[]).reverse();
     // Nothing new since the last pass, or too little to repeat itself: no call.

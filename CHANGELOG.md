@@ -6,6 +6,19 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Learning from outside** (WORK_PLAN 8.16 F1, D57, `docs/literature/learning-from-outside.md`): an entity memory keeps by
+  itself the lasting knowledge it reads or is told — a web search's answer, a page, what a household member teaches — as a
+  `knowledge` note with who brought it and how far to trust it, decided in code: read in a page → the new origin `learned`,
+  pending and said with its source until a trusted person or a second independent source confirms it (the same page again
+  confirms nothing); an event read that touched a life → an episode of origin
+  `learned`; a household member teaching about the place → kept at once; trust per informant learned from
+  outcomes (`informants`); perishable news fades (`LEARNED_NEWS_KEEP_DAYS`), slowly changing knowledge is told as possibly
+  out of date (`LEARNED_RECHECK_DAYS`); instructions inside what it reads never become an intent or a rule. On by
+  default for entity memories (`learnFromOutside`, console; off: the previous prompt and rules); personal memories
+  unchanged. Prompt `extract.v24+entity.v12+learn.v1`; migration `Learning1791340000000`; `search_memory` notes carry
+  `learned`.
+
 ## [0.13.0] — 2026-11-09
 
 **The agent remembers what its senses noticed — as seen, once, until it fades.** A client describes in words what a
