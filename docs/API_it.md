@@ -511,7 +511,22 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   solo questi entrano anche nella scheda di sé e nel blocco di sé del contesto di memoria come "su di me come agente";
   oppure `procedure`, 8.12d — come svolge un compito ricorrente per una persona o un luogo, imparato da un esito
   (insegnato, corretto, approvato esplicitamente): "quando <situazione>, <come lo faccio>"; il contesto di memoria lo
-  riferisce come "come lo faccio (imparato)" quando il turno riguarda quel compito).
+  riferisce come "come lo faccio (imparato)" quando il turno riguarda quel compito). Una nota che la memoria ha **letto**
+  (origine `learned`, 8.16) porta `learned: {from, at, confirmed, until?, mayBeOutdated?}` — il sito o lo strumento da cui
+  viene, il giorno, se è stata confermata dopo, il suo ultimo giorno quando è deperibile, e se può essere cambiata
+  (conoscenza a lenta variazione oltre `LEARNED_RECHECK_DAYS`); una nota così viene restituita anche finché è in attesa, e
+  l'agente dice dove l'ha letta.
+- **Imparare dall'esterno** (WORK_PLAN 8.16 F1, D57; memorie di entità, `learnFromOutside` in `PATCH
+  api/v1/admin/memories/{id}` o nella console, null = attivo per una memoria di entità): non c'è nulla da chiamare — bastano
+  l'output degli strumenti che il client già manda (ruolo `tool`) e ciò che dicono le persone. La conoscenza duratura del
+  luogo o del mondo delle persone, e ciò che una persona insegna di proposito, diventano note `knowledge` con chi le ha
+  portate: letto in una pagina → origine `learned`, in attesa a meno che lo strumento sia uno di quelli propri dell'agente
+  (`LEARNING_OWN_TOOLS`); insegnato da un membro della casa sul luogo (il parlante proprio dell'account, o una persona con
+  un'identità verificata) → tenuto subito; qualcuno di sconosciuto → in attesa. La stessa pagina letta di nuovo non conferma
+  nulla; una persona fidata o una seconda fonte indipendente sì. La conoscenza deperibile svanisce
+  (`LEARNED_NEWS_KEEP_DAYS`, alla sua data quando è detta); una correzione toglie dal richiamo il vecchio valore. Le
+  istruzioni dentro una pagina o l'output di uno strumento non diventano mai un intento o una regola. Il contesto di
+  memoria etichetta una nota così `learned (read on <day>, from <site>; not confirmed)`.
 
 ### `search_knowledge` e `learn_source` (D49, WORK_PLAN 8.9 — fonti apprese)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passaggi delle fonti che l'agente ha imparato, ordinati

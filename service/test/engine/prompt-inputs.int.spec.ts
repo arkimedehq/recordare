@@ -10,7 +10,7 @@ import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
 import { createHash } from 'node:crypto';
 import { EXTRACTION_RUNNER, type ExtractionRunner } from '../../src/queue/queue.port';
-import { AMBIENT_NOTE, EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
+import { AMBIENT_NOTE, ENTITY_LEARNING_SYSTEM, ENTITY_SYSTEM, EXTRACTION_SYSTEM } from '../../src/engine/extraction.prompt';
 import { FACTS_SYSTEM } from '../../src/engine/facts.prompt';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, startFakeLlm, testEnv } from '../helpers/app';
 
@@ -77,7 +77,11 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-5', role: 'tool', toolName: 'web_search', content: 'Meteo: sole.', sentAt: '2026-06-08T09:04:00+02:00' },
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
-    expect(sha(second.system)).toBe('63c55e6133e4c20d3bf85b394b3ad26ce96541e2969b4f3e528a62647f511010');
+    // The measured entity prompt stays byte-identical (`entity.v12`, a memory switched off); one that learns by itself
+    // (8.16, the default) adds the LEARNING section, its own version `learn.v1`.
+    expect(sha(ENTITY_SYSTEM)).toBe('63c55e6133e4c20d3bf85b394b3ad26ce96541e2969b4f3e528a62647f511010');
+    expect(second.system).toBe(ENTITY_LEARNING_SYSTEM);
+    expect(sha(ENTITY_LEARNING_SYSTEM)).toBe('9be53fba9e53684ab10eadaa677176cb3a2c65af4e5f023f1ef7c7097bedcaea');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

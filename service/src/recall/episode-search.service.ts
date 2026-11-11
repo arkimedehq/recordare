@@ -47,7 +47,7 @@ export interface EpisodeView {
   when: string;
   planStatus?: 'open' | 'confirmed' | 'cancelled' | 'rescheduled' | 'unresolved';
   rescheduledTo?: string;
-  origin: 'holder_lived' | 'holder_told' | 'assistant_stated' | 'reflected' | 'perceived';
+  origin: 'holder_lived' | 'holder_told' | 'assistant_stated' | 'reflected' | 'perceived' | 'learned';
   authorRole: 'holder' | 'assistant' | 'other' | 'tool';
   /** Whose memory it is: the self (first person), a contact, someone, or undecided between candidates (D50). */
   subject: SubjectView;

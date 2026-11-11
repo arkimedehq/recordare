@@ -236,6 +236,12 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > tuo agente; Recordare non riceve mai l'immagine. Manda eventi, non uno stream (una ripetizione entro pochi minuti torna
 > come `duplicate`); avvisare subito qualcuno resta compito tuo. Se non ne mandi, non cambia nulla.
 
+> **Imparare dall'esterno** (8.16, D57, memorie di entità, attivo di default): continua a mandare le chiamate ai tuoi
+> strumenti e il loro output come messaggi `tool` (come per la contaminazione del turno); una memoria di entità tiene allora
+> la conoscenza duratura che legge (orari di apertura, come funziona qualcosa) con il sito da cui viene, in attesa che una
+> persona la confermi, e lascia svanire le notizie. Spegnilo per memoria (`learnFromOutside: false`, console) per tenere le
+> regole di prima.
+
 > **Canali e presenza per luogo** (D55 §5b–§5c, 2026-11-05): un'iniziativa porta `channels` — quelli accettabili in ordine
 > (`voice`, `messaging` solo per una richiesta o una promessa, `chat`) — consegnala sul primo che dalla tua parte
 > raggiunge la persona **adesso**, e riporta il canale usato; `for.addresses` dice dove trovare la persona (le sue identità

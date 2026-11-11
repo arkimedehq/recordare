@@ -34,7 +34,7 @@ const T = {
     linkCode: 'Codice di collegamento', linkCodeHint: 'Il titolare lo invia all\'agente dal canale, in chat diretta, entro 10 minuti; poi la richiesta si conferma qui.',
     claims: 'Da confermare', isHolder: 'È il titolare', notHolder: 'Non è il titolare',
     claimConfirm: 'Da ora i messaggi di questo mittente saranno del titolare ("io"); i messaggi passati restano come sono. Confermare?',
-    save: 'Salva', locale: 'Lingua (BCP 47)', timezone: 'Fuso orario', quiet: 'Ore di quiete (nessuna iniziativa)', from: 'dalle', to: 'alle', perceptionKeep: 'Percezioni conservate per', days: 'giorni', installDefault: 'predefinito',
+    save: 'Salva', locale: 'Lingua (BCP 47)', timezone: 'Fuso orario', quiet: 'Ore di quiete (nessuna iniziativa)', from: 'dalle', to: 'alle', perceptionKeep: 'Percezioni conservate per', days: 'giorni', installDefault: 'predefinito', learn: 'Impara da ciò che sente e legge', learnDefault: 'predefinito (sì per una memoria di entità)', yes: 'sì', no: 'no',
     run: 'Esegui ora', reviewFacts: 'Revisione fatti', patterns: 'Abitudini', thoughts: 'Pensieri', initiatives: 'Iniziative', done: 'Eseguito',
     tokenScopes: 'Permessi del nuovo token:', erase: 'Cancella la memoria',
     eraseConfirm: 'Cancellare per sempre TUTTA la memoria di «{name}»? Scrivi il nome per confermare.', erased: 'Memoria cancellata',
@@ -75,7 +75,7 @@ const T = {
     linkCode: 'Link code', linkCodeHint: 'The holder sends it to the agent from the channel, in a direct chat, within 10 minutes; then the claim is confirmed here.',
     claims: 'To confirm', isHolder: 'It is the holder', notHolder: 'Not the holder',
     claimConfirm: 'From now on this sender\'s messages will be the holder\'s ("I"); past messages stay as they are. Confirm?',
-    save: 'Save', locale: 'Language (BCP 47)', timezone: 'Time zone', quiet: 'Quiet hours (no initiative)', from: 'from', to: 'to', perceptionKeep: 'Perceptions kept for', days: 'days', installDefault: 'default',
+    save: 'Save', locale: 'Language (BCP 47)', timezone: 'Time zone', quiet: 'Quiet hours (no initiative)', from: 'from', to: 'to', perceptionKeep: 'Perceptions kept for', days: 'days', installDefault: 'default', learn: 'Learns from what it hears and reads', learnDefault: 'default (yes for an entity memory)', yes: 'yes', no: 'no',
     run: 'Run now', reviewFacts: 'Facts review', patterns: 'Habits', thoughts: 'Thoughts', initiatives: 'Initiatives', done: 'Done',
     tokenScopes: 'Scopes for a new token:', erase: 'Erase the memory',
     eraseConfirm: 'Erase ALL of «{name}»\'s memory for good? Type the name to confirm.', erased: 'Memory erased',
@@ -102,6 +102,7 @@ const HELP = {
     locale: 'La lingua in cui la memoria scrive i suoi ricordi e le sue iniziative, come codice BCP 47: it, en, es, pt-BR…',
     timezone: 'Il fuso orario della persona: serve per capire "domani", "stasera", le ore di quiete e l\'ora dei promemoria.',
     quiet: 'Le ore in cui la memoria non disturba: nessun messaggio spontaneo, salvo un promemoria chiesto proprio per quell\'ora.',
+    learn: 'La memoria impara da sola ciò che le viene detto o che legge (una ricerca web, una pagina): conoscenza che dura, con la sua fonte e quanto fidarsene; le notizie svaniscono, una cosa ripetuta non è una conferma. Una memoria personale impara solo ciò che impara la persona: per ora resta spenta.',
     perceptionKeep: 'Quanto la memoria ricorda ciò che i sensori dell\'agente hanno notato (una telecamera, un sensore) prima che svanisca. Vuoto: il valore dell\'installazione; 0: per sempre. Ciò che una persona ne ha detto resta.',
     identities: 'Chi può aprire questa memoria: un "account" è un utente di un client (es. l\'utente di Arkimede) che arriva qui. Scollegare non cancella i ricordi.',
     merge: 'La stessa persona conosciuta due volte (es. "Eriona" e "Eriona Rossi"): la prima scheda confluisce nella seconda, che tiene tutti i nomi, gli indirizzi, ciò che la memoria sa di lei e ciò che intende dirle. Le citazioni aiutano a scegliere quale tenere.',
@@ -138,6 +139,7 @@ const HELP = {
     locale: 'The language the memory writes its memories and initiatives in, as a BCP 47 code: it, en, es, pt-BR…',
     timezone: 'The person\'s time zone: it resolves "tomorrow", "tonight", the quiet hours and when reminders are due.',
     quiet: 'Hours when the memory does not disturb: no message of its own, except a reminder asked for that very hour.',
+    learn: 'The memory learns by itself what it is told or reads (a web search, a page): lasting knowledge, with its source and how far to trust it; news fades, something repeated is not a confirmation. A personal memory learns only what its person learns: off for now.',
     perceptionKeep: 'How long the memory keeps what the agent\'s senses noticed (a camera, a sensor) before it fades. Empty: the installation\'s value; 0: forever. What a person said about it stays.',
     identities: 'Who can open this memory: an "account" is a client\'s user (e.g. Arkimede\'s user) arriving here. Unlinking deletes no memory.',
     merge: 'The same person known twice (e.g. "Eriona" and "Eriona Rossi"): the first card goes into the second, which keeps every name, address, what the memory knows about them and what it means to tell them. The mentions help to choose which one to keep.',
@@ -310,6 +312,10 @@ function personCard(p) {
   const tzInput = h('input', { value: p.timezone ?? '', list: tzList, size: 18 });
   // 8.12e: days a perception is kept before it fades; empty = the installation's default, 0 = kept.
   const keepInput = h('input', { type: 'number', min: 0, max: 3650, value: p.perceptionKeepDays ?? '', placeholder: t('installDefault'), style: 'width:6em' });
+  // 8.16: learning from outside; null = the mode's default (on for an entity memory).
+  const learnSelect = h('select', { onchange: (e) => patch({ learnFromOutside: e.target.value === '' ? null : e.target.value === 'true' }) },
+    [['', t('learnDefault')], ['true', t('yes')], ['false', t('no')]].map(([v, l]) =>
+      h('option', { value: v, selected: String(p.learnFromOutside ?? '') === v }, l)));
   const hourSelect = (value, key) => h('select', { onchange: (e) => patch({ [key]: Number(e.target.value) }) },
     HOURS.map((x) => h('option', { value: x, selected: Number(value) === x }, `${String(x).padStart(2, '0')}:00`)));
   const runNow = (path, label) => h('button', { class: 'ghost small', onclick: () => act(() => api('POST', `memories/${p.id}/${path}`), t('done')) }, label);
@@ -347,6 +353,7 @@ function personCard(p) {
         h('div', { class: 'row' }, keepInput, t('days'), h('button', {
           class: 'ghost small', onclick: () => patch({ perceptionKeepDays: keepInput.value.trim() === '' ? null : Number(keepInput.value) }),
         }, t('save'))), help('perceptionKeep')),
+      h('label', { class: 'field' }, h('span', {}, t('learn')), learnSelect, help('learn')),
     ),
     h('div', { class: 'sub' },
       h('h4', {}, t('identities')), help('identities'),

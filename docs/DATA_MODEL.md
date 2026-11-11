@@ -613,6 +613,32 @@ installation's `PERCEPTION_KEEP_DAYS`, 0 = kept). Fading (`fadePerceptions`, in 
 messages and episodes are deleted with what only they supported (`forgetting.ts`); notes of origin `reflected` drawn
 from them stay.
 
+## Learning from outside (WORK_PLAN 8.16 F1, D57) — built 2026-11-11 (migration `Learning1791340000000`)
+
+An entity memory learns by itself from what it is told and reads (`memories.learn_from_outside`, boolean null = on for an
+entity memory, off for a personal one). The origin type gains **`learned`** (read in a tool's output or a page). Facts and
+notes keep who brought them; notes keep how long they hold.
+
+### informants
+`id, memory_id → memories (cascade), kind ('person' | 'tool' | 'site'), key (a person's id, 'account' — the entity
+account's own speaker —, 'someone', a tool's name, or the one host a tool's output names), person_id → persons (set
+null), class ('household' | 'contact' | 'own_tool' | 'site' | 'anonymous'), confirmed, corrected, created_at`; unique
+`(memory_id, kind, key)`. Trust = min(cap, (prior × 4 + confirmed) / (4 + confirmed + corrected)); priors 0.9 / 0.7 /
+0.8 / 0.5 / 0.3, caps 1 / 0.9 / 0.95 / 0.6 / 0.4 (`service/src/engine/learning.ts`); at or above 0.75 what it teaches is
+kept at once. A household member is the entity account's own speaker or a person with a verified identity.
+
+### item_informants
+`id bigserial, memory_id, fact_id → facts (cascade) | note_id → notes (cascade) (exactly one), informant_id →
+informants (cascade), conversation_id → conversations (set null), at` — every backing of an item; a backing is
+independent when no earlier one has the same informant or the same conversation. Confirming a pending item
+(`pending.ts`) adds one `confirmed` to its informants; an item corrected adds one `corrected`.
+
+### notes (additions)
+`lasts` ('perishable' | 'changing' | 'lasting', null), `expires_at` (perishable: the end of its own day `until`, local, or
+learned + `LEARNED_NEWS_KEEP_DAYS`), `recheck_at` (changing: learned + `LEARNED_RECHECK_DAYS`); index on `(memory_id,
+expires_at)` where set. Fading (`fadeLearned`, in the consolidation, report `faded`): notes past `expires_at` are deleted,
+a `forgotten` entry in `note_changes`.
+
 ## Engine bookkeeping
 
 ### extraction_runs

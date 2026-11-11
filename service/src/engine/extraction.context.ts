@@ -66,6 +66,8 @@ export interface Memory {
   entity?: boolean;
   /** First person in gendered languages. */
   gender?: MemoryGender;
+  /** Learns by itself from what it is told and reads (8.16; `memories.learn_from_outside`, on by default for an entity memory). */
+  learning?: boolean;
 }
 
 export interface FactRef {

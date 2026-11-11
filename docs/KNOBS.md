@@ -50,6 +50,9 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `INITIATIVE_DAILY_LIMIT` | 3 | Initiatives a person is given a day at most (D53, 8.12c); the rest wait for tomorrow |
 | `PERCEPTION_KEEP_DAYS` | 14 | Days a perception is kept before it fades (8.12e, API.md §4c); 0 = kept; a memory's `perceptionKeepDays` and a request's `keepDays` win. A first guess |
 | `PERCEPTION_DEDUP_MINUTES` | 10 | The same perception (sensor, place, words) again within these minutes is one; 0 = every one kept |
+| `LEARNED_NEWS_KEEP_DAYS` | 7 | Learning from outside (8.16, D57): days perishable knowledge (news, a forecast, a price) is kept when it names no date of its own; it fades at the nightly consolidation |
+| `LEARNED_RECHECK_DAYS` | 180 | Days after which slowly changing learned knowledge (opening hours, a phone number) is told as possibly out of date |
+| `LEARNING_OWN_TOOLS` | empty | Tool names (a regular expression, case-insensitive) that are the agent's own first-party tools (a calendar, a device): what they say is trusted enough to be kept at once; empty: every tool counts as a site |
 | `WEBHOOK_ALLOW_PRIVATE` | false | Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
 | `LOG_LLM_CALLS` | on | One `llm_calls` row per call (tokens, latency; never content) |
@@ -84,6 +87,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Language of the memories, local dates and the night |
 | `quietFrom`, `quietTo` | admin | 22, 8 | The memory's quiet hours (local): no initiative is due inside them (D53, 8.12c) |
 | `perceptionKeepDays` | admin (console) | installation default | Days a perception is kept before it fades (8.12e); 0 = kept |
+| `learnFromOutside` | admin (console) | on for an entity memory, off for a personal one | Learning from outside (8.16, D57): the memory keeps lasting knowledge it reads or is told, with its source and trust; off: today's rules (`entity.v12` prompt) |
 
 ## 5. Per client (admin API or console — every setting below, webhooks and channels included)
 

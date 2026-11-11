@@ -48,6 +48,8 @@ export class Memory {
   @Column({ name: 'quiet_to', type: 'smallint', default: 8 }) quietTo!: number;
   /** Days a perception is kept before it fades (8.12e); null: the installation's `PERCEPTION_KEEP_DAYS`; 0: kept. */
   @Column({ name: 'perception_keep_days', type: 'smallint', nullable: true }) perceptionKeepDays!: number | null;
+  /** Learning from outside (8.16): null = on for an entity memory, off for a personal one. */
+  @Column({ name: 'learn_from_outside', type: 'boolean', nullable: true }) learnFromOutside!: boolean | null;
   @Column({ type: 'enum', enumName: 'memory_mode', enum: MEMORY_MODES, default: 'personal' }) mode!: MemoryMode;
   @Column({ type: 'enum', enumName: 'memory_gender', enum: MEMORY_GENDERS, default: 'masculine' }) gender!: MemoryGender;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;

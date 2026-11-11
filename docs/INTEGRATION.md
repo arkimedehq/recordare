@@ -214,6 +214,11 @@ known participant who shows up under a new name on the channel keeps their conta
 > receives the image. Send events, not a stream (a repeat within minutes is answered as `duplicate`); telling someone at
 > once stays your job. Nothing else changes if you send none.
 
+> **Learning from outside** (8.16, D57, entity memories, on by default): keep sending your tool calls and their output
+> as `tool` messages (as for the turn taint); an entity memory then keeps the lasting knowledge it reads (opening hours,
+> how something works) with the site it came from, waiting for a person to confirm it, and lets news fade. Switch it off
+> per memory (`learnFromOutside: false`, console) to keep the previous rules.
+
 > **Channels and presence by place** (D55 §5b–§5c, 2026-11-05): an initiative carries `channels` — the acceptable ones in
 > order (`voice`, `messaging` only for a request or a promise, `chat`) — deliver on the first that reaches the person
 > **now** on your side, and report the channel you used; `for.addresses` tells where to find the person (their verified

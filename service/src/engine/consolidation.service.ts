@@ -36,6 +36,7 @@ import { expireClarifications } from './clarifications';
 import { subjectLabel } from './subjects';
 import { vectorParam } from '../db/pgvector';
 import { fadePerceptions } from '../perception/perception.service';
+import { fadeLearned } from './learning';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
@@ -54,7 +55,7 @@ export interface ConsolidationReport { days: number; months: number; superseded:
   thoughts: number;
   /** Digests still naming the self in the third person (counts only, like the extraction's). */
   leaks: number;
-  /** Perceptions past their time forgotten (8.12e). */
+  /** Perceptions (8.12e) and learned perishable knowledge (8.16) past their time, forgotten. */
   faded: number }
 
 /** Multi-day items are listed on each of their days, up to this many. */
@@ -109,7 +110,7 @@ export class ConsolidationService {
     // Open clarifications nobody answered expire (D50 / 8.4; also checked on read and at extraction).
     await expireClarifications(this.db, memoryId, now);
     // Perceptions past their time fade before the diary is written again (8.12e, no model).
-    report.faded = await fadePerceptions(this.db, memoryId, now);
+    report.faded = await fadePerceptions(this.db, memoryId, now) + await fadeLearned(this.db, memoryId, now);
     const tz: string = memory.timezone;
     const today = localDate(now, tz);
     const [run] = await this.db.query(

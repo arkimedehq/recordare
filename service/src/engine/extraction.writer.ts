@@ -35,9 +35,11 @@ import { localDate, toStored, type Precision } from './time';
 import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 import { askClarification, resolveClarification } from './clarifications';
 import { confirmPending, isPending } from './pending';
+import { backItem, creditInformants, type Informant, informantOf, lastingOf, TEACH_TRUST, upsertInformant } from './learning';
 import { setPrivate } from '../rawlog/message-privacy';
 
 type AuthorRole = 'holder' | 'assistant' | 'other' | 'tool';
+type LearnedFrom = { informant: Informant; id: string; trust: number };
 
 /** Heard by a device in the room (continuous listening, WORK_PLAN 6.5): the speaker may be misrecognised. */
 const heard = (msgs: WindowMessage[]): boolean => msgs.some((m) => m.heard);
@@ -59,6 +61,8 @@ export interface WriteContext {
   conversationId: string;
   /** An entity memory (D50, 8.5): a shared agent several people talk to. Otherwise a personal memory. */
   entity?: boolean;
+  /** Learning from outside (8.16, D57): who brought each fact and note, trust, expiry. Entity memories only for now. */
+  learning?: { ownTools: RegExp | null; newsKeepDays: number; recheckDays: number };
 }
 
 export interface WrittenRow {
@@ -93,6 +97,8 @@ export class ExtractionWriter {
   private readonly clarified = { asked: 0, resolved: 0 };
   private readonly book: ContactBook;
   private readonly contactNames = new Map<string, Set<string>>();
+  /** 8.16: informants met in this window, by kind and key. */
+  private readonly informantRows = new Map<string, { id: string; trust: number }>();
 
   constructor(private readonly tx: EntityManager, private readonly ctx: WriteContext, private readonly input: ExtractionInput) {
     this.book = new ContactBook(tx, ctx.memoryId, input.selfNames, input.contacts);
@@ -476,12 +482,13 @@ export class ExtractionWriter {
       const subjectId = r.subject.personId;
       if (this.deleted('fact', key, subjectId, msgs)) { this.drop('fact', 'deleted'); continue; }
       const own = !(await this.inferred(role, msgs, subjectId ? contact(subjectId) : SELF_SUBJECT));
-      const inferred = !own || heard(msgs);
+      const learned = await this.learnedFrom(msgs);
+      const inferred = learned ? this.learnedInferred(learned, !own, subjectId === null, msgs) : !own || heard(msgs);
       let target = f.target ? this.input.facts.get(f.target) : undefined;
       if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
 
       if (f.verdict === 'keep') {
-        if (target) await this.support('facts', target.id, own && confirms(role, msgs));
+        if (target) await this.support('facts', target.id, own && confirms(role, msgs), learned, msgs);
         continue;
       }
       let verdict = f.verdict;
@@ -536,7 +543,10 @@ export class ExtractionWriter {
           status = value === null ? 'unknown_current' : 'current';
         }
       } else if (target && verdict === 'corrects') {
-        if (!proposal) await this.tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1 AND memory_id = $2`, [target.id, this.ctx.memoryId]);
+        if (!proposal) {
+          await this.tx.query(`UPDATE facts SET status = 'corrected', expired_at = now() WHERE id = $1 AND memory_id = $2`, [target.id, this.ctx.memoryId]);
+          await creditInformants(this.tx, { table: 'facts', id: target.id }, 'corrected');
+        }
         correctsId = target.id;
       }
       // A fact without a subject is the self's: the person's (personal) or the agent's and its place's (entity, e.g. where the spare keys are).
@@ -548,10 +558,11 @@ export class ExtractionWriter {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'holder', $17, $18, $19, $20, $21)
          RETURNING id`,
         [this.ctx.memoryId, key, value, status, from.at, validTo, from.precision, supersedes, correctsId, verdict, inferred,
-          this.assistantSaid(role, msgs) ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated', inferred ? 0.6 : 1,
+          this.originOf(role, msgs, learned, 'holder_lived'), role, inferred ? 'inferred' : 'stated', this.confidenceOf(inferred, learned),
           this.ctx.runId, this.audience, this.audienceUnverified, subjectId, subject.kind, subject.candidates],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO fact_evidence (fact_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
+      if (learned) await backItem(this.tx, this.ctx.memoryId, { table: 'facts', id: row.id }, learned.id, this.ctx.conversationId, msgs[0]?.sentAt ?? new Date());
       const about = subjectId ? `${f.subject?.trim()} — ` : '';
       this.written.push({ table: 'facts', id: row.id, text: `${about}${key}: ${value ?? '(unknown)'}` });
     }
@@ -579,8 +590,9 @@ export class ExtractionWriter {
       if (problem) { this.drop('note', problem); continue; }
       const target = n.target ? this.input.notes.get(n.target) : undefined;
       const role = this.authorRole(msgs);
+      const learned = await this.learnedFrom(msgs);
       if (n.verdict === 'keep') {
-        if (target) await this.support('notes', target, confirms(role, msgs) && !(await this.inferred(role, msgs, await this.subjectOf('notes', target))));
+        if (target) await this.support('notes', target, confirms(role, msgs) && !(await this.inferred(role, msgs, await this.subjectOf('notes', target))), learned, msgs);
         continue;
       }
       if (!this.subjectNamed(n.subject, [])) { this.drop('note', 'person_not_named'); continue; }
@@ -589,7 +601,9 @@ export class ExtractionWriter {
       if (who.subject.kind === 'someone') { this.drop('note', 'someone_subject'); continue; }
       const subject = who.subject;
       if (this.deleted('note', n.category, subject.personId, msgs)) { this.drop('note', 'deleted'); continue; }
-      const inferred = n.stance === 'inferred' || heard(msgs) || (await this.inferred(role, msgs, subject));
+      const inferred = learned
+        ? n.stance === 'inferred' || this.learnedInferred(learned, await this.inferred(role, msgs, subject), subject.kind === 'self', msgs)
+        : n.stance === 'inferred' || heard(msgs) || (await this.inferred(role, msgs, subject));
       let supersedes: string | null = null;
       let correctsId: string | null = null;
       // A pending note only proposes the change to a stated one: applied when it is confirmed (pending.ts).
@@ -598,20 +612,28 @@ export class ExtractionWriter {
         if (!proposal) await this.tx.query(`UPDATE notes SET status = 'superseded' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
         supersedes = target;
       } else if (target && n.verdict === 'corrects') {
-        if (!proposal) await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
+        if (!proposal) {
+          await this.tx.query(`UPDATE notes SET status = 'corrected' WHERE id = $1 AND memory_id = $2`, [target, this.ctx.memoryId]);
+          await creditInformants(this.tx, { table: 'notes', id: target }, 'corrected');
+        }
         correctsId = target;
       }
+      // 8.16: how long learned knowledge holds (perishable fades, changing is rechecked); only when the memory learns.
+      const l = this.ctx.learning;
+      const holds = l ? lastingOf(n.lasts, n.until, msgs[0]?.sentAt ?? new Date(), this.ctx.timezone, l) : { lasts: null, expiresAt: null, recheckAt: null };
       const [row] = await this.tx.query(
         `INSERT INTO notes (memory_id, category, content, keywords, context, tags, supersedes, corrects, pending, valid_from,
            origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified, subject_kind, subject_candidates,
-           subject_person_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'holder', $16, $17, $18, $19, $20)
+           subject_person_id, lasts, expires_at, recheck_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'holder', $16, $17, $18, $19, $20, $21, $22, $23)
          RETURNING id`,
         [this.ctx.memoryId, n.category, n.content, n.keywords, n.context ?? null, n.tags, supersedes, correctsId, inferred,
-          msgs[0]?.sentAt ?? null, this.assistantSaid(role, msgs) ? 'assistant_stated' : 'holder_lived', role, inferred ? 'inferred' : 'stated',
-          inferred ? 0.6 : 1, this.ctx.runId, this.audience, this.audienceUnverified, subject.kind, subject.candidates, subject.personId],
+          msgs[0]?.sentAt ?? null, this.originOf(role, msgs, learned, 'holder_lived'), role, inferred ? 'inferred' : 'stated',
+          this.confidenceOf(inferred, learned), this.ctx.runId, this.audience, this.audienceUnverified, subject.kind, subject.candidates, subject.personId,
+          holds.lasts, holds.expiresAt, holds.recheckAt],
       );
       for (const m of msgs) await this.tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, m.id]);
+      if (learned) await backItem(this.tx, this.ctx.memoryId, { table: 'notes', id: row.id }, learned.id, this.ctx.conversationId, msgs[0]?.sentAt ?? new Date());
       await this.tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, $3)`,
         [this.ctx.memoryId, row.id, correctsId ? 'corrected' : supersedes ? 'updated' : 'created']);
       this.written.push({ table: 'notes', id: row.id, text: [n.content, n.keywords.join(' '), n.context].filter(Boolean).join(' | ') });
@@ -673,9 +695,56 @@ export class ExtractionWriter {
    * A fact or note told again. Said again by its own person outside continuous listening (in a chat, or by voice to the
    * assistant), a pending one is confirmed — e.g. what a device heard in the room (WORK_PLAN 6.5).
    */
-  private async support(table: 'facts' | 'notes', id: string, confirm: boolean): Promise<void> {
+  private async support(table: 'facts' | 'notes', id: string, confirm: boolean, learned?: LearnedFrom | null, msgs?: WindowMessage[]): Promise<void> {
+    if (learned) {
+      // 8.16: only an independent origin counts — another informant, in another conversation; the same page read again,
+      // the same group repeating or the agent's own summary add nothing. It confirms when that informant is trusted
+      // enough to teach, or when two independent informants now back the item.
+      const b = await backItem(this.tx, this.ctx.memoryId, { table, id }, learned.id, this.ctx.conversationId, msgs?.[0]?.sentAt ?? new Date());
+      if (!b.independent) { if (confirm) await confirmPending(this.tx, table, id, this.ctx.memoryId); return; }
+      confirm = confirm || learned.trust >= TEACH_TRUST || b.informants >= 2;
+    }
     await this.tx.query(`UPDATE ${table} SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [id, this.ctx.memoryId]);
     if (confirm) await confirmPending(this.tx, table, id, this.ctx.memoryId);
+  }
+
+  /** 8.16: who brought what these messages say (a person, a tool, a site) and how far to trust it; null when the memory does not learn, or for the agent's own words. */
+  private async learnedFrom(msgs: WindowMessage[]): Promise<LearnedFrom | null> {
+    const l = this.ctx.learning;
+    if (!l) return null;
+    const informant = await informantOf(this.tx, msgs, this.input.messages.filter((m) => m.role === 'tool'), l.ownTools);
+    if (!informant) return null;
+    const k = `${informant.kind}:${informant.key}`;
+    let row = this.informantRows.get(k);
+    if (!row) {
+      row = await upsertInformant(this.tx, this.ctx.memoryId, informant);
+      this.informantRows.set(k, row);
+    }
+    return { informant, ...row };
+  }
+
+  /**
+   * 8.16: is a learned item pending? Read in a tool's output or a page: unless the source is trusted enough to teach (the
+   * agent's own tools), it waits — said with its source. Taught by a trusted person about me or my place (a household
+   * member: where things are, how the house works): kept at once. Otherwise the usual rule (`otherwise`).
+   */
+  private learnedInferred(learned: LearnedFrom, otherwise: boolean, aboutMe: boolean, msgs: WindowMessage[]): boolean {
+    if (heard(msgs)) return true;
+    if (learned.informant.kind !== 'person') return learned.trust < TEACH_TRUST;
+    if (aboutMe && learned.trust >= TEACH_TRUST) return false;
+    return otherwise;
+  }
+
+  /** The origin of a fact or a note: the agent's own words, read (8.16), or the fallback. */
+  private originOf(role: AuthorRole, msgs: WindowMessage[], learned: LearnedFrom | null, fallback: string): string {
+    if (learned && learned.informant.kind !== 'person') return 'learned';
+    return this.assistantSaid(role, msgs) ? 'assistant_stated' : fallback;
+  }
+
+  /** Confidence: 1 stated, 0.6 inferred; a learned item carries its source's trust. */
+  private confidenceOf(inferred: boolean, learned: LearnedFrom | null): number {
+    if (learned && learned.informant.kind !== 'person') return Math.round(learned.trust * 100) / 100;
+    return inferred ? 0.6 : 1;
   }
 
   private async subjectOf(table: 'facts' | 'notes', id: string): Promise<Subject> {

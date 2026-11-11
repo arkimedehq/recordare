@@ -83,7 +83,9 @@ TOOLS: List[Dict[str, Any]] = [
     {"name": "recordare_search_memory",
      "description": "Search your memory of preferences, habits, values, relationships, knowledge and current state "
                     "(car, home, job…) — yours and of the people you know; each item has its subject. Use as_of for "
-                    "\"what was it on that date\"; each fact comes with its history.",
+                    "\"what was it on that date\"; each fact comes with its history. A note with learned you read (a search, "
+                    "a page): say where and when; unless confirmed it is not confirmed yet, and with mayBeOutdated it may "
+                    "have changed since.",
      "parameters": {"type": "object", "properties": {
          "query": _p("Topic"), "as_of": _p("ISO date YYYY-MM-DD; default today"),
          "include_pending": _p("Include facts awaiting confirmation", "boolean")}, "required": ["query"]}},
