@@ -38,6 +38,12 @@ ITEMS = """
   SELECT 'fact', f.id, f.key || ': ' || COALESCE(f.value, ''), f.origin::text, f.pending, f.status::text, NULL FROM facts f
    WHERE f.memory_id = %(m)s AND f.deleted_at IS NULL
 """
+# Episodes too, for a check that asks for them (`"episodes": true`): what touched a life is an episode, not a note.
+EPISODES = """
+  SELECT 'episode' AS t, e.id, e.content AS text, e.origin::text AS origin, false AS pending,
+         CASE WHEN e.invalidated_at IS NULL THEN 'current' ELSE 'invalidated' END AS status, NULL AS lasts FROM episodes e
+   WHERE e.memory_id = %(m)s AND e.deleted_at IS NULL
+"""
 
 
 def main() -> None:
@@ -100,7 +106,7 @@ def main() -> None:
     def check(k: dict) -> None:
         with psycopg.connect(DB_URL) as db:
             db.row_factory = dict_row
-            items = db.execute(ITEMS, {"m": memory}).fetchall()
+            items = db.execute(EPISODES if k.get("episodes") else ITEMS, {"m": memory}).fetchall()
             hit = [i for i in items if k["match"].lower() in i["text"].lower() and (not k.get("and") or k["and"].lower() in i["text"].lower())]
             cur = [i for i in hit if i["status"] in ("current", "unknown_current")]
             ok = True

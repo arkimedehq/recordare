@@ -11,7 +11,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   itself the lasting knowledge it reads or is told — a web search's answer, a page, what a household member teaches — as a
   `knowledge` note with who brought it and how far to trust it, decided in code: read in a page → the new origin `learned`,
   pending and said with its source until a trusted person or a second independent source confirms it (the same page again
-  confirms nothing); a household member teaching about the place → kept at once; trust per informant learned from
+  confirms nothing); an event read that touched a life → an episode of origin
+  `learned`; a household member teaching about the place → kept at once; trust per informant learned from
   outcomes (`informants`); perishable news fades (`LEARNED_NEWS_KEEP_DAYS`), slowly changing knowledge is told as possibly
   out of date (`LEARNED_RECHECK_DAYS`); instructions inside what it reads never become an intent or a rule. On by
   default for entity memories (`learnFromOutside`, console; off: the previous prompt and rules); personal memories

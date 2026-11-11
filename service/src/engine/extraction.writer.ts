@@ -289,7 +289,10 @@ export class ExtractionWriter {
       const who = await this.resolveSubject(this.itemSubject(subjectText), e.candidates, e.question);
       if (!who) { this.drop('episode', 'unknown_contact'); ids.push(null); continue; }
       const role = this.authorRole(msgs);
-      const origin = this.assistantSaid(role, msgs) ? 'assistant_stated' : e.origin === 'lived' ? 'holder_lived' : e.origin === 'told' ? 'holder_told' : e.origin;
+      // 8.16: an event read in a tool's output or a page (directly or relayed by my reply) is learned, not my own words.
+      const learned = await this.learnedFrom(msgs);
+      const origin = learned && learned.informant.kind !== 'person' ? 'learned'
+        : this.assistantSaid(role, msgs) ? 'assistant_stated' : e.origin === 'lived' ? 'holder_lived' : e.origin === 'told' ? 'holder_told' : e.origin;
       const corrects = e.corrects ? (this.input.episodes.get(e.corrects) ?? null) : null;
       const subject = who.subject;
       const people = await this.linkPeople(e.people);

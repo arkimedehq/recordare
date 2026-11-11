@@ -643,7 +643,8 @@ note di origine `reflected` tratte da esse restano.
 
 Una memoria di entità impara da sola da ciò che le viene detto e che legge (`memories.learn_from_outside`, booleano null =
 attivo per una memoria di entità, spento per una personale). Il tipo di origine guadagna **`learned`** (letto nell'output
-di uno strumento o in una pagina). Fatti e note tengono chi li ha portati; le note tengono quanto durano.
+di uno strumento o in una pagina) — su fatti, note ed episodi (un evento letto, detto nel contesto della memoria come "read
+by me, not told"). Fatti e note tengono chi li ha portati; le note tengono quanto durano.
 
 ### informants
 `id, memory_id → memories (cascade), kind ('person' | 'tool' | 'site'), key (l'id di una persona, 'account' — il parlante

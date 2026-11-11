@@ -11,7 +11,8 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   tiene da sola la conoscenza duratura che legge o le viene detta — la risposta di una ricerca web, una pagina, ciò che
   insegna un membro della casa — come nota `knowledge` con chi l'ha portata e quanto fidarsi, deciso dal codice: letto in
   una pagina → la nuova origine `learned`, in attesa e detto con la sua fonte finché una persona fidata o una seconda
-  fonte indipendente lo conferma (la stessa pagina di nuovo non conferma nulla); un membro della casa che insegna sul
+  fonte indipendente lo conferma (la stessa pagina di nuovo non conferma nulla); un evento letto che ha toccato una vita → un episodio
+  di origine `learned`; un membro della casa che insegna sul
   luogo → tenuto subito; la fiducia per informatore imparata dagli esiti (`informants`); le notizie deperibili svaniscono
   (`LEARNED_NEWS_KEEP_DAYS`), la conoscenza a lenta variazione è detta come forse superata (`LEARNED_RECHECK_DAYS`); le
   istruzioni dentro ciò che legge non diventano mai un intento o una regola. Attiva di default per le memorie di entità

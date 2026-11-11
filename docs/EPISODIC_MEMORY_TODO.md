@@ -956,7 +956,8 @@ initiative from it. Built in phases, each measured on a dev set first.
   lasting, `until`); the rest (headlines, trivia, answers to general questions) → the raw log only. The model proposes
   (section LEARNING, `learn.v1`); who brought it and how far to trust it are decided in code.
 - **Origin `learned`** (F1): read in a tool's output or a page, apart from told, perceived and reflected; recall says where
-  and when, and whether it is confirmed.
+  and when, and whether it is confirmed. An episode read in a tool's output (directly or relayed by the agent's reply) has
+  it too — it touched a life, but nobody here told it — and stays out of patterns, thoughts and initiatives until F3.
 - **Informants and trust** (F1): each fact or note keeps who brought it — a person, a tool, a site (the one host a tool's
   output names). A class gives the starting trust and a cap (household > contact > own tool > site > someone unknown);
   outcomes move it per informant (confirmed raises, corrected lowers), never the wording. At or above the teaching

@@ -59,7 +59,7 @@ describe('learning from outside (8.16 F1)', () => {
         messages: msgs.map((m, i) => ({ externalId: `${conversation}-${++n}`, sentAt: new Date(t0 + i * 1000).toISOString(), ...m })) },
     });
     expect(res.status).toBeLessThan(300);
-    if (typeof out === 'function') answer = out;
+    if (typeof out === 'function') answer = out as (user: string) => object;
     else llm.queue.push(out);
     await app.get<ExtractionRunner>(EXTRACTION_RUNNER).runForConversation(res.body.conversationId as string);
     answer = null;
@@ -158,6 +158,17 @@ describe('learning from outside (8.16 F1)', () => {
       { facts: [{ key: 'fuse_box_location', value: 'in garage', verdict: 'new', subject: 'me', evidence: [1] }] }, undefined,
       [{ ref: 'x', role: 'other', displayName: 'Ospite' }]);
     expect((await db.query(`SELECT pending FROM facts WHERE memory_id = $1 AND key = 'fuse_box_location'`, [home]))[0]).toEqual({ pending: true });
+  });
+
+  it('remembers an event read in a page and relayed by its reply as learned, not as its own words', async () => {
+    const home = await memory('Borgo', 'entity');
+    await extract('Borgo', 'w-strike', [
+      { role: 'user', content: 'Domani c\'è lo sciopero dei treni?' },
+      { role: 'tool', toolName: 'web_search', content: 'https://notizie-esempio.it/sciopero\nSciopero nazionale dei treni l\'8 giugno 2026 dalle 9 alle 17.' },
+      { role: 'assistant', content: 'Sì, domani 8 giugno sciopero dei treni dalle 9 alle 17.' },
+    ], { episodes: [{ content: 'Ho saputo che l\'8 giugno 2026 c\'è uno sciopero nazionale dei treni dalle 9 alle 17.', kind: 'event',
+      occurred_at: '2026-06-08', date_precision: 'day', evidence: [3] }] });
+    expect(await db.query(`SELECT origin::text FROM episodes WHERE memory_id = $1`, [home])).toEqual([{ origin: 'learned' }]);
   });
 
   it('keeps today\'s prompt and rules for a personal memory and for an entity memory switched off', async () => {

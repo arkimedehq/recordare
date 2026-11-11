@@ -993,7 +993,9 @@ compresi — e prende iniziativa da lì. Costruito per fasi, ognuna misurata pri
   changing / lasting, `until`); il resto (titoli, curiosità, risposte a domande generali) → solo il registro grezzo. Il
   modello propone (sezione LEARNING, `learn.v1`); chi l'ha portato e quanto fidarsi si decide nel codice.
 - **Origine `learned`** (F1): letto nell'output di uno strumento o in una pagina, distinta da detto, percepito e riflesso;
-  il richiamo dice dove e quando, e se è confermato.
+  il richiamo dice dove e quando, e se è confermato. Ce l'ha anche un episodio letto nell'output di uno strumento
+  (direttamente o riferito dalla risposta dell'agente) — ha toccato una vita, ma nessuno qui l'ha detto — e resta fuori da
+  schemi, pensieri e iniziative fino a F3.
 - **Informatori e fiducia** (F1): ogni fatto o nota tiene chi l'ha portato — una persona, uno strumento, un sito (l'unico
   host che l'output di uno strumento nomina). Una classe dà la fiducia di partenza e un tetto (membro della casa > contatto >
   strumento proprio > sito > sconosciuto); gli esiti spostano la fiducia per informatore (confermato la alza, corretto la

@@ -616,8 +616,8 @@ from them stay.
 ## Learning from outside (WORK_PLAN 8.16 F1, D57) — built 2026-11-11 (migration `Learning1791340000000`)
 
 An entity memory learns by itself from what it is told and reads (`memories.learn_from_outside`, boolean null = on for an
-entity memory, off for a personal one). The origin type gains **`learned`** (read in a tool's output or a page). Facts and
-notes keep who brought them; notes keep how long they hold.
+entity memory, off for a personal one). The origin type gains **`learned`** (read in a tool's output or a page) — on facts, notes and
+episodes (an event read, said in the memory context as "read by me, not told"). Facts and notes keep who brought them; notes keep how long they hold.
 
 ### informants
 `id, memory_id → memories (cascade), kind ('person' | 'tool' | 'site'), key (a person's id, 'account' — the entity
