@@ -27,6 +27,7 @@ twin, holder vs twin provenance, and unresolved user plans.
 | H6 | Eval method: blind held-out set by a separate agent; over-strict judge artefacts | Partially novel, modest (methods appendix) | 1 |
 | H7 | Distilling the extraction engine into a small local model closes most of the local-model gap | To test (engineering hypothesis); the gap is now measured (below) | after M4 |
 | H8 | Twin style: per-person fine-tuning vs few-shot retrieval of the holder's own messages | To test | 2 |
+| H15 | An entity memory that sorts outside information by code into write classes (touches a life / lasting / the rest), keeps its source and a distinct origin, trusts per informant from outcomes, counts only independent corroboration, lets perishable items expire, takes retracted values out of the context and keeps procedures whole learns more useful knowledge with fewer stale, repeated or injected items than keeping only what touches a life or storing everything | Parts known; the combination not found (narrow) — re-check before any claim | R / 8.16 |
 | H14 | A proactive memory that learns **when** to speak (a window per initiative, the moment chosen from presence impulses, turns, routines and outcomes; a bandit over time slots with the model's window as prior) and **what to ask** to know its people and world (questions routed to a person who could know or to the agent's tools; fewer questions as it knows more) beats fixed rules on needless interruptions, timeliness and knowledge gained | Parts known; the combination not found (narrow): integration + home evaluation — re-check in full text before any claim | R / D55 |
 | H13 | Classify-and-compose extraction (a message-type router picks rule modules for one extraction call) and failure-driven module growth ("learning from surprise"), compared with the monolithic prompt on blind sets, with cost | Known, partially novel (narrow): the controlled monolithic-vs-composed comparison | 1 / R |
 | H12 | Resting-state thinking ("default mode"): a budgeted background process that replays recent episodes, links them, keeps open loops (unresolved plans, promises), prepares questions / proposals and updates the self-model improves recall and initiative without confabulation | To design with M5 / track R | 5 / R |
@@ -463,3 +464,39 @@ first real data (HeartSteps' method), regret against the best slot in hindsight,
 simulated by an LLM, each knowing a different part and with its own patience (CLAM's simulated user); metrics also
 knowledge against cumulative questions (area under the curve), questions per fact learned, redundant and wrongly
 targeted questions, the weekly slope of questions; baselines: passive listening only, fixed rules, random choice.
+
+## H15 — Learning from what it is told, shown and reads, like a child
+
+**Inspiration (maintainer, 2026-11-11).** An entity memory installed on a robot must learn by itself, like a child, from
+what it is told, shown and reads — web searches and other tool output included — and take initiative from what it
+learned; a task learned from a source (making the bed) must reach the agent as instructions it can follow.
+
+**Hypothesis.** Outside information split by code into three write classes (touches a known life → episode; lasting
+knowledge of the place or the world → a learned item, pending, with its source; the rest → raw log or a pointer), with a
+distinct origin `learned`, trust per source class capped by provenance and moved per informant by outcomes (confirmed
+vs corrected), corroboration only from independent origins, an expiry for perishable items, retractions that take the
+old value out of the context, and multi-step procedures kept whole with the household's variants and fed by the
+robot's runs, makes an entity memory learn more useful knowledge with fewer stale, repeated or injected items than
+today's rule (keep only what touches a life) or storing everything a source says.
+
+**Where it stands in Recordare.** The News LEARNED rule, learned sources (D49) through `learn_source` (only when the
+agent's model calls it, the client sends a source, or a `lookup` initiative asks), the poisoning guard on `other` /
+`tool` evidence, perceptions (D56), learning by asking (D55), one-line procedures from outcomes on replies (8.12d).
+Missing: general knowledge from tool output or words is not kept, nothing records how far to trust it or until when,
+repetition is not told apart from confirmation, a procedure read in a source reaches the agent in fragments.
+
+**Literature (2026-11-11, `docs/literature/learning-from-outside.md`; about 40 searches, mostly abstracts).** Each piece
+has prior art: archival stores with provenance (Letta, Graphiti, D49), write gating, perishability-aware decay,
+deterministic supersession, provenance-capped trust, origin-bound authority against laundering, robots that ask when
+unsure, a skill library refined from execution (Voyager). Documented products keep no trust level per source, no expiry
+and no rule against counting repetition as confirmation. Not found in this pass (re-check before any claim): the
+combination — per-informant trust learned from outcomes as in children's selective trust, independence-based
+corroboration, the three write classes, initiatives from learned content limited to questions or source-labelled
+offers — measured together.
+
+**Evaluation.** A dev set per language (study §7.15): unrelated news, news that touches a plan, a fact read once vs
+confirmed by an independent person, one source repeating, a retraction, an instruction injected in a page and in an
+email, a familiar informant who turns out wrong, a volatile value, laundering via the agent's own summary, a procedure
+read in a source and a household variant. Counts: items kept that should not be, stale and retracted values served,
+injected rules stored, initiatives from untrusted sources, useful knowledge lost, procedure steps missing or out of
+order.

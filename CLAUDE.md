@@ -33,7 +33,7 @@ done (Arkimede integrated, full-level connectors in `connectors/`), M7 v0.1 crit
 - `connectors/*/README.md` — the full-level connectors (Claude Code, Codex, OpenClaw, Hermes Agent, OpenAI-compatible
   memory proxy); `docs/connectors/` — research notes on the target platforms; WORK_PLAN 6.6 / 6.6b.
 - `CHANGELOG.md` — release notes (Keep a Changelog, SemVer 0.x).
-- `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H12) with literature verdicts: phase 1 is
+- `docs/RESEARCH_NOTES.md` — hypotheses register (H1–H15) with literature verdicts: phase 1 is
   mostly integration; open ground = unresolved user plans (H1), twin disclosure (H2), holder vs
   twin provenance (H3). Never claim novelty without re-checking it.
 - `docs/literature/` — deep-reading cards of 15 key sources + `README.md` synthesis (D29 data-model

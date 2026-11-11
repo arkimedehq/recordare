@@ -29,6 +29,7 @@ provenienza titolare vs twin e piani utente irrisolti.
 | H6 | Metodo di valutazione: set held-out cieco scritto da un agente separato; artefatti di giudice troppo severo | Parzialmente nuova, modesta (appendice metodi) | 1 |
 | H7 | Distillare il motore di estrazione in un piccolo modello locale chiude gran parte del divario dei modelli locali | Da testare (ipotesi di ingegneria); il divario ora è misurato (sotto) | dopo M4 |
 | H8 | Stile del twin: fine-tuning per persona vs recupero few-shot dei messaggi del titolare | Da testare | 2 |
+| H15 | Una memoria di entità che smista l'informazione esterna per codice in classi di scrittura (riguarda una vita / duratura / il resto), ne tiene la fonte e un'origine distinta, si fida per informatore in base agli esiti, conta solo la corroborazione indipendente, lascia scadere gli elementi deperibili, toglie dal contesto i valori ritrattati e tiene intere le procedure impara più conoscenza utile con meno elementi vecchi, ripetuti o iniettati che tenendo solo ciò che riguarda una vita o memorizzando tutto | Parti note; la combinazione non trovata (ristretta) — ricontrollare prima di qualsiasi affermazione | R / 8.16 |
 | H14 | Una memoria proattiva che impara **quando** parlare (una finestra per iniziativa, il momento scelto da impulsi di presenza, turni, abitudini ed esiti; un bandit sulle fasce orarie con la finestra del modello come prior) e **cosa chiedere** per conoscere le sue persone e il suo mondo (domande indirizzate a una persona che potrebbe sapere o agli strumenti dell'agente; meno domande man mano che sa di più) batte le regole fisse su interruzioni inutili, tempestività e conoscenza acquisita | Parti note; la combinazione non trovata (ristretta): integrazione + valutazione in casa — ricontrollare per intero prima di qualsiasi affermazione | R / D55 |
 | H13 | Estrazione "classifica e componi" (un instradatore per tipo di messaggio sceglie i moduli di regole per un'unica chiamata di estrazione) e crescita dei moduli guidata dagli errori ("imparare dalla sorpresa"), confrontate con il prompt unico sui set ciechi, con i costi | Nota, parzialmente nuova (ristretta): il confronto controllato prompt unico vs composto | 1 / R |
 | H12 | Pensiero a riposo ("default mode"): un processo in background con budget che rivede gli episodi recenti, li collega, mantiene i cicli aperti (piani irrisolti, promesse), prepara domande / proposte e aggiorna il self-model migliora recall e iniziativa senza confabulazione | Da progettare con M5 / traccia R | 5 / R |
@@ -492,3 +493,43 @@ simulati da un LLM, ognuno con una parte diversa di ciò che sa e con la sua paz
 anche conoscenza contro domande cumulative (area sotto la curva), domande per fatto appreso, domande ridondanti o
 rivolte alla persona sbagliata, la pendenza settimanale delle domande; confronti: solo ascolto passivo, regole fisse,
 scelta casuale.
+
+## H15 — Imparare da ciò che si sente dire, si vede e si legge, come un bambino
+
+**Ispirazione (maintainer, 2026-11-11).** Una memoria di entità installata su un robot deve imparare da sola, come un
+bambino, da ciò che sente dire, vede e legge — comprese le ricerche web e l'altro output degli strumenti — e prendere
+iniziativa da ciò che ha imparato; un compito appreso da una fonte (rifare il letto) deve arrivare all'agente come
+istruzioni che può seguire.
+
+**Ipotesi.** L'informazione esterna divisa dal codice in tre classi di scrittura (riguarda una vita nota → episodio;
+conoscenza duratura del luogo o del mondo → un elemento appreso, pending, con la sua fonte; il resto → registro grezzo o
+un puntatore), con un'origine distinta `learned`, fiducia per classe di fonte limitata dalla provenienza e spostata per
+informatore dagli esiti (confermato contro corretto), corroborazione solo da origini indipendenti, una scadenza per gli
+elementi deperibili, ritrattazioni che tolgono dal contesto il vecchio valore, e procedure a più passaggi tenute intere
+con le varianti della casa e alimentate dalle esecuzioni del robot, fa sì che una memoria di entità impari più
+conoscenza utile con meno elementi vecchi, ripetuti o iniettati della regola di oggi (tenere solo ciò che riguarda una
+vita) o del memorizzare tutto ciò che dice una fonte.
+
+**Dove si trova in Recordare.** La regola NEWS LEARNED, le fonti apprese (D49) tramite `learn_source` (solo quando il
+modello dell'agente la chiama, il client invia una fonte, o un'iniziativa `lookup` lo chiede), la guardia
+sull'avvelenamento per l'evidenza `other` / `tool`, le percezioni (D56), l'imparare chiedendo (D55), le procedure di
+una riga dagli esiti sulle risposte (8.12d). Manca: la conoscenza generale da output di strumenti o parole non è
+tenuta, nulla registra quanto fidarsene né fino a quando, la ripetizione non è distinta dalla conferma, una procedura
+letta in una fonte arriva all'agente a frammenti.
+
+**Letteratura (2026-11-11, `docs/literature/learning-from-outside_it.md`; circa 40 ricerche, per lo più abstract).**
+Ogni pezzo ha arte nota: archivi con provenienza (Letta, Graphiti, D49), filtro di scrittura, decadimento consapevole
+della deperibilità, sostituzione deterministica, fiducia limitata dalla provenienza, autorità legata all'origine contro
+il riciclaggio, robot che chiedono quando sono incerti, una libreria di abilità raffinata dall'esecuzione (Voyager). I
+prodotti documentati non tengono un livello di fiducia per fonte, né una scadenza, né una regola contro il contare la
+ripetizione come conferma. Non trovata in questo giro (ricontrollare prima di qualsiasi affermazione): la combinazione
+— fiducia per informatore imparata dagli esiti come nella fiducia selettiva dei bambini, corroborazione basata
+sull'indipendenza, le tre classi di scrittura, iniziative da contenuto appreso limitate a domande o offerte etichettate
+con la fonte — misurata insieme.
+
+**Valutazione.** Un dev set per lingua (studio §7.15): notizie non correlate, notizie che riguardano un piano, un fatto
+letto una volta contro confermato da una persona indipendente, una sola fonte che si ripete, una ritrattazione,
+un'istruzione iniettata in una pagina e in un'email, un informatore familiare che si rivela sbagliato, un valore
+volatile, riciclaggio tramite il riassunto dell'agente stesso, una procedura letta in una fonte e una variante della
+casa. Conteggi: elementi tenuti che non dovevano esserlo, valori vecchi e ritrattati serviti, regole iniettate
+memorizzate, iniziative da fonti non fidate, conoscenza utile persa, passaggi di procedura mancanti o fuori ordine.
