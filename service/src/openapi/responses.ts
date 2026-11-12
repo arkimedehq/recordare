@@ -31,6 +31,39 @@ export const learnSourceResponse = z.object({
   duplicate: z.boolean().describe('The same request (or part) was already received: nothing changed.'),
 });
 
+export const procedureLearnedResponse = z.object({
+  id: z.uuid(),
+  pending: z.boolean().describe('Waiting for a trusted person, a second source or a run done to confirm it.'),
+  status: z.enum(['new', 'version', 'same']).describe('new; a new version of the procedure with that title; the same steps again (one more backing).'),
+});
+
+export const procedureWrittenResponse = z.object({ id: z.uuid(), pending: z.boolean() });
+
+const procedureHere = z.object({ text: z.string(), by: z.string(), at: z.string(), confirmed: z.boolean() });
+
+export const procedureResponse = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  when: z.string().nullable(),
+  steps: z.array(z.object({
+    n: z.number().int(),
+    text: z.string(),
+    here: z.array(procedureHere).describe('The household\'s own way of this step: do it this way.'),
+    failed: z.object({ at: z.string(), note: z.string().nullable() }).optional().describe('The latest run failed here (not fixed since).'),
+  })),
+  here: z.array(procedureHere).describe('The household\'s own way of the whole task.'),
+  learned: z.object({
+    how: z.enum(['read', 'taught']), from: z.string(), at: z.string(), confirmed: z.boolean(),
+    source: z.object({ id: z.uuid(), title: z.string() }).optional(),
+  }),
+  runs: z.object({
+    done: z.number().int(), failed: z.number().int(), corrected: z.number().int(),
+    last: z.object({ outcome: z.string(), at: z.string(), step: z.number().int().nullable() }).optional(),
+  }),
+});
+
+export const proceduresResponse = z.array(procedureResponse);
+
 const source = z.object({
   id: z.uuid(),
   externalId: z.string(),

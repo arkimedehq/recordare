@@ -97,10 +97,10 @@ diario self-service.
 ### Scope
 | Scope | Consente |
 |---|---|
-| `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; §2 fonti apprese (`api/v1/ingest/sources…`); `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me`; i codici di collegamento e le identità del titolare del D51 (`POST api/v1/me/link-codes`, conferma / rifiuto / scollegamento) |
-| `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
-| `read` | §4 endpoint GET (compreso `GET api/v1/sources`), `GET api/v1/me`, `GET api/v1/me/identities`, `POST api/v1/context`, `GET api/v1/charter` |
-| `write` | §4 inserimenti manuali, correzioni, oblio (anche di una fonte appresa), modifiche di fatti / note |
+| `ingest` | §2 ingest, modifiche, cancellazioni, `…/end` delle conversazioni del client stesso; §2 fonti apprese (`api/v1/ingest/sources…`); §4d procedure, loro varianti ed esecuzioni (`POST api/v1/procedures…`); `ingest` dentro `POST api/v1/context`; `PATCH api/v1/me`; i codici di collegamento e le identità del titolare del D51 (`POST api/v1/me/link-codes`, conferma / rifiuto / scollegamento) |
+| `mcp` | §3 strumenti (letture + `log_episode`, `remember`, `learn_source`, `learn_procedure`, `report_procedure_run`, `correct_episode`, `forget_episode`) |
+| `read` | §4 endpoint GET (compresi `GET api/v1/sources` e §4d `GET api/v1/procedures`), `GET api/v1/me`, `GET api/v1/me/identities`, `POST api/v1/context`, `GET api/v1/charter` |
+| `write` | §4 inserimenti manuali, correzioni, oblio (anche di una fonte appresa e di una procedura §4d), modifiche di fatti / note |
 | `memory_settings` | `PATCH settings` (lingua, fuso orario, profilo di qualità) — mai le chiavi API dei client. v1: il token personale della memoria (l'admin usa `PATCH api/v1/admin/memories/:id`); public profile: sessioni del titolare / token creati dal titolare |
 | `export` | §4 job di export — v1: il token personale della memoria; public profile: solo sessioni del titolare, download con scadenza |
 | `erase` | `DELETE api/v1/me` — cancella l'intera memoria (WORK_PLAN 8.13); dato solo se richiesto, a una chiave client (una piattaforma che elimina gli account dei suoi utenti) o a un token personale |
@@ -529,10 +529,12 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   memoria etichetta una nota così `learned (read on <day>, from <site>; not confirmed)`.
 
 ### `search_knowledge` e `learn_source` (D49, WORK_PLAN 8.9 — fonti apprese)
-- `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passaggi delle fonti che l'agente ha imparato, ordinati
-  con RRF pesato dei ranghi vettoriale e full-text (come gli episodi). Restituisce:
+- `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — prima le procedure sulla domanda, intere (al massimo 2,
+  la vista della §4d: similarità vettoriale ≥ 0,35 o parole nel titolo e nella situazione), poi i passaggi delle fonti che
+  l'agente ha imparato, ordinati con RRF pesato dei ranghi vettoriale e full-text (come gli episodi). Restituisce:
   ```ts
   {
+    procedures: Procedure[];                     // §4d, whole: steps in order, `here` (the household's way) above each
     memory: { name: string; mode: "personal" | "entity" };
     passages: Array<{
       text: string; heading: string | null;
@@ -553,6 +555,15 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   richiede un contesto risolvibile. Restituisce `{sourceId, status, passages, stored}` (`stored: false` = lo stesso
   testo c'era già). Per un testo grande, la rotta REST a parti (§2).
 - Richiamo: un episodio che cita una fonte riporta `sources` (`search_episodes`, sopra).
+- `learn_procedure {title?, when?, steps?, from?, uri?, source_id?, variant_of?, variant?, step?}` (8.16 F2) — tiene intero
+  un compito a più passaggi (§4d): `title`, `steps` (in ordine, come insegnati o letti: ≤ 30 × 300 caratteri) e `from`
+  (`page`: letto — dare `uri` o `source_id`; `person`: insegnato da chi parla nella conversazione). Con `variant_of`
+  (l'id di una procedura) e `variant` (e `step`, nessuno = l'intero compito) aggiunge invece il modo proprio di chi parla.
+  Chi l'ha portata e se resta in attesa si decide nel codice. Restituisce `{id, pending, status}` (o `{id, pending}` per una
+  variante); è una scrittura.
+- `report_procedure_run {procedure_id, outcome, step?, note?}` — come è andata un'esecuzione: `done`, `failed` (al `step`,
+  `note` cosa è andato storto), `corrected` (al `step`, `note` il modo giusto — obbligatoria; diventa il modo di chi parla).
+  Restituisce `{id, pending}`; è una scrittura.
 
 ### `resolve_period` (D12, deterministico)
 Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'espressione sconosciuta); espressioni nelle
@@ -895,6 +906,43 @@ Telemetria: `initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Misu
   memoria serve per dopo ("chi è passato oggi?", "quando è uscita Viola?").
 - Libreria client: `perceive(user, perception)`.
 
+## 4d. Procedure — un compito a più passaggi tenuto intero (WORK_PLAN 8.16 F2, D57) — F2a costruita il 2026-11-12
+
+Recordare dice cosa fare, in che ordine, con il modo proprio della casa e da chi è stato imparato; trasformare i passaggi in
+movimento è lavoro del client (un agente, il controllore di un robot). Le rotte con chiave client prendono l'header
+dell'utente e, con `ALLOW_CLOCK_OVERRIDE`, `X-Recordare-Now`; `conversation` (`{externalId}`, quello del client) indica chi
+sta parlando — quella persona ha insegnato, corretto o eseguito.
+
+| Rotta | Scope | |
+|---|---|---|
+| `POST api/v1/procedures` `{title, when?, steps[], from: "page" \| "person", uri?, sourceId?, conversation?}` | ingest | Tiene una procedura → `200 {id, pending, status: "new" \| "version" \| "same"}` |
+| `POST api/v1/procedures/{id}/variants` `{step?, text, conversation?}` | ingest | Il modo proprio di chi parla per un passaggio (nessuno: l'intero compito) → `200 {id, pending}` |
+| `POST api/v1/procedures/{id}/runs` `{outcome: "done" \| "failed" \| "corrected", step?, note?, conversation?}` | ingest | Come è andata un'esecuzione (`note` obbligatoria per `corrected`) → `200 {id, pending}` |
+| `GET api/v1/procedures` / `GET api/v1/procedures/{id}` | read | Le procedure correnti / una (anche una versione sostituita), intera |
+| `DELETE api/v1/procedures/{id}` | write | La dimentica con le sue versioni, varianti ed esecuzioni → `204` |
+
+- **Chi l'ha portata, nel codice (come F1, `informants`)**: `from: "page"` → il sito di `uri` (o dell'uri della fonte; "page"
+  se manca), origine `learned`, **in attesa** (la fiducia di un sito è sotto la soglia dell'insegnamento); `from: "person"` →
+  chi parla in `conversation` (il parlante dell'account o una persona verificata: tenuta subito; qualcun altro: in attesa),
+  origine `holder_told`.
+- **Lo stesso titolo** (maiuscole o minuscole) con gli stessi passaggi è un appoggio in più: conferma una procedura in attesa
+  solo da un'origine indipendente (un altro informatore, un'altra conversazione) fidata o la seconda. Con altri passaggi è
+  una **nuova versione** che sostituisce la vecchia e ne prende le varianti della casa — una versione in attesa non
+  sostituisce mai una confermata (restano correnti entrambe). I passaggi sono tenuti come dati: mai tolti, fusi o
+  "migliorati".
+- **Esecuzioni**: `done` conferma una procedura in attesa e accredita chi l'ha portata; `failed` segna il suo passaggio
+  (finché dopo non ne viene insegnata una variante) e non sposta fiducia — l'errore può essere del robot; `corrected`
+  diventa la variante di chi parla per quel passaggio e costa un `corrected` agli altri informatori della procedura.
+- **La vista** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
+  note}}], here (le varianti dell'intero compito), learned: {how: "read" | "taught", from, at, confirmed, source?: {id,
+  title}}, runs: {done, failed, corrected, last?}}` — `by` / `from` è il nome di una persona, "the household" (il parlante
+  dell'account), "someone", o il sito.
+- **Richiamo**: `search_knowledge` le restituisce per prime, intere (§3); il contesto di memoria porta intera la più vicina
+  quando il messaggio la riguarda (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0,55; un budget suo di 1 500 caratteri, tagliato solo
+  tra i passaggi): `- procedure "make the bed" (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way
+  first, steps as taught:` poi `4. here (Sofia): …` sopra `4. (generic) …`, e `failed here on …` sotto un passaggio.
+- Le procedure di una riga di 8.12d (note `procedure`, "how I do it (learned)") restano come sono.
+
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (vedi il suo README): `RecordareClient` (`me`, `updateMe`, `ingest`
@@ -902,7 +950,8 @@ diviso in richieste da 500, `context` / `contextWithTurn` (§3 contesto di memor
 di stanza), `endConversation`, `editMessage`, `deleteMessage` / `deleteConversation` con 404 = fatto, i metodi del D51 `linkCode` /
 `holderIdentities` / `confirmHolderClaim` / `rejectHolderClaim` / `unlinkHolderIdentity` con `isLinkCode` e
 `LINK_CODE_INSTRUCTION` (il testo che un host dà al suo modello quando il messaggio dell'utente è un codice), `learnSource` (§2 fonti apprese:
-un testo grande inviato a parti di `SOURCE_PART_BYTES` = 4 MB ai confini dei paragrafi) / `forgetSource` / `sources`,
+un testo grande inviato a parti di `SOURCE_PART_BYTES` = 4 MB ai confini dei paragrafi) / `forgetSource` / `sources`, §4d
+`learnProcedure` / `addProcedureVariant` / `reportProcedureRun` / `procedures` / `procedure` / `forgetProcedure`,
 i wrapper della §4 `episodes`,
 `episode`, `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`,
 `mcp.listTools` / `mcp.callTool` con l'SDK MCP ufficiale e una sessione per utente + conversazione), `TOOLS` (gli schemi

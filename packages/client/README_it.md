@@ -143,6 +143,16 @@ await client.perceive(userId, { text: 'una persona che non conosco ha suonato il
 Viene ricordata come vista (origine `perceived`, la ricerca la segna `seen`) e svanisce dopo `keepDays` (default: l'impostazione
 della memoria, altrimenti 14 giorni); una ripetizione entro pochi minuti torna come `duplicate`.
 
+Procedure (8.16 F2, `API.md` §4d): un compito a più passaggi tenuto intero — cosa fare, in che ordine, il modo della casa.
+```ts
+const { id } = await client.learnProcedure(userId, { title: 'make the bed', steps, from: 'page', uri: pageUrl });
+await client.addProcedureVariant(userId, id, { step: 4, text: 'the pillow goes over the bedspread', conversation: { externalId: chatId } });
+await client.reportProcedureRun(userId, id, { outcome: 'failed', step: 3, note: 'the sheet was too short' });
+const bed = await client.procedure(userId, id); // steps in order, `here` (the household's way) above each generic step
+```
+Letta in una pagina resta in attesa (`pending`) finché una persona fidata la conferma, una seconda fonte concorda o
+un'esecuzione è `done`.
+
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:
 `linkCode(user)` → `{code, expiresAt}` (`RCD-XXXX-XXXX`, dieci minuti, un solo uso) — il titolare invia il codice da

@@ -25,6 +25,7 @@ const COLUMNS = {
   episodes: ['embedding_model', 'embedding_text'],
   facts: ['embedding_model', 'embedding_text'],
   notes: ['embedding_model', 'embedding_text'],
+  procedures: ['embedding_model', 'embedding_text'],
 } as const;
 
 export type EmbeddedTable = keyof typeof COLUMNS;

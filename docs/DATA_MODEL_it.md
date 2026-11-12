@@ -656,7 +656,7 @@ corrected)); a priori 0.9 / 0.7 / 0.8 / 0.5 / 0.3, tetti 1 / 0.9 / 0.95 / 0.6 / 
 con un'identità verificata.
 
 ### item_informants
-`id bigserial, memory_id, fact_id → facts (cascade) | note_id → notes (cascade) (esattamente uno), informant_id →
+`id bigserial, memory_id, fact_id → facts (cascade) | note_id → notes (cascade) | procedure_id → procedures (cascade) (esattamente uno), informant_id →
 informants (cascade), conversation_id → conversations (set null), at` — ogni appoggio di un elemento; un appoggio è
 indipendente quando nessuno precedente ha lo stesso informatore o la stessa conversazione. Confermare un elemento in
 attesa (`pending.ts`) aggiunge un `confirmed` ai suoi informatori; un elemento corretto aggiunge un `corrected`.
@@ -666,6 +666,37 @@ attesa (`pending.ts`) aggiunge un `confirmed` ai suoi informatori; un elemento c
 oppure appreso + `LEARNED_NEWS_KEEP_DAYS`), `recheck_at` (a lenta variazione: appreso + `LEARNED_RECHECK_DAYS`); indice su
 `(memory_id, expires_at)` dove valorizzato. Svanire (`fadeLearned`, nel consolidamento, rapporto `faded`): le note oltre
 `expires_at` vengono cancellate, una voce `forgotten` in `note_changes`.
+
+## Procedure tenute intere (WORK_PLAN 8.16 F2, D57) — F2a costruita il 2026-11-12 (migrazione `LearnedProcedures1791350000000`)
+
+Un compito a più passaggi (rifare il letto) tenuto come un'unità e restituito intero, mai a frammenti; a parte le procedure
+di una riga di 8.12d (note di categoria `procedure`, che restano). Scritto dal client o dall'agente (`POST
+api/v1/procedures`, MCP `learn_procedure`); chi l'ha portato si decide nel codice come in F1.
+
+### procedures
+`id, memory_id → memories (cascade), title, situation (quando si usa, nullable), steps jsonb (i passaggi in ordine, come
+insegnati: ≤ 30 × 300 caratteri), source_id → sources (set null), origin_uri, origin (learned: letto; holder_told:
+insegnato da una persona), pending, status ('current' | 'replaced'), replaced_by → procedures (set null), conversation_id,
+extraction_run_id (set null; F2b), embedding / embedding_model / embedding_text (il titolo e la situazione), created_at,
+learned_at, confirmed_at`. Letta in una pagina → in attesa finché una persona fidata insegna gli stessi passaggi, un secondo
+informatore indipendente concorda o un'esecuzione riesce; insegnata da un parlante almeno alla fiducia dell'insegnamento (un
+membro della casa) → tenuta subito. Lo stesso titolo con altri passaggi è una nuova versione che sostituisce la vecchia e ne
+prende le varianti della casa — tranne che una versione in attesa non sostituisce mai una confermata (restano correnti
+entrambe, la confermata per prima).
+
+### procedure_variants
+`id, procedure_id (cascade), memory_id, step (da 1, null: l'intero compito), text, informant_id → informants (set null),
+pending (la fiducia dell'informatore sotto la soglia dell'insegnamento), conversation_id, at, retired_at` — il modo proprio
+della casa, mostrato sopra il passaggio generico; il nuovo modo dello stesso informatore per lo stesso passaggio ritira il
+vecchio.
+
+### procedure_runs
+`id, procedure_id (cascade), memory_id, outcome ('done' | 'failed' | 'corrected'), step, note, conversation_id, at` — done
+conferma una procedura in attesa e accredita i suoi informatori; failed segna il suo passaggio (finché dopo non ne viene
+insegnata una variante; nessuna fiducia si sposta — l'errore può essere del robot); corrected aggiunge la variante di chi
+corregge e un `corrected` agli altri informatori della procedura.
+
+`item_informants` guadagna `procedure_id → procedures (cascade)`: esattamente uno tra `fact_id`, `note_id`, `procedure_id`.
 
 ## Contabilità del motore
 

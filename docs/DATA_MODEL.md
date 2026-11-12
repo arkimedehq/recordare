@@ -639,6 +639,35 @@ learned + `LEARNED_NEWS_KEEP_DAYS`), `recheck_at` (changing: learned + `LEARNED_
 expires_at)` where set. Fading (`fadeLearned`, in the consolidation, report `faded`): notes past `expires_at` are deleted,
 a `forgotten` entry in `note_changes`.
 
+## Procedures kept whole (WORK_PLAN 8.16 F2, D57) — F2a built 2026-11-12 (migration `LearnedProcedures1791350000000`)
+
+A task of several steps (making the bed) kept as one unit and returned whole, never as fragments; apart from 8.12d's
+one-line procedures (notes of category `procedure`, which stay). Written by the client or the agent (`POST
+api/v1/procedures`, MCP `learn_procedure`); who brought it is decided in code as in F1.
+
+### procedures
+`id, memory_id → memories (cascade), title, situation (when it is used, nullable), steps jsonb (the steps in order, as
+taught: ≤ 30 × 300 characters), source_id → sources (set null), origin_uri, origin (learned: read; holder_told: taught by
+a person), pending, status ('current' | 'replaced'), replaced_by → procedures (set null), conversation_id, extraction_run_id
+(set null; F2b), embedding / embedding_model / embedding_text (the title and situation), created_at, learned_at,
+confirmed_at`. Read in a page → pending until a trusted person teaches the same steps, a second independent informant
+agrees or a run is done; taught by a speaker at or above the teaching trust (a household member) → kept at once. The same
+title with other steps is a new version that replaces the old one and takes its household variants — except a pending
+version never replaces a confirmed one (both stay current, the confirmed first).
+
+### procedure_variants
+`id, procedure_id (cascade), memory_id, step (1-based, null: the whole task), text, informant_id → informants (set null),
+pending (the informant's trust below the teaching threshold), conversation_id, at, retired_at` — the household's own way,
+shown above the generic step; the same informant's new way of the same step retires the old one.
+
+### procedure_runs
+`id, procedure_id (cascade), memory_id, outcome ('done' | 'failed' | 'corrected'), step, note, conversation_id, at` — done
+confirms a pending procedure and credits its informants; failed marks its step (until a variant of it is taught after
+it; no trust moves — the robot may be at fault); corrected adds the corrector's variant and one `corrected` to the
+procedure's other informants.
+
+`item_informants` gains `procedure_id → procedures (cascade)`: exactly one of `fact_id`, `note_id`, `procedure_id`.
+
 ## Engine bookkeeping
 
 ### extraction_runs

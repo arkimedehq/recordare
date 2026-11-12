@@ -28,6 +28,7 @@ import { speakerOf } from './subjects';
 import { vectorParam } from '../db/pgvector';
 import { buildCards, selfCardLines } from './cards';
 import { learnedFromSql, learnedView } from './memory-search.service';
+import { procedureLines, procedureViews } from '../procedures/procedures.service';
 import { episodeVisible, factVisible, messageVisible, noteVisible, readerOf, type Reader } from './privacy';
 import { InitiativeService, type InitiativeView } from '../initiative/initiative.service';
 
@@ -47,6 +48,9 @@ const MAX_EPISODES = 3;
 /** A passage of a learned source (WORK_PLAN 8.9) enters only when clearly about the message: at most one, shortened. */
 const MIN_PASSAGE_SIMILARITY = 0.6;
 const PASSAGE_CHARS = 300;
+/** A procedure (8.16 F2) enters whole when it is about the message: one, on its own budget (cut only between steps). */
+const MIN_PROCEDURE_SIMILARITY = 0.55;
+const PROCEDURE_CHARS = 1_500;
 /** Episodes of the period a message names ("what did I do last Saturday?") enter with this lower bar. */
 const MIN_PERIOD_SIMILARITY = 0.35;
 /** At most this many sentences of a message are matched on their own (besides the whole message). */
@@ -91,11 +95,12 @@ export class ContextService {
     private readonly initiatives: InitiativeService,
   ) {
     const knob = (k: 'CONTEXT_MIN_FACT_SIMILARITY' | 'CONTEXT_MIN_EPISODE_SIMILARITY' | 'CONTEXT_MIN_PLAN_SIMILARITY' | 'CONTEXT_MIN_PERIOD_SIMILARITY'
-      | 'CONTEXT_MIN_PASSAGE_SIMILARITY', d: number) =>
+      | 'CONTEXT_MIN_PASSAGE_SIMILARITY' | 'CONTEXT_MIN_PROCEDURE_SIMILARITY', d: number) =>
       config.get(k, { infer: true }) ?? d;
     this.floors = { fact: knob('CONTEXT_MIN_FACT_SIMILARITY', MIN_FACT_SIMILARITY), episode: knob('CONTEXT_MIN_EPISODE_SIMILARITY', MIN_EPISODE_SIMILARITY),
       plan: knob('CONTEXT_MIN_PLAN_SIMILARITY', MIN_PLAN_SIMILARITY), period: knob('CONTEXT_MIN_PERIOD_SIMILARITY', MIN_PERIOD_SIMILARITY),
-      passage: knob('CONTEXT_MIN_PASSAGE_SIMILARITY', MIN_PASSAGE_SIMILARITY) };
+      passage: knob('CONTEXT_MIN_PASSAGE_SIMILARITY', MIN_PASSAGE_SIMILARITY),
+      procedure: knob('CONTEXT_MIN_PROCEDURE_SIMILARITY', MIN_PROCEDURE_SIMILARITY) };
     this.shortQueryWords = config.get('CONTEXT_SHORT_QUERY_WORDS', { infer: true }) ?? SHORT_QUERY_WORDS;
     this.embeddingBudgetMs = config.get('CONTEXT_EMBEDDING_BUDGET_MS', { infer: true });
   }
@@ -104,7 +109,7 @@ export class ContextService {
 
   private readonly shortQueryWords: number;
 
-  private readonly floors: { fact: number; episode: number; plan: number; period: number; passage: number };
+  private readonly floors: { fact: number; episode: number; plan: number; period: number; passage: number; procedure: number };
 
   /**
    * `card`: open the block with the self card (who I am: current facts and notes about me), on by default (D54).
@@ -259,6 +264,12 @@ export class ContextService {
       size += l.length;
     }
     // What I meant to tell or ask, on its own budget after the lines (D55): said once, never cut.
+    // How to do the task the message is about (8.16 F2): the nearest procedure, whole, on its own budget.
+    const [procedure]: Array<{ id: string }> = await this.db.query(
+      `SELECT id FROM procedures WHERE memory_id = $1 AND status = 'current' AND embedding IS NOT NULL AND ${sim('embedding')} >= ${at(0)}
+       ORDER BY ${sim('embedding')} DESC, pending LIMIT 1`, [memoryId, ...vectors, this.floors.procedure]);
+    const how = procedure ? (await procedureViews(this.db, memoryId, [procedure.id])).flatMap((p) => procedureLines(p, PROCEDURE_CHARS)) : [];
+    if (how.length) kept.push(...how);
     const own = await this.initiativeLines(memoryId, memory.mode, conversationId, now, lookups);
     if (!kept.length && !top.lines.length && !own.length) return EMPTY;
     // Logged only when something about this message is served (the self card alone is not a recall of it): the

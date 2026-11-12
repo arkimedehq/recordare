@@ -18,6 +18,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   istruzioni dentro ciò che legge non diventano mai un intento o una regola. Attiva di default per le memorie di entità
   (`learnFromOutside`, console; spenta: il prompt e le regole di prima); le memorie personali restano invariate. Prompt
   `extract.v24+entity.v12+learn.v1`; migrazione `Learning1791340000000`; le note di `search_memory` portano `learned`.
+- **Procedure tenute intere** (WORK_PLAN 8.16 F2a, D57): un compito a più passaggi (rifare il letto) tenuto come un'unità —
+  i suoi passaggi in ordine come insegnati, dove è stato letto e chi l'ha portato, il modo proprio della casa per un passaggio
+  mostrato sopra quello generico, e come è andata ogni esecuzione — restituito intero da `search_knowledge` e dal contesto
+  di memoria quando il messaggio lo riguarda (`CONTEXT_MIN_PROCEDURE_SIMILARITY`). Letto in una pagina → in attesa finché una
+  persona fidata, una seconda fonte o un'esecuzione riuscita lo conferma; insegnato da un membro della casa → tenuto subito;
+  un'esecuzione fallita segna il suo passaggio; la correzione di una persona diventa il suo modo e costa fiducia alla pagina.
+  `POST api/v1/procedures` (`…/variants`, `…/runs`, `GET`, `DELETE`), MCP `learn_procedure` / `report_procedure_run`,
+  libreria client `learnProcedure` / `addProcedureVariant` / `reportProcedureRun` / `procedures` / `procedure` /
+  `forgetProcedure`; migrazione `LearnedProcedures1791350000000`; l'esportazione ora porta informatori e procedure.
 
 ## [0.13.0] — 2026-11-09
 

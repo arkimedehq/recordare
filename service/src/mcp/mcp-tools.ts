@@ -21,6 +21,8 @@ import { createHash } from 'node:crypto';
 import { type KnowledgeSearchService } from '../knowledge/knowledge-search.service';
 import { type SourcesService } from '../knowledge/sources.service';
 import { SOURCE_KINDS } from '../knowledge/sources.schemas';
+import { type ProceduresService } from '../procedures/procedures.service';
+import { MAX_STEPS, STEP_CHARS } from '../procedures/procedures.schemas';
 
 export interface ToolDeps {
   principal: Principal;
@@ -31,8 +33,9 @@ export interface ToolDeps {
   writes: MemoryWriteService;
   knowledge: KnowledgeSearchService;
   sources: SourcesService;
+  procedures: ProceduresService;
   clock: ClockPort;
-  settings: { timezone: string; locale: string };
+  settings: { timezone: string; locale: string; personal: boolean };
   allowClockOverride: boolean;
 }
 
@@ -113,13 +116,75 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
 
   server.registerTool('search_knowledge', {
     title: 'Search what you learned',
-    description: 'Search the sources you learned (manuals, documents, pages, notes you were given or wrote): passages of their '
-      + 'text, each with its source (title, author, who gave it, when) and the episodes that refer to it. For what happened, '
-      + 'use search_episodes.',
+    description: 'Search the sources you learned (manuals, documents, pages, notes you were given or wrote): first the '
+      + 'procedures about it, whole (how to do a task: its steps in order — follow `here`, the household\'s own way, above the '
+      + 'generic step; a step with `failed` went wrong last time; unless `learned.confirmed`, say it is not confirmed), then '
+      + 'passages of their text, each with its source (title, author, who gave it, when) and the episodes that refer to it. '
+      + 'For what happened, use search_episodes.',
     inputSchema: { query: z.string().describe('What to look up'), limit: z.number().int().min(1).max(20).optional() },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    return result(await deps.knowledge.search(deps.memoryId, { query: args.query, limit: args.limit, conversationId: ctx.conversationId }, now(extra)) as unknown as Record<string, unknown>);
+    const procedures = await deps.procedures.search(deps.memoryId, args.query, 2);
+    const found = await deps.knowledge.search(deps.memoryId, { query: args.query, limit: args.limit, conversationId: ctx.conversationId }, now(extra));
+    return result({ procedures, ...found } as unknown as Record<string, unknown>);
+  });
+
+  server.registerTool('learn_procedure', {
+    title: 'Learn how to do a task',
+    description: 'Keep a task of several steps whole, to do it later or tell how (making the bed, starting the dishwasher): '
+      + 'the steps in order, as taught or read — do not drop or "improve" steps. from "page" when you read it (a search, a '
+      + 'page, a learned source: give its uri or source_id), "person" when the person speaking taught it. To add how it is '
+      + 'done here to a procedure you hold (the household\'s own way of a step), pass variant_of (its id), variant and step. '
+      + 'Whether it is trusted is decided by who brought it, not by you.',
+    inputSchema: {
+      title: z.string().optional().describe('The task, as people name it'),
+      when: z.string().optional().describe('When it is used, if it matters'),
+      steps: z.array(z.string()).max(MAX_STEPS).optional().describe(`The steps in order (at most ${MAX_STEPS}, ${STEP_CHARS} characters each)`),
+      from: z.enum(['page', 'person']).optional(),
+      uri: z.string().optional(),
+      source_id: z.uuid().optional(),
+      variant_of: z.uuid().optional().describe('A procedure you hold: add the household\'s way to it'),
+      variant: z.string().optional(),
+      step: z.number().int().min(1).optional().describe('The step the variant changes; none: the whole task'),
+    },
+  }, async (args, extra) => {
+    const ctx = await context(extra);
+    if (!writable(ctx)) return result({ error: 'cannot write here' });
+    const who = { conversationId: ctx.conversationId ?? null, personal: deps.settings.personal };
+    try {
+      if (args.variant_of) {
+        if (!args.variant) return result({ error: 'variant_of needs variant (how it is done here)' });
+        return result(await deps.procedures.variant(deps.memoryId, args.variant_of, who, { step: args.step, text: args.variant.slice(0, STEP_CHARS) }, now(extra)));
+      }
+      const steps = (args.steps ?? []).map((s) => s.trim()).filter(Boolean).map((s) => s.slice(0, STEP_CHARS));
+      if (!args.title || !steps.length || !args.from) return result({ error: 'title, steps and from are required' });
+      return result(await deps.procedures.learn(deps.memoryId, who, { title: args.title.slice(0, 300), when: args.when?.slice(0, 500), steps, from: args.from,
+        uri: args.uri, sourceId: args.source_id }, now(extra)));
+    } catch (err) {
+      return result({ error: (err as Error).message });
+    }
+  });
+
+  server.registerTool('report_procedure_run', {
+    title: 'Tell how a task went',
+    description: 'After doing a procedure (or when a person corrects how you did it): done; failed (at step N, what went wrong); '
+      + 'corrected (at step N, note = the right way, as the person said it — it becomes the household\'s way).',
+    inputSchema: {
+      procedure_id: z.uuid(),
+      outcome: z.enum(['done', 'failed', 'corrected']),
+      step: z.number().int().min(1).optional(),
+      note: z.string().optional(),
+    },
+  }, async (args, extra) => {
+    const ctx = await context(extra);
+    if (!writable(ctx)) return result({ error: 'cannot write here' });
+    if (args.outcome === 'corrected' && !args.note?.trim()) return result({ error: 'a correction needs its note (the right way)' });
+    try {
+      return result(await deps.procedures.run(deps.memoryId, args.procedure_id, { conversationId: ctx.conversationId ?? null, personal: deps.settings.personal },
+        { outcome: args.outcome, step: args.step, note: args.note?.trim().slice(0, STEP_CHARS) }, now(extra)));
+    } catch (err) {
+      return result({ error: (err as Error).message });
+    }
   });
 
   server.registerTool('learn_source', {

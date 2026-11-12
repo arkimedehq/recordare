@@ -102,6 +102,12 @@ export class ExportsService {
       sources: await rows(`SELECT * FROM sources WHERE memory_id = $1 ORDER BY learned_at`),
       sourcePassages: await rows(`SELECT * FROM source_passages WHERE memory_id = $1 ORDER BY source_id, ordinal`),
       clarifications: await rows(`SELECT * FROM clarifications WHERE memory_id = $1 ORDER BY created_at`),
+      // 8.16: who brought what (informants and their track records), and procedures kept whole with their variants and runs.
+      informants: await rows(`SELECT * FROM informants WHERE memory_id = $1 ORDER BY created_at`),
+      itemInformants: await rows(`SELECT * FROM item_informants WHERE memory_id = $1 ORDER BY at`),
+      procedures: await rows(`SELECT * FROM procedures WHERE memory_id = $1 ORDER BY learned_at`),
+      procedureVariants: await rows(`SELECT * FROM procedure_variants WHERE memory_id = $1 ORDER BY at`),
+      procedureRuns: await rows(`SELECT * FROM procedure_runs WHERE memory_id = $1 ORDER BY at`),
     };
   }
 }

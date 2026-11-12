@@ -10,7 +10,7 @@ own [Recordare](../../README.md) service — the **full** client level:
   relevant).
 - **Memory tools**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
   `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode`, `recordare_search_knowledge`,
-  `recordare_learn_source` (Recordare's MCP tools, bound in code to
+  `recordare_learn_source`, `recordare_learn_procedure`, `recordare_report_procedure_run` (Recordare's MCP tools, bound in code to
   the memory and the conversation — neither the model nor the user can point them elsewhere), with the schemas the
   service publishes (`TOOLS` of the client library). `log_episode` is left out: the conversation is already captured.
 - **One memory for the agent** (D50): the Gateway's agent has one memory; the people who talk to it — on any channel,

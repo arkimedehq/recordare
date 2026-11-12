@@ -971,9 +971,15 @@ initiative from it. Built in phases, each measured on a dev set first.
 - **Instructions in what it reads are information, never a rule or an intent** (F1, as the existing guard on tool output).
 - **Procedures** (F2): a multi-step task kept whole — steps in order, source, teacher, the household's variants above the
   generic steps, revised from the robot's runs. Two modes: **A** the agent structures it (`learn_procedure`); **B**
-  automatic, Recordare finds procedures in a learned source with its own model, with limits to define (off by default,
-  only for a source learned because a task was asked, a cap per source and per day, always pending until confirmed or run
-  successfully). The one-line procedures of 8.12d stay.
+  automatic, in two parts (maintainer, 2026-11-12): **B1** a how-to a person teaches in conversation, proposed by the
+  extraction call that runs anyway (no extra call; entity memories that learn); **B2** Recordare finds procedures in a
+  learned source with its own model, with limits (approved, to measure and tune): off by default (`PROCEDURES_FROM_SOURCES`
+  and a switch per memory, never in economy), only for a source learned for a task — the explicit signal (`for_task`, a
+  look-up an initiative asked for) and, tried first, recognised from the conversation (kept only if it measures well,
+  else the explicit signal alone) —, one call per source on its first 30 000 characters, at most 3 procedures per source
+  and 5 calls per memory per day, always pending until a household member confirms it or a run succeeds; instructions
+  inside the text stay information. F2a built 2026-11-12 (data, mode A, recall, runs; API §4d). The one-line procedures
+  of 8.12d stay.
 - **Initiatives from learned knowledge** (F3): only when it touches a life and its source is trusted, otherwise as a
   question, always with source and date; the learning loop (notice → ask / look up → keep → use → be corrected); child-like
   stages (more questions, fewer initiatives while young).
