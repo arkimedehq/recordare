@@ -55,6 +55,10 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `PERCEPTION_DEDUP_MINUTES` | 10 | La stessa percezione (sensore, luogo, parole) di nuovo entro questi minuti è una sola; 0 = tenute tutte |
 | `LEARNED_NEWS_KEEP_DAYS` | 7 | Imparare dall'esterno (8.16, D57): giorni in cui si tiene la conoscenza deperibile (una notizia, una previsione, un prezzo) quando non nomina una data propria; svanisce al consolidamento notturno |
 | `LEARNED_RECHECK_DAYS` | 180 | Giorni dopo i quali la conoscenza appresa a lenta variazione (orari di apertura, un numero di telefono) è detta come forse superata |
+| `PROCEDURES_FROM_SOURCES` | spento | Modo B2 (8.16 F2c): una memoria di entità che impara legge con il suo modello (task `procedures`) una fonte appresa per un compito e ne tiene le procedure, in attesa; vale `proceduresFromSources` della memoria (console); mai nel profilo economy. Da misurare |
+| `PROCEDURES_SOURCE_CHARS` | 30 000 | B2: caratteri letti di una fonte (l'inizio). Primo valore, da misurare e regolare |
+| `PROCEDURES_PER_SOURCE` | 3 | B2: procedure tenute da una fonte. Primo valore |
+| `PROCEDURES_DAILY_CALLS` | 5 | B2: letture per memoria al giorno; una fonte oltre il tetto aspetta lo sweep notturno. Primo valore |
 | `LEARNING_OWN_TOOLS` | vuoto | Nomi di strumenti (un'espressione regolare, senza distinzione maiuscole/minuscole) che sono gli strumenti propri dell'agente (un calendario, un dispositivo): ciò che dicono è abbastanza fidato da essere tenuto subito; vuoto: ogni strumento vale come un sito |
 | `WEBHOOK_ALLOW_PRIVATE` | false | I webhook possono puntare a indirizzi privati e a http semplice (un client ospitato insieme a Recordare); spento: solo https pubblico |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
@@ -69,7 +73,7 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `LLM_PROVIDER` | `openai-compatible` (predefinito), `anthropic`, `claude-cli` (solo valutazioni locali) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Endpoint e modello predefiniti di ogni task |
 | `LLM_PROFILE` / `LLM_PROFILE_JSON` | Profilo del provider — come spegnere il ragionamento, output strutturato: `generic`, `deepseek`, `openrouter`, `ollama`, `vllm`, `anthropic`, `openai`, o una definizione JSON |
-| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Override per task; task: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS`, `INITIATIVE` |
+| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Override per task; task: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS`, `INITIATIVE`, `PROCEDURES` |
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Endpoint di embedding (misurato con `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fisso per installazione (1024 per bge-m3); cambiare modello richiede un re-embed |
 | `EMBEDDING_QUIET_MS` | Default 10000. Gli embedding interattivi (contesto di memoria, strumenti di richiamo, `remember`) partono subito; quelli in background (messaggi nuovi, ricordi estratti, passaggi, passate notturne) vanno una richiesta alla volta e partono solo dopo tanto tempo senza un embedding interattivo — una conversazione richiede entro pochi secondi, il lavoro in background aspetta la sua pausa — o dopo al massimo 60 s di attesa. 0 = appena nessuna richiesta interattiva è in corso. Durante una conversazione un messaggio diventa cercabile per vettore fino a un minuto dopo (il full-text lo trova nel frattempo). Le configurazioni di valutazione possono usare 0 (il consolidamento su richiesta non aspetta mai) · misurato sul Kinox: la query del contesto durante l'ingest di un turno 4 970 ms → 137 ms |
@@ -90,6 +94,7 @@ Nessuna impostazione di consenso (D50): ogni memoria conserva ciò che il suo cl
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Lingua dei ricordi, date locali e la notte |
 | `quietFrom`, `quietTo` | admin | 22, 8 | Le ore di quiete della memoria (locali): nessuna iniziativa scatta al loro interno (D53, 8.12c) |
 | `perceptionKeepDays` | admin (console) | default dell'installazione | Giorni in cui una percezione resta prima di svanire (8.12e); 0 = conservata |
+| `proceduresFromSources` | admin (console) | `PROCEDURES_FROM_SOURCES` (spento) | Procedure da fonti apprese per un compito (8.16 F2c, modo B2), per una memoria di entità che impara |
 | `learnFromOutside` | admin (console) | attivo per una memoria di entità, spento per una personale | Imparare dall'esterno (8.16, D57): la memoria tiene la conoscenza duratura che legge o le viene detta, con la sua fonte e fiducia; spento: le regole di oggi (prompt `entity.v12`) |
 
 ## 5. Per client (API admin o console — ogni impostazione qui sotto, webhook e canali compresi)

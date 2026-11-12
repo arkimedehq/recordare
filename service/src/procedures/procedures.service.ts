@@ -60,31 +60,7 @@ export class ProceduresService {
         ? page(req.uri ?? source?.origin_uri ?? null)
         : await this.speaker(tx, who, now);
       const i = await upsertInformant(tx, memoryId, informant);
-      const trusted = i.trust >= TEACH_TRUST;
-      const steps = req.steps.map((s) => s.replace(/\s+/g, ' ').trim());
-      const [same]: Array<{ id: string; pending: boolean; steps: string[] }> = await tx.query(
-        `SELECT id, pending, steps FROM procedures WHERE memory_id = $1 AND status = 'current' AND lower(title) = lower($2)
-         ORDER BY pending, learned_at DESC`, [memoryId, req.title]);
-      if (same && JSON.stringify(same.steps) === JSON.stringify(steps)) {
-        // The same steps again: one more backing — a confirmation only from an independent, trusted or second origin.
-        const b = await backItem(tx, memoryId, { table: 'procedures', id: same.id }, i.id, who.conversationId, now);
-        if (same.pending && b.independent && (trusted || b.informants >= 2)) await this.confirm(tx, same.id, now);
-        const [p] = await tx.query(`SELECT pending FROM procedures WHERE id = $1`, [same.id]);
-        return { id: same.id, pending: p.pending as boolean, status: 'same' as const };
-      }
-      const pending = !trusted;
-      const [{ id }] = await tx.query(
-        `INSERT INTO procedures (memory_id, title, situation, steps, source_id, origin_uri, origin, pending, conversation_id, learned_at, confirmed_at)
-         VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
-        [memoryId, req.title, req.when ?? null, JSON.stringify(steps), source?.id ?? null, req.uri ?? source?.origin_uri ?? null,
-          req.from === 'page' ? 'learned' : 'holder_told', pending, who.conversationId, now, pending ? null : now]);
-      await backItem(tx, memoryId, { table: 'procedures', id }, i.id, who.conversationId, now);
-      // A new version replaces the old one and takes its household variants — unless it is pending and the old one is not.
-      if (same && (!pending || same.pending)) {
-        await tx.query(`UPDATE procedures SET status = 'replaced', replaced_by = $2 WHERE id = $1`, [same.id, id]);
-        await tx.query(`UPDATE procedure_variants SET procedure_id = $2 WHERE procedure_id = $1 AND retired_at IS NULL`, [same.id, id]);
-      }
-      return { id: id as string, pending, status: same ? 'version' as const : 'new' as const };
+      return keepProcedure(tx, memoryId, i, who.conversationId, { ...req, uri: req.uri ?? source?.origin_uri ?? null, sourceId: source?.id ?? null }, now);
     });
     if (out.status !== 'same') await this.embed(out.id, [req.title, req.when].filter(Boolean).join('\n'));
     return out;
@@ -109,7 +85,7 @@ export class ProceduresService {
         [procedureId, memoryId, req.outcome, req.step ?? null, req.note ?? null, who.conversationId, now]);
       let pending = p.pending;
       if (req.outcome === 'done' && p.pending) {
-        await this.confirm(tx, procedureId, now);
+        await confirmProcedure(tx, procedureId, now);
         pending = false;
       }
       if (req.outcome === 'corrected') {
@@ -179,19 +155,7 @@ export class ProceduresService {
 
   private async addVariant(tx: Db, memoryId: string, procedureId: string, who: Who, step: number | null, text: string, now: Date): Promise<{ id: string; pending: boolean }> {
     const i = await upsertInformant(tx, memoryId, await this.speaker(tx, who, now));
-    const pending = i.trust < TEACH_TRUST;
-    // The same person's earlier way of the same step is replaced by the new one.
-    await tx.query(`UPDATE procedure_variants SET retired_at = $4 WHERE procedure_id = $1 AND step IS NOT DISTINCT FROM $2 AND informant_id = $3 AND retired_at IS NULL`,
-      [procedureId, step, i.id, now]);
-    const [{ id }] = await tx.query(
-      `INSERT INTO procedure_variants (procedure_id, memory_id, step, text, informant_id, pending, conversation_id, at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [procedureId, memoryId, step, text.replace(/\s+/g, ' ').trim(), i.id, pending, who.conversationId, now]);
-    return { id: id as string, pending };
-  }
-
-  private async confirm(tx: Db, id: string, now: Date): Promise<void> {
-    await tx.query(`UPDATE procedures SET pending = false, confirmed_at = $2 WHERE id = $1`, [id, now]);
-    await creditInformants(tx, { table: 'procedures', id }, 'confirmed');
+    return addProcedureVariant(tx, memoryId, procedureId, i, who.conversationId, step, text, now);
   }
 
   private async speaker(tx: Db, who: Who, now: Date): Promise<Informant> {
@@ -219,6 +183,65 @@ export class ProceduresService {
       // Best-effort: words still find it.
     }
   }
+}
+
+export interface KeepProcedure {
+  title: string; when?: string | null; steps: string[]; from: 'page' | 'person';
+  uri?: string | null; sourceId?: string | null;
+  /** The extraction run that proposed it (F2b). */
+  runId?: string | null;
+  /** Pending whatever the informant's trust (heard in the room, F2b). */
+  pending?: boolean;
+}
+
+/**
+ * Keeps a procedure from an informant already resolved (`upsertInformant`): the same title with the same steps is one
+ * more backing (a confirmation only from an independent origin that is trusted or the second one); other steps are a new
+ * version that replaces the old one and takes its household variants — unless it is pending and the old one is not.
+ * Shared by the routes, the MCP tool and the extraction (F2b). Embedding is the caller's.
+ */
+export async function keepProcedure(tx: Db, memoryId: string, i: { id: string; trust: number }, conversationId: string | null, req: KeepProcedure,
+  now: Date): Promise<{ id: string; pending: boolean; status: 'new' | 'version' | 'same' }> {
+  const trusted = i.trust >= TEACH_TRUST && !req.pending;
+  const steps = req.steps.map((s) => s.replace(/\s+/g, ' ').trim());
+  const [same]: Array<{ id: string; pending: boolean; steps: string[] }> = await tx.query(
+    `SELECT id, pending, steps FROM procedures WHERE memory_id = $1 AND status = 'current' AND lower(title) = lower($2)
+     ORDER BY pending, learned_at DESC`, [memoryId, req.title]);
+  if (same && JSON.stringify(same.steps) === JSON.stringify(steps)) {
+    const b = await backItem(tx, memoryId, { table: 'procedures', id: same.id }, i.id, conversationId, now);
+    if (same.pending && b.independent && (trusted || b.informants >= 2)) await confirmProcedure(tx, same.id, now);
+    const [p] = await tx.query(`SELECT pending FROM procedures WHERE id = $1`, [same.id]);
+    return { id: same.id, pending: p.pending as boolean, status: 'same' };
+  }
+  const pending = !trusted;
+  const [{ id }] = await tx.query(
+    `INSERT INTO procedures (memory_id, title, situation, steps, source_id, origin_uri, origin, pending, conversation_id, extraction_run_id, learned_at, confirmed_at)
+     VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+    [memoryId, req.title, req.when ?? null, JSON.stringify(steps), req.sourceId ?? null, req.uri ?? null,
+      req.from === 'page' ? 'learned' : 'holder_told', pending, conversationId, req.runId ?? null, now, pending ? null : now]);
+  await backItem(tx, memoryId, { table: 'procedures', id }, i.id, conversationId, now);
+  if (same && (!pending || same.pending)) {
+    await tx.query(`UPDATE procedures SET status = 'replaced', replaced_by = $2 WHERE id = $1`, [same.id, id]);
+    await tx.query(`UPDATE procedure_variants SET procedure_id = $2 WHERE procedure_id = $1 AND retired_at IS NULL`, [same.id, id]);
+  }
+  return { id: id as string, pending, status: same ? 'version' : 'new' };
+}
+
+/** The household's own way of a step (null: the whole task) from an informant; the same informant's earlier way of it retires. */
+export async function addProcedureVariant(tx: Db, memoryId: string, procedureId: string, i: { id: string; trust: number }, conversationId: string | null,
+  step: number | null, text: string, now: Date, forcePending = false): Promise<{ id: string; pending: boolean }> {
+  const pending = i.trust < TEACH_TRUST || forcePending;
+  await tx.query(`UPDATE procedure_variants SET retired_at = $4 WHERE procedure_id = $1 AND step IS NOT DISTINCT FROM $2 AND informant_id = $3 AND retired_at IS NULL`,
+    [procedureId, step, i.id, now]);
+  const [{ id }] = await tx.query(
+    `INSERT INTO procedure_variants (procedure_id, memory_id, step, text, informant_id, pending, conversation_id, at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+    [procedureId, memoryId, step, text.replace(/\s+/g, ' ').trim(), i.id, pending, conversationId, now]);
+  return { id: id as string, pending };
+}
+
+async function confirmProcedure(tx: Db, id: string, now: Date): Promise<void> {
+  await tx.query(`UPDATE procedures SET pending = false, confirmed_at = $2 WHERE id = $1`, [id, now]);
+  await creditInformants(tx, { table: 'procedures', id }, 'confirmed');
 }
 
 /** A page's informant: its site, or "a page" when no single site is named. */

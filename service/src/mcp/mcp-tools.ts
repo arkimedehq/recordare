@@ -197,6 +197,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
       author: z.string().optional(),
       kind: z.enum(SOURCE_KINDS).optional(),
       uri: z.string().optional(),
+      for_task: z.boolean().optional().describe('true when you learn it in order to do a task (a manual, a how-to): its procedures may be kept'),
     },
   }, async (args, extra) => {
     const ctx = await context(extra);
@@ -204,6 +205,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     const externalId = `mcp:${createHash('sha256').update(args.title.trim().toLowerCase()).digest('hex').slice(0, 32)}`;
     const r = await deps.sources.learn(deps.memoryId, clientId, {
       externalId, title: args.title, text: args.text, kind: args.kind ?? 'document', author: args.author, uri: args.uri, providedBy: 'me', final: true,
+      ...(args.for_task !== undefined ? { forTask: args.for_task } : {}),
     }, now(extra), ctx.conversationId);
     return result({ sourceId: r.sourceId, status: r.status, passages: r.passages, stored: !r.duplicate });
   });

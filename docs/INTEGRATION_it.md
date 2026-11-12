@@ -246,7 +246,9 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 > insegnato da qualcuno — si tiene intero con `learn_procedure` (MCP) o `learnProcedure` (libreria client); il tuo agente o
 > il controllore del robot riporta ogni esecuzione (`report_procedure_run` / `reportProcedureRun`: fatta, fallita al
 > passaggio N, corretta da una persona). Recordare dà i passaggi in ordine con il modo proprio della casa sopra il passaggio
-> generico; trasformarli in movimento è lavoro tuo.
+> generico; trasformarli in movimento è lavoro tuo. Tiene anche da sola un how-to che qualcuno insegna in conversazione e
+> — quando chi gestisce il servizio lo accende — le procedure di una fonte appresa per un compito (manda `forTask: true`
+> con `learnSource` quando lo sai).
 
 > **Canali e presenza per luogo** (D55 §5b–§5c, 2026-11-05): un'iniziativa porta `channels` — quelli accettabili in ordine
 > (`voice`, `messaging` solo per una richiesta o una promessa, `chat`) — consegnala sul primo che dalla tua parte

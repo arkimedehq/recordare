@@ -37,6 +37,7 @@ import { subjectLabel } from './subjects';
 import { vectorParam } from '../db/pgvector';
 import { fadePerceptions } from '../perception/perception.service';
 import { fadeLearned } from './learning';
+import { SourceProceduresService } from './source-procedures';
 
 interface EpisodeRow {
   id: string; kind: 'event' | 'plan' | 'state_change'; content: string; occurred_at: Date; occurred_until: Date | null;
@@ -73,6 +74,7 @@ export class ConsolidationService {
     private readonly factsReview: FactsReviewService,
     private readonly patterns: PatternsService,
     private readonly thoughts: ThoughtsService,
+    private readonly sourceProcedures: SourceProceduresService,
     private readonly config: ConfigService<Env, true>,
   ) {}
 
@@ -111,6 +113,8 @@ export class ConsolidationService {
     await expireClarifications(this.db, memoryId, now);
     // Perceptions past their time fade before the diary is written again (8.12e, no model).
     report.faded = await fadePerceptions(this.db, memoryId, now) + await fadeLearned(this.db, memoryId, now);
+    // Sources learned for a task and not read for procedures yet (over a day's cap, or switched on since; 8.16 F2c).
+    await this.sourceProcedures.sweep(memoryId, now);
     const tz: string = memory.timezone;
     const today = localDate(now, tz);
     const [run] = await this.db.query(

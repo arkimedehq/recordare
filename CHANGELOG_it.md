@@ -26,7 +26,13 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   un'esecuzione fallita segna il suo passaggio; la correzione di una persona diventa il suo modo e costa fiducia alla pagina.
   `POST api/v1/procedures` (`…/variants`, `…/runs`, `GET`, `DELETE`), MCP `learn_procedure` / `report_procedure_run`,
   libreria client `learnProcedure` / `addProcedureVariant` / `reportProcedureRun` / `procedures` / `procedure` /
-  `forgetProcedure`; migrazione `LearnedProcedures1791350000000`; l'esportazione ora porta informatori e procedure.
+  `forgetProcedure`; migrazione `LearnedProcedures1791350000000`; l'esportazione ora porta informatori e procedure. Tenute anche da sole (F2b, F2c): un how-to che una persona insegna in
+  conversazione, proposto dalla chiamata di estrazione che gira comunque (`extract.v24+entity.v12+learn.v2`, sezione
+  PROCEDURES, `CURRENT PROCEDURES` nell'input); e — spento di default (`PROCEDURES_FROM_SOURCES`, `proceduresFromSources`
+  nella console, mai in economy) — le procedure di una fonte appresa per un compito, lette dal modello proprio di Recordare
+  (task `procedures`, `procedures.v1`), sempre in attesa, entro dei limiti (`PROCEDURES_SOURCE_CHARS`,
+  `PROCEDURES_PER_SOURCE`, `PROCEDURES_DAILY_CALLS`); una fonte è per un compito quando lo dice il client (`forTask`,
+  `for_task`) o l'estrazione lo riconosce (`sources_for_task`).
 
 ## [0.13.0] — 2026-11-09
 

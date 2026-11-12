@@ -331,6 +331,8 @@ riceve 403.
   providedBy?: "me" | "someone" | { name: string };   // default "me" (the memory's self); a name = a contact of
                                           // this memory, created when new (an ambiguous name stays "someone")
   conversation?: { externalId: string };  // the conversation it was learned in (its extraction then tells of it)
+  forTask?: boolean;                      // learned in order to do a task (8.16 F2c): an entity memory that learns may
+                                          // read it for its procedures (§4d); unset: the extraction may recognise it
   text: string;                           // the text, or its first part
   final?: boolean;                        // default true; false = more parts follow
 }
@@ -549,7 +551,7 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   }
   ```
   Registrato in `recall_log` (strumento `search_knowledge`). Per ciò che è successo, `search_episodes`.
-- `learn_source {title, text, author?, kind?, uri?}` — l'agente impara un testo (testo semplice; `kind` come nella §2)
+- `learn_source {title, text, author?, kind?, uri?, for_task?}` — l'agente impara un testo (testo semplice; `kind` come nella §2)
   dato nella conversazione: fornito dal sé della memoria, collegato alla conversazione della chiamata (la sua estrazione
   racconta l'apprendimento). Lo stesso titolo lo sostituisce (l'id della fonte è derivato dal titolo). È una scrittura:
   richiede un contesto risolvibile. Restituisce `{sourceId, status, passages, stored}` (`stored: false` = lo stesso
@@ -906,7 +908,7 @@ Telemetria: `initiative.created`, `initiative.outcome` (`ATLAS_EVENTS.md`). Misu
   memoria serve per dopo ("chi è passato oggi?", "quando è uscita Viola?").
 - Libreria client: `perceive(user, perception)`.
 
-## 4d. Procedure — un compito a più passaggi tenuto intero (WORK_PLAN 8.16 F2, D57) — F2a costruita il 2026-11-12
+## 4d. Procedure — un compito a più passaggi tenuto intero (WORK_PLAN 8.16 F2, D57) — F2a–F2c costruite il 2026-11-12
 
 Recordare dice cosa fare, in che ordine, con il modo proprio della casa e da chi è stato imparato; trasformare i passaggi in
 movimento è lavoro del client (un agente, il controllore di un robot). Le rotte con chiave client prendono l'header
@@ -941,6 +943,23 @@ sta parlando — quella persona ha insegnato, corretto o eseguito.
   quando il messaggio la riguarda (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0,55; un budget suo di 1 500 caratteri, tagliato solo
   tra i passaggi): `- procedure "make the bed" (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way
   first, steps as taught:` poi `4. here (Sofia): …` sopra `4. (generic) …`, e `failed here on …` sotto un passaggio.
+- **Da ciò che una persona insegna in conversazione (modo B1, F2b)**: in una memoria di entità che impara, la chiamata di
+  estrazione che gira comunque (`learn.v2`, sezione PROCEDURES; nessuna chiamata in più) propone un how-to di più passaggi
+  che una persona qui insegna — o che uno strumento o una pagina nella finestra dà perché qualcuno ha chiesto come si fa
+  quel compito — e il modo della casa per una procedura che tiene (l'input elenca le 3 più vicine come `CURRENT
+  PROCEDURES`, numeri H). Chi l'ha portata si decide dalla sua evidenza come sopra (una persona: insegnata; uno strumento o
+  una pagina: letta, in attesa; le mie sole parole: nulla); sentita nella stanza: in attesa.
+- **Da una fonte appresa (modo B2, F2c)**: Recordare legge con il suo modello una fonte appresa **per un compito** (task
+  `procedures`, prompt `procedures.v1`) e tiene i compiti a più passaggi che insegna, **sempre in attesa**, con il sito
+  della fonte (o chi l'ha data) come informatore. Spento di default: `PROCEDURES_FROM_SOURCES` o
+  `proceduresFromSources` della memoria (console); mai nel profilo economy; solo una memoria di entità che impara. Per un
+  compito: lo dice il client (`forTask` nella §2, `for_task` in `learn_source`) o lo riconosce l'estrazione della
+  conversazione con cui la fonte è arrivata (`sources_for_task`; un `false` esplicito del client resta). Limiti (da
+  misurare e regolare): una lettura per fonte (una nuova versione si rilegge), i suoi primi `PROCEDURES_SOURCE_CHARS`
+  (30 000) caratteri, al massimo `PROCEDURES_PER_SOURCE` (3) procedure, `PROCEDURES_DAILY_CALLS` (5) letture per memoria
+  al giorno (una oltre il tetto aspetta lo sweep notturno). Ciò che è successo resta sulla fonte (`procedures_outcome`:
+  `read:N`, `off`, `not_for_task`, `economy`, `daily_cap`…). Le istruzioni dentro il testo sono lasciate fuori, mai tenute
+  come passaggi.
 - Le procedure di una riga di 8.12d (note `procedure`, "how I do it (learned)") restano come sono.
 
 ## 5. Libreria client (task 1.6, WORK_PLAN 6.7) — costruita (2026-10-07)

@@ -11,7 +11,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { EMBEDDING_PORT, type EmbeddingPort } from '../embedding/embedding.port';
 import { LLM_PORT, type LlmPort } from '../llm/llm.port';
-import { type ExtractionRunner } from '../queue/queue.port';
+import { type ExtractionRunner, QUEUE_PORT, type QueuePort } from '../queue/queue.port';
 import { buildInput, pendingWindows, type Memory, type WindowMessage } from './extraction.context';
 import { buildExtractionUser, ENTITY_LEARNING_SYSTEM, ENTITY_PROMPT_VERSION, ENTITY_SYSTEM, EXTRACTION_PROMPT_VERSION, EXTRACTION_SYSTEM } from './extraction.prompt';
 import { LEARNING_PROMPT_VERSION } from './learning.prompt';
@@ -51,6 +51,7 @@ export class EngineExtractionRunner implements ExtractionRunner {
     @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort,
     config: ConfigService<Env, true>,
     private readonly telemetry: TelemetryService,
+    @Inject(QUEUE_PORT) private readonly queue: QueuePort,
   ) {
     this.defaultProfile = config.get('QUALITY_PROFILE', { infer: true });
     this.windowCharsOverride = config.get('EXTRACTION_WINDOW_CHARS', { infer: true });
@@ -132,10 +133,14 @@ export class EngineExtractionRunner implements ExtractionRunner {
           : Promise.resolve(null),
       ]);
       const output = factsOut ? { ...episodesOut, facts: factsOut.facts, notes: factsOut.notes } : episodesOut;
+      const procedureRows: Array<{ id: string; text: string }> = [];
+      const forTask: string[] = [];
       const written = await this.db.transaction(async (tx) => {
         const writer = new ExtractionWriter(tx, { memoryId: memory.id, timezone: memory.timezone, runId, conversationId, entity: !!memory.entity,
           ...(memory.learning ? { learning: this.learningKnobs } : {}) }, input);
         const rows = await writer.apply(output);
+        procedureRows.push(...writer.procedureRows);
+        forTask.push(...writer.sourcesForTask);
         // Sources of this conversation the episodes did not tell of get their learning episode in code (D49).
         for (const sourceId of input.sources.values()) {
           const learned = await writeLearnedEpisode(tx, sourceId);
@@ -145,6 +150,8 @@ export class EngineExtractionRunner implements ExtractionRunner {
         return rows;
       });
       await this.telemetry.track('embed.memories', memory.id, () => this.embed(written));
+      if (procedureRows.length) await this.embedProcedures(procedureRows);
+      for (const sourceId of forTask) await this.queue.enqueueSourceProcedures(sourceId);
       await this.announce(memory.id, runId, written);
       // Second call only when near-duplicates exist (corrections not linked, same event in two chats).
       const links = await resolveNearDuplicates(this.db, this.llm, memory.id, written.filter((w) => w.table === 'episodes').map((w) => w.id),
@@ -199,6 +206,16 @@ export class EngineExtractionRunner implements ExtractionRunner {
     } catch (err) {
       this.log.warn(`window embedding failed, recent episodes only: ${(err as Error).message}`);
       return null;
+    }
+  }
+
+  /** 8.16 F2b: embeds new procedures (title and when it is used); a failure leaves them found by words. */
+  private async embedProcedures(rows: Array<{ id: string; text: string }>): Promise<void> {
+    try {
+      const vectors = await this.embeddings.embed(rows.map((r) => r.text), 'document');
+      await storeEmbeddings(this.db, 'procedures', this.embeddings.model, rows.map((r, i) => ({ id: r.id, vector: vectors[i], text: r.text })));
+    } catch (err) {
+      this.log.warn(`embedding new procedures failed: ${(err as Error).message}`);
     }
   }
 

@@ -50,6 +50,8 @@ export class Memory {
   @Column({ name: 'perception_keep_days', type: 'smallint', nullable: true }) perceptionKeepDays!: number | null;
   /** Learning from outside (8.16): null = on for an entity memory, off for a personal one. */
   @Column({ name: 'learn_from_outside', type: 'boolean', nullable: true }) learnFromOutside!: boolean | null;
+  /** 8.16 F2c: read sources learned for a task for their procedures (null: the installation's PROCEDURES_FROM_SOURCES). */
+  @Column({ name: 'procedures_from_sources', type: 'boolean', nullable: true }) proceduresFromSources!: boolean | null;
   @Column({ type: 'enum', enumName: 'memory_mode', enum: MEMORY_MODES, default: 'personal' }) mode!: MemoryMode;
   @Column({ type: 'enum', enumName: 'memory_gender', enum: MEMORY_GENDERS, default: 'masculine' }) gender!: MemoryGender;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;

@@ -313,6 +313,8 @@ text arrives in parts (the client library does it, §5). Scope `ingest`; a clien
   providedBy?: "me" | "someone" | { name: string };   // default "me" (the memory's self); a name = a contact of
                                           // this memory, created when new (an ambiguous name stays "someone")
   conversation?: { externalId: string };  // the conversation it was learned in (its extraction then tells of it)
+  forTask?: boolean;                      // learned in order to do a task (8.16 F2c): an entity memory that learns may
+                                          // read it for its procedures (§4d); unset: the extraction may recognise it
   text: string;                           // the text, or its first part
   final?: boolean;                        // default true; false = more parts follow
 }
@@ -526,7 +528,7 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   }
   ```
   Logged in `recall_log` (tool `search_knowledge`). For what happened, `search_episodes`.
-- `learn_source {title, text, author?, kind?, uri?}` — the agent learns a text (plain text; `kind` as in §2) given in the
+- `learn_source {title, text, author?, kind?, uri?, for_task?}` — the agent learns a text (plain text; `kind` as in §2) given in the
   conversation: provided by the memory's self, linked to the conversation of the call (its extraction tells of the
   learning). The same title again replaces it (the source id is derived from the title). A write: needs a resolvable
   context. Returns `{sourceId, status, passages, stored}` (`stored: false` = the same text was already there). For a
@@ -877,7 +879,7 @@ with `ALLOW_CLOCK_OVERRIDE`):
   later ("who came by today?", "when did Viola go out?").
 - Client library: `perceive(user, perception)`.
 
-## 4d. Procedures — a task of several steps kept whole (WORK_PLAN 8.16 F2, D57) — F2a built 2026-11-12
+## 4d. Procedures — a task of several steps kept whole (WORK_PLAN 8.16 F2, D57) — F2a–F2c built 2026-11-12
 
 Recordare says what to do, in which order, with the household's own way and from whom it was learned; turning steps into
 motion is the client's work (an agent, a robot's controller). Client key routes take the user header and, with
@@ -911,6 +913,22 @@ person taught, corrected or ran it.
   message is about it (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0.55; its own budget of 1 500 characters, cut only between
   steps): `- procedure "make the bed" (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way first,
   steps as taught:` then `4. here (Sofia): …` above `4. (generic) …`, and `failed here on …` under a step.
+- **From what a person teaches in conversation (mode B1, F2b)**: in an entity memory that learns, the extraction call
+  that runs anyway (`learn.v2`, section PROCEDURES; no extra call) proposes a how-to of several steps a person here
+  teaches — or that a tool or a page in the window gives because someone asked how to do that task — and the
+  household's way of a procedure it holds (the input lists the 3 nearest as `CURRENT PROCEDURES`, H-numbers). Who
+  brought it is decided from its evidence as above (a person: taught; a tool or a page: read, pending; my own words
+  alone: nothing); heard in the room: pending.
+- **From a learned source (mode B2, F2c)**: Recordare reads a source learned **for a task** with its own model (task
+  `procedures`, prompt `procedures.v1`) and keeps the tasks of several steps it teaches, **always pending**, with the
+  source's site (or who gave it) as informant. Off by default: `PROCEDURES_FROM_SOURCES` or the memory's
+  `proceduresFromSources` (console); never on the economy profile; only an entity memory that learns. For a task: the
+  client says so (`forTask` in §2, `for_task` in `learn_source`) or the extraction of the conversation the source came
+  with recognises it (`sources_for_task`; a client's explicit `false` stays). Limits (to measure and tune): one reading
+  per source (a new version is read again), its first `PROCEDURES_SOURCE_CHARS` (30 000) characters, at most
+  `PROCEDURES_PER_SOURCE` (3) procedures, `PROCEDURES_DAILY_CALLS` (5) readings per memory a day (one over the cap waits
+  for the nightly sweep). What happened is kept on the source (`procedures_outcome`: `read:N`, `off`, `not_for_task`,
+  `economy`, `daily_cap`…). Instructions inside the text are left out, never kept as steps.
 - 8.12d's one-line procedures (notes `procedure`, "how I do it (learned)") stay as they are.
 
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)

@@ -80,7 +80,7 @@ describe('learning from outside (8.16 F1)', () => {
     ], { notes: [{ ...pharmacy, evidence: [2] }] });
     expect(system).toContain('LEARNING (what I am told or read that lasts)');
     expect(await db.query(`SELECT DISTINCT prompt_version FROM extraction_runs WHERE memory_id = $1`, [home]))
-      .toEqual([{ prompt_version: 'extract.v24+entity.v12+learn.v1' }]);
+      .toEqual([{ prompt_version: 'extract.v24+entity.v12+learn.v2' }]);
 
     const [note] = await db.query(`SELECT id, origin::text, pending, stance::text, confidence, lasts, recheck_at, expires_at FROM notes WHERE memory_id = $1`, [home]);
     expect(note).toMatchObject({ origin: 'learned', pending: true, stance: 'inferred', confidence: 0.5, lasts: 'changing', expires_at: null });
@@ -171,11 +171,48 @@ describe('learning from outside (8.16 F1)', () => {
     expect(await db.query(`SELECT origin::text FROM episodes WHERE memory_id = $1`, [home])).toEqual([{ origin: 'learned' }]);
   });
 
+  it('keeps a how-to taught by the household at once and one read in a page pending; a variant joins the one held; my own words teach nothing (F2b)', async () => {
+    const home = await memory('Cascina', 'entity');
+    const bed = { title: 'Rifare il letto', when: null, steps: ['Togli le lenzuola', 'Metti il lenzuolo pulito', 'Metti il copriletto'] };
+    // Read in a page because someone asked how to do it: learned, pending, from the site.
+    const system = await extract('Cascina', 'b1', [
+      { role: 'user', content: 'Come si rifà il letto? Devo farlo stasera.' },
+      { role: 'tool', toolName: 'web_fetch', content: 'https://casa-esempio.it/letto\n1. Togli le lenzuola. 2. Metti il lenzuolo pulito. 3. Metti il copriletto.' },
+      { role: 'assistant', content: 'Togli le lenzuola, metti quello pulito, poi il copriletto.' },
+    ], { procedures: [{ ...bed, evidence: [2] }] });
+    expect(system).toContain('PROCEDURES (how to do a task, kept whole)');
+    expect(await db.query(`SELECT origin::text, pending, steps, embedding IS NOT NULL AS embedded FROM procedures WHERE memory_id = $1`, [home]))
+      .toEqual([{ origin: 'learned', pending: true, steps: bed.steps, embedded: true }]);
+
+    // The household's way of step 3, naming the one held by its H-number (read from the input).
+    await extract('Cascina', 'b2', [{ role: 'user', content: 'Da noi il cuscino va sopra il copriletto.' }], (user) => {
+      expect(user).toContain('CURRENT PROCEDURES');
+      const h = /(H\d+): «Rifare il letto»/.exec(user)![1];
+      return { procedures: [{ variant_of: h, step: 3, text: 'Il cuscino va sopra il copriletto', evidence: [1] }] };
+    });
+    expect(await db.query(`SELECT step, pending FROM procedure_variants WHERE memory_id = $1`, [home])).toEqual([{ step: 3, pending: false }]);
+
+    // Taught by the account's speaker: kept at once; my own suggestion alone is not learned.
+    await extract('Cascina', 'b3', [
+      { role: 'user', content: 'Per la lavastoviglie: chiudi lo sportello, premi Eco, poi Avvio.' },
+      { role: 'assistant', content: 'Per il forno invece: accendi, aspetta dieci minuti, inforna.' },
+    ], { procedures: [
+      { title: 'Accendere la lavastoviglie', steps: ['Chiudi lo sportello', 'Premi Eco', 'Premi Avvio'], evidence: [1] },
+      { title: 'Usare il forno', steps: ['Accendi', 'Aspetta dieci minuti', 'Inforna'], evidence: [2] },
+    ] });
+    expect(await db.query(`SELECT title, origin::text, pending FROM procedures WHERE memory_id = $1 AND title <> 'Rifare il letto'`, [home]))
+      .toEqual([{ title: 'Accendere la lavastoviglie', origin: 'holder_told', pending: false }]);
+    expect((await db.query(`SELECT summary FROM extraction_runs WHERE memory_id = $1 ORDER BY started_at DESC LIMIT 1`, [home]))[0].summary.dropped.procedure)
+      .toEqual({ own_words: 1 });
+  });
+
   it('keeps today\'s prompt and rules for a personal memory and for an entity memory switched off', async () => {
     const own = await memory('Giulia');
     const system = await extract('Giulia', 'p1', [{ role: 'user', content: 'Cerca gli orari della farmacia' }, page('sabato 8:30–20:00')],
       { notes: [{ ...pharmacy, evidence: [2] }] });
     expect(system).not.toContain('LEARNING');
+    expect(system).not.toContain('PROCEDURES');
+    expect((llm.requests as unknown as Array<{ messages: Array<{ content: string }> }>).at(-1)!.messages[1]!.content).not.toContain('CURRENT PROCEDURES');
     expect((await db.query(`SELECT origin::text, lasts FROM notes WHERE memory_id = $1`, [own]))[0]).toEqual({ origin: 'holder_lived', lasts: null });
     expect(await db.query(`SELECT id FROM informants WHERE memory_id = $1`, [own])).toEqual([]);
 

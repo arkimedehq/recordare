@@ -128,7 +128,7 @@ export class FactsReviewService {
       return report;
     }
     const input: ExtractionInput = { messages, facts: factMap, plans: new Map(), notes: new Map(), episodes: new Map(),
-      contacts: people.contacts, questions: people.questions, selfNames: people.selfNames, sources: new Map(),
+      contacts: people.contacts, questions: people.questions, selfNames: people.selfNames, sources: new Map(), procedures: new Map(),
       prompt: { contacts: people.list } as PromptContext };
     const written: WrittenRow[] = await this.db.transaction(async (tx) => {
       const rows = await new ExtractionWriter(tx, { memoryId, timezone: tz, runId, conversationId: '', entity }, input)

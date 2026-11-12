@@ -474,6 +474,8 @@ export interface LearnSource {
   providedBy?: 'me' | 'someone' | { name: string };
   /** The conversation it was learned in: its extraction then tells of it. */
   conversation?: { externalId: string };
+  /** Learned in order to do a task (8.16 F2c): an entity memory that learns may read it for its procedures (kept pending). */
+  forTask?: boolean;
   text: string;
 }
 

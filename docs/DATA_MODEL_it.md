@@ -667,7 +667,7 @@ oppure appreso + `LEARNED_NEWS_KEEP_DAYS`), `recheck_at` (a lenta variazione: ap
 `(memory_id, expires_at)` dove valorizzato. Svanire (`fadeLearned`, nel consolidamento, rapporto `faded`): le note oltre
 `expires_at` vengono cancellate, una voce `forgotten` in `note_changes`.
 
-## Procedure tenute intere (WORK_PLAN 8.16 F2, D57) — F2a costruita il 2026-11-12 (migrazione `LearnedProcedures1791350000000`)
+## Procedure tenute intere (WORK_PLAN 8.16 F2, D57) — F2a–F2c costruite il 2026-11-12 (migrazione `LearnedProcedures1791350000000`)
 
 Un compito a più passaggi (rifare il letto) tenuto come un'unità e restituito intero, mai a frammenti; a parte le procedure
 di una riga di 8.12d (note di categoria `procedure`, che restano). Scritto dal client o dall'agente (`POST
@@ -697,6 +697,13 @@ insegnata una variante; nessuna fiducia si sposta — l'errore può essere del r
 corregge e un `corrected` agli altri informatori della procedura.
 
 `item_informants` guadagna `procedure_id → procedures (cascade)`: esattamente uno tra `fact_id`, `note_id`, `procedure_id`.
+
+`sources` guadagna `for_task` (booleano, null: sconosciuto — appresa per fare un compito: il `forTask` del client, o
+riconosciuta dall'estrazione della sua conversazione, F2c), `procedures_at` (quando Recordare l'ha letta per le procedure;
+reclamata prima della chiamata, azzerata se fallisce; una nuova versione la cancella) e `procedures_outcome` (`read:N`,
+`off`, `not_for_task`, `economy`, `not_learning`, `daily_cap`, `failed`). `memories` guadagna `procedures_from_sources`
+(booleano, null: il `PROCEDURES_FROM_SOURCES` dell'installazione). Le procedure proposte da un'estrazione (F2b) portano il
+suo `extraction_run_id` e compaiono in `run_outputs` come `procedures`.
 
 ## Contabilità del motore
 

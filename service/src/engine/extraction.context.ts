@@ -94,7 +94,13 @@ export interface ExtractionInput {
   selfNames: string[];
   /** "S1" → a source learned in this conversation with no episode yet (WORK_PLAN 8.9). */
   sources: Map<string, string>;
+  /** "H1" → a current procedure (8.16 F2b; learning memories only). */
+  procedures: Map<string, { id: string; steps: number }>;
 }
+
+/** CURRENT PROCEDURES (8.16 F2b): at most this many, each step shortened to this many characters. */
+const MAX_PROCEDURES = 3;
+const STEP_PREVIEW = 120;
 
 /** Recordare's own read tools, as a client names them (possibly prefixed, e.g. `recordare_search_episodes`). */
 const MEMORY_TOOLS = '(^|[_.:-])(search_episodes|search_memory|search_facts|resolve_period)$';
@@ -225,6 +231,14 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
     `SELECT c.title FROM conversations c WHERE c.id = (SELECT conversation_id FROM messages WHERE id = $1)
        AND EXISTS (SELECT 1 FROM conversation_participants p WHERE p.conversation_id = c.id AND p.role = 'other')`, [first.id]);
   const sourceMap = new Map<string, string>();
+  // 8.16 F2b: the procedures the memory holds, nearest the window first (a variant names one by its H-number).
+  const procedureMap = new Map<string, { id: string; steps: number }>();
+  const procedures: Array<{ id: string; title: string; situation: string | null; steps: string[] }> = memory.learning
+    ? await tx.query(
+      `SELECT id, title, situation, steps FROM procedures WHERE memory_id = $1 AND status = 'current'
+       ORDER BY ${windowVector ? `embedding <=> $2::vector NULLS LAST` : 'learned_at DESC'} LIMIT ${MAX_PROCEDURES}`,
+      windowVector ? [memory.id, vectorParam(windowVector)] : [memory.id])
+    : [];
   const messages: PromptMessage[] = window.map((m, i) => ({
     n: i + 1,
     speaker: speaker(m, people.refOf),
@@ -242,7 +256,13 @@ export async function buildInput(tx: EntityManager, memory: Memory, window: Wind
     questions: people.questions,
     selfNames: people.selfNames,
     sources: sourceMap,
+    procedures: procedureMap,
     prompt: {
+      ...(memory.learning ? { currentProcedures: procedures.map((p, i) => {
+        procedureMap.set(`H${i + 1}`, { id: p.id, steps: p.steps.length });
+        const steps = p.steps.map((s, k) => `${k + 1}. ${s.length > STEP_PREVIEW ? `${s.slice(0, STEP_PREVIEW)}…` : s}`).join(' | ');
+        return `H${i + 1}: «${p.title}»${p.situation ? ` (when: ${p.situation})` : ''}: ${steps}`;
+      }) } : {}),
       learnedSources: learned.map((l, i) => {
         sourceMap.set(`S${i + 1}`, l.id);
         const by = l.provided_by_kind === 'contact' && l.provider ? `given by ${l.provider}` : l.provided_by_kind === 'someone' ? 'given by someone' : 'mine';

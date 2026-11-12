@@ -78,6 +78,18 @@ export const extractionSchema = z.object({
     until: date,
     evidence,
   })).default([]),
+  /** 8.16 F2b (entity prompt with LEARNING): a how-to of several steps, kept whole; or the household's way of one held (H-number). */
+  procedures: z.array(z.object({
+    title: z.string().max(300).nullable().optional(),
+    when: z.string().max(500).nullable().optional(),
+    steps: z.array(z.string()).max(40).default([]),
+    variant_of: z.string().max(20).nullable().optional(),
+    step: z.number().int().positive().nullable().optional(),
+    text: z.string().max(600).nullable().optional(),
+    evidence,
+  })).max(10).default([]).catch([]),
+  /** 8.16 F2c: the sources learned in this conversation (S-numbers) that someone here wants in order to do a task. */
+  sources_for_task: z.array(z.string().max(20)).max(10).default([]).catch([]),
   /** OPEN QUESTIONS the window answers (Q-number → the chosen C-number). */
   answers: z.array(z.object({
     question: z.string().max(20),

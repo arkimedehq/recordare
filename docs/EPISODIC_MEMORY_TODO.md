@@ -978,8 +978,9 @@ initiative from it. Built in phases, each measured on a dev set first.
   look-up an initiative asked for) and, tried first, recognised from the conversation (kept only if it measures well,
   else the explicit signal alone) —, one call per source on its first 30 000 characters, at most 3 procedures per source
   and 5 calls per memory per day, always pending until a household member confirms it or a run succeeds; instructions
-  inside the text stay information. F2a built 2026-11-12 (data, mode A, recall, runs; API §4d). The one-line procedures
-  of 8.12d stay.
+  inside the text stay information. Built 2026-11-12: F2a (data, mode A, recall, runs), F2b (B1, `learn.v2`), F2c (B2,
+  `procedures.v1`, the recognition from the conversation in the same extraction call: `sources_for_task`); API §4d. The
+  one-line procedures of 8.12d stay.
 - **Initiatives from learned knowledge** (F3): only when it touches a life and its source is trusted, otherwise as a
   question, always with source and date; the learning loop (notice → ask / look up → keep → use → be corrected); child-like
   stages (more questions, fewer initiatives while young).

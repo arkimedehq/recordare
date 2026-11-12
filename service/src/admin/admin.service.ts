@@ -55,6 +55,7 @@ export class AdminService {
     if (input.quietTo !== undefined) memory.quietTo = input.quietTo;
     if (input.perceptionKeepDays !== undefined) memory.perceptionKeepDays = input.perceptionKeepDays;
     if (input.learnFromOutside !== undefined) memory.learnFromOutside = input.learnFromOutside;
+    if (input.proceduresFromSources !== undefined) memory.proceduresFromSources = input.proceduresFromSources;
     return repo.save(memory);
   }
 
@@ -129,7 +130,7 @@ export class AdminService {
   async listPersons(): Promise<unknown[]> {
     const memories: Array<Record<string, unknown> & { id: string }> = await this.db.query(
       `SELECT p.id, p.display_name AS name, o.mode, o.gender,
-              o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.quiet_from AS "quietFrom", o.quiet_to AS "quietTo", o.perception_keep_days AS "perceptionKeepDays", o.learn_from_outside AS "learnFromOutside",
+              o.quality_profile AS "qualityProfile", o.locale, o.timezone, o.quiet_from AS "quietFrom", o.quiet_to AS "quietTo", o.perception_keep_days AS "perceptionKeepDays", o.learn_from_outside AS "learnFromOutside", o.procedures_from_sources AS "proceduresFromSources",
               o.created_at AS "createdAt",
               (SELECT count(*)::int FROM persons c WHERE c.memory_id = p.id) AS contacts,
               (SELECT count(*)::int FROM messages m JOIN conversations c ON c.id = m.conversation_id WHERE c.memory_id = p.id) AS messages,

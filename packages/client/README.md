@@ -65,7 +65,7 @@ description, JSON Schema), for hosts that must declare tools before connecting; 
 sync with the service.
 
 ## Learned sources
-`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?})`
+`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?, forTask?})`
 makes the agent learn a text (D49, WORK_PLAN 8.9: a manual, a page, a note — **text only**, the host converts files).
 Any size: a text bigger than `SOURCE_PART_BYTES` (4 MB, or the `partBytes` argument) is sent in parts cut at paragraph
 boundaries (`POST api/v1/ingest/sources` + `…/parts`); → `{sourceId, status, parts, passages, duplicate}`. The same

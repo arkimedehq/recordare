@@ -146,6 +146,10 @@ export const TOOLS = [
         },
         "uri": {
           "type": "string"
+        },
+        "for_task": {
+          "description": "true when you learn it in order to do a task (a manual, a how-to): its procedures may be kept",
+          "type": "boolean"
         }
       },
       "required": [

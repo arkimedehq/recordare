@@ -9,7 +9,10 @@
  *   confirms it or a run succeeds; steps as taught (never optimised);
  * - `procedure_variants`: the household's own way of a step (or of the whole task), shown above the generic step;
  * - `procedure_runs`: how each run went (done / failed at step N / corrected by a person) — outcomes like a reply's;
- * - `item_informants.procedure_id`: who backs a procedure (independent corroboration as for facts and notes).
+ * - `item_informants.procedure_id`: who backs a procedure (independent corroboration as for facts and notes);
+ * - `sources.for_task` (learned to do a task: said by the client, or recognised by the extraction), `procedures_at` /
+ *   `procedures_outcome` (Recordare's own reading of it for procedures, mode B2 — once per source);
+ * - `memories.procedures_from_sources`: the memory's switch for B2 (null: the installation's PROCEDURES_FROM_SOURCES).
  */
 import { type MigrationInterface, type QueryRunner } from 'typeorm';
 
@@ -73,9 +76,13 @@ export class LearnedProcedures1791350000000 implements MigrationInterface {
     await q.query(`ALTER TABLE item_informants DROP CONSTRAINT item_informants_check`);
     await q.query(`ALTER TABLE item_informants ADD CONSTRAINT item_informants_check CHECK (num_nonnulls(fact_id, note_id, procedure_id) = 1)`);
     await q.query(`CREATE INDEX item_informants_procedure_idx ON item_informants(procedure_id) WHERE procedure_id IS NOT NULL`);
+    await q.query(`ALTER TABLE sources ADD COLUMN for_task boolean, ADD COLUMN procedures_at timestamptz, ADD COLUMN procedures_outcome text`);
+    await q.query(`ALTER TABLE memories ADD COLUMN procedures_from_sources boolean`);
   }
 
   async down(q: QueryRunner): Promise<void> {
+    await q.query(`ALTER TABLE memories DROP COLUMN procedures_from_sources`);
+    await q.query(`ALTER TABLE sources DROP COLUMN for_task, DROP COLUMN procedures_at, DROP COLUMN procedures_outcome`);
     await q.query(`DELETE FROM item_informants WHERE procedure_id IS NOT NULL`);
     await q.query(`DROP INDEX item_informants_procedure_idx`);
     await q.query(`ALTER TABLE item_informants DROP CONSTRAINT item_informants_check`);

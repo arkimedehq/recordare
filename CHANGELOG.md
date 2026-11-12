@@ -26,7 +26,13 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   becomes their way and costs the page trust. `POST api/v1/procedures` (`…/variants`, `…/runs`, `GET`, `DELETE`), MCP
   `learn_procedure` / `report_procedure_run`, client library `learnProcedure` / `addProcedureVariant` /
   `reportProcedureRun` / `procedures` / `procedure` / `forgetProcedure`; migration `LearnedProcedures1791350000000`;
-  the export now carries informants and procedures.
+  the export now carries informants and procedures. Kept by themselves too (F2b, F2c): a how-to a person teaches in
+  conversation, proposed by the extraction call that runs anyway (`extract.v24+entity.v12+learn.v2`, section PROCEDURES,
+  `CURRENT PROCEDURES` in the input); and — off by default (`PROCEDURES_FROM_SOURCES`, `proceduresFromSources` in the
+  console, never on economy) — the procedures of a source learned for a task, read by Recordare's own model (task
+  `procedures`, `procedures.v1`), always pending, within limits (`PROCEDURES_SOURCE_CHARS`, `PROCEDURES_PER_SOURCE`,
+  `PROCEDURES_DAILY_CALLS`); a source is for a task when the client says so (`forTask`, `for_task`) or the extraction
+  recognises it (`sources_for_task`).
 
 ## [0.13.0] — 2026-11-09
 

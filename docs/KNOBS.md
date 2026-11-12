@@ -53,6 +53,10 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `PERCEPTION_DEDUP_MINUTES` | 10 | The same perception (sensor, place, words) again within these minutes is one; 0 = every one kept |
 | `LEARNED_NEWS_KEEP_DAYS` | 7 | Learning from outside (8.16, D57): days perishable knowledge (news, a forecast, a price) is kept when it names no date of its own; it fades at the nightly consolidation |
 | `LEARNED_RECHECK_DAYS` | 180 | Days after which slowly changing learned knowledge (opening hours, a phone number) is told as possibly out of date |
+| `PROCEDURES_FROM_SOURCES` | off | Mode B2 (8.16 F2c): an entity memory that learns reads a source learned for a task with its own model (task `procedures`) and keeps its procedures, pending; per memory `proceduresFromSources` (console) wins; never on the economy profile. To measure |
+| `PROCEDURES_SOURCE_CHARS` | 30 000 | B2: characters of a source read (its beginning). First value, to measure and tune |
+| `PROCEDURES_PER_SOURCE` | 3 | B2: procedures kept from one source. First value |
+| `PROCEDURES_DAILY_CALLS` | 5 | B2: readings per memory a day; a source over the cap waits for the nightly sweep. First value |
 | `LEARNING_OWN_TOOLS` | empty | Tool names (a regular expression, case-insensitive) that are the agent's own first-party tools (a calendar, a device): what they say is trusted enough to be kept at once; empty: every tool counts as a site |
 | `WEBHOOK_ALLOW_PRIVATE` | false | Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
@@ -67,7 +71,7 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `LLM_PROVIDER` | `openai-compatible` (default), `anthropic`, `claude-cli` (local evaluations only) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | Default endpoint and model of every task |
 | `LLM_PROFILE` / `LLM_PROFILE_JSON` | Provider profile — how to switch reasoning off, structured output: `generic`, `deepseek`, `openrouter`, `ollama`, `vllm`, `anthropic`, `openai`, or a JSON definition |
-| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Per-task override; tasks: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS`, `INITIATIVE` |
+| `LLM_<TASK>_MODEL` / `_PROVIDER` / `_PROFILE` / `_PROFILE_JSON` / `_BASE_URL` / `_API_KEY` | Per-task override; tasks: `EXTRACT`, `EXTRACT_ECONOMY`, `RESOLVE`, `FACTS`, `DIGEST`, `PATTERNS`, `THOUGHTS`, `INITIATIVE`, `PROCEDURES` |
 | `EMBEDDING_BASE_URL`, `EMBEDDING_API_KEY`, `EMBEDDING_MODEL` | Embedding endpoint (measured with `BAAI/bge-m3`) |
 | `EMBEDDING_DIM` | Fixed per installation (1024 for bge-m3); changing the model needs a re-embed |
 | `EMBEDDING_QUIET_MS` | Default 10000. Interactive embeddings (memory context, recall tools, `remember`) are sent at once; background ones (new messages, extracted memories, passages, nightly passes) run one request at a time and start only after this long without an interactive one — a conversation asks again within seconds, background work waits for its pause — or after 60 s of waiting at most. 0 = as soon as no interactive request is in flight. A message is then vector-searchable up to a minute later during a conversation (full-text finds it meanwhile). Evaluation setups may use 0 (on-demand consolidation then never waits) · measured on Kinox: the context query during a turn's ingest 4 970 ms → 137 ms |
@@ -88,6 +92,7 @@ No consent setting (D50): every memory stores what its client sends; the on/off 
 | `locale`, `timezone` | admin | `it`, `Europe/Rome` | Language of the memories, local dates and the night |
 | `quietFrom`, `quietTo` | admin | 22, 8 | The memory's quiet hours (local): no initiative is due inside them (D53, 8.12c) |
 | `perceptionKeepDays` | admin (console) | installation default | Days a perception is kept before it fades (8.12e); 0 = kept |
+| `proceduresFromSources` | admin (console) | `PROCEDURES_FROM_SOURCES` (off) | Procedures from sources learned for a task (8.16 F2c, mode B2), for an entity memory that learns |
 | `learnFromOutside` | admin (console) | on for an entity memory, off for a personal one | Learning from outside (8.16, D57): the memory keeps lasting knowledge it reads or is told, with its source and trust; off: today's rules (`entity.v12` prompt) |
 
 ## 5. Per client (admin API or console — every setting below, webhooks and channels included)

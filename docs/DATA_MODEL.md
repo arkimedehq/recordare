@@ -639,7 +639,7 @@ learned + `LEARNED_NEWS_KEEP_DAYS`), `recheck_at` (changing: learned + `LEARNED_
 expires_at)` where set. Fading (`fadeLearned`, in the consolidation, report `faded`): notes past `expires_at` are deleted,
 a `forgotten` entry in `note_changes`.
 
-## Procedures kept whole (WORK_PLAN 8.16 F2, D57) — F2a built 2026-11-12 (migration `LearnedProcedures1791350000000`)
+## Procedures kept whole (WORK_PLAN 8.16 F2, D57) — F2a–F2c built 2026-11-12 (migration `LearnedProcedures1791350000000`)
 
 A task of several steps (making the bed) kept as one unit and returned whole, never as fragments; apart from 8.12d's
 one-line procedures (notes of category `procedure`, which stay). Written by the client or the agent (`POST
@@ -667,6 +667,13 @@ it; no trust moves — the robot may be at fault); corrected adds the corrector'
 procedure's other informants.
 
 `item_informants` gains `procedure_id → procedures (cascade)`: exactly one of `fact_id`, `note_id`, `procedure_id`.
+
+`sources` gains `for_task` (boolean, null: unknown — learned to do a task: the client's `forTask`, or recognised by the
+extraction of its conversation, F2c), `procedures_at` (when Recordare read it for procedures; claimed before the call,
+reset on failure; a new version clears it) and `procedures_outcome` (`read:N`, `off`, `not_for_task`, `economy`,
+`not_learning`, `daily_cap`, `failed`). `memories` gains `procedures_from_sources` (boolean, null: the installation's
+`PROCEDURES_FROM_SOURCES`). Procedures proposed by an extraction (F2b) carry its `extraction_run_id` and appear in
+`run_outputs` as `procedures`.
 
 ## Engine bookkeeping
 

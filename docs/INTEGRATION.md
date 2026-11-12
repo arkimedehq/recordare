@@ -223,7 +223,8 @@ known participant who shows up under a new name on the channel keeps their conta
 > someone — is kept whole with `learn_procedure` (MCP) or `learnProcedure` (client library); your agent or the robot's
 > controller reports each run (`report_procedure_run` / `reportProcedureRun`: done, failed at step N, corrected by a
 > person). Recordare gives the steps in order with the household's own way above the generic step; turning them into
-> motion is your work.
+> motion is your work. It also keeps by itself a how-to someone teaches in conversation, and — when the deployer switches
+> it on — the procedures of a source learned for a task (send `forTask: true` with `learnSource` when you know it).
 
 > **Channels and presence by place** (D55 §5b–§5c, 2026-11-05): an initiative carries `channels` — the acceptable ones in
 > order (`voice`, `messaging` only for a request or a promise, `chat`) — deliver on the first that reaches the person

@@ -1020,7 +1020,8 @@ compresi — e prende iniziativa da lì. Costruito per fasi, ognuna misurata pri
   riconosciuta dalla conversazione (tenuto solo se misura bene, altrimenti il solo segnale esplicito) —, una chiamata per
   fonte sui suoi primi 30 000 caratteri, al massimo 3 procedure per fonte e 5 chiamate per memoria al giorno, sempre in
   attesa finché un membro della casa la conferma o un'esecuzione riesce; le istruzioni dentro il testo restano
-  informazione. F2a costruita il 2026-11-12 (dati, modo A, richiamo, esecuzioni; API §4d). Le procedure di una riga di 8.12d
+  informazione. Costruite il 2026-11-12: F2a (dati, modo A, richiamo, esecuzioni), F2b (B1, `learn.v2`), F2c (B2,
+  `procedures.v1`, il riconoscimento dalla conversazione nella stessa chiamata di estrazione: `sources_for_task`); API §4d. Le procedure di una riga di 8.12d
   restano.
 - **Iniziative da conoscenza appresa** (F3): solo quando tocca una vita e la sua fonte è fidata, altrimenti come domanda,
   sempre con fonte e data; il ciclo di apprendimento (notare → chiedere / cercare → tenere → usare → essere corretta);

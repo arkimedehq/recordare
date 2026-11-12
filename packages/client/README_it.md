@@ -66,7 +66,7 @@ schemi degli strumenti MCP che il servizio offre (nome, titolo, descrizione, JSO
 dichiarare gli strumenti prima di collegarsi; la suite di conformità li tiene allineati al servizio.
 
 ## Fonti apprese
-`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?})`
+`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?, forTask?})`
 fa imparare un testo all'agente (D49, WORK_PLAN 8.9: un manuale, una pagina, una nota — **solo testo**, è l'host a
 convertire i file). Qualsiasi dimensione: un testo più grande di `SOURCE_PART_BYTES` (4 MB, o l'argomento `partBytes`)
 viene inviato a parti tagliate ai confini dei paragrafi (`POST api/v1/ingest/sources` + `…/parts`); → `{sourceId,

@@ -61,6 +61,12 @@ const baseSchema = z.object({
   /** Memory context: minimum similarity for one passage of a learned source (WORK_PLAN 8.9). */
   CONTEXT_MIN_PASSAGE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** Memory context: minimum similarity for one procedure, carried whole (WORK_PLAN 8.16 F2). */
+  /** 8.16 F2c (mode B2): Recordare reads a source learned for a task and keeps its procedures (pending) — off by default; per memory too (console). */
+  PROCEDURES_FROM_SOURCES: bool.optional(),
+  /** B2 limits: characters read per source, procedures kept per source, calls per memory per day. */
+  PROCEDURES_SOURCE_CHARS: z.coerce.number().int().min(1000).max(200_000).optional(),
+  PROCEDURES_PER_SOURCE: z.coerce.number().int().min(1).max(10).optional(),
+  PROCEDURES_DAILY_CALLS: z.coerce.number().int().min(0).max(100).optional(),
   CONTEXT_MIN_PROCEDURE_SIMILARITY: z.coerce.number().min(0).max(1).optional(),
   /** D54: a message of at most this many words is matched with the person's previous turn too (0: never). */
   CONTEXT_SHORT_QUERY_WORDS: z.coerce.number().int().min(0).max(50).optional(),
