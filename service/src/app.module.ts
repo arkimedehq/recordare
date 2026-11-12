@@ -22,6 +22,7 @@ import { RawLogModule } from './rawlog/rawlog.module';
 import { McpModule } from './mcp/mcp.module';
 import { OpenApiModule } from './openapi/openapi.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
+import { ProceduresModule } from './procedures/procedures.module';
 import { InitiativeModule } from './initiative/initiative.module';
 import { PerceptionModule } from './perception/perception.module';
 
@@ -49,6 +50,7 @@ import { PerceptionModule } from './perception/perception.module';
     QueueModule,
     RawLogModule,
     KnowledgeModule,
+    ProceduresModule,
     InitiativeModule,
     PerceptionModule,
     McpModule,

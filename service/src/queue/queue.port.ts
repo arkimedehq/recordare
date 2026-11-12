@@ -9,6 +9,8 @@ export interface QueuePort {
   enqueueMessageEmbeddings(messageIds: string[]): Promise<void>;
   /** Embed the passages of a learned source still without one (WORK_PLAN 8.9); marks the source ready when done. */
   enqueueSourcePassages(sourceId: string): Promise<void>;
+  /** Read a source learned for a task for its procedures (WORK_PLAN 8.16 F2c); once per source, the checks are the reader's. */
+  enqueueSourceProcedures(sourceId: string): Promise<void>;
 }
 
 export const QUEUE_PORT = Symbol('QUEUE_PORT');

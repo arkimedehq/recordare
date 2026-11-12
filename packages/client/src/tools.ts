@@ -62,6 +62,63 @@ export const TOOLS = [
     }
   },
   {
+    "name": "learn_procedure",
+    "title": "Learn how to do a task",
+    "description": "Keep a task of several steps whole, to do it later or tell how (making the bed, starting the dishwasher): the steps in order, as taught or read — do not drop or \"improve\" steps. from \"page\" when you read it (a search, a page, a learned source: give its uri or source_id), \"person\" when the person speaking taught it. To add how it is done here to a procedure you hold (the household's own way of a step), pass variant_of (its id), variant and step. Whether it is trusted is decided by who brought it, not by you.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "description": "The task, as people name it",
+          "type": "string"
+        },
+        "when": {
+          "description": "When it is used, if it matters",
+          "type": "string"
+        },
+        "steps": {
+          "description": "The steps in order (at most 30, 300 characters each)",
+          "maxItems": 30,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "from": {
+          "type": "string",
+          "enum": [
+            "page",
+            "person"
+          ]
+        },
+        "uri": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "variant_of": {
+          "description": "A procedure you hold: add the household's way to it",
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "step": {
+          "description": "The step the variant changes; none: the whole task",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
     "name": "learn_source",
     "title": "Learn a text",
     "description": "Learn a text as knowledge (a manual, a page, a note — as plain text; send it again with the same title to replace it). It stays searchable with search_knowledge; the learning becomes a memory of this conversation.",
@@ -89,6 +146,10 @@ export const TOOLS = [
         },
         "uri": {
           "type": "string"
+        },
+        "for_task": {
+          "description": "true when you learn it in order to do a task (a manual, a how-to): its procedures may be kept",
+          "type": "boolean"
         }
       },
       "required": [
@@ -178,6 +239,42 @@ export const TOOLS = [
     }
   },
   {
+    "name": "report_procedure_run",
+    "title": "Tell how a task went",
+    "description": "After doing a procedure (or when a person corrects how you did it): done; failed (at step N, what went wrong); corrected (at step N, note = the right way, as the person said it — it becomes the household's way).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "procedure_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "done",
+            "failed",
+            "corrected"
+          ]
+        },
+        "step": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "procedure_id",
+        "outcome"
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
     "name": "resolve_period",
     "title": "Turn a period expression into dates",
     "description": "Deterministic: \"questa settimana\", \"la settimana scorsa\", \"a febbraio\", \"lo scorso dicembre\", \"last week\"… → {from, to} (ISO, inclusive).",
@@ -238,7 +335,7 @@ export const TOOLS = [
   {
     "name": "search_knowledge",
     "title": "Search what you learned",
-    "description": "Search the sources you learned (manuals, documents, pages, notes you were given or wrote): passages of their text, each with its source (title, author, who gave it, when) and the episodes that refer to it. For what happened, use search_episodes.",
+    "description": "Search the sources you learned (manuals, documents, pages, notes you were given or wrote): first the procedures about it, whole (how to do a task: its steps in order — follow `here`, the household's own way, above the generic step; a step with `failed` went wrong last time; unless `learned.confirmed`, say it is not confirmed), then passages of their text, each with its source (title, author, who gave it, when) and the episodes that refer to it. For what happened, use search_episodes.",
     "inputSchema": {
       "type": "object",
       "properties": {

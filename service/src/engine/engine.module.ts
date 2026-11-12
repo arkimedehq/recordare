@@ -8,10 +8,11 @@ import { ConsolidationService } from './consolidation.service';
 import { FactsReviewService } from './facts-review.service';
 import { PatternsService } from './patterns.service';
 import { ThoughtsService } from './thoughts.service';
+import { SourceProceduresService } from './source-procedures';
 
 @Global()
 @Module({
-  providers: [{ provide: EXTRACTION_RUNNER, useClass: EngineExtractionRunner }, ConsolidationService, FactsReviewService, PatternsService, ThoughtsService],
-  exports: [EXTRACTION_RUNNER, ConsolidationService],
+  providers: [{ provide: EXTRACTION_RUNNER, useClass: EngineExtractionRunner }, ConsolidationService, FactsReviewService, PatternsService, ThoughtsService, SourceProceduresService],
+  exports: [EXTRACTION_RUNNER, ConsolidationService, SourceProceduresService],
 })
 export class EngineModule {}

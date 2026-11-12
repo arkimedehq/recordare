@@ -78,6 +78,7 @@ export const updateMemorySchema = z.object({
   perceptionKeepDays: z.number().int().min(0).max(3_650).nullable().optional(),
   /** Learning from outside (8.16): learn by itself from what it is told and reads; null = the mode's default (on for an entity memory). */
   learnFromOutside: z.boolean().nullable().optional(),
+  proceduresFromSources: z.boolean().nullable().optional(),
 });
 
 /**

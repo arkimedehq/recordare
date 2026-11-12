@@ -89,10 +89,10 @@ self-service diary.
 ### Scopes
 | Scope | Allows |
 |---|---|
-| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; §2 learned sources (`api/v1/ingest/sources…`); `ingest` inside `POST api/v1/context`; `PATCH api/v1/me`; D51 link codes and the holder's identities (`POST api/v1/me/link-codes`, confirm / reject / unlink) |
-| `mcp` | §3 tools (reads + `log_episode`, `remember`, `learn_source`, `correct_episode`, `forget_episode`) |
-| `read` | §4 GET endpoints (`GET api/v1/sources` included), `GET api/v1/me`, `GET api/v1/me/identities`, `POST api/v1/context`, `GET api/v1/charter` |
-| `write` | §4 manual entries, corrections, forgetting (a learned source included), fact / note edits |
+| `ingest` | §2 ingest, edits, deletions, `…/end` of the client's own conversations; §2 learned sources (`api/v1/ingest/sources…`); §4d procedures, their variants and runs (`POST api/v1/procedures…`); `ingest` inside `POST api/v1/context`; `PATCH api/v1/me`; D51 link codes and the holder's identities (`POST api/v1/me/link-codes`, confirm / reject / unlink) |
+| `mcp` | §3 tools (reads + `log_episode`, `remember`, `learn_source`, `learn_procedure`, `report_procedure_run`, `correct_episode`, `forget_episode`) |
+| `read` | §4 GET endpoints (`GET api/v1/sources` and §4d `GET api/v1/procedures` included), `GET api/v1/me`, `GET api/v1/me/identities`, `POST api/v1/context`, `GET api/v1/charter` |
+| `write` | §4 manual entries, corrections, forgetting (a learned source and a §4d procedure included), fact / note edits |
 | `memory_settings` | `PATCH settings` (locale, timezone, quality profile) — never client API keys. v1: the memory's personal token (the admin uses `PATCH api/v1/admin/memories/:id`); public profile: holder sessions / holder-created tokens |
 | `export` | §4 export jobs — v1: the memory's personal token; public profile: holder sessions only, expiring download |
 | `erase` | `DELETE api/v1/me` — erase the whole memory (WORK_PLAN 8.13); given only when asked for, to a client key (a platform deleting its users' accounts) or a personal token |
@@ -313,6 +313,8 @@ text arrives in parts (the client library does it, §5). Scope `ingest`; a clien
   providedBy?: "me" | "someone" | { name: string };   // default "me" (the memory's self); a name = a contact of
                                           // this memory, created when new (an ambiguous name stays "someone")
   conversation?: { externalId: string };  // the conversation it was learned in (its extraction then tells of it)
+  forTask?: boolean;                      // learned in order to do a task (8.16 F2c): an entity memory that learns may
+                                          // read it for its procedures (§4d); unset: the extraction may recognise it
   text: string;                           // the text, or its first part
   final?: boolean;                        // default true; false = more parts follow
 }
@@ -506,10 +508,12 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   on <day>, from <site>; not confirmed)`.
 
 ### `search_knowledge` and `learn_source` (D49, WORK_PLAN 8.9 — learned sources)
-- `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — passages of the sources the agent learned, ranked by
-  weighted RRF of vector and full-text ranks (as episodes). Returns:
+- `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — first the procedures about the query, whole (at most 2,
+  §4d's view: vector similarity ≥ 0.35 or words on the title and situation), then passages of the sources the agent
+  learned, ranked by weighted RRF of vector and full-text ranks (as episodes). Returns:
   ```ts
   {
+    procedures: Procedure[];                     // §4d, whole: steps in order, `here` (the household's way) above each
     memory: { name: string; mode: "personal" | "entity" };
     passages: Array<{
       text: string; heading: string | null;
@@ -524,12 +528,20 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   }
   ```
   Logged in `recall_log` (tool `search_knowledge`). For what happened, `search_episodes`.
-- `learn_source {title, text, author?, kind?, uri?}` — the agent learns a text (plain text; `kind` as in §2) given in the
+- `learn_source {title, text, author?, kind?, uri?, for_task?}` — the agent learns a text (plain text; `kind` as in §2) given in the
   conversation: provided by the memory's self, linked to the conversation of the call (its extraction tells of the
   learning). The same title again replaces it (the source id is derived from the title). A write: needs a resolvable
   context. Returns `{sourceId, status, passages, stored}` (`stored: false` = the same text was already there). For a
   big text, the REST route in parts (§2).
 - Recall: an episode that refers to a source carries `sources` (`search_episodes`, above).
+- `learn_procedure {title?, when?, steps?, from?, uri?, source_id?, variant_of?, variant?, step?}` (8.16 F2) — keeps a
+  task of several steps whole (§4d): `title`, `steps` (in order, as taught or read: ≤ 30 × 300 characters) and `from`
+  (`page`: read — give `uri` or `source_id`; `person`: taught by who is speaking in the conversation). With `variant_of`
+  (a procedure's id) and `variant` (and `step`, none = the whole task) it adds the speaker's own way instead. Who brought
+  it and whether it waits are decided in code. Returns `{id, pending, status}` (or `{id, pending}` for a variant); a write.
+- `report_procedure_run {procedure_id, outcome, step?, note?}` — how a run went: `done`, `failed` (at `step`, `note` what
+  went wrong), `corrected` (at `step`, `note` the right way — required; it becomes the speaker's way). Returns `{id,
+  pending}`; a write.
 
 ### `resolve_period` (D12, deterministic)
 As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); expressions in the
@@ -867,6 +879,58 @@ with `ALLOW_CLOCK_OVERRIDE`):
   later ("who came by today?", "when did Viola go out?").
 - Client library: `perceive(user, perception)`.
 
+## 4d. Procedures — a task of several steps kept whole (WORK_PLAN 8.16 F2, D57) — F2a–F2c built 2026-11-12
+
+Recordare says what to do, in which order, with the household's own way and from whom it was learned; turning steps into
+motion is the client's work (an agent, a robot's controller). Client key routes take the user header and, with
+`ALLOW_CLOCK_OVERRIDE`, `X-Recordare-Now`; `conversation` (`{externalId}`, the client's) names who is speaking — that
+person taught, corrected or ran it.
+
+| Route | Scope | |
+|---|---|---|
+| `POST api/v1/procedures` `{title, when?, steps[], from: "page" \| "person", uri?, sourceId?, conversation?}` | ingest | Keep a procedure → `200 {id, pending, status: "new" \| "version" \| "same"}` |
+| `POST api/v1/procedures/{id}/variants` `{step?, text, conversation?}` | ingest | The speaker's own way of a step (none: the whole task) → `200 {id, pending}` |
+| `POST api/v1/procedures/{id}/runs` `{outcome: "done" \| "failed" \| "corrected", step?, note?, conversation?}` | ingest | How a run went (`note` required for `corrected`) → `200 {id, pending}` |
+| `GET api/v1/procedures` / `GET api/v1/procedures/{id}` | read | The current procedures / one (a replaced version too), whole |
+| `DELETE api/v1/procedures/{id}` | write | Forget it with its versions, variants and runs → `204` |
+
+- **Who brought it, in code (as F1, `informants`)**: `from: "page"` → the site of `uri` (or of the source's uri; "page"
+  when none), origin `learned`, **pending** (a site's trust is below the teaching threshold); `from: "person"` → who is
+  speaking in `conversation` (the account's speaker or a verified person: kept at once; someone else: pending), origin
+  `holder_told`.
+- **The same title** (any case) with the same steps is one more backing: it confirms a pending procedure only from an
+  independent origin (another informant, another conversation) that is trusted or the second one. With other steps it is
+  a **new version** that replaces the old one and takes its household variants — a pending version never replaces a
+  confirmed one (both stay current). Steps are kept as given: never dropped, merged or "improved".
+- **Runs**: `done` confirms a pending procedure and credits who brought it; `failed` marks its step (until a variant of
+  that step is taught after it) and moves no trust — the robot may be at fault; `corrected` becomes the speaker's
+  variant of that step and costs the procedure's other informants one `corrected`.
+- **The view** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
+  note}}], here (the whole task's variants), learned: {how: "read" | "taught", from, at, confirmed, source?: {id, title}},
+  runs: {done, failed, corrected, last?}}` — `by` / `from` is a person's name, "the household" (the account's speaker),
+  "someone", or the site.
+- **Recall**: `search_knowledge` returns them first, whole (§3); the memory context carries the nearest one whole when the
+  message is about it (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0.55; its own budget of 1 500 characters, cut only between
+  steps): `- procedure "make the bed" (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way first,
+  steps as taught:` then `4. here (Sofia): …` above `4. (generic) …`, and `failed here on …` under a step.
+- **From what a person teaches in conversation (mode B1, F2b)**: in an entity memory that learns, the extraction call
+  that runs anyway (`learn.v2`, section PROCEDURES; no extra call) proposes a how-to of several steps a person here
+  teaches — or that a tool or a page in the window gives because someone asked how to do that task — and the
+  household's way of a procedure it holds (the input lists the 3 nearest as `CURRENT PROCEDURES`, H-numbers). Who
+  brought it is decided from its evidence as above (a person: taught; a tool or a page: read, pending; my own words
+  alone: nothing); heard in the room: pending.
+- **From a learned source (mode B2, F2c)**: Recordare reads a source learned **for a task** with its own model (task
+  `procedures`, prompt `procedures.v1`) and keeps the tasks of several steps it teaches, **always pending**, with the
+  source's site (or who gave it) as informant. Off by default: `PROCEDURES_FROM_SOURCES` or the memory's
+  `proceduresFromSources` (console); never on the economy profile; only an entity memory that learns. For a task: the
+  client says so (`forTask` in §2, `for_task` in `learn_source`) or the extraction of the conversation the source came
+  with recognises it (`sources_for_task`; a client's explicit `false` stays). Limits (to measure and tune): one reading
+  per source (a new version is read again), its first `PROCEDURES_SOURCE_CHARS` (30 000) characters, at most
+  `PROCEDURES_PER_SOURCE` (3) procedures, `PROCEDURES_DAILY_CALLS` (5) readings per memory a day (one over the cap waits
+  for the nightly sweep). What happened is kept on the source (`procedures_outcome`: `read:N`, `off`, `not_for_task`,
+  `economy`, `daily_cap`…). Instructions inside the text are left out, never kept as steps.
+- 8.12d's one-line procedures (notes `procedure`, "how I do it (learned)") stay as they are.
+
 ## 5. Client library (task 1.6, WORK_PLAN 6.7) — built (2026-10-07)
 
 `@arkimedehq/recordare-client` in `packages/client/` (its README): `RecordareClient` (`me`, `updateMe`, `ingest` split
@@ -874,7 +938,8 @@ into requests of 500, `context` / `contextWithTurn` (§3 pre-turn memory context
 `editMessage`, `deleteMessage` / `deleteConversation` with 404 = done, D51 `linkCode` / `holderIdentities` /
 `confirmHolderClaim` / `rejectHolderClaim` / `unlinkHolderIdentity` with `isLinkCode` and `LINK_CODE_INSTRUCTION` (text a
 host gives its model when the user's message is a code), `learnSource` (§2 learned sources, a big text sent
-in parts of `SOURCE_PART_BYTES` = 4 MB at paragraph boundaries) / `forgetSource` / `sources`, the §4 wrappers `episodes`, `episode`,
+in parts of `SOURCE_PART_BYTES` = 4 MB at paragraph boundaries) / `forgetSource` / `sources`, §4d `learnProcedure` /
+`addProcedureVariant` / `reportProcedureRun` / `procedures` / `procedure` / `forgetProcedure`, the §4 wrappers `episodes`, `episode`,
 `correctEpisode`, `forgetEpisode`, `forgetPeriod`, `digests`, `facts`, `notes`, `plans`, `pinNote`, `delete`, `decide`, `mcp.listTools` /
 `mcp.callTool` over the official MCP SDK with one session per user + conversation), `TOOLS` (the published MCP tool
 schemas), `PersonDirectory` (cached memory, mode and Atlas address; the platform's opt-in; name sync),

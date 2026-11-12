@@ -25,7 +25,7 @@
  *   was ignored: the reminder came at 20:00); a move, in this window or a later one, repeats the entry with the new "due"; a request I
  *   answer is already set (asked again, on the same account by someone else) is not a new intent.
  */
-import { E_LEARNED } from './learning.prompt';
+import { E_LEARNED, E_PROCEDURES } from './learning.prompt';
 
 export interface PromptMessage {
   n: number;
@@ -56,6 +56,8 @@ export interface PromptContext {
   reminders: string[];
   currentFacts: string[];
   currentNotes: string[];
+  /** CURRENT PROCEDURES (8.16 F2b, learning memories only): "H1: «make the bed»: 1. … | 2. …". Absent: the section is not shown. */
+  currentProcedures?: string[];
   knownEpisodes: string[];
   knownSlots: string[];
   messages: PromptMessage[];
@@ -486,7 +488,7 @@ export const ENTITY_SYSTEM = E_INTRO + schema("first person for me ('Ho impostat
 
 /** An entity memory that learns by itself (8.16): the same prompt with the LEARNING section after the notes. */
 export const ENTITY_LEARNING_SYSTEM = E_INTRO + schema("first person for me ('Ho impostato il timer del forno', 'Irene ha vinto la partita di pallavolo')")
-  + E_FIRST_PERSON + E_SUBJECT + DATES + E_EPISODES + PLANS + E_FACTS + NOTES + E_LEARNED + CORRECTIONS + PRIVATE + INTENTS + E_SAFETY + END;
+  + E_FIRST_PERSON + E_SUBJECT + DATES + E_EPISODES + PLANS + E_FACTS + NOTES + E_LEARNED + E_PROCEDURES + CORRECTIONS + PRIVATE + INTENTS + E_SAFETY + END;
 
 /** A contact of the memory as the prompt lists it ("C3: Marco Bellini — collega; also: Marco"). */
 export interface PromptContact {
@@ -530,6 +532,7 @@ export function buildExtractionUser(ctx: PromptContext): string {
     `CURRENT FACTS:\n${ctx.currentFacts.join('\n') || NONE}`,
     `KNOWN SLOTS: ${ctx.knownSlots.join(', ') || NONE}`,
     `CURRENT NOTES:\n${ctx.currentNotes.join('\n') || NONE}`,
+    ...(ctx.currentProcedures ? [`CURRENT PROCEDURES (how I do a task; H-numbers):\n${ctx.currentProcedures.join('\n') || NONE}`] : []),
     `KNOWN EPISODES (recent, and older ones related to these messages):\n${ctx.knownEpisodes.join('\n') || NONE}`,
     ...(ctx.ambient ? [AMBIENT_NOTE] : []),
     ...(ctx.groupChat ? [`GROUP CHAT: «${ctx.groupChat}» (the group's name: an episode told here says it was in the group «${ctx.groupChat}»)`] : []),

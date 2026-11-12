@@ -36,6 +36,8 @@ import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject
 import { askClarification, resolveClarification } from './clarifications';
 import { confirmPending, isPending } from './pending';
 import { backItem, creditInformants, type Informant, informantOf, lastingOf, TEACH_TRUST, upsertInformant } from './learning';
+import { addProcedureVariant, keepProcedure } from '../procedures/procedures.service';
+import { MAX_STEPS, STEP_CHARS } from '../procedures/procedures.schemas';
 import { setPrivate } from '../rawlog/message-privacy';
 
 type AuthorRole = 'holder' | 'assistant' | 'other' | 'tool';
@@ -87,6 +89,10 @@ export class ConcurrentExtractionError extends Error {
 
 export class ExtractionWriter {
   private readonly written: WrittenRow[] = [];
+  /** 8.16 F2b: procedures written by this run, for the runner to embed (not memories for Atlas: `written` stays as it is). */
+  readonly procedureRows: Array<{ id: string; text: string }> = [];
+  /** 8.16 F2c: sources this run recognised as learned for a task, for the runner to queue for their procedures. */
+  readonly sourcesForTask: string[] = [];
   private audience: string[] = [];
   private audienceUnverified: string[] = [];
   private tombstones: Tombstones = { messageIds: new Set(), periods: [], items: [] };
@@ -116,12 +122,17 @@ export class ExtractionWriter {
     await this.applyPlanPatches(out, episodeIds);
     await this.writeFacts(out);
     await this.writeNotes(out);
+    await this.writeProcedures(out);
+    await this.markSourcesForTask(out);
     await this.applyAnswers(out);
     await this.applyPrivacy(out);
     await this.applyIntents(out);
     await this.tx.query(`UPDATE messages SET extracted_run_id = $1 WHERE id = ANY($2)`, [this.ctx.runId, this.input.messages.map((m) => m.id)]);
     for (const w of this.written) {
       await this.tx.query(`INSERT INTO run_outputs (run_id, table_name, row_id) VALUES ($1, $2, $3)`, [this.ctx.runId, w.table, w.id]);
+    }
+    for (const p of this.procedureRows) {
+      await this.tx.query(`INSERT INTO run_outputs (run_id, table_name, row_id) VALUES ($1, 'procedures', $2)`, [this.ctx.runId, p.id]);
     }
     return this.written;
   }
@@ -151,9 +162,56 @@ export class ExtractionWriter {
     };
   }
 
-  private drop(kind: 'episode' | 'plan_patch' | 'intent' | 'fact' | 'note' | 'answer' | 'private', reason: string): void {
+  private drop(kind: 'episode' | 'plan_patch' | 'intent' | 'fact' | 'note' | 'answer' | 'private' | 'procedure', reason: string): void {
     const k = (this.dropped[kind] ??= {});
     k[reason] = (k[reason] ?? 0) + 1;
+  }
+
+  /**
+   * 8.16 F2b (mode B1): a how-to of several steps kept whole, or the household's way of one held. Who brought it is
+   * decided in code from its evidence (`learnedFrom`): a person (taught; kept at once when trusted to teach), a tool or a
+   * page (read; pending); my own words alone are nothing learned. Heard in the room: pending whatever the speaker.
+   */
+  private async writeProcedures(out: ExtractionOutput): Promise<void> {
+    if (!this.ctx.learning) return;
+    for (const p of out.procedures) {
+      const msgs = this.evidence(p.evidence);
+      const problem = this.evidenceProblem(msgs, null, null);
+      if (problem) { this.drop('procedure', problem); continue; }
+      const learned = await this.learnedFrom(msgs);
+      if (!learned) { this.drop('procedure', 'own_words'); continue; }
+      const now = msgs.at(-1)?.sentAt ?? new Date();
+      if (p.variant_of) {
+        const target = this.input.procedures.get(p.variant_of.trim().toUpperCase());
+        const text = p.text?.trim();
+        if (!target || !text) { this.drop('procedure', 'unknown_procedure'); continue; }
+        // The household's way comes from a person, never from a page.
+        if (learned.informant.kind !== 'person') { this.drop('procedure', 'variant_not_from_a_person'); continue; }
+        const step = p.step && p.step <= target.steps ? p.step : null;
+        await addProcedureVariant(this.tx, this.ctx.memoryId, target.id, learned, this.ctx.conversationId, step, text.slice(0, STEP_CHARS), now, heard(msgs));
+        continue;
+      }
+      const steps = p.steps.map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean).slice(0, MAX_STEPS).map((s) => s.slice(0, STEP_CHARS));
+      const title = p.title?.trim();
+      if (!title || steps.length < 2) { this.drop('procedure', 'not_a_procedure'); continue; }
+      const read = learned.informant.kind !== 'person';
+      const kept = await keepProcedure(this.tx, this.ctx.memoryId, learned, this.ctx.conversationId, {
+        title: title.slice(0, 300), when: p.when?.trim().slice(0, 500) || null, steps, from: read ? 'page' : 'person',
+        uri: learned.informant.kind === 'site' ? learned.informant.key : null, runId: this.ctx.runId, pending: heard(msgs),
+      }, now);
+      if (kept.status !== 'same') this.procedureRows.push({ id: kept.id, text: [title, p.when].filter(Boolean).join('\n') });
+    }
+  }
+
+  /** 8.16 F2c: sources learned here for a task (recognised in the conversation); a client's explicit no stays. */
+  private async markSourcesForTask(out: ExtractionOutput): Promise<void> {
+    if (!this.ctx.learning) return;
+    for (const ref of out.sources_for_task) {
+      const id = this.input.sources.get(ref.trim().toUpperCase());
+      if (!id) continue;
+      const [s]: Array<{ id: string }> = await this.tx.query(`UPDATE sources SET for_task = true WHERE id = $1 AND for_task IS NULL RETURNING id`, [id]);
+      if (s) this.sourcesForTask.push(id);
+    }
   }
 
   /** Why an item's evidence does not hold: no message, forgotten, or only an echo of a recall. */

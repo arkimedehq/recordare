@@ -25,6 +25,8 @@ export const learnSourceSchema = z.object({
   providedBy: providedBy.default('me'),
   /** The conversation the source was learned in (its extraction then tells of it), when there is one. */
   conversation: z.object({ externalId: z.string().min(1).max(200) }).optional(),
+  /** Learned in order to do a task (8.16 F2c): an entity memory that learns may read it for its procedures. */
+  forTask: z.boolean().optional(),
   /** The text, or its first part; `final: false` = more parts follow (POST …/parts). No size limit beyond one request's. */
   text: z.string().min(1),
   final: z.boolean().default(true),

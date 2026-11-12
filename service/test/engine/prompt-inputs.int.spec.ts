@@ -78,10 +78,10 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
     // The measured entity prompt stays byte-identical (`entity.v12`, a memory switched off); one that learns by itself
-    // (8.16, the default) adds the LEARNING section, its own version `learn.v1`.
+    // (8.16, the default) adds the LEARNING section, its own version `learn.v2` (with PROCEDURES since F2b).
     expect(sha(ENTITY_SYSTEM)).toBe('63c55e6133e4c20d3bf85b394b3ad26ce96541e2969b4f3e528a62647f511010');
     expect(second.system).toBe(ENTITY_LEARNING_SYSTEM);
-    expect(sha(ENTITY_LEARNING_SYSTEM)).toBe('9be53fba9e53684ab10eadaa677176cb3a2c65af4e5f023f1ef7c7097bedcaea');
+    expect(sha(ENTITY_LEARNING_SYSTEM)).toBe('1a323a7c81cb8e9e3e41895077568f16eaa9c38c4d1edf7416e2def0b24160e9');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",
@@ -143,6 +143,9 @@ describe('prompt inputs of the measured versions', () => {
       "",
       "CURRENT NOTES:",
       "N1: [preference] Andrea prende il caffè amaro.",
+      "",
+      "CURRENT PROCEDURES (how I do a task; H-numbers):",
+      "(none)",
       "",
       "KNOWN EPISODES (recent, and older ones related to these messages):",
       "E1: Andrea ha comprato una Panda. (domenica 2026-06-07)",

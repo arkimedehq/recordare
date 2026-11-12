@@ -2074,6 +2074,31 @@ in §5c vs v2, the holder's messaging address…): golds avoid depending on them
 Verdict: v2 generalises — every v2 rule the dev set taught holds on cases written by someone else; v0 and v1 make the
 interruptions v2 was built to avoid. Kinox (7 days in shadow, 4 decisions, none since v2): too few to compare.
 
+### Procedures kept whole — `dataset_dev_procedures` (WORK_PLAN 8.16 F2b–F2c, D57, 2026-11-12, DeepSeek direct, `deepseek-flash`)
+
+`learning_eval.py` (extended: sources in a conversation and with `forTask`, procedure checks, the memory's switch,
+`search_knowledge` for the agent): an invented entity memory (Sofia verified, a guest nobody recognised;
+`*-esempio.it` sites) with procedures from sources switched on. Nine conversations over two days and one source sent
+alone: making the bed read in a page for a task, Sofia's way of the pillow, the dishwasher taught in words, how cheese is
+made asked out of curiosity, the garage gate told by the guest, a washing-machine filter page with an order hidden among
+its steps, the boiler manual sent in conversation for a task (B2, recognised), an article on boilers sent for curiosity,
+a vacuum guide sent with `forTask` (B2, explicit). Ten database checks, six questions (memory context + read tools with
+`search_knowledge`), graded by the usual judge. Not blind.
+
+| run | answers | checks | notes |
+|---|---|---|---|
+| 1 (`learn.v2`) | **6 / 6** | 8 / 10 | k5: the guest's gate kept as a pending note, not a procedure; k10 counted intents, but the two were the household's own requests ("domani lo devi fare tu", the boiler) — the check was wrong (now: no intent about the hidden order) |
+| 2 (PROCEDURES: "a how-to of several steps goes in procedures, not in notes") | 5 / 6 | 9 / 10 | the gate a note again; q3 gave its steps without saying they were not confirmed (from the note) |
+| 3 (LEARNING points to PROCEDURES; "whoever tells it — a guest too") | **6 / 6** | **10 / 10** | the gate a pending procedure (`holder_told`, from someone), said as not verified |
+
+Every run: the bed whole (6 steps in order, from casa-esempio.it, pending) with Sofia's pillow as the household's way of
+step 5, said above the generic step; the dishwasher kept at once (4 steps); no procedure for cheese; the filter without
+the hidden order (5 steps), no intent from it; **the boiler manual recognised as for a task from the conversation** and
+read (2 procedures, the reset one used to answer E01), the article not; the vacuum guide read on `forTask`. The
+recognition from the conversation held in all three runs: kept (maintainer, 2026-11-12: keep it if it measures well).
+Cost ≈ 10 extractions + 2 B2 readings + 16 agent / judge calls a run, a few cents (a first launch stopped at the questions
+for a missing `questions.json`).
+
 ### Learning from outside — `dataset_dev_learning` (WORK_PLAN 8.16 F1, D57, 2026-11-11, DeepSeek direct, `deepseek-flash`)
 
 `learning_eval.py`: an invented entity memory (Sofia verified, Matteo, an unknown guest; `*-esempio.it` sites), ten

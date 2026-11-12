@@ -25,6 +25,8 @@ import httpx
 import psycopg
 from psycopg.rows import dict_row
 
+import agent_eval
+import re
 from agent_eval import mcp_tools, run_agent
 from evalkit.common import DATASET, USAGE, judge
 from systems.service_sys import ADMIN, DB_URL, URL
@@ -63,6 +65,9 @@ def main() -> None:
     user = f"{m['user']}-{run}"
     memory = post("/api/v1/admin/memories", {"displayName": m["name"], "mode": m["mode"], "locale": m["locale"], "timezone": m["timezone"]})["personId"]
     post("/api/v1/admin/identities", {"kind": "account", "personId": memory, "clientId": client["id"], "externalId": user})
+    if m.get("patch"):
+        admin.patch(f"/api/v1/admin/memories/{memory}", json=m["patch"]).raise_for_status()
+    agent_eval.READ_TOOLS.update(tl.get("read_tools_extra", []))
     as_client = httpx.Client(base_url=URL, timeout=120, headers={"authorization": f"Bearer {key}", "x-recordare-user": user})
     people = {p["name"]: p for p in tl["people"]}
 
@@ -75,6 +80,24 @@ def main() -> None:
                     return
                 time.sleep(5)
         print("  ! extraction still pending, going on", flush=True)
+
+    def learn_source(src: dict, conversation: str | None = None) -> None:
+        body = {"externalId": f"{run}-{src['id']}", "title": src["title"], "text": src["text"], "kind": "document", "learnedAt": src["at"],
+                **({"uri": src["uri"]} if src.get("uri") else {}), **({"forTask": src["forTask"]} if "forTask" in src else {}),
+                **({"conversation": {"externalId": conversation}} if conversation else {})}
+        as_client.post("/api/v1/ingest/sources", json=body).raise_for_status()
+
+    def wait_sources() -> None:
+        """B2 readings (queued jobs) done: no source learned for a task still unread or being read."""
+        deadline = time.time() + EXTRACTION_WAIT_S
+        with psycopg.connect(DB_URL) as db:
+            while time.time() < deadline:
+                (n,) = db.execute("""SELECT count(*) FROM sources WHERE memory_id = %s AND for_task IS TRUE
+                                     AND (procedures_outcome IS NULL OR procedures_outcome = 'reading')""", (memory,)).fetchone()
+                if n == 0:
+                    return
+                time.sleep(3)
+        print("  ! procedures of sources still pending, going on", flush=True)
 
     bound: set[str] = set()
     for c in tl["conversations"]:
@@ -91,6 +114,9 @@ def main() -> None:
                              **({"toolName": x["tool"], "authorRef": "assistant"} if x["role"] == "tool" else {})})
         r = as_client.post("/api/v1/ingest/messages", json={"conversation": {"externalId": f"{run}-{c['id']}", "participants": participants}, "messages": msgs})
         r.raise_for_status()
+        # Sources learned in this conversation (8.16 F2c): sent before its idle extraction, which may recognise them as for a task.
+        for j, src in enumerate(c.get("sources", [])):
+            learn_source({**src, "id": f"{c['id']}-s{j}", "at": c["at"]}, conversation=f"{run}-{c['id']}")
         wait_extracted()
         # The household's verified faces: a person with a verified identity is household (trusted to teach).
         with psycopg.connect(DB_URL) as db:
@@ -101,9 +127,79 @@ def main() -> None:
                                                   "externalId": f"{p['voice']}-face", "verified": True})
                 bound.add(name)
 
+    for src in tl.get("sources", []):
+        learn_source(src)
+    wait_extracted()
+    wait_sources()
+
     checks: list[tuple[str, bool]] = []
 
+    def check_procedure(k: dict) -> None:
+        """8.16 F2: procedures (and the sources read for them)."""
+        with psycopg.connect(DB_URL) as db:
+            db.row_factory = dict_row
+            detail: list[str] = []
+            ok = True
+            src = None
+            if "source_title" in k:
+                src = next((r for r in db.execute("SELECT id, title, for_task, procedures_outcome FROM sources WHERE memory_id = %s", (memory,)).fetchall()
+                            if k["source_title"].lower() in r["title"].lower()), None)
+                detail.append(f"source={src and {'for_task': src['for_task'], 'outcome': src['procedures_outcome']}}")
+                ok &= src is not None
+                if src and k.get("for_task"):
+                    ok &= src["for_task"] is True
+                if src and k.get("for_task_not"):
+                    ok &= src["for_task"] is not True
+                if src and "outcome" in k:
+                    ok &= (src["procedures_outcome"] or "").startswith(k["outcome"])
+                if src and "procedure_from_source" in k:
+                    (n,) = db.execute("SELECT count(*) AS n FROM procedures WHERE source_id = %s", (src["id"],)).fetchone().values()
+                    ok &= n == k["procedure_from_source"]
+            if "procedure" in k:
+                rows = db.execute("""SELECT id, title, origin::text AS origin, pending, steps FROM procedures
+                                     WHERE memory_id = %s AND status = 'current'""", (memory,)).fetchall()
+                hit = [r for r in rows if re.search(k["procedure"], r["title"].lower())]
+                detail += [f"{r['origin']}:{'P' if r['pending'] else 'S'}:{r['title']}:{len(r['steps'])} steps" for r in hit]
+                if "count" in k:
+                    ok &= len(hit) == k["count"]
+                else:
+                    ok &= bool(hit)
+                if hit and "origin" in k:
+                    ok &= any(r["origin"] == k["origin"] for r in hit)
+                if hit and "pending" in k:
+                    ok &= all(r["pending"] == k["pending"] for r in hit)
+                if hit and "steps_min" in k:
+                    ok &= any(len(r["steps"]) >= k["steps_min"] for r in hit)
+                if hit and "first_step" in k:
+                    ok &= any(k["first_step"] in r["steps"][0].lower() for r in hit)
+                if hit and "last_step" in k:
+                    ok &= any(k["last_step"] in r["steps"][-1].lower() for r in hit)
+                if hit and "no_step" in k:
+                    ok &= not any(k["no_step"] in st.lower() for r in hit for st in r["steps"])
+                if hit and "source" in k:
+                    keys = {x["key"] for x in db.execute("""SELECT i.key FROM item_informants ii JOIN informants i ON i.id = ii.informant_id
+                                                            WHERE ii.procedure_id = ANY(%s)""", ([r["id"] for r in hit],)).fetchall()}
+                    detail.append(f"from={sorted(keys)}")
+                    ok &= k["source"] in keys
+                if hit and "variant" in k:
+                    vs = db.execute("SELECT step, text, pending FROM procedure_variants WHERE procedure_id = ANY(%s) AND retired_at IS NULL",
+                                    ([r["id"] for r in hit],)).fetchall()
+                    detail.append(f"variants={[(v['step'], v['text'][:40], v['pending']) for v in vs]}")
+                    match = [v for v in vs if k["variant"] in v["text"].lower()]
+                    ok &= bool(match) and all(v["pending"] == k.get("variant_pending", v["pending"]) for v in match)
+            if "intents" in k:
+                (n,) = db.execute("SELECT count(*) AS n FROM intents WHERE memory_id = %s", (memory,)).fetchone().values()
+                detail.append(f"intents={n}")
+                ok &= n == k["intents"]
+            if "intents_not" in k:
+                texts = [r["content"] for r in db.execute("SELECT content FROM intents WHERE memory_id = %s", (memory,)).fetchall()]
+                detail.append(f"intents={[t[:50] for t in texts]}")
+                ok &= not any(k["intents_not"] in t.lower() for t in texts)
+        checks.append((f"{k['id']} {k['what']} — {detail}", ok))
+
     def check(k: dict) -> None:
+        if "procedure" in k or "source_title" in k or "intents_not" in k or ("intents" in k and "match" not in k):
+            return check_procedure(k)
         with psycopg.connect(DB_URL) as db:
             db.row_factory = dict_row
             items = db.execute(EPISODES if k.get("episodes") else ITEMS, {"m": memory}).fetchall()

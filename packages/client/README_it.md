@@ -66,7 +66,7 @@ schemi degli strumenti MCP che il servizio offre (nome, titolo, descrizione, JSO
 dichiarare gli strumenti prima di collegarsi; la suite di conformità li tiene allineati al servizio.
 
 ## Fonti apprese
-`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?})`
+`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?, forTask?})`
 fa imparare un testo all'agente (D49, WORK_PLAN 8.9: un manuale, una pagina, una nota — **solo testo**, è l'host a
 convertire i file). Qualsiasi dimensione: un testo più grande di `SOURCE_PART_BYTES` (4 MB, o l'argomento `partBytes`)
 viene inviato a parti tagliate ai confini dei paragrafi (`POST api/v1/ingest/sources` + `…/parts`); → `{sourceId,
@@ -142,6 +142,16 @@ await client.perceive(userId, { text: 'una persona che non conosco ha suonato il
 ```
 Viene ricordata come vista (origine `perceived`, la ricerca la segna `seen`) e svanisce dopo `keepDays` (default: l'impostazione
 della memoria, altrimenti 14 giorni); una ripetizione entro pochi minuti torna come `duplicate`.
+
+Procedure (8.16 F2, `API.md` §4d): un compito a più passaggi tenuto intero — cosa fare, in che ordine, il modo della casa.
+```ts
+const { id } = await client.learnProcedure(userId, { title: 'make the bed', steps, from: 'page', uri: pageUrl });
+await client.addProcedureVariant(userId, id, { step: 4, text: 'the pillow goes over the bedspread', conversation: { externalId: chatId } });
+await client.reportProcedureRun(userId, id, { outcome: 'failed', step: 3, note: 'the sheet was too short' });
+const bed = await client.procedure(userId, id); // steps in order, `here` (the household's way) above each generic step
+```
+Letta in una pagina resta in attesa (`pending`) finché una persona fidata la conferma, una seconda fonte concorda o
+un'esecuzione è `done`.
 
 ## Collegare l'identità di canale del titolare (D51)
 In una memoria personale un mittente di un canale parla come "io" solo dopo che il titolare l'ha collegato:

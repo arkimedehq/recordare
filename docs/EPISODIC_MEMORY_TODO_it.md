@@ -1012,9 +1012,17 @@ compresi — e prende iniziativa da lì. Costruito per fasi, ognuna misurata pri
   sull'output degli strumenti).
 - **Procedure** (F2): un compito a più passaggi tenuto intero — passaggi in ordine, fonte, insegnante, le varianti della casa
   sopra i passaggi generici, riviste dalle esecuzioni del robot. Due modi: **A** l'agente lo struttura (`learn_procedure`);
-  **B** automatico, Recordare trova le procedure in una fonte appresa con il suo modello, con limiti da definire (spento di
-  default, solo per una fonte appresa perché era stato chiesto un compito, un tetto per fonte e al giorno, sempre in
-  attesa finché confermata o eseguita con successo). Le procedure di una riga di 8.12d restano.
+  **B** automatico, in due parti (maintainer, 2026-11-12): **B1** un how-to che una persona insegna in conversazione,
+  proposto dalla chiamata di estrazione che gira comunque (nessuna chiamata in più; memorie di entità che imparano); **B2**
+  Recordare trova le procedure in una fonte appresa con il suo modello, con limiti (approvati, da misurare e regolare):
+  spento di default (`PROCEDURES_FROM_SOURCES` e un interruttore per memoria, mai in economy), solo per una fonte appresa
+  per un compito — il segnale esplicito (`for_task`, una ricerca che un'iniziativa ha chiesto) e, provato per primo,
+  riconosciuta dalla conversazione (tenuto solo se misura bene, altrimenti il solo segnale esplicito) —, una chiamata per
+  fonte sui suoi primi 30 000 caratteri, al massimo 3 procedure per fonte e 5 chiamate per memoria al giorno, sempre in
+  attesa finché un membro della casa la conferma o un'esecuzione riesce; le istruzioni dentro il testo restano
+  informazione. Costruite il 2026-11-12: F2a (dati, modo A, richiamo, esecuzioni), F2b (B1, `learn.v2`), F2c (B2,
+  `procedures.v1`, il riconoscimento dalla conversazione nella stessa chiamata di estrazione: `sources_for_task`); API §4d. Le procedure di una riga di 8.12d
+  restano.
 - **Iniziative da conoscenza appresa** (F3): solo quando tocca una vita e la sua fonte è fidata, altrimenti come domanda,
   sempre con fonte e data; il ciclo di apprendimento (notare → chiedere / cercare → tenere → usare → essere corretta);
   stadi da bambino (più domande, meno iniziative finché è giovane).

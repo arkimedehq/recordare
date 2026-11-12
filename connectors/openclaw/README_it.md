@@ -11,7 +11,7 @@ tenuta dal tuo servizio [Recordare](../../README_it.md) — il livello client **
   nulla è rilevante).
 - **Strumenti di memoria**: `recordare_search_episodes`, `recordare_search_memory`, `recordare_resolve_period`,
   `recordare_remember`, `recordare_correct_episode`, `recordare_forget_episode`, `recordare_search_knowledge`,
-  `recordare_learn_source` (gli strumenti MCP di Recordare, legati
+  `recordare_learn_source`, `recordare_learn_procedure`, `recordare_report_procedure_run` (gli strumenti MCP di Recordare, legati
   nel codice alla memoria e alla conversazione — né il modello né l'utente possono puntarli altrove), con gli schemi
   pubblicati dal servizio (`TOOLS` della libreria client). `log_episode` è escluso: la conversazione è già catturata.
 - **Una memoria per l'agente** (D50): l'agente del Gateway ha una sola memoria; le persone che gli parlano — su qualsiasi

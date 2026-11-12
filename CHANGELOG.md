@@ -18,6 +18,21 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   default for entity memories (`learnFromOutside`, console; off: the previous prompt and rules); personal memories
   unchanged. Prompt `extract.v24+entity.v12+learn.v1`; migration `Learning1791340000000`; `search_memory` notes carry
   `learned`.
+- **Procedures kept whole** (WORK_PLAN 8.16 F2a, D57): a task of several steps (making the bed) kept as one unit — its
+  steps in order as taught, where it was read and who brought it, the household's own way of a step shown above the
+  generic one, and how each run went — returned whole by `search_knowledge` and by the memory context when the message is
+  about it (`CONTEXT_MIN_PROCEDURE_SIMILARITY`). Read in a page → pending until a trusted person, a second source or a run
+  done confirms it; taught by a household member → kept at once; a failed run marks its step; a person's correction
+  becomes their way and costs the page trust. `POST api/v1/procedures` (`…/variants`, `…/runs`, `GET`, `DELETE`), MCP
+  `learn_procedure` / `report_procedure_run`, client library `learnProcedure` / `addProcedureVariant` /
+  `reportProcedureRun` / `procedures` / `procedure` / `forgetProcedure`; migration `LearnedProcedures1791350000000`;
+  the export now carries informants and procedures. Kept by themselves too (F2b, F2c): a how-to a person teaches in
+  conversation, proposed by the extraction call that runs anyway (`extract.v24+entity.v12+learn.v2`, section PROCEDURES,
+  `CURRENT PROCEDURES` in the input); and — off by default (`PROCEDURES_FROM_SOURCES`, `proceduresFromSources` in the
+  console, never on economy) — the procedures of a source learned for a task, read by Recordare's own model (task
+  `procedures`, `procedures.v1`), always pending, within limits (`PROCEDURES_SOURCE_CHARS`, `PROCEDURES_PER_SOURCE`,
+  `PROCEDURES_DAILY_CALLS`); a source is for a task when the client says so (`forTask`, `for_task`) or the extraction
+  recognises it (`sources_for_task`).
 
 ## [0.13.0] — 2026-11-09
 

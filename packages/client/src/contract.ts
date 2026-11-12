@@ -474,6 +474,8 @@ export interface LearnSource {
   providedBy?: 'me' | 'someone' | { name: string };
   /** The conversation it was learned in: its extraction then tells of it. */
   conversation?: { externalId: string };
+  /** Learned in order to do a task (8.16 F2c): an entity memory that learns may read it for its procedures (kept pending). */
+  forTask?: boolean;
   text: string;
 }
 
@@ -550,4 +552,64 @@ export function clipUtf8(text: string, maxBytes = MAX_CONTENT_BYTES, marker = ' 
   // Step back over continuation bytes (10xxxxxx) so the cut lands on a character boundary.
   while (end > 0 && ((bytes[end] ?? 0) & 0xc0) === 0x80) end--;
   return bytes.subarray(0, end).toString('utf8') + marker;
+}
+
+/**
+ * A procedure (WORK_PLAN 8.16 F2): a task of several steps kept whole — Recordare says what to do, in which order, with
+ * the household's own way and from whom it was learned; turning steps into motion is the client's work.
+ */
+export interface LearnProcedure {
+  /** The task, as people name it ("make the bed"). */
+  title: string;
+  /** When it is used, if it matters. */
+  when?: string;
+  /** The steps in order, as taught or read (at most 30, 300 characters each): never dropped or "improved". */
+  steps: string[];
+  /** page: read in a source, a page or a tool's output (pending until confirmed); person: taught by who is speaking in `conversation`. */
+  from: 'page' | 'person';
+  /** Where it was read: its site is who brought it. */
+  uri?: string;
+  /** The learned source it comes from (`learnSource`). */
+  sourceId?: string;
+  /** The conversation it happens in: who speaks there taught it. */
+  conversation?: { externalId: string };
+}
+
+export interface LearnProcedureResult {
+  id: string;
+  /** Waiting for a trusted person, a second source or a run done. */
+  pending: boolean;
+  /** new; a new version of the procedure with that title; the same steps again (one more backing). */
+  status: 'new' | 'version' | 'same';
+}
+
+export interface ProcedureVariant {
+  /** The step it changes (1-based); none: the whole task. */
+  step?: number;
+  /** How it is done here ("the pillow goes over the bedspread"). */
+  text: string;
+  conversation?: { externalId: string };
+}
+
+export interface ProcedureRun {
+  outcome: 'done' | 'failed' | 'corrected';
+  /** failed / corrected: the step (1-based). */
+  step?: number;
+  /** failed: what went wrong; corrected: the right way (required). */
+  note?: string;
+  /** Who is speaking there corrected it. */
+  conversation?: { externalId: string };
+}
+
+export interface ProcedureHere { text: string; by: string; at: string; confirmed: boolean }
+
+/** A procedure, whole: follow `here` (the household's way) above the generic step. */
+export interface Procedure {
+  id: string;
+  title: string;
+  when: string | null;
+  steps: Array<{ n: number; text: string; here: ProcedureHere[]; failed?: { at: string; note: string | null } }>;
+  here: ProcedureHere[];
+  learned: { how: 'read' | 'taught'; from: string; at: string; confirmed: boolean; source?: { id: string; title: string } };
+  runs: { done: number; failed: number; corrected: number; last?: { outcome: string; at: string; step: number | null } };
 }

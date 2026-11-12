@@ -27,6 +27,7 @@ import { registerTools } from './mcp-tools';
 import { CHARTER } from '../recall/charter';
 import { KnowledgeSearchService } from '../knowledge/knowledge-search.service';
 import { SourcesService } from '../knowledge/sources.service';
+import { ProceduresService } from '../procedures/procedures.service';
 
 interface Session {
   transport: StreamableHTTPServerTransport;
@@ -54,6 +55,7 @@ export class McpService implements OnModuleDestroy {
     private readonly writes: MemoryWriteService,
     private readonly knowledge: KnowledgeSearchService,
     private readonly sources: SourcesService,
+    private readonly procedures: ProceduresService,
     private readonly db: DataSource,
     @Inject(CLOCK_PORT) private readonly clock: ClockPort,
     private readonly config: ConfigService<Env, true>,
@@ -78,11 +80,11 @@ export class McpService implements OnModuleDestroy {
 
     // The charter (D54) as the server's instructions: hosts that pass them to the model tell it this is its own memory.
     const server = new McpServer({ name: 'recordare', version: VERSION }, { instructions: CHARTER });
-    const [settings] = await this.db.query(`SELECT timezone, locale FROM memories WHERE person_id = $1`, [memoryId]);
+    const [settings] = await this.db.query(`SELECT timezone, locale, mode FROM memories WHERE person_id = $1`, [memoryId]);
     registerTools(server, {
       principal, memoryId, conversations: this.conversations, episodes: this.episodes, memory: this.memory, writes: this.writes,
-      knowledge: this.knowledge, sources: this.sources,
-      clock: this.clock, settings: { timezone: settings.timezone, locale: settings.locale },
+      knowledge: this.knowledge, sources: this.sources, procedures: this.procedures,
+      clock: this.clock, settings: { timezone: settings.timezone, locale: settings.locale, personal: settings.mode === 'personal' },
       allowClockOverride: this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }),
     });
     const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({

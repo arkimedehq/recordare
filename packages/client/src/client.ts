@@ -7,6 +7,7 @@ import {
   type MeSettings, type MemoryContext, type Note, type NoteChange, type NoteDetail, type PlanStatus, type Precision, type Source,
   SOURCE_PART_BYTES, type Usage,
   type DeliveryChannel, type Initiative, type InitiativeOutcome, type PresenceImpulse, type PresenceResult, type Perception, type PerceptionResult,
+  type LearnProcedure, type LearnProcedureResult, type Procedure, type ProcedureRun, type ProcedureVariant,
 } from './contract.js';
 import { MemoryNotEmptyError, RecordareHttpError } from './errors.js';
 import { type ClientOptions, Http } from './http.js';
@@ -214,6 +215,44 @@ export class RecordareClient {
   /** What the agent learned, newest first. */
   sources(user: string): Promise<Source[]> {
     return this.http.request('GET', 'api/v1/sources', { user });
+  }
+
+  // ── Procedures (8.16 F2): a task of several steps kept whole — what to do, in which order, the household's way ──
+
+  /**
+   * Keeps a procedure (needs `ingest`): read in a page (`from: 'page'`, pending until confirmed) or taught by who is
+   * speaking in `conversation` (`from: 'person'`). The same title again is a new version; the same steps again one more backing.
+   */
+  learnProcedure(user: string, procedure: LearnProcedure): Promise<LearnProcedureResult> {
+    return this.http.request('POST', 'api/v1/procedures', { user, body: procedure });
+  }
+
+  /** The household's own way of a step (or of the whole task), from who is speaking in `conversation` (needs `ingest`). */
+  addProcedureVariant(user: string, procedureId: string, variant: ProcedureVariant): Promise<{ id: string; pending: boolean }> {
+    return this.http.request('POST', `api/v1/procedures/${enc(procedureId)}/variants`, { user, body: variant });
+  }
+
+  /**
+   * How a run went (needs `ingest`): `done` confirms a pending procedure; `failed` marks its step; `corrected` (with the
+   * right way in `note`) becomes the corrector's way of that step.
+   */
+  reportProcedureRun(user: string, procedureId: string, run: ProcedureRun): Promise<{ id: string; pending: boolean }> {
+    return this.http.request('POST', `api/v1/procedures/${enc(procedureId)}/runs`, { user, body: run });
+  }
+
+  /** The procedures the memory holds, whole (needs `read`). */
+  procedures(user: string): Promise<Procedure[]> {
+    return this.http.request('GET', 'api/v1/procedures', { user });
+  }
+
+  /** One procedure, whole (needs `read`). */
+  procedure(user: string, id: string): Promise<Procedure> {
+    return this.http.request('GET', `api/v1/procedures/${enc(id)}`, { user });
+  }
+
+  /** Forgets a procedure with its versions, variants and runs (needs `write`). */
+  async forgetProcedure(user: string, id: string): Promise<void> {
+    await this.http.request('DELETE', `api/v1/procedures/${enc(id)}`, { user });
   }
 
   // ── The diary (API.md §4): what Recordare remembers, shown to the person in the platform's UI ──────────────────

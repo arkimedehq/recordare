@@ -10,6 +10,7 @@ import { MemoryWriteService } from '../recall/memory-write.service';
 import { McpController } from './mcp.controller';
 import { McpService } from './mcp.service';
 import { KnowledgeModule } from '../knowledge/knowledge.module';
+import { ProceduresModule } from '../procedures/procedures.module';
 
-@Module({ imports: [KnowledgeModule], controllers: [McpController], providers: [McpService, ConversationResolver, RawLogSearchService, EpisodeSearchService, MemorySearchService, MemoryWriteService] })
+@Module({ imports: [KnowledgeModule, ProceduresModule], controllers: [McpController], providers: [McpService, ConversationResolver, RawLogSearchService, EpisodeSearchService, MemorySearchService, MemoryWriteService] })
 export class McpModule {}

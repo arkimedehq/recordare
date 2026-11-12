@@ -13,14 +13,18 @@
       "recordare_correct_episode",
       "recordare_forget_episode",
       "recordare_search_knowledge",
-      "recordare_learn_source"
+      "recordare_learn_source",
+      "recordare_learn_procedure",
+      "recordare_report_procedure_run"
     ]
   },
   "toolMetadata": {
     "recordare_remember": { "sideEffecting": true },
     "recordare_correct_episode": { "sideEffecting": true },
     "recordare_forget_episode": { "sideEffecting": true },
-    "recordare_learn_source": { "sideEffecting": true }
+    "recordare_learn_source": { "sideEffecting": true },
+    "recordare_learn_procedure": { "sideEffecting": true },
+    "recordare_report_procedure_run": { "sideEffecting": true }
   },
   "uiHints": {
     "url": { "label": "Recordare URL", "placeholder": "http://localhost:8080", "help": "Address of your Recordare service" },

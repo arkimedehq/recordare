@@ -68,18 +68,19 @@ export class SourcesService {
         await tx.query(`DELETE FROM source_passages WHERE source_id = $1`, [existing.id]);
         await tx.query(
           `UPDATE sources SET title = $2, kind = $3, author = $4, origin_uri = $5, language = $6, provided_by_kind = $7, provided_by_person_id = $8,
-             learned_at = $9, conversation_id = COALESCE($10, conversation_id), status = 'receiving', parts = 0, chars = 0, content_hash = $11, updated_at = now()
+             learned_at = $9, conversation_id = COALESCE($10, conversation_id), status = 'receiving', parts = 0, chars = 0, content_hash = $11, updated_at = now(),
+             for_task = COALESCE($12, for_task), procedures_at = NULL, procedures_outcome = NULL
            WHERE id = $1`,
           [existing.id, req.title, req.kind, req.author ?? null, req.uri ?? null, req.language ?? null, provider.kind, provider.personId, learnedAt,
-            conversationId, first]);
+            conversationId, first, req.forTask ?? null]);
         id = existing.id;
       } else {
         [{ id }] = await tx.query(
           `INSERT INTO sources (memory_id, client_id, external_id, title, kind, author, origin_uri, language, provided_by_kind, provided_by_person_id,
-             learned_at, conversation_id, content_hash)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+             learned_at, conversation_id, content_hash, for_task)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
           [memoryId, clientId, req.externalId, req.title, req.kind, req.author ?? null, req.uri ?? null, req.language ?? null, provider.kind,
-            provider.personId, learnedAt, conversationId, first]);
+            provider.personId, learnedAt, conversationId, first, req.forTask ?? null]);
       }
       await this.addPart(tx, id, memoryId, req.text, req.final);
       return { ...(await this.counts(tx, id)), duplicate: false };
@@ -151,10 +152,12 @@ export class SourcesService {
   private async afterWrite(sourceId: string, status: LearnSourceResult['status']): Promise<void> {
     await this.queue.enqueueSourcePassages(sourceId);
     if (status === 'receiving') return;
-    const [s]: Array<{ conversation_id: string | null; pending: boolean }> = await this.db.query(
-      `SELECT s.conversation_id, EXISTS (SELECT 1 FROM messages m WHERE m.conversation_id = s.conversation_id AND m.extracted_run_id IS NULL
+    const [s]: Array<{ conversation_id: string | null; pending: boolean; for_task: boolean | null }> = await this.db.query(
+      `SELECT s.conversation_id, s.for_task, EXISTS (SELECT 1 FROM messages m WHERE m.conversation_id = s.conversation_id AND m.extracted_run_id IS NULL
          AND m.role IN ('user', 'other')) AS pending
        FROM sources s WHERE s.id = $1`, [sourceId]);
+    // Learned for a task (the client said so): read for its procedures (8.16 F2c; the reader checks the switches and limits).
+    if (s?.for_task) await this.queue.enqueueSourceProcedures(sourceId);
     // Its conversation still has messages to extract: the extraction tells of it (and writes the episode itself if not).
     if (s?.conversation_id && s.pending) return;
     const written = await this.db.transaction((tx) => writeLearnedEpisode(tx, sourceId));

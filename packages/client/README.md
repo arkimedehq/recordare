@@ -65,7 +65,7 @@ description, JSON Schema), for hosts that must declare tools before connecting; 
 sync with the service.
 
 ## Learned sources
-`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?})`
+`learnSource(user, {externalId, title, text, kind?, author?, uri?, language?, learnedAt?, providedBy?, conversation?, forTask?})`
 makes the agent learn a text (D49, WORK_PLAN 8.9: a manual, a page, a note — **text only**, the host converts files).
 Any size: a text bigger than `SOURCE_PART_BYTES` (4 MB, or the `partBytes` argument) is sent in parts cut at paragraph
 boundaries (`POST api/v1/ingest/sources` + `…/parts`); → `{sourceId, status, parts, passages, duplicate}`. The same
@@ -140,6 +140,15 @@ await client.perceive(userId, { text: 'someone I don\'t know rang the bell', sen
 ```
 It is remembered as seen (origin `perceived`, search marks it `seen`) and fades after `keepDays` (default: the memory's
 setting, else 14 days); a repeat within minutes comes back as `duplicate`.
+
+Procedures (8.16 F2, `API.md` §4d): a task of several steps kept whole — what to do, in which order, the household's way.
+```ts
+const { id } = await client.learnProcedure(userId, { title: 'make the bed', steps, from: 'page', uri: pageUrl });
+await client.addProcedureVariant(userId, id, { step: 4, text: 'the pillow goes over the bedspread', conversation: { externalId: chatId } });
+await client.reportProcedureRun(userId, id, { outcome: 'failed', step: 3, note: 'the sheet was too short' });
+const bed = await client.procedure(userId, id); // steps in order, `here` (the household's way) above each generic step
+```
+Read in a page it waits (`pending`) until a trusted person confirms it, a second source agrees or a run is `done`.
 
 ## Linking the holder's channel identity (D51)
 In a personal memory a channel sender speaks as "I" only once the holder links it: `linkCode(user)` → `{code,

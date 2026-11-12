@@ -14,6 +14,7 @@
  */
 import { type EntityManager } from 'typeorm';
 import { localDate } from './time';
+import { accountSpeaker } from '../rawlog/attribution';
 
 type Db = Pick<EntityManager, 'query'>;
 
@@ -88,8 +89,8 @@ export async function upsertInformant(db: Db, memoryId: string, i: Informant): P
   return { id: (row as { id: string }).id, trust: trustOf(row!.class, row!.confirmed, row!.corrected) };
 }
 
-type Item = { table: 'facts' | 'notes'; id: string };
-const column = (t: Item['table']) => (t === 'facts' ? 'fact_id' : 'note_id');
+type Item = { table: 'facts' | 'notes' | 'procedures'; id: string };
+const column = (t: Item['table']) => (t === 'facts' ? 'fact_id' : t === 'notes' ? 'note_id' : 'procedure_id');
 
 /**
  * Records that `informant` backs the item, from this conversation. Returns whether it is an independent origin (no
@@ -107,11 +108,20 @@ export async function backItem(db: Db, memoryId: string, item: Item, informantId
   return { independent: !seenRow?.seen, informants: count?.n ?? 0 };
 }
 
-/** An outcome for the informants behind an item: it was confirmed, or it turned out wrong. */
-export async function creditInformants(db: Db, item: Item, outcome: 'confirmed' | 'corrected'): Promise<void> {
+/** An outcome for the informants behind an item: it was confirmed, or it turned out wrong (`except`: who brought the outcome). */
+export async function creditInformants(db: Db, item: Item, outcome: 'confirmed' | 'corrected', except?: string): Promise<void> {
   await db.query(
     `UPDATE informants SET ${outcome} = ${outcome} + 1
-     WHERE id IN (SELECT DISTINCT informant_id FROM item_informants WHERE ${column(item.table)} = $1)`, [item.id]);
+     WHERE id IN (SELECT DISTINCT informant_id FROM item_informants WHERE ${column(item.table)} = $1) AND id IS DISTINCT FROM $2`, [item.id, except ?? null]);
+}
+
+/** Who is speaking in a conversation now (its latest turn of a person), as evidence for `informantOf`; null without one. */
+export async function speakerEvidence(db: Db, conversationId: string | null, now: Date, personal: boolean): Promise<EvidenceMessage | null> {
+  if (!conversationId) return null;
+  const [m]: Array<{ role: string; account_speaker: boolean; author_person_id: string | null; content: string; sent_at: Date }> = await db.query(
+    `SELECT m.role, ${personal ? `m.author_kind IN ('self', 'own')` : accountSpeaker('m')} AS account_speaker, m.author_person_id, m.content, m.sent_at
+     FROM messages m WHERE m.conversation_id = $1 AND m.role IN ('user', 'other') AND m.sent_at <= $2 ORDER BY m.sent_at DESC LIMIT 1`, [conversationId, now]);
+  return m ? { role: m.role, toolName: null, accountSpeaker: m.account_speaker, authorPersonId: m.author_person_id, content: m.content, sentAt: m.sent_at } : null;
 }
 
 /** How long a learned note holds: perishable ones fade, slowly changing ones are rechecked, lasting ones stay. */
