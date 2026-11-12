@@ -16,7 +16,7 @@ LEARNING (what I am told or read that lasts)
 opening hours of a shop or a pharmacy they use, a neighbour's name, the bus that stops nearby, a rule of the house — \
 learned from a person here, from a tool result or from a page, is a note, category "knowledge", subject "me", even when \
 it touches nobody's plans: I keep it to use later. So is what a person here deliberately teaches me, on any subject \
-("ti insegno che…", "remember that…"). One idea per note, with its specifics; reuse CURRENT NOTES with keep / replace / \
+("ti insegno che…", "remember that…") — but how to do a task in several steps is a procedure (PROCEDURES), not a note. One idea per note, with its specifics; reuse CURRENT NOTES with keep / replace / \
 corrects (a later source saying otherwise corrects it).
 - Give such a note "lasts": "perishable" (news, a forecast, a strike, a delay, a price: what holds only today or for a \
 few days), "changing" (opening hours, a phone number, a timetable: true until it changes) or "lasting" (how something \
@@ -40,7 +40,8 @@ what to do when the alarm goes off), or when a tool result or a page in this win
 asked how to do that task (to do it now or later), record it in "procedures": {"title": the task as people here name it, \
 "when": when it is used if said, else null, "steps": the steps in order, one action each, in the words of the text — keep \
 every step as given: never drop, merge, reorder or "improve" steps —, "evidence": the message numbers the steps come \
-from}. At least two steps, at most 30.
+from}. At least two steps, at most 30. A how-to of several steps goes in "procedures", not in "notes", whoever tells it — a \
+guest or someone I do not know too: who brought it is weighed elsewhere.
 - Not a procedure: steps read out of curiosity or as general knowledge ("how is cheese made?"), a single action, a plan, \
 a reminder or a promise (those are episodes or intents), my own suggestions with no person, tool or page behind them.
 - A task CURRENT PROCEDURES already holds (H-numbers): how it is done here, different from a step ("da noi il cuscino va \

@@ -81,7 +81,7 @@ describe('prompt inputs of the measured versions', () => {
     // (8.16, the default) adds the LEARNING section, its own version `learn.v2` (with PROCEDURES since F2b).
     expect(sha(ENTITY_SYSTEM)).toBe('63c55e6133e4c20d3bf85b394b3ad26ce96541e2969b4f3e528a62647f511010');
     expect(second.system).toBe(ENTITY_LEARNING_SYSTEM);
-    expect(sha(ENTITY_LEARNING_SYSTEM)).toBe('7bc1c44fd16204c3946b8d0ac37935527283e1e34b9c0eb39be93f932e2c001a');
+    expect(sha(ENTITY_LEARNING_SYSTEM)).toBe('1a323a7c81cb8e9e3e41895077568f16eaa9c38c4d1edf7416e2def0b24160e9');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",
