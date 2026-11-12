@@ -6,6 +6,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.14.0] — 2026-11-12
+
+**L'agente impara dall'esterno, come un bambino — e tiene intero il modo di fare un compito.** Una memoria di entità
+tiene da sola la conoscenza duratura che legge o le viene detta, con chi l'ha portata e quanto fidarsi: letta in una
+pagina, aspetta una persona fidata o una seconda fonte; insegnata da un membro della casa, è tenuta subito. Un compito di
+più passi (rifare il letto) è tenuto intero, in ordine, con il modo della casa sopra il passo generico e com'è andata ogni
+esecuzione. Libreria client e connettori 0.14.0 (`learnProcedure`, `reportProcedureRun` e gli altri metodi delle
+procedure; `learnSource` con `forTask`).
+
 ### Aggiunto
 - **Imparare dall'esterno** (WORK_PLAN 8.16 F1, D57, `docs/literature/learning-from-outside_it.md`): una memoria di entità
   tiene da sola la conoscenza duratura che legge o le viene detta — la risposta di una ricerca web, una pagina, ciò che
