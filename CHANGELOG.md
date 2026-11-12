@@ -6,6 +6,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-11-12
+
+**The agent learns from outside, like a child — and keeps how to do a task whole.** An entity memory keeps by itself
+the lasting knowledge it reads or is told, with who brought it and how far to trust it: read in a page, it waits for a
+trusted person or a second source; taught by a household member, it is kept at once. A task of several steps (making the
+bed) is kept whole, in order, with the household's own way above the generic step and how each run went. Client library
+and connectors 0.14.0 (`learnProcedure`, `reportProcedureRun` and the other procedure methods; `learnSource` with
+`forTask`).
+
 ### Added
 - **Learning from outside** (WORK_PLAN 8.16 F1, D57, `docs/literature/learning-from-outside.md`): an entity memory keeps by
   itself the lasting knowledge it reads or is told — a web search's answer, a page, what a household member teaches — as a
