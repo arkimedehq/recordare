@@ -60,7 +60,7 @@ def main() -> None:
 
     run = f"learn{int(time.time())}"
     client = post("/api/v1/admin/clients", {"name": f"learning-eval {run}", "kind": "platform"})
-    key = post(f"/api/v1/admin/clients/{client['id']}/keys", {"scopes": ["ingest", "mcp", "read"]})["key"]
+    key = post(f"/api/v1/admin/clients/{client['id']}/keys", {"scopes": ["ingest", "mcp", "read", "write"]})["key"]
     m = tl["memory"]
     user = f"{m['user']}-{run}"
     memory = post("/api/v1/admin/memories", {"displayName": m["name"], "mode": m["mode"], "locale": m["locale"], "timezone": m["timezone"]})["personId"]
@@ -99,14 +99,47 @@ def main() -> None:
                 time.sleep(3)
         print("  ! procedures of sources still pending, going on", flush=True)
 
+    def given(kind: str) -> tuple[str, str] | None:
+        """8.16 F3: the latest initiative not answered yet whose intent is of `kind` (its id and text)."""
+        with psycopg.connect(DB_URL) as db:
+            row = db.execute("""SELECT i.id::text, i.text FROM initiatives i JOIN intents t ON t.id = i.intent_id
+                               WHERE i.memory_id = %s AND t.kind::text = %s AND i.status IN ('pending', 'offered')
+                               ORDER BY i.created_at DESC LIMIT 1""", (memory, kind)).fetchone()
+        return (row[0], row[1]) if row else None
+
     bound: set[str] = set()
     for c in tl["conversations"]:
+        # 8.16 F3 steps: the initiative sweep as of a moment; a run of a procedure reported by the robot.
+        if "sweep" in c:
+            r = post(f"/api/v1/admin/memories/{memory}/initiatives", {}, headers={"x-recordare-now": c["sweep"]})
+            print(f"sweep as of {c['sweep']}: {r}", flush=True)
+            continue
+        if "run" in c:
+            k = c["run"]
+            with psycopg.connect(DB_URL) as db:
+                rows = db.execute("SELECT id::text, title FROM procedures WHERE memory_id = %s AND status = 'current'", (memory,)).fetchall()
+            hit = [i for i, t in rows if re.search(k["procedure"], t.lower())]
+            if not hit:
+                print(f"  ! no procedure {k['procedure']} to report a run of", flush=True)
+                continue
+            as_client.post(f"/api/v1/procedures/{hit[0]}/runs", json={x: k[x] for x in ("outcome", "step", "note") if x in k},
+                           headers={"x-recordare-now": k["at"]}).raise_for_status()
+            continue
         participants = [{"ref": p["name"].lower(), "role": "other", "displayName": p["name"], "identity": {"channel": "voice", "externalId": p["voice"]}}
                         for p in tl["people"]]
         participants += [{"ref": x["ref"], "role": "other", "displayName": x["name"]} for x in c.get("participants", [])]
         msgs = []
         for i, x in enumerate(c["messages"]):
             at = c["at"][:17] + f"{i:02d}" + c["at"][19:]
+            if "initiative" in x:
+                # The agent says the initiative it was given (its text as the memory worded it), and reports it asked.
+                g = given(x["initiative"])
+                print(f"  initiative {x['initiative']}: {g and g[1]!r}", flush=True)
+                if not g:
+                    continue
+                as_client.post(f"/api/v1/initiatives/{g[0]}/outcome", json={"status": "asked", "at": at}).raise_for_status()
+                msgs.append({"externalId": f"{c['id']}-{i}", "role": "assistant", "content": g[1], "sentAt": at})
+                continue
             if "by" in x:
                 msgs.append({"externalId": f"{c['id']}-{i}", "role": "other", "authorRef": x["by"].lower(), "content": x["content"], "sentAt": at})
             else:
@@ -197,7 +230,31 @@ def main() -> None:
                 ok &= not any(k["intents_not"] in t.lower() for t in texts)
         checks.append((f"{k['id']} {k['what']} — {detail}", ok))
 
+    def check_initiative(k: dict) -> None:
+        """8.16 F3: the initiatives armed from what was read (intent kind, about what, said or asked, for whom, its text)."""
+        with psycopg.connect(DB_URL) as db:
+            db.row_factory = dict_row
+            rows = db.execute("""SELECT t.kind::text AS intent, t.content, t.status::text AS intent_status, i.kind::text AS kind, i.text,
+                                        (SELECT display_name FROM persons WHERE id = t.for_person_id) AS for_name
+                                 FROM intents t LEFT JOIN initiatives i ON i.intent_id = t.id WHERE t.memory_id = %s""", (memory,)).fetchall()
+        hit = [r for r in rows if (not k.get("intent_kind") or r["intent"] == k["intent_kind"])
+               and re.search(k["about"], (r["content"] + " " + (r["text"] or "")).lower())]
+        detail = [f"{r['intent']}:{r['kind']}:{r['for_name']}:{(r['text'] or r['content'])[:110]}" for r in hit]
+        if k.get("none"):
+            ok = not hit
+        else:
+            ok = bool(hit)
+            if hit and "kind" in k:
+                ok &= any(r["kind"] == k["kind"] for r in hit)
+            if hit and "for" in k:
+                ok &= any(r["for_name"] == k["for"] for r in hit)
+            if hit and "text_contains" in k:
+                ok &= any(k["text_contains"].lower() in (r["text"] or "").lower() for r in hit)
+        checks.append((f"{k['id']} {k['what']} — {detail}", ok))
+
     def check(k: dict) -> None:
+        if "about" in k:
+            return check_initiative(k)
         if "procedure" in k or "source_title" in k or "intents_not" in k or ("intents" in k and "match" not in k):
             return check_procedure(k)
         with psycopg.connect(DB_URL) as db:
@@ -216,6 +273,10 @@ def main() -> None:
                 ok &= any(i["origin"] == k["origin"] for i in cur)
             if "pending" in k:
                 ok &= bool(cur) and all(i["pending"] == k["pending"] for i in cur)
+            if k.get("learned_not_current"):
+                ok &= bool(hit) and not any(i["origin"] == "learned" for i in cur)
+            if k.get("not_current"):
+                ok &= bool(hit) and not cur
             if "current_contains" in k:
                 ok &= any(k["current_contains"] in i["text"].lower() for i in cur)
             if "source" in k:

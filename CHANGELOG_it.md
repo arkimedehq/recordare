@@ -15,7 +15,9 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   confermare una conoscenza del luogo che ha letto — una domanda alla volta; una persona fidata che tiene a ciò che
   sapeva ritira la versione della pagina. Stadi da bambino, calcolati da ciò che la casa ha confermato
   (`LEARNING_STAGE_YOUNG`, `LEARNING_STAGE_GROWN`; mostrati in console): piccola, chiede di più e dice ciò che ha letto
-  solo come domanda. `LEARNED_AHEAD_DAYS`; prompt `initiative.v5`; migrazione `LearnedInitiatives1791360000000`; frasi
+  solo come domanda. `LEARNED_AHEAD_DAYS`; prompt `initiative.v5` e `extract.v24+entity.v12+learn.v3` (una notizia letta
+  che tocca una persona di casa è anche un episodio che la nomina, con il giorno in cui accade: `episodes.happens_on`);
+  migrazione `LearnedInitiatives1791360000000`; frasi
   in tutte le lingue.
 
 ## [0.14.0] — 2026-11-12

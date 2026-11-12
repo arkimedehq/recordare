@@ -1037,7 +1037,14 @@ compresi — e prende iniziativa da lì. Costruito per fasi, ognuna misurata pri
   (`LEARNING_STAGE_YOUNG` 30, `LEARNING_STAGE_GROWN` 150, da misurare): piccola — fino a due domande di apprendimento al
   giorno per persona e ciò che ha letto solo come domanda; cresce — una al giorno, le letture fidate dette; grande — chiede
   di confermare solo la conoscenza che dura. Abitudini e pensieri continuano a lasciare fuori gli episodi letti. Prompt
-  `initiative.v5`; migrazione `LearnedInitiatives1791360000000`.
+  `initiative.v5`; migrazione `LearnedInitiatives1791360000000`. Misurato (`dataset_dev_learned_initiatives`, RESULTS.md):
+  un episodio letto ha la data del giorno in cui è stato letto (il prompt di base, condiviso con le memorie personali,
+  non cambia), quindi `learn.v3` (solo la sezione di apprendimento) chiede che una notizia letta che tocca una persona di
+  casa sia anche un episodio che la nomina con `happens_on`, il giorno della notizia stessa (`episodes.happens_on`), e
+  che la risposta a una mia domanda su una cosa letta tenga la versione che la persona sostiene o corregga quella letta —
+  mai la sua; una persona nota può essere nominata da una notizia letta senza essere nominata dove è stata letta (mai una
+  scheda nuova); una persona fidata che tiene a ciò che la memoria sapeva ritira la versione in attesa della pagina anche
+  quando è la sua stessa parola detta di nuovo. 12 / 12 in due giri; F1 e F2 ricontrollate.
 
 ## Questioni aperte (da discutere)
 

@@ -14,7 +14,8 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   holds, when a step of a procedure failed, and to confirm knowledge of the place it read — one question at a time; a
   trusted person holding to what it had retires the page's version. Child-like stages, worked out from what the
   household confirmed (`LEARNING_STAGE_YOUNG`, `LEARNING_STAGE_GROWN`; shown in the console): young, it asks more and
-  says what it read only as a question. `LEARNED_AHEAD_DAYS`; prompt `initiative.v5`; migration
+  says what it read only as a question. `LEARNED_AHEAD_DAYS`; prompts `initiative.v5` and `extract.v24+entity.v12+learn.v3` (news read that
+  touches a person here is also an episode naming them, with the day it happens: `episodes.happens_on`); migration
   `LearnedInitiatives1791360000000`; sentences in every language.
 
 ## [0.14.0] — 2026-11-12

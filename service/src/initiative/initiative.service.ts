@@ -467,16 +467,18 @@ export class InitiativeService {
    * unchecked. Once per episode; a retraction closes it (the episode invalidated). Not a learning question.
    */
   private async armLearned(memoryId: string, now: Date, stage: LearningStage): Promise<number> {
+    // The news's own day (`happens_on`, learn.v3), in the memory's time zone: from today to LEARNED_AHEAD_DAYS ahead;
+    // said until that day ends.
     const rows: Array<{ id: string; content: string; touched: string; ends_at: Date }> = await this.db.query(
       `SELECT e.id, e.content,
          COALESCE(CASE WHEN e.subject_kind = 'contact' THEN e.subject_person_id END,
            (SELECT ep.person_id FROM episode_people ep WHERE ep.episode_id = e.id AND ep.person_id <> $1 ORDER BY ep.person_id LIMIT 1)) AS touched,
-         COALESCE(e.occurred_until, e.occurred_at + CASE WHEN e.date_precision = 'day' THEN interval '1 day' ELSE interval '0' END) AS ends_at
-       FROM episodes e
+         ((e.happens_on + 1)::timestamp AT TIME ZONE m.timezone) AS ends_at
+       FROM episodes e JOIN memories m ON m.person_id = e.memory_id
        WHERE e.memory_id = $1 AND e.origin = 'learned' AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
-         AND e.occurred_at IS NOT NULL AND e.date_precision IN ('minute', 'day')
-         AND e.occurred_at < $2::timestamptz + make_interval(days => $3)
-         AND COALESCE(e.occurred_until, e.occurred_at + CASE WHEN e.date_precision = 'day' THEN interval '1 day' ELSE interval '0' END) > $2
+         AND e.happens_on IS NOT NULL
+         AND e.happens_on >= ($2::timestamptz AT TIME ZONE m.timezone)::date
+         AND e.happens_on <= ($2::timestamptz AT TIME ZONE m.timezone)::date + $3::int
          AND ((e.subject_kind = 'contact' AND e.subject_person_id IS NOT NULL)
            OR EXISTS (SELECT 1 FROM episode_people ep WHERE ep.episode_id = e.id AND ep.person_id <> $1))
          AND ${episodeVisible('e', PUBLIC_ONLY)}
@@ -517,7 +519,7 @@ export class InitiativeService {
     ? `EXISTS (SELECT 1 FROM notes o WHERE o.id IN (n.supersedes, n.corrects) AND o.status = 'current' AND NOT o.pending AND o.deleted_at IS NULL)`
     : `NOT EXISTS (SELECT 1 FROM notes o WHERE o.id IN (n.supersedes, n.corrects) AND o.status = 'current' AND o.deleted_at IS NULL)
            AND n.lasts IS DISTINCT FROM 'perishable' ${stage === 'grown' ? `AND n.lasts = 'lasting'` : ''}
-           AND n.recorded_at <= $2::timestamptz - interval '1 day'`}
+           AND COALESCE(n.valid_from, n.recorded_at) <= $2::timestamptz - interval '1 day'`}
          AND ${noteVisible('n', PUBLIC_ONLY)}
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.note_id = n.id AND t.kind = 'check')
        ORDER BY n.recorded_at, n.id`, [memoryId, now]);
@@ -696,8 +698,8 @@ export class InitiativeService {
       const said = w?.text?.trim();
       const days = sayDays(t, now, memory.timezone);
       const todayOnly = days.from === days.to && days.from === localDate(now, memory.timezone);
-      // 8.16 F3: what I read keeps its source — a wording that lost the site is not said.
-      const keepsSource = !(t.kind === 'learned' || t.kind === 'check') || (!!t.source && !!said && said.toLowerCase().includes(t.source.toLowerCase()));
+      // 8.16 F3: what I read keeps its source — a wording that lost the site is not said (one of my own tools: no site to keep).
+      const keepsSource = !(t.kind === 'learned' || t.kind === 'check') || !t.source || (!!said && said.toLowerCase().includes(t.source.toLowerCase()));
       const content = said && keepsSource && (todayOnly || !saysRelativeDay(said)) ? said : fallback;
       const acceptable = acceptableChannels(kind as InitiativeKind, t.kind);
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {

@@ -994,7 +994,13 @@ initiative from it. Built in phases, each measured on a dev set first.
   the household confirmed (`LEARNING_STAGE_YOUNG` 30, `LEARNING_STAGE_GROWN` 150, to measure): young — up to two learning
   questions a day per person and what it read only as a question; growing — one a day, trusted reading told; grown — asks
   to confirm only lasting knowledge. Patterns and thoughts still leave learned episodes out. Prompt `initiative.v5`;
-  migration `LearnedInitiatives1791360000000`.
+  migration `LearnedInitiatives1791360000000`. Measured (`dataset_dev_learned_initiatives`, RESULTS.md): a learned
+  episode is dated the day it was read (the base prompt, shared with personal memories, unchanged), so `learn.v3` (the
+  learning section only) asks news read that touches a person here to be also an episode naming them with
+  `happens_on`, the news's own day (`episodes.happens_on`), and an answer to my question about something read to keep
+  the version the person holds or correct the one read — never their own; a known person may be named by news read
+  without being named where it was read (never a new card); a trusted person holding to what the memory had retires the
+  page's pending version even when it is their own word told again. 12 / 12 in two runs; F1 and F2 rechecked.
 
 ## Open questions (to discuss)
 

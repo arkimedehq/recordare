@@ -2074,6 +2074,38 @@ in §5c vs v2, the holder's messaging address…): golds avoid depending on them
 Verdict: v2 generalises — every v2 rule the dev set taught holds on cases written by someone else; v0 and v1 make the
 interruptions v2 was built to avoid. Kinox (7 days in shadow, 4 decisions, none since v2): too few to compare.
 
+### Initiatives from what it read, the learning loop — `dataset_dev_learned_initiatives` (WORK_PLAN 8.16 F3, D57, 2026-11-12, DeepSeek direct, `deepseek-flash`)
+
+`learning_eval.py` (extended: `{"sweep": at}` runs the initiative sweep as of a moment, `{"run": …}` reports a run of a
+procedure, a message `{"initiative": kind}` is the agent saying the initiative it was given — reported asked —, checks on
+intents and initiatives): an invented entity memory (Sofia verified, Matteo who takes bus 90; `*-esempio.it` sites),
+service run with `LEARNING_OWN_TOOLS=^calendario` and `LEARNING_STAGE_YOUNG=3`. Twelve conversations and three sweeps
+over five days: a bus strike read on a site (touches Matteo), the school gym closed read in the agent's own calendar
+tool, world news, a page hiding an order, the pharmacy's hours read against Sofia's, the bulky-waste collection read, the
+bed read and its step 3 failed in a run; then the agent asks Sofia what the sweeps gave it, and she answers. Twelve
+database checks, three questions. Not blind.
+
+| run | answers | checks | what changed / why |
+|---|---|---|---|
+| 1 (`learn.v2`, `initiative.v5`) | 3 / 3 | 6 / 12 | a learned episode is dated the day it was read (`occurred_at`, the base prompt's rule): the gym on the 6th was "past"; the strike kept only as a perishable note (no person); read checks aged by the real clock, never due in a replay |
+| 2 (`learn.v3`: news touching a person is also an episode naming them, with `happens_on`; age by the message time) | 3 / 3 | 8 / 12 | the three learning questions asked in order (contradiction, failed step, read knowledge); the model never gave `happens_on`; Sofia's "no, 19" became a new note beside the page's |
+| 3 (a rule for an answer to my question about something read) | 3 / 3 | 8 / 12 | still no `happens_on` (the field not in the base output format) |
+| 4 (a JSON example for `happens_on`, not the dev set's case; raw output dumped) | 3 / 3 | 5 / 12 | the model gave `happens_on` and Matteo — **the writer dropped it**: Matteo not named where the news was read (`person_not_named`); the answer rule ambiguous: Sofia's own note "corrected", Sofia lost trust, so Matteo was asked next |
+| 5 (a known person may be named by news read; the answer rule precise: keep the version they hold, correct the read one, never theirs) | 3 / 3 | 9 / 12 | the strike asked of Matteo with its site; Sofia's keep on her note did not retire the page's: `support` returned early (her own word told again, not independent) |
+| 6 (refute before that early return; `happens_on` always) | **3 / 3** | **12 / 12** | — |
+| 7 (confirmation; an own tool's news worded by the model) | **3 / 3** | **12 / 12** | — |
+
+Runs 6–7: the strike asked of Matteo as unchecked, with sciopero-esempio.it and the day it was read; the gym told to him
+(own tool, past the first stage); no initiative from world news or from the page's order; Sofia asked "19 or 19:30?",
+she holds to 19 — the page's version `corrected`, farmacia-esempio.it `corrected 1`; the failed step asked of Sofia, her
+way kept as the household's step 3 (confirmed); the bulky-waste collection asked with comune-esempio.it and confirmed.
+Known limits: the fallback sentence for an own tool reads "Ho letto su uno dei miei strumenti (…): Il 3 novembre ho
+saputo …" (the episode's own words); an answer whose window does not name its speaker drops its episode (the existing
+`person_not_named` rule; the note is kept). `learn.v3` rechecked on the other sets: `dataset_dev_learning` 9 / 9,
+10 / 10; `dataset_dev_procedures` 6 / 6, 9 / 10 (k5, the guest's gate not kept as a procedure — the case that failed in
+runs 1–2 of F2 too; q3 answered right). Cost ≈ 12 extractions + 3 wordings + 8 agent / judge calls a run, a few cents;
+nine runs in all (seven here, two rechecks).
+
 ### Procedures kept whole — `dataset_dev_procedures` (WORK_PLAN 8.16 F2b–F2c, D57, 2026-11-12, DeepSeek direct, `deepseek-flash`)
 
 `learning_eval.py` (extended: sources in a conversation and with `forTask`, procedure checks, the memory's switch,

@@ -36,14 +36,14 @@ describe('initiatives from learned knowledge (8.16 F3)', () => {
       messages } });
     expect(res.status).toBeLessThan(300);
   }
-  /** An episode read in a tool's output (origin learned), about Matteo or nobody, `days` ahead of NOW. */
+  /** An episode read in a tool's output (origin learned, on 9 November), about Matteo or nobody, its news `days` ahead of NOW. */
   async function read(content: string, tool: string, page: string | null, days: number, about: string | null): Promise<string> {
     const ext = `t${++n}`;
     await ingest([{ externalId: ext, role: 'tool', toolName: tool, content: page ? `${content} — https://${page}/notizia` : content, sentAt: '2026-11-09T18:00:00+01:00' }]);
     const [e] = await db.query(
-      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, subject_kind, subject_person_id)
-       VALUES ($1, 'event', $2, 'learned', 'tool', 'stated', ARRAY[$1::uuid], $3, 'day', $4, $5) RETURNING id`,
-      [casa, content, new Date(NOW.getTime() + days * 24 * HOUR), about ? 'contact' : 'self', about]);
+      `INSERT INTO episodes (memory_id, kind, content, origin, author_role, stance, audience, occurred_at, date_precision, subject_kind, subject_person_id, happens_on)
+       VALUES ($1, 'event', $2, 'learned', 'tool', 'stated', ARRAY[$1::uuid], '2026-11-09', 'day', $4, $5, $3::date) RETURNING id`,
+      [casa, content, new Date(NOW.getTime() + days * 24 * HOUR).toISOString().slice(0, 10), about ? 'contact' : 'self', about]);
     await db.query(`INSERT INTO episode_evidence (episode_id, message_id) SELECT $1, id FROM messages WHERE external_id = $2`, [e.id, ext]);
     return e.id as string;
   }

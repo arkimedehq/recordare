@@ -78,10 +78,10 @@ describe('prompt inputs of the measured versions', () => {
       { externalId: 'u2-6', role: 'user', own: true, content: 'Manuale della caldaia: reset con il tasto rosso.', sentAt: '2026-06-08T09:05:00+02:00' },
     ], {});
     // The measured entity prompt stays byte-identical (`entity.v12`, a memory switched off); one that learns by itself
-    // (8.16, the default) adds the LEARNING section, its own version `learn.v2` (with PROCEDURES since F2b).
+    // (8.16, the default) adds the LEARNING section, its own version `learn.v3` (with PROCEDURES since F2b, happens_on since F3).
     expect(sha(ENTITY_SYSTEM)).toBe('63c55e6133e4c20d3bf85b394b3ad26ce96541e2969b4f3e528a62647f511010');
     expect(second.system).toBe(ENTITY_LEARNING_SYSTEM);
-    expect(sha(ENTITY_LEARNING_SYSTEM)).toBe('1a323a7c81cb8e9e3e41895077568f16eaa9c38c4d1edf7416e2def0b24160e9');
+    expect(sha(ENTITY_LEARNING_SYSTEM)).toBe('8ae7351e3a8652995765adad7b9baca3ddefbb6ce070dfe1ef96e739b06e45f5');
     expect(second.user).toBe([
       "ME: Casa — gender masculine",
       "",

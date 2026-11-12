@@ -336,8 +336,12 @@ export class ExtractionWriter {
       const at = toStored(e.occurred_at, e.date_precision as Precision | undefined, this.ctx.timezone);
       const until = toStored(e.occurred_until, 'day', this.ctx.timezone);
       const subjectText = this.subjectOrPerson(e.subject, e.people);
+      // 8.16 F3: news read in a tool's output touches people the memory already knows (Matteo takes the bus that strikes)
+      // who need not be named where it was read — a known person only, never a new card.
+      const read = this.ctx.learning && msgs.some((m) => m.role === 'tool' || m.toolDerived);
+      const unnamed = e.people.filter((p) => !this.namedInWindow(p));
       const problem = this.evidenceProblem(msgs, at.at, e.content)
-        ?? (this.ctx.entity && !e.people.every((p) => this.namedInWindow(p)) ? 'person_not_named' : null)
+        ?? (this.ctx.entity && unnamed.length && !(read && (await Promise.all(unnamed.map((p) => this.book.known(p)))).every(Boolean)) ? 'person_not_named' : null)
         ?? (!this.subjectNamed(subjectText, e.candidates) ? 'person_not_named' : null);
       if (problem) {
         this.drop('episode', problem);
@@ -359,15 +363,15 @@ export class ExtractionWriter {
         `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, time_expression, place,
            importance, valence, feelings, opinion, keywords, context, tags, plan_status, plan_status_at, corrects,
            origin, author_role, stance, confidence, extraction_run_id, disclosure, audience, audience_unverified,
-           subject_kind, subject_person_id, subject_candidates)
+           subject_kind, subject_person_id, subject_candidates, happens_on)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, 'holder', $24, $25,
-           $26, $27, $28)
+           $26, $27, $28, $29)
          RETURNING id`,
         [this.ctx.memoryId, e.kind, e.content, at.at, until.at, at.precision, e.time_expression ?? null, e.place ?? null,
           e.importance, e.valence ?? null, e.feelings, e.opinion ?? null, e.keywords, e.context ?? null, e.tags,
           e.kind === 'plan' ? 'open' : null, e.kind === 'plan' ? new Date() : null, corrects,
           origin, role, stance, stance === 'stated' ? 1 : 0.6, this.ctx.runId, this.audience, this.audienceUnverified,
-          subject.kind, subject.personId, subject.candidates],
+          subject.kind, subject.personId, subject.candidates, origin === 'learned' ? (e.happens_on ?? null) : null],
       );
       const id = row.id as string;
       if (corrects) await this.tx.query(`UPDATE episodes SET invalidated_at = now() WHERE id = $1 AND memory_id = $2`, [corrects, this.ctx.memoryId]);
@@ -757,6 +761,11 @@ export class ExtractionWriter {
    * assistant), a pending one is confirmed — e.g. what a device heard in the room (WORK_PLAN 6.5).
    */
   private async support(table: 'facts' | 'notes', id: string, confirm: boolean, learned?: LearnedFrom | null, msgs?: WindowMessage[]): Promise<void> {
+    // 8.16 F3: a trusted person here holds to what I had — a page that said otherwise was wrong (even when it is their
+    // own word told again: holding to it is the point).
+    if (learned?.informant.kind === 'person' && learned.trust >= TEACH_TRUST && !(await isPending(this.tx, table, id))) {
+      await refuteProposals(this.tx, table, id, this.ctx.memoryId);
+    }
     if (learned) {
       // 8.16: only an independent origin counts — another informant, in another conversation; the same page read again,
       // the same group repeating or the agent's own summary add nothing. It confirms when that informant is trusted
@@ -767,10 +776,6 @@ export class ExtractionWriter {
     }
     await this.tx.query(`UPDATE ${table} SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [id, this.ctx.memoryId]);
     if (confirm) await confirmPending(this.tx, table, id, this.ctx.memoryId);
-    // 8.16 F3: a trusted person here holds to what I had — a page that said otherwise was wrong.
-    if (learned?.informant.kind === 'person' && learned.trust >= TEACH_TRUST && !(await isPending(this.tx, table, id))) {
-      await refuteProposals(this.tx, table, id, this.ctx.memoryId);
-    }
   }
 
   /** 8.16: who brought what these messages say (a person, a tool, a site) and how far to trust it; null when the memory does not learn, or for the agent's own words. */
