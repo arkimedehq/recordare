@@ -264,6 +264,15 @@ ogni notte è vecchia quanto la sua prima versione, e una conferma chiesta su un
 nota imparata dalla risposta a una domanda della memoria, o una privata. I
 fatti solo negli episodi, o mai detti ad alta voce, non si raggiungono così.
 
+**Ciò che ha letto, e imparare da lì** (8.16 F3, D57, costruito il 2026-11-12, senza modello): in una memoria di entità
+che impara, una cosa letta che tocca una vita nota ed è ancora davanti ("domani sciopero dei bus", Matteo prende il bus)
+va a quella persona con la sua fonte e il giorno in cui è stata letta — detta (`readSay`) quando la fonte è fidata per
+insegnare e la memoria ha passato il primo stadio, altrimenti chiesta come non verificata (`readAsk`); una formulazione
+che perde il sito viene sostituita dalla frase. Domande di apprendimento al membro della casa di cui la memoria si fida
+di più, dopo le lacune e prima delle conferme, una alla volta come sopra: una contraddizione tra una cosa letta e ciò che
+sa (`contradiction`), un passo di una procedura fallito (`failedStep`), una conoscenza del luogo letta e in attesa
+(`checkRead`). Piccola (poche cose confermate), la memoria chiede fino a due volte al giorno per persona.
+
 ## 7. Il contratto (cambi, tutti additivi)
 
 - **Impulso di presenza** `POST api/v1/presence {user?, person: {ref | personId}, channel: voice | camera | chat | panel,

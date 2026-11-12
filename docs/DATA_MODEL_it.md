@@ -764,6 +764,13 @@ mantenuta in conversazione (`done`), trovate dalle parole che condividono (`lang
 data si chiede due giorni dopo la sua fine, a meno che una conferma raccontata all'inizio del piano o dopo dica com'è
 andata; un piano con una richiesta o una promessa sulla stessa cosa (stessa persona, entro tre giorni, le stesse parole)
 non arma nulla. I piani privati non vengono armati (D52: un'iniziativa si rivolge a una persona).
+**8.16 F3** (migrazione `LearnedInitiatives1791360000000`): tipi `learned` (un episodio letto che tocca una vita nota,
+ancora davanti: `episode_id`, dovuto subito, fino alla fine dell'evento), `check` (una nota appresa ancora in attesa —
+una contraddizione con una nota affermata che propone di sostituire o correggere, o una conoscenza del luogo da
+confermare: `note_id`, chiuso quando non è più in attesa) e `step` (un passo fallito di una procedura:
+`procedure_run_id uuid null → procedure_runs (CASCADE)`, unico per esecuzione e tipo; chiuso quando viene insegnato il
+modo della casa per quel passo); `intents.source text null` (il sito in cui è stato letto; null: uno degli strumenti
+dell'agente), `intents.trusted boolean` (detto, non chiesto).
 `initiatives(id, seq bigserial, memory_id, intent_id null → intents, kind enum (say|ask|lookup|do), for_person_id null,
 text, reason, worth real null (del modello, balanced e full; migrazione `InitiativeWorth1791240000000`), episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
 expired), outcome_at, reply, created_at, updated_at)` — ciò che l'agente ha deciso di dire o fare: scritta quando un

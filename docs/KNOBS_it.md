@@ -60,6 +60,9 @@ Override dell'installazione di singole manopole (vincono su ogni profilo): `EXTR
 | `PROCEDURES_PER_SOURCE` | 3 | B2: procedure tenute da una fonte. Primo valore |
 | `PROCEDURES_DAILY_CALLS` | 5 | B2: letture per memoria al giorno; una fonte oltre il tetto aspetta lo sweep notturno. Primo valore |
 | `LEARNING_OWN_TOOLS` | vuoto | Nomi di strumenti (un'espressione regolare, senza distinzione maiuscole/minuscole) che sono gli strumenti propri dell'agente (un calendario, un dispositivo): ciò che dicono è abbastanza fidato da essere tenuto subito; vuoto: ogni strumento vale come un sito |
+| `LEARNED_AHEAD_DAYS` | 3 | 8.16 F3: una cosa letta che tocca una vita nota viene detta (o chiesta) quando è al massimo a questi giorni |
+| `LEARNING_STAGE_YOUNG` | 30 | 8.16 F3 stadi da bambino: sotto questo numero di cose confermate dalla casa una memoria di entità che impara è piccola — fino a due domande di apprendimento al giorno per persona, ciò che ha letto detto solo come domanda. Primo valore, da misurare |
+| `LEARNING_STAGE_GROWN` | 150 | Da questo numero è grande: chiede di confermare solo la conoscenza letta che dura. Primo valore, da misurare |
 | `WEBHOOK_ALLOW_PRIVATE` | false | I webhook possono puntare a indirizzi privati e a http semplice (un client ospitato insieme a Recordare); spento: solo https pubblico |
 | `QUALITY_PROFILE` | `balanced` | Profilo predefinito dell'installazione (§1) |
 | `LOG_LLM_CALLS` | on | Una riga `llm_calls` per chiamata (token, latenza; mai il contenuto) |

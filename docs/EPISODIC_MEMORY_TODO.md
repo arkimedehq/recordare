@@ -981,9 +981,20 @@ initiative from it. Built in phases, each measured on a dev set first.
   inside the text stay information. Built 2026-11-12: F2a (data, mode A, recall, runs), F2b (B1, `learn.v2`), F2c (B2,
   `procedures.v1`, the recognition from the conversation in the same extraction call: `sources_for_task`); API §4d. The
   one-line procedures of 8.12d stay.
-- **Initiatives from learned knowledge** (F3): only when it touches a life and its source is trusted, otherwise as a
-  question, always with source and date; the learning loop (notice → ask / look up → keep → use → be corrected); child-like
-  stages (more questions, fewer initiatives while young).
+- **Initiatives from learned knowledge** (F3, approved and built 2026-11-12): something read (an episode of origin
+  `learned`) that touches a known life and is still ahead (`LEARNED_AHEAD_DAYS`) goes to the person it touches (or whoever
+  could tell them), always with its source and the day it was read: **told** when the source is trusted to teach (≥ 0.75)
+  and the memory is past its first stage, else **asked** as unchecked (maintainer: tell it, rather than asking the obvious
+  every time); news touching nobody stays recall only; a retraction closes it. The **learning loop**, as learning
+  questions to the household member the memory trusts most (one at a time, after the gaps): something read that
+  contradicts what it holds ("which holds?"), a step of a procedure that failed in a run ("how is it done here?" — the
+  answer becomes the household's way, B1), knowledge of the place read and still pending ("is that how it is here?" — not
+  perishable news); a trusted person holding to what the memory had retires the page's version and costs it trust. A
+  procedure never run asks nothing (its first run done confirms it). **Child-like stages**, worked out each time from what
+  the household confirmed (`LEARNING_STAGE_YOUNG` 30, `LEARNING_STAGE_GROWN` 150, to measure): young — up to two learning
+  questions a day per person and what it read only as a question; growing — one a day, trusted reading told; grown — asks
+  to confirm only lasting knowledge. Patterns and thoughts still leave learned episodes out. Prompt `initiative.v5`;
+  migration `LearnedInitiatives1791360000000`.
 
 ## Open questions (to discuss)
 

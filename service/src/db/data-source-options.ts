@@ -44,6 +44,7 @@ import { PresenceMoment1791320000000 } from './migrations/1791320000000-Presence
 import { Perceptions1791330000000 } from './migrations/1791330000000-Perceptions';
 import { Learning1791340000000 } from './migrations/1791340000000-Learning';
 import { LearnedProcedures1791350000000 } from './migrations/1791350000000-LearnedProcedures';
+import { LearnedInitiatives1791360000000 } from './migrations/1791360000000-LearnedInitiatives';
 import { Conversation, ConversationParticipant, Message } from '../rawlog/rawlog.entities';
 
 /**
@@ -59,7 +60,8 @@ export const MIGRATIONS = [InitialSchema1790950000000, Notes1790960000000, Messa
   HolderLinks1791150000000, PendingProposals1791160000000, UnknownFactHistory1791170000000, UnembeddedMessages1791180000000, PrivateMessages1791190000000,
   Thoughts1791200000000, SelfNotes1791210000000, Initiatives1791220000000, IntentMessages1791230000000, InitiativeWorth1791240000000, Procedures1791250000000, InitiativeDelivery1791260000000, InitiativeTiming1791270000000, IntentFollowup1791280000000,
   InitiativeChannels1791290000000, IntentWho1791300000000, IntentConfirm1791310000000, PresenceMoment1791320000000, Perceptions1791330000000,
-  Learning1791340000000, LearnedProcedures1791350000000];
+  Learning1791340000000, LearnedProcedures1791350000000,
+  LearnedInitiatives1791360000000];
 
 /**
  * Every session scans HNSW indexes iteratively (pgvector ≥ 0.8, WORK_PLAN 4.14): a vector search filtered by memory

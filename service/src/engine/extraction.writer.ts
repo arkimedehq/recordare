@@ -34,7 +34,7 @@ import { overlap } from '../lang/overlap';
 import { localDate, toStored, type Precision } from './time';
 import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 import { askClarification, resolveClarification } from './clarifications';
-import { confirmPending, isPending } from './pending';
+import { confirmPending, isPending, refuteProposals } from './pending';
 import { backItem, creditInformants, type Informant, informantOf, lastingOf, TEACH_TRUST, upsertInformant } from './learning';
 import { addProcedureVariant, keepProcedure } from '../procedures/procedures.service';
 import { MAX_STEPS, STEP_CHARS } from '../procedures/procedures.schemas';
@@ -767,6 +767,10 @@ export class ExtractionWriter {
     }
     await this.tx.query(`UPDATE ${table} SET support_count = support_count + 1 WHERE id = $1 AND memory_id = $2`, [id, this.ctx.memoryId]);
     if (confirm) await confirmPending(this.tx, table, id, this.ctx.memoryId);
+    // 8.16 F3: a trusted person here holds to what I had — a page that said otherwise was wrong.
+    if (learned?.informant.kind === 'person' && learned.trust >= TEACH_TRUST && !(await isPending(this.tx, table, id))) {
+      await refuteProposals(this.tx, table, id, this.ctx.memoryId);
+    }
   }
 
   /** 8.16: who brought what these messages say (a person, a tool, a site) and how far to trust it; null when the memory does not learn, or for the agent's own words. */

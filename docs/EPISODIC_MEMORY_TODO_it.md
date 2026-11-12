@@ -1023,9 +1023,21 @@ compresi — e prende iniziativa da lì. Costruito per fasi, ognuna misurata pri
   informazione. Costruite il 2026-11-12: F2a (dati, modo A, richiamo, esecuzioni), F2b (B1, `learn.v2`), F2c (B2,
   `procedures.v1`, il riconoscimento dalla conversazione nella stessa chiamata di estrazione: `sources_for_task`); API §4d. Le procedure di una riga di 8.12d
   restano.
-- **Iniziative da conoscenza appresa** (F3): solo quando tocca una vita e la sua fonte è fidata, altrimenti come domanda,
-  sempre con fonte e data; il ciclo di apprendimento (notare → chiedere / cercare → tenere → usare → essere corretta);
-  stadi da bambino (più domande, meno iniziative finché è giovane).
+- **Iniziative da conoscenza appresa** (F3, approvata e costruita il 2026-11-12): una cosa letta (un episodio di origine
+  `learned`) che tocca una vita nota ed è ancora davanti (`LEARNED_AHEAD_DAYS`) va alla persona che tocca (o a chi
+  potrebbe dirglielo), sempre con la sua fonte e il giorno in cui è stata letta: **detta** quando la fonte è fidata per
+  insegnare (≥ 0,75) e la memoria ha passato il primo stadio, altrimenti **chiesta** come non verificata (maintainer:
+  dirla, piuttosto che chiedere ogni volta l'ovvio); una notizia che non tocca nessuno resta solo nel richiamo; una smentita
+  la chiude. Il **ciclo di apprendimento**, come domande di apprendimento al membro della casa di cui la memoria si fida di
+  più (una alla volta, dopo le lacune): una cosa letta che contraddice ciò che sa ("quale vale?"), un passo di una
+  procedura fallito in un'esecuzione ("come si fa da noi?" — la risposta diventa il modo della casa, B1), una conoscenza
+  del luogo letta e ancora in attesa ("è così da noi?" — non le notizie deperibili); una persona fidata che tiene a ciò che
+  la memoria sapeva ritira la versione della pagina e le costa fiducia. Una procedura mai eseguita non chiede nulla (la
+  prima esecuzione riuscita la conferma). **Stadi da bambino**, calcolati ogni volta da ciò che la casa ha confermato
+  (`LEARNING_STAGE_YOUNG` 30, `LEARNING_STAGE_GROWN` 150, da misurare): piccola — fino a due domande di apprendimento al
+  giorno per persona e ciò che ha letto solo come domanda; cresce — una al giorno, le letture fidate dette; grande — chiede
+  di confermare solo la conoscenza che dura. Abitudini e pensieri continuano a lasciare fuori gli episodi letti. Prompt
+  `initiative.v5`; migrazione `LearnedInitiatives1791360000000`.
 
 ## Questioni aperte (da discutere)
 

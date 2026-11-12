@@ -733,6 +733,12 @@ request withdrawn (`cancelled`) or a promise kept in the conversation (`done`), 
 (`lang/overlap.ts`). A plan past its date is asked about two days after its end, unless a confirmation told at or after
 its start says how it went; a plan with a request or promise about the same thing (same person, within three days, the
 same words) arms nothing. Private plans are not armed (D52: an initiative addresses a person).
+**8.16 F3** (migration `LearnedInitiatives1791360000000`): kinds `learned` (an episode read that touches a known life,
+still ahead: `episode_id`, due at once, until the event ends), `check` (a learned note still pending — a contradiction
+with a stated note it proposes to replace or correct, or knowledge of the place to confirm: `note_id`, closed when it is
+no longer pending) and `step` (a failed step of a procedure: `procedure_run_id uuid null → procedure_runs (CASCADE)`,
+unique per run and kind; closed when the household's way of that step is taught); `intents.source text null` (the site
+it was read on; null: one of the agent's tools), `intents.trusted boolean` (told, not asked).
 `initiatives(id, seq bigserial, memory_id, intent_id null → intents, kind enum (say|ask|lookup|do), for_person_id null,
 text, reason, worth real null (the model's, balanced and full; migration `InitiativeWorth1791240000000`), episode_ids uuid[], due_at, expires_at, status enum (pending|said|asked|ignored|declined|done|failed|
 expired), outcome_at, reply, created_at, updated_at)` — what the agent decided to say or do: written when an armed intent
