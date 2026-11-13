@@ -18,7 +18,7 @@ describe('initiative.v3 hours', () => {
   });
 
   it('asks for them in the prompt, versioned', () => {
-    expect(INITIATIVE_VERSION).toBe('initiative.v4');
+    expect(INITIATIVE_VERSION).toBe('initiative.v5');
     expect(INITIATIVE_SYSTEM).toContain('"hours": [from, to]');
   });
 });
@@ -29,5 +29,12 @@ describe('initiative.v4 days', () => {
     // Its own examples hold no relative day either.
     expect(INITIATIVE_SYSTEM).not.toMatch(/"(Ieri|Domani)\b/);
     expect(INITIATIVE_SYSTEM).not.toContain('è oggi');
+  });
+});
+
+describe('initiative.v5 what I read (8.16 F3)', () => {
+  it('keeps where and when it was read, never as known for sure', () => {
+    expect(INITIATIVE_SYSTEM).toContain('keep where and when I read it in the text');
+    expect(INITIATIVE_SYSTEM).toContain('an "ask" says I have not checked it');
   });
 });

@@ -37,6 +37,8 @@ export const extractionSchema = z.object({
     context: z.string().nullable().optional(),
     tags: z.array(z.string()).default([]),
     corrects: z.string().nullable().optional(),
+    /** 8.16 F3 (learn.v3): news read — the day the news itself happens (occurred_at stays the day it was learned). */
+    happens_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional().catch(null),
     /** S-numbers of SOURCES LEARNED IN THIS CONVERSATION the episode tells of (WORK_PLAN 8.9). */
     sources: z.array(z.string().max(20)).max(10).default([]),
     evidence,

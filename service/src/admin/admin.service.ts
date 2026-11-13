@@ -2,7 +2,10 @@
 // Copyright © 2026 Andrea Genovese
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource, QueryFailedError } from 'typeorm';
+import { type Env } from '../config/env';
+import { learningStage } from '../engine/learning';
 import { CLAIM_TTL_DAYS, confirmClaim, createLinkCode, type LinkCode, rejectClaim } from '../identity/holder-links';
 import { AccessToken, ApiKey, Client, ExternalIdentity, Memory, Person } from '../identity/identity.entities';
 import { generateCredential, hashCredential } from '../auth/credentials';
@@ -13,7 +16,7 @@ import { type CreateClient, type CreateIdentity, type CreateKey, type CreateMemo
 /** Installation management for the v1 home / research profile (memories created by the admin, D33). */
 @Injectable()
 export class AdminService {
-  constructor(private readonly db: DataSource, private readonly auth: AuthService) {}
+  constructor(private readonly db: DataSource, private readonly auth: AuthService, private readonly config: ConfigService<Env, true>) {}
 
   createClient(input: CreateClient): Promise<Client> {
     return this.db.getRepository(Client).save(input);
@@ -158,6 +161,11 @@ export class AdminService {
       `SELECT p.memory_id AS "memoryId", p.id, p.display_name AS name,
               (SELECT count(*)::int FROM episode_people ep WHERE ep.person_id = p.id) AS mentions
        FROM persons p WHERE p.memory_id IS NOT NULL ORDER BY p.display_name`);
+    // 8.16 F3: how far an entity memory that learns has grown (worked out, read only).
+    const knobs = { young: this.config.get('LEARNING_STAGE_YOUNG', { infer: true }) ?? 30, grown: this.config.get('LEARNING_STAGE_GROWN', { infer: true }) ?? 150 };
+    for (const o of memories) {
+      o.learningStage = o.mode === 'entity' && o.learnFromOutside !== false ? await learningStage(this.db, o.id, knobs) : null;
+    }
     return memories.map((o) => ({
       ...o,
       people: [{ id: o.id, name: o.name, self: true }, ...people.filter((c) => c.memoryId === o.id).map(({ id, name, mentions }) => ({ id, name, mentions }))],

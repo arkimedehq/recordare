@@ -58,6 +58,9 @@ Installation overrides of single knobs (they win over every profile): `EXTRACTIO
 | `PROCEDURES_PER_SOURCE` | 3 | B2: procedures kept from one source. First value |
 | `PROCEDURES_DAILY_CALLS` | 5 | B2: readings per memory a day; a source over the cap waits for the nightly sweep. First value |
 | `LEARNING_OWN_TOOLS` | empty | Tool names (a regular expression, case-insensitive) that are the agent's own first-party tools (a calendar, a device): what they say is trusted enough to be kept at once; empty: every tool counts as a site |
+| `LEARNED_AHEAD_DAYS` | 3 | 8.16 F3: something read that touches a known life is told (or asked about) when it is at most this many days ahead |
+| `LEARNING_STAGE_YOUNG` | 30 | 8.16 F3 child-like stages: below this many items the household confirmed an entity memory that learns is young — up to two learning questions a day per person, what it read said only as a question. First value, to measure |
+| `LEARNING_STAGE_GROWN` | 150 | From this many it is grown: it asks to confirm only lasting knowledge read. First value, to measure |
 | `WEBHOOK_ALLOW_PRIVATE` | false | Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only |
 | `QUALITY_PROFILE` | `balanced` | Installation default profile (§1) |
 | `LOG_LLM_CALLS` | on | One `llm_calls` row per call (tokens, latency; never content) |

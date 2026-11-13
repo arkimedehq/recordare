@@ -31,6 +31,18 @@ export interface InitiativeText {
    * memory holds it, a whole sentence; is it so, or is there more?
    */
   confirm: (belief: string) => string;
+  /** 8.16 F3: something read that touches someone, from a trusted source — `what` as held, `source` (a site, or `ownTool`), `day` it was read. */
+  readSay: (what: string, source: string, day: string) => string;
+  /** The same from a source not trusted yet: said as unchecked, with a question. */
+  readAsk: (what: string, source: string, day: string) => string;
+  /** Knowledge of the place read and still pending: is it so here? */
+  checkRead: (what: string, source: string) => string;
+  /** What the memory had, and what it read otherwise: which holds? */
+  contradiction: (had: string, read: string, source: string) => string;
+  /** A step of a procedure that failed in a run: `title`, the step's number and text; how is it done here? */
+  failedStep: (title: string, step: number, text: string) => string;
+  /** The source named when a tool of the agent's own (no site) brought it. */
+  ownTool: string;
 }
 
 const TEXTS: Record<string, InitiativeText> = {
@@ -41,6 +53,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, I have something for you: do you want to hear it?`,
     whoIs: (n) => `Who is ${n}? I have heard the name but do not know who they are.`,
     confirm: (b) => `I understood this: ${b} Is that right, or is there more?`,
+    readSay: (w, s, d) => `I read on ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `I read on ${s} (${d}): ${w} I have not checked it: do you know anything about it?`,
+    checkRead: (w, s) => `I read on ${s}: ${w} Is that how it is here?`,
+    contradiction: (h, r, s) => `I had this: ${h} But I read on ${s}: ${r} Which one holds?`,
+    failedStep: (t, n, st) => `At step ${n} of “${t}” (${st}) I did not manage. How is it done here?`,
+    ownTool: 'one of my tools',
   },
   it: {
     askPlan: (p, d) => `Per ${d} era previsto: ${p} È andata?`,
@@ -49,6 +67,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, ho una cosa per te: vuoi sentirla?`,
     whoIs: (n) => `Chi è ${n}? Ho sentito il nome, ma non so chi sia.`,
     confirm: (b) => `Ho capito questo: ${b} È così, o c'è altro?`,
+    readSay: (w, s, d) => `Ho letto su ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Ho letto su ${s} (${d}): ${w} Non l'ho verificato: ne sai qualcosa?`,
+    checkRead: (w, s) => `Ho letto su ${s}: ${w} È così da noi?`,
+    contradiction: (h, r, s) => `Sapevo questo: ${h} Ma ho letto su ${s}: ${r} Quale vale?`,
+    failedStep: (t, n, st) => `Al passo ${n} di «${t}» (${st}) non ci sono riuscito. Come si fa da noi?`,
+    ownTool: 'uno dei miei strumenti',
   },
   es: {
     askPlan: (p, d) => `Para el ${d} estaba previsto: ${p} ¿Se hizo?`,
@@ -57,6 +81,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, tengo algo para ti: ¿quieres oírlo?`,
     whoIs: (n) => `¿Quién es ${n}? He oído el nombre, pero no sé quién es.`,
     confirm: (b) => `Entendí esto: ${b} ¿Es así, o hay algo más?`,
+    readSay: (w, s, d) => `Leí en ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Leí en ${s} (${d}): ${w} No lo he comprobado: ¿sabes algo?`,
+    checkRead: (w, s) => `Leí en ${s}: ${w} ¿Es así aquí?`,
+    contradiction: (h, r, s) => `Yo tenía esto: ${h} Pero leí en ${s}: ${r} ¿Cuál vale?`,
+    failedStep: (t, n, st) => `En el paso ${n} de «${t}» (${st}) no lo conseguí. ¿Cómo se hace aquí?`,
+    ownTool: 'una de mis herramientas',
   },
   fr: {
     askPlan: (p, d) => `Pour le ${d} c'était prévu : ${p} Cela a-t-il eu lieu ?`,
@@ -65,6 +95,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, j'ai quelque chose pour toi : tu veux l'entendre ?`,
     whoIs: (n) => `Qui est ${n} ? J'ai entendu ce nom, mais je ne sais pas qui c'est.`,
     confirm: (b) => `J'ai compris ceci : ${b} C'est bien ça, ou il y a autre chose ?`,
+    readSay: (w, s, d) => `J'ai lu sur ${s} (${d}) : ${w}`,
+    readAsk: (w, s, d) => `J'ai lu sur ${s} (${d}) : ${w} Je ne l'ai pas vérifié : tu en sais quelque chose ?`,
+    checkRead: (w, s) => `J'ai lu sur ${s} : ${w} Est-ce comme ça ici ?`,
+    contradiction: (h, r, s) => `Je savais ceci : ${h} Mais j'ai lu sur ${s} : ${r} Lequel est juste ?`,
+    failedStep: (t, n, st) => `À l'étape ${n} de « ${t} » (${st}), je n'ai pas réussi. Comment fait-on ici ?`,
+    ownTool: 'un de mes outils',
   },
   de: {
     askPlan: (p, d) => `Für den ${d} war geplant: ${p} Hat es stattgefunden?`,
@@ -73,6 +109,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, ich habe etwas für dich: Möchtest du es hören?`,
     whoIs: (n) => `Wer ist ${n}? Ich habe den Namen gehört, weiß aber nicht, wer das ist.`,
     confirm: (b) => `Ich habe Folgendes verstanden: ${b} Stimmt das, oder gibt es noch mehr?`,
+    readSay: (w, s, d) => `Ich habe auf ${s} gelesen (${d}): ${w}`,
+    readAsk: (w, s, d) => `Ich habe auf ${s} gelesen (${d}): ${w} Ich habe es nicht geprüft: Weißt du etwas darüber?`,
+    checkRead: (w, s) => `Ich habe auf ${s} gelesen: ${w} Ist das bei uns so?`,
+    contradiction: (h, r, s) => `Ich wusste dies: ${h} Aber auf ${s} habe ich gelesen: ${r} Was stimmt?`,
+    failedStep: (t, n, st) => `Bei Schritt ${n} von „${t}“ (${st}) bin ich nicht weitergekommen. Wie macht man das bei uns?`,
+    ownTool: 'eines meiner Werkzeuge',
   },
   pt: {
     askPlan: (p, d) => `Para ${d} estava previsto: ${p} Aconteceu?`,
@@ -81,6 +123,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, tenho uma coisa para você: quer ouvir?`,
     whoIs: (n) => `Quem é ${n}? Ouvi o nome, mas não sei quem é.`,
     confirm: (b) => `Entendi isto: ${b} É isso, ou há mais alguma coisa?`,
+    readSay: (w, s, d) => `Li em ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Li em ${s} (${d}): ${w} Não verifiquei: sabes alguma coisa?`,
+    checkRead: (w, s) => `Li em ${s}: ${w} É assim aqui?`,
+    contradiction: (h, r, s) => `Eu sabia isto: ${h} Mas li em ${s}: ${r} Qual vale?`,
+    failedStep: (t, n, st) => `No passo ${n} de «${t}» (${st}) não consegui. Como se faz aqui?`,
+    ownTool: 'uma das minhas ferramentas',
   },
   zh: {
     askPlan: (p, d) => `${d}原本有计划：${p}后来实现了吗？`,
@@ -89,6 +137,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}，我有件事要告诉你：你想听吗？`,
     whoIs: (n) => `${n}是谁？我听到过这个名字，但不知道是谁。`,
     confirm: (b) => `我的理解是：${b}对吗？还有别的吗？`,
+    readSay: (w, s, d) => `我在 ${s} 上读到（${d}）：${w}`,
+    readAsk: (w, s, d) => `我在 ${s} 上读到（${d}）：${w} 我还没有核实：你知道这件事吗？`,
+    checkRead: (w, s) => `我在 ${s} 上读到：${w} 我们这里是这样吗？`,
+    contradiction: (h, r, s) => `我原来知道：${h} 但我在 ${s} 上读到：${r} 哪个是对的？`,
+    failedStep: (t, n, st) => `“${t}”的第 ${n} 步（${st}）我没有做成。我们这里是怎么做的？`,
+    ownTool: '我的一个工具',
   },
   hi: {
     askPlan: (p, d) => `${d} के लिए योजना थी: ${p} क्या ऐसा हुआ?`,
@@ -97,6 +151,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, आपके लिए कुछ है: क्या आप सुनना चाहेंगे?`,
     whoIs: (n) => `${n} कौन है? मैंने यह नाम सुना है, पर मुझे नहीं पता कि वह कौन है।`,
     confirm: (b) => `मैंने यह समझा: ${b} क्या यह सही है, या कुछ और भी है?`,
+    readSay: (w, s, d) => `मैंने ${s} पर पढ़ा (${d}): ${w}`,
+    readAsk: (w, s, d) => `मैंने ${s} पर पढ़ा (${d}): ${w} मैंने इसकी जाँच नहीं की: क्या आप इसके बारे में कुछ जानते हैं?`,
+    checkRead: (w, s) => `मैंने ${s} पर पढ़ा: ${w} क्या यहाँ ऐसा ही है?`,
+    contradiction: (h, r, s) => `मुझे यह पता था: ${h} पर मैंने ${s} पर पढ़ा: ${r} कौन सा सही है?`,
+    failedStep: (t, n, st) => `“${t}” के चरण ${n} (${st}) पर मैं सफल नहीं हुआ। यहाँ यह कैसे किया जाता है?`,
+    ownTool: 'मेरे एक उपकरण',
   },
   ar: {
     askPlan: (p, d) => `كان مخططًا في ${d}: ${p} هل حدث ذلك؟`,
@@ -105,6 +165,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}، لديّ شيء لك: هل تريد أن تسمعه؟`,
     whoIs: (n) => `من هو ${n}؟ سمعت الاسم لكني لا أعرف من هو.`,
     confirm: (b) => `فهمت ما يلي: ${b} هل هذا صحيح، أم هناك المزيد؟`,
+    readSay: (w, s, d) => `قرأت على ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `قرأت على ${s} (${d}): ${w} لم أتحقق من ذلك: هل تعرف شيئًا عنه؟`,
+    checkRead: (w, s) => `قرأت على ${s}: ${w} هل الأمر هكذا هنا؟`,
+    contradiction: (h, r, s) => `كنت أعرف هذا: ${h} لكنني قرأت على ${s}: ${r} أيهما الصحيح؟`,
+    failedStep: (t, n, st) => `في الخطوة ${n} من «${t}» (${st}) لم أنجح. كيف تُفعل هنا؟`,
+    ownTool: 'إحدى أدواتي',
   },
   bn: {
     askPlan: (p, d) => `${d}-এর জন্য পরিকল্পনা ছিল: ${p} সেটা কি হয়েছিল?`,
@@ -113,6 +179,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, তোমার জন্য একটা কথা আছে: শুনতে চাও?`,
     whoIs: (n) => `${n} কে? নামটা শুনেছি, কিন্তু জানি না সে কে।`,
     confirm: (b) => `আমি এটা বুঝেছি: ${b} এটা কি ঠিক, নাকি আরও কিছু আছে?`,
+    readSay: (w, s, d) => `আমি ${s}-এ পড়েছি (${d}): ${w}`,
+    readAsk: (w, s, d) => `আমি ${s}-এ পড়েছি (${d}): ${w} আমি যাচাই করিনি: আপনি কি এ বিষয়ে কিছু জানেন?`,
+    checkRead: (w, s) => `আমি ${s}-এ পড়েছি: ${w} এখানে কি এমনই?`,
+    contradiction: (h, r, s) => `আমি এটা জানতাম: ${h} কিন্তু ${s}-এ পড়েছি: ${r} কোনটা ঠিক?`,
+    failedStep: (t, n, st) => `“${t}”-এর ধাপ ${n} (${st})-এ আমি পারিনি। এখানে এটা কীভাবে করা হয়?`,
+    ownTool: 'আমার একটি সরঞ্জাম',
   },
   ru: {
     askPlan: (p, d) => `На ${d} было запланировано: ${p} Это состоялось?`,
@@ -121,6 +193,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, у меня есть кое-что для тебя: хочешь послушать?`,
     whoIs: (n) => `Кто такой ${n}? Я слышал это имя, но не знаю, кто это.`,
     confirm: (b) => `Я понял так: ${b} Это верно, или есть что-то ещё?`,
+    readSay: (w, s, d) => `Я прочитал на ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Я прочитал на ${s} (${d}): ${w} Я это не проверял: ты что-нибудь об этом знаешь?`,
+    checkRead: (w, s) => `Я прочитал на ${s}: ${w} У нас это так?`,
+    contradiction: (h, r, s) => `Я знал вот что: ${h} Но на ${s} я прочитал: ${r} Что верно?`,
+    failedStep: (t, n, st) => `На шаге ${n} из «${t}» (${st}) у меня не получилось. Как это делают у нас?`,
+    ownTool: 'один из моих инструментов',
   },
   ur: {
     askPlan: (p, d) => `${d} کے لیے منصوبہ تھا: ${p} کیا ایسا ہوا؟`,
@@ -129,6 +207,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}، آپ کے لیے ایک بات ہے: کیا آپ سننا چاہیں گے؟`,
     whoIs: (n) => `${n} کون ہے؟ میں نے یہ نام سنا ہے، مگر نہیں جانتا کہ وہ کون ہے۔`,
     confirm: (b) => `میں نے یہ سمجھا: ${b} کیا یہ درست ہے، یا کچھ اور بھی ہے؟`,
+    readSay: (w, s, d) => `میں نے ${s} پر پڑھا (${d}): ${w}`,
+    readAsk: (w, s, d) => `میں نے ${s} پر پڑھا (${d}): ${w} میں نے اس کی تصدیق نہیں کی: کیا آپ اس بارے میں کچھ جانتے ہیں؟`,
+    checkRead: (w, s) => `میں نے ${s} پر پڑھا: ${w} کیا یہاں ایسا ہی ہے؟`,
+    contradiction: (h, r, s) => `مجھے یہ معلوم تھا: ${h} لیکن میں نے ${s} پر پڑھا: ${r} کون سا درست ہے؟`,
+    failedStep: (t, n, st) => `“${t}” کے مرحلہ ${n} (${st}) پر میں کامیاب نہیں ہوا۔ یہاں یہ کیسے کیا جاتا ہے؟`,
+    ownTool: 'میرا ایک آلہ',
   },
   id: {
     askPlan: (p, d) => `Untuk ${d} sudah direncanakan: ${p} Apakah itu terlaksana?`,
@@ -137,6 +221,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, ada sesuatu untukmu: mau dengar?`,
     whoIs: (n) => `Siapa ${n}? Saya pernah mendengar namanya, tapi tidak tahu siapa dia.`,
     confirm: (b) => `Saya memahami ini: ${b} Benar begitu, atau ada yang lain?`,
+    readSay: (w, s, d) => `Saya membaca di ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Saya membaca di ${s} (${d}): ${w} Saya belum memeriksanya: apakah kamu tahu sesuatu?`,
+    checkRead: (w, s) => `Saya membaca di ${s}: ${w} Apakah di sini memang begitu?`,
+    contradiction: (h, r, s) => `Saya tahu ini: ${h} Tapi saya membaca di ${s}: ${r} Mana yang benar?`,
+    failedStep: (t, n, st) => `Pada langkah ${n} dari “${t}” (${st}) saya tidak berhasil. Bagaimana caranya di sini?`,
+    ownTool: 'salah satu alat saya',
   },
   ja: {
     askPlan: (p, d) => `${d}の予定でした：${p}予定どおりになりましたか？`,
@@ -145,6 +235,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}さん、お伝えしたいことがあります。聞きますか？`,
     whoIs: (n) => `${n}さんはどなたですか？お名前は聞きましたが、どなたか分かりません。`,
     confirm: (b) => `このように理解しています：${b}合っていますか？ほかにもありますか？`,
+    readSay: (w, s, d) => `${s} で読みました（${d}）：${w}`,
+    readAsk: (w, s, d) => `${s} で読みました（${d}）：${w} まだ確かめていません。何か知っていますか？`,
+    checkRead: (w, s) => `${s} で読みました：${w} ここでもそうですか？`,
+    contradiction: (h, r, s) => `こう知っていました：${h} でも ${s} で読みました：${r} どちらが正しいですか？`,
+    failedStep: (t, n, st) => `「${t}」の手順 ${n}（${st}）がうまくできませんでした。ここではどうやるのですか？`,
+    ownTool: '私の道具の一つ',
   },
   tr: {
     askPlan: (p, d) => `${d} için planlanmıştı: ${p} Oldu mu?`,
@@ -153,6 +249,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, senin için bir şey var: dinlemek ister misin?`,
     whoIs: (n) => `${n} kim? Adını duydum ama kim olduğunu bilmiyorum.`,
     confirm: (b) => `Şunu anladım: ${b} Doğru mu, yoksa başka bir şey var mı?`,
+    readSay: (w, s, d) => `${s} sitesinde okudum (${d}): ${w}`,
+    readAsk: (w, s, d) => `${s} sitesinde okudum (${d}): ${w} Doğrulamadım: bu konuda bir şey biliyor musun?`,
+    checkRead: (w, s) => `${s} sitesinde okudum: ${w} Burada da böyle mi?`,
+    contradiction: (h, r, s) => `Şunu biliyordum: ${h} Ama ${s} sitesinde okudum: ${r} Hangisi geçerli?`,
+    failedStep: (t, n, st) => `“${t}” işinin ${n}. adımında (${st}) başaramadım. Burada nasıl yapılıyor?`,
+    ownTool: 'araçlarımdan biri',
   },
   ko: {
     askPlan: (p, d) => `${d}에 예정되어 있었습니다: ${p} 잘 진행되었나요?`,
@@ -161,6 +263,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}님, 전해 드릴 말이 있어요. 들으시겠어요?`,
     whoIs: (n) => `${n}님은 누구인가요? 이름은 들었지만 누구인지 모르겠어요.`,
     confirm: (b) => `이렇게 이해했어요: ${b} 맞나요, 아니면 더 있나요?`,
+    readSay: (w, s, d) => `${s}에서 읽었어요 (${d}): ${w}`,
+    readAsk: (w, s, d) => `${s}에서 읽었어요 (${d}): ${w} 아직 확인하지 않았어요. 혹시 알고 있나요?`,
+    checkRead: (w, s) => `${s}에서 읽었어요: ${w} 여기서도 그런가요?`,
+    contradiction: (h, r, s) => `이렇게 알고 있었어요: ${h} 그런데 ${s}에서 읽었어요: ${r} 어느 쪽이 맞나요?`,
+    failedStep: (t, n, st) => `“${t}”의 ${n}단계(${st})를 해내지 못했어요. 여기서는 어떻게 하나요?`,
+    ownTool: '제 도구 중 하나',
   },
   vi: {
     askPlan: (p, d) => `Vào ${d} đã có kế hoạch: ${p} Việc đó đã diễn ra chưa?`,
@@ -169,6 +277,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, có điều này dành cho bạn: bạn có muốn nghe không?`,
     whoIs: (n) => `${n} là ai? Tôi đã nghe tên này nhưng không biết là ai.`,
     confirm: (b) => `Tôi hiểu thế này: ${b} Có đúng không, hay còn gì nữa?`,
+    readSay: (w, s, d) => `Tôi đã đọc trên ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Tôi đã đọc trên ${s} (${d}): ${w} Tôi chưa kiểm tra: bạn có biết gì về việc này không?`,
+    checkRead: (w, s) => `Tôi đã đọc trên ${s}: ${w} Ở đây có đúng như vậy không?`,
+    contradiction: (h, r, s) => `Tôi đã biết điều này: ${h} Nhưng tôi đọc trên ${s}: ${r} Điều nào đúng?`,
+    failedStep: (t, n, st) => `Ở bước ${n} của “${t}” (${st}) tôi đã không làm được. Ở đây làm thế nào?`,
+    ownTool: 'một trong các công cụ của tôi',
   },
   fa: {
     askPlan: (p, d) => `برای ${d} برنامه‌ریزی شده بود: ${p} انجام شد؟`,
@@ -177,6 +291,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}، چیزی برایت دارم: می‌خواهی بشنوی؟`,
     whoIs: (n) => `${n} کیست؟ اسمش را شنیده‌ام اما نمی‌دانم کیست.`,
     confirm: (b) => `این را فهمیدم: ${b} درست است، یا چیز دیگری هم هست؟`,
+    readSay: (w, s, d) => `در ${s} خواندم (${d}): ${w}`,
+    readAsk: (w, s, d) => `در ${s} خواندم (${d}): ${w} آن را بررسی نکرده‌ام: چیزی درباره‌اش می‌دانی؟`,
+    checkRead: (w, s) => `در ${s} خواندم: ${w} اینجا هم همین‌طور است؟`,
+    contradiction: (h, r, s) => `این را می‌دانستم: ${h} اما در ${s} خواندم: ${r} کدام درست است؟`,
+    failedStep: (t, n, st) => `در مرحلهٔ ${n} از «${t}» (${st}) موفق نشدم. اینجا چطور انجامش می‌دهند؟`,
+    ownTool: 'یکی از ابزارهایم',
   },
   pl: {
     askPlan: (p, d) => `Na ${d} zaplanowano: ${p} Czy do tego doszło?`,
@@ -185,6 +305,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, mam coś dla ciebie: chcesz posłuchać?`,
     whoIs: (n) => `Kim jest ${n}? Słyszałem to imię, ale nie wiem, kto to jest.`,
     confirm: (b) => `Zrozumiałem to tak: ${b} Czy tak jest, czy jest coś jeszcze?`,
+    readSay: (w, s, d) => `Przeczytałem na ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Przeczytałem na ${s} (${d}): ${w} Nie sprawdziłem tego: wiesz coś o tym?`,
+    checkRead: (w, s) => `Przeczytałem na ${s}: ${w} Czy u nas tak jest?`,
+    contradiction: (h, r, s) => `Wiedziałem to: ${h} Ale na ${s} przeczytałem: ${r} Co jest prawdą?`,
+    failedStep: (t, n, st) => `Przy kroku ${n} z „${t}” (${st}) nie dałem rady. Jak to się robi u nas?`,
+    ownTool: 'jedno z moich narzędzi',
   },
   nl: {
     askPlan: (p, d) => `Voor ${d} stond gepland: ${p} Is het doorgegaan?`,
@@ -193,6 +319,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, ik heb iets voor je: wil je het horen?`,
     whoIs: (n) => `Wie is ${n}? Ik heb de naam gehoord, maar weet niet wie het is.`,
     confirm: (b) => `Ik heb dit begrepen: ${b} Klopt dat, of is er meer?`,
+    readSay: (w, s, d) => `Ik las op ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Ik las op ${s} (${d}): ${w} Ik heb het niet gecontroleerd: weet jij er iets van?`,
+    checkRead: (w, s) => `Ik las op ${s}: ${w} Is dat hier ook zo?`,
+    contradiction: (h, r, s) => `Ik wist dit: ${h} Maar ik las op ${s}: ${r} Wat klopt?`,
+    failedStep: (t, n, st) => `Bij stap ${n} van “${t}” (${st}) lukte het me niet. Hoe doen we dat hier?`,
+    ownTool: 'een van mijn hulpmiddelen',
   },
   th: {
     askPlan: (p, d) => `มีแผนไว้สำหรับ ${d}: ${p} เกิดขึ้นหรือไม่`,
@@ -201,6 +333,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n} มีเรื่องจะบอก อยากฟังไหม`,
     whoIs: (n) => `${n} คือใคร ได้ยินชื่อนี้แต่ไม่รู้ว่าเป็นใคร`,
     confirm: (b) => `เข้าใจว่า: ${b} ถูกต้องไหม หรือมีอะไรเพิ่มเติมอีก?`,
+    readSay: (w, s, d) => `ฉันอ่านเจอใน ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `ฉันอ่านเจอใน ${s} (${d}): ${w} ยังไม่ได้ตรวจสอบ คุณรู้อะไรเกี่ยวกับเรื่องนี้ไหม?`,
+    checkRead: (w, s) => `ฉันอ่านเจอใน ${s}: ${w} ที่นี่เป็นแบบนี้ไหม?`,
+    contradiction: (h, r, s) => `ฉันเคยรู้ว่า: ${h} แต่อ่านเจอใน ${s}: ${r} อันไหนถูก?`,
+    failedStep: (t, n, st) => `ขั้นที่ ${n} ของ “${t}” (${st}) ฉันทำไม่สำเร็จ ที่นี่ทำอย่างไร?`,
+    ownTool: 'เครื่องมือหนึ่งของฉัน',
   },
   sw: {
     askPlan: (p, d) => `Kwa ${d} ilipangwa: ${p} Je, ilifanyika?`,
@@ -209,6 +347,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, nina jambo lako: ungependa kulisikia?`,
     whoIs: (n) => `${n} ni nani? Nimesikia jina hilo lakini sijui ni nani.`,
     confirm: (b) => `Nimeelewa hivi: ${b} Ni sahihi, au kuna zaidi?`,
+    readSay: (w, s, d) => `Nilisoma kwenye ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Nilisoma kwenye ${s} (${d}): ${w} Sijathibitisha: unajua chochote kuhusu hilo?`,
+    checkRead: (w, s) => `Nilisoma kwenye ${s}: ${w} Je, hapa ni hivyo?`,
+    contradiction: (h, r, s) => `Nilijua hivi: ${h} Lakini nilisoma kwenye ${s}: ${r} Kipi ni sahihi?`,
+    failedStep: (t, n, st) => `Katika hatua ya ${n} ya “${t}” (${st}) sikufaulu. Hapa inafanywaje?`,
+    ownTool: 'moja ya zana zangu',
   },
   uk: {
     askPlan: (p, d) => `На ${d} було заплановано: ${p} Це відбулося?`,
@@ -217,6 +361,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, у мене є дещо для тебе: хочеш послухати?`,
     whoIs: (n) => `Хто такий ${n}? Я чув це ім'я, але не знаю, хто це.`,
     confirm: (b) => `Я зрозумів так: ${b} Це правильно, чи є ще щось?`,
+    readSay: (w, s, d) => `Я прочитав на ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Я прочитав на ${s} (${d}): ${w} Я цього не перевіряв: ти щось про це знаєш?`,
+    checkRead: (w, s) => `Я прочитав на ${s}: ${w} У нас це так?`,
+    contradiction: (h, r, s) => `Я знав ось що: ${h} Але на ${s} я прочитав: ${r} Що правильно?`,
+    failedStep: (t, n, st) => `На кроці ${n} з «${t}» (${st}) у мене не вийшло. Як це роблять у нас?`,
+    ownTool: 'один з моїх інструментів',
   },
   ro: {
     askPlan: (p, d) => `Pentru ${d} era planificat: ${p} S-a întâmplat?`,
@@ -225,6 +375,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, am ceva pentru tine: vrei să auzi?`,
     whoIs: (n) => `Cine este ${n}? Am auzit numele, dar nu știu cine este.`,
     confirm: (b) => `Am înțeles asta: ${b} Așa este, sau mai e ceva?`,
+    readSay: (w, s, d) => `Am citit pe ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Am citit pe ${s} (${d}): ${w} Nu am verificat: știi ceva despre asta?`,
+    checkRead: (w, s) => `Am citit pe ${s}: ${w} Așa este la noi?`,
+    contradiction: (h, r, s) => `Știam asta: ${h} Dar am citit pe ${s}: ${r} Care este valabil?`,
+    failedStep: (t, n, st) => `La pasul ${n} din „${t}” (${st}) nu am reușit. Cum se face la noi?`,
+    ownTool: 'unul dintre instrumentele mele',
   },
   el: {
     askPlan: (p, d) => `Για τις ${d} είχε προγραμματιστεί: ${p} Έγινε;`,
@@ -233,6 +389,12 @@ const TEXTS: Record<string, InitiativeText> = {
     opening: (n) => `${n}, έχω κάτι για σένα: θέλεις να το ακούσεις;`,
     whoIs: (n) => `Ποιος είναι ο/η ${n}; Έχω ακούσει το όνομα, αλλά δεν ξέρω ποιος είναι.`,
     confirm: (b) => `Κατάλαβα το εξής: ${b} Ισχύει, ή υπάρχει κάτι ακόμα;`,
+    readSay: (w, s, d) => `Διάβασα στο ${s} (${d}): ${w}`,
+    readAsk: (w, s, d) => `Διάβασα στο ${s} (${d}): ${w} Δεν το έχω ελέγξει: ξέρεις κάτι γι' αυτό;`,
+    checkRead: (w, s) => `Διάβασα στο ${s}: ${w} Έτσι είναι εδώ;`,
+    contradiction: (h, r, s) => `Ήξερα αυτό: ${h} Αλλά διάβασα στο ${s}: ${r} Ποιο ισχύει;`,
+    failedStep: (t, n, st) => `Στο βήμα ${n} του «${t}» (${st}) δεν τα κατάφερα. Πώς γίνεται εδώ;`,
+    ownTool: 'ένα από τα εργαλεία μου',
   },
 };
 

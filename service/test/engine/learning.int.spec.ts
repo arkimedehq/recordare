@@ -80,7 +80,7 @@ describe('learning from outside (8.16 F1)', () => {
     ], { notes: [{ ...pharmacy, evidence: [2] }] });
     expect(system).toContain('LEARNING (what I am told or read that lasts)');
     expect(await db.query(`SELECT DISTINCT prompt_version FROM extraction_runs WHERE memory_id = $1`, [home]))
-      .toEqual([{ prompt_version: 'extract.v24+entity.v12+learn.v2' }]);
+      .toEqual([{ prompt_version: 'extract.v24+entity.v12+learn.v3' }]);
 
     const [note] = await db.query(`SELECT id, origin::text, pending, stance::text, confidence, lasts, recheck_at, expires_at FROM notes WHERE memory_id = $1`, [home]);
     expect(note).toMatchObject({ origin: 'learned', pending: true, stance: 'inferred', confidence: 0.5, lasts: 'changing', expires_at: null });

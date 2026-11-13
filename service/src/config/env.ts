@@ -106,6 +106,12 @@ const baseSchema = z.object({
   LEARNED_RECHECK_DAYS: z.coerce.number().int().min(1).max(3_650).default(180),
   /** Tool names (a regular expression, case-insensitive) that are the agent's own first-party tools (a calendar, a device); empty: none. */
   LEARNING_OWN_TOOLS: z.string().default(''),
+  /** 8.16 F3: something read that touches a known life is told (or asked about) when it is at most this many days ahead. */
+  LEARNED_AHEAD_DAYS: z.coerce.number().int().min(0).max(60).default(3),
+  /** 8.16 F3 child-like stages: an entity memory that learns is young below this many items the household confirmed (asks
+   * more, says what it read only as a question), grown from LEARNING_STAGE_GROWN (asks to confirm only lasting knowledge). */
+  LEARNING_STAGE_YOUNG: z.coerce.number().int().min(0).max(100_000).default(30),
+  LEARNING_STAGE_GROWN: z.coerce.number().int().min(0).max(100_000).default(150),
   /** D55 §5c: at most one spontaneous announcement (an initiative or an opening said aloud) per person this often, in minutes. */
   INITIATIVE_VOICE_PACE_MINUTES: z.coerce.number().int().min(0).max(1_440).default(30),
   /** Webhooks may point to private addresses and plain http (a client co-hosted with Recordare); off: public https only (SSRF). */

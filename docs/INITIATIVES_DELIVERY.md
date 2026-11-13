@@ -253,6 +253,15 @@ confirmation asked about any version covers the later ones. Never a note learnt 
 question, or a private one. Facts
 only in episodes, or never said aloud, are not reached this way.
 
+**What it read, and learning from it** (8.16 F3, D57, built 2026-11-12, no model): in an entity memory that learns,
+something read that touches a known life and is still ahead ("a bus strike tomorrow", Matteo takes the bus) goes to that
+person with its source and the day it was read — told (`readSay`) when the source is trusted to teach and the memory is
+past its first stage, else asked as unchecked (`readAsk`); a wording that loses the site is replaced by the sentence.
+Learning questions to the household member the memory trusts most, after the gaps and before the confirmations, one at a
+time as above: a contradiction between something read and what it holds (`contradiction`), a step of a procedure that
+failed (`failedStep`), knowledge of the place read and pending (`checkRead`). Young (few things confirmed), the memory
+asks up to twice a day per person.
+
 ## 7. The contract (changes, all additive)
 
 - **Presence impulse** `POST api/v1/presence {user?, person: {ref | personId}, channel: voice | camera | chat | panel,

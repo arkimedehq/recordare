@@ -125,6 +125,17 @@ export class ContactBook {
     return this.byName(text);
   }
 
+  /** 8.16 F3: is this name already one person in the memory (a contact it knows; nothing created)? */
+  async known(raw: string): Promise<boolean> {
+    const { name } = parseName(raw);
+    if (!name || this.isSelf(name)) return false;
+    const f = fold(name);
+    const rows: Array<{ names: string[] }> = await this.tx.query(
+      `SELECT array_remove(array_agg(a.alias_norm), NULL) || ARRAY[lower(unaccent(p.display_name)), lower(unaccent(COALESCE(p.full_name, '')))] AS names
+       FROM persons p LEFT JOIN person_aliases a ON a.person_id = p.id WHERE p.memory_id = $1 AND p.id <> $1 GROUP BY p.id`, [this.memoryId]);
+    return rows.filter((c) => c.names.some((x) => fold(x) === f)).length === 1;
+  }
+
   /**
    * A person named in an item ("Marco (cugino)"): the contact, a new one, or undecided between several. `properOnly`
    * (episode people): references that are not names ("amiche del nuoto") create no contact.

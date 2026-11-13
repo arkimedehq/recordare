@@ -6,6 +6,20 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Aggiunto
+- **Iniziative da ciò che ha letto, e il ciclo di apprendimento** (WORK_PLAN 8.16 F3, D57): in una memoria di entità che
+  impara, una cosa letta che tocca una vita nota ed è ancora davanti viene detta a quella persona con la sua fonte e il
+  giorno in cui è stata letta — detta quando la fonte è fidata e la memoria ha passato il primo stadio, altrimenti
+  chiesta come non verificata; una notizia che non tocca nessuno non dice nulla. La memoria chiede al membro della casa
+  di cui si fida di più quando una cosa letta contraddice ciò che sa, quando un passo di una procedura è fallito, e per
+  confermare una conoscenza del luogo che ha letto — una domanda alla volta; una persona fidata che tiene a ciò che
+  sapeva ritira la versione della pagina. Stadi da bambino, calcolati da ciò che la casa ha confermato
+  (`LEARNING_STAGE_YOUNG`, `LEARNING_STAGE_GROWN`; mostrati in console): piccola, chiede di più e dice ciò che ha letto
+  solo come domanda. `LEARNED_AHEAD_DAYS`; prompt `initiative.v5` e `extract.v24+entity.v12+learn.v3` (una notizia letta
+  che tocca una persona di casa è anche un episodio che la nomina, con il giorno in cui accade: `episodes.happens_on`);
+  migrazione `LearnedInitiatives1791360000000`; frasi
+  in tutte le lingue.
+
 ## [0.14.0] — 2026-11-12
 
 **L'agente impara dall'esterno, come un bambino — e tiene intero il modo di fare un compito.** Una memoria di entità

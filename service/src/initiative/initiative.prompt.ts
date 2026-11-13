@@ -16,7 +16,7 @@
  */
 import { z } from 'zod';
 
-export const INITIATIVE_VERSION = 'initiative.v4';
+export const INITIATIVE_VERSION = 'initiative.v5';
 
 export const INITIATIVE_SYSTEM = `You word what an agent's memory decided to say on its own, and weigh whether it is \
 worth saying. I am ME: the agent (in a personal memory, one self with the person whose memory this is). You get ME, \
@@ -43,6 +43,9 @@ suggests them: asking how a dinner went in the evening ([18, 22]), a work matter
 for a child after school ([16, 20]); null when any time of the day is fine. Never narrower than three hours.
 - Keep every detail true to WHAT and WHEN; add nothing — no judgement of the person, no recalling what they got wrong \
 before ("l'anno scorso te ne sei ricordato tardi"): a reminder reminds.
+- Something I READ (its WHAT says "read on" a source and a day): keep where and when I read it in the text, never \
+present it as known for sure or as told by a person ("Ho letto su sciopero-esempio.it, mercoledì, che giovedì i bus non \
+passano."); a "say" tells it, an "ask" says I have not checked it and asks.
 
 Output JSON only: {"initiatives": [{"candidate", "text", "worth", "skip", "hours"}]}`;
 

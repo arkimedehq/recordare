@@ -32,6 +32,7 @@ import { containsPhrase, normalize, RELATION_GROUPS } from '../lang';
 import { episodeVisible, noteVisible, PUBLIC_ONLY } from '../recall/privacy';
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { DELIVERY_CHANNELS } from './initiative.responses';
+import { episodeInformant, householdAnswerer, informantTrust, itemSource, learningStage, type LearningStage, TEACH_TRUST } from '../engine/learning';
 import { WebhooksService } from './webhooks.service';
 
 export type InitiativeKind = 'say' | 'ask' | 'lookup' | 'do';
@@ -125,6 +126,10 @@ const MAX_ATTEMPTS = 2;
 const DAY_MS = 86_400_000;
 /** A learning question to a person at most once a day: less than 24 h, so one given at the same hour each day is not pushed later and later. */
 const LEARN_GAP_HOURS = 20;
+/** 8.16 F3: a young memory asks more — up to two learning questions a day per person. */
+const LEARN_GAP_HOURS_YOUNG = 8;
+/** 8.16 F3: a failed step of a procedure is asked about within this many days of the run. */
+const STEP_ASK_DAYS = 7;
 /** Below this worth (the model's, balanced and full) an initiative is not said — and its intent is dropped, not postponed. */
 const WORTH_FLOOR = 0.3;
 
@@ -240,6 +245,9 @@ export class InitiativeService {
          OR EXISTS (SELECT 1 FROM intents t WHERE t.memory_id = o.person_id AND t.status IN ('armed', 'fired'))
          -- someone heard named whom it does not know (a gap, D55 F2b)
          OR EXISTS (SELECT 1 FROM persons p JOIN episode_people ep ON ep.person_id = p.id WHERE p.memory_id = o.person_id AND p.relation IS NULL)
+         -- 8.16 F3: something read still pending, a step of a procedure that failed
+         OR EXISTS (SELECT 1 FROM notes n WHERE n.memory_id = o.person_id AND n.origin = 'learned' AND n.pending AND n.status = 'current')
+         OR EXISTS (SELECT 1 FROM procedure_runs r WHERE r.memory_id = o.person_id AND r.outcome = 'failed')
          -- what was given or waits to be (D55): settled, pushed or lapsed even when no intent is open any more
          OR EXISTS (SELECT 1 FROM initiatives i WHERE i.memory_id = o.person_id AND i.status IN ('pending', 'offered'))`);
     for (const { person_id } of memories) {
@@ -310,7 +318,13 @@ export class InitiativeService {
          AND NOT EXISTS (SELECT 1 FROM note_evidence x JOIN messages m ON m.id = x.message_id WHERE x.note_id = n.id AND m.role = 'assistant')
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.supersedes)
          AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.kind IN ('lookup', 'own') AND t.note_id = n.id)`, [memoryId]);
-    const [mem]: Array<{ mode: string }> = await this.db.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
+    const [mem]: Array<{ mode: string; learn_from_outside: boolean | null }> = await this.db.query(
+      `SELECT mode, learn_from_outside FROM memories WHERE person_id = $1`, [memoryId]);
+    // 8.16 F3: an entity memory that learns grows by stages — young, it asks more (two learning questions a day).
+    const learns = mem?.mode === 'entity' && mem.learn_from_outside !== false;
+    const stage: LearningStage | null = learns ? (await learningStage(this.db, memoryId, {
+      young: this.config.get('LEARNING_STAGE_YOUNG', { infer: true }) ?? 30, grown: this.config.get('LEARNING_STAGE_GROWN', { infer: true }) ?? 150 })).stage : null;
+    const gap = stage === 'young' ? LEARN_GAP_HOURS_YOUNG : LEARN_GAP_HOURS;
     for (const q of questions) {
       // D55 F2b: whom to ask. A question about the world goes to the agent's tools (a look-up); one about a person to
       // someone who could know — that person when they talk to me, else whoever told me most about them (the holder of a
@@ -319,7 +333,7 @@ export class InitiativeService {
       const to = q.subject ? await this.answerer(memoryId, q.subject, mem?.mode === 'entity') : null;
       if (q.subject && to === undefined) continue;
       if (to !== null && to !== undefined) {
-        if (await this.learningBusy(memoryId, to === 'holder' ? null : to, now)) continue;
+        if (await this.learningBusy(memoryId, to === 'holder' ? null : to, now, gap)) continue;
       }
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -327,8 +341,16 @@ export class InitiativeService {
         [memoryId, q.subject ? 'own' : 'lookup', q.content, to && to !== 'holder' ? to : null, q.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
       armed += r.length;
     }
-    armed += await this.armGaps(memoryId, now, mem?.mode === 'entity');
-    armed += await this.armConfirms(memoryId, now, mem?.mode === 'entity');
+    armed += await this.armGaps(memoryId, now, mem?.mode === 'entity', gap);
+    if (stage) {
+      // 8.16 F3, in this order: what I read touching someone ahead; then the learning questions — a contradiction, a
+      // failed step, something read to confirm — before the confirmations of what I heard.
+      armed += await this.armLearned(memoryId, now, stage);
+      armed += await this.armChecks(memoryId, now, stage, gap, true);
+      armed += await this.armSteps(memoryId, now, gap);
+      armed += await this.armChecks(memoryId, now, stage, gap, false);
+    }
+    armed += await this.armConfirms(memoryId, now, mem?.mode === 'entity', gap);
     // A source that moved on closes its intent: the plan confirmed, cancelled or rescheduled; the question answered or forgotten.
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM episodes e
@@ -337,7 +359,14 @@ export class InitiativeService {
               OR e.deleted_at IS NOT NULL OR e.invalidated_at IS NOT NULL)`, [memoryId]);
     await this.db.query(
       `UPDATE intents t SET status = 'done', updated_at = now() FROM notes n
-       WHERE t.memory_id = $1 AND t.status IN ('armed', 'fired') AND t.note_id = n.id AND (n.status <> 'current' OR n.deleted_at IS NOT NULL)`, [memoryId]);
+       WHERE t.memory_id = $1 AND t.status IN ('armed', 'fired') AND t.note_id = n.id AND (n.status <> 'current' OR n.deleted_at IS NOT NULL
+         OR (t.kind = 'check' AND NOT n.pending))`, [memoryId]);
+    // 8.16 F3: a failed step whose household way was taught since — nothing to ask.
+    await this.db.query(
+      `UPDATE intents t SET status = 'done', updated_at = now() FROM procedure_runs r
+       WHERE t.memory_id = $1 AND t.kind = 'step' AND t.status = 'armed' AND r.id = t.procedure_run_id
+         AND EXISTS (SELECT 1 FROM procedure_variants v WHERE v.procedure_id = r.procedure_id AND v.step = r.step AND v.at >= r.at AND v.retired_at IS NULL)`,
+      [memoryId]);
     return armed;
   }
 
@@ -347,7 +376,7 @@ export class InitiativeService {
    * "Who is Elena?". No model. One question at a time per person asked; never twice about the same person (an answer
    * or a "don't know" alike: the intent is done). Closed when the gap closes before it is asked.
    */
-  private async armGaps(memoryId: string, now: Date, entity: boolean): Promise<number> {
+  private async armGaps(memoryId: string, now: Date, entity: boolean, gap = LEARN_GAP_HOURS): Promise<number> {
     const gaps: Array<{ id: string; display_name: string }> = await this.db.query(
       `SELECT p.id, p.display_name FROM persons p
        WHERE p.memory_id = $1 AND p.id <> $1 AND p.relation IS NULL
@@ -367,7 +396,7 @@ export class InitiativeService {
       if (relationInName(g, names)) continue;
       const to = await this.answerer(memoryId, g.id, entity);
       if (to === undefined || to === g.id) continue; // nobody to ask (they would be asked who they are themselves)
-      if (await this.learningBusy(memoryId, to === 'holder' ? null : to, now)) continue;
+      if (await this.learningBusy(memoryId, to === 'holder' ? null : to, now, gap)) continue;
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, about_person_id, due_at, expires_at) VALUES ($1, 'who', $2, $3, $4, $5, $6)
          ON CONFLICT (about_person_id, kind) WHERE about_person_id IS NOT NULL DO NOTHING RETURNING id`,
@@ -393,7 +422,7 @@ export class InitiativeService {
    * my questions (that is the answer), not a private one, not one revising a note already asked about. After the gaps;
    * one learning question at a time per person, at most one a day (`learningBusy`).
    */
-  private async armConfirms(memoryId: string, now: Date, entity: boolean): Promise<number> {
+  private async armConfirms(memoryId: string, now: Date, entity: boolean, gap = LEARN_GAP_HOURS): Promise<number> {
     // A note's versions (the patterns pass rewrites a guess every night) count as one: its age is the first version's,
     // and a confirmation asked about any version covers them all (D55 F2b confirm1: a guess rewritten nightly never
     // turned a day old).
@@ -421,7 +450,7 @@ export class InitiativeService {
       const to = await this.answerer(memoryId, n.subject, entity);
       if (to === undefined) continue;
       const forId = to === 'holder' ? null : to;
-      if (await this.learningBusy(memoryId, forId, now)) continue;
+      if (await this.learningBusy(memoryId, forId, now, gap)) continue;
       const r = await this.db.query(
         `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at) VALUES ($1, 'confirm', $2, $3, $4, $5, $6)
          ON CONFLICT (note_id, kind) WHERE note_id IS NOT NULL DO NOTHING RETURNING id`,
@@ -432,16 +461,125 @@ export class InitiativeService {
   }
 
   /**
+   * 8.16 F3: something I read (an episode of origin `learned`) that touches a known life and is still ahead — within
+   * LEARNED_AHEAD_DAYS, not over — is for the person it touches (or whoever could tell them: `answerer`), said with its
+   * source and the day I read it: told when the source is trusted to teach and I am past my first stage, else asked as
+   * unchecked. Once per episode; a retraction closes it (the episode invalidated). Not a learning question.
+   */
+  private async armLearned(memoryId: string, now: Date, stage: LearningStage): Promise<number> {
+    // The news's own day (`happens_on`, learn.v3), in the memory's time zone: from today to LEARNED_AHEAD_DAYS ahead;
+    // said until that day ends.
+    const rows: Array<{ id: string; content: string; touched: string; ends_at: Date }> = await this.db.query(
+      `SELECT e.id, e.content,
+         COALESCE(CASE WHEN e.subject_kind = 'contact' THEN e.subject_person_id END,
+           (SELECT ep.person_id FROM episode_people ep WHERE ep.episode_id = e.id AND ep.person_id <> $1 ORDER BY ep.person_id LIMIT 1)) AS touched,
+         ((e.happens_on + 1)::timestamp AT TIME ZONE m.timezone) AS ends_at
+       FROM episodes e JOIN memories m ON m.person_id = e.memory_id
+       WHERE e.memory_id = $1 AND e.origin = 'learned' AND e.deleted_at IS NULL AND e.invalidated_at IS NULL AND e.duplicate_of IS NULL
+         AND e.happens_on IS NOT NULL
+         AND e.happens_on >= ($2::timestamptz AT TIME ZONE m.timezone)::date
+         AND e.happens_on <= ($2::timestamptz AT TIME ZONE m.timezone)::date + $3::int
+         AND ((e.subject_kind = 'contact' AND e.subject_person_id IS NOT NULL)
+           OR EXISTS (SELECT 1 FROM episode_people ep WHERE ep.episode_id = e.id AND ep.person_id <> $1))
+         AND ${episodeVisible('e', PUBLIC_ONLY)}
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.episode_id = e.id AND t.kind = 'learned')
+       ORDER BY e.occurred_at`, [memoryId, now, this.config.get('LEARNED_AHEAD_DAYS', { infer: true }) ?? 3]);
+    if (!rows.length) return 0;
+    const own = (this.config.get('LEARNING_OWN_TOOLS', { infer: true }) ?? '').trim();
+    const ownTools = own ? new RegExp(own, 'i') : null;
+    let armed = 0;
+    for (const e of rows) {
+      const to = await this.answerer(memoryId, e.touched, true);
+      if (to === undefined) continue;
+      const informant = await episodeInformant(this.db, e.id, ownTools);
+      if (!informant) continue;
+      const trusted = stage !== 'young' && (await informantTrust(this.db, memoryId, informant)) >= TEACH_TRUST;
+      const r = await this.db.query(
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, episode_id, due_at, expires_at, source, trusted)
+         VALUES ($1, 'learned', $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (episode_id, kind) WHERE episode_id IS NOT NULL DO NOTHING RETURNING id`,
+        [memoryId, e.content, to === 'holder' ? null : to, e.id, now, e.ends_at, informant.kind === 'site' ? informant.key : null, trusted]);
+      armed += r.length;
+    }
+    return armed;
+  }
+
+  /**
+   * 8.16 F3, the learning loop: something I read and still hold pending, asked of the household member I trust most
+   * (`householdAnswerer`). `contradictions`: it proposes to replace or correct what I hold ("I had …, but I read …: which
+   * holds?"); else knowledge to confirm ("I read …: is that how it is here?") — not perishable news, at least a day old,
+   * only lasting knowledge once I am grown. The answer is the household's word on it (the extraction confirms it, or a
+   * trusted person holding to what I had retires it: `refuteProposals`). Once per note; a learning question (one at a time).
+   */
+  private async armChecks(memoryId: string, now: Date, stage: LearningStage, gap: number, contradictions: boolean): Promise<number> {
+    const notes: Array<{ id: string; content: string }> = await this.db.query(
+      `SELECT n.id, n.content FROM notes n
+       WHERE n.memory_id = $1 AND n.origin = 'learned' AND n.pending AND n.status = 'current' AND n.deleted_at IS NULL
+         AND n.category <> 'question' AND (n.expires_at IS NULL OR n.expires_at > $2)
+         AND ${contradictions
+    ? `EXISTS (SELECT 1 FROM notes o WHERE o.id IN (n.supersedes, n.corrects) AND o.status = 'current' AND NOT o.pending AND o.deleted_at IS NULL)`
+    : `NOT EXISTS (SELECT 1 FROM notes o WHERE o.id IN (n.supersedes, n.corrects) AND o.status = 'current' AND o.deleted_at IS NULL)
+           AND n.lasts IS DISTINCT FROM 'perishable' ${stage === 'grown' ? `AND n.lasts = 'lasting'` : ''}
+           AND COALESCE(n.valid_from, n.recorded_at) <= $2::timestamptz - interval '1 day'`}
+         AND ${noteVisible('n', PUBLIC_ONLY)}
+         AND NOT EXISTS (SELECT 1 FROM intents t WHERE t.note_id = n.id AND t.kind = 'check')
+       ORDER BY n.recorded_at, n.id`, [memoryId, now]);
+    if (!notes.length) return 0;
+    const to = await householdAnswerer(this.db, memoryId);
+    if (to === undefined) return 0;
+    let armed = 0;
+    for (const n of notes) {
+      if (await this.learningBusy(memoryId, to, now, gap)) break;
+      const source = await itemSource(this.db, { table: 'notes', id: n.id });
+      const r = await this.db.query(
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, note_id, due_at, expires_at, source) VALUES ($1, 'check', $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (note_id, kind) WHERE note_id IS NOT NULL DO NOTHING RETURNING id`,
+        [memoryId, n.content, to, n.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS), source?.kind === 'site' ? source.key : null]);
+      armed += r.length;
+    }
+    return armed;
+  }
+
+  /**
+   * 8.16 F3, the learning loop: a step of a procedure that failed in a run (in the last STEP_ASK_DAYS) is asked of the
+   * household member I trust most — "at step N of … I did not manage: how is it done here?" —; the answer becomes the
+   * household's way of that step (the extraction's PROCEDURES, B1). Once per run; closed when that way is taught.
+   */
+  private async armSteps(memoryId: string, now: Date, gap: number): Promise<number> {
+    const runs: Array<{ id: string; text: string }> = await this.db.query(
+      `SELECT r.id, p.steps->>(r.step - 1) AS text FROM procedure_runs r JOIN procedures p ON p.id = r.procedure_id
+       WHERE r.memory_id = $1 AND r.outcome = 'failed' AND r.step IS NOT NULL AND p.status = 'current'
+         AND r.at > $2::timestamptz - make_interval(days => $3) AND r.at <= $2
+         AND NOT EXISTS (SELECT 1 FROM procedure_variants v WHERE v.procedure_id = p.id AND v.step = r.step AND v.at >= r.at AND v.retired_at IS NULL)
+         -- the same step asked about after an earlier failure: once is enough
+         AND NOT EXISTS (SELECT 1 FROM intents t JOIN procedure_runs o ON o.id = t.procedure_run_id
+           WHERE t.kind = 'step' AND o.procedure_id = r.procedure_id AND o.step = r.step)
+       ORDER BY r.at`, [memoryId, now, STEP_ASK_DAYS]);
+    if (!runs.length) return 0;
+    const to = await householdAnswerer(this.db, memoryId);
+    if (to === undefined) return 0;
+    let armed = 0;
+    for (const r of runs) {
+      if (!r.text || await this.learningBusy(memoryId, to, now, gap)) break;
+      const ins = await this.db.query(
+        `INSERT INTO intents (memory_id, kind, content, for_person_id, procedure_run_id, due_at, expires_at) VALUES ($1, 'step', $2, $3, $4, $5, $6)
+         ON CONFLICT (procedure_run_id, kind) WHERE procedure_run_id IS NOT NULL DO NOTHING RETURNING id`,
+        [memoryId, r.text, to, r.id, now, new Date(now.getTime() + LOOKUP_KEEP_DAYS * DAY_MS)]);
+      armed += ins.length;
+    }
+    return armed;
+  }
+
+  /**
    * Learning questions (a question of mine about someone, a gap, a confirmation) go one at a time to each person and at
    * most one a day (D55 F2b confirm1: a child who answers once a day was asked twice in an evening once the first was
    * answered): busy while one is open, or one was given in the last LEARN_GAP_HOURS.
    */
-  private async learningBusy(memoryId: string, forId: string | null, now: Date): Promise<boolean> {
+  private async learningBusy(memoryId: string, forId: string | null, now: Date, gap = LEARN_GAP_HOURS): Promise<boolean> {
     const [busy] = await this.db.query(
-      `SELECT 1 FROM intents t WHERE t.memory_id = $1 AND t.kind IN ('own', 'who', 'confirm') AND t.for_person_id IS NOT DISTINCT FROM $2
+      `SELECT 1 FROM intents t WHERE t.memory_id = $1 AND t.kind IN ('own', 'who', 'confirm', 'check', 'step') AND t.for_person_id IS NOT DISTINCT FROM $2
          AND (t.status IN ('armed', 'fired') OR EXISTS (SELECT 1 FROM initiatives i WHERE i.intent_id = t.id
            AND i.status NOT IN ('failed', 'expired') AND i.due_at > $3::timestamptz - make_interval(hours => $4)))
-       LIMIT 1`, [memoryId, forId, now, LEARN_GAP_HOURS]);
+       LIMIT 1`, [memoryId, forId, now, gap]);
     return !!busy;
   }
 
@@ -484,12 +622,19 @@ export class InitiativeService {
       `SELECT o.timezone, o.locale, o.quiet_from, o.quiet_to, o.quality_profile, o.mode, p.display_name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory) return 0;
     const due: Array<{ id: string; kind: string; content: string; for_person_id: string | null; for_name: string | null; episode_id: string | null; note_id: string | null; expires_at: Date; due_at: Date; occurred_at: Date | null;
-      timed: boolean; message_id: string | null; private: boolean; note_subject: string | null }> =
+      timed: boolean; message_id: string | null; private: boolean; note_subject: string | null;
+      source: string | null; trusted: boolean; read_at: Date | null; had: string | null; run_title: string | null; run_step: number | null }> =
       await this.db.query(
         `SELECT t.id, t.kind::text, t.content, t.for_person_id, (SELECT display_name FROM persons WHERE id = t.for_person_id) AS for_name,
            t.episode_id, t.note_id, t.expires_at, t.due_at, e.occurred_at, t.timed, t.message_id,
            COALESCE((SELECT m.private FROM messages m WHERE m.id = t.message_id), false) AS private,
-           (SELECT CASE WHEN n.subject_kind = 'contact' THEN n.subject_person_id END FROM notes n WHERE n.id = t.note_id) AS note_subject
+           (SELECT CASE WHEN n.subject_kind = 'contact' THEN n.subject_person_id END FROM notes n WHERE n.id = t.note_id) AS note_subject,
+           t.source, t.trusted,
+           CASE WHEN t.kind = 'learned' THEN (SELECT max(m.sent_at) FROM episode_evidence v JOIN messages m ON m.id = v.message_id WHERE v.episode_id = t.episode_id) END AS read_at,
+           CASE WHEN t.kind = 'check' THEN (SELECT o.content FROM notes n JOIN notes o ON o.id IN (n.supersedes, n.corrects)
+             WHERE n.id = t.note_id AND o.status = 'current' AND NOT o.pending LIMIT 1) END AS had,
+           (SELECT p.title FROM procedure_runs r JOIN procedures p ON p.id = r.procedure_id WHERE r.id = t.procedure_run_id) AS run_title,
+           (SELECT r.step FROM procedure_runs r WHERE r.id = t.procedure_run_id) AS run_step
          FROM intents t LEFT JOIN episodes e ON e.id = t.episode_id
          WHERE t.memory_id = $1 AND t.status = 'armed' AND t.due_at <= $2 AND (t.reconsider_at IS NULL OR t.reconsider_at <= $2)
          ORDER BY t.due_at`, [memoryId, now]);
@@ -513,7 +658,7 @@ export class InitiativeService {
         // Not worth saying: dropped, not postponed (a request or a promise is never skipped: the prompt says so, the code too).
         // Nor a gap or a confirmation (D55 F2b run 1: "Who is Elena?" judged not worth asking Giada, who surely knows — that
         // is why she is asked).
-        if (t.kind === 'promise' || t.kind === 'request' || t.kind === 'who' || t.kind === 'confirm') { /* owed, or asked once anyway */ } else {
+        if (t.kind === 'promise' || t.kind === 'request' || t.kind === 'who' || t.kind === 'confirm' || t.kind === 'check' || t.kind === 'step') { /* owed, or asked once anyway */ } else {
           await this.db.query(`UPDATE intents SET status = 'cancelled', updated_at = now() WHERE id = $1`, [t.id]);
           this.telemetry.emit({ type: 'initiative.outcome', memoryId, id: t.id, status: 'not_worth' });
           continue;
@@ -530,6 +675,7 @@ export class InitiativeService {
       const owedLastDay = (t.kind === 'request' || t.kind === 'promise') && sayDays(t, now, memory.timezone).to === localDate(when, memory.timezone);
       if (!chosen && !owedLastDay && (counted[0]?.n ?? 0) >= limit) continue;
       const plan = t.content.trim().replace(/([^.!?])$/, '$1.');
+      const source = t.source ?? text.ownTool;
       const [kind, fallback, reason] = t.kind === 'open_plan' ? ['ask', text.askPlan(plan, day(t.occurred_at!)), 'a plan past its date without an outcome']
           : t.kind === 'lookup' ? ['lookup', text.lookup(t.content), 'a question I hold']
             // A follow-up's content is already the question, in the memory's language (the extraction wrote it so).
@@ -540,13 +686,21 @@ export class InitiativeService {
                 : t.kind === 'who' ? ['ask', text.whoIs(t.content.trim()), 'someone I heard named and do not know']
                   // Something I believe about someone, heard once or guessed: is it so, or is there more?
                   : t.kind === 'confirm' ? ['ask', text.confirm(plan), 'something I believe about them, heard once or guessed']
+                    // 8.16 F3: something I read that touches them — told from a trusted source, else asked as unchecked.
+                    : t.kind === 'learned' ? (t.trusted ? ['say', text.readSay(plan, source, day(t.read_at ?? t.due_at)), 'something I read that touches them']
+                      : ['ask', text.readAsk(plan, source, day(t.read_at ?? t.due_at)), 'something I read that touches them, not checked'])
+                      : t.kind === 'check' ? ['ask', t.had ? text.contradiction(t.had.trim().replace(/([^.!?])$/, '$1.'), plan, source) : text.checkRead(plan, source),
+                        t.had ? 'something I read that contradicts what I hold' : 'something I read about the place, not confirmed']
+                        : t.kind === 'step' ? ['ask', text.failedStep(t.run_title ?? '', t.run_step ?? 0, t.content.trim()), 'a step of a task I did not manage']
             : ['say', text.remindPlan(plan, day(t.due_at)), t.kind === 'promise' ? 'a promise I made' : 'a request they made to me'];
       // A day relative to now ("yesterday") is true only today: in a text that may be said on a later day (an ask, a
       // look-up: days of window), the service's own sentence, which names the day.
       const said = w?.text?.trim();
       const days = sayDays(t, now, memory.timezone);
       const todayOnly = days.from === days.to && days.from === localDate(now, memory.timezone);
-      const content = said && (todayOnly || !saysRelativeDay(said)) ? said : fallback;
+      // 8.16 F3: what I read keeps its source — a wording that lost the site is not said (one of my own tools: no site to keep).
+      const keepsSource = !(t.kind === 'learned' || t.kind === 'check') || !t.source || (!!said && said.toLowerCase().includes(t.source.toLowerCase()));
+      const content = said && keepsSource && (todayOnly || !saysRelativeDay(said)) ? said : fallback;
       const acceptable = acceptableChannels(kind as InitiativeKind, t.kind);
       const rows: Row[] = await this.db.transaction(async (tx: EntityManager) => {
         const inserted: Row[] = await tx.query(
@@ -571,25 +725,38 @@ export class InitiativeService {
 
   /** The model words each due intent as the agent would say it and weighs it (balanced, full); on a failure, the templates. */
   private async word(memoryId: string, memory: { locale: string; timezone: string; display_name: string; mode: string },
-    due: Array<{ id: string; kind: string; content: string; for_name: string | null; due_at: Date; expires_at: Date; timed: boolean; occurred_at: Date | null }>, now: Date,
+    due: Array<{ id: string; kind: string; content: string; for_name: string | null; due_at: Date; expires_at: Date; timed: boolean; occurred_at: Date | null;
+      source?: string | null; trusted?: boolean; read_at?: Date | null; had?: string | null; run_title?: string | null; run_step?: number | null }>, now: Date,
   ): Promise<Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>> {
     const out = new Map<string, { text: string | null; worth: number; skip: boolean; hours: [number, number] | null }>();
     if (!due.length) return out;
-    const kindOf = (k: string) => (k === 'open_plan' || k === 'followup' || k === 'own' || k === 'who' || k === 'confirm' ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    const kindOf = (k: string, trusted?: boolean) => (k === 'open_plan' || k === 'followup' || k === 'own' || k === 'who' || k === 'confirm' || k === 'check'
+      || k === 'step' || (k === 'learned' && !trusted) ? 'ask' : k === 'lookup' ? 'lookup' : 'say');
+    // 8.16 F3: what I read carries where and when; a contradiction both versions; a failed step its task.
+    const whatOf = (t: (typeof due)[number]) => {
+      const site = t.source ?? 'one of my tools';
+      if (t.kind === 'learned') return `${t.content} (read on ${site}, ${localDate(t.read_at ?? t.due_at, memory.timezone)})`;
+      if (t.kind === 'check') return t.had ? `I hold: ${t.had} — but read on ${site}: ${t.content}` : `${t.content} (read on ${site})`;
+      if (t.kind === 'step') return `step ${t.run_step ?? '?'} of "${t.run_title ?? ''}": ${t.content}`;
+      return t.content;
+    };
     const sourceOf = (k: string) => (k === 'open_plan' ? 'a plan of theirs past its date'
       : k === 'promise' ? 'a promise I made' : k === 'request' ? 'a request they made to me'
         : k === 'followup' ? 'something they started and left to finish (WHAT is the question to check it)'
           : k === 'own' ? 'a question I hold, to ask the person FOR, who could know (WHAT is the question)'
             : k === 'who' ? 'someone I heard named and do not know (WHAT is their name): ask the person FOR who they are'
               : k === 'confirm' ? 'something I believe about someone, heard once or guessed (WHAT): ask the person FOR whether it is so or there is more'
-                : 'a question I hold');
+                : k === 'learned' ? 'something I read that touches them (keep where and when I read it)'
+                  : k === 'check' ? 'something I read about the place, not confirmed: ask the person FOR whether it is so here (or which holds)'
+                    : k === 'step' ? 'a step of a task I did not manage when I did it: ask the person FOR how it is done here'
+                      : 'a question I hold');
     // The days it may be said on: one day alone when it is said today or lapses.
     const said = (t: { kind: string; timed: boolean; due_at: Date; expires_at: Date }) => { const d = sayDays(t, now, memory.timezone); return d.from === d.to ? d.from : `${d.from} to ${d.to}`; };
     const user = [
       `ME: ${memory.display_name}${memory.mode === 'entity' ? ' (a shared agent several people talk to)' : ''}`,
       `MEMORY LANGUAGE: ${memory.locale}`,
       `TODAY: ${localDate(now, memory.timezone)}`,
-      `CANDIDATES:\n${due.map((t, i) => `C${i + 1}. kind ${kindOf(t.kind)} · FOR ${t.for_name ?? (memory.mode === 'entity' ? 'anyone' : 'holder')} · WHAT ${t.content} · WHEN ${localDate(t.occurred_at ?? t.due_at, memory.timezone)} · SOURCE ${sourceOf(t.kind)} · SAID ${said(t)}`).join('\n')}`,
+      `CANDIDATES:\n${due.map((t, i) => `C${i + 1}. kind ${kindOf(t.kind, t.trusted)} · FOR ${t.for_name ?? (memory.mode === 'entity' ? 'anyone' : 'holder')} · WHAT ${whatOf(t)} · WHEN ${localDate(t.occurred_at ?? t.due_at, memory.timezone)} · SOURCE ${sourceOf(t.kind)} · SAID ${said(t)}`).join('\n')}`,
     ].join('\n\n');
     try {
       const res: InitiativeOutput = await this.llm.completeJson({ promptId: INITIATIVE_VERSION, system: INITIATIVE_SYSTEM, user, schema: initiativeSchema, maxTokens: 1500, task: 'initiative' }, { memoryId });

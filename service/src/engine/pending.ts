@@ -50,3 +50,20 @@ async function retireReplaced(db: Db, table: 'facts' | 'notes', id: string): Pro
      FROM notes n WHERE n.id = $1 AND n.status = 'current' AND o.memory_id = n.memory_id
        AND o.id IN (n.supersedes, n.corrects) AND o.status = 'current'`, [id]);
 }
+
+/**
+ * 8.16 F3: a trusted person here holds to what the memory had (says it again, answers "it is as you knew") — pending
+ * items that only proposed to replace or correct it (a page saying otherwise) turned out wrong: they are retired as
+ * corrected and whoever brought them loses trust. Returns how many.
+ */
+export async function refuteProposals(db: Db, table: 'facts' | 'notes', id: string, memoryId: string): Promise<number> {
+  const rows: Array<{ id: string }> = await db.query(
+    `SELECT id FROM ${table} WHERE memory_id = $1 AND pending AND deleted_at IS NULL AND status = 'current'
+       AND (supersedes = $2 OR corrects = $2)`, [memoryId, id]);
+  for (const r of rows) {
+    await db.query(`UPDATE ${table} SET status = 'corrected' WHERE id = $1`, [r.id]);
+    await creditInformants(db, { table, id: r.id }, 'corrected');
+    if (table === 'notes') await db.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'corrected')`, [memoryId, r.id]);
+  }
+  return rows.length;
+}

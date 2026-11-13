@@ -6,6 +6,18 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Added
+- **Initiatives from what it read, and the learning loop** (WORK_PLAN 8.16 F3, D57): in an entity memory that learns,
+  something read that touches a known life and is still ahead is said to that person with its source and the day it was
+  read — told when the source is trusted and the memory past its first stage, else asked as unchecked; news touching
+  nobody says nothing. The memory asks the household member it trusts most when something it read contradicts what it
+  holds, when a step of a procedure failed, and to confirm knowledge of the place it read — one question at a time; a
+  trusted person holding to what it had retires the page's version. Child-like stages, worked out from what the
+  household confirmed (`LEARNING_STAGE_YOUNG`, `LEARNING_STAGE_GROWN`; shown in the console): young, it asks more and
+  says what it read only as a question. `LEARNED_AHEAD_DAYS`; prompts `initiative.v5` and `extract.v24+entity.v12+learn.v3` (news read that
+  touches a person here is also an episode naming them, with the day it happens: `episodes.happens_on`); migration
+  `LearnedInitiatives1791360000000`; sentences in every language.
+
 ## [0.14.0] — 2026-11-12
 
 **The agent learns from outside, like a child — and keeps how to do a task whole.** An entity memory keeps by itself
