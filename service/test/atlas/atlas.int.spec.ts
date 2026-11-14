@@ -59,5 +59,24 @@ describe('atlas snapshot (M5b.2)', () => {
       const key = (await call(url, 'POST', `/api/v1/admin/clients/${client.body.id}/keys`, { token: ADMIN_KEY, body: { scopes: ['read'] } })).body.key;
       expect((await call(url, 'GET', `/api/v1/admin/memories/${memoryId}/atlas`, { token: key })).status).toBe(403);
     });
+
+    it('counts in the memory list what the Episodes counter counts: own visible episodes only', async () => {
+      const memoryId = (await call(url, 'POST', '/api/v1/admin/memories', { token: ADMIN_KEY, body: { displayName: 'Nadia' } })).body.personId;
+      const db = app.get(DataSource);
+      const ins = async (role: string, extra = '') => {
+        const [r] = await db.query(
+          `INSERT INTO episodes (memory_id, kind, content, origin, author_role, audience, occurred_at, date_precision${extra ? ', ' + extra.split('=')[0] : ''})
+           VALUES ($1, 'event', 'x', 'holder_lived', $2, $3, '2026-03-14T20:00:00Z', 'day'${extra ? ', ' + extra.split('=')[1] : ''}) RETURNING id`,
+          [memoryId, role, [memoryId]]);
+        return r.id as string;
+      };
+      const kept = await ins('holder');
+      await ins('holder');
+      await ins('holder', `duplicate_of='${kept}'`);
+      await ins('holder', 'invalidated_at=now()');
+      await ins('other');
+      const list = await call(url, 'GET', '/api/v1/admin/memories', { token: ADMIN_KEY });
+      expect(list.body.find((m: { id: string }) => m.id === memoryId).episodes).toBe(2);
+    });
   });
 });

@@ -18,7 +18,7 @@ the first contract, with those old names.
 
 | Endpoint | What |
 |---|---|
-| `GET api/v1/admin/memories` | Memory list: `id, name, episodes, lastActivity` (most recent first, max 200) |
+| `GET api/v1/admin/memories` | Memory list: `id, name, episodes, lastActivity` (`episodes`: the memory's own visible ones — no duplicates, invalidated ones or claims, as the Episodes counter) (most recent first, max 200) |
 | `GET api/v1/admin/memories/:id/atlas` | Snapshot of one memory: episodes (kind, author role, importance, day, plan status, hidden state, `xyz` position by meaning), real edges (`similar`, `corrects`, `duplicate`, `outcome`, `rescheduled`, `people`), facts / notes / digests (ids and kinds), lifetime `totals` (LLM calls, input / output tokens, recalls) |
 | `GET api/v1/admin/telemetry/stream[?memory=<id>]` | Server-Sent Events, one per step below (`event:` = type, `data:` = JSON) |
 

@@ -33,7 +33,10 @@ export class AtlasService {
   async memories(): Promise<Array<{ id: string; name: string; episodes: number; lastActivity: string | null }>> {
     return this.db.query(
       `SELECT o.person_id AS id, p.display_name AS name,
-              (SELECT count(*)::int FROM episodes e WHERE e.memory_id = o.person_id AND e.deleted_at IS NULL) AS episodes,
+              -- The memory's own visible episodes, as the dashboard's Episodes counter: no duplicates, no invalidated ones,
+              -- no claims (what others or a tool said, counted apart).
+              (SELECT count(*)::int FROM episodes e WHERE e.memory_id = o.person_id AND e.deleted_at IS NULL AND e.duplicate_of IS NULL
+                 AND e.invalidated_at IS NULL AND e.author_role NOT IN ('other', 'tool')) AS episodes,
               (SELECT max(m.received_at) FROM messages m WHERE m.memory_id = o.person_id) AS "lastActivity"
        FROM memories o JOIN persons p ON p.id = o.person_id
        ORDER BY "lastActivity" DESC NULLS LAST LIMIT 200`);

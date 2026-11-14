@@ -21,7 +21,7 @@ visualizzatore ignora i tipi che non conosce.
 
 | Endpoint | Che cosa |
 |---|---|
-| `GET api/v1/admin/memories` | Elenco delle memorie: `id, name, episodes, lastActivity` (più recenti prima, max 200) |
+| `GET api/v1/admin/memories` | Elenco delle memorie: `id, name, episodes, lastActivity` (`episodes`: quelli propri visibili — senza duplicati, invalidati né affermazioni altrui, come il contatore Episodi) (più recenti prima, max 200) |
 | `GET api/v1/admin/memories/:id/atlas` | Snapshot di una memoria: episodi (tipo, ruolo dell'autore, importanza, giorno, stato del piano, stato nascosto, posizione `xyz` per significato), archi reali (`similar`, `corrects`, `duplicate`, `outcome`, `rescheduled`, `people`), fatti / note / digest (id e tipi), `totals` complessivi (chiamate LLM, token di input / output, richiami) |
 | `GET api/v1/admin/telemetry/stream[?memory=<id>]` | Server-Sent Events, uno per ciascun passo sotto (`event:` = tipo, `data:` = JSON) |
 
