@@ -6,6 +6,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.15.0] — 2026-11-16
+
+**Ciò che l'agente legge diventa qualcosa che dice o chiede — e chiede per imparare.** Una notizia letta che tocca
+qualcuno di casa ed è ancora davanti gli viene detta con la sua fonte, o chiesta come non verificata finché la fonte o
+la memoria sono giovani; la memoria chiede alla persona di cui si fida di più quando ciò che ha letto contraddice ciò
+che sa, quando un passo di una procedura è fallito, e per confermare ciò che ha letto sul luogo. Solo il servizio; la
+libreria client e i connettori restano 0.14.0.
+
 ### Aggiunto
 - **Iniziative da ciò che ha letto, e il ciclo di apprendimento** (WORK_PLAN 8.16 F3, D57): in una memoria di entità che
   impara, una cosa letta che tocca una vita nota ed è ancora davanti viene detta a quella persona con la sua fonte e il
@@ -19,6 +27,10 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   che tocca una persona di casa è anche un episodio che la nomina, con il giorno in cui accade: `episodes.happens_on`);
   migrazione `LearnedInitiatives1791360000000`; frasi
   in tutte le lingue.
+
+### Corretto
+- L'elenco delle memorie per l'amministratore (`GET api/v1/admin/memories`) conta gli episodi propri visibili — senza
+  duplicati, invalidati né affermazioni altrui —, come il contatore Episodi della dashboard atlas.
 
 ## [0.14.0] — 2026-11-12
 
