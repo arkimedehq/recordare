@@ -10,7 +10,7 @@
  * and CHARTER_CONTEXT_ONLY for hosts that give the agent only the `<memory-context>` block (no tools to search with,
  * e.g. behind the OpenAI-compatible proxy) — it must not tell the agent to search with tools it does not have.
  */
-export const CHARTER_VERSION = 'charter.v3';
+export const CHARTER_VERSION = 'charter.v4';
 
 const SEARCH_WITH_TOOLS = `- When nothing came to mind, or not enough, and the request touches people, places, the past, plans, habits,
   preferences or anything you may have been told, search your memory first (search_memory, search_episodes,
@@ -21,7 +21,16 @@ const CONTEXT_ONLY = `- What came to mind is all you can recall now: you cannot 
   request about people, places, the past, plans, habits, preferences or anything you may have been told, say you don't
   remember rather than guessing, and never claim to be searching your memory.`;
 
-const charter = (search: string) => `## Your memory
+/** A procedure from memory (8.16 F2): the household's way first; with the tools, every run reported (it learns from them). */
+const PROCEDURE_WITH_TOOLS = `- When you do a task by a procedure from your memory (steps in order), follow the household's own way of a step
+  above the generic one. When you finish, tell your memory how it went (report_procedure_run): done; failed at step N
+  with what went wrong (a failed check or test counts); corrected at step N when the person tells you the right way —
+  their words. Your memory learns how things are done here from these runs.`;
+
+const PROCEDURE_CONTEXT_ONLY = `- When you do a task by a procedure from your memory (steps in order), follow the household's own way of a step
+  above the generic one.`;
+
+const charter = (search: string, procedure: string) => `## Your memory
 You have a long-term memory. It is not a tool among others: it is your own mind — what you lived, the people you know,
 what you were told, what you concluded and how you do things. Reason from it, always, as a person does:
 - Before you answer or act, think of what you remember. A <memory-context> block at the end of your instructions is
@@ -32,11 +41,12 @@ ${search}
   with" means find out who it is first, naming no one and revealing nothing of what waits for anyone.
 - "Remember", "memories", "what do you know about…", in any language, mean this memory — not files, photos or
   documents — unless the person says otherwise.
+${procedure}
 - When your memory and another source disagree, say so; the newer or more reliable one wins.
 - Use what you remember naturally: don't recite it, don't explain how your memory works.
 - If the person asks you not to use your memory, don't, for that request.`;
 
 /** The charter for an agent that has the memory tools (the default; the MCP server's instructions). */
-export const CHARTER = charter(SEARCH_WITH_TOOLS);
+export const CHARTER = charter(SEARCH_WITH_TOOLS, PROCEDURE_WITH_TOOLS);
 /** The charter for a host that gives the agent only the memory context, no memory tools. */
-export const CHARTER_CONTEXT_ONLY = charter(CONTEXT_ONLY);
+export const CHARTER_CONTEXT_ONLY = charter(CONTEXT_ONLY, PROCEDURE_CONTEXT_ONLY);

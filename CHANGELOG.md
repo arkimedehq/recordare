@@ -6,6 +6,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Changed
+- **Memory charter `charter.v4`**: a task done by a procedure from memory follows the household's way of a step first,
+  and, where the agent has the memory tools, every run is reported with `report_procedure_run` (done, failed at a step,
+  corrected by the person) so the memory learns from it and asks about a failed step. Clients re-read the charter when
+  its version changes.
+
 ## [0.15.0] — 2026-11-16
 
 **What the agent reads becomes something it says or asks — and it asks to learn.** News read that touches someone at
