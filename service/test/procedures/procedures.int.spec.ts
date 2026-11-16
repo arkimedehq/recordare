@@ -12,6 +12,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { type INestApplication } from '@nestjs/common';
 import { type Server } from 'node:http';
 import { DataSource } from 'typeorm';
+import { procedureLines } from '../../src/procedures/procedures.service';
 import { ADMIN_KEY, call, resetSchema, startApp, startFakeEmbeddings, testEnv } from '../helpers/app';
 
 describe('procedures kept whole (8.16 F2a)', () => {
@@ -70,9 +71,16 @@ describe('procedures kept whole (8.16 F2a)', () => {
     const here = await call(url, 'POST', `/api/v1/procedures/${id}/variants`, { ...as(), body: { step: 4, text: 'Il cuscino va sopra il copriletto', conversation: { externalId: 'c3' } } });
     expect(here.body.pending).toBe(false);
 
-    // The robot ran it: done confirms it and credits the site.
-    expect((await call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as(), body: { outcome: 'done' } })).body.pending).toBe(false);
+    // One step checked and done: that step's news, not the task's — what was read stays unconfirmed.
+    expect((await call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as(), body: { outcome: 'done', step: 2 } })).body.pending).toBe(true);
+    expect(await site()).toEqual({ confirmed: 0, corrected: 0 });
+
+    // The robot ran it whole: done confirms it and credits the site.
+    const whole = await call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as(), body: { outcome: 'done' } });
+    expect(whole.body.pending).toBe(false);
     expect(await site()).toEqual({ confirmed: 1, corrected: 0 });
+    // The same outcome told again (the agent and the host's code, a retry): the same run, counted once.
+    expect((await call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as(), body: { outcome: 'done' } })).body).toEqual({ id: whole.body.id, pending: false });
 
     // A failure at step 3, then a guest nobody identified corrects step 2: their way waits; the site pays for it.
     await call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as(), body: { outcome: 'failed', step: 3, note: 'Il lenzuolo era troppo corto' } });
@@ -86,15 +94,30 @@ describe('procedures kept whole (8.16 F2a)', () => {
     expect(view.steps[3].here).toEqual([expect.objectContaining({ text: 'Il cuscino va sopra il copriletto', by: 'the household', confirmed: true })]);
     expect(view.steps[2].failed).toEqual({ at: '2026-06-07', note: 'Il lenzuolo era troppo corto' });
     expect(view.steps[1].here).toEqual([expect.objectContaining({ by: 'someone', confirmed: false })]); // a guest nobody identified
-    expect(view.runs).toMatchObject({ done: 1, failed: 1, corrected: 1 });
+    expect(view.runs).toMatchObject({ done: 2, failed: 1, corrected: 1 });
 
     // The memory context carries it whole, the household's way above the generic step.
     const block = (await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'c4' }), body: { query: 'Rifare il letto', card: false } })).body.block as string;
-    expect(block).toContain('procedure "Rifare il letto"');
+    expect(block).toContain(`procedure "Rifare il letto" [id: ${id}]`);
     expect(block).toContain('4. here (the household): Il cuscino va sopra il copriletto');
     expect(block).toContain('4. (generic) Metti il copriletto');
     expect(block).toContain('failed here on 2026-06-07: Il lenzuolo era troppo corto');
     expect(block.indexOf('1. Togli')).toBeLessThan(block.indexOf('5. Sistema'));
+  });
+
+  it('cuts a long procedure between steps within its budget, its id always on the head', () => {
+    const view = {
+      id: '00000000-0000-4000-8000-000000000001', title: 'Montare la libreria', when: null, here: [],
+      steps: Array.from({ length: 30 }, (_, k) => ({ n: k + 1, text: `Passo numero ${k + 1}: avvita il pannello con cura`, here: [] })),
+      learned: { how: 'read' as const, from: 'mobili-esempio.it', at: '2026-06-07', confirmed: false },
+      runs: { done: 0, failed: 0, corrected: 0 },
+    } as unknown as Parameters<typeof procedureLines>[0];
+    for (const budget of [400, 800, 1_500]) {
+      const lines = procedureLines(view, budget);
+      expect(lines[0]).toContain('[id: 00000000-0000-4000-8000-000000000001]');
+      expect(lines.join('\n').length).toBeLessThanOrEqual(budget);
+      expect(lines.at(-1)).toMatch(/more steps: search_knowledge "Montare la libreria"$/);
+    }
   });
 
   it('keeps at once what the household teaches; a page\'s pending version does not replace it; search_knowledge returns it whole', async () => {

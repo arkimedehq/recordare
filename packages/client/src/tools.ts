@@ -241,7 +241,7 @@ export const TOOLS = [
   {
     "name": "report_procedure_run",
     "title": "Tell how a task went",
-    "description": "After doing a procedure (or when a person corrects how you did it): done; failed (at step N, what went wrong); corrected (at step N, note = the right way, as the person said it — it becomes the household's way).",
+    "description": "After putting a procedure into practice — the whole task or one step, yourself or through another tool, a check or test of a step included — or when a person corrects how you did it: done (with step when it was one step); failed (at step N, what went wrong; a failed check or test counts); corrected (at step N, note = the right way, as the person said it — it becomes the household's way). The id is on the procedure's line in your memory context, or from search_knowledge. The same outcome told again within minutes counts once.",
     "inputSchema": {
       "type": "object",
       "properties": {

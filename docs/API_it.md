@@ -563,9 +563,12 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   (l'id di una procedura) e `variant` (e `step`, nessuno = l'intero compito) aggiunge invece il modo proprio di chi parla.
   Chi l'ha portata e se resta in attesa si decide nel codice. Restituisce `{id, pending, status}` (o `{id, pending}` per una
   variante); è una scrittura.
-- `report_procedure_run {procedure_id, outcome, step?, note?}` — come è andata un'esecuzione: `done`, `failed` (al `step`,
-  `note` cosa è andato storto), `corrected` (al `step`, `note` il modo giusto — obbligatoria; diventa il modo di chi parla).
-  Restituisce `{id, pending}`; è una scrittura.
+- `report_procedure_run {procedure_id, outcome, step?, note?}` — come è andata un'esecuzione: `done` (con `step` quando era
+  un solo passaggio), `failed` (al `step`, `note` cosa è andato storto — conta anche un controllo o un test fallito),
+  `corrected` (al `step`, `note` il modo giusto — obbligatoria; diventa il modo di chi parla). Un'esecuzione è l'intero
+  compito o un passaggio, fatto dall'agente o tramite un altro strumento. L'id sta sulla riga della procedura nel contesto
+  di memoria, o in `search_knowledge`. Restituisce `{id, pending}`; è una scrittura; lo stesso esito detto di nuovo a
+  breve conta una volta (§4d).
 
 ### `resolve_period` (D12, deterministico)
 Come costruito: `{expression}` → `{from, to, label}` (oppure `{error}` per un'espressione sconosciuta); espressioni nelle
@@ -577,7 +580,7 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 la sua mente, non uno strumento tra tanti; ragionare da ciò che gli è venuto in mente, cercare nella memoria prima degli
 altri strumenti e prima di dire "non lo so", "ricordi / ricordare" vogliono dire questa memoria, usarla con naturalezza,
 non usarla quando gli viene chiesto. Lo stesso testo per ogni memoria, in inglese per tutte le lingue come il blocco,
-stabile finché `version` non cambia (`charter.v4` dalla 0.15.1: una procedura dalla memoria fatta nel modo della casa, ogni esecuzione riportata con `report_procedure_run` — solo nella forma con gli strumenti; `charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
+stabile finché `version` non cambia (`charter.v5` dalla 0.15.2: quando riportare — l'intero compito o un passaggio, anche tramite un altro strumento, compresi un controllo o un test di un passaggio, con l'id sulla riga della procedura; `charter.v4` dalla 0.15.1: una procedura dalla memoria fatta nel modo della casa, ogni esecuzione riportata con `report_procedure_run` — solo nella forma con gli strumenti; `charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
 cacheabile) e lo rilegge solo quando cambia la versione. Il server MCP manda lo stesso testo come sue `instructions`
 all'`initialize`, e il blocco `<memory-context>` lo nomina. Il contratto memory-first che ogni client segue:
 `INTEGRATION.md` §4. `?tools=false` dà la forma per un ospite che offre all'agente solo il contesto di memoria, senza
@@ -932,17 +935,22 @@ sta parlando — quella persona ha insegnato, corretto o eseguito.
   una **nuova versione** che sostituisce la vecchia e ne prende le varianti della casa — una versione in attesa non
   sostituisce mai una confermata (restano correnti entrambe). I passaggi sono tenuti come dati: mai tolti, fusi o
   "migliorati".
-- **Esecuzioni**: `done` conferma una procedura in attesa e accredita chi l'ha portata; `failed` segna il suo passaggio
+- **Esecuzioni**: `done` dell'intero compito (senza `step`) conferma una procedura in attesa e accredita chi l'ha portata;
+  `done` con uno `step` (un passaggio fatto, un suo controllo) è una notizia di quel passaggio e non conferma nulla; `failed` segna il suo passaggio
   (finché dopo non ne viene insegnata una variante) e non sposta fiducia — l'errore può essere del robot; `corrected`
-  diventa la variante di chi parla per quel passaggio e costa un `corrected` agli altri informatori della procedura.
+  diventa la variante di chi parla per quel passaggio e costa un `corrected` agli altri informatori della procedura. Lo
+  stesso esito detto di nuovo — stessa procedura, esito, passaggio e conversazione (nessuna vale nessuna), entro 10
+  minuti; una correzione solo con la stessa `note` — è la stessa esecuzione: non si tiene nulla di nuovo e torna il suo `id`
+  (possono riportarla sia l'agente sia il codice dell'host).
 - **La vista** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
   note}}], here (le varianti dell'intero compito), learned: {how: "read" | "taught", from, at, confirmed, source?: {id,
   title}}, runs: {done, failed, corrected, last?}}` — `by` / `from` è il nome di una persona, "the household" (il parlante
   dell'account), "someone", o il sito.
 - **Richiamo**: `search_knowledge` le restituisce per prime, intere (§3); il contesto di memoria porta intera la più vicina
   quando il messaggio la riguarda (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0,55; un budget suo di 1 500 caratteri, tagliato solo
-  tra i passaggi): `- procedure "make the bed" (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way
-  first, steps as taught:` poi `4. here (Sofia): …` sopra `4. (generic) …`, e `failed here on …` sotto un passaggio.
+  tra i passaggi; ci conta anche la riga che rimanda al resto): `- procedure "make the bed" [id: <uuid>] (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way
+  first, steps as taught:` poi `4. here (Sofia): …` sopra `4. (generic) …`, e `failed here on …` sotto un passaggio; tagliata, `… N more steps: search_knowledge "…"`. L'id
+  sull'intestazione, mai tagliata, è quello che prende `report_procedure_run`.
 - **Da ciò che una persona insegna in conversazione (modo B1, F2b)**: in una memoria di entità che impara, la chiamata di
   estrazione che gira comunque (`learn.v2`, sezione PROCEDURES; nessuna chiamata in più) propone un how-to di più passaggi
   che una persona qui insegna — o che uno strumento o una pagina nella finestra dà perché qualcuno ha chiesto come si fa

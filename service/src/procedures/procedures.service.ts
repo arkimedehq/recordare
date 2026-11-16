@@ -48,6 +48,9 @@ export interface ProcedureView {
 
 interface Who { conversationId: string | null; personal: boolean }
 
+/** A run told again within this window (same procedure, outcome, step, conversation) is the same run. */
+const RUN_REPEAT_MS = 10 * 60_000;
+
 @Injectable()
 export class ProceduresService {
   constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {}
@@ -80,11 +83,21 @@ export class ProceduresService {
     return this.db.transaction(async (tx) => {
       const p = await this.current(tx, memoryId, procedureId);
       if (req.step && req.step > p.steps.length) throw new BadRequestException(`step ${req.step}: the procedure has ${p.steps.length} steps`);
+      // The same outcome told twice — by the agent and by the host's code, or a retry — counts once: same procedure,
+      // outcome, step and conversation (none matches none) within RUN_REPEAT_MS; a correction only with the same words.
+      const [seen]: Array<{ id: string }> = await tx.query(
+        `SELECT id FROM procedure_runs WHERE procedure_id = $1 AND outcome = $2::text AND step IS NOT DISTINCT FROM $3::int
+           AND conversation_id IS NOT DISTINCT FROM $4::uuid AND ($2::text <> 'corrected' OR note IS NOT DISTINCT FROM $5::text)
+           AND at > $6::timestamptz - make_interval(secs => $7) AND at <= $6::timestamptz + make_interval(secs => $7)
+         ORDER BY at DESC LIMIT 1`,
+        [procedureId, req.outcome, req.step ?? null, who.conversationId, req.note ?? null, now, RUN_REPEAT_MS / 1000]);
+      if (seen) return { id: seen.id, pending: p.pending };
       const [{ id }] = await tx.query(
         `INSERT INTO procedure_runs (procedure_id, memory_id, outcome, step, note, conversation_id, at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
         [procedureId, memoryId, req.outcome, req.step ?? null, req.note ?? null, who.conversationId, now]);
       let pending = p.pending;
-      if (req.outcome === 'done' && p.pending) {
+      // Only a whole run confirms what was read: one step done (a check of it, say) is that step's news, not the task's.
+      if (req.outcome === 'done' && !req.step && p.pending) {
         await confirmProcedure(tx, procedureId, now);
         pending = false;
       }
@@ -311,15 +324,19 @@ export function procedureLines(p: ProcedureView, budget: number): string[] {
     : `taught by ${p.learned.from} on ${p.learned.at}${p.learned.confirmed ? '' : '; not confirmed'}`;
   const runs = p.runs.done || p.runs.failed ? `; runs: ${p.runs.done} done, ${p.runs.failed} failed` : '';
   const here = (h: ProcedureView['here']) => h.map((v) => `here (${v.by}${v.confirmed ? '' : ', not confirmed'}): ${v.text}`);
-  const head = `- procedure "${p.title}"${p.when ? ` (when: ${p.when})` : ''} (${how}${runs}) — the household's way first, steps as taught:`;
+  // The id rides on the head, which is never cut: an agent reports a run (report_procedure_run) with no search first.
+  const head = `- procedure "${p.title}" [id: ${p.id}]${p.when ? ` (when: ${p.when})` : ''} (${how}${runs}) — the household's way first, steps as taught:`;
   const lines = [head, ...here(p.here).map((t) => `    ${t}`)];
   let size = lines.join('\n').length;
+  const more = (k: number) => `  … ${p.steps.length - k} more steps: search_knowledge "${p.title}"`;
   for (const [k, s] of p.steps.entries()) {
     const block = [...here(s.here).map((t) => `  ${s.n}. ${t}`), `  ${s.n}. ${s.here.length ? '(generic) ' : ''}${s.text}`,
       ...(s.failed ? [`     failed here on ${s.failed.at}${s.failed.note ? `: ${s.failed.note}` : ''}`] : [])];
     const add = block.join('\n').length + 1;
-    if (size + add > budget) {
-      lines.push(`  … ${p.steps.length - k} more steps: search_knowledge "${p.title}"`);
+    // Room is kept for the line that points to the rest, so the whole stays within the budget.
+    const tail = k + 1 < p.steps.length ? more(k + 1).length + 1 : 0;
+    if (size + add + tail > budget) {
+      lines.push(more(k));
       break;
     }
     lines.push(...block);

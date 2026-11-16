@@ -30,7 +30,7 @@ export type ProcedureVariantRequest = z.infer<typeof procedureVariantSchema>;
 
 export const procedureRunSchema = z.object({
   outcome: z.enum(['done', 'failed', 'corrected']),
-  step: z.number().int().min(1).max(MAX_STEPS).optional().describe('failed / corrected: the step it happened at.'),
+  step: z.number().int().min(1).max(MAX_STEPS).optional().describe('failed / corrected: the step it happened at; done: only that step was done (none: the whole task, which confirms what was read).'),
   note: z.string().trim().max(STEP_CHARS).optional().describe('failed: what went wrong; corrected: the right way (required).'),
   conversation,
 }).refine((r) => r.outcome !== 'corrected' || !!r.note, { message: 'a correction needs its note (the right way)', path: ['note'] });

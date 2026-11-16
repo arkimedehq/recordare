@@ -593,7 +593,7 @@ export interface ProcedureVariant {
 
 export interface ProcedureRun {
   outcome: 'done' | 'failed' | 'corrected';
-  /** failed / corrected: the step (1-based). */
+  /** The step (1-based): failed / corrected at it; with done, only that step was done (none: the whole task). */
   step?: number;
   /** failed: what went wrong; corrected: the right way (required). */
   note?: string;

@@ -6,6 +6,15 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Modificato
+- **Le esecuzioni di una procedura arrivano alla memoria senza che nessuno lo chieda** (WORK_PLAN 8.16 F2): la riga
+  della procedura nel contesto di memoria porta il suo id (`[id: …]`, sull'intestazione, mai tagliata; la procedura
+  tagliata resta nei suoi 1 500 caratteri con la riga che rimanda al resto); la carta della memoria `charter.v5` (solo la
+  forma con gli strumenti) dice quando riportare — l'intero compito o un passaggio, anche tramite un altro strumento,
+  compresi un controllo o un test di un passaggio. Lo stesso esito detto di nuovo entro 10 minuti (stessa procedura,
+  passaggio, conversazione; una correzione con le stesse parole) conta una volta e restituisce l'id della prima
+  esecuzione. `done` con uno `step` non conferma più ciò che è stato letto: lo fa solo un'esecuzione intera.
+
 ## [0.15.1] — 2026-11-16
 
 **L'agente dice alla memoria com'è andato un compito.** La carta della memoria chiede all'agente di seguire il modo
