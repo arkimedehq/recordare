@@ -6,6 +6,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Changed
+- **A procedure's runs reach the memory without being asked** (WORK_PLAN 8.16 F2): the procedure's line in the memory
+  context carries its id (`[id: …]`, on the head, never cut; the cut procedure stays within its 1 500 characters with the
+  line pointing to the rest); memory charter `charter.v5` (tools form only) says when to report — the whole task or one
+  step, through another tool too, a check or test of a step included. The same outcome told again within 10 minutes
+  (same procedure, step, conversation; a correction with the same words) counts once and returns the first run's id.
+  `done` with a `step` no longer confirms what was read: only a whole run does.
+
 ## [0.15.1] — 2026-11-16
 
 **The agent tells its memory how a task went.** The memory charter asks the agent to follow the household's way of a

@@ -539,9 +539,11 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   (`page`: read — give `uri` or `source_id`; `person`: taught by who is speaking in the conversation). With `variant_of`
   (a procedure's id) and `variant` (and `step`, none = the whole task) it adds the speaker's own way instead. Who brought
   it and whether it waits are decided in code. Returns `{id, pending, status}` (or `{id, pending}` for a variant); a write.
-- `report_procedure_run {procedure_id, outcome, step?, note?}` — how a run went: `done`, `failed` (at `step`, `note` what
-  went wrong), `corrected` (at `step`, `note` the right way — required; it becomes the speaker's way). Returns `{id,
-  pending}`; a write.
+- `report_procedure_run {procedure_id, outcome, step?, note?}` — how a run went: `done` (with `step` when it was one
+  step), `failed` (at `step`, `note` what went wrong — a failed check or test counts), `corrected` (at `step`, `note` the
+  right way — required; it becomes the speaker's way). A run is the whole task or one step, done by the agent or through
+  another tool. The id is on the procedure's line of the memory context, or in `search_knowledge`. Returns `{id,
+  pending}`; a write; the same outcome told again soon counts once (§4d).
 
 ### `resolve_period` (D12, deterministic)
 As built: `{expression}` → `{from, to, label}` (or `{error}` for an unknown expression); expressions in the
@@ -553,7 +555,7 @@ synonyms); Monday-based weeks, the memory's timezone; "now" is the server clock 
 `GET api/v1/charter` (scope `read`, no user header) → `{charter, version}`: how the agent uses its memory — its own
 mind, not a tool among others; reason from what came to mind, search the memory before other tools and before saying
 "I don't know", "remember / memories" mean this memory, use it naturally, not when asked not to. The same text for every
-memory, in English for every language like the block, stable until `version` changes (`charter.v4` since 0.15.1: a procedure from memory done the household's way, each run reported with `report_procedure_run` — the tools form only; `charter.v3` since 0.9.1: asking who it is names no one; `charter.v2` since 0.7.0: how to use an initiative line): the host puts it in
+memory, in English for every language like the block, stable until `version` changes (`charter.v5` since 0.15.2: when to report — the whole task or one step, through another tool too, a check or test of a step included, with the id on the procedure's line; `charter.v4` since 0.15.1: a procedure from memory done the household's way, each run reported with `report_procedure_run` — the tools form only; `charter.v3` since 0.9.1: asking who it is names no one; `charter.v2` since 0.7.0: how to use an initiative line): the host puts it in
 the agent's system prompt (stable part, cacheable) and re-reads it only when the version changes. The MCP server sends
 the same text as its `instructions` at `initialize`, and the `<memory-context>` block names it. The memory-first
 contract every client follows: `INTEGRATION.md` §4. `?tools=false` gives the form for a host that offers the agent
@@ -902,17 +904,21 @@ person taught, corrected or ran it.
   independent origin (another informant, another conversation) that is trusted or the second one. With other steps it is
   a **new version** that replaces the old one and takes its household variants — a pending version never replaces a
   confirmed one (both stay current). Steps are kept as given: never dropped, merged or "improved".
-- **Runs**: `done` confirms a pending procedure and credits who brought it; `failed` marks its step (until a variant of
+- **Runs**: `done` of the whole task (no `step`) confirms a pending procedure and credits who brought it; `done` with a
+  `step` (one step done, a check of it) is that step's news and confirms nothing; `failed` marks its step (until a variant of
   that step is taught after it) and moves no trust — the robot may be at fault; `corrected` becomes the speaker's
-  variant of that step and costs the procedure's other informants one `corrected`.
+  variant of that step and costs the procedure's other informants one `corrected`. The same outcome told again — same
+  procedure, outcome, step and conversation (none matches none), within 10 minutes; a correction only with the same
+  `note` — is the same run: nothing new is kept and its `id` comes back (the agent and the host's code may both report it).
 - **The view** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
   note}}], here (the whole task's variants), learned: {how: "read" | "taught", from, at, confirmed, source?: {id, title}},
   runs: {done, failed, corrected, last?}}` — `by` / `from` is a person's name, "the household" (the account's speaker),
   "someone", or the site.
 - **Recall**: `search_knowledge` returns them first, whole (§3); the memory context carries the nearest one whole when the
   message is about it (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0.55; its own budget of 1 500 characters, cut only between
-  steps): `- procedure "make the bed" (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way first,
-  steps as taught:` then `4. here (Sofia): …` above `4. (generic) …`, and `failed here on …` under a step.
+  steps; the line that points to the rest counts in it too): `- procedure "make the bed" [id: <uuid>] (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way first,
+  steps as taught:` then `4. here (Sofia): …` above `4. (generic) …`, and `failed here on …` under a step; cut, `… N more steps: search_knowledge "…"`. The id on the head, never cut, is
+  what `report_procedure_run` takes.
 - **From what a person teaches in conversation (mode B1, F2b)**: in an entity memory that learns, the extraction call
   that runs anyway (`learn.v2`, section PROCEDURES; no extra call) proposes a how-to of several steps a person here
   teaches — or that a tool or a page in the window gives because someone asked how to do that task — and the
