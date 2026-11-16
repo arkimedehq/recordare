@@ -6,6 +6,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.15.1] — 2026-11-16
+
+**L'agente dice alla memoria com'è andato un compito.** La carta della memoria chiede all'agente di seguire il modo
+della casa per un passo e di riportare ogni esecuzione di una procedura, così la memoria impara e chiede di un passo
+fallito. Solo il servizio; la libreria client e i connettori restano 0.14.0.
+
 ### Modificato
 - **Carta della memoria `charter.v4`**: un compito fatto con una procedura dalla memoria segue prima il modo della casa
   per un passo e, dove l'agente ha gli strumenti della memoria, ogni esecuzione viene riportata con
