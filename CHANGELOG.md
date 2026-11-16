@@ -6,6 +6,12 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.15.1] — 2026-11-16
+
+**The agent tells its memory how a task went.** The memory charter asks the agent to follow the household's way of a
+step and to report every run of a procedure, so the memory learns from it and asks about a failed step. Service only;
+client library and connectors stay 0.14.0.
+
 ### Changed
 - **Memory charter `charter.v4`**: a task done by a procedure from memory follows the household's way of a step first,
   and, where the agent has the memory tools, every run is reported with `report_procedure_run` (done, failed at a step,
