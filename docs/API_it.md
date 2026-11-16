@@ -577,7 +577,7 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 la sua mente, non uno strumento tra tanti; ragionare da ciò che gli è venuto in mente, cercare nella memoria prima degli
 altri strumenti e prima di dire "non lo so", "ricordi / ricordare" vogliono dire questa memoria, usarla con naturalezza,
 non usarla quando gli viene chiesto. Lo stesso testo per ogni memoria, in inglese per tutte le lingue come il blocco,
-stabile finché `version` non cambia (`charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
+stabile finché `version` non cambia (`charter.v4` dalla 0.15.1: una procedura dalla memoria fatta nel modo della casa, ogni esecuzione riportata con `report_procedure_run` — solo nella forma con gli strumenti; `charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
 cacheabile) e lo rilegge solo quando cambia la versione. Il server MCP manda lo stesso testo come sue `instructions`
 all'`initialize`, e il blocco `<memory-context>` lo nomina. Il contratto memory-first che ogni client segue:
 `INTEGRATION.md` §4. `?tools=false` dà la forma per un ospite che offre all'agente solo il contesto di memoria, senza

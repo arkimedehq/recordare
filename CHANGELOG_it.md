@@ -6,6 +6,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Modificato
+- **Carta della memoria `charter.v4`**: un compito fatto con una procedura dalla memoria segue prima il modo della casa
+  per un passo e, dove l'agente ha gli strumenti della memoria, ogni esecuzione viene riportata con
+  `report_procedure_run` (fatta, fallita a un passo, corretta dalla persona), così la memoria impara e chiede di un
+  passo fallito. I client rileggono la carta quando cambia la versione.
+
 ## [0.15.0] — 2026-11-16
 
 **Ciò che l'agente legge diventa qualcosa che dice o chiede — e chiede per imparare.** Una notizia letta che tocca

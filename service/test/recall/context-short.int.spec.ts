@@ -28,6 +28,10 @@ describe('memory-first contract (D54)', () => {
     expect(CHARTER_CONTEXT_ONLY).not.toContain('search_memory');
     expect(CHARTER_CONTEXT_ONLY).toContain("say you don't\n  remember rather than guessing");
     expect(CHARTER).toContain('search_memory');
+    // 8.16 F2: the household's way first in both forms; reporting each run only where the agent has the tools.
+    expect(CHARTER).toContain('report_procedure_run');
+    expect(CHARTER_CONTEXT_ONLY).not.toContain('report_procedure_run');
+    expect(CHARTER_CONTEXT_ONLY).toContain("household's own way");
     expect((await call(s.url, 'GET', '/api/v1/charter?tools=maybe', { token: s.key })).status).toBe(400);
   });
 
