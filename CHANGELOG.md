@@ -6,6 +6,13 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-11-16
+
+**What the agent reads becomes something it says or asks — and it asks to learn.** News read that touches someone at
+home and is still ahead is told to them with its source, or asked as unchecked while the source or the memory is young;
+the memory asks the person it trusts most when what it read contradicts what it holds, when a step of a procedure
+failed, and to confirm what it read about the place. Service only; client library and connectors stay 0.14.0.
+
 ### Added
 - **Initiatives from what it read, and the learning loop** (WORK_PLAN 8.16 F3, D57): in an entity memory that learns,
   something read that touches a known life and is still ahead is said to that person with its source and the day it was
@@ -17,6 +24,10 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   says what it read only as a question. `LEARNED_AHEAD_DAYS`; prompts `initiative.v5` and `extract.v24+entity.v12+learn.v3` (news read that
   touches a person here is also an episode naming them, with the day it happens: `episodes.happens_on`); migration
   `LearnedInitiatives1791360000000`; sentences in every language.
+
+### Fixed
+- The admin memory list (`GET api/v1/admin/memories`) counts the memory's own visible episodes — no duplicates,
+  invalidated ones or claims —, the same as the atlas dashboard's Episodes counter.
 
 ## [0.14.0] — 2026-11-12
 
