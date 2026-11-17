@@ -4,7 +4,7 @@
 /**
  * Procedures kept whole (WORK_PLAN 8.16 F2a, D57): read in a page → learned, pending, with its site; the same page again
  * confirms nothing, a run done does and credits the site; the household's way of a step shown above it; a failed run
- * marks its step; a person's correction becomes their way and costs the page trust; taught by the household → kept at
+ * marks its step; the turns of one task make one run per conversation, a run left halfway is stopped; a person's correction becomes their way and costs the page trust; taught by the household → kept at
  * once; a pending version never replaces a confirmed one; carried whole by the memory context and search_knowledge.
  */
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -99,6 +99,11 @@ describe('procedures kept whole (8.16 F2a)', () => {
     // The memory context carries it whole, the household's way above the generic step.
     const block = (await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'c4' }), body: { query: 'Rifare il letto', card: false } })).body.block as string;
     expect(block).toContain(`procedure "Rifare il letto" [id: ${id}]`);
+    // Where the agent decides: carrying it out ends with the report — unless the agent has no memory tools.
+    expect(block).toContain('end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)');
+    const bare = (await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'c4' }), body: { query: 'Rifare il letto', card: false, tools: false } })).body.block as string;
+    expect(bare).toContain(`procedure "Rifare il letto" [id: ${id}]`);
+    expect(bare).not.toContain('report_procedure_run');
     expect(block).toContain('4. here (the household): Il cuscino va sopra il copriletto');
     expect(block).toContain('4. (generic) Metti il copriletto');
     expect(block).toContain('failed here on 2026-06-07: Il lenzuolo era troppo corto');
@@ -117,7 +122,45 @@ describe('procedures kept whole (8.16 F2a)', () => {
       expect(lines[0]).toContain('[id: 00000000-0000-4000-8000-000000000001]');
       expect(lines.join('\n').length).toBeLessThanOrEqual(budget);
       expect(lines.at(-1)).toMatch(/more steps: search_knowledge "Montare la libreria"$/);
+      expect(lines[1]).toContain('report_procedure_run');
     }
+    // Without the memory tools: no line asks for a tool.
+    const bare = procedureLines(view, 400, false);
+    expect(bare.join('\n')).not.toMatch(/report_procedure_run|search_knowledge/);
+    expect(bare.at(-1)).toMatch(/more steps$/);
+  });
+
+  it('joins the turns of one task into one run per conversation; a run left halfway is stopped, not failed', async () => {
+    await say('d1', 'Facciamo una partita a dama.');
+    const id = (await call(url, 'POST', '/api/v1/procedures', { ...as(), body: {
+      title: 'Giocare a dama', steps: ['Disponi le pedine', 'Muovi in diagonale', 'Mangia quando puoi', 'Fai dama in fondo'], from: 'person', conversation: { externalId: 'd1' } } })).body.id as string;
+    const report = (body: Record<string, unknown>, conversation = 'd1', at = NOW) =>
+      call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as({ 'x-recordare-now': at }), body: { ...body, conversation: { externalId: conversation } } });
+
+    // Turn by turn, the agent reports the step reached: one run, at the furthest step.
+    const first = (await report({ outcome: 'done', step: 1 })).body.id;
+    expect((await report({ outcome: 'done', step: 2 }, 'd1', '2026-06-07T10:05:00+02:00')).body.id).toBe(first);
+    expect((await report({ outcome: 'done', step: 1 }, 'd1', '2026-06-07T10:06:00+02:00')).body.id).toBe(first);
+    // The person gives up: the same run ends stopped at step 2 — no step marked failed.
+    expect((await report({ outcome: 'stopped', step: 2, note: 'La persona ha smesso di giocare' }, 'd1', '2026-06-07T10:07:00+02:00')).body.id).toBe(first);
+    expect((await db.query(`SELECT outcome, step, note FROM procedure_runs WHERE id = $1`, [first]))[0])
+      .toEqual({ outcome: 'stopped', step: 2, note: 'La persona ha smesso di giocare' });
+
+    // A run ended: the next report is a new game. Another conversation is another run too.
+    const second = (await report({ outcome: 'done', step: 1 }, 'd1', '2026-06-07T10:20:00+02:00')).body.id;
+    expect(second).not.toBe(first);
+    await say('d2', 'Un\'altra partita a dama.');
+    const other = (await report({ outcome: 'done', step: 1 }, 'd2', '2026-06-07T10:21:00+02:00')).body.id;
+    expect(other).not.toBe(second);
+    // The run of d1 ends whole later in the game: the same run; past the pause (3 h) a step done starts a new one.
+    expect((await report({ outcome: 'done' }, 'd1', '2026-06-07T11:00:00+02:00')).body.id).toBe(second);
+    expect((await report({ outcome: 'done', step: 3 }, 'd2', '2026-06-07T15:00:00+02:00')).body.id).not.toBe(other);
+
+    const view = (await call(url, 'GET', `/api/v1/procedures/${id}`, as())).body;
+    expect(view.runs).toMatchObject({ done: 3, failed: 0, stopped: 1, corrected: 0 });
+    expect(view.steps.every((s: { failed?: unknown }) => !s.failed)).toBe(true);
+    const block = (await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'd1' }), body: { query: 'Giocare a dama', card: false } })).body.block as string;
+    expect(block).toContain('runs: 3 done, 0 failed, 1 stopped');
   });
 
   it('keeps at once what the household teaches; a page\'s pending version does not replace it; search_knowledge returns it whole', async () => {

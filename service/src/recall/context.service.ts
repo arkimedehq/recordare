@@ -114,12 +114,13 @@ export class ContextService {
   /**
    * `card`: open the block with the self card (who I am: current facts and notes about me), on by default (D54).
    * `lookups`: the host's agent has tools, so a look-up the memory wants done may be given to it (D55).
+   * `tools`: the agent has the memory tools (default); false: only this block — no line asks it to call one.
    */
-  async build(memoryId: string, query: string, conversationId: string | undefined, now: Date, opts: { card?: boolean; lookups?: boolean } = {}): Promise<MemoryContext> {
+  async build(memoryId: string, query: string, conversationId: string | undefined, now: Date, opts: { card?: boolean; lookups?: boolean; tools?: boolean } = {}): Promise<MemoryContext> {
     const [memory] = await this.db.query(
       `SELECT o.timezone, o.locale, o.mode, p.display_name AS name FROM memories o JOIN persons p ON p.id = o.person_id WHERE o.person_id = $1`, [memoryId]);
     if (!memory || !query.trim()) return EMPTY;
-    return this.telemetry.track('recall', memoryId, () => this.collect(memoryId, memory, query, conversationId, now, opts.card ?? true, !!opts.lookups));
+    return this.telemetry.track('recall', memoryId, () => this.collect(memoryId, memory, query, conversationId, now, opts.card ?? true, !!opts.lookups, opts.tools ?? true));
   }
 
   /**
@@ -139,7 +140,7 @@ export class ContextService {
   }
 
   private async collect(memoryId: string, memory: { timezone: string; locale: string; mode: string; name: string }, query: string,
-    conversationId: string | undefined, now: Date, withCard: boolean, lookups: boolean): Promise<MemoryContext> {
+    conversationId: string | undefined, now: Date, withCard: boolean, lookups: boolean, tools: boolean): Promise<MemoryContext> {
     // The whole message and its sentences, each embedded: an item matches by its best one, so an instruction tacked on
     // a question ("…? Answer in one line.") does not dilute it.
     const reader = await readerOf(this.db, memoryId, conversationId, now);
@@ -268,7 +269,7 @@ export class ContextService {
     const [procedure]: Array<{ id: string }> = await this.db.query(
       `SELECT id FROM procedures WHERE memory_id = $1 AND status = 'current' AND embedding IS NOT NULL AND ${sim('embedding')} >= ${at(0)}
        ORDER BY ${sim('embedding')} DESC, pending LIMIT 1`, [memoryId, ...vectors, this.floors.procedure]);
-    const how = procedure ? (await procedureViews(this.db, memoryId, [procedure.id])).flatMap((p) => procedureLines(p, PROCEDURE_CHARS)) : [];
+    const how = procedure ? (await procedureViews(this.db, memoryId, [procedure.id])).flatMap((p) => procedureLines(p, PROCEDURE_CHARS, tools)) : [];
     if (how.length) kept.push(...how);
     const own = await this.initiativeLines(memoryId, memory.mode, conversationId, now, lookups);
     if (!kept.length && !top.lines.length && !own.length) return EMPTY;

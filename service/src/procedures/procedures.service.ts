@@ -43,13 +43,15 @@ export interface ProcedureView {
   here: Array<{ text: string; by: string; at: string; confirmed: boolean }>;
   /** read: in a page or a source; taught: by a person. */
   learned: { how: 'read' | 'taught'; from: string; at: string; confirmed: boolean; source?: { id: string; title: string } };
-  runs: { done: number; failed: number; corrected: number; last?: { outcome: string; at: string; step: number | null } };
+  runs: { done: number; failed: number; stopped: number; corrected: number; last?: { outcome: string; at: string; step: number | null } };
 }
 
 interface Who { conversationId: string | null; personal: boolean }
 
 /** A run told again within this window (same procedure, outcome, step, conversation) is the same run. */
 const RUN_REPEAT_MS = 10 * 60_000;
+/** A run still going (one step done) takes the next report of its conversation within this pause: one run over many turns. */
+const RUN_SPAN_MS = 3 * 3_600_000;
 
 @Injectable()
 export class ProceduresService {
@@ -78,7 +80,10 @@ export class ProceduresService {
     });
   }
 
-  /** How a run went: done confirms a pending procedure; failed marks its step; corrected becomes the corrector's variant. */
+  /**
+   * How a run went: done whole confirms a pending procedure; failed marks its step; stopped (left halfway) only counts;
+   * corrected becomes the corrector's variant.
+   */
   async run(memoryId: string, procedureId: string, who: Who, req: ProcedureRunRequest, now: Date): Promise<{ id: string; pending: boolean }> {
     return this.db.transaction(async (tx) => {
       const p = await this.current(tx, memoryId, procedureId);
@@ -92,9 +97,21 @@ export class ProceduresService {
          ORDER BY at DESC LIMIT 1`,
         [procedureId, req.outcome, req.step ?? null, who.conversationId, req.note ?? null, now, RUN_REPEAT_MS / 1000]);
       if (seen) return { id: seen.id, pending: p.pending };
-      const [{ id }] = await tx.query(
+      // A task carried out over several turns is one run: in a conversation, a run still going (only some steps done so
+      // far) takes the next report within RUN_SPAN_MS — the step reached, or how it ended (done whole, failed, stopped).
+      // A correction is the person's teaching, not a run: kept apart.
+      const [open]: Array<{ id: string }> = req.outcome === 'corrected' || !who.conversationId ? [] : await tx.query(
+        `SELECT id FROM procedure_runs WHERE procedure_id = $1 AND conversation_id = $2::uuid AND outcome = 'done' AND step IS NOT NULL
+           AND at > $3::timestamptz - make_interval(secs => $4) AND at <= $3::timestamptz ORDER BY at DESC LIMIT 1`,
+        [procedureId, who.conversationId, now, RUN_SPAN_MS / 1000]);
+      if (open) {
+        await tx.query(
+          `UPDATE procedure_runs SET outcome = $2::text, step = CASE WHEN $2::text = 'done' AND $3::int IS NOT NULL THEN GREATEST(step, $3::int) ELSE $3::int END,
+             note = COALESCE($4, note), at = $5 WHERE id = $1`, [open.id, req.outcome, req.step ?? null, req.note ?? null, now]);
+      }
+      const id: string = open ? open.id : (await tx.query(
         `INSERT INTO procedure_runs (procedure_id, memory_id, outcome, step, note, conversation_id, at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-        [procedureId, memoryId, req.outcome, req.step ?? null, req.note ?? null, who.conversationId, now]);
+        [procedureId, memoryId, req.outcome, req.step ?? null, req.note ?? null, who.conversationId, now]))[0].id;
       let pending = p.pending;
       // Only a whole run confirms what was read: one step done (a check of it, say) is that step's news, not the task's.
       if (req.outcome === 'done' && !req.step && p.pending) {
@@ -106,7 +123,7 @@ export class ProceduresService {
         const [vi]: Array<{ informant_id: string | null }> = await tx.query(`SELECT informant_id FROM procedure_variants WHERE id = $1`, [v.id]);
         await creditInformants(tx, { table: 'procedures', id: procedureId }, 'corrected', vi?.informant_id ?? undefined);
       }
-      return { id: id as string, pending };
+      return { id, pending };
     });
   }
 
@@ -304,7 +321,7 @@ export async function procedureViews(db: Db, memoryId: string, ids: string[], an
       learned: { how: r.origin === 'learned' ? 'read' as const : 'taught' as const, from: from.find((f) => f.procedure_id === id)?.name ?? '?',
         at: day(r.learned_at), confirmed: !r.pending, ...(r.source_id && r.source_title ? { source: { id: r.source_id, title: r.source_title } } : {}) },
       runs: { done: rs.filter((x) => x.outcome === 'done').length, failed: rs.filter((x) => x.outcome === 'failed').length,
-        corrected: rs.filter((x) => x.outcome === 'corrected').length, ...(last ? { last: { outcome: last.outcome, at: day(last.at), step: last.step } } : {}) },
+        stopped: rs.filter((x) => x.outcome === 'stopped').length, corrected: rs.filter((x) => x.outcome === 'corrected').length, ...(last ? { last: { outcome: last.outcome, at: day(last.at), step: last.step } } : {}) },
     } satisfies ProcedureView];
   });
 }
@@ -316,19 +333,23 @@ const informantName = (i: string) =>
 
 /**
  * A procedure as lines of the memory context: whole, the household's way above each generic step, where it failed, and
- * whether it is confirmed; within `budget` characters, cut only between steps (the rest: search_knowledge).
+ * whether it is confirmed; within `budget` characters, cut only between steps (the rest: search_knowledge). `tools`: the
+ * agent has the memory tools — its head then asks for the run's report (report_procedure_run).
  */
-export function procedureLines(p: ProcedureView, budget: number): string[] {
+export function procedureLines(p: ProcedureView, budget: number, tools = true): string[] {
   const how = p.learned.how === 'read'
     ? `read on ${p.learned.at} from ${p.learned.source ? `«${p.learned.source.title}», ` : ''}${p.learned.from}${p.learned.confirmed ? '' : '; not confirmed'}`
     : `taught by ${p.learned.from} on ${p.learned.at}${p.learned.confirmed ? '' : '; not confirmed'}`;
-  const runs = p.runs.done || p.runs.failed ? `; runs: ${p.runs.done} done, ${p.runs.failed} failed` : '';
+  const runs = p.runs.done || p.runs.failed || p.runs.stopped
+    ? `; runs: ${p.runs.done} done, ${p.runs.failed} failed${p.runs.stopped ? `, ${p.runs.stopped} stopped` : ''}` : '';
   const here = (h: ProcedureView['here']) => h.map((v) => `here (${v.by}${v.confirmed ? '' : ', not confirmed'}): ${v.text}`);
   // The id rides on the head, which is never cut: an agent reports a run (report_procedure_run) with no search first.
   const head = `- procedure "${p.title}" [id: ${p.id}]${p.when ? ` (when: ${p.when})` : ''} (${how}${runs}) — the household's way first, steps as taught:`;
-  const lines = [head, ...here(p.here).map((t) => `    ${t}`)];
+  // Where the agent decides, never cut: carrying it out ends with telling the memory how it went (with the tools only).
+  const report = `  carrying it out (whole, one step, or left halfway)? end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)`;
+  const lines = [head, ...(tools ? [report] : []), ...here(p.here).map((t) => `    ${t}`)];
   let size = lines.join('\n').length;
-  const more = (k: number) => `  … ${p.steps.length - k} more steps: search_knowledge "${p.title}"`;
+  const more = (k: number) => `  … ${p.steps.length - k} more steps${tools ? `: search_knowledge "${p.title}"` : ''}`;
   for (const [k, s] of p.steps.entries()) {
     const block = [...here(s.here).map((t) => `  ${s.n}. ${t}`), `  ${s.n}. ${s.here.length ? '(generic) ' : ''}${s.text}`,
       ...(s.failed ? [`     failed here on ${s.failed.at}${s.failed.note ? `: ${s.failed.note}` : ''}`] : [])];

@@ -563,11 +563,14 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   (l'id di una procedura) e `variant` (e `step`, nessuno = l'intero compito) aggiunge invece il modo proprio di chi parla.
   Chi l'ha portata e se resta in attesa si decide nel codice. Restituisce `{id, pending, status}` (o `{id, pending}` per una
   variante); è una scrittura.
-- `report_procedure_run {procedure_id, outcome, step?, note?}` — come è andata un'esecuzione: `done` (con `step` quando era
-  un solo passaggio), `failed` (al `step`, `note` cosa è andato storto — conta anche un controllo o un test fallito),
-  `corrected` (al `step`, `note` il modo giusto — obbligatoria; diventa il modo di chi parla). Un'esecuzione è l'intero
-  compito o un passaggio, fatto dall'agente o tramite un altro strumento. L'id sta sulla riga della procedura nel contesto
-  di memoria, o in `search_knowledge`. Restituisce `{id, pending}`; è una scrittura; lo stesso esito detto di nuovo a
+- `report_procedure_run {procedure_id, outcome, step?, note?}` — come è andata un'esecuzione, chiamato alla fine di ogni
+  turno che ha seguito o applicato una procedura della memoria, anche in parte o interrotta: `done` (l'intero compito; con
+  `step`, il passaggio raggiunto finora), `failed` (al `step`, `note` cosa è andato storto — conta anche un controllo o un
+  test fallito), `stopped` (lasciata a metà — la persona ha rinunciato o cambiato idea: il passaggio raggiunto, `note` il
+  perché; non è un difetto della procedura), `corrected` (al `step`, `note` il modo giusto — obbligatoria; diventa il modo
+  di chi parla). Un'esecuzione è l'intero compito o un passaggio, fatto dall'agente o tramite un altro strumento. L'id sta
+  sulla riga della procedura nel contesto di memoria, o in `search_knowledge`. Restituisce `{id, pending}`; è una
+  scrittura; i turni di un compito in una conversazione fanno un'esecuzione sola, e lo stesso esito detto di nuovo a
   breve conta una volta (§4d).
 
 ### `resolve_period` (D12, deterministico)
@@ -580,7 +583,7 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 la sua mente, non uno strumento tra tanti; ragionare da ciò che gli è venuto in mente, cercare nella memoria prima degli
 altri strumenti e prima di dire "non lo so", "ricordi / ricordare" vogliono dire questa memoria, usarla con naturalezza,
 non usarla quando gli viene chiesto. Lo stesso testo per ogni memoria, in inglese per tutte le lingue come il blocco,
-stabile finché `version` non cambia (`charter.v5` dalla 0.15.2: quando riportare — l'intero compito o un passaggio, anche tramite un altro strumento, compresi un controllo o un test di un passaggio, con l'id sulla riga della procedura; `charter.v4` dalla 0.15.1: una procedura dalla memoria fatta nel modo della casa, ogni esecuzione riportata con `report_procedure_run` — solo nella forma con gli strumenti; `charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
+stabile finché `version` non cambia (`charter.v6` dalla 0.15.2: l'esecuzione di una procedura riportata alla fine di ogni turno che la mette in pratica, anche in parte — `stopped` quando è lasciata a metà; i turni di un compito si uniscono in un'esecuzione sola; `charter.v5`: quando riportare — l'intero compito o un passaggio, anche tramite un altro strumento, compresi un controllo o un test di un passaggio, con l'id sulla riga della procedura; `charter.v4` dalla 0.15.1: una procedura dalla memoria fatta nel modo della casa, ogni esecuzione riportata con `report_procedure_run` — solo nella forma con gli strumenti; `charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
 cacheabile) e lo rilegge solo quando cambia la versione. Il server MCP manda lo stesso testo come sue `instructions`
 all'`initialize`, e il blocco `<memory-context>` lo nomina. Il contratto memory-first che ogni client segue:
 `INTEGRATION.md` §4. `?tools=false` dà la forma per un ospite che offre all'agente solo il contesto di memoria, senza
@@ -589,10 +592,11 @@ che è venuto in mente è tutto ciò che l'agente può ricordare ora — quando 
 tirare a indovinare, mai dire di stare cercando; stessa `version`.
 
 ### Contesto di memoria prima del turno (WORK_PLAN 5.7) — costruito
-`POST api/v1/context {query?, ingest?, card?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
+`POST api/v1/context {query?, ingest?, card?, initiatives?, tools?}` (scope `read`; `X-Recordare-User`, `X-Recordare-Conversation`) → `{block, items}`.
 Il blocco si apre con la scheda di sé (WORK_PLAN 8.13: righe "about me" dai fatti e dalle note attuali su di sé,
 nell'ordine di `GET api/v1/cards`; un elemento pertinente già nella scheda non viene ripetuto) — **accesa di default da
-D54** (un agente sa sempre chi è), `card: false` la spegne; misurata su dieci memorie di valutazione: 526 caratteri in
+D54** (un agente sa sempre chi è), `card: false` la spegne; `tools: false` (un agente senza strumenti di memoria, come
+`GET api/v1/charter?tools=false`) toglie ogni riga che gli chiede di chiamarne uno; misurata su dieci memorie di valutazione: 526 caratteri in
 media, 600 al massimo (circa 130–150 token). Un seguito breve (al massimo `CONTEXT_SHORT_QUERY_WORDS` parole, default 4,
 contate con Intl in ogni lingua: "e lui?", "他呢？") viene confrontato anche insieme al turno precedente della persona
 nella stessa conversazione (visibile a chi legge, D52), così trova ciò di cui parlava quel turno.
@@ -936,21 +940,31 @@ sta parlando — quella persona ha insegnato, corretto o eseguito.
   sostituisce mai una confermata (restano correnti entrambe). I passaggi sono tenuti come dati: mai tolti, fusi o
   "migliorati".
 - **Esecuzioni**: `done` dell'intero compito (senza `step`) conferma una procedura in attesa e accredita chi l'ha portata;
-  `done` con uno `step` (un passaggio fatto, un suo controllo) è una notizia di quel passaggio e non conferma nulla; `failed` segna il suo passaggio
+  `done` con uno `step` (il passaggio raggiunto finora, il controllo di un passaggio) è una notizia di quel passaggio e non
+  conferma nulla; `stopped` (lasciata a metà: la persona ha rinunciato o cambiato idea) conta come esecuzione, non conferma
+  nulla e non segna nessun passaggio; `failed` segna il suo passaggio
   (finché dopo non ne viene insegnata una variante) e non sposta fiducia — l'errore può essere del robot; `corrected`
   diventa la variante di chi parla per quel passaggio e costa un `corrected` agli altri informatori della procedura. Lo
   stesso esito detto di nuovo — stessa procedura, esito, passaggio e conversazione (nessuna vale nessuna), entro 10
   minuti; una correzione solo con la stessa `note` — è la stessa esecuzione: non si tiene nulla di nuovo e torna il suo `id`
-  (possono riportarla sia l'agente sia il codice dell'host).
+  (possono riportarla sia l'agente sia il codice dell'host). **Un compito su più turni è un'esecuzione sola**: in una
+  conversazione, un'esecuzione ancora in corso (`done` con uno `step`) prende la segnalazione successiva di quella
+  procedura entro 3 ore dall'ultima — il passaggio raggiunto (il più avanti) o come è finita (`done` intera, `failed`,
+  `stopped`) — e torna il suo `id`; un'esecuzione finita, un'altra conversazione o una pausa più lunga ne apre una nuova.
+  Un `corrected` è l'insegnamento della persona e resta sempre a parte; senza conversazione vale solo la regola dei 10
+  minuti.
 - **La vista** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
   note}}], here (le varianti dell'intero compito), learned: {how: "read" | "taught", from, at, confirmed, source?: {id,
-  title}}, runs: {done, failed, corrected, last?}}` — `by` / `from` è il nome di una persona, "the household" (il parlante
+  title}}, runs: {done, failed, stopped, corrected, last?}}` — `by` / `from` è il nome di una persona, "the household" (il parlante
   dell'account), "someone", o il sito.
 - **Richiamo**: `search_knowledge` le restituisce per prime, intere (§3); il contesto di memoria porta intera la più vicina
   quando il messaggio la riguarda (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0,55; un budget suo di 1 500 caratteri, tagliato solo
   tra i passaggi; ci conta anche la riga che rimanda al resto): `- procedure "make the bed" [id: <uuid>] (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way
-  first, steps as taught:` poi `4. here (Sofia): …` sopra `4. (generic) …`, e `failed here on …` sotto un passaggio; tagliata, `… N more steps: search_knowledge "…"`. L'id
-  sull'intestazione, mai tagliata, è quello che prende `report_procedure_run`.
+  first, steps as taught:`, poi (quando l'agente ha gli strumenti di memoria) `carrying it out (whole, one step, or left
+  halfway)? end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)`, poi `4. here (Sofia): …` sopra
+  `4. (generic) …`, e `failed here on …` sotto un passaggio; tagliata, `… N more steps: search_knowledge "…"` (`… N more
+  steps` con `tools: false`). L'id sull'intestazione e la riga che chiede la segnalazione non vengono mai tagliati; l'id è
+  quello che prende `report_procedure_run`.
 - **Da ciò che una persona insegna in conversazione (modo B1, F2b)**: in una memoria di entità che impara, la chiamata di
   estrazione che gira comunque (`learn.v2`, sezione PROCEDURES; nessuna chiamata in più) propone un how-to di più passaggi
   che una persona qui insegna — o che uno strumento o una pagina nella finestra dà perché qualcuno ha chiesto come si fa

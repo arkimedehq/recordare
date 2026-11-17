@@ -100,6 +100,7 @@ describe('proxy', () => {
     expect(ingest.messages[0]).toMatchObject({ role: 'other', authorRef: 'anythingllm:7' });
     expect(calls[0]!.body.query).toBe('Come si chiama il mio gatto?');
     expect(calls[0]!.body).not.toHaveProperty('card'); // the self card: on by default
+    expect(calls[0]!.body.tools).toBe(false); // no memory tools by default: the block asks the model to call none
     const answer = (calls[1]!.body.messages as Array<Record<string, unknown>>)[0]!;
     expect(answer).toMatchObject({ role: 'assistant', content: 'Hello', upsert: true });
     expect(answer.externalId).toBe(`${ingest.messages[0]!.externalId}:a`);

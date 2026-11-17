@@ -57,7 +57,7 @@ export const procedureResponse = z.object({
     source: z.object({ id: z.uuid(), title: z.string() }).optional(),
   }),
   runs: z.object({
-    done: z.number().int(), failed: z.number().int(), corrected: z.number().int(),
+    done: z.number().int(), failed: z.number().int(), stopped: z.number().int(), corrected: z.number().int(),
     last: z.object({ outcome: z.string(), at: z.string(), step: z.number().int().nullable() }).optional(),
   }),
 });

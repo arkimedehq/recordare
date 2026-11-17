@@ -33,6 +33,8 @@ const contextSchema = z.object({
   card: z.boolean().optional(),
   /** D55: what the host's agent can do with the memory's initiatives — `lookups`: it has tools to find things out with. */
   initiatives: z.object({ lookups: z.boolean().optional() }).optional(),
+  /** `false`: the agent has no memory tools, only this block (as `GET api/v1/charter?tools=false`): no line asks it to call one. */
+  tools: z.boolean().optional(),
 });
 
 const charterQuery = z.object({
@@ -76,7 +78,7 @@ export class ContextController {
     const ctx = await this.conversations.resolve(principal, memoryId, conversation);
     const override = this.config.get('ALLOW_CLOCK_OVERRIDE', { infer: true }) && at ? new Date(at) : null;
     const now = override && !Number.isNaN(override.getTime()) ? override : this.clock.now();
-    return this.context.build(memoryId, query.trim().slice(0, 8_000), ctx.conversationId, now, { card: body.card, lookups: body.initiatives?.lookups });
+    return this.context.build(memoryId, query.trim().slice(0, 8_000), ctx.conversationId, now, { card: body.card, lookups: body.initiatives?.lookups, tools: body.tools });
   }
 }
 

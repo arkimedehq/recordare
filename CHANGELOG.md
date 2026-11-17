@@ -13,6 +13,15 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   step, through another tool too, a check or test of a step included. The same outcome told again within 10 minutes
   (same procedure, step, conversation; a correction with the same words) counts once and returns the first run's id.
   `done` with a `step` no longer confirms what was read: only a whole run does.
+- **…and at the point where the agent decides** (charter `charter.v6`): the procedure's lines in the memory context ask
+  for the report right under the head (`carrying it out …? end your turn with report_procedure_run: this id, …`, never
+  cut); the `report_procedure_run` description says when — at the end of any turn that followed or applied it, even
+  partly or interrupted. New outcome **`stopped`**: a task left halfway (the person gave up or changed their mind) counts
+  as a run with the step reached, confirms nothing and marks no step as failed (`runs.stopped` in the view). **One task
+  over several turns is one run**: in a conversation, a run still going takes the next report within 3 hours (the step
+  reached, or how it ended). `POST api/v1/context` takes `tools: false` for an agent with no memory tools (no line asks
+  for a tool); the OpenAI-compatible proxy sends it unless `MEMORY_TOOLS` is on. Client library and connectors: the
+  `stopped` outcome, the `tools` context option, the new tool description.
 
 ## [0.15.1] — 2026-11-16
 
