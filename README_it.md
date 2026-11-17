@@ -249,6 +249,10 @@ Attorno alla memoria:
 - **Recordare Atlas** ([`arkimedehq/recordare-atlas`](https://github.com/arkimedehq/recordare-atlas), opzionale, repo
   proprio): una vista "cervello" in tempo reale di Recordare e degli agenti dei suoi client. Mostra solo metadati, e
   ogni animazione è un evento reale ([contratto](docs/ATLAS_EVENTS_it.md)). Recordare funziona senza.
+- **Percezione** ([`arkimedehq/percezione`](https://github.com/arkimedehq/percezione), opzionale, repo proprio): gli
+  occhi. Trasforma le tue camere in eventi sulle persone (chi è arrivato, chi è alla porta, cosa sta facendo); tramite
+  [Arkimede](https://github.com/arkimedehq/arkimede) arrivano alla memoria come *percezioni* (ricordate come viste,
+  lasciate sbiadire) e impulsi di presenza, il momento giusto per un'iniziativa. Recordare funziona senza.
 - **Connettori** per altre piattaforme di agenti (Claude Code, Codex, OpenClaw, Hermes Agent, un proxy di memoria
   compatibile OpenAI), che condividono una libreria client e una suite di conformità ([`connectors/`](connectors/)).
 

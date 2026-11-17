@@ -236,6 +236,10 @@ Around the memory:
 - **Recordare Atlas** ([`arkimedehq/recordare-atlas`](https://github.com/arkimedehq/recordare-atlas), optional, its
   own repo): a live "brain" view of Recordare and its clients' agents. It shows metadata only, and every animation
   is a real event ([contract](docs/ATLAS_EVENTS.md)). Recordare works without it.
+- **Percezione** ([`arkimedehq/percezione`](https://github.com/arkimedehq/percezione), optional, its own repo): the
+  eyes. It turns your own cameras into events about people (who arrived, who is at the door, what someone is doing);
+  through [Arkimede](https://github.com/arkimedehq/arkimede) they reach the memory as *perceptions* (remembered as
+  seen, left to fade) and presence impulses, the right moment for an initiative. Recordare works without it.
 - **Connectors** for other agent platforms (Claude Code, Codex, OpenClaw, Hermes Agent, an OpenAI-compatible memory
   proxy), sharing one client library and one conformance suite ([`connectors/`](connectors/)).
 
