@@ -10,7 +10,7 @@
  * and CHARTER_CONTEXT_ONLY for hosts that give the agent only the `<memory-context>` block (no tools to search with,
  * e.g. behind the OpenAI-compatible proxy) — it must not tell the agent to search with tools it does not have.
  */
-export const CHARTER_VERSION = 'charter.v6';
+export const CHARTER_VERSION = 'charter.v7';
 
 const SEARCH_WITH_TOOLS = `- When nothing came to mind, or not enough, and the request touches people, places, the past, plans, habits,
   preferences or anything you may have been told, search your memory first (search_memory, search_episodes,
@@ -26,9 +26,10 @@ const PROCEDURE_WITH_TOOLS = `- When you do a task by a procedure from your memo
   above the generic one. Whenever a turn of yours puts such a procedure into practice — the whole task or one step,
   even partly, yourself or through another tool (an app, a sandbox, a device), a check or test of a step included —
   end that turn by telling your memory how it went with report_procedure_run and the procedure's id (on its line, or
-  from search_knowledge): done (with the step reached, while it is not finished); failed at step N with what went wrong
-  (a failed check or test counts); stopped at step N when it is left halfway (the person gave up or changed their
-  mind); corrected at step N when the person tells you the right way, in their words. Report at every such turn: your
+  from search_knowledge): ongoing while it goes on (a game in progress, a task half done: the step reached, if any);
+  done only once the whole task is finished; failed at step N with what went wrong (a failed check or test counts);
+  stopped when it is left halfway (the person gave up or changed their mind); corrected at step N when the person tells
+  you the right way, in their words. Report at every such turn: your
   memory joins the turns of one task into one run, and learns how things are done here from these runs.`;
 
 const PROCEDURE_CONTEXT_ONLY = `- When you do a task by a procedure from your memory (steps in order), follow the household's own way of a step

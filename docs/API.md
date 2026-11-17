@@ -542,8 +542,9 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   (a procedure's id) and `variant` (and `step`, none = the whole task) it adds the speaker's own way instead. Who brought
   it and whether it waits are decided in code. Returns `{id, pending, status}` (or `{id, pending}` for a variant); a write.
 - `report_procedure_run {procedure_id, outcome, step?, note?}` — how a run went, called at the end of any turn that
-  followed or applied a procedure from memory, even partly or interrupted: `done` (the whole task; with `step`, the step
-  reached so far), `failed` (at `step`, `note` what went wrong — a failed check or test counts), `stopped` (left halfway —
+  followed or applied a procedure from memory, even partly or interrupted: `ongoing` (it goes on — a game in progress, a
+  task half done: the step reached if any, `note` where it stands), `done` (only once the whole task is finished, no
+  `step`; with a `step` it counts as `ongoing`), `failed` (at `step`, `note` what went wrong — a failed check or test counts), `stopped` (left halfway —
   the person gave up or changed their mind: the step reached, `note` why; not a fault of the procedure), `corrected` (at
   `step`, `note` the right way — required; it becomes the speaker's way). A run is the whole task or one step, done by the
   agent or through another tool. The id is on the procedure's line of the memory context, or in `search_knowledge`.
@@ -560,7 +561,7 @@ synonyms); Monday-based weeks, the memory's timezone; "now" is the server clock 
 `GET api/v1/charter` (scope `read`, no user header) → `{charter, version}`: how the agent uses its memory — its own
 mind, not a tool among others; reason from what came to mind, search the memory before other tools and before saying
 "I don't know", "remember / memories" mean this memory, use it naturally, not when asked not to. The same text for every
-memory, in English for every language like the block, stable until `version` changes (`charter.v6` since 0.15.2: a procedure's run reported at the end of every turn that puts it into practice, even partly — `stopped` when left halfway; the turns of one task join into one run; `charter.v5`: when to report — the whole task or one step, through another tool too, a check or test of a step included, with the id on the procedure's line; `charter.v4` since 0.15.1: a procedure from memory done the household's way, each run reported with `report_procedure_run` — the tools form only; `charter.v3` since 0.9.1: asking who it is names no one; `charter.v2` since 0.7.0: how to use an initiative line): the host puts it in
+memory, in English for every language like the block, stable until `version` changes (`charter.v7` since 0.15.2: a procedure's run reported at the end of every turn that puts it into practice, even partly, with the id on the procedure's line — `ongoing` while it goes on, `done` only once the whole task is finished, `stopped` when left halfway; the turns of one task join into one run; `charter.v4` since 0.15.1: a procedure from memory done the household's way, each run reported with `report_procedure_run` — the tools form only; `charter.v3` since 0.9.1: asking who it is names no one; `charter.v2` since 0.7.0: how to use an initiative line): the host puts it in
 the agent's system prompt (stable part, cacheable) and re-reads it only when the version changes. The MCP server sends
 the same text as its `instructions` at `initialize`, and the `<memory-context>` block names it. The memory-first
 contract every client follows: `INTEGRATION.md` §4. `?tools=false` gives the form for a host that offers the agent
@@ -910,17 +911,21 @@ person taught, corrected or ran it.
   independent origin (another informant, another conversation) that is trusted or the second one. With other steps it is
   a **new version** that replaces the old one and takes its household variants — a pending version never replaces a
   confirmed one (both stay current). Steps are kept as given: never dropped, merged or "improved".
-- **Runs**: `done` of the whole task (no `step`) confirms a pending procedure and credits who brought it; `done` with a
-  `step` (the step reached so far, a check of one step) is that step's news and confirms nothing; `stopped` (left halfway:
+- **Runs**: `done` of the whole task (no `step`) confirms a pending procedure and credits who brought it; `ongoing` (the
+  task goes on: the step reached) — and `done` with a `step`, kept as `ongoing` — confirms nothing; `stopped` (left halfway:
   the person gave up or changed their mind) counts as a run, confirms nothing and marks no step; `failed` marks its step (until a variant of
   that step is taught after it) and moves no trust — the robot may be at fault; `corrected` becomes the speaker's
   variant of that step and costs the procedure's other informants one `corrected`. The same outcome told again — same
   procedure, outcome, step and conversation (none matches none), within 10 minutes; a correction only with the same
   `note` — is the same run: nothing new is kept and its `id` comes back (the agent and the host's code may both report it).
-  **One task over several turns is one run**: in a conversation, a run still going (`done` with a `step`) takes the next
+  **One task over several turns is one run**: in a conversation, a run still going (`ongoing`) takes the next
   report of that procedure within 3 hours of the last — the step reached (the furthest one) or how it ended (`done` whole,
   `failed`, `stopped`) — and its `id` comes back; an ended run, another conversation or a longer pause starts a new one.
-  A `corrected` is the person's teaching and always kept apart; with no conversation only the 10-minute rule applies.
+  **A `done` told too soon is taken back**: when the same conversation, within those 3 hours, then reports the same
+  procedure `ongoing`, `stopped` or `failed`, that `done` was not the end — the report goes into its run, and the
+  confirmation it gave (the procedure no longer pending, one `confirmed` to its informants) is taken back. A new `done`
+  after a `done` is another run. A `corrected` is the person's teaching and always kept apart; with no conversation only
+  the 10-minute rule applies.
 - **The view** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
   note}}], here (the whole task's variants), learned: {how: "read" | "taught", from, at, confirmed, source?: {id, title}},
   runs: {done, failed, stopped, corrected, unreported, last?}}` — `unreported`: looked up (search_knowledge) in a
@@ -929,16 +934,16 @@ person taught, corrected or ran it.
 - **Recall**: `search_knowledge` returns them first, whole (§3); the memory context carries the nearest one whole when the
   message is about it (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0.55; its own budget of 1 500 characters, cut only between
   steps; the line that points to the rest counts in it too): `- procedure "make the bed" [id: <uuid>] (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way first,
-  steps as taught:`, then (when the agent has the memory tools) `carrying it out (whole, one step, or left halfway)? end your
-  turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)`, then `4. here (Sofia): …` above `4. (generic) …`,
+  steps as taught:`, then (when the agent has the memory tools) `carrying it out? end your turn with report_procedure_run, this id
+  and the outcome: ongoing while it goes on (the step reached), done only once it is all finished, stopped if left
+  halfway, failed if it went wrong`, then `4. here (Sofia): …` above `4. (generic) …`,
   and `failed here on …` under a step; cut, `… N more steps: search_knowledge "…"` (`… N more steps` with `tools: false`).
   The id on the head and the line that asks for the report are never cut; the id is what `report_procedure_run` takes.
 - **In progress in a conversation** (with the memory tools): a procedure the memory context of a conversation carried,
   or search_knowledge returned there, is in progress in it; the next turns' memory context carries a compact line even
-  when the message does not recall it — `- procedure in progress "…" [id: <uuid>] (not reported yet | last reported: step
-  N | last reported: done) — if you are carrying it out: when it moves on, ends or stops, end your turn with
-  report_procedure_run (…)` — so the turn that carries it on or ends it still has its id and the report asked for. It
-  ends with a report that ends the run (`done` whole, `failed`, `stopped`; `done` with a step keeps it, at that step),
+  when the message does not recall it — `- procedure in progress "…" [id: <uuid>] (not reported yet | last reported: ongoing
+  [at step N]) — if you are carrying it out, end your turn with report_procedure_run, this id and the outcome: …` — so the turn that carries it on or ends it still has its id and the report asked for. It
+  ends with a report that ends the run (`done` whole, `failed`, `stopped`; `ongoing` keeps it, at that step),
   with the conversation (`POST api/v1/ingest/conversations/{id}/end`), or 3 hours unused. A run that just ended there is
   not reopened by the context alone, only by looking it up again. Looked up and ended with no report at all: one
   `unreported` in the view.

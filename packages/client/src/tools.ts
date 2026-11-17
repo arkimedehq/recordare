@@ -241,7 +241,7 @@ export const TOOLS = [
   {
     "name": "report_procedure_run",
     "title": "Tell how a task went",
-    "description": "Call it at the end of any turn in which you followed or applied a procedure from your memory — the whole task or one step, even partly, even interrupted, yourself or through another tool, a check or test of a step included — and when a person corrects how you did it. Outcome: done (the whole task; with step, the step reached so far); failed (at step N, what went wrong; a failed check or test counts); stopped (left halfway — the person gave up or changed their mind: the step reached, why in note; not a fault of the procedure); corrected (at step N, note = the right way, as the person said it — it becomes the household's way). The id is on the procedure's line in your memory context, or from search_knowledge. Report at every turn: in one conversation the turns of one task make one run, and the same outcome told again counts once.",
+    "description": "Call it at the end of any turn in which you followed or applied a procedure from your memory — the whole task or one step, even partly, even interrupted, yourself or through another tool, a check or test of a step included — and when a person corrects how you did it. Outcome: ongoing (it goes on — a game in progress, a task half done: the step reached if any, where it stands in note); done (only once the whole task is finished, no step); failed (at step N, what went wrong; a failed check or test counts); stopped (left halfway — the person gave up or changed their mind: the step reached, why in note; not a fault of the procedure); corrected (at step N, note = the right way, as the person said it — it becomes the household's way). The id is on the procedure's line in your memory context, or from search_knowledge. Report at every turn: in one conversation the turns of one task make one run, and the same outcome told again counts once.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -254,6 +254,7 @@ export const TOOLS = [
           "type": "string",
           "enum": [
             "done",
+            "ongoing",
             "failed",
             "stopped",
             "corrected"

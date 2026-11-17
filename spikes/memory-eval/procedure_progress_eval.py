@@ -75,7 +75,7 @@ def run_case(case: dict, texts: dict, variant: str, prompt: str, tools: list[dic
     proc = texts["procedures"][case["procedure"]]
     history: list[dict] = []
     reports: list[dict] = []
-    state = {"open": False, "closed": False, "last": None}  # the procedure in progress (variant progress)
+    state = {"open": False, "closed": False, "reported": False, "last": None}  # the procedure in progress (variant progress)
     for turn in case["turns"]:
         lines = []
         if turn["recall"]:
@@ -83,8 +83,8 @@ def run_case(case: dict, texts: dict, variant: str, prompt: str, tools: list[dic
             if not state["closed"]:
                 state["open"] = True
         elif variant == "progress" and state["open"] and not state["closed"]:
-            line = proc["progress"] if state["last"] is None else proc["progress"].replace(
-                "(not reported yet)", f"(last reported: {'step ' + str(state['last']) if state['last'] else 'done'})")
+            line = proc["progress"] if not state["reported"] else proc["progress"].replace(
+                "(not reported yet)", f"(last reported: ongoing{' at step ' + str(state['last']) if state['last'] else ''})")
             lines.append(line)
         system = f"{prompt}\n\n{texts['charter']}\n\n{block(lines)}"
         turn_msgs: list[dict] = [{"role": "user", "content": turn["user"]}]
@@ -104,11 +104,10 @@ def run_case(case: dict, texts: dict, variant: str, prompt: str, tools: list[dic
                     args = {}
                 if name == "report_procedure_run":
                     reports.append({"turn": case["turns"].index(turn) + 1, **args})
-                    if args.get("procedure_id") == proc["id"]:
-                        ended = args.get("outcome") != "done" or not args.get("step")
-                        state["last"] = args.get("step")
-                        if ended and args.get("outcome") != "corrected":
-                            state["closed"] = True
+                    if args.get("procedure_id") == proc["id"] and args.get("outcome") != "corrected":
+                        going = args.get("outcome") == "ongoing" or (args.get("outcome") == "done" and args.get("step"))
+                        state["reported"], state["last"] = True, args.get("step")
+                        state["closed"] = not going
                     out = json.dumps({"id": "run-1", "pending": True})
                 elif name == "search_knowledge":
                     out = proc["search"]["after" if variant == "progress" else "before"]

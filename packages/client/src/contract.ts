@@ -594,11 +594,14 @@ export interface ProcedureVariant {
 }
 
 export interface ProcedureRun {
-  /** stopped: left halfway (the person gave up or changed their mind) — counts, confirms nothing, marks no step as failed. */
-  outcome: 'done' | 'failed' | 'stopped' | 'corrected';
-  /** The step (1-based): failed / corrected at it; stopped, or done while not finished: the step reached (none: the whole task). */
+  /**
+   * ongoing: it goes on (the step reached, if any); done: only the whole task finished (with a step: counts as ongoing);
+   * stopped: left halfway (the person gave up or changed their mind) — counts, confirms nothing, marks no step as failed.
+   */
+  outcome: 'done' | 'ongoing' | 'failed' | 'stopped' | 'corrected';
+  /** The step (1-based): failed / corrected at it; ongoing / stopped: the step reached. */
   step?: number;
-  /** failed: what went wrong; stopped: why it was left; corrected: the right way (required). */
+  /** ongoing: where it stands; failed: what went wrong; stopped: why it was left; corrected: the right way (required). */
   note?: string;
   /** Who is speaking there corrected it. */
   conversation?: { externalId: string };
@@ -615,5 +618,5 @@ export interface Procedure {
   here: ProcedureHere[];
   learned: { how: 'read' | 'taught'; from: string; at: string; confirmed: boolean; source?: { id: string; title: string } };
   /** unreported: looked up in a conversation that closed with no report at all. */
-  runs: { done: number; failed: number; stopped: number; corrected: number; unreported: number; last?: { outcome: string; at: string; step: number | null } };
+  runs: { done: number; ongoing: number; failed: number; stopped: number; corrected: number; unreported: number; last?: { outcome: string; at: string; step: number | null } };
 }

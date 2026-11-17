@@ -44,7 +44,7 @@ export interface ProcedureView {
   /** read: in a page or a source; taught: by a person. */
   learned: { how: 'read' | 'taught'; from: string; at: string; confirmed: boolean; source?: { id: string; title: string } };
   /** unreported: looked up in a conversation (search_knowledge) that closed with no report at all. */
-  runs: { done: number; failed: number; stopped: number; corrected: number; unreported: number; last?: { outcome: string; at: string; step: number | null } };
+  runs: { done: number; ongoing: number; failed: number; stopped: number; corrected: number; unreported: number; last?: { outcome: string; at: string; step: number | null } };
 }
 
 interface Who { conversationId: string | null; personal: boolean }
@@ -55,7 +55,7 @@ const RUN_REPEAT_MS = 10 * 60_000;
 const RUN_SPAN_MS = 3 * 3_600_000;
 
 /** What an agent with the memory tools is asked wherever a procedure reaches it: the line under its head, search_knowledge. */
-export const REPORT_ASK = 'carrying it out (whole, one step, or left halfway)? end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)';
+export const REPORT_ASK = 'carrying it out? end your turn with report_procedure_run, this id and the outcome: ongoing while it goes on (the step reached), done only once it is all finished, stopped if left halfway, failed if it went wrong';
 
 /**
  * A procedure in progress in a conversation (8.16 F2): opened (or touched) when the memory context of that conversation
@@ -94,8 +94,8 @@ export async function procedureInProgressLines(db: DataSource | EntityManager, c
 
 /** The compact line of a procedure in progress (no steps: they came in an earlier turn or from search_knowledge). */
 export function inProgressLine(p: { id: string; title: string; reported: boolean; lastStep: number | null }): string {
-  return `- procedure in progress "${p.title}" [id: ${p.id}] (${p.reported ? `last reported: ${p.lastStep ? `step ${p.lastStep}` : 'done'}` : 'not reported yet'})`
-    + ' — if you are carrying it out: when it moves on, ends or stops, end your turn with report_procedure_run (this id, the outcome, the step reached; none once it is all done)';
+  return `- procedure in progress "${p.title}" [id: ${p.id}] (${p.reported ? `last reported: ongoing${p.lastStep ? ` at step ${p.lastStep}` : ''}` : 'not reported yet'})`
+    + ' — if you are carrying it out, end your turn with report_procedure_run, this id and the outcome: ongoing while it goes on (the step reached), done only once it is all finished, stopped if left halfway, failed if it went wrong';
 }
 
 /** TypeORM returns [rows, count] for UPDATE … RETURNING. */
@@ -141,6 +141,10 @@ export class ProceduresService {
     return this.db.transaction(async (tx) => {
       const p = await this.current(tx, memoryId, procedureId);
       if (req.step && req.step > p.steps.length) throw new BadRequestException(`step ${req.step}: the procedure has ${p.steps.length} steps`);
+      const outcome = req.outcome;
+      // Still going: `ongoing`, or (older clients) `done` with a step — neither confirms anything.
+      const going = outcome === 'ongoing' || (outcome === 'done' && !!req.step);
+      const whole = outcome === 'done' && !req.step;
       // The same outcome told twice — by the agent and by the host's code, or a retry — counts once: same procedure,
       // outcome, step and conversation (none matches none) within RUN_REPEAT_MS; a correction only with the same words.
       const [seen]: Array<{ id: string }> = await tx.query(
@@ -148,39 +152,51 @@ export class ProceduresService {
            AND conversation_id IS NOT DISTINCT FROM $4::uuid AND ($2::text <> 'corrected' OR note IS NOT DISTINCT FROM $5::text)
            AND at > $6::timestamptz - make_interval(secs => $7) AND at <= $6::timestamptz + make_interval(secs => $7)
          ORDER BY at DESC LIMIT 1`,
-        [procedureId, req.outcome, req.step ?? null, who.conversationId, req.note ?? null, now, RUN_REPEAT_MS / 1000]);
-      if (seen) return { id: seen.id, pending: p.pending };
-      // A task carried out over several turns is one run: in a conversation, a run still going (only some steps done so
-      // far) takes the next report within RUN_SPAN_MS — the step reached, or how it ended (done whole, failed, stopped).
-      // A correction is the person's teaching, not a run: kept apart.
-      const [open]: Array<{ id: string }> = req.outcome === 'corrected' || !who.conversationId ? [] : await tx.query(
-        `SELECT id FROM procedure_runs WHERE procedure_id = $1 AND conversation_id = $2::uuid AND outcome = 'done' AND step IS NOT NULL
+        [procedureId, outcome, req.step ?? null, who.conversationId, req.note ?? null, now, RUN_REPEAT_MS / 1000]);
+      if (seen) return { id: seen.id, pending: (await this.current(tx, memoryId, procedureId)).pending };
+      // A task carried out over several turns is one run: in a conversation, the latest run within RUN_SPAN_MS takes the
+      // next report when it is still going — or when it was told `done` too soon, and this report says the task goes on,
+      // stopped or failed (then what that `done` confirmed is taken back). A correction is the person's teaching: apart.
+      const [open]: Array<{ id: string; outcome: string; step: number | null; confirmed: boolean }> = outcome === 'corrected' || !who.conversationId ? [] : await tx.query(
+        `SELECT id, outcome, step, confirmed FROM procedure_runs WHERE procedure_id = $1 AND conversation_id = $2::uuid AND outcome <> 'corrected'
            AND at > $3::timestamptz - make_interval(secs => $4) AND at <= $3::timestamptz ORDER BY at DESC LIMIT 1`,
         [procedureId, who.conversationId, now, RUN_SPAN_MS / 1000]);
-      if (open) {
+      const openGoing = open && (open.outcome === 'ongoing' || (open.outcome === 'done' && open.step !== null));
+      const tooSoon = open && open.outcome === 'done' && open.step === null && !whole;
+      const into = openGoing || tooSoon ? open : null;
+      if (into?.confirmed) await unconfirmProcedure(tx, procedureId, into.id);
+      if (into) {
         await tx.query(
-          `UPDATE procedure_runs SET outcome = $2::text, step = CASE WHEN $2::text = 'done' AND $3::int IS NOT NULL THEN GREATEST(step, $3::int) ELSE $3::int END,
-             note = COALESCE($4, note), at = $5 WHERE id = $1`, [open.id, req.outcome, req.step ?? null, req.note ?? null, now]);
+          `UPDATE procedure_runs SET outcome = $2::text, step = CASE WHEN $3::boolean THEN GREATEST(step, $4::int)
+             WHEN $2::text = 'done' THEN NULL ELSE COALESCE($4::int, step) END,
+             note = COALESCE($5, note), at = $6 WHERE id = $1`, [into.id, going ? 'ongoing' : outcome, going, req.step ?? null, req.note ?? null, now]);
       }
-      const id: string = open ? open.id : (await tx.query(
+      const id: string = into ? into.id : (await tx.query(
         `INSERT INTO procedure_runs (procedure_id, memory_id, outcome, step, note, conversation_id, at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-        [procedureId, memoryId, req.outcome, req.step ?? null, req.note ?? null, who.conversationId, now]))[0].id;
-      // The procedure in progress in this conversation: reported (the step reached); a run that ended closes it.
-      if (who.conversationId && req.outcome !== 'corrected') {
-        const ended = req.outcome !== 'done' || !req.step;
+        [procedureId, memoryId, going ? 'ongoing' : outcome, req.step ?? null, req.note ?? null, who.conversationId, now]))[0].id;
+      // The procedure in progress in this conversation: reported (the step reached); a run that ended closes it — and one
+      // told done too soon reopens it.
+      if (who.conversationId && outcome !== 'corrected') {
+        if (tooSoon) {
+          await tx.query(
+            `UPDATE procedure_sessions SET closed_at = NULL, closed = NULL WHERE id = (SELECT id FROM procedure_sessions WHERE conversation_id = $1
+               AND procedure_id = $2 AND closed = 'reported' ORDER BY closed_at DESC LIMIT 1) AND NOT EXISTS (SELECT 1 FROM procedure_sessions
+               WHERE conversation_id = $1 AND procedure_id = $2 AND closed_at IS NULL)`, [who.conversationId, procedureId]);
+        }
         await tx.query(
           `UPDATE procedure_sessions SET reported = true, last_step = $3, touched_at = GREATEST(touched_at, $4::timestamptz),
              closed_at = CASE WHEN $5::boolean THEN $4::timestamptz END, closed = CASE WHEN $5::boolean THEN 'reported' END
            WHERE conversation_id = $1 AND procedure_id = $2 AND closed_at IS NULL`,
-          [who.conversationId, procedureId, req.step ?? null, now, ended]);
+          [who.conversationId, procedureId, req.step ?? null, now, !going]);
       }
-      let pending = p.pending;
-      // Only a whole run confirms what was read: one step done (a check of it, say) is that step's news, not the task's.
-      if (req.outcome === 'done' && !req.step && p.pending) {
+      let pending = (await this.current(tx, memoryId, procedureId)).pending;
+      // Only a whole run confirms what was read: a step done (a check of it, say) or a task still going is not the task's news.
+      if (whole && pending) {
         await confirmProcedure(tx, procedureId, now);
+        await tx.query(`UPDATE procedure_runs SET confirmed = true WHERE id = $1`, [id]);
         pending = false;
       }
-      if (req.outcome === 'corrected') {
+      if (outcome === 'corrected') {
         const v = await this.addVariant(tx, memoryId, procedureId, who, req.step ?? null, req.note as string, now);
         const [vi]: Array<{ informant_id: string | null }> = await tx.query(`SELECT informant_id FROM procedure_variants WHERE id = $1`, [v.id]);
         await creditInformants(tx, { table: 'procedures', id: procedureId }, 'corrected', vi?.informant_id ?? undefined);
@@ -336,6 +352,15 @@ async function confirmProcedure(tx: Db, id: string, now: Date): Promise<void> {
   await creditInformants(tx, { table: 'procedures', id }, 'confirmed');
 }
 
+/** A run told `done` too soon had confirmed the procedure: it waits again and its informants lose that confirmation. */
+async function unconfirmProcedure(tx: Db, id: string, runId: string): Promise<void> {
+  await tx.query(`UPDATE procedures SET pending = true, confirmed_at = NULL WHERE id = $1`, [id]);
+  await tx.query(
+    `UPDATE informants SET confirmed = confirmed - 1 WHERE confirmed > 0
+       AND id IN (SELECT DISTINCT informant_id FROM item_informants WHERE procedure_id = $1)`, [id]);
+  await tx.query(`UPDATE procedure_runs SET confirmed = false WHERE id = $1`, [runId]);
+}
+
 /** A page's informant: its site, or "a page" when no single site is named. */
 function page(uri: string | null): Informant {
   const host = uri ? singleHost(uri.includes('://') ? uri : `https://${uri}`) : null;
@@ -385,7 +410,7 @@ export async function procedureViews(db: Db, memoryId: string, ids: string[], an
       here: here(null),
       learned: { how: r.origin === 'learned' ? 'read' as const : 'taught' as const, from: from.find((f) => f.procedure_id === id)?.name ?? '?',
         at: day(r.learned_at), confirmed: !r.pending, ...(r.source_id && r.source_title ? { source: { id: r.source_id, title: r.source_title } } : {}) },
-      runs: { done: rs.filter((x) => x.outcome === 'done').length, failed: rs.filter((x) => x.outcome === 'failed').length,
+      runs: { done: rs.filter((x) => x.outcome === 'done').length, ongoing: rs.filter((x) => x.outcome === 'ongoing').length, failed: rs.filter((x) => x.outcome === 'failed').length,
         stopped: rs.filter((x) => x.outcome === 'stopped').length, unreported: unreported.find((u) => u.procedure_id === id)?.n ?? 0, corrected: rs.filter((x) => x.outcome === 'corrected').length, ...(last ? { last: { outcome: last.outcome, at: day(last.at), step: last.step } } : {}) },
     } satisfies ProcedureView];
   });
@@ -405,8 +430,8 @@ export function procedureLines(p: ProcedureView, budget: number, tools = true): 
   const how = p.learned.how === 'read'
     ? `read on ${p.learned.at} from ${p.learned.source ? `«${p.learned.source.title}», ` : ''}${p.learned.from}${p.learned.confirmed ? '' : '; not confirmed'}`
     : `taught by ${p.learned.from} on ${p.learned.at}${p.learned.confirmed ? '' : '; not confirmed'}`;
-  const runs = p.runs.done || p.runs.failed || p.runs.stopped
-    ? `; runs: ${p.runs.done} done, ${p.runs.failed} failed${p.runs.stopped ? `, ${p.runs.stopped} stopped` : ''}` : '';
+  const runs = p.runs.done || p.runs.failed || p.runs.stopped || p.runs.ongoing
+    ? `; runs: ${p.runs.done} done, ${p.runs.failed} failed${p.runs.stopped ? `, ${p.runs.stopped} stopped` : ''}${p.runs.ongoing ? `, ${p.runs.ongoing} ongoing` : ''}` : '';
   const here = (h: ProcedureView['here']) => h.map((v) => `here (${v.by}${v.confirmed ? '' : ', not confirmed'}): ${v.text}`);
   // The id rides on the head, which is never cut: an agent reports a run (report_procedure_run) with no search first.
   const head = `- procedure "${p.title}" [id: ${p.id}]${p.when ? ` (when: ${p.when})` : ''} (${how}${runs}) — the household's way first, steps as taught:`;

@@ -9,12 +9,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 ### Modificato
 - **Le esecuzioni di una procedura arrivano alla memoria senza che nessuno lo chieda** (WORK_PLAN 8.16 F2): la riga
   della procedura nel contesto di memoria porta il suo id (`[id: …]`, sull'intestazione, mai tagliata; la procedura
-  tagliata resta nei suoi 1 500 caratteri con la riga che rimanda al resto); la carta della memoria `charter.v5` (solo la
+  tagliata resta nei suoi 1 500 caratteri con la riga che rimanda al resto); la carta della memoria (solo la
   forma con gli strumenti) dice quando riportare — l'intero compito o un passaggio, anche tramite un altro strumento,
   compresi un controllo o un test di un passaggio. Lo stesso esito detto di nuovo entro 10 minuti (stessa procedura,
   passaggio, conversazione; una correzione con le stesse parole) conta una volta e restituisce l'id della prima
   esecuzione. `done` con uno `step` non conferma più ciò che è stato letto: lo fa solo un'esecuzione intera.
-- **…e nel punto in cui l'agente decide** (carta `charter.v6`): le righe della procedura nel contesto di memoria chiedono
+- **…e nel punto in cui l'agente decide** (carta `charter.v7`): le righe della procedura nel contesto di memoria chiedono
   la segnalazione subito sotto l'intestazione (`carrying it out …? end your turn with report_procedure_run: this id, …`,
   mai tagliata); la descrizione di `report_procedure_run` dice quando — alla fine di ogni turno che l'ha seguita o
   applicata, anche in parte o interrotta. Nuovo esito **`stopped`**: un compito lasciato a metà (la persona ha rinunciato
@@ -32,6 +32,12 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   richiesta) subito dopo il suo id, così un host che taglia le risposte lunghe degli strumenti la conserva. Una procedura
   cercata e chiusa senza segnalazione conta come `runs.unreported`. Valutazione (tre turni, un prompt dell'host lungo):
   5/5 contro 4/5.
+- **Esito `ongoing`** (carta `charter.v7`): un compito che continua (una partita in corso) si segnala `ongoing` con il
+  passaggio raggiunto; `done` è solo l'intero compito finito (`done` con uno step è tenuto come `ongoing`). Dal vivo, un
+  agente ha detto `done` per una partita ancora in corso, e questo ha confermato la procedura: **un `done` detto troppo
+  presto viene ritirato** — quando la stessa conversazione la segnala poi `ongoing`, `stopped` o `failed` entro 3 ore, la
+  segnalazione entra in quell'esecuzione e la sua conferma (e il `confirmed` degli informatori) viene annullata.
+  `runs.ongoing` nella vista.
 
 ## [0.15.1] — 2026-11-16
 

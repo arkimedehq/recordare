@@ -9,11 +9,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 ### Changed
 - **A procedure's runs reach the memory without being asked** (WORK_PLAN 8.16 F2): the procedure's line in the memory
   context carries its id (`[id: …]`, on the head, never cut; the cut procedure stays within its 1 500 characters with the
-  line pointing to the rest); memory charter `charter.v5` (tools form only) says when to report — the whole task or one
+  line pointing to the rest); the memory charter (tools form only) says when to report — the whole task or one
   step, through another tool too, a check or test of a step included. The same outcome told again within 10 minutes
   (same procedure, step, conversation; a correction with the same words) counts once and returns the first run's id.
   `done` with a `step` no longer confirms what was read: only a whole run does.
-- **…and at the point where the agent decides** (charter `charter.v6`): the procedure's lines in the memory context ask
+- **…and at the point where the agent decides** (charter `charter.v7`): the procedure's lines in the memory context ask
   for the report right under the head (`carrying it out …? end your turn with report_procedure_run: this id, …`, never
   cut); the `report_procedure_run` description says when — at the end of any turn that followed or applied it, even
   partly or interrupted. New outcome **`stopped`**: a task left halfway (the person gave up or changed their mind) counts
@@ -29,6 +29,11 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   procedure with `report` (the report asked for) right after its id, so a host that cuts long tool results keeps it.
   A procedure looked up and closed with no report counts as `runs.unreported`. Eval (three turns, a long host prompt):
   5/5 against 4/5.
+- **Outcome `ongoing`** (charter `charter.v7`): a task that goes on (a game in progress) is reported `ongoing` with the
+  step reached; `done` is only the whole task finished (`done` with a step is kept as `ongoing`). Live, an agent told
+  `done` for a game still going, which confirmed the procedure: **a `done` told too soon is taken back** — when the same
+  conversation then reports it `ongoing`, `stopped` or `failed` within 3 hours, the report joins that run and its
+  confirmation (and the informants' `confirmed`) is undone. `runs.ongoing` in the view.
 
 ## [0.15.1] — 2026-11-16
 

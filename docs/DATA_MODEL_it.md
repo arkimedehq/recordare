@@ -691,9 +691,10 @@ della casa, mostrato sopra il passaggio generico; il nuovo modo dello stesso inf
 vecchio.
 
 ### procedure_runs
-`id, procedure_id (cascade), memory_id, outcome ('done' | 'failed' | 'stopped' | 'corrected'), step, note, conversation_id, at`
-— done dell'intero compito (senza step) conferma una procedura in attesa e accredita i suoi informatori; stopped (lasciata
-a metà) conta soltanto; un'esecuzione ancora in corso (done con uno step) viene aggiornata dalla segnalazione successiva
+`id, procedure_id (cascade), memory_id, outcome ('done' | 'ongoing' | 'failed' | 'stopped' | 'corrected'), step, note,
+conversation_id, at, confirmed` — done (l'intero compito, senza step) conferma una procedura in attesa e accredita i suoi
+informatori (`confirmed` su quell'esecuzione, così un done detto troppo presto può ritirarla); stopped (lasciata a metà)
+conta soltanto; un'esecuzione ancora in corso (ongoing; un done con uno step è tenuto come ongoing) viene aggiornata dalla segnalazione successiva
 della sua conversazione entro 3 ore (indice `procedure_runs_conversation_idx`), quindi `at` è la sua ultima segnalazione; failed segna il suo passaggio (finché dopo non ne viene
 insegnata una variante; nessuna fiducia si sposta — l'errore può essere del robot); corrected aggiunge la variante di chi
 corregge e un `corrected` agli altri informatori della procedura.

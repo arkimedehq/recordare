@@ -221,9 +221,9 @@ known participant who shows up under a new name on the channel keeps their conta
 
 > **Procedures** (8.16 F2, D57, `API.md` §4d): a task of several steps your agent learns — read in a page, or taught by
 > someone — is kept whole with `learn_procedure` (MCP) or `learnProcedure` (client library); your agent or the robot's
-> controller reports each run (`report_procedure_run` / `reportProcedureRun`: done — the whole task, or the step reached
-> with `step` —, failed at step N, stopped when left halfway, corrected by a person), with the id on the procedure's line
-> of the memory context, which also asks for the report. The charter (`charter.v6`) tells the agent when — at the end of
+> controller reports each run (`report_procedure_run` / `reportProcedureRun`: ongoing while it goes on (the step
+> reached), done once the whole task is finished, failed at step N, stopped when left halfway, corrected by a person), with the id on the procedure's line
+> of the memory context, which also asks for the report. The charter (`charter.v7`) tells the agent when — at the end of
 > every turn that puts it into practice; your code may report too: the turns of one task in a conversation make one run,
 > and the same outcome told twice counts once. An agent with no memory tools: send `tools: false` with the context. Recordare gives the steps in order with the household's own way above the generic step; turning them into
 > motion is your work. It also keeps by itself a how-to someone teaches in conversation, and — when the deployer switches

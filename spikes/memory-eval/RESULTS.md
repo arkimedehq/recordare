@@ -2384,3 +2384,9 @@ Controls: no report in either variant (the in-progress line after a mere mention
 unrecalled game's difference starts with the model looking the procedure up in one variant and not in the other at
 the same first turn — provider noise at temperature 0 —, so part of it is chance; the laundry's whole `done` and the
 controls are the clearer signals. Cost: 52 calls, 1.2 M prompt tokens (92 % cached).
+
+Follow-up, `charter.v7` (outcome `ongoing`, 2026-11-17): live on Kinox the agent reported every turn of a chess game, but
+as `done` with no step while the game went on (the step of a game is no natural notion), which confirmed the procedure.
+With `ongoing` (the line, the tool's description and the charter: "ongoing while it goes on, done only once it is all
+finished") the `progress` variant, re-run alone on regenerated texts: **5/5**, and the sequences are the intended ones —
+both games `ongoing, ongoing, stopped`, the laundry `ongoing … done` (whole). 29 calls, 0.68 M prompt tokens (91 % cached).
