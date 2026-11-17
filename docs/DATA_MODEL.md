@@ -668,6 +668,14 @@ counts; a run still going (done with a step) is updated by the next report of it
 it; no trust moves — the robot may be at fault); corrected adds the corrector's variant and one `corrected` to the
 procedure's other informants.
 
+### procedure_sessions
+`id, procedure_id (cascade), memory_id, conversation_id (cascade), via ('context' | 'search'), opened_at, touched_at,
+reported, last_step, closed_at, closed ('reported' | 'ended')` — a procedure in progress in a conversation (API §4d):
+opened or touched when that conversation's memory context carries it or search_knowledge returns it there (`search`
+wins); open while unused for less than 3 hours; a report updates `reported` / `last_step` and one that ends the run
+closes it; the conversation's end closes it too. `via` search, closed or past the pause with `reported` false: one
+`unreported` in the procedure's view.
+
 `item_informants` gains `procedure_id → procedures (cascade)`: exactly one of `fact_id`, `note_id`, `procedure_id`.
 
 `sources` gains `for_task` (boolean, null: unknown — learned to do a task: the client's `forTask`, or recognised by the

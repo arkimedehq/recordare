@@ -43,7 +43,8 @@ export interface ProcedureView {
   here: Array<{ text: string; by: string; at: string; confirmed: boolean }>;
   /** read: in a page or a source; taught: by a person. */
   learned: { how: 'read' | 'taught'; from: string; at: string; confirmed: boolean; source?: { id: string; title: string } };
-  runs: { done: number; failed: number; stopped: number; corrected: number; last?: { outcome: string; at: string; step: number | null } };
+  /** unreported: looked up in a conversation (search_knowledge) that closed with no report at all. */
+  runs: { done: number; failed: number; stopped: number; corrected: number; unreported: number; last?: { outcome: string; at: string; step: number | null } };
 }
 
 interface Who { conversationId: string | null; personal: boolean }
@@ -53,9 +54,61 @@ const RUN_REPEAT_MS = 10 * 60_000;
 /** A run still going (one step done) takes the next report of its conversation within this pause: one run over many turns. */
 const RUN_SPAN_MS = 3 * 3_600_000;
 
+/** What an agent with the memory tools is asked wherever a procedure reaches it: the line under its head, search_knowledge. */
+export const REPORT_ASK = 'carrying it out (whole, one step, or left halfway)? end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)';
+
+/**
+ * A procedure in progress in a conversation (8.16 F2): opened (or touched) when the memory context of that conversation
+ * carries it or search_knowledge returns it; the next turns repeat a compact line until a report ends the run, the
+ * conversation ends, or it is unused for RUN_SPAN_MS. `via` search wins over context (the agent looked it up).
+ */
+export async function openProcedureSessions(db: DataSource | EntityManager, memoryId: string, conversationId: string, procedureIds: string[], via: 'context' | 'search', now: Date): Promise<void> {
+  for (const id of procedureIds) {
+    const [open]: Array<{ id: string }> = await db.query(
+      `UPDATE procedure_sessions SET touched_at = GREATEST(touched_at, $3::timestamptz), via = CASE WHEN $4::text = 'search' THEN 'search' ELSE via END
+       WHERE id = (SELECT id FROM procedure_sessions WHERE conversation_id = $1 AND procedure_id = $2 AND closed_at IS NULL
+         AND touched_at > $3::timestamptz - make_interval(secs => $5) ORDER BY touched_at DESC LIMIT 1) RETURNING id`,
+      [conversationId, id, now, via, RUN_SPAN_MS / 1000]).then((r) => rowsOf<{ id: string }>(r));
+    // A run that just ended here is not reopened by the context alone (the message still about it: "basta con gli
+    // scacchi"); looking it up again is.
+    const [ended]: Array<{ id: string }> = open || via === 'search' ? [] : await db.query(
+      `SELECT id FROM procedure_sessions WHERE conversation_id = $1 AND procedure_id = $2 AND closed_at > $3::timestamptz - make_interval(secs => $4) LIMIT 1`,
+      [conversationId, id, now, RUN_SPAN_MS / 1000]);
+    if (!open && !ended) {
+      await db.query(
+        `INSERT INTO procedure_sessions (procedure_id, memory_id, conversation_id, via, opened_at, touched_at) VALUES ($1, $2, $3, $4, $5, $5)`,
+        [id, memoryId, conversationId, via, now]);
+    }
+  }
+}
+
+/** The procedures in progress in a conversation (open, used within RUN_SPAN_MS), as compact memory-context lines. */
+export async function procedureInProgressLines(db: DataSource | EntityManager, conversationId: string, except: string[], now: Date): Promise<string[]> {
+  const rows: Array<{ id: string; title: string; reported: boolean; last_step: number | null }> = await db.query(
+    `SELECT DISTINCT ON (s.procedure_id) p.id, p.title, s.reported, s.last_step FROM procedure_sessions s JOIN procedures p ON p.id = s.procedure_id
+     WHERE s.conversation_id = $1 AND s.closed_at IS NULL AND s.touched_at > $2::timestamptz - make_interval(secs => $3) AND s.touched_at <= $2::timestamptz
+       AND p.status = 'current' AND NOT (s.procedure_id = ANY($4::uuid[]))
+     ORDER BY s.procedure_id, s.touched_at DESC`, [conversationId, now, RUN_SPAN_MS / 1000, except]);
+  return rows.map((r) => inProgressLine({ id: r.id, title: r.title, reported: r.reported, lastStep: r.last_step }));
+}
+
+/** The compact line of a procedure in progress (no steps: they came in an earlier turn or from search_knowledge). */
+export function inProgressLine(p: { id: string; title: string; reported: boolean; lastStep: number | null }): string {
+  return `- procedure in progress "${p.title}" [id: ${p.id}] (${p.reported ? `last reported: ${p.lastStep ? `step ${p.lastStep}` : 'done'}` : 'not reported yet'})`
+    + ' — if you are carrying it out: when it moves on, ends or stops, end your turn with report_procedure_run (this id, the outcome, the step reached; none once it is all done)';
+}
+
+/** TypeORM returns [rows, count] for UPDATE … RETURNING. */
+const rowsOf = <T>(r: T[] | [T[], number]): T[] => (Array.isArray(r[0]) ? r[0] as T[] : r as T[]);
+
 @Injectable()
 export class ProceduresService {
   constructor(private readonly db: DataSource, @Inject(EMBEDDING_PORT) private readonly embeddings: EmbeddingPort) {}
+
+  /** The procedures looked up or recalled in a conversation are in progress there (see openProcedureSessions). */
+  async openSessions(memoryId: string, conversationId: string, ids: string[], via: 'context' | 'search', now: Date): Promise<void> {
+    await openProcedureSessions(this.db, memoryId, conversationId, ids, via, now);
+  }
 
   /** Keeps a procedure (or a new version, or confirms the same one from another informant). */
   async learn(memoryId: string, who: Who, req: LearnProcedureRequest, now: Date): Promise<{ id: string; pending: boolean; status: 'new' | 'version' | 'same' }> {
@@ -112,6 +165,15 @@ export class ProceduresService {
       const id: string = open ? open.id : (await tx.query(
         `INSERT INTO procedure_runs (procedure_id, memory_id, outcome, step, note, conversation_id, at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
         [procedureId, memoryId, req.outcome, req.step ?? null, req.note ?? null, who.conversationId, now]))[0].id;
+      // The procedure in progress in this conversation: reported (the step reached); a run that ended closes it.
+      if (who.conversationId && req.outcome !== 'corrected') {
+        const ended = req.outcome !== 'done' || !req.step;
+        await tx.query(
+          `UPDATE procedure_sessions SET reported = true, last_step = $3, touched_at = GREATEST(touched_at, $4::timestamptz),
+             closed_at = CASE WHEN $5::boolean THEN $4::timestamptz END, closed = CASE WHEN $5::boolean THEN 'reported' END
+           WHERE conversation_id = $1 AND procedure_id = $2 AND closed_at IS NULL`,
+          [who.conversationId, procedureId, req.step ?? null, now, ended]);
+      }
       let pending = p.pending;
       // Only a whole run confirms what was read: one step done (a check of it, say) is that step's news, not the task's.
       if (req.outcome === 'done' && !req.step && p.pending) {
@@ -300,6 +362,9 @@ export async function procedureViews(db: Db, memoryId: string, ids: string[], an
      WHERE v.procedure_id = ANY($1) AND v.retired_at IS NULL ORDER BY v.at`, [ids]);
   const runs: Array<{ procedure_id: string; outcome: string; step: number | null; note: string | null; at: Date }> = await db.query(
     `SELECT procedure_id, outcome, step, note, at FROM procedure_runs WHERE procedure_id = ANY($1) ORDER BY at`, [ids]);
+  const unreported: Array<{ procedure_id: string; n: number }> = await db.query(
+    `SELECT procedure_id, count(*)::int AS n FROM procedure_sessions WHERE procedure_id = ANY($1) AND via = 'search' AND NOT reported
+       AND (closed_at IS NOT NULL OR touched_at < now() - make_interval(secs => $2)) GROUP BY procedure_id`, [ids, RUN_SPAN_MS / 1000]);
   const byId = new Map(rows.map((r) => [r.id, r]));
   return ids.flatMap((id) => {
     const r = byId.get(id);
@@ -321,7 +386,7 @@ export async function procedureViews(db: Db, memoryId: string, ids: string[], an
       learned: { how: r.origin === 'learned' ? 'read' as const : 'taught' as const, from: from.find((f) => f.procedure_id === id)?.name ?? '?',
         at: day(r.learned_at), confirmed: !r.pending, ...(r.source_id && r.source_title ? { source: { id: r.source_id, title: r.source_title } } : {}) },
       runs: { done: rs.filter((x) => x.outcome === 'done').length, failed: rs.filter((x) => x.outcome === 'failed').length,
-        stopped: rs.filter((x) => x.outcome === 'stopped').length, corrected: rs.filter((x) => x.outcome === 'corrected').length, ...(last ? { last: { outcome: last.outcome, at: day(last.at), step: last.step } } : {}) },
+        stopped: rs.filter((x) => x.outcome === 'stopped').length, unreported: unreported.find((u) => u.procedure_id === id)?.n ?? 0, corrected: rs.filter((x) => x.outcome === 'corrected').length, ...(last ? { last: { outcome: last.outcome, at: day(last.at), step: last.step } } : {}) },
     } satisfies ProcedureView];
   });
 }
@@ -346,7 +411,7 @@ export function procedureLines(p: ProcedureView, budget: number, tools = true): 
   // The id rides on the head, which is never cut: an agent reports a run (report_procedure_run) with no search first.
   const head = `- procedure "${p.title}" [id: ${p.id}]${p.when ? ` (when: ${p.when})` : ''} (${how}${runs}) — the household's way first, steps as taught:`;
   // Where the agent decides, never cut: carrying it out ends with telling the memory how it went (with the tools only).
-  const report = `  carrying it out (whole, one step, or left halfway)? end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)`;
+  const report = `  ${REPORT_ASK}`;
   const lines = [head, ...(tools ? [report] : []), ...here(p.here).map((t) => `    ${t}`)];
   let size = lines.join('\n').length;
   const more = (k: number) => `  … ${p.steps.length - k} more steps${tools ? `: search_knowledge "${p.title}"` : ''}`;

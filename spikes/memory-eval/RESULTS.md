@@ -2364,3 +2364,23 @@ The first v6 run had the whole household task reported as `done` with step 4 (th
 reached"; with "(none once it is all done)" it is `done` with no step (re-run of v6 only). Controls: no report in either
 variant. Limits: a short prompt (≈ 2 500 tokens) against a real host's ≈ 22 000, one model, one run; the real check is
 on Kinox. Cost: 64 calls, ≈ 152 k prompt tokens (83 % cached).
+
+### A procedure in progress over three turns (WORK_PLAN 8.16 F2, 2026-11-17, DeepSeek direct)
+
+Kinox showed charter.v6 alone falls short: the procedure (with its id and the report asked for) is in the memory context
+only in the turn that recalls it — the opening —, and the host cuts earlier tool results (search_knowledge) to 3 000
+characters, so the turns that carry the task on and end it no longer see the invitation. `procedure_progress_eval.py`,
+`dataset_dev_procedure_progress` (5 conversations × 3 turns: a chess game in chat — recalled at the opening, or not
+recalled at all —, a laundry guided step by step, 2 controls where the procedure is only mentioned): ≈ 19 000 tokens of a
+generic host prompt with 40 tools of its own, earlier tool results cut to 3 000 characters. `deepseek-flash`, temperature 0,
+one run.
+
+| Variant | Score | Notes |
+|---|---|---|
+| `v6` (as deployed) | 4/5 | a game not recalled at the opening: never looked up, never reported; the laundry ended `done@5` (not whole) |
+| `progress` (in-progress line in the next turns, `report` in search_knowledge) | **5/5** | the unrecalled game looked up then reported at the move and `stopped` at the end; the laundry ended `done` whole |
+
+Controls: no report in either variant (the in-progress line after a mere mention did not cause one). Caveat: the
+unrecalled game's difference starts with the model looking the procedure up in one variant and not in the other at
+the same first turn — provider noise at temperature 0 —, so part of it is chance; the laundry's whole `done` and the
+controls are the clearer signals. Cost: 52 calls, 1.2 M prompt tokens (92 % cached).

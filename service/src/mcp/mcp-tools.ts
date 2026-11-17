@@ -21,7 +21,7 @@ import { createHash } from 'node:crypto';
 import { type KnowledgeSearchService } from '../knowledge/knowledge-search.service';
 import { type SourcesService } from '../knowledge/sources.service';
 import { SOURCE_KINDS } from '../knowledge/sources.schemas';
-import { type ProceduresService } from '../procedures/procedures.service';
+import { type ProceduresService, REPORT_ASK } from '../procedures/procedures.service';
 import { MAX_STEPS, STEP_CHARS } from '../procedures/procedures.schemas';
 
 export interface ToolDeps {
@@ -124,7 +124,13 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
     inputSchema: { query: z.string().describe('What to look up'), limit: z.number().int().min(1).max(20).optional() },
   }, async (args, extra) => {
     const ctx = await context(extra);
-    const procedures = await deps.procedures.search(deps.memoryId, args.query, 2);
+    const views = await deps.procedures.search(deps.memoryId, args.query, 2);
+    // Looked up in a conversation: in progress there (its next turns carry its line). The report asked for rides right
+    // after the id, before the steps: a host that cuts a long tool result keeps it.
+    if (ctx.conversationId && views.length) {
+      await deps.procedures.openSessions(deps.memoryId, ctx.conversationId, views.map((p) => p.id), 'search', now(extra));
+    }
+    const procedures = views.map(({ id, title, ...rest }) => ({ id, title, report: REPORT_ASK, ...rest }));
     const found = await deps.knowledge.search(deps.memoryId, { query: args.query, limit: args.limit, conversationId: ctx.conversationId }, now(extra));
     return result({ procedures, ...found } as unknown as Record<string, unknown>);
   });

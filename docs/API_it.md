@@ -533,10 +533,12 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
 ### `search_knowledge` e `learn_source` (D49, WORK_PLAN 8.9 — fonti apprese)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — prima le procedure sulla domanda, intere (al massimo 2,
   la vista della §4d: similarità vettoriale ≥ 0,35 o parole nel titolo e nella situazione), poi i passaggi delle fonti che
-  l'agente ha imparato, ordinati con RRF pesato dei ranghi vettoriale e full-text (come gli episodi). Restituisce:
+  l'agente ha imparato, ordinati con RRF pesato dei ranghi vettoriale e full-text (come gli episodi). In una
+  conversazione, ogni procedura restituita è **in corso** lì (§4d). Restituisce:
   ```ts
   {
-    procedures: Procedure[];                     // §4d, whole: steps in order, `here` (the household's way) above each
+    procedures: Array<Procedure & { report: string }>; // §4d, whole: steps in order, `here` (the household's way) above each;
+                                                 // `report` right after `id` and `title` (the run's report asked for)
     memory: { name: string; mode: "personal" | "entity" };
     passages: Array<{
       text: string; heading: string | null;
@@ -955,7 +957,8 @@ sta parlando — quella persona ha insegnato, corretto o eseguito.
   minuti.
 - **La vista** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
   note}}], here (le varianti dell'intero compito), learned: {how: "read" | "taught", from, at, confirmed, source?: {id,
-  title}}, runs: {done, failed, stopped, corrected, last?}}` — `by` / `from` è il nome di una persona, "the household" (il parlante
+  title}}, runs: {done, failed, stopped, corrected, unreported, last?}}` — `unreported`: cercata (search_knowledge) in
+  una conversazione che si è chiusa senza nessuna segnalazione — — `by` / `from` è il nome di una persona, "the household" (il parlante
   dell'account), "someone", o il sito.
 - **Richiamo**: `search_knowledge` le restituisce per prime, intere (§3); il contesto di memoria porta intera la più vicina
   quando il messaggio la riguarda (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0,55; un budget suo di 1 500 caratteri, tagliato solo
@@ -965,6 +968,15 @@ sta parlando — quella persona ha insegnato, corretto o eseguito.
   `4. (generic) …`, e `failed here on …` sotto un passaggio; tagliata, `… N more steps: search_knowledge "…"` (`… N more
   steps` con `tools: false`). L'id sull'intestazione e la riga che chiede la segnalazione non vengono mai tagliati; l'id è
   quello che prende `report_procedure_run`.
+- **In corso in una conversazione** (con gli strumenti di memoria): una procedura che il contesto di memoria di una
+  conversazione ha portato, o che search_knowledge ha restituito lì, è in corso in quella conversazione; il contesto di
+  memoria dei turni successivi porta una riga compatta anche quando il messaggio non la richiama — `- procedure in
+  progress "…" [id: <uuid>] (not reported yet | last reported: step N | last reported: done) — if you are carrying it
+  out: when it moves on, ends or stops, end your turn with report_procedure_run (…)` — così il turno che la porta avanti o
+  la chiude ha ancora il suo id e la segnalazione richiesta. Finisce con una segnalazione che chiude l'esecuzione (`done`
+  intera, `failed`, `stopped`; `done` con un passaggio la tiene, a quel passaggio), con la conversazione (`POST
+  api/v1/ingest/conversations/{id}/end`), o dopo 3 ore senza uso. Un'esecuzione appena finita lì non viene riaperta dal
+  solo contesto, solo cercandola di nuovo. Cercata e finita senza nessuna segnalazione: un `unreported` nella vista.
 - **Da ciò che una persona insegna in conversazione (modo B1, F2b)**: in una memoria di entità che impara, la chiamata di
   estrazione che gira comunque (`learn.v2`, sezione PROCEDURES; nessuna chiamata in più) propone un how-to di più passaggi
   che una persona qui insegna — o che uno strumento o una pagina nella finestra dà perché qualcuno ha chiesto come si fa

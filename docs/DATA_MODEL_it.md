@@ -698,6 +698,14 @@ della sua conversazione entro 3 ore (indice `procedure_runs_conversation_idx`), 
 insegnata una variante; nessuna fiducia si sposta — l'errore può essere del robot); corrected aggiunge la variante di chi
 corregge e un `corrected` agli altri informatori della procedura.
 
+### procedure_sessions
+`id, procedure_id (cascade), memory_id, conversation_id (cascade), via ('context' | 'search'), opened_at, touched_at,
+reported, last_step, closed_at, closed ('reported' | 'ended')` — una procedura in corso in una conversazione (API §4d):
+aperta o toccata quando il contesto di memoria di quella conversazione la porta o search_knowledge la restituisce lì
+(`search` prevale); aperta finché non resta inutilizzata per 3 ore; una segnalazione aggiorna `reported` / `last_step` e
+una che chiude l'esecuzione la chiude; la chiude anche la fine della conversazione. `via` search, chiusa o oltre la pausa
+con `reported` falso: un `unreported` nella vista della procedura.
+
 `item_informants` guadagna `procedure_id → procedures (cascade)`: esattamente uno tra `fact_id`, `note_id`, `procedure_id`.
 
 `sources` guadagna `for_task` (booleano, null: sconosciuto — appresa per fare un compito: il `forTask` del client, o
