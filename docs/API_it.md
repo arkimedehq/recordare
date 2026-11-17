@@ -566,8 +566,9 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   Chi l'ha portata e se resta in attesa si decide nel codice. Restituisce `{id, pending, status}` (o `{id, pending}` per una
   variante); è una scrittura.
 - `report_procedure_run {procedure_id, outcome, step?, note?}` — come è andata un'esecuzione, chiamato alla fine di ogni
-  turno che ha seguito o applicato una procedura della memoria, anche in parte o interrotta: `done` (l'intero compito; con
-  `step`, il passaggio raggiunto finora), `failed` (al `step`, `note` cosa è andato storto — conta anche un controllo o un
+  turno che ha seguito o applicato una procedura della memoria, anche in parte o interrotta: `ongoing` (continua — una
+  partita in corso, un compito a metà: il passaggio raggiunto se c'è, `note` a che punto è), `done` (solo quando l'intero
+  compito è finito, senza `step`; con uno `step` vale come `ongoing`), `failed` (al `step`, `note` cosa è andato storto — conta anche un controllo o un
   test fallito), `stopped` (lasciata a metà — la persona ha rinunciato o cambiato idea: il passaggio raggiunto, `note` il
   perché; non è un difetto della procedura), `corrected` (al `step`, `note` il modo giusto — obbligatoria; diventa il modo
   di chi parla). Un'esecuzione è l'intero compito o un passaggio, fatto dall'agente o tramite un altro strumento. L'id sta
@@ -585,7 +586,7 @@ lingue più usate (`service/src/lang`: periodi relativi e nomi dei mesi da Intl 
 la sua mente, non uno strumento tra tanti; ragionare da ciò che gli è venuto in mente, cercare nella memoria prima degli
 altri strumenti e prima di dire "non lo so", "ricordi / ricordare" vogliono dire questa memoria, usarla con naturalezza,
 non usarla quando gli viene chiesto. Lo stesso testo per ogni memoria, in inglese per tutte le lingue come il blocco,
-stabile finché `version` non cambia (`charter.v6` dalla 0.15.2: l'esecuzione di una procedura riportata alla fine di ogni turno che la mette in pratica, anche in parte — `stopped` quando è lasciata a metà; i turni di un compito si uniscono in un'esecuzione sola; `charter.v5`: quando riportare — l'intero compito o un passaggio, anche tramite un altro strumento, compresi un controllo o un test di un passaggio, con l'id sulla riga della procedura; `charter.v4` dalla 0.15.1: una procedura dalla memoria fatta nel modo della casa, ogni esecuzione riportata con `report_procedure_run` — solo nella forma con gli strumenti; `charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
+stabile finché `version` non cambia (`charter.v7` dalla 0.15.2: l'esecuzione di una procedura riportata alla fine di ogni turno che la mette in pratica, anche in parte, con l'id sulla riga della procedura — `ongoing` mentre continua, `done` solo quando l'intero compito è finito, `stopped` quando è lasciata a metà; i turni di un compito si uniscono in un'esecuzione sola; `charter.v4` dalla 0.15.1: una procedura dalla memoria fatta nel modo della casa, ogni esecuzione riportata con `report_procedure_run` — solo nella forma con gli strumenti; `charter.v3` dalla 0.9.1: chiedere chi è senza fare nomi; `charter.v2` dalla 0.7.0: come usare una riga di iniziativa): l'ospite lo mette nel prompt di sistema dell'agente (parte stabile,
 cacheabile) e lo rilegge solo quando cambia la versione. Il server MCP manda lo stesso testo come sue `instructions`
 all'`initialize`, e il blocco `<memory-context>` lo nomina. Il contratto memory-first che ogni client segue:
 `INTEGRATION.md` §4. `?tools=false` dà la forma per un ospite che offre all'agente solo il contesto di memoria, senza
@@ -942,19 +943,22 @@ sta parlando — quella persona ha insegnato, corretto o eseguito.
   sostituisce mai una confermata (restano correnti entrambe). I passaggi sono tenuti come dati: mai tolti, fusi o
   "migliorati".
 - **Esecuzioni**: `done` dell'intero compito (senza `step`) conferma una procedura in attesa e accredita chi l'ha portata;
-  `done` con uno `step` (il passaggio raggiunto finora, il controllo di un passaggio) è una notizia di quel passaggio e non
-  conferma nulla; `stopped` (lasciata a metà: la persona ha rinunciato o cambiato idea) conta come esecuzione, non conferma
+  `ongoing` (il compito continua: il passaggio raggiunto) — e `done` con uno `step`, tenuto come `ongoing` — non conferma
+  nulla; `stopped` (lasciata a metà: la persona ha rinunciato o cambiato idea) conta come esecuzione, non conferma
   nulla e non segna nessun passaggio; `failed` segna il suo passaggio
   (finché dopo non ne viene insegnata una variante) e non sposta fiducia — l'errore può essere del robot; `corrected`
   diventa la variante di chi parla per quel passaggio e costa un `corrected` agli altri informatori della procedura. Lo
   stesso esito detto di nuovo — stessa procedura, esito, passaggio e conversazione (nessuna vale nessuna), entro 10
   minuti; una correzione solo con la stessa `note` — è la stessa esecuzione: non si tiene nulla di nuovo e torna il suo `id`
   (possono riportarla sia l'agente sia il codice dell'host). **Un compito su più turni è un'esecuzione sola**: in una
-  conversazione, un'esecuzione ancora in corso (`done` con uno `step`) prende la segnalazione successiva di quella
+  conversazione, un'esecuzione ancora in corso (`ongoing`) prende la segnalazione successiva di quella
   procedura entro 3 ore dall'ultima — il passaggio raggiunto (il più avanti) o come è finita (`done` intera, `failed`,
   `stopped`) — e torna il suo `id`; un'esecuzione finita, un'altra conversazione o una pausa più lunga ne apre una nuova.
-  Un `corrected` è l'insegnamento della persona e resta sempre a parte; senza conversazione vale solo la regola dei 10
-  minuti.
+  **Un `done` detto troppo presto viene ritirato**: quando la stessa conversazione, entro quelle 3 ore, segnala poi la
+  stessa procedura `ongoing`, `stopped` o `failed`, quel `done` non era la fine — la segnalazione entra nella sua
+  esecuzione, e la conferma che aveva dato (la procedura non più in attesa, un `confirmed` ai suoi informatori) viene
+  ritirata. Un nuovo `done` dopo un `done` è un'altra esecuzione. Un `corrected` è l'insegnamento della persona e resta
+  sempre a parte; senza conversazione vale solo la regola dei 10 minuti.
 - **La vista** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
   note}}], here (le varianti dell'intero compito), learned: {how: "read" | "taught", from, at, confirmed, source?: {id,
   title}}, runs: {done, failed, stopped, corrected, unreported, last?}}` — `unreported`: cercata (search_knowledge) in
@@ -963,18 +967,19 @@ sta parlando — quella persona ha insegnato, corretto o eseguito.
 - **Richiamo**: `search_knowledge` le restituisce per prime, intere (§3); il contesto di memoria porta intera la più vicina
   quando il messaggio la riguarda (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0,55; un budget suo di 1 500 caratteri, tagliato solo
   tra i passaggi; ci conta anche la riga che rimanda al resto): `- procedure "make the bed" [id: <uuid>] (read on 2026-06-07 from casa-esempio.it; not confirmed) — the household's way
-  first, steps as taught:`, poi (quando l'agente ha gli strumenti di memoria) `carrying it out (whole, one step, or left
-  halfway)? end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)`, poi `4. here (Sofia): …` sopra
+  first, steps as taught:`, poi (quando l'agente ha gli strumenti di memoria) `carrying it out? end your turn with
+  report_procedure_run, this id and the outcome: ongoing while it goes on (the step reached), done only once it is all
+  finished, stopped if left halfway, failed if it went wrong`, poi `4. here (Sofia): …` sopra
   `4. (generic) …`, e `failed here on …` sotto un passaggio; tagliata, `… N more steps: search_knowledge "…"` (`… N more
   steps` con `tools: false`). L'id sull'intestazione e la riga che chiede la segnalazione non vengono mai tagliati; l'id è
   quello che prende `report_procedure_run`.
 - **In corso in una conversazione** (con gli strumenti di memoria): una procedura che il contesto di memoria di una
   conversazione ha portato, o che search_knowledge ha restituito lì, è in corso in quella conversazione; il contesto di
   memoria dei turni successivi porta una riga compatta anche quando il messaggio non la richiama — `- procedure in
-  progress "…" [id: <uuid>] (not reported yet | last reported: step N | last reported: done) — if you are carrying it
-  out: when it moves on, ends or stops, end your turn with report_procedure_run (…)` — così il turno che la porta avanti o
+  progress "…" [id: <uuid>] (not reported yet | last reported: ongoing [at step N]) — if you are carrying
+  it out, end your turn with report_procedure_run, this id and the outcome: …` — così il turno che la porta avanti o
   la chiude ha ancora il suo id e la segnalazione richiesta. Finisce con una segnalazione che chiude l'esecuzione (`done`
-  intera, `failed`, `stopped`; `done` con un passaggio la tiene, a quel passaggio), con la conversazione (`POST
+  intera, `failed`, `stopped`; `ongoing` la tiene, a quel passaggio), con la conversazione (`POST
   api/v1/ingest/conversations/{id}/end`), o dopo 3 ore senza uso. Un'esecuzione appena finita lì non viene riaperta dal
   solo contesto, solo cercandola di nuovo. Cercata e finita senza nessuna segnalazione: un `unreported` nella vista.
 - **Da ciò che una persona insegna in conversazione (modo B1, F2b)**: in una memoria di entità che impara, la chiamata di

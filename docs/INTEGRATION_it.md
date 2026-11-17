@@ -244,10 +244,10 @@ nome nuovo sul canale resta lo stesso contatto; il nome nuovo diventa un alias.
 
 > **Procedure** (8.16 F2, D57, `API.md` §4d): un compito a più passaggi che il tuo agente impara — letto in una pagina o
 > insegnato da qualcuno — si tiene intero con `learn_procedure` (MCP) o `learnProcedure` (libreria client); il tuo agente o
-> il controllore del robot riporta ogni esecuzione (`report_procedure_run` / `reportProcedureRun`: fatta — l'intero compito,
-> o il passaggio raggiunto con `step` —, fallita al passaggio N, interrotta quando è lasciata a metà, corretta da una
+> il controllore del robot riporta ogni esecuzione (`report_procedure_run` / `reportProcedureRun`: in corso mentre continua (il
+> passaggio raggiunto), fatta quando l'intero compito è finito, fallita al passaggio N, interrotta quando è lasciata a metà, corretta da una
 > persona), con l'id sulla riga della procedura nel contesto di memoria, che chiede anche la segnalazione. La carta
-> (`charter.v6`) dice all'agente quando — alla fine di ogni turno che la mette in pratica; può riportarla anche il tuo
+> (`charter.v7`) dice all'agente quando — alla fine di ogni turno che la mette in pratica; può riportarla anche il tuo
 > codice: i turni di un compito in una conversazione fanno un'esecuzione sola, e lo stesso esito detto due volte conta
 > una volta. Un agente senza strumenti di memoria: manda `tools: false` con il contesto. Recordare dà i passaggi in ordine con il modo proprio della casa sopra il passaggio
 > generico; trasformarli in movimento è lavoro tuo. Tiene anche da sola un how-to che qualcuno insegna in conversazione e

@@ -94,13 +94,13 @@ describe('procedures kept whole (8.16 F2a)', () => {
     expect(view.steps[3].here).toEqual([expect.objectContaining({ text: 'Il cuscino va sopra il copriletto', by: 'the household', confirmed: true })]);
     expect(view.steps[2].failed).toEqual({ at: '2026-06-07', note: 'Il lenzuolo era troppo corto' });
     expect(view.steps[1].here).toEqual([expect.objectContaining({ by: 'someone', confirmed: false })]); // a guest nobody identified
-    expect(view.runs).toMatchObject({ done: 2, failed: 1, corrected: 1 });
+    expect(view.runs).toMatchObject({ done: 1, ongoing: 1, failed: 1, corrected: 1 }); // the step done alone: still going
 
     // The memory context carries it whole, the household's way above the generic step.
     const block = (await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'c4' }), body: { query: 'Rifare il letto', card: false } })).body.block as string;
     expect(block).toContain(`procedure "Rifare il letto" [id: ${id}]`);
     // Where the agent decides: carrying it out ends with the report — unless the agent has no memory tools.
-    expect(block).toContain('end your turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)');
+    expect(block).toContain('end your turn with report_procedure_run, this id and the outcome: ongoing while it goes on');
     const bare = (await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'c4' }), body: { query: 'Rifare il letto', card: false, tools: false } })).body.block as string;
     expect(bare).toContain(`procedure "Rifare il letto" [id: ${id}]`);
     expect(bare).not.toContain('report_procedure_run');
@@ -117,7 +117,7 @@ describe('procedures kept whole (8.16 F2a)', () => {
       learned: { how: 'read' as const, from: 'mobili-esempio.it', at: '2026-06-07', confirmed: false },
       runs: { done: 0, failed: 0, corrected: 0 },
     } as unknown as Parameters<typeof procedureLines>[0];
-    for (const budget of [400, 800, 1_500]) {
+    for (const budget of [500, 800, 1_500]) {
       const lines = procedureLines(view, budget);
       expect(lines[0]).toContain('[id: 00000000-0000-4000-8000-000000000001]');
       expect(lines.join('\n').length).toBeLessThanOrEqual(budget);
@@ -125,7 +125,7 @@ describe('procedures kept whole (8.16 F2a)', () => {
       expect(lines[1]).toContain('report_procedure_run');
     }
     // Without the memory tools: no line asks for a tool.
-    const bare = procedureLines(view, 400, false);
+    const bare = procedureLines(view, 500, false);
     expect(bare.join('\n')).not.toMatch(/report_procedure_run|search_knowledge/);
     expect(bare.at(-1)).toMatch(/more steps$/);
   });
@@ -157,10 +157,10 @@ describe('procedures kept whole (8.16 F2a)', () => {
     expect((await report({ outcome: 'done', step: 3 }, 'd2', '2026-06-07T15:00:00+02:00')).body.id).not.toBe(other);
 
     const view = (await call(url, 'GET', `/api/v1/procedures/${id}`, as())).body;
-    expect(view.runs).toMatchObject({ done: 3, failed: 0, stopped: 1, corrected: 0 });
+    expect(view.runs).toMatchObject({ done: 1, ongoing: 2, failed: 0, stopped: 1, corrected: 0 });
     expect(view.steps.every((s: { failed?: unknown }) => !s.failed)).toBe(true);
     const block = (await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'd1' }), body: { query: 'Giocare a dama', card: false } })).body.block as string;
-    expect(block).toContain('runs: 3 done, 0 failed, 1 stopped');
+    expect(block).toContain('runs: 1 done, 0 failed, 1 stopped, 2 ongoing');
   });
 
   it('keeps a procedure in progress in its conversation: its line in the next turns until a report ends it; asked for in search_knowledge', async () => {
@@ -186,7 +186,7 @@ describe('procedures kept whole (8.16 F2a)', () => {
     // Reported halfway: still in progress, at its step; stopped: gone, even when the message still recalls it.
     const run = (body: Record<string, unknown>) => call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as(), body: { ...body, conversation: { externalId: 'g1' } } });
     await run({ outcome: 'done', step: 3 });
-    expect(await block('Metto il cerchio in alto.')).toContain(`${progress} (last reported: step 3)`);
+    expect(await block('Metto il cerchio in alto.')).toContain(`${progress} (last reported: ongoing at step 3)`);
     await run({ outcome: 'stopped', step: 3, note: 'Partita lasciata a metà' });
     expect(await block('Basta col filetto.')).not.toContain(progress);
     expect(await block('Che ore sono?')).not.toContain(progress);
@@ -212,7 +212,37 @@ describe('procedures kept whole (8.16 F2a)', () => {
     expect((await call(url, 'POST', '/api/v1/ingest/conversations/g4/end', as())).status).toBe(202);
     expect(await block('Metto la croce in basso.', 'g4')).not.toContain(progress);
     const view = (await call(url, 'GET', `/api/v1/procedures/${id}`, as())).body;
-    expect(view.runs).toMatchObject({ done: 0, stopped: 1, unreported: 1 });
+    expect(view.runs).toMatchObject({ done: 0, ongoing: 0, stopped: 1, unreported: 1 }); // the step reached, then stopped: one run
+  });
+
+  it('takes back a done told too soon: the same conversation goes on, then stops — one run, stopped, nothing confirmed', async () => {
+    await say('k1', 'Cerca come si gioca a dama cinese.');
+    const id = (await call(url, 'POST', '/api/v1/procedures', { ...as(), body: {
+      title: 'Giocare a dama cinese', steps: ['Disponi le biglie nella tua punta', 'Muovi di una casa o salta', 'Porta tutte le biglie nella punta opposta'],
+      from: 'page', uri: 'https://giochi-esempio.it/dama-cinese', conversation: { externalId: 'k1' } } })).body.id as string;
+    const games = async () => (await db.query(`SELECT confirmed FROM informants WHERE memory_id = $1 AND key = 'giochi-esempio.it'`, [home]))[0];
+    const report = (body: Record<string, unknown>, at: string) =>
+      call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as({ 'x-recordare-now': at }), body: { ...body, conversation: { externalId: 'k1' } } });
+    // As seen live: the agent says done (no step) while the game goes on — that confirms, for now.
+    const first = await report({ outcome: 'done', note: 'Partita in corso, tocca al bianco' }, '2026-06-07T10:01:00+02:00');
+    expect(first.body.pending).toBe(false);
+    expect(await games()).toEqual({ confirmed: 1 });
+    // The same done again a minute later: the same run. Then it stops: that done was told too soon — taken back.
+    expect((await report({ outcome: 'done', note: 'In corso' }, '2026-06-07T10:02:00+02:00')).body.id).toBe(first.body.id);
+    const stop = await report({ outcome: 'stopped', note: 'La persona ha smesso' }, '2026-06-07T10:03:00+02:00');
+    expect(stop.body).toEqual({ id: first.body.id, pending: true });
+    expect(await games()).toEqual({ confirmed: 0 });
+    const view = (await call(url, 'GET', `/api/v1/procedures/${id}`, as())).body;
+    expect(view.runs).toMatchObject({ done: 0, ongoing: 0, stopped: 1 });
+    expect(view.learned.confirmed).toBe(false);
+    // ongoing turn by turn, then done: one run, done whole, which confirms.
+    const go = await report({ outcome: 'ongoing', step: 1 }, '2026-06-07T11:00:00+02:00');
+    expect(go.body.id).not.toBe(first.body.id);
+    expect((await report({ outcome: 'ongoing', step: 2 }, '2026-06-07T11:05:00+02:00')).body.id).toBe(go.body.id);
+    expect((await report({ outcome: 'done' }, '2026-06-07T11:10:00+02:00')).body).toEqual({ id: go.body.id, pending: false });
+    expect(await games()).toEqual({ confirmed: 1 });
+    // A new done after a done is another run, not a correction of the first.
+    expect((await report({ outcome: 'done' }, '2026-06-07T11:40:00+02:00')).body.id).not.toBe(go.body.id);
   });
 
   it('keeps at once what the household teaches; a page\'s pending version does not replace it; search_knowledge returns it whole', async () => {
