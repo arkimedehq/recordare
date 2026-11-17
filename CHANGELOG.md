@@ -6,6 +6,14 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+## [0.15.2] — 2026-11-17
+
+**A procedure's runs reach the memory without being asked.** Each turn that carries out a procedure from memory ends
+with its report — `ongoing` while it goes on, `done` once finished, `stopped` when left halfway — and the turns of one
+task make one run, even when the message no longer recalls it (the procedure stays in progress in the conversation).
+Memory charter `charter.v7`. Client library and connectors 0.14.1: the new outcomes, the `tools` context option, the
+tool's description.
+
 ### Changed
 - **A procedure's runs reach the memory without being asked** (WORK_PLAN 8.16 F2): the procedure's line in the memory
   context carries its id (`[id: …]`, on the head, never cut; the cut procedure stays within its 1 500 characters with the
