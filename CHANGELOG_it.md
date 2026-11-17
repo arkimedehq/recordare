@@ -24,6 +24,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   `POST api/v1/context` accetta `tools: false` per un agente senza strumenti di memoria (nessuna riga chiede uno
   strumento); il proxy compatibile OpenAI lo manda a meno che `MEMORY_TOOLS` sia acceso. Libreria client e connettori:
   l'esito `stopped`, l'opzione `tools` del contesto, la nuova descrizione dello strumento.
+- **…e nei turni che la portano avanti o la chiudono**: una procedura che il contesto di memoria ha portato, o che
+  search_knowledge ha restituito, in una conversazione è **in corso** lì — il contesto di memoria dei turni successivi
+  ripete una riga compatta con il suo id e la segnalazione richiesta (`- procedure in progress "…" [id: …] (not reported
+  yet) — …`), anche quando il messaggio non la richiama, finché una segnalazione chiude l'esecuzione, la conversazione
+  finisce o resta inutilizzata per 3 ore. `search_knowledge` restituisce ogni procedura con `report` (la segnalazione
+  richiesta) subito dopo il suo id, così un host che taglia le risposte lunghe degli strumenti la conserva. Una procedura
+  cercata e chiusa senza segnalazione conta come `runs.unreported`. Valutazione (tre turni, un prompt dell'host lungo):
+  5/5 contro 4/5.
 
 ## [0.15.1] — 2026-11-16
 

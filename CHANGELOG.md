@@ -22,6 +22,13 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
   reached, or how it ended). `POST api/v1/context` takes `tools: false` for an agent with no memory tools (no line asks
   for a tool); the OpenAI-compatible proxy sends it unless `MEMORY_TOOLS` is on. Client library and connectors: the
   `stopped` outcome, the `tools` context option, the new tool description.
+- **…and in the turns that carry it on or end it**: a procedure the memory context carried, or search_knowledge returned,
+  in a conversation is **in progress** there — the next turns' memory context repeats a compact line with its id and the
+  report asked for (`- procedure in progress "…" [id: …] (not reported yet) — …`), even when the message does not recall
+  it, until a report ends the run, the conversation ends or it is unused for 3 hours. `search_knowledge` returns each
+  procedure with `report` (the report asked for) right after its id, so a host that cuts long tool results keeps it.
+  A procedure looked up and closed with no report counts as `runs.unreported`. Eval (three turns, a long host prompt):
+  5/5 against 4/5.
 
 ## [0.15.1] — 2026-11-16
 

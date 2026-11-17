@@ -163,6 +163,58 @@ describe('procedures kept whole (8.16 F2a)', () => {
     expect(block).toContain('runs: 3 done, 0 failed, 1 stopped');
   });
 
+  it('keeps a procedure in progress in its conversation: its line in the next turns until a report ends it; asked for in search_knowledge', async () => {
+    await say('g1', 'Giochiamo a filetto?');
+    const id = (await call(url, 'POST', '/api/v1/procedures', { ...as(), body: {
+      title: 'Giocare a filetto', steps: ['Disegna la griglia tre per tre', 'Scegli croce o cerchio', 'Metti un segno a turno', 'Vince chi allinea tre segni'],
+      from: 'person', conversation: { externalId: 'g1' } } })).body.id as string;
+    const block = async (query: string, conversation = 'g1', at = NOW) => (await call(url, 'POST', '/api/v1/context',
+      { ...as({ 'x-recordare-conversation': conversation, 'x-recordare-now': at }), body: { query, card: false } })).body.block as string | null ?? '';
+    const progress = `procedure in progress "Giocare a filetto" [id: ${id}]`;
+
+    // The opening turn recalls it whole; the next turns, about a move, carry its line with the report asked for.
+    expect(await block('Giocare a filetto')).toContain(`procedure "Giocare a filetto" [id: ${id}]`);
+    await say('g1', 'Metto la croce al centro.');
+    const move = await block('Metto la croce al centro.');
+    expect(move).toContain(`${progress} (not reported yet) — if you are carrying it out`);
+    expect(move).toContain('end your turn with report_procedure_run');
+    // Not in another conversation, nor past the pause.
+    await say('g2', 'Che tempo fa domani?');
+    expect(await block('Che tempo fa domani?', 'g2')).not.toContain(progress);
+    expect(await block('Metto la croce al centro.', 'g1', '2026-06-07T13:30:00+02:00')).not.toContain(progress);
+
+    // Reported halfway: still in progress, at its step; stopped: gone, even when the message still recalls it.
+    const run = (body: Record<string, unknown>) => call(url, 'POST', `/api/v1/procedures/${id}/runs`, { ...as(), body: { ...body, conversation: { externalId: 'g1' } } });
+    await run({ outcome: 'done', step: 3 });
+    expect(await block('Metto il cerchio in alto.')).toContain(`${progress} (last reported: step 3)`);
+    await run({ outcome: 'stopped', step: 3, note: 'Partita lasciata a metà' });
+    expect(await block('Basta col filetto.')).not.toContain(progress);
+    expect(await block('Che ore sono?')).not.toContain(progress);
+    // Without the memory tools no line asks for a tool.
+    await say('g3', 'Giochiamo a filetto?');
+    await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'g3' }), body: { query: 'Giocare a filetto', card: false, tools: false } });
+    expect((await call(url, 'POST', '/api/v1/context', { ...as({ 'x-recordare-conversation': 'g3' }), body: { query: 'Metto la croce.', card: false, tools: false } })).body.block ?? '')
+      .not.toContain(progress);
+
+    // Looked up with search_knowledge: the report asked for right after the id, within what a host keeps of a long result.
+    await say('g4', 'Facciamo una partita a filetto.');
+    const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), { requestInit: { headers: {
+      authorization: `Bearer ${key}`, 'x-recordare-user': 'casa', 'x-recordare-conversation': 'g4', 'x-recordare-now': NOW } } });
+    const client = new Client({ name: 'test', version: '1' });
+    await client.connect(transport);
+    const text = ((await client.callTool({ name: 'search_knowledge', arguments: { query: 'Giocare a filetto' } })).content as Array<{ text: string }>)[0]!.text;
+    await client.close();
+    expect(Object.keys(JSON.parse(text).procedures[0]).slice(0, 3)).toEqual(['id', 'title', 'report']);
+    expect(text.slice(0, 3_000)).toContain(id);
+    expect(text.slice(0, 3_000)).toContain('end your turn with report_procedure_run');
+    expect(await block('Metto la croce in basso.', 'g4')).toContain(`${progress} (not reported yet)`);
+    // That conversation ends with no report: one unreported; the ones only recalled by the context do not count.
+    expect((await call(url, 'POST', '/api/v1/ingest/conversations/g4/end', as())).status).toBe(202);
+    expect(await block('Metto la croce in basso.', 'g4')).not.toContain(progress);
+    const view = (await call(url, 'GET', `/api/v1/procedures/${id}`, as())).body;
+    expect(view.runs).toMatchObject({ done: 0, stopped: 1, unreported: 1 });
+  });
+
   it('keeps at once what the household teaches; a page\'s pending version does not replace it; search_knowledge returns it whole', async () => {
     await say('t1', 'Per accendere la lavastoviglie: chiudi lo sportello, premi Eco, poi Avvio.');
     const taught = await call(url, 'POST', '/api/v1/procedures', { ...as(), body: {

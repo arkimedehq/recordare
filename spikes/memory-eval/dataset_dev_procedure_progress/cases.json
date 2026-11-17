@@ -1,0 +1,22 @@
+[
+  {"id": "chess_chat", "procedure": "chess", "expect": ["stopped", "done"], "final": "stopped",
+   "turns": [{"user": "Giochiamo a scacchi qui in chat, senza app. Io ho il bianco: e4.", "recall": true},
+             {"user": "Cavallo in f3.", "recall": false},
+             {"user": "Basta, smettiamo.", "recall": false}]},
+  {"id": "chess_unrecalled", "procedure": "chess", "expect": ["stopped", "done"], "final": "stopped",
+   "turns": [{"user": "Facciamo una partita? Io ho il bianco: e4.", "recall": false},
+             {"user": "Alfiere in c4.", "recall": false},
+             {"user": "Ok, mi arrendo. Chiudiamo qui.", "recall": false}]},
+  {"id": "laundry_guide", "procedure": "laundry", "expect": ["done"], "final": "done",
+   "turns": [{"user": "Mi guidi a fare il bucato?", "recall": true},
+             {"user": "Fatto: ho diviso i colori e controllato le tasche.", "recall": false},
+             {"user": "Ho steso tutto, finito!", "recall": false}]},
+  {"id": "control_tv", "procedure": "chess", "expect": [],
+   "turns": [{"user": "Ieri sera ho visto una bellissima partita a scacchi in TV.", "recall": true},
+             {"user": "Che tempo fa domani a Milano?", "recall": false},
+             {"user": "Grazie, a dopo.", "recall": false}]},
+  {"id": "control_question", "procedure": "laundry", "expect": [],
+   "turns": [{"user": "Quanti passaggi ha la procedura del bucato?", "recall": true},
+             {"user": "E a quanti gradi vanno le lenzuola?", "recall": false},
+             {"user": "Ok, grazie.", "recall": false}]}
+]

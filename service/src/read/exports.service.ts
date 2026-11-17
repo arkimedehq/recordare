@@ -108,6 +108,7 @@ export class ExportsService {
       procedures: await rows(`SELECT * FROM procedures WHERE memory_id = $1 ORDER BY learned_at`),
       procedureVariants: await rows(`SELECT * FROM procedure_variants WHERE memory_id = $1 ORDER BY at`),
       procedureRuns: await rows(`SELECT * FROM procedure_runs WHERE memory_id = $1 ORDER BY at`),
+      procedureSessions: await rows(`SELECT * FROM procedure_sessions WHERE memory_id = $1 ORDER BY opened_at`),
     };
   }
 }

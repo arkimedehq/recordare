@@ -28,7 +28,7 @@ import { speakerOf } from './subjects';
 import { vectorParam } from '../db/pgvector';
 import { buildCards, selfCardLines } from './cards';
 import { learnedFromSql, learnedView } from './memory-search.service';
-import { procedureLines, procedureViews } from '../procedures/procedures.service';
+import { openProcedureSessions, procedureInProgressLines, procedureLines, procedureViews } from '../procedures/procedures.service';
 import { episodeVisible, factVisible, messageVisible, noteVisible, readerOf, type Reader } from './privacy';
 import { InitiativeService, type InitiativeView } from '../initiative/initiative.service';
 
@@ -271,6 +271,12 @@ export class ContextService {
        ORDER BY ${sim('embedding')} DESC, pending LIMIT 1`, [memoryId, ...vectors, this.floors.procedure]);
     const how = procedure ? (await procedureViews(this.db, memoryId, [procedure.id])).flatMap((p) => procedureLines(p, PROCEDURE_CHARS, tools)) : [];
     if (how.length) kept.push(...how);
+    // A procedure in progress in this conversation (with the memory tools): carried on, even when this message does not
+    // recall it, so the turn that carries it on or ends it still has its id and the report asked for.
+    if (tools && conversationId) {
+      if (procedure) await openProcedureSessions(this.db, memoryId, conversationId, [procedure.id], 'context', now);
+      kept.push(...await procedureInProgressLines(this.db, conversationId, procedure ? [procedure.id] : [], now));
+    }
     const own = await this.initiativeLines(memoryId, memory.mode, conversationId, now, lookups);
     if (!kept.length && !top.lines.length && !own.length) return EMPTY;
     // Logged only when something about this message is served (the self card alone is not a recall of it): the

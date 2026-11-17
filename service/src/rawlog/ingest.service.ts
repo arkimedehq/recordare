@@ -210,6 +210,8 @@ export class IngestService {
     );
     if (!conv) throw new NotFoundException();
     await this.db.query(`UPDATE conversations SET idle_job_at = now() WHERE id = $1`, [conv.id]);
+    // A procedure still in progress there ends with it (8.16 F2): unreported if it was looked up and never reported.
+    await this.db.query(`UPDATE procedure_sessions SET closed_at = now(), closed = 'ended' WHERE conversation_id = $1 AND closed_at IS NULL`, [conv.id]);
     await this.queue.scheduleIdleExtraction(conv.id, 0);
   }
 

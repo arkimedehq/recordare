@@ -510,10 +510,12 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
 ### `search_knowledge` and `learn_source` (D49, WORK_PLAN 8.9 — learned sources)
 - `search_knowledge {query, limit?}` (`limit` 1–20, default 5) — first the procedures about the query, whole (at most 2,
   §4d's view: vector similarity ≥ 0.35 or words on the title and situation), then passages of the sources the agent
-  learned, ranked by weighted RRF of vector and full-text ranks (as episodes). Returns:
+  learned, ranked by weighted RRF of vector and full-text ranks (as episodes). In a conversation, each procedure returned
+  is **in progress** there (§4d). Returns:
   ```ts
   {
-    procedures: Procedure[];                     // §4d, whole: steps in order, `here` (the household's way) above each
+    procedures: Array<Procedure & { report: string }>; // §4d, whole: steps in order, `here` (the household's way) above each;
+                                                 // `report` right after `id` and `title` (the run's report asked for)
     memory: { name: string; mode: "personal" | "entity" };
     passages: Array<{
       text: string; heading: string | null;
@@ -921,7 +923,8 @@ person taught, corrected or ran it.
   A `corrected` is the person's teaching and always kept apart; with no conversation only the 10-minute rule applies.
 - **The view** (`Procedure`): `{id, title, when, steps: [{n, text, here: [{text, by, at, confirmed}], failed?: {at,
   note}}], here (the whole task's variants), learned: {how: "read" | "taught", from, at, confirmed, source?: {id, title}},
-  runs: {done, failed, stopped, corrected, last?}}` — `by` / `from` is a person's name, "the household" (the account's speaker),
+  runs: {done, failed, stopped, corrected, unreported, last?}}` — `unreported`: looked up (search_knowledge) in a
+  conversation that closed with no report at all — — `by` / `from` is a person's name, "the household" (the account's speaker),
   "someone", or the site.
 - **Recall**: `search_knowledge` returns them first, whole (§3); the memory context carries the nearest one whole when the
   message is about it (`CONTEXT_MIN_PROCEDURE_SIMILARITY`, 0.55; its own budget of 1 500 characters, cut only between
@@ -930,6 +933,15 @@ person taught, corrected or ran it.
   turn with report_procedure_run: this id, the outcome, the step reached (none once it is all done)`, then `4. here (Sofia): …` above `4. (generic) …`,
   and `failed here on …` under a step; cut, `… N more steps: search_knowledge "…"` (`… N more steps` with `tools: false`).
   The id on the head and the line that asks for the report are never cut; the id is what `report_procedure_run` takes.
+- **In progress in a conversation** (with the memory tools): a procedure the memory context of a conversation carried,
+  or search_knowledge returned there, is in progress in it; the next turns' memory context carries a compact line even
+  when the message does not recall it — `- procedure in progress "…" [id: <uuid>] (not reported yet | last reported: step
+  N | last reported: done) — if you are carrying it out: when it moves on, ends or stops, end your turn with
+  report_procedure_run (…)` — so the turn that carries it on or ends it still has its id and the report asked for. It
+  ends with a report that ends the run (`done` whole, `failed`, `stopped`; `done` with a step keeps it, at that step),
+  with the conversation (`POST api/v1/ingest/conversations/{id}/end`), or 3 hours unused. A run that just ended there is
+  not reopened by the context alone, only by looking it up again. Looked up and ended with no report at all: one
+  `unreported` in the view.
 - **From what a person teaches in conversation (mode B1, F2b)**: in an entity memory that learns, the extraction call
   that runs anyway (`learn.v2`, section PROCEDURES; no extra call) proposes a how-to of several steps a person here
   teaches — or that a tool or a page in the window gives because someone asked how to do that task — and the

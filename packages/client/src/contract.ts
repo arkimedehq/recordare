@@ -614,5 +614,6 @@ export interface Procedure {
   steps: Array<{ n: number; text: string; here: ProcedureHere[]; failed?: { at: string; note: string | null } }>;
   here: ProcedureHere[];
   learned: { how: 'read' | 'taught'; from: string; at: string; confirmed: boolean; source?: { id: string; title: string } };
-  runs: { done: number; failed: number; stopped: number; corrected: number; last?: { outcome: string; at: string; step: number | null } };
+  /** unreported: looked up in a conversation that closed with no report at all. */
+  runs: { done: number; failed: number; stopped: number; corrected: number; unreported: number; last?: { outcome: string; at: string; step: number | null } };
 }
