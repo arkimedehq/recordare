@@ -6,6 +6,14 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+## [0.15.2] — 2026-11-17
+
+**Le esecuzioni di una procedura arrivano alla memoria senza che nessuno lo chieda.** Ogni turno che mette in pratica
+una procedura della memoria si chiude con la sua segnalazione — `ongoing` mentre continua, `done` quando è finita,
+`stopped` quando è lasciata a metà — e i turni di un compito fanno un'esecuzione sola, anche quando il messaggio non la
+richiama più (la procedura resta in corso nella conversazione). Carta della memoria `charter.v7`. Libreria client e
+connettori 0.14.1: i nuovi esiti, l'opzione `tools` del contesto, la descrizione dello strumento.
+
 ### Modificato
 - **Le esecuzioni di una procedura arrivano alla memoria senza che nessuno lo chieda** (WORK_PLAN 8.16 F2): la riga
   della procedura nel contesto di memoria porta il suo id (`[id: …]`, sull'intestazione, mai tagliata; la procedura
