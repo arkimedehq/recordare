@@ -9,8 +9,10 @@ tokens of its own prompt and 40 tools of its own, and tool results of earlier tu
   progress  + the procedure in progress: its compact line in every next turn until a report ends it; `report` in
             search_knowledge, right after the id
 Scored: a report with the procedure's id by the end of the conversation (and which outcome ended it); none in the controls.
+`--no-search`: the agent has no search_knowledge — what it knows of the procedure is only the memory context (the
+non-regression case of a host that does not look procedures up; the cases that need a look-up are skipped).
 
-  uv run --directory <spikes/memory-eval> python procedure_progress_eval.py [--variants v6,progress] [--only id,…]
+  uv run --directory <spikes/memory-eval> python procedure_progress_eval.py [--variants v6,progress] [--only id,…] [--no-search]
 """
 from __future__ import annotations
 
@@ -133,13 +135,17 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--variants", default="v6,progress")
     ap.add_argument("--only", default="")
+    ap.add_argument("--no-search", action="store_true", help="no search_knowledge: the memory context alone")
     args = ap.parse_args()
     texts = json.loads((DATA / "texts.json").read_text())
     cases = json.loads((DATA / "cases.json").read_text())
     if args.only:
         cases = [c for c in cases if c["id"] in args.only.split(",")]
+    if args.no_search:
+        cases = [c for c in cases if not c.get("needs_search")]
     prompt = host_prompt()
-    tools = [{"type": "function", "function": t} for t in texts["tools"]] + host_tools()
+    memory_tools = [t for t in texts["tools"] if not (args.no_search and t["name"] == "search_knowledge")]
+    tools = [{"type": "function", "function": t} for t in memory_tools] + host_tools()
     results: dict[str, list[dict]] = {}
     for variant in args.variants.split(","):
         rows = []
@@ -154,9 +160,9 @@ def main() -> None:
             print(f"{variant:9} {case['id']:18} {'OK ' if ok else 'NO '} expect={'/'.join(case['expect']) or 'none':13} got={seen}", flush=True)
         results[variant] = rows
         print(f"{variant}: {sum(r['ok'] for r in rows)}/{len(rows)}", flush=True)
-    path = ROOT / "results" / f"procedure_progress_{time.strftime('%Y%m%d-%H%M%S')}.json"
+    path = ROOT / "results" / f"procedure_progress{'_nosearch' if args.no_search else ''}_{time.strftime('%Y%m%d-%H%M%S')}.json"
     path.parent.mkdir(exist_ok=True)
-    path.write_text(json.dumps({"model": llm_model(), "results": results, "usage": USAGE.as_dict()}, ensure_ascii=False, indent=2))
+    path.write_text(json.dumps({"model": llm_model(), "no_search": args.no_search, "results": results, "usage": USAGE.as_dict()}, ensure_ascii=False, indent=2))
     print(f"usage: {USAGE.as_dict()}\n→ {path}")
 
 

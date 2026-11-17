@@ -3,7 +3,7 @@
    "turns": [{"user": "Giochiamo a scacchi qui in chat, senza app. Io ho il bianco: e4.", "recall": true},
              {"user": "Cavallo in f3.", "recall": false},
              {"user": "Basta, smettiamo.", "recall": false}]},
-  {"id": "chess_unrecalled", "procedure": "chess", "expect": ["stopped", "done"], "final": "stopped",
+  {"id": "chess_unrecalled", "procedure": "chess", "needs_search": true, "expect": ["stopped", "done"], "final": "stopped",
    "turns": [{"user": "Facciamo una partita? Io ho il bianco: e4.", "recall": false},
              {"user": "Alfiere in c4.", "recall": false},
              {"user": "Ok, mi arrendo. Chiudiamo qui.", "recall": false}]},

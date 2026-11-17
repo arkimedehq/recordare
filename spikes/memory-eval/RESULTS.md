@@ -2390,3 +2390,10 @@ as `done` with no step while the game went on (the step of a game is no natural 
 With `ongoing` (the line, the tool's description and the charter: "ongoing while it goes on, done only once it is all
 finished") the `progress` variant, re-run alone on regenerated texts: **5/5**, and the sequences are the intended ones —
 both games `ongoing, ongoing, stopped`, the laundry `ongoing … done` (whole). 29 calls, 0.68 M prompt tokens (91 % cached).
+
+Non-regression, no search_knowledge (`--no-search`, 2026-11-17, `charter.v7`): the agent knows the procedure only from
+the memory context — the case the host reported live (opening that recalls it, a move, "basta, smettiamo"). `progress`
+**4/4** (the case that needs a look-up skipped): chess `ongoing, ongoing, stopped` in one run, laundry `ongoing, ongoing,
+done` (whole), no report in the controls. 23 calls, 0.52 M prompt tokens (92 % cached). Run it before any change of the
+charter, of the procedure's lines or of the in-progress line:
+`procedure_progress_eval.py --variants progress --no-search`.
