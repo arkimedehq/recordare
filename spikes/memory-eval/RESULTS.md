@@ -2345,3 +2345,22 @@ midnight). On `dataset_dev_initiatives`: fresh run i18v4 (strict) **12 / 14**, t
 with weekday and date ("Martedì 8 settembre avevi la visita dal dentista…"), the day's reminders with "oggi", no fallback.
 v3 on its own extractions: 11, 10, 11 / 14. Cost ≈ 0.25 USD the fresh run, ≈ 0.03 each re-run.
 
+
+### Procedure runs reported unasked — `charter.v6` (WORK_PLAN 8.16 F2, 2026-11-17, DeepSeek direct)
+
+`procedure_report_eval.py`, `dataset_dev_procedure_report` (8 cases, Italian): the agent has a procedure in its
+`<memory-context>` and, in the last turn, puts it into practice (a move of a game in progress, a test of one step in a
+sandbox — passed or failed —, a whole household task through a device tool), gives it up, is corrected — or only talks
+about it (2 controls). Nobody asks it to report. Scored: `report_procedure_run` with the right id and outcome in that
+turn; none in the controls. Texts frozen from the service (`texts.json`): charter, MCP tool descriptions, procedure lines.
+`deepseek-flash`, temperature 0, neutral host prompt, one run.
+
+| Variant | Score | Misses |
+|---|---|---|
+| `charter.v5` (id on the line) | 6/8 | a move of a game in progress: no report; a game given up: `done` |
+| `charter.v6` (report asked on the line, when in the tool's description, `stopped`) | **8/8** | — |
+
+The first v6 run had the whole household task reported as `done` with step 4 (the last): the line said "the step
+reached"; with "(none once it is all done)" it is `done` with no step (re-run of v6 only). Controls: no report in either
+variant. Limits: a short prompt (≈ 2 500 tokens) against a real host's ≈ 22 000, one model, one run; the real check is
+on Kinox. Cost: 64 calls, ≈ 152 k prompt tokens (83 % cached).

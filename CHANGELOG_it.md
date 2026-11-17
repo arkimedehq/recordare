@@ -14,6 +14,16 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
   compresi un controllo o un test di un passaggio. Lo stesso esito detto di nuovo entro 10 minuti (stessa procedura,
   passaggio, conversazione; una correzione con le stesse parole) conta una volta e restituisce l'id della prima
   esecuzione. `done` con uno `step` non conferma più ciò che è stato letto: lo fa solo un'esecuzione intera.
+- **…e nel punto in cui l'agente decide** (carta `charter.v6`): le righe della procedura nel contesto di memoria chiedono
+  la segnalazione subito sotto l'intestazione (`carrying it out …? end your turn with report_procedure_run: this id, …`,
+  mai tagliata); la descrizione di `report_procedure_run` dice quando — alla fine di ogni turno che l'ha seguita o
+  applicata, anche in parte o interrotta. Nuovo esito **`stopped`**: un compito lasciato a metà (la persona ha rinunciato
+  o cambiato idea) conta come esecuzione con il passaggio raggiunto, non conferma nulla e non segna nessun passaggio come
+  fallito (`runs.stopped` nella vista). **Un compito su più turni è un'esecuzione sola**: in una conversazione,
+  un'esecuzione ancora in corso prende la segnalazione successiva entro 3 ore (il passaggio raggiunto, o come è finita).
+  `POST api/v1/context` accetta `tools: false` per un agente senza strumenti di memoria (nessuna riga chiede uno
+  strumento); il proxy compatibile OpenAI lo manda a meno che `MEMORY_TOOLS` sia acceso. Libreria client e connettori:
+  l'esito `stopped`, l'opzione `tools` del contesto, la nuova descrizione dello strumento.
 
 ## [0.15.1] — 2026-11-16
 

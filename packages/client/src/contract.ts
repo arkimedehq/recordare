@@ -510,6 +510,8 @@ export interface ContextOptions {
   card?: boolean;
   /** D55: what your agent can do with the memory's initiatives — `lookups`: it has tools to find things out with. */
   initiatives?: { lookups?: boolean };
+  /** false: your agent has no memory tools, only the block (as `charter({ tools: false })`) — no line asks it to call one. */
+  tools?: boolean;
 }
 
 /** `GET api/v1/charter`: the memory charter (D54) — how the agent uses its memory, for its system prompt. */
@@ -592,10 +594,11 @@ export interface ProcedureVariant {
 }
 
 export interface ProcedureRun {
-  outcome: 'done' | 'failed' | 'corrected';
-  /** The step (1-based): failed / corrected at it; with done, only that step was done (none: the whole task). */
+  /** stopped: left halfway (the person gave up or changed their mind) — counts, confirms nothing, marks no step as failed. */
+  outcome: 'done' | 'failed' | 'stopped' | 'corrected';
+  /** The step (1-based): failed / corrected at it; stopped, or done while not finished: the step reached (none: the whole task). */
   step?: number;
-  /** failed: what went wrong; corrected: the right way (required). */
+  /** failed: what went wrong; stopped: why it was left; corrected: the right way (required). */
   note?: string;
   /** Who is speaking there corrected it. */
   conversation?: { externalId: string };
@@ -611,5 +614,5 @@ export interface Procedure {
   steps: Array<{ n: number; text: string; here: ProcedureHere[]; failed?: { at: string; note: string | null } }>;
   here: ProcedureHere[];
   learned: { how: 'read' | 'taught'; from: string; at: string; confirmed: boolean; source?: { id: string; title: string } };
-  runs: { done: number; failed: number; corrected: number; last?: { outcome: string; at: string; step: number | null } };
+  runs: { done: number; failed: number; stopped: number; corrected: number; last?: { outcome: string; at: string; step: number | null } };
 }

@@ -661,8 +661,10 @@ pending (the informant's trust below the teaching threshold), conversation_id, a
 shown above the generic step; the same informant's new way of the same step retires the old one.
 
 ### procedure_runs
-`id, procedure_id (cascade), memory_id, outcome ('done' | 'failed' | 'corrected'), step, note, conversation_id, at` — done
-confirms a pending procedure and credits its informants; failed marks its step (until a variant of it is taught after
+`id, procedure_id (cascade), memory_id, outcome ('done' | 'failed' | 'stopped' | 'corrected'), step, note, conversation_id, at`
+— done of the whole task (no step) confirms a pending procedure and credits its informants; stopped (left halfway) only
+counts; a run still going (done with a step) is updated by the next report of its conversation within 3 hours (index
+`procedure_runs_conversation_idx`), so `at` is its last report; failed marks its step (until a variant of it is taught after
 it; no trust moves — the robot may be at fault); corrected adds the corrector's variant and one `corrected` to the
 procedure's other informants.
 

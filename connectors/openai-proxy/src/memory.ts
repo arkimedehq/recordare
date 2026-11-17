@@ -140,7 +140,9 @@ export class Memory {
     }
     if (!recall) return null;
     try {
-      const res = req ? await this.fast.contextWithTurn(user, req, query) : await this.fast.context(user, identity.conversation, query);
+      // Without the memory tools the block must not ask the model to call one (as the charter's context-only form).
+      const opts = { tools: this.cfg.memoryTools };
+      const res = req ? await this.fast.contextWithTurn(user, req, query, opts) : await this.fast.context(user, identity.conversation, query, opts);
       st.block = res.block;
       return res.block;
     } catch (err) {
