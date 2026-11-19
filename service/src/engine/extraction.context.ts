@@ -117,7 +117,7 @@ export async function pendingWindows(tx: EntityManager, conversationId: string, 
     // recall — one of Recordare's read tools called by the client (its tool message), or a recall Recordare served
     // in this conversation.
     `SELECT m.id, m.role, m.tool_name, ${personal ? `m.author_kind IN ('self', 'own')` : accountSpeaker('m')} AS account_speaker,
-       m.author_kind, m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at,
+       m.author_kind, m.author_person_id, COALESCE(p.display_name, CASE WHEN cp.role <> 'holder' THEN cp.display_name END) AS author_name, m.content, m.sent_at,
        (m.role = 'assistant' AND (
           EXISTS (SELECT 1 FROM messages t WHERE t.conversation_id = m.conversation_id AND t.role = 'tool'
                     AND t.tool_name ~ $2 AND t.sent_at <= m.sent_at + interval '5 seconds' AND t.sent_at >= turn.start)

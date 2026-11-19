@@ -6,6 +6,17 @@ Riferimento inglese: [CHANGELOG.md](CHANGELOG.md).
 
 ## [Non rilasciato]
 
+### Corretto
+- **Una voce non riconosciuta è qualcuno, la correzione di un familiare resta** (memorie di entità): in una
+  conversazione vocale un turno senza parlante riconosciuto non è mai il parlante proprio dell'account — i suoi fatti e
+  le sue note restano in sospeso e non fa da evidenza a `remember`; `remember` prende come evidenza il turno di un membro
+  della casa identificato (`holder_told`, tenuta subito quando è fidato) e l'ultimo turno di una persona decide di chi
+  è; quello che un membro della casa dice di un altro è tenuto subito (8.16).
+
+### Aggiunto
+- `remember {replaces}`: l'id della nota che una correzione o un aggiornamento sostituisce — ritirata invece di restarle
+  accanto (descrizione `TOOLS` della libreria client).
+
 ## [0.15.2] — 2026-11-17
 
 **Le esecuzioni di una procedura arrivano alla memoria senza che nessuno lo chieda.** Ogni turno che mette in pratica

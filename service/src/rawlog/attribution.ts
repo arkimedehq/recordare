@@ -38,8 +38,18 @@ export const SOMEONE: Attribution = { kind: 'someone', personId: null, method: '
  * until first person arrives (WORK_PLAN 8.4). `m` is the alias of `messages`.
  */
 export const accountSpeaker = (m: string): string =>
-  `(${m}.role = 'user' OR ${m}.author_kind IN ('self', 'own') OR EXISTS (SELECT 1 FROM conversation_participants asp
-     WHERE asp.conversation_id = ${m}.conversation_id AND asp.ref = ${m}.author_ref AND asp.role = 'holder'))`;
+  `(NOT ${unattributedVoice(m)} AND (${m}.role = 'user' OR ${m}.author_kind IN ('self', 'own') OR EXISTS (SELECT 1 FROM conversation_participants asp
+     WHERE asp.conversation_id = ${m}.conversation_id AND asp.ref = ${m}.author_ref AND asp.role = 'holder')))`;
+
+/**
+ * SQL predicate: a turn of a voice conversation whose speaker nobody recognised. Whoever is near a device can talk to it,
+ * so such a turn is never the account's speaker (an entity memory's "the person"), whatever role the client gave it: its
+ * words stay someone's — pending, no evidence for `remember` — until a voice or a face names the speaker (Kinox
+ * 2026-11-19: a voiceprint that missed made a wrong time a stated note, and the household's correction a pending one).
+ */
+export const unattributedVoice = (m: string): string =>
+  `(${m}.author_kind = 'someone' AND ${m}.author_person_id IS NULL
+     AND EXISTS (SELECT 1 FROM conversations uvc WHERE uvc.id = ${m}.conversation_id AND uvc.source = 'voice'))`;
 
 /**
  * SQL predicate: the message is the memory's own turn in either mode — personal memories (8.4): the self or own content

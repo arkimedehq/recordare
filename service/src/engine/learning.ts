@@ -75,9 +75,27 @@ export async function informantOf(db: Db, msgs: EvidenceMessage[], tools: Eviden
   if (!said) return null;
   if (said.accountSpeaker) return { kind: 'person', key: 'account', personId: null, cls: 'household' };
   if (!said.authorPersonId) return { kind: 'person', key: 'someone', personId: null, cls: 'anonymous' };
+  const household = await isHouseholdMember(db, said.authorPersonId);
+  return { kind: 'person', key: said.authorPersonId, personId: said.authorPersonId, cls: household ? 'household' : 'contact' };
+}
+
+/** A household member of the memory: a person with a verified identity (a voice, a face, a channel the household gave). */
+export async function isHouseholdMember(db: Db, personId: string): Promise<boolean> {
   const [v]: Array<{ verified: boolean }> = await db.query(
-    `SELECT EXISTS (SELECT 1 FROM external_identities WHERE person_id = $1 AND verified_at IS NOT NULL) AS verified`, [said.authorPersonId]);
-  return { kind: 'person', key: said.authorPersonId, personId: said.authorPersonId, cls: v?.verified ? 'household' : 'contact' };
+    `SELECT EXISTS (SELECT 1 FROM external_identities WHERE person_id = $1 AND verified_at IS NOT NULL) AS verified`, [personId]);
+  return !!v?.verified;
+}
+
+/**
+ * An identified contact who said something the agent writes down (`remember`, `log_episode` in an entity memory): is it
+ * kept at once, and who backs it? With learning on, the contact's trust decides (a household member teaches, a contact
+ * alone waits) and the item is backed by them; off, a household member is enough.
+ */
+export async function contactTeaches(db: Db, memoryId: string, personId: string, learning: boolean): Promise<{ stated: boolean; informantId: string | null }> {
+  const household = await isHouseholdMember(db, personId);
+  if (!learning) return { stated: household, informantId: null };
+  const row = await upsertInformant(db, memoryId, { kind: 'person', key: personId, personId, cls: household ? 'household' : 'contact' });
+  return { stated: row.trust >= TEACH_TRUST, informantId: row.id };
 }
 
 /** The informant's row (created on first use) and its trust now. */

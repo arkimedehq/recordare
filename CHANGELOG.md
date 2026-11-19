@@ -6,6 +6,17 @@ Italian: [CHANGELOG_it.md](CHANGELOG_it.md).
 
 ## [Unreleased]
 
+### Fixed
+- **An unrecognised voice is someone, a household member's correction sticks** (entity memories): in a voice
+  conversation a turn with no recognised speaker is never the account's own speaker — its facts and notes stay pending
+  and it backs no `remember`; `remember` takes an identified household member's turn as evidence (`holder_told`, kept at
+  once when trusted) and the latest person's turn decides whose it is; what a household member says about another one is
+  kept at once (8.16).
+
+### Added
+- `remember {replaces}`: the id of the note a correction or an update replaces — retired instead of kept beside it
+  (client library `TOOLS` description).
+
 ## [0.15.2] — 2026-11-17
 
 **A procedure's runs reach the memory without being asked.** Each turn that carries out a procedure from memory ends

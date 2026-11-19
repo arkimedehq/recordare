@@ -74,6 +74,10 @@ OpenAI-compatible memory proxy for platforms without plugin hooks (AnythingLLM, 
   conversation (the latest person's turn), so ingest the turn before recalling for it (`contextWithTurn`, or flush your
   outbox) — in a shared chat a stale turn would read as the previous speaker. In an entity memory your diary UI reads the
   public only: private things are the agent's and the person's who said them.
+- **Voice turns** (`source: "voice"`): send the speaker your voice recognition found as a participant with its identity.
+  A turn whose voice nobody recognised is someone — Recordare never takes it for the account's own speaker, even sent
+  as `user`: its facts and notes stay pending and it backs no `remember`. Do not declare it as the holder (Kinox
+  2026-11-19: a missed voiceprint made a wrong time a stated note, the household's correction a pending one).
 - **Continuous listening** (a home device that hears the room, D45, WORK_PLAN 6.5): send the transcript as a
   conversation with `source: "ambient"` — the person whose memory it is as `user`, the others as `other` participants
   (with an identity when your voice recognition knows them), never `own`. The extraction is told it reads speech heard

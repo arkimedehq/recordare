@@ -493,10 +493,15 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
 `unknown_current` → "il valore attuale non è noto".
 
 ### `remember` e `search_memory` (D34 — note semantiche)
-- `remember {content, category?}` — esplicito "ricorda che…": memorizzato come nota dichiarata (messaggio
+- `remember {content, category?, replaces?}` — esplicito "ricorda che…": memorizzato come nota dichiarata (messaggio
   `user` del titolare come evidenza, stesse regole di `log_episode`); senza tale evidenza è memorizzato come nota
-  dedotta **in sospeso** (`origin: assistant_stated`) che il titolare conferma nel diario (§4). `category` per default è
-  `knowledge`. Restituisce `{id, stored}`.
+  dedotta **in sospeso** (`origin: assistant_stated`) che il titolare conferma nel diario (§4). L'evidenza è l'ultimo
+  turno di una persona nella conversazione (ultimi 30 minuti) le cui parole si sovrappongono alla nota: in una memoria
+  di entità conta anche il turno di un membro della casa identificato (`origin: holder_told`, tenuta subito quando è
+  fidato per insegnare — 8.16), non quello di un ospite o di una voce non riconosciuta. `replaces`: l'id di una nota che
+  questa corregge o aggiorna (restituito dal `remember` precedente, o da `search_memory`) — ritirata (`superseded`) quando
+  la nuova nota è dichiarata; una in sospeso propone soltanto la modifica (§4 elementi in sospeso). Un id che non è una
+  nota corrente della memoria è un errore. `category` per default è `knowledge`. Restituisce `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferenze, abitudini, valori, conoscenze, più i
   fatti di stato rilevanti validi a `as_of` (data ISO, default oggi) con la loro cronologia; integra `search_episodes`
   (cosa è successo / quando). Restituisce `{memory, speaker, notes, facts, notes_info, clarifications?}` (`notes_info`:
@@ -523,8 +528,11 @@ Restituisce `{facts: [{key, value | null, status, validFrom, validTo, history: [
   l'output degli strumenti che il client già manda (ruolo `tool`) e ciò che dicono le persone. La conoscenza duratura del
   luogo o del mondo delle persone, e ciò che una persona insegna di proposito, diventano note `knowledge` con chi le ha
   portate: letto in una pagina → origine `learned`, in attesa a meno che lo strumento sia uno di quelli propri dell'agente
-  (`LEARNING_OWN_TOOLS`); insegnato da un membro della casa sul luogo (il parlante proprio dell'account, o una persona con
-  un'identità verificata) → tenuto subito; qualcuno di sconosciuto → in attesa. La stessa pagina letta di nuovo non conferma
+  (`LEARNING_OWN_TOOLS`); insegnato da un membro della casa sul luogo
+  o su un altro membro della casa (il parlante proprio dell'account, o una persona con un'identità verificata — vale
+  anche una dichiarata dal client) → tenuto subito; qualcuno di sconosciuto → in attesa. In una conversazione vocale
+  (`source: "voice"`) un turno di cui nessuno ha riconosciuto chi parla (nessuna identità) è qualcuno, mai il parlante
+  proprio dell'account, qualunque sia il suo ruolo. La stessa pagina letta di nuovo non conferma
   nulla; una persona fidata o una seconda fonte indipendente sì. La conoscenza deperibile svanisce
   (`LEARNED_NEWS_KEEP_DAYS`, alla sua data quando è detta); una correzione toglie dal richiamo il vecchio valore. Le
   istruzioni dentro una pagina o l'output di uno strumento non diventano mai un intento o una regola. Il contesto di

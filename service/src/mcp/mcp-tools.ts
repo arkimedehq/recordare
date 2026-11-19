@@ -259,10 +259,13 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
   server.registerTool('remember', {
     title: 'Remember something',
     description: 'Explicit "remember that…" about preferences, habits, values, knowledge.'
-      + ' Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something.',
+      + ' Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something.'
+      + ' To correct or update something remembered, pass `replaces` with its id (returned when you remembered it, or from'
+      + ' search_memory): the old note is retired instead of kept beside the new one.',
     inputSchema: {
       content: z.string(),
       category: z.enum(['preference', 'habit', 'value', 'relationship', 'knowledge', 'profile', 'constraint']).optional(),
+      replaces: z.uuid().optional().describe('The id of a note this one corrects or updates'),
     },
   }, async (args, extra) => {
     const ctx = await context(extra);
