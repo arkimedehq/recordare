@@ -35,7 +35,7 @@ import { localDate, toStored, type Precision } from './time';
 import { ContactBook, contact, fold, SELF_SUBJECT, SOMEONE_SUBJECT, type Subject, withoutRelation } from './subjects';
 import { askClarification, resolveClarification } from './clarifications';
 import { confirmPending, isPending, refuteProposals } from './pending';
-import { backItem, creditInformants, type Informant, informantOf, lastingOf, TEACH_TRUST, upsertInformant } from './learning';
+import { backItem, creditInformants, type Informant, informantOf, isHouseholdMember, lastingOf, TEACH_TRUST, upsertInformant } from './learning';
 import { addProcedureVariant, keepProcedure } from '../procedures/procedures.service';
 import { MAX_STEPS, STEP_CHARS } from '../procedures/procedures.schemas';
 import { setPrivate } from '../rawlog/message-privacy';
@@ -548,7 +548,7 @@ export class ExtractionWriter {
       if (this.deleted('fact', key, subjectId, msgs)) { this.drop('fact', 'deleted'); continue; }
       const own = !(await this.inferred(role, msgs, subjectId ? contact(subjectId) : SELF_SUBJECT));
       const learned = await this.learnedFrom(msgs);
-      const inferred = learned ? this.learnedInferred(learned, !own, subjectId === null, msgs) : !own || heard(msgs);
+      const inferred = learned ? this.learnedInferred(learned, !own, await this.aboutHome(subjectId), msgs) : !own || heard(msgs);
       let target = f.target ? this.input.facts.get(f.target) : undefined;
       if (target && (target.key !== key || (target.subjectId ?? null) !== subjectId)) target = undefined;
 
@@ -667,7 +667,7 @@ export class ExtractionWriter {
       const subject = who.subject;
       if (this.deleted('note', n.category, subject.personId, msgs)) { this.drop('note', 'deleted'); continue; }
       const inferred = learned
-        ? n.stance === 'inferred' || this.learnedInferred(learned, await this.inferred(role, msgs, subject), subject.kind === 'self', msgs)
+        ? n.stance === 'inferred' || this.learnedInferred(learned, await this.inferred(role, msgs, subject), subject.kind === 'self' || await this.aboutHome(subject.personId), msgs)
         : n.stance === 'inferred' || heard(msgs) || (await this.inferred(role, msgs, subject));
       let supersedes: string | null = null;
       let correctsId: string | null = null;
@@ -795,14 +795,20 @@ export class ExtractionWriter {
 
   /**
    * 8.16: is a learned item pending? Read in a tool's output or a page: unless the source is trusted enough to teach (the
-   * agent's own tools), it waits — said with its source. Taught by a trusted person about me or my place (a household
-   * member: where things are, how the house works): kept at once. Otherwise the usual rule (`otherwise`).
+   * agent's own tools), it waits — said with its source. Taught by a trusted person about me, my place or one of the
+   * household (a household member: where things are, how the house works, a child's timetable — maintainer
+   * 2026-11-19): kept at once. Otherwise the usual rule (`otherwise`).
    */
-  private learnedInferred(learned: LearnedFrom, otherwise: boolean, aboutMe: boolean, msgs: WindowMessage[]): boolean {
+  private learnedInferred(learned: LearnedFrom, otherwise: boolean, aboutHome: boolean, msgs: WindowMessage[]): boolean {
     if (heard(msgs)) return true;
     if (learned.informant.kind !== 'person') return learned.trust < TEACH_TRUST;
-    if (aboutMe && learned.trust >= TEACH_TRUST) return false;
+    if (aboutHome && learned.trust >= TEACH_TRUST) return false;
     return otherwise;
+  }
+
+  /** About me (no person: the memory itself, its place) or a household member (a verified identity). */
+  private async aboutHome(personId: string | null): Promise<boolean> {
+    return personId === null || isHouseholdMember(this.tx, personId);
   }
 
   /** The origin of a fact or a note: the agent's own words, read (8.16), or the fallback. */

@@ -17,6 +17,7 @@ import { addDays, periodEnd, toStored, zonedMidnight, type Precision } from '../
 import { TelemetryService } from '../telemetry/telemetry.service';
 import { memorySpeaker } from '../rawlog/attribution';
 import { episodeSubject, SELF_SUBJECT, SOMEONE_SUBJECT } from '../engine/subjects';
+import { backItem, contactTeaches } from '../engine/learning';
 import { dropUnsupported, supersedeDigests, supportedBy } from './forgetting';
 import { storeEmbeddings } from '../db/pgvector';
 import { episodeVisible, readerOf } from './privacy';
@@ -39,10 +40,11 @@ async function privateEvidence(tx: EntityManager, table: Table, id: string): Pro
 /**
  * The agent's text is backed by a message of the holder when the two overlap as a whole (trigram similarity ≥ 0.2) or
  * when the text is found inside the message (word similarity ≥ 0.6): a long message ("use the tools: … remember that
- * my favourite colour is green") dilutes the whole-text similarity of the short fact it contains.
+ * my favourite colour is green") dilutes the whole-text similarity of the short fact it contains. Of the messages that
+ * overlap, the latest is the one that asked: a correction overlaps the words it corrects as much as its own, and the
+ * best-scoring one could be an earlier speaker's (2026-11-19).
  */
 const OVERLAP = (col: string) => `(similarity(${col}, $3) >= 0.2 OR word_similarity($3, ${col}) >= 0.6)`;
-const SCORE = (col: string) => `GREATEST(similarity(${col}, $3), word_similarity($3, ${col}))`;
 
 /** The month after a YYYY-MM month, as YYYY-MM. */
 function nextMonth(month: string): string {
@@ -58,6 +60,17 @@ export interface Evidence {
   memoryDirect?: boolean;
 }
 
+/** The message an explicit write binds to, and whose it is. */
+interface Bound {
+  messageId: string | null;
+  byHolder: boolean;
+  /** An identified contact of an entity memory who said it. */
+  contactId: string | null;
+  /** No person's message says it: the agent's own words (a message written for it). */
+  byAssistant: boolean;
+  conversationId: string | null;
+}
+
 @Injectable()
 export class MemoryWriteService {
   constructor(
@@ -70,8 +83,10 @@ export class MemoryWriteService {
     content: string; kind?: 'event' | 'plan'; occurredAt?: string; occurredUntil?: string; datePrecision?: Precision; people?: string[]; place?: string;
   }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
-      const [memory] = await tx.query(`SELECT timezone, mode FROM memories WHERE person_id = $1`, [memoryId]);
-      const { messageId, byHolder } = await this.bindEvidence(tx, memoryId, ev, input.content);
+      const [memory] = await tx.query(`SELECT timezone, mode, learn_from_outside FROM memories WHERE person_id = $1`, [memoryId]);
+      const bound = await this.bindEvidence(tx, memoryId, ev, input.content, memory.mode === 'entity');
+      const { messageId } = bound;
+      const by = await this.writerOf(tx, memoryId, bound, memory);
       const at = toStored(input.occurredAt, input.datePrecision, memory.timezone);
       const until = toStored(input.occurredUntil, 'day', memory.timezone);
       const kind = input.kind ?? 'event';
@@ -82,14 +97,14 @@ export class MemoryWriteService {
         `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, plan_status, plan_status_at,
            origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_person_id, subject_candidates)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'holder', $15, $16, $17, $18) RETURNING id`,
-        [memoryId, kind, input.content, at.at, until.at, at.precision, input.place ?? null, byHolder ? 10 : 5,
+        [memoryId, kind, input.content, at.at, until.at, at.precision, input.place ?? null, by.stated ? 10 : 5,
           kind === 'plan' ? 'open' : null, kind === 'plan' ? new Date() : null,
-          byHolder ? 'holder_lived' : 'assistant_stated', byHolder ? 'holder' : 'assistant',
-          // "stated" only with the holder's own words behind it (API.md §3), as for notes.
-          byHolder ? 'stated' : 'inferred', byHolder ? 1 : 0.6, [memoryId], subject.kind, subject.personId, subject.candidates]);
+          by.origin, by.authorRole,
+          // "stated" only with the holder's own words behind it (API.md §3), or a household member's, as for notes.
+          by.stated ? 'stated' : 'inferred', by.stated ? 1 : 0.6, [memoryId], subject.kind, subject.personId, subject.candidates]);
       if (messageId) {
         await tx.query(`INSERT INTO episode_evidence (episode_id, message_id, evidence_kind) VALUES ($1, $2, $3)`,
-          [row.id, messageId, byHolder ? 'message' : 'agent_paraphrase']);
+          [row.id, messageId, bound.byAssistant ? 'agent_paraphrase' : 'message']);
       }
       for (const p of input.people ?? []) {
         await tx.query(`INSERT INTO episode_people (episode_id, alias, person_id) VALUES ($1, $2, $3)`, [row.id, p, people.get(p) ?? null]);
@@ -100,18 +115,32 @@ export class MemoryWriteService {
     return id;
   }
 
-  async remember(memoryId: string, ev: Evidence | null, input: { content: string; category?: string }): Promise<string> {
+  /**
+   * An explicit "remember that…". `replaces`: a note this one corrects or updates (the id the agent got when it remembered
+   * it, or from search_memory) — retired when the new one is stated, else the new one only proposes the change
+   * (pending.ts), applied when it is confirmed.
+   */
+  async remember(memoryId: string, ev: Evidence | null, input: { content: string; category?: string; replaces?: string }): Promise<string> {
     const id = await this.db.transaction(async (tx) => {
-      const { messageId, byHolder } = await this.bindEvidence(tx, memoryId, ev, input.content);
-      const [memory] = await tx.query(`SELECT mode FROM memories WHERE person_id = $1`, [memoryId]);
+      const [memory] = await tx.query(`SELECT mode, learn_from_outside FROM memories WHERE person_id = $1`, [memoryId]);
+      const [old]: Array<{ id: string; pending: boolean }> = input.replaces ? await tx.query(
+        `SELECT id, pending FROM notes WHERE id = $1 AND memory_id = $2 AND deleted_at IS NULL AND status = 'current'`, [input.replaces, memoryId]) : [];
+      if (input.replaces && !old) throw new NotFoundException('No current note with this id to replace');
+      const bound = await this.bindEvidence(tx, memoryId, ev, input.content, memory.mode === 'entity');
+      const by = await this.writerOf(tx, memoryId, bound, memory);
       const subject = memory.mode === 'entity' ? SOMEONE_SUBJECT : SELF_SUBJECT;
       const [row] = await tx.query(
-        `INSERT INTO notes (memory_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_candidates)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'holder', $9, $10, $11) RETURNING id`,
-        [memoryId, input.category ?? 'knowledge', input.content, !byHolder, byHolder ? 'holder_lived' : 'assistant_stated',
-          byHolder ? 'holder' : 'assistant', byHolder ? 'stated' : 'inferred', byHolder ? 1 : 0.6, [memoryId], subject.kind, subject.candidates]);
-      if (messageId) await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, messageId]);
-      await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, 'created')`, [memoryId, row.id]);
+        `INSERT INTO notes (memory_id, category, content, pending, origin, author_role, stance, confidence, disclosure, audience, subject_kind, subject_candidates, supersedes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'holder', $9, $10, $11, $12) RETURNING id`,
+        [memoryId, input.category ?? 'knowledge', input.content, !by.stated, by.origin,
+          by.authorRole, by.stated ? 'stated' : 'inferred', by.stated ? 1 : 0.6, [memoryId], subject.kind, subject.candidates, old?.id ?? null]);
+      // A stated note retires the one it replaces; a pending one replaces only a pending one (else it is a proposal).
+      if (old && (by.stated || old.pending)) {
+        await tx.query(`UPDATE notes SET status = 'superseded' WHERE id = $1 AND memory_id = $2`, [old.id, memoryId]);
+      }
+      if (bound.messageId) await tx.query(`INSERT INTO note_evidence (note_id, message_id) VALUES ($1, $2)`, [row.id, bound.messageId]);
+      if (by.informantId) await backItem(tx, memoryId, { table: 'notes', id: row.id }, by.informantId, bound.conversationId, new Date());
+      await tx.query(`INSERT INTO note_changes (memory_id, note_id, change) VALUES ($1, $2, $3)`, [memoryId, row.id, old ? 'updated' : 'created']);
       return row.id as string;
     });
     await this.embed('notes', id, input.content);
@@ -126,7 +155,7 @@ export class MemoryWriteService {
       if (!old) throw new NotFoundException();
       const kept = await privateEvidence(tx, 'episodes', input.id);
       const [memory] = await tx.query(`SELECT timezone FROM memories WHERE person_id = $1`, [memoryId]);
-      const { messageId } = await this.bindEvidence(tx, memoryId, ev, input.content ?? old.content);
+      const { messageId } = await this.bindEvidence(tx, memoryId, ev, input.content ?? old.content, false);
       const at = input.occurredAt ? toStored(input.occurredAt, input.datePrecision, memory.timezone) : { at: old.occurred_at, precision: old.date_precision };
       const [row] = await tx.query(
         `INSERT INTO episodes (memory_id, kind, content, occurred_at, occurred_until, date_precision, place, importance, valence, feelings,
@@ -303,28 +332,47 @@ export class MemoryWriteService {
    * `mcp_tool` conversation as the agent's paraphrase (role assistant: the extraction gate never
    * spends a call on it).
    */
-  private async bindEvidence(tx: EntityManager, memoryId: string, ev: Evidence | null, text: string): Promise<{ messageId: string | null; byHolder: boolean }> {
-    if (!ev) return { messageId: null, byHolder: true }; // written by the person in the host's UI
+  /**
+   * Who wrote what the agent writes down, from the message it binds to: the holder (the memory's own speaker), an
+   * identified contact of an entity memory (a household member teaches at once — 8.16 —, a contact alone waits), or
+   * the agent itself (no message of a person says it: recorded as its own words, pending).
+   */
+  private async writerOf(tx: EntityManager, memoryId: string, bound: Bound, memory: { mode: string; learn_from_outside: boolean | null }):
+    Promise<{ stated: boolean; origin: string; authorRole: string; informantId: string | null }> {
+    if (bound.byHolder) return { stated: true, origin: 'holder_lived', authorRole: 'holder', informantId: null };
+    if (bound.contactId) {
+      const taught = await contactTeaches(tx, memoryId, bound.contactId, memory.mode === 'entity' && memory.learn_from_outside !== false);
+      return { ...taught, origin: 'holder_told', authorRole: 'other' };
+    }
+    return { stated: false, origin: 'assistant_stated', authorRole: 'assistant', informantId: null };
+  }
+
+  private async bindEvidence(tx: EntityManager, memoryId: string, ev: Evidence | null, text: string, contacts: boolean): Promise<Bound> {
+    if (!ev) return { messageId: null, byHolder: true, contactId: null, byAssistant: false, conversationId: null }; // written by the person in the host's UI
     if (ev.conversationId) {
       // Memory-stated only when a recent message of the holder actually says it (text overlap):
-      // an agent cannot turn "ciao" into "the memory decided X" (poisoning guard).
-      const [m] = await tx.query(
-        `SELECT m.id FROM messages m
-         WHERE m.conversation_id = $1 AND m.memory_id = $2 AND ${memorySpeaker('m')}
+      // an agent cannot turn "ciao" into "the memory decided X" (poisoning guard). In an entity memory an identified
+      // contact's message counts too (what a household member asked to remember), as theirs.
+      // The latest person's turn that says it decides whose it is: a guest correcting what the household said is the guest's.
+      const [m]: Array<{ id: string; own: boolean; contact: string | null; conversation_id: string }> = await tx.query(
+        `SELECT m.id, ${memorySpeaker('m')} AS own, CASE WHEN m.author_kind = 'contact' THEN m.author_person_id END AS contact, m.conversation_id
+         FROM messages m
+         WHERE m.conversation_id = $1 AND m.memory_id = $2 AND m.role IN ('user', 'other')
            AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
-         ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
+         ORDER BY m.sent_at DESC LIMIT 1`,
         [ev.conversationId, memoryId, text]);
-      if (m) return { messageId: m.id, byHolder: true };
+      if (m?.own) return { messageId: m.id, byHolder: true, contactId: null, byAssistant: false, conversationId: m.conversation_id };
+      if (m?.contact && contacts) return { messageId: m.id, byHolder: false, contactId: m.contact, byAssistant: false, conversationId: m.conversation_id };
     } else if (ev.memoryDirect) {
       // A personal-token client (Claude Code, a connector) ingests the person's turns but cannot name the conversation
       // on MCP calls: the person's own recent words from the same client are the evidence, same overlap rule.
       const [m] = await tx.query(
-        `SELECT m.id FROM messages m JOIN conversations c ON c.id = m.conversation_id
+        `SELECT m.id, m.conversation_id FROM messages m JOIN conversations c ON c.id = m.conversation_id
          WHERE c.client_id = $1 AND m.memory_id = $2 AND ${memorySpeaker('m')}
            AND m.received_at > now() - interval '30 minutes' AND ${OVERLAP('m.content')}
-         ORDER BY ${SCORE('m.content')} DESC, m.sent_at DESC LIMIT 1`,
+         ORDER BY m.sent_at DESC LIMIT 1`,
         [ev.clientId, memoryId, text]);
-      if (m) return { messageId: m.id, byHolder: true };
+      if (m) return { messageId: m.id, byHolder: true, contactId: null, byAssistant: false, conversationId: m.conversation_id };
     }
     const day = new Date().toISOString().slice(0, 10);
     const [conv] = await tx.query(
@@ -336,7 +384,7 @@ export class MemoryWriteService {
       `INSERT INTO messages (conversation_id, memory_id, external_id, role, author_kind, attribution_method, attribution_confidence, content, content_hash, sent_at)
        VALUES ($1, $2, $3, 'assistant', 'agent', 'client_assertion', 1, $4, $5, now()) RETURNING id`,
       [conv.id, memoryId, `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text, createHash('sha256').update(text).digest()]);
-    return { messageId: msg.id, byHolder: false };
+    return { messageId: msg.id, byHolder: false, contactId: null, byAssistant: true, conversationId: conv.id };
   }
 
   private async embed(table: 'episodes' | 'notes' | 'facts', id: string, text: string): Promise<void> {

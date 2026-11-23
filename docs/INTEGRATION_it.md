@@ -86,6 +86,11 @@ memoria compatibile OpenAI per le piattaforme senza hook per plugin (AnythingLLM
   richiamo per lui (`contextWithTurn`, o svuota la tua outbox) — in una chat condivisa un turno non ancora arrivato
   verrebbe letto come quello di chi ha parlato prima. In una memoria entity l'interfaccia del diario legge solo il
   pubblico: le cose private sono dell'agente e di chi le ha dette.
+- **Turni vocali** (`source: "voice"`): inviare chi parla, trovato dal riconoscimento vocale, come partecipante con la
+  sua identità. Un turno la cui voce nessuno ha riconosciuto è qualcuno — Recordare non lo prende mai per il parlante
+  proprio dell'account, anche se inviato come `user`: i suoi fatti e le sue note restano in sospeso e non fa da evidenza
+  a `remember`. Non dichiararlo come titolare (Kinox 2026-11-19: un'impronta vocale mancata ha reso un orario sbagliato
+  una nota dichiarata, e la correzione della famiglia una nota in sospeso).
 - **Ascolto continuo** (un dispositivo di casa che sente la stanza, D45, WORK_PLAN 6.5): inviare la trascrizione come
   conversazione con `source: "ambient"` — la persona di cui è la memoria come `user`, gli altri come partecipanti `other`
   (con un'identità quando il riconoscimento vocale li conosce), mai `own`. All'estrazione viene detto che legge parlato

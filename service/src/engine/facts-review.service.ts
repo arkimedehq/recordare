@@ -68,7 +68,7 @@ export class FactsReviewService {
       account_speaker: boolean; author_kind: AuthorKind; author_person_id: string | null; author_name: string | null; content: string; sent_at: Date; heard: boolean }> = await this.db.query(
       `SELECT DISTINCT ON (v.episode_id) v.episode_id, m.id, m.role, m.tool_name,
          ${entity ? accountSpeaker('m') : `m.author_kind IN ('self', 'own')`} AS account_speaker, m.author_kind,
-         m.author_person_id, COALESCE(p.display_name, cp.display_name) AS author_name, m.content, m.sent_at,
+         m.author_person_id, COALESCE(p.display_name, CASE WHEN cp.role <> 'holder' THEN cp.display_name END) AS author_name, m.content, m.sent_at,
          (SELECT c.source = 'ambient' FROM conversations c WHERE c.id = m.conversation_id) AS heard
        FROM episode_evidence v JOIN messages m ON m.id = v.message_id LEFT JOIN persons p ON p.id = m.author_person_id
          LEFT JOIN conversation_participants cp ON cp.conversation_id = m.conversation_id AND cp.ref = m.author_ref

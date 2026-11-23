@@ -212,7 +212,7 @@ export const TOOLS = [
   {
     "name": "remember",
     "title": "Remember something",
-    "description": "Explicit \"remember that…\" about preferences, habits, values, knowledge. Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something.",
+    "description": "Explicit \"remember that…\" about preferences, habits, values, knowledge. Conversations are remembered automatically: use it only when explicitly asked, and never ask whether to remember or save something. To correct or update something remembered, pass `replaces` with its id (returned when you remembered it, or from search_memory): the old note is retired instead of kept beside the new one.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -230,6 +230,12 @@ export const TOOLS = [
             "profile",
             "constraint"
           ]
+        },
+        "replaces": {
+          "description": "The id of a note this one corrects or updates",
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
         }
       },
       "required": [

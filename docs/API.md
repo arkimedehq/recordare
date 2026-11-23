@@ -473,9 +473,14 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
 `unknown_current` → "the current value is not known".
 
 ### `remember` and `search_memory` (D34 — semantic notes)
-- `remember {content, category?}` — explicit "remember that…": stored as a stated note (holder's
+- `remember {content, category?, replaces?}` — explicit "remember that…": stored as a stated note (holder's
   `user` message as evidence, same rules as `log_episode`); without such evidence it is stored as an inferred,
-  **pending** note (`origin: assistant_stated`) the holder confirms in the diary (§4). `category` defaults to
+  **pending** note (`origin: assistant_stated`) the holder confirms in the diary (§4). The evidence is the latest
+  person's turn of the conversation (last 30 minutes) whose words overlap the note: in an entity memory, an identified
+  household member's turn counts too (`origin: holder_told`, kept at once when trusted to teach — 8.16), a guest's or an
+  unrecognised voice's does not. `replaces`: the id of a note this one corrects or updates (returned by the earlier
+  `remember`, or from `search_memory`) — retired (`superseded`) when the new note is stated; a pending one only proposes
+  the change (§4 pending items). An id that is not a current note of the memory is an error. `category` defaults to
   `knowledge`. Returns `{id, stored}`.
 - `search_memory {query, as_of?, include_pending?}` — preferences, habits, values, knowledge, plus the
   relevant state facts valid at `as_of` (ISO date, default today) with their history; complements `search_episodes`
@@ -501,7 +506,9 @@ Returns `{facts: [{key, value | null, status, validFrom, validTo, history: [...]
   already ingests (role `tool`) and what people say are enough. Lasting knowledge of the place or the people's world, and
   what a person deliberately teaches, become `knowledge` notes with who brought them: read in a page → origin `learned`,
   pending unless the tool is one of the agent's own (`LEARNING_OWN_TOOLS`); taught by a household member about the place
-  (the account's own speaker, or a person with a verified identity) → kept at once; someone unknown → pending. The same page
+  or about another household member (the account's own speaker, or a person with a verified identity — one the client
+  declared counts) → kept at once; someone unknown → pending. In a voice conversation (`source: "voice"`) a turn whose
+  speaker nobody recognised (no identity) is someone, never the account's own speaker, whatever its role. The same page
   read again confirms nothing; a trusted person or a second independent source does. Perishable knowledge fades
   (`LEARNED_NEWS_KEEP_DAYS`, at its own date when said); a correction takes the old value out of recall. Instructions
   inside a page or a tool's output never become an intent or a rule. The memory context labels such a note `learned (read
